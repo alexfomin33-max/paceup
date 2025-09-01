@@ -27,6 +27,8 @@ class MyApp extends StatelessWidget {
 import 'package:flutter/material.dart';
 import 'routes.dart';
 
+//тестовый комит
+
 void main() {
   runApp(const MyApp());
 }
