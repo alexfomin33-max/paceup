@@ -1,5 +1,5 @@
 import "package:flutter/material.dart";
-import "createacc_screen.dart";
+//import "createacc_screen.dart";
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -44,10 +44,11 @@ class WelcomeScreen extends StatelessWidget {
                 width: 250,
                 child: OutlinedButton(
                   onPressed: () {
-                    Navigator.push(
+                    Navigator.pushReplacementNamed(context, '/createacc',);
+                   /* Navigator.push(
                       context, 
                       MaterialPageRoute(builder: (context) => const CreateaccScreen()),
-                    );
+                    );*/
                   }, 
                   style: ButtonStyle(
                     padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: 15)),

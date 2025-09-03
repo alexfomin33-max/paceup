@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+//import 'package:paceip/screens/regstep1_screen.dart';
 import 'dart:convert';
-import "lenta_screen.dart";
+//import "lenta_screen.dart";
 //import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AddAccSmsScreen extends StatefulWidget {
@@ -91,11 +92,11 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
          // await storage.write(key: "refresh_token", value: data["refresh_token"]);
          // await storage.write(key: "user_id", value: data['code']);
           if (!mounted) return;
-
-          Navigator.push(
-            context, 
-            MaterialPageRoute(builder: (context) => LentaScreen(userId: codeValue,)),
-          );
+            Navigator.pushReplacementNamed(context, '/regstep1', arguments: {'userId': codeValue},);
+            /*Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => Regstep1Screen(userId: codeValue,)),
+            );*/
         } else {
           //print("Ошибка $codeValue");
         }
