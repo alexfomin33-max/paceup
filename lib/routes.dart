@@ -12,7 +12,7 @@ final Map<String, WidgetBuilder> appRoutes = {
   '/home': (context) => const HomeScreen(),
   '/lenta': (context) {
     final args = ModalRoute.of(context)!.settings.arguments as Map;
-    return LentaScreen(userId: args['userId']);
+    return LentaScreen(userId: args['userId'] as int);
   },
   //'/login': (context) => const LoginScreen(),
   //'/profile': (context) => const ProfileScreen(),
