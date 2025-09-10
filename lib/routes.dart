@@ -5,6 +5,7 @@ import 'screens/home_screen.dart';
 import 'screens/lenta_screen.dart';
 import 'screens/regstep1_screen.dart';
 import 'screens/regstep2_screen.dart';
+import "screens/createacccode_screen.dart";
 //import 'screens/login_screen.dart';
 ///import 'screens/profile_screen.dart';
 //import 'screens/settings_screen.dart';
@@ -25,6 +26,10 @@ final Map<String, WidgetBuilder> appRoutes = {
   '/regstep2': (context) {
     final args = ModalRoute.of(context)!.settings.arguments as Map;
     return Regstep2Screen(userId: args['userId'] as int);
+  },
+  '/addaccsms': (context) {
+    final args = ModalRoute.of(context)!.settings.arguments as Map;
+    return AddAccSmsScreen(phone: args['phone']);
   },
   //'/login': (context) => const LoginScreen(),
   //'/profile': (context) => const ProfileScreen(),
