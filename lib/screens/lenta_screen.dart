@@ -1,23 +1,81 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
-/*class LentaScreen extends StatefulWidget {
-  final int userId;
 
-  const LentaScreen({super.key, required this.userId});
+class RouteCard extends StatelessWidget {
+  final LatLng start;
+  final LatLng end;
 
-  @override
-  _LentaScreenState createState() => _LentaScreenState();
-}
+  const RouteCard({super.key, required this.start, required this.end});
 
-class _LentaScreenState extends State<LentaScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-    
+    // если координаты валидные, берём середину
+    final center = (start.latitude.isFinite &&
+            start.longitude.isFinite &&
+            end.latitude.isFinite &&
+            end.longitude.isFinite)
+        ? LatLng(
+            (start.latitude + end.latitude) / 2,
+            (start.longitude + end.longitude) / 2,
+          )
+        : start; // fallback
+
+    final polylinePoints = <LatLng>[start, end];
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: SizedBox(
+        height: 200,
+        child: FlutterMap(
+          options: MapOptions(
+            //center: center,
+            //zoom: 10,
+            interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.all,
+            ),
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'paceup.ru',
+            ),
+            MarkerLayer(
+              markers: [
+                Marker(
+                  point: start,
+                  width: 40,
+                  height: 40,
+                  child: const Icon(Icons.location_on,
+                      color: Colors.green, size: 32),
+                ),
+                Marker(
+                  point: end,
+                  width: 40,
+                  height: 40,
+                  child: const Icon(Icons.flag,
+                      color: Colors.red, size: 28),
+                ),
+              ],
+            ),
+            PolylineLayer(
+              polylines: [
+                Polyline(
+                  points: polylinePoints,
+                  strokeWidth: 4.0,
+                  color: Colors.blue,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
+}
 
-}*/
 
 class LentaScreen extends StatefulWidget {
   final int userId;
@@ -36,15 +94,34 @@ class _LentaScreenState extends State<LentaScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
+        centerTitle: true, // чтобы "Лента" была по центру
+        leadingWidth: 100, // расширяем область для двух иконок
+        leading: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () {
+                // действие
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                // действие
+              },
+            ),
+          ],
+        ),
         title: const Text(
           "Лента",
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w500,
             color: Color(0xFF171A1F),
+            fontFamily: 'Inter'
           ),
         ),
-        centerTitle: true,
         actions: [
           Stack(
             children: [
@@ -63,10 +140,10 @@ class _LentaScreenState extends State<LentaScreen> {
                   ),
                   child: const Text(
                     "9",
-                    style: TextStyle(fontSize: 8, color: Colors.white),
+                    style: TextStyle(fontSize: 8, color: Colors.white, fontFamily: 'Inter'),
                   ),
                 ),
-              )
+              ),
             ],
           ),
           IconButton(
@@ -129,14 +206,14 @@ class _LentaScreenState extends State<LentaScreen> {
                 Expanded(
                   child: Text(
                     "Игорь Зелёный",
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Inter',),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Flexible(
                   child: Text(
                     "8 июня 2025, в 10:28",
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Inter',),
                     overflow: TextOverflow.ellipsis,
                     softWrap: false,
                     textAlign: TextAlign.right,
@@ -162,6 +239,16 @@ class _LentaScreenState extends State<LentaScreen> {
                 _Metric(title: "Пульс", value: "141"),
               ],
             ),
+            const SizedBox(height: 8,),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                RouteCard(
+                  start: LatLng(55.7558, 37.6173), // Москва
+                  end: LatLng(59.9343, 30.3351),   // Питер
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -176,7 +263,7 @@ class _LentaScreenState extends State<LentaScreen> {
           padding: EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             "Рекомендации для вас",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, fontFamily: 'Inter',),
           ),
         ),
         const SizedBox(height: 12),
@@ -222,21 +309,21 @@ class _LentaScreenState extends State<LentaScreen> {
           const SizedBox(height: 12),
           Text(
             name,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Inter',),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 4),
           Text(
             desc,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            style: const TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Inter',),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 4),
           Text(
             mutual,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            style: const TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Inter',),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
@@ -249,7 +336,7 @@ class _LentaScreenState extends State<LentaScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            child: const Text("Подписаться"),
+            child: const Text("Подписаться", style: TextStyle(fontFamily: 'Inter',),),
           ),
         ],
       ),
@@ -275,13 +362,13 @@ class _LentaScreenState extends State<LentaScreen> {
                     children: const [
                       Text(
                         "Алексей Лукашин",
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                        style: TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Inter',),
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         "7 июня 2025, в 14:36",
                         style:
-                            TextStyle(fontSize: 12, color: Colors.grey),
+                            TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Inter',),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -299,18 +386,18 @@ class _LentaScreenState extends State<LentaScreen> {
               fit: BoxFit.cover),
           const Padding(
             padding: EdgeInsets.all(12),
-            child: Text("Вот так вот очень легко всех победил"),
+            child: Text("Вот так вот очень легко всех победил", style: TextStyle(fontFamily: 'Inter',),),
           ),
           Row(
             children: const [
               SizedBox(width: 12),
               Icon(Icons.favorite_border, size: 20),
               SizedBox(width: 4),
-              Text("2707"),
+              Text("2707", style: TextStyle(fontFamily: 'Inter',),),
               SizedBox(width: 16),
               Icon(Icons.mode_comment_outlined, size: 20),
               SizedBox(width: 4),
-              Text("50"),
+              Text("50", style: TextStyle(fontFamily: 'Inter',),),
             ],
           ),
           const SizedBox(height: 12),
