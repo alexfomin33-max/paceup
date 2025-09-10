@@ -3,6 +3,10 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+
 class RouteCard extends StatelessWidget {
   final LatLng start;
   final LatLng end;
@@ -28,19 +32,28 @@ class RouteCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: SizedBox(
-        height: 200,
+        height: 200, // фиксированная высота карты
         child: FlutterMap(
           options: MapOptions(
-            //center: center,
-            //zoom: 10,
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.all,
-            ),
+            initialCenter: center,
+            initialZoom: 6.0, // подбираем по расстоянию маршрута
+            interactionOptions:
+                const InteractionOptions(flags: InteractiveFlag.all),
           ),
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'paceup.ru',
+              additionalOptions: {'debug': 'true'}, // временно для дебага
+            ),
+            PolylineLayer(
+              polylines: [
+                Polyline(
+                  points: polylinePoints,
+                  strokeWidth: 4.0,
+                  color: Colors.blue,
+                ),
+              ],
             ),
             MarkerLayer(
               markers: [
@@ -55,17 +68,7 @@ class RouteCard extends StatelessWidget {
                   point: end,
                   width: 40,
                   height: 40,
-                  child: const Icon(Icons.flag,
-                      color: Colors.red, size: 28),
-                ),
-              ],
-            ),
-            PolylineLayer(
-              polylines: [
-                Polyline(
-                  points: polylinePoints,
-                  strokeWidth: 4.0,
-                  color: Colors.blue,
+                  child: const Icon(Icons.flag, color: Colors.red, size: 28),
                 ),
               ],
             ),
@@ -75,6 +78,7 @@ class RouteCard extends StatelessWidget {
     );
   }
 }
+
 
 
 class LentaScreen extends StatefulWidget {
@@ -240,14 +244,11 @@ class _LentaScreenState extends State<LentaScreen> {
               ],
             ),
             const SizedBox(height: 8,),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                RouteCard(
+            SizedBox.expand(   // или Container с конкретной высотой
+              child: RouteCard(
                   start: LatLng(55.7558, 37.6173), // Москва
                   end: LatLng(59.9343, 30.3351),   // Питер
                 ),
-              ],
             ),
           ],
         ),
