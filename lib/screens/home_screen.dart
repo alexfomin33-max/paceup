@@ -21,7 +21,7 @@ class WelcomeScreen extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           Image.asset("assets/background.png", fit: BoxFit.cover),
-          Container(color: Colors.black.withValues(alpha: 0.4)),
+          Container(color: Colors.black.withValues(alpha: 0.5)),
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
@@ -46,7 +46,7 @@ class WelcomeScreen extends StatelessWidget {
                   _buildButton(
                     text: "Создать аккаунт",
                     onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/createacc',);
+                      Navigator.pushReplacementNamed(context, '/createacc');
                       /*Navigator.push(
                         context,
                         MaterialPageRoute(
