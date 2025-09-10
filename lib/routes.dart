@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:paceip/screens/createacc_screen.dart';
+import 'screens/createacc_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/lenta_screen.dart';
