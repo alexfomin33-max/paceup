@@ -24,7 +24,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (authorized) {
       final userId = await auth.getUserId();
-      Navigator.pushReplacementNamed(context, '/lenta', arguments: {'userId': userId},);
+      Navigator.pushReplacementNamed(
+        context,
+        '/home',
+        arguments: {'userId': userId},
+      );
     } else {
       Navigator.pushReplacementNamed(context, '/home');
     }
@@ -32,8 +36,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      
-    );
+    return const Scaffold();
   }
 }
