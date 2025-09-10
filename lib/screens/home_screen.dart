@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'createacc_screen.dart';
+//import 'createacc_screen.dart';
 // import '../design/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -46,12 +46,13 @@ class WelcomeScreen extends StatelessWidget {
                   _buildButton(
                     text: "Создать аккаунт",
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushReplacementNamed(context, '/createacc',);
+                      /*Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const CreateaccScreen(),
                         ),
-                      );
+                      );*/
                     },
                   ),
                   const SizedBox(height: 20),
