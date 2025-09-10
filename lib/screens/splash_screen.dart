@@ -23,7 +23,8 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
 
     if (authorized) {
-      Navigator.pushReplacementNamed(context, '/lenta', arguments: {'userId': auth.getUserId()},);
+      final userId = await auth.getUserId();
+      Navigator.pushReplacementNamed(context, '/lenta', arguments: {'userId': userId},);
     } else {
       Navigator.pushReplacementNamed(context, '/home');
     }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+//import 'package:paceip/screens/regstep1_screen.dart';
 import 'dart:convert';
-import "lenta_screen.dart";
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+//import "lenta_screen.dart";
+//import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AddAccSmsScreen extends StatefulWidget {
   final String phone;
@@ -16,7 +17,8 @@ class AddAccSmsScreen extends StatefulWidget {
 class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
   final controllers = List.generate(6, (_) => TextEditingController());
   final nodes = List.generate(6, (_) => FocusNode());
-  final storage = const FlutterSecureStorage();
+   //временный костыль
+  //final storage = const FlutterSecureStorage();
 
   //String apiResponse = "Загрузка...";
   //String resendResponse = ""; // ответ на повторный запрос
@@ -85,14 +87,16 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
         final codeValue = int.tryParse(data['code'].toString()) ?? 0;
 
         if (codeValue > 0) {
-          await storage.write(key: "access_token", value: data["access_token"]);
-          await storage.write(key: "refresh_token", value: data["refresh_token"]);
-          await storage.write(key: "user_id", value: data['code']);
+           //временный костыль
+          //await storage.write(key: "access_token", value: data["access_token"]);
+         // await storage.write(key: "refresh_token", value: data["refresh_token"]);
+         // await storage.write(key: "user_id", value: data['code']);
           if (!mounted) return;
-          Navigator.push(
-            context, 
-            MaterialPageRoute(builder: (context) => LentaScreen(userId: data['code'],)),
-          );
+            Navigator.pushReplacementNamed(context, '/regstep1', arguments: {'userId': codeValue},);
+            /*Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => Regstep1Screen(userId: codeValue,)),
+            );*/
         } else {
           //print("Ошибка $codeValue");
         }

@@ -88,10 +88,11 @@ class AddAccScreen extends StatelessWidget {
                 height: 38,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
+                    Navigator.pushReplacementNamed(context, '/addaccsms', arguments: {'phone': phoneController.text},);
+                   /*Navigator.push(
                       context, 
                       MaterialPageRoute(builder: (context) => AddAccSmsScreen(phone: phoneController.text,)),
-                    );
+                    );*/
                   }, 
                   style: ButtonStyle(
                     padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: 15)),
@@ -152,10 +153,11 @@ class AddAccScreen extends StatelessWidget {
                   height: 32,
                   child: OutlinedButton(
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushReplacementNamed(context, '/home',);
+                      /*Navigator.push(
                         context, 
                         MaterialPageRoute(builder: (context) => const HomeScreen()),
-                      );
+                      );*/
                     }, 
                     style: ButtonStyle(
                       padding: const WidgetStatePropertyAll(
