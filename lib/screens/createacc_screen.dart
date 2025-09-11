@@ -1,6 +1,5 @@
 import "package:flutter/material.dart";
 import "package:mask_input_formatter/mask_input_formatter.dart";
-import "home_screen.dart";
 import "createacccode_screen.dart";
 
 class CreateaccScreen extends StatelessWidget {
@@ -16,170 +15,163 @@ class AddAccScreen extends StatelessWidget {
   AddAccScreen({super.key});
 
   final TextEditingController phoneController = TextEditingController();
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
-            "assets/background.png", 
-            fit: BoxFit.cover,
-          ),
-          Container(color: Colors.black.withValues(alpha: 0.4)),
+          Image.asset("assets/background.png", fit: BoxFit.cover),
+          Container(color: Colors.black.withValues(alpha: 0.5)),
+
+          /// 🔹 Логотип — как на WelcomeScreen
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: EdgeInsets.only(top:55),
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).size.height * 0.11,
+              ),
               child: Image.asset(
                 "assets/logo_icon.png",
-                width: 125,
-                height: 125,
+                width: 175,
+                height: 175,
                 fit: BoxFit.contain,
               ),
             ),
           ),
+
+          /// 🔹 Поле ввода, кнопка "Зарегистрироваться", текст условий и кнопка "Назад"
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: EdgeInsets.only(bottom:150),
-              child: SizedBox(
-                width: 250,
-                height: 38,
-                child: TextFormField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
-                  inputFormatters: [
-                    MaskInputFormatter(mask: '+# (###) ###-##-##'),
-                  ],
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(width: 1.0, color: Colors.white),
-                      borderRadius: BorderRadius.circular(26),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                       borderSide: BorderSide(width: 1.0, color: Colors.white),
-                       borderRadius: BorderRadius.circular(26),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(width: 1.0, color: Colors.white),
-                      borderRadius: BorderRadius.circular(26),
-                    ),
-                    hintText: "+7 (999) 123-45-67",
-                    labelText: "Телефон",
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    labelStyle: const TextStyle(color: Colors.white, fontSize: 10),
-                    constraints: BoxConstraints(maxWidth: 250, maxHeight: 50),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: EdgeInsets.only(bottom:100),
-              child: SizedBox(
-                width: 250,
-                height: 38,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/addaccsms', arguments: {'phone': phoneController.text},);
-                   /*Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => AddAccSmsScreen(phone: phoneController.text,)),
-                    );*/
-                  }, 
-                  style: ButtonStyle(
-                    padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: 15)),
-                    side: const WidgetStatePropertyAll(BorderSide(color: Colors.white, width: 1)),
-                    shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(26),)),
-                    overlayColor: const WidgetStatePropertyAll(Colors.transparent),
-                    animationDuration: Duration(milliseconds: 0),
-                  ),
-                  child: Text(
-                    "Зарегистрироваться",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: "Inter",
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Column(
-            //alignment: Alignment.bottomCenter,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Row(
-                //padding: EdgeInsets.only(bottom:45),
-                mainAxisAlignment: MainAxisAlignment.center,
+              padding: const EdgeInsets.only(bottom: 30, left: 40, right: 40),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Поле ввода телефона
                   SizedBox(
-                    width: 210,
-                    //margin: EdgeInsets.only(bottom: 16),
-                    child: Padding(
-                      padding: EdgeInsets.only(bottom:45),
-                      child: Text(
-                        "Регистрируясь, вы принимаете Условия предоставления услуг и Политику конфиденциальности",
-                        style: TextStyle(
+                    width: double.infinity,
+                    child: TextFormField(
+                      controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      style: const TextStyle(color: Colors.white),
+                      inputFormatters: [
+                        MaskInputFormatter(mask: '+# (###) ###-##-##'),
+                      ],
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderSide: const BorderSide(
+                            width: 1.0,
+                            color: Colors.white,
+                          ),
+                          borderRadius: BorderRadius.circular(26),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(
+                            width: 1.0,
+                            color: Colors.white,
+                          ),
+                          borderRadius: BorderRadius.circular(26),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(
+                            width: 1.0,
+                            color: Colors.white,
+                          ),
+                          borderRadius: BorderRadius.circular(26),
+                        ),
+                        hintText: "+7 (999) 123-45-67",
+                        labelText: "Телефон",
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        hintStyle: const TextStyle(color: Colors.grey),
+                        labelStyle: const TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
-                          fontFamily: "InterThin",
+                          fontSize: 16,
+                          fontFamily: "Inter",
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Кнопка "Зарегистрироваться"
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/addaccsms',
+                          arguments: {'phone': phoneController.text},
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white, // белая кнопка
+                        foregroundColor: Colors.black, // текст чёрный
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(26),
+                        ),
+                        elevation: 0, // убираем тень, если нужна плоская
+                      ),
+                      child: const Text(
+                        "Зарегистрироваться",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: "Inter",
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ),
                   ),
-                ]
-              ),
-            ]
-          ),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: EdgeInsets.only(bottom:15),
-                child: SizedBox(
-                  width: 90,
-                  height: 32,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/home',);
-                      /*Navigator.push(
-                        context, 
-                        MaterialPageRoute(builder: (context) => const HomeScreen()),
-                      );*/
-                    }, 
-                    style: ButtonStyle(
-                      padding: const WidgetStatePropertyAll(
-                        EdgeInsets.symmetric(vertical: 15),
-                      ),
-                      side: const WidgetStatePropertyAll(BorderSide.none),
-                      overlayColor: const WidgetStatePropertyAll(Colors.transparent),
-                      animationDuration: Duration(milliseconds: 0),
-                    ),
 
-                    child: Text(
-                      "<- Назад",
+                  const SizedBox(height: 25),
+
+                  // 🔹 Текст условий
+                  SizedBox(
+                    width: 250,
+                    child: const Text(
+                      "Регистрируясь, вы принимаете Условия предоставления услуг и Политику конфиденциальности",
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w300,
+                        color: Color.fromARGB(255, 192, 192, 192),
+                        fontSize: 12,
                         fontFamily: "Inter",
                       ),
                       textAlign: TextAlign.center,
                     ),
                   ),
-                ),
+
+                  const SizedBox(height: 15),
+
+                  // 🔹 Кнопка Назад без рамки
+                  SizedBox(
+                    width: 100,
+                    height: 36,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(context, '/home');
+                      },
+                      style: ButtonStyle(
+                        overlayColor: const WidgetStatePropertyAll(
+                          Colors.transparent,
+                        ),
+                        animationDuration: const Duration(milliseconds: 0),
+                      ),
+                      child: const Text(
+                        "<- Назад",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: "Inter",
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
