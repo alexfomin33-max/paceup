@@ -1,6 +1,5 @@
 import "package:flutter/material.dart";
 import "package:mask_input_formatter/mask_input_formatter.dart";
-import "createacccode_screen.dart";
 
 class CreateaccScreen extends StatelessWidget {
   const CreateaccScreen({super.key});

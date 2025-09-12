@@ -18,7 +18,6 @@ class AuthService {
   }
   Future<int?> getUserId() async {
     final userIdStr = "1";
-    if (userIdStr == null) return null;
 
     return int.tryParse(userIdStr);
 }
