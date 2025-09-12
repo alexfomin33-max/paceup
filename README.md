@@ -1,4 +1,4 @@
-# paceip
+# paceup
 
 A new Flutter project.
 
