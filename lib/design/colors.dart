@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // 🔹 Основные цвета
-  static const Color primary = Color(0xFF2ECC70);
+  static const Color primary = Color(0xFF27B462);
   static const Color secondary = Color(0xFF379AE6);
 
   // 🔹 Фоновые цвета
@@ -16,11 +16,12 @@ class AppColors {
   static const Color orange = Color(0xFFEB9D00);
   static const Color green = Color(0xFF17A948);
   static const Color text = Color(0xFF323743);
+  static const Color greytext = Color(0xFF9C9C9C);
 
   // 🔹 Цвет имён в чате
   static const Color man = Color(0xFF197DCA);
   static const Color woman = Color(0xFFE02862);
- 
+
   // 🔹 Цвет иконок
   static const Color gold = Color(0xFFECA517);
 
@@ -32,5 +33,3 @@ class AppColors {
   static const Color warning = Colors.orange;
   static const Color success = Colors.green;
 }
-
-

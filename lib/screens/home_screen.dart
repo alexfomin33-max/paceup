@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 //import 'createacc_screen.dart';
-//import '../design/app_theme.dart';
+import '../design/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -39,7 +39,7 @@ class WelcomeScreen extends StatelessWidget {
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 150, left: 40, right: 40),
+              padding: const EdgeInsets.only(bottom: 177, left: 40, right: 40),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -85,7 +85,9 @@ class WelcomeScreen extends StatelessWidget {
             BorderSide(color: Colors.white, width: 1),
           ),
           shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.xlarge),
+            ),
           ),
           overlayColor: const WidgetStatePropertyAll(Colors.transparent),
           animationDuration: const Duration(milliseconds: 0),

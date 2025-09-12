@@ -24,7 +24,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (authorized) {
       final userId = await auth.getUserId();
-      Navigator.pushReplacementNamed(context, '/lenta', arguments: {'userId': userId},);
+      Navigator.pushReplacementNamed(
+        context,
+        '/regstep2',
+        arguments: {'userId': userId},
+      );
     } else {
       Navigator.pushReplacementNamed(context, '/home');
     }

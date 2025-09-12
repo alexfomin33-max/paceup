@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:mask_input_formatter/mask_input_formatter.dart";
+import '../design/app_theme.dart';
 
 class CreateaccScreen extends StatelessWidget {
   const CreateaccScreen({super.key});
@@ -44,7 +45,7 @@ class AddAccScreen extends StatelessWidget {
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 30, left: 40, right: 40),
+              padding: const EdgeInsets.only(bottom: 65, left: 40, right: 40),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -64,21 +65,21 @@ class AddAccScreen extends StatelessWidget {
                             width: 1.0,
                             color: Colors.white,
                           ),
-                          borderRadius: BorderRadius.circular(26),
+                          borderRadius: BorderRadius.circular(AppRadius.xlarge),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderSide: const BorderSide(
                             width: 1.0,
                             color: Colors.white,
                           ),
-                          borderRadius: BorderRadius.circular(26),
+                          borderRadius: BorderRadius.circular(AppRadius.xlarge),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide: const BorderSide(
                             width: 1.0,
                             color: Colors.white,
                           ),
-                          borderRadius: BorderRadius.circular(26),
+                          borderRadius: BorderRadius.circular(AppRadius.xlarge),
                         ),
                         hintText: "+7 (999) 123-45-67",
                         labelText: "Телефон",
@@ -111,7 +112,7 @@ class AddAccScreen extends StatelessWidget {
                         foregroundColor: Colors.black, // текст чёрный
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(26),
+                          borderRadius: BorderRadius.circular(AppRadius.xlarge),
                         ),
                         elevation: 0, // убираем тень, если нужна плоская
                       ),
@@ -127,7 +128,7 @@ class AddAccScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 15),
 
                   // 🔹 Текст условий
                   SizedBox(
@@ -143,7 +144,7 @@ class AddAccScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
 
                   // 🔹 Кнопка Назад без рамки
                   SizedBox(
@@ -160,7 +161,7 @@ class AddAccScreen extends StatelessWidget {
                         animationDuration: const Duration(milliseconds: 0),
                       ),
                       child: const Text(
-                        "<- Назад",
+                        "<-- Назад",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,

@@ -143,7 +143,7 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
                     "Введите код, отправленный на номер\n${widget.phone}",
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 15,
                       fontFamily: "Inter",
                     ),
                     textAlign: TextAlign.left,
@@ -175,7 +175,7 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
                       "Отправить заново",
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 15,
                         fontFamily: "Inter",
                         fontWeight: FontWeight.w500,
                       ),
