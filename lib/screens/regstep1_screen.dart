@@ -168,15 +168,15 @@ class CustomTextField extends StatelessWidget {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: Color(0xFFBDC1CA)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: Color(0xFFBDC1CA)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: Color(0xFF2ECC70)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
       ),
     );
@@ -244,15 +244,15 @@ class CustomDateField extends StatelessWidget {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.small),
-              borderSide: const BorderSide(color: Color(0xFFBDC1CA)),
+              borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.small),
-              borderSide: const BorderSide(color: Color(0xFFBDC1CA)),
+              borderSide: const BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.small),
-              borderSide: const BorderSide(color: Color(0xFF2ECC70)),
+              borderSide: const BorderSide(color: AppColors.border),
             ),
           ),
         ),
@@ -306,15 +306,15 @@ class CustomDropdownField extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Color(0xFFBDC1CA)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Color(0xFFBDC1CA)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Color(0xFF2ECC70)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
       ),
       child: DropdownButtonHideUnderline(
