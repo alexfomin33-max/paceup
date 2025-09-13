@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'regstep2_screen.dart';
-import '../design/app_theme.dart';
+import '../theme/app_theme.dart';
 
 class Regstep1Screen extends StatefulWidget {
   final int userId;
@@ -24,30 +24,17 @@ class _Regstep1ScreenState extends State<Regstep1Screen> {
   final List<String> genders = ['Муж', 'Жен'];
   final List<String> sports = ['Бег', 'Велосипед', 'Плавание'];
 
-  // Переменные для подсветки красным
-  bool nameError = false;
-  bool surnameError = false;
-  bool dobError = false;
-  bool genderError = false;
-  bool cityError = false;
-  bool sportError = false;
+  bool get isFormValid {
+    return nameController.text.isNotEmpty &&
+        surnameController.text.isNotEmpty &&
+        dobController.text.isNotEmpty &&
+        selectedGender != null &&
+        cityController.text.isNotEmpty &&
+        selectedSport != null;
+  }
 
   void _checkAndContinue() {
-    setState(() {
-      nameError = nameController.text.isEmpty;
-      surnameError = surnameController.text.isEmpty;
-      dobError = dobController.text.isEmpty;
-      genderError = selectedGender == null;
-      cityError = cityController.text.isEmpty;
-      sportError = selectedSport == null;
-    });
-
-    if (!nameError &&
-        !surnameError &&
-        !dobError &&
-        !genderError &&
-        !cityError &&
-        !sportError) {
+    if (isFormValid) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -55,6 +42,17 @@ class _Regstep1ScreenState extends State<Regstep1Screen> {
         ),
       );
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Следим за изменениями текста
+    nameController.addListener(() => setState(() {}));
+    surnameController.addListener(() => setState(() {}));
+    dobController.addListener(() => setState(() {}));
+    cityController.addListener(() => setState(() {}));
   }
 
   @override
@@ -79,69 +77,42 @@ class _Regstep1ScreenState extends State<Regstep1Screen> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                CustomTextField(
-                  controller: nameController,
-                  label: 'Имя*',
-                  hasError: nameError,
-                  onChanged: (_) {
-                    if (nameError) setState(() => nameError = false);
-                  },
-                ),
+                CustomTextField(controller: nameController, label: 'Имя*'),
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: surnameController,
                   label: 'Фамилия*',
-                  hasError: surnameError,
-                  onChanged: (_) {
-                    if (surnameError) setState(() => surnameError = false);
-                  },
                 ),
                 const SizedBox(height: 20),
                 CustomDateField(
                   controller: dobController,
                   label: 'Дата рождения*',
-                  hasError: dobError,
-                  onDateSelected: () {
-                    if (dobError) setState(() => dobError = false);
-                  },
                 ),
                 const SizedBox(height: 20),
                 CustomDropdownField(
                   label: 'Пол*',
                   value: selectedGender,
                   items: genders,
-                  hasError: genderError,
                   onChanged: (value) {
-                    setState(() {
-                      selectedGender = value;
-                      genderError = false;
-                    });
+                    setState(() => selectedGender = value);
                   },
                 ),
                 const SizedBox(height: 20),
-                CustomTextField(
-                  controller: cityController,
-                  label: 'Город*',
-                  hasError: cityError,
-                  onChanged: (_) {
-                    if (cityError) setState(() => cityError = false);
-                  },
-                ),
+                CustomTextField(controller: cityController, label: 'Город*'),
                 const SizedBox(height: 20),
                 CustomDropdownField(
                   label: 'Основной вид спорта*',
                   value: selectedSport,
                   items: sports,
-                  hasError: sportError,
                   onChanged: (value) {
-                    setState(() {
-                      selectedSport = value;
-                      sportError = false;
-                    });
+                    setState(() => selectedSport = value);
                   },
                 ),
                 const SizedBox(height: 50),
-                ContinueButton(onPressed: _checkAndContinue),
+                ContinueButton(
+                  onPressed: _checkAndContinue,
+                  isEnabled: isFormValid,
+                ),
               ],
             ),
           ),
@@ -157,15 +128,11 @@ class _Regstep1ScreenState extends State<Regstep1Screen> {
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
-  final bool hasError;
-  final ValueChanged<String>? onChanged;
 
   const CustomTextField({
     super.key,
     required this.controller,
     required this.label,
-    required this.hasError,
-    this.onChanged,
   });
 
   @override
@@ -173,7 +140,6 @@ class CustomTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       style: const TextStyle(color: Colors.black),
-      onChanged: onChanged,
       decoration: InputDecoration(
         label: RichText(
           text: TextSpan(
@@ -202,21 +168,15 @@ class CustomTextField extends StatelessWidget {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: BorderSide(
-            color: hasError ? Colors.red : Color(0xFFBDC1CA),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFBDC1CA)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: BorderSide(
-            color: hasError ? Colors.red : Color(0xFFBDC1CA),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFBDC1CA)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: BorderSide(
-            color: hasError ? Colors.red : Color(0xFFBDC1CA),
-          ),
+          borderSide: const BorderSide(color: Color(0xFF2ECC70)),
         ),
       ),
     );
@@ -229,15 +189,11 @@ class CustomTextField extends StatelessWidget {
 class CustomDateField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
-  final bool hasError;
-  final VoidCallback? onDateSelected;
 
   const CustomDateField({
     super.key,
     required this.controller,
     required this.label,
-    required this.hasError,
-    this.onDateSelected,
   });
 
   Future<void> _selectDate(BuildContext context) async {
@@ -249,7 +205,6 @@ class CustomDateField extends StatelessWidget {
     );
     if (pickedDate != null) {
       controller.text = DateFormat('dd.MM.yyyy').format(pickedDate);
-      if (onDateSelected != null) onDateSelected!();
     }
   }
 
@@ -289,21 +244,15 @@ class CustomDateField extends StatelessWidget {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.small),
-              borderSide: BorderSide(
-                color: hasError ? Colors.red : Color(0xFFBDC1CA),
-              ),
+              borderSide: const BorderSide(color: Color(0xFFBDC1CA)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.small),
-              borderSide: BorderSide(
-                color: hasError ? Colors.red : Color(0xFFBDC1CA),
-              ),
+              borderSide: const BorderSide(color: Color(0xFFBDC1CA)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.small),
-              borderSide: BorderSide(
-                color: hasError ? Colors.red : Color(0xFF2ECC70),
-              ),
+              borderSide: const BorderSide(color: Color(0xFF2ECC70)),
             ),
           ),
         ),
@@ -320,7 +269,6 @@ class CustomDropdownField extends StatelessWidget {
   final String? value;
   final List<String> items;
   final Function(String?) onChanged;
-  final bool hasError;
 
   const CustomDropdownField({
     super.key,
@@ -328,7 +276,6 @@ class CustomDropdownField extends StatelessWidget {
     required this.value,
     required this.items,
     required this.onChanged,
-    required this.hasError,
   });
 
   @override
@@ -359,21 +306,15 @@ class CustomDropdownField extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(
-            color: hasError ? Colors.red : Color(0xFFBDC1CA),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFBDC1CA)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(
-            color: hasError ? Colors.red : Color(0xFFBDC1CA),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFBDC1CA)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(
-            color: hasError ? Colors.red : Color(0xFF2ECC70),
-          ),
+          borderSide: const BorderSide(color: Color(0xFF2ECC70)),
         ),
       ),
       child: DropdownButtonHideUnderline(
@@ -396,15 +337,20 @@ class CustomDropdownField extends StatelessWidget {
 // ==========================
 class ContinueButton extends StatelessWidget {
   final VoidCallback onPressed;
+  final bool isEnabled;
 
-  const ContinueButton({super.key, required this.onPressed});
+  const ContinueButton({
+    super.key,
+    required this.onPressed,
+    required this.isEnabled,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: onPressed,
+      onPressed: isEnabled ? onPressed : null,
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
+        backgroundColor: isEnabled ? AppColors.primary : Colors.grey.shade400,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xlarge),
         ),

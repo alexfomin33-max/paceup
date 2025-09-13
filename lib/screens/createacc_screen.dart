@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
 import "package:mask_input_formatter/mask_input_formatter.dart";
-import '../design/app_theme.dart';
+import '../theme/app_theme.dart';
 
 class CreateaccScreen extends StatelessWidget {
   const CreateaccScreen({super.key});

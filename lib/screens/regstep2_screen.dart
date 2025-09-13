@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../design/app_theme.dart';
+import '../theme/app_theme.dart';
 
 class Regstep2Screen extends StatefulWidget {
   final int userId;
