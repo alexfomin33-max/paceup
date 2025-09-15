@@ -2,13 +2,14 @@ import "package:flutter/material.dart";
 import "package:mask_input_formatter/mask_input_formatter.dart"; // 🔹 Для форматирования ввода телефона
 import '../theme/app_theme.dart';
 
-/// 🔹 Экран создания аккаунта (обертка)
+/// 🔹 Обёртка для экрана создания аккаунта
+/// Используется для маршрутизации и возможного расширения функционала
 class CreateaccScreen extends StatelessWidget {
   const CreateaccScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Возвращает основной виджет AddAccScreen
+    // Возвращаем основной экран регистрации с вводом телефона
     return AddAccScreen();
   }
 }
@@ -17,14 +18,14 @@ class CreateaccScreen extends StatelessWidget {
 class AddAccScreen extends StatelessWidget {
   AddAccScreen({super.key});
 
-  // 🔹 Контроллер для поля ввода телефона
+  /// 🔹 Контроллер для поля ввода телефона
   final TextEditingController phoneController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
-        fit: StackFit.expand,
+        fit: StackFit.expand, // 🔹 Заполнение всего экрана
         children: [
           // 🔹 Фоновое изображение
           Image.asset("assets/background.png", fit: BoxFit.cover),
@@ -48,7 +49,9 @@ class AddAccScreen extends StatelessWidget {
             ),
           ),
 
-          /// 🔹 Контент регистрации снизу: поле ввода, кнопка, текст условий и кнопка "Назад"
+          /// 🔹 Контент регистрации снизу:
+          ///   поле ввода телефона, кнопка "Зарегистрироваться",
+          ///   текст условий и кнопка "Назад"
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
@@ -77,6 +80,7 @@ class AddAccScreen extends StatelessWidget {
                           fontSize: 16,
                           fontFamily: "Inter",
                         ),
+                        // 🔹 Стиль рамки поля
                         border: OutlineInputBorder(
                           borderSide: const BorderSide(
                             width: 1.0,
@@ -109,7 +113,8 @@ class AddAccScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        // 🔹 Переход на экран подтверждения через SMS, передаём номер телефона
+                        // 🔹 Переход на экран подтверждения через SMS,
+                        // передаём номер телефона
                         Navigator.pushReplacementNamed(
                           context,
                           '/addaccsms',
@@ -143,7 +148,8 @@ class AddAccScreen extends StatelessWidget {
                   SizedBox(
                     width: 250,
                     child: const Text(
-                      "Регистрируясь, вы принимаете Условия предоставления услуг и Политику конфиденциальности",
+                      "Регистрируясь, вы принимаете Условия предоставления услуг "
+                      "и Политику конфиденциальности",
                       style: TextStyle(
                         color: Color.fromARGB(255, 192, 192, 192),
                         fontSize: 12,
@@ -163,11 +169,11 @@ class AddAccScreen extends StatelessWidget {
                       onPressed: () {
                         Navigator.pushReplacementNamed(context, '/home');
                       },
-                      style: ButtonStyle(
-                        overlayColor: const WidgetStatePropertyAll(
+                      style: const ButtonStyle(
+                        overlayColor: WidgetStatePropertyAll(
                           Colors.transparent,
                         ),
-                        animationDuration: const Duration(milliseconds: 0),
+                        animationDuration: Duration(milliseconds: 0),
                       ),
                       child: const Text(
                         "<-- Назад",

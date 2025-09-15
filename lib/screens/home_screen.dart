@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-// import 'createacc_screen.dart'; // Если понадобится экран создания аккаунта
+// import 'createacc_screen.dart'; // 🔹 Можно раскомментировать, если понадобится экран создания аккаунта
 import '../theme/app_theme.dart';
 
 /// 🔹 Главный экран приложения
+/// Этот экран выступает контейнером для WelcomeScreen, который пользователь видит при запуске
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -13,24 +14,25 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// 🔹 Экран приветствия / welcome screen
+/// 🔹 Экран приветствия / Welcome Screen
+/// Показывается при первом запуске приложения с логотипом и кнопками входа/регистрации
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Используем Stack, чтобы накладывать элементы друг на друга
+      // 🔹 Используем Stack, чтобы накладывать элементы друг на друга
       body: Stack(
-        fit: StackFit.expand, // Заставляем Stack занимать весь экран
+        fit: StackFit.expand, // 🔹 Stack занимает весь экран
         children: [
-          // 🔹 Фоновое изображение
+          // 🔹 Фоновое изображение приложения
           Image.asset("assets/background.png", fit: BoxFit.cover),
 
-          // 🔹 Полупрозрачный черный слой поверх фона для затемнения
+          // 🔹 Полупрозрачный черный слой для затемнения фона
           Container(color: Colors.black.withValues(alpha: 0.5)),
 
-          // 🔹 Логотип в верхней части экрана
+          // 🔹 Логотип приложения сверху
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
@@ -48,24 +50,28 @@ class WelcomeScreen extends StatelessWidget {
             ),
           ),
 
-          // 🔹 Нижняя часть экрана: кнопки "Создать аккаунт" и "Войти"
+          // 🔹 Нижняя часть экрана с кнопками "Создать аккаунт" и "Войти"
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 177, left: 40, right: 40),
+              padding: const EdgeInsets.only(
+                bottom: 177,
+                left: 40,
+                right: 40,
+              ), // Отступ снизу и по бокам
               child: Column(
                 mainAxisSize: MainAxisSize
-                    .min, // Колонка занимает минимальное пространство по вертикали
+                    .min, // 🔹 Колонка занимает минимальное пространство по вертикали
                 children: [
-                  // Кнопка "Создать аккаунт"
+                  // 🔹 Кнопка "Создать аккаунт"
                   _buildButton(
                     text: "Создать аккаунт",
                     onPressed: () {
-                      // Переход на экран создания аккаунта через routes
+                      // 🔹 Переход на экран создания аккаунта через именованные маршруты
                       Navigator.pushReplacementNamed(context, '/createacc');
 
                       /*
-                      // Альтернативный вариант с MaterialPageRoute
+                      // 🔹 Альтернативный вариант с MaterialPageRoute
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -76,12 +82,13 @@ class WelcomeScreen extends StatelessWidget {
                     },
                   ),
 
-                  const SizedBox(height: 20), // Отступ между кнопками
-                  // Кнопка "Войти"
+                  const SizedBox(height: 20), // 🔹 Отступ между кнопками
+                  // 🔹 Кнопка "Войти"
                   _buildButton(
                     text: "Войти",
                     onPressed: () {
-                      // Здесь можно добавить переход на экран входа
+                      // 🔹 Здесь можно добавить переход на экран входа
+                      // Navigator.pushNamed(context, '/login');
                     },
                   ),
                 ],
@@ -93,34 +100,35 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  /// 🔹 Универсальный метод для создания кнопки с заданным текстом и действием
+  /// 🔹 Универсальный метод для создания кнопки
+  /// Позволяет использовать одинаковый стиль для всех кнопок
   Widget _buildButton({required String text, required VoidCallback onPressed}) {
     return SizedBox(
-      width: double.infinity, // Кнопка занимает всю доступную ширину
+      width: double.infinity, // 🔹 Кнопка занимает всю доступную ширину
       child: OutlinedButton(
         onPressed: onPressed,
         style: ButtonStyle(
-          // Отступ внутри кнопки
+          // 🔹 Отступы внутри кнопки
           padding: WidgetStatePropertyAll(
             const EdgeInsets.symmetric(vertical: 15),
           ),
-          // Рамка кнопки
+          // 🔹 Рамка кнопки
           side: WidgetStatePropertyAll(
             const BorderSide(color: Colors.white, width: 1),
           ),
-          // Скругление углов кнопки
+          // 🔹 Скругление углов кнопки
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.xlarge),
             ),
           ),
-          // Цвет оверлея при нажатии (сделан прозрачным)
+          // 🔹 Цвет overlay при нажатии (сделан прозрачным)
           overlayColor: WidgetStatePropertyAll(Colors.transparent),
         ),
         child: Text(
           text,
           style: const TextStyle(
-            color: Colors.white,
+            color: Colors.white, // 🔹 Цвет текста
             fontSize: 18,
             fontWeight: FontWeight.w600,
             fontFamily: "Inter",

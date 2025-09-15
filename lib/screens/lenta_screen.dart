@@ -3,16 +3,22 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/text_styles.dart';
 
-/// 🔹 RouteCard — отображает маршрут на карте
+/// 🔹 RouteCard — карточка маршрута на карте
+/// Принимает список точек маршрута и отображает:
+/// - линию маршрута (Polyline)
+/// - маркер начала маршрута (зелёный)
+/// - маркер конца маршрута (красный)
 class RouteCard extends StatelessWidget {
-  final List<LatLng> points;
+  final List<LatLng> points; // Список точек маршрута
 
   const RouteCard({super.key, required this.points});
 
   @override
   Widget build(BuildContext context) {
+    // Если нет точек, показываем сообщение
     if (points.isEmpty) return const Text("Нет точек маршрута");
 
+    // 🔹 Вычисляем центр карты по среднему значению lat/lng всех точек
     final lat =
         points.map((e) => e.latitude).reduce((a, b) => a + b) / points.length;
     final lng =
@@ -27,15 +33,18 @@ class RouteCard extends StatelessWidget {
         child: FlutterMap(
           options: MapOptions(initialCenter: center, initialZoom: 12.0),
           children: [
+            // 🔹 Слой карты OpenStreetMap
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'paceup.ru',
             ),
+            // 🔹 Линия маршрута
             PolylineLayer(
               polylines: [
                 Polyline(points: points, strokeWidth: 4.0, color: Colors.blue),
               ],
             ),
+            // 🔹 Маркеры начала и конца маршрута
             MarkerLayer(
               markers: [
                 Marker(
@@ -63,9 +72,10 @@ class RouteCard extends StatelessWidget {
   }
 }
 
-/// 🔹 Экран Ленты
+/// 🔹 Экран Ленты (Feed)
+/// Показывает активности пользователя, рекомендации и посты
 class LentaScreen extends StatelessWidget {
-  final int userId;
+  final int userId; // Идентификатор пользователя
 
   const LentaScreen({super.key, required this.userId});
 
@@ -90,6 +100,7 @@ class LentaScreen extends StatelessWidget {
         ),
         title: const Text("Лента", style: AppTextStyles.h1),
         actions: [
+          // 🔹 Уведомления с красной точкой
           Stack(
             children: [
               IconButton(
@@ -106,7 +117,7 @@ class LentaScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: const Text(
-                    "9",
+                    "9", // Количество уведомлений
                     style: TextStyle(
                       fontSize: 8,
                       color: Colors.white,
@@ -125,16 +136,17 @@ class LentaScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
-          _buildActivityCard(),
+          _buildActivityCard(), // 🔹 Карточка активности
           const SizedBox(height: 16),
-          _buildRecommendations(),
+          _buildRecommendations(), // 🔹 Рекомендации для пользователя
           const SizedBox(height: 16),
-          _buildPostCard(),
+          _buildPostCard(), // 🔹 Пример поста
         ],
       ),
     );
   }
 
+  /// 🔹 Карточка активности пользователя
   Widget _buildActivityCard() {
     return Card(
       margin: const EdgeInsets.all(12),
@@ -143,6 +155,7 @@ class LentaScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 🔹 Пользователь и дата
             Row(
               children: [
                 const CircleAvatar(
@@ -176,6 +189,7 @@ class LentaScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
+            // 🔹 Метрики активности: расстояние, время, темп
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: const [
@@ -185,6 +199,7 @@ class LentaScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
+            // 🔹 Дополнительные метрики: набор высоты, каденс, пульс
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: const [
@@ -194,6 +209,7 @@ class LentaScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
+            // 🔹 Карта маршрута
             RouteCard(
               points: [LatLng(56.43246, 40.42653), LatLng(56.43242, 40.42624)],
             ),
@@ -203,6 +219,7 @@ class LentaScreen extends StatelessWidget {
     );
   }
 
+  /// 🔹 Блок рекомендаций: горизонтальный ListView с карточками друзей
   Widget _buildRecommendations() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,6 +260,7 @@ class LentaScreen extends StatelessWidget {
     );
   }
 
+  /// 🔹 Карточка друга для блока рекомендаций
   Widget _friendCard(String name, String desc, String mutual) {
     return Container(
       width: 220,
@@ -308,6 +326,7 @@ class LentaScreen extends StatelessWidget {
     );
   }
 
+  /// 🔹 Карточка поста в ленте
   Widget _buildPostCard() {
     return Card(
       margin: const EdgeInsets.all(12),
@@ -354,6 +373,7 @@ class LentaScreen extends StatelessWidget {
               ],
             ),
           ),
+          // 🔹 Изображение поста
           Image.network("https://picsum.photos/400/200", fit: BoxFit.cover),
           const Padding(
             padding: EdgeInsets.all(12),
@@ -362,6 +382,7 @@ class LentaScreen extends StatelessWidget {
               style: TextStyle(fontFamily: 'Inter'),
             ),
           ),
+          // 🔹 Лайки и комментарии
           Row(
             children: const [
               SizedBox(width: 12),
@@ -381,10 +402,10 @@ class LentaScreen extends StatelessWidget {
   }
 }
 
-/// 🔹 Виджет метрики (Расстояние, Время и т.д.)
+/// 🔹 Виджет метрики активности (расстояние, время, темп и т.д.)
 class Metric extends StatelessWidget {
-  final String title;
-  final String value;
+  final String title; // Название метрики
+  final String value; // Значение метрики
 
   const Metric({super.key, required this.title, required this.value});
 
