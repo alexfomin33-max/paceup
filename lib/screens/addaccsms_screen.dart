@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-/// 🔹 Экран ввода кода из SMS для подтверждения номера телефона
+/// Экран ввода кода из SMS для подтверждения номера телефона
 class AddAccSmsScreen extends StatefulWidget {
-  final String phone;
-
+  final String phone; // Номер телефона, на который отправлен код
   const AddAccSmsScreen({super.key, required this.phone});
 
   @override
@@ -13,10 +12,7 @@ class AddAccSmsScreen extends StatefulWidget {
 }
 
 class AddAccSmsScreenState extends State<AddAccSmsScreen> {
-  // 🔹 Контроллеры для 6 полей ввода кода
   final controllers = List.generate(6, (_) => TextEditingController());
-
-  // 🔹 FocusNode для каждого поля, чтобы автоматически переключаться между ними
   final nodes = List.generate(6, (_) => FocusNode());
 
   @override
@@ -25,7 +21,6 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
     fetchApiData();
   }
 
-  /// 🔹 Метод для первоначальной отправки запроса регистрации пользователя
   Future<void> fetchApiData() async {
     try {
       await http.post(
@@ -34,12 +29,10 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
         body: json.encode({'phone': widget.phone}),
       );
     } catch (e) {
-      // Ошибки игнорируем, можно добавить логи
-      // debugPrint('fetchApiData error: $e');
+      debugPrint("fetchApiData error: $e");
     }
   }
 
-  /// 🔹 Метод для повторной отправки кода на номер
   Future<void> resendCode() async {
     try {
       await http.post(
@@ -48,11 +41,10 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
         body: json.encode({'phone': widget.phone}),
       );
     } catch (e) {
-      // debugPrint('resendCode error: $e');
+      debugPrint("resendCode error: $e");
     }
   }
 
-  /// 🔹 Метод для проверки введенного кода
   Future<void> enterCode(String userCode) async {
     try {
       final response = await http.post(
@@ -74,11 +66,10 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
         }
       }
     } catch (e) {
-      // debugPrint('enterCode error: $e');
+      debugPrint("enterCode error: $e");
     }
   }
 
-  /// 🔹 Генерация отдельного поля для ввода одной цифры кода
   Widget _buildCodeField(int index) {
     return SizedBox(
       width: 45,
@@ -124,13 +115,9 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 🔹 Фоновое изображение
           Image.asset("assets/background.png", fit: BoxFit.cover),
+          Container(color: Colors.black.withValues(alpha: 0.5)),
 
-          // 🔹 Полупрозрачный черный слой
-          Container(color: Colors.black.withValues(alpha: 127)),
-
-          // 🔹 Логотип сверху
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
@@ -146,7 +133,6 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
             ),
           ),
 
-          // 🔹 Блок ввода кода и кнопки
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
@@ -165,10 +151,9 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
                       fontSize: 15,
                       fontFamily: "Inter",
                     ),
+                    textAlign: TextAlign.left,
                   ),
                   const SizedBox(height: 20),
-
-                  // 🔹 Ряд полей для кода
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: List.generate(
@@ -177,8 +162,6 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
                     ),
                   ),
                   const SizedBox(height: 15),
-
-                  // 🔹 Кнопка "Отправить заново"
                   TextButton(
                     onPressed: resendCode,
                     style: const ButtonStyle(

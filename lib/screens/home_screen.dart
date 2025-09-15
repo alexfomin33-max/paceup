@@ -28,7 +28,7 @@ class WelcomeScreen extends StatelessWidget {
           Image.asset("assets/background.png", fit: BoxFit.cover),
 
           // 🔹 Полупрозрачный черный слой поверх фона для затемнения
-          Container(color: Colors.black.withOpacity(0.5)),
+          Container(color: Colors.black.withValues(alpha: 0.5)),
 
           // 🔹 Логотип в верхней части экрана
           Align(
