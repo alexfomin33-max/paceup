@@ -26,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
       final userId = await auth.getUserId();
       Navigator.pushReplacementNamed(
         context,
-        '/regstep1',
+        '/lenta',
         arguments: {'userId': userId},
       );
     } else {
@@ -36,6 +36,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold();
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

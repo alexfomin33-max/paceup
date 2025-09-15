@@ -1,19 +1,23 @@
 import "package:flutter/material.dart";
-import "package:mask_input_formatter/mask_input_formatter.dart";
+import "package:mask_input_formatter/mask_input_formatter.dart"; // 🔹 Для форматирования ввода телефона
 import '../theme/app_theme.dart';
 
+/// 🔹 Экран создания аккаунта (обертка)
 class CreateaccScreen extends StatelessWidget {
   const CreateaccScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Возвращает основной виджет AddAccScreen
     return AddAccScreen();
   }
 }
 
+/// 🔹 Основной экран регистрации с вводом телефона
 class AddAccScreen extends StatelessWidget {
   AddAccScreen({super.key});
 
+  // 🔹 Контроллер для поля ввода телефона
   final TextEditingController phoneController = TextEditingController();
 
   @override
@@ -22,10 +26,13 @@ class AddAccScreen extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
+          // 🔹 Фоновое изображение
           Image.asset("assets/background.png", fit: BoxFit.cover),
+
+          // 🔹 Полупрозрачный черный слой поверх фона
           Container(color: Colors.black.withValues(alpha: 0.5)),
 
-          /// 🔹 Логотип — как на WelcomeScreen
+          /// 🔹 Логотип приложения сверху, как на WelcomeScreen
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
@@ -41,7 +48,7 @@ class AddAccScreen extends StatelessWidget {
             ),
           ),
 
-          /// 🔹 Поле ввода, кнопка "Зарегистрироваться", текст условий и кнопка "Назад"
+          /// 🔹 Контент регистрации снизу: поле ввода, кнопка, текст условий и кнопка "Назад"
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
@@ -49,7 +56,7 @@ class AddAccScreen extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Поле ввода телефона
+                  // 🔹 Поле ввода телефона
                   SizedBox(
                     width: double.infinity,
                     child: TextFormField(
@@ -57,9 +64,19 @@ class AddAccScreen extends StatelessWidget {
                       keyboardType: TextInputType.phone,
                       style: const TextStyle(color: Colors.white),
                       inputFormatters: [
+                        // 🔹 Маска для ввода телефона: +7 (999) 123-45-67
                         MaskInputFormatter(mask: '+# (###) ###-##-##'),
                       ],
                       decoration: InputDecoration(
+                        hintText: "+7 (999) 123-45-67",
+                        labelText: "Телефон",
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        hintStyle: const TextStyle(color: Colors.grey),
+                        labelStyle: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontFamily: "Inter",
+                        ),
                         border: OutlineInputBorder(
                           borderSide: const BorderSide(
                             width: 1.0,
@@ -81,26 +98,18 @@ class AddAccScreen extends StatelessWidget {
                           ),
                           borderRadius: BorderRadius.circular(AppRadius.xlarge),
                         ),
-                        hintText: "+7 (999) 123-45-67",
-                        labelText: "Телефон",
-                        floatingLabelBehavior: FloatingLabelBehavior.always,
-                        hintStyle: const TextStyle(color: Colors.grey),
-                        labelStyle: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontFamily: "Inter",
-                        ),
                       ),
                     ),
                   ),
 
                   const SizedBox(height: 20),
 
-                  // Кнопка "Зарегистрироваться"
+                  // 🔹 Кнопка "Зарегистрироваться"
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
+                        // 🔹 Переход на экран подтверждения через SMS, передаём номер телефона
                         Navigator.pushReplacementNamed(
                           context,
                           '/addaccsms',
@@ -108,13 +117,13 @@ class AddAccScreen extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white, // белая кнопка
-                        foregroundColor: Colors.black, // текст чёрный
+                        backgroundColor: Colors.white, // фон кнопки
+                        foregroundColor: Colors.black, // текст кнопки
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.xlarge),
                         ),
-                        elevation: 0, // убираем тень, если нужна плоская
+                        elevation: 0, // без тени
                       ),
                       child: const Text(
                         "Зарегистрироваться",
@@ -146,7 +155,7 @@ class AddAccScreen extends StatelessWidget {
 
                   const SizedBox(height: 10),
 
-                  // 🔹 Кнопка Назад без рамки
+                  // 🔹 Кнопка "Назад" без рамки
                   SizedBox(
                     width: 100,
                     height: 36,

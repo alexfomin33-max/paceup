@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+/// 🔹 Экран ввода кода из SMS для подтверждения номера телефона
 class AddAccSmsScreen extends StatefulWidget {
-  final String phone;
+  final String phone; // Номер телефона, на который отправлен код
   const AddAccSmsScreen({super.key, required this.phone});
 
   @override
@@ -11,15 +12,20 @@ class AddAccSmsScreen extends StatefulWidget {
 }
 
 class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
+  // 🔹 Контроллеры для 6 полей ввода кода
   final controllers = List.generate(6, (_) => TextEditingController());
+
+  // 🔹 FocusNode для каждого поля, чтобы автоматически переключаться между ними
   final nodes = List.generate(6, (_) => FocusNode());
 
   @override
   void initState() {
     super.initState();
+    // 🔹 При открытии экрана сразу отправляем запрос на регистрацию пользователя
     fetchApiData();
   }
 
+  /// 🔹 Метод для первоначальной отправки запроса регистрации пользователя
   Future<void> fetchApiData() async {
     try {
       await http.post(
@@ -27,9 +33,12 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'phone': widget.phone}),
       );
-    } catch (e) {}
+    } catch (e) {
+      // 🔹 Ошибки игнорируются, можно добавить логи или уведомления
+    }
   }
 
+  /// 🔹 Метод для повторной отправки кода на номер
   Future<void> resendCode() async {
     try {
       await http.post(
@@ -40,6 +49,7 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
     } catch (e) {}
   }
 
+  /// 🔹 Метод для проверки введенного кода
   Future<void> enterCode(String userCode) async {
     try {
       final response = await http.post(
@@ -47,9 +57,12 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'code': userCode, 'phone': widget.phone}),
       );
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final codeValue = int.tryParse(data['code'].toString()) ?? 0;
+
+        // 🔹 Если код валиден — переходим на следующий экран регистрации
         if (codeValue > 0 && mounted) {
           Navigator.pushReplacementNamed(
             context,
@@ -61,19 +74,20 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
     } catch (e) {}
   }
 
+  /// 🔹 Генерация отдельного поля для ввода одной цифры кода
   Widget _buildCodeField(int index) {
     return SizedBox(
-      width: 45, // одинаковая ширина
-      height: 50, // одинаковая высота
+      width: 45, // фиксированная ширина
+      height: 50, // фиксированная высота
       child: TextFormField(
         controller: controllers[index],
         focusNode: nodes[index],
         style: const TextStyle(color: Colors.white, fontSize: 20),
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
-        maxLength: 1,
+        maxLength: 1, // только одна цифра
         decoration: InputDecoration(
-          counterText: "",
+          counterText: "", // скрыть счетчик символов
           enabledBorder: OutlineInputBorder(
             borderSide: const BorderSide(color: Colors.white),
             borderRadius: BorderRadius.circular(10),
@@ -87,11 +101,13 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
           contentPadding: const EdgeInsets.all(0),
         ),
         onChanged: (v) {
+          // 🔹 Логика автоматического перехода между полями
           if (v.isNotEmpty && index < 5) {
             nodes[index + 1].requestFocus();
           } else if (v.isEmpty && index > 0) {
             nodes[index - 1].requestFocus();
           } else if (index == 5) {
+            // 🔹 Если последний символ введен — объединяем код и отправляем
             final code = controllers.map((c) => c.text).join();
             enterCode(code);
           }
@@ -106,10 +122,13 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
+          // 🔹 Фоновое изображение
           Image.asset("assets/background.png", fit: BoxFit.cover),
+
+          // 🔹 Полупрозрачный черный слой поверх фона
           Container(color: Colors.black.withValues(alpha: 0.5)),
 
-          /// Логотип сверху
+          /// 🔹 Логотип приложения сверху
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
@@ -125,7 +144,7 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
             ),
           ),
 
-          /// Блок ввода кода и кнопки
+          /// 🔹 Блок ввода кода и кнопки
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
@@ -135,10 +154,10 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment:
-                    CrossAxisAlignment.start, // выравнивание по левому краю
+                crossAxisAlignment: CrossAxisAlignment
+                    .start, // выравнивание текста по левому краю
                 children: [
-                  // Текст инструкции
+                  // 🔹 Инструкция для пользователя
                   Text(
                     "Введите код, отправленный на номер\n${widget.phone}",
                     style: const TextStyle(
@@ -150,7 +169,7 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Поля для кода
+                  // 🔹 Ряд полей для кода
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: List.generate(
@@ -160,7 +179,7 @@ class _AddAccSmsScreenState extends State<AddAccSmsScreen> {
                   ),
                   const SizedBox(height: 15),
 
-                  // Кнопка "Отправить заново"
+                  // 🔹 Кнопка "Отправить заново"
                   TextButton(
                     onPressed: resendCode,
                     style: ButtonStyle(

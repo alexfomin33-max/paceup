@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:latlong2/latlong.dart';
+import '../theme/text_styles.dart';
 
+/// 🔹 RouteCard — виджет для отображения маршрута на карте
+/// Принимает список точек [points] и рисует:
+///   - линию маршрута (Polyline)
+///   - маркер начала (зеленый)
+///   - маркер конца (красный)
 class RouteCard extends StatelessWidget {
   final List<LatLng> points;
 
@@ -10,53 +17,61 @@ class RouteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
+      // Если точек нет — показываем сообщение
       return const Text("Нет точек маршрута");
     }
 
-    // считаем центр как среднее арифметическое всех точек
-    final lat = points.map((e) => e.latitude).reduce((a, b) => a + b) / points.length;
-    final lng = points.map((e) => e.longitude).reduce((a, b) => a + b) / points.length;
+    // Считаем центр карты как среднее всех координат маршрута
+    final lat =
+        points.map((e) => e.latitude).reduce((a, b) => a + b) / points.length;
+    final lng =
+        points.map((e) => e.longitude).reduce((a, b) => a + b) / points.length;
     final center = LatLng(lat, lng);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: SizedBox(
-        height: 200,
+        height: 200, // высота карты
         child: FlutterMap(
           options: MapOptions(
-            initialCenter: center,
-            initialZoom: 12.0,
+            initialCenter: center, // центрируем карту по маршруту
+            initialZoom: 12.0, // начальный зум
           ),
           children: [
+            // 🔹 Слой с картой OpenStreetMap
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'paceup.ru',
             ),
+            // 🔹 Слой линии маршрута
             PolylineLayer(
               polylines: [
                 Polyline(
-                  points: points,
+                  points: points, // линии соединяют все точки
                   strokeWidth: 4.0,
                   color: Colors.blue,
                 ),
               ],
             ),
+            // 🔹 Маркеры для первой и последней точки
             MarkerLayer(
               markers: [
                 Marker(
-                  point: points.first,
+                  point: points.first, // начало маршрута
                   width: 40,
                   height: 40,
-                  child: const Icon(Icons.location_on,
-                      color: Colors.green, size: 32),
+                  child: const Icon(
+                    Icons.location_on,
+                    color: Colors.green,
+                    size: 32,
+                  ),
                 ),
                 Marker(
-                  point: points.last,
+                  point: points.last, // конец маршрута
                   width: 40,
                   height: 40,
-                  child: const Icon(Icons.flag,
-                      color: Colors.red, size: 28),
+                  child: const Icon(Icons.flag, color: Colors.red, size: 28),
                 ),
               ],
             ),
@@ -67,9 +82,11 @@ class RouteCard extends StatelessWidget {
   }
 }
 
-
-
-
+/// 🔹 Экран Ленты
+/// Отображает:
+///   - AppBar с меню, поиском и уведомлениями
+///   - список активности
+///   - нижнее меню навигации
 class LentaScreen extends StatefulWidget {
   final int userId;
 
@@ -80,42 +97,35 @@ class LentaScreen extends StatefulWidget {
 }
 
 class _LentaScreenState extends State<LentaScreen> {
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9F9),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
-        centerTitle: true, // чтобы "Лента" была по центру
-        leadingWidth: 100, // расширяем область для двух иконок
+        centerTitle: true, // "Лента" по центру
+        leadingWidth: 100, // расширяем область для двух кнопок
         leading: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             IconButton(
-              icon: const Icon(Icons.menu),
+              icon: const Icon(Icons.star_border),
               onPressed: () {
-                // действие
+                // действие для перехода в избранные
               },
             ),
             IconButton(
-              icon: const Icon(Icons.search),
+              icon: const Icon(Icons.add_circle_outline),
               onPressed: () {
-                // действие
+                // действие для добавления поста
               },
             ),
           ],
         ),
-        title: const Text(
-          "Лента",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF171A1F),
-            fontFamily: 'Inter'
-          ),
-        ),
+        title: const Text("Лента", style: AppTextStyles.h1),
         actions: [
+          // 🔹 Уведомления с красным индикатором
           Stack(
             children: [
               IconButton(
@@ -132,8 +142,12 @@ class _LentaScreenState extends State<LentaScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: const Text(
-                    "9",
-                    style: TextStyle(fontSize: 8, color: Colors.white, fontFamily: 'Inter'),
+                    "9", // количество уведомлений
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: Colors.white,
+                      fontFamily: 'Inter',
+                    ),
                   ),
                 ),
               ),
@@ -147,32 +161,33 @@ class _LentaScreenState extends State<LentaScreen> {
       ),
       body: ListView(
         children: [
-          _buildActivityCard(),
+          _buildActivityCard(), // карточка активности с маршрутом
           const SizedBox(height: 16),
-          _buildRecommendations(),
+          _buildRecommendations(), // блок рекомендаций (метод нужно реализовать)
           const SizedBox(height: 16),
-          _buildPostCard(),
+          _buildPostCard(), // карточка поста (метод нужно реализовать)
         ],
       ),
+      // 🔹 Нижняя навигация
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF579FFF),
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.dynamic_feed_outlined),
+            icon: Icon(Icons.home_outlined),
             label: "Лента",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.map_outlined),
+            icon: Icon(Icons.location_on_outlined),
             label: "Карта",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.storefront_outlined),
+            icon: Icon(Icons.shopping_cart_outlined),
             label: "Маркет",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle_outline),
+            icon: FaIcon(FontAwesomeIcons.crosshairs),
             label: "Задачи",
           ),
           BottomNavigationBarItem(
@@ -184,6 +199,12 @@ class _LentaScreenState extends State<LentaScreen> {
     );
   }
 
+  /// 🔹 Пример карточки активности
+  /// Включает:
+  ///   - имя пользователя
+  ///   - дату и время
+  ///   - метрики активности (расстояние, темп и др.)
+  ///   - карту маршрута через RouteCard
   Widget _buildActivityCard() {
     return Card(
       margin: const EdgeInsets.all(12),
@@ -194,19 +215,29 @@ class _LentaScreenState extends State<LentaScreen> {
           children: [
             Row(
               children: [
-                const CircleAvatar(radius: 20, backgroundColor: Colors.blueGrey),
+                const CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.blueGrey,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     "Игорь Зелёный",
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Inter',),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Inter',
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Flexible(
                   child: Text(
                     "8 июня 2025, в 10:28",
-                    style: const TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Inter',),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                      fontFamily: 'Inter',
+                    ),
                     overflow: TextOverflow.ellipsis,
                     softWrap: false,
                     textAlign: TextAlign.right,
@@ -215,6 +246,7 @@ class _LentaScreenState extends State<LentaScreen> {
               ],
             ),
             const SizedBox(height: 12),
+            // 🔹 Метрики активности в ряд
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: const [
@@ -232,7 +264,8 @@ class _LentaScreenState extends State<LentaScreen> {
                 Metric(title: "Пульс", value: "141"),
               ],
             ),
-            const SizedBox(height: 8,),
+            const SizedBox(height: 8),
+            // 🔹 Карта маршрута
             RouteCard(
               points: [
                 LatLng(56.43246, 40.42653),
@@ -2498,113 +2531,150 @@ class _LentaScreenState extends State<LentaScreen> {
                 LatLng(56.4327, 40.42589),
                 LatLng(56.43246, 40.42653),
               ],
-            )
+            ),
           ],
         ),
       ),
     );
   }
 
+  // 🔹 Метод для отображения блока рекомендаций
   Widget _buildRecommendations() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Заголовок блока
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             "Рекомендации для вас",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, fontFamily: 'Inter',),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Inter',
+            ),
           ),
         ),
         const SizedBox(height: 12),
+        // Горизонтальный список карточек друзей/рекомендаций
         SizedBox(
-          height: 280,
+          height: 280, // фиксированная высота списка
           child: ListView(
-            scrollDirection: Axis.horizontal,
+            scrollDirection: Axis.horizontal, // горизонтальная прокрутка
             padding: const EdgeInsets.symmetric(horizontal: 12),
             children: [
-              _friendCard("Екатерина Виноградова", "36 лет, Санкт-Петербург",
-                  "6 общих друзей"),
-              const SizedBox(width: 12),
+              // Каждая карточка друга
               _friendCard(
-                  "Анатолий Курагин", "38 лет, Ковров", "4 общих друга"),
+                "Екатерина Виноградова",
+                "36 лет, Санкт-Петербург",
+                "6 общих друзей",
+              ),
+              const SizedBox(width: 12), // отступ между карточками
+              _friendCard(
+                "Анатолий Курагин",
+                "38 лет, Ковров",
+                "4 общих друга",
+              ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
 
+  // 🔹 Метод создания одной карточки друга
   Widget _friendCard(String name, String desc, String mutual) {
     return Container(
-      width: 220,
+      width: 220, // ширина карточки
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12), // скругление углов
         boxShadow: const [
           BoxShadow(
             color: Colors.black12,
             blurRadius: 4,
-            offset: Offset(0, 2),
-          )
+            offset: Offset(0, 2), // тень для глубины
+          ),
         ],
       ),
       child: Column(
         children: [
-          const CircleAvatar(
-            radius: 50,
-            backgroundColor: Colors.blueGrey,
-          ),
+          // Аватар пользователя
+          const CircleAvatar(radius: 50, backgroundColor: Colors.blueGrey),
           const SizedBox(height: 12),
+          // Имя пользователя
           Text(
             name,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Inter',),
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Inter',
+            ),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 4),
+          // Описание (возраст, город)
           Text(
             desc,
-            style: const TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Inter',),
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+              fontFamily: 'Inter',
+            ),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 4),
+          // Количество общих друзей
           Text(
             mutual,
-            style: const TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Inter',),
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+              fontFamily: 'Inter',
+            ),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 12),
+          // Кнопка "Подписаться"
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {}, // здесь можно добавить логику подписки
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF3999E6),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(
+                  20,
+                ), // скругленные края кнопки
               ),
             ),
-            child: const Text("Подписаться", style: TextStyle(fontFamily: 'Inter',),),
+            child: const Text(
+              "Подписаться",
+              style: TextStyle(fontFamily: 'Inter'),
+            ),
           ),
         ],
       ),
     );
   }
 
+  // 🔹 Метод создания карточки поста
   Widget _buildPostCard() {
     return Card(
       margin: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Верхняя часть карточки: аватар, имя и дата
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
                 const CircleAvatar(
-                    radius: 20, backgroundColor: Colors.blueGrey),
+                  radius: 20,
+                  backgroundColor: Colors.blueGrey,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
@@ -2612,42 +2682,55 @@ class _LentaScreenState extends State<LentaScreen> {
                     children: const [
                       Text(
                         "Алексей Лукашин",
-                        style: TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Inter',),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Inter',
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         "7 июня 2025, в 14:36",
-                        style:
-                            TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Inter',),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                          fontFamily: 'Inter',
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () {}, // дополнительные действия (меню)
                   icon: const Icon(Icons.more_horiz),
                 ),
               ],
             ),
           ),
+          // Фото/картинка поста
           Image.network(
-              "https://picsum.photos/400/200", // пока заглушка
-              fit: BoxFit.cover),
+            "https://picsum.photos/400/200", // заглушка
+            fit: BoxFit.cover,
+          ),
+          // Текст поста
           const Padding(
             padding: EdgeInsets.all(12),
-            child: Text("Вот так вот очень легко всех победил", style: TextStyle(fontFamily: 'Inter',),),
+            child: Text(
+              "Вот так вот очень легко всех победил",
+              style: TextStyle(fontFamily: 'Inter'),
+            ),
           ),
+          // Метрики поста: лайки и комментарии
           Row(
             children: const [
               SizedBox(width: 12),
               Icon(Icons.favorite_border, size: 20),
               SizedBox(width: 4),
-              Text("2707", style: TextStyle(fontFamily: 'Inter',),),
+              Text("2707", style: TextStyle(fontFamily: 'Inter')),
               SizedBox(width: 16),
               Icon(Icons.mode_comment_outlined, size: 20),
               SizedBox(width: 4),
-              Text("50", style: TextStyle(fontFamily: 'Inter',),),
+              Text("50", style: TextStyle(fontFamily: 'Inter')),
             ],
           ),
           const SizedBox(height: 12),
@@ -2657,6 +2740,7 @@ class _LentaScreenState extends State<LentaScreen> {
   }
 }
 
+// 🔹 Виджет для отображения одной метрики (например, Расстояние, Время)
 class Metric extends StatelessWidget {
   final String title;
   final String value;
@@ -2667,8 +2751,10 @@ class Metric extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // Название метрики
         Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 4),
+        // Значение метрики
         Text(
           value,
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),

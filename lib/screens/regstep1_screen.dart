@@ -3,8 +3,10 @@ import 'package:intl/intl.dart';
 import 'regstep2_screen.dart';
 import '../theme/app_theme.dart';
 
+/// 🔹 Первый экран регистрации — ввод базовых данных спортсмена
 class Regstep1Screen extends StatefulWidget {
-  final int userId;
+  final int
+  userId; // ID пользователя, передается с предыдущего шага (например, после SMS-подтверждения)
 
   const Regstep1Screen({super.key, required this.userId});
 
@@ -13,17 +15,21 @@ class Regstep1Screen extends StatefulWidget {
 }
 
 class _Regstep1ScreenState extends State<Regstep1Screen> {
+  // 🔹 Контроллеры для полей ввода
   final TextEditingController nameController = TextEditingController();
   final TextEditingController surnameController = TextEditingController();
   final TextEditingController dobController = TextEditingController();
   final TextEditingController cityController = TextEditingController();
 
+  // 🔹 Выбранные значения из Dropdown
   String? selectedGender;
   String? selectedSport;
 
+  // 🔹 Списки возможных вариантов
   final List<String> genders = ['Муж', 'Жен'];
   final List<String> sports = ['Бег', 'Велосипед', 'Плавание'];
 
+  /// 🔹 Проверка, все ли поля заполнены
   bool get isFormValid {
     return nameController.text.isNotEmpty &&
         surnameController.text.isNotEmpty &&
@@ -33,6 +39,7 @@ class _Regstep1ScreenState extends State<Regstep1Screen> {
         selectedSport != null;
   }
 
+  /// 🔹 Переход на следующий экран, если форма валидна
   void _checkAndContinue() {
     if (isFormValid) {
       Navigator.push(
@@ -48,7 +55,7 @@ class _Regstep1ScreenState extends State<Regstep1Screen> {
   void initState() {
     super.initState();
 
-    // Следим за изменениями текста
+    // 🔹 Подписка на изменения в полях, чтобы кнопка продолжить обновлялась
     nameController.addListener(() => setState(() {}));
     surnameController.addListener(() => setState(() {}));
     dobController.addListener(() => setState(() {}));
@@ -61,11 +68,13 @@ class _Regstep1ScreenState extends State<Regstep1Screen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
+          // 🔹 Скролл, чтобы экран не ломался на маленьких устройствах
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // 🔹 Заголовок экрана
                 const Text(
                   'Данные спортсмена',
                   textAlign: TextAlign.center,
@@ -77,6 +86,8 @@ class _Regstep1ScreenState extends State<Regstep1Screen> {
                   ),
                 ),
                 const SizedBox(height: 30),
+
+                // 🔹 Поля ввода
                 CustomTextField(controller: nameController, label: 'Имя*'),
                 const SizedBox(height: 20),
                 CustomTextField(
@@ -93,9 +104,7 @@ class _Regstep1ScreenState extends State<Regstep1Screen> {
                   label: 'Пол*',
                   value: selectedGender,
                   items: genders,
-                  onChanged: (value) {
-                    setState(() => selectedGender = value);
-                  },
+                  onChanged: (value) => setState(() => selectedGender = value),
                 ),
                 const SizedBox(height: 20),
                 CustomTextField(controller: cityController, label: 'Город*'),
@@ -104,11 +113,11 @@ class _Regstep1ScreenState extends State<Regstep1Screen> {
                   label: 'Основной вид спорта*',
                   value: selectedSport,
                   items: sports,
-                  onChanged: (value) {
-                    setState(() => selectedSport = value);
-                  },
+                  onChanged: (value) => setState(() => selectedSport = value),
                 ),
                 const SizedBox(height: 50),
+
+                // 🔹 Кнопка Продолжить
                 ContinueButton(
                   onPressed: _checkAndContinue,
                   isEnabled: isFormValid,
@@ -123,7 +132,7 @@ class _Regstep1ScreenState extends State<Regstep1Screen> {
 }
 
 // ==========================
-// Текстовое поле
+// Текстовое поле с обязательным указанием '*'
 // ==========================
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -141,6 +150,7 @@ class CustomTextField extends StatelessWidget {
       controller: controller,
       style: const TextStyle(color: Colors.black),
       decoration: InputDecoration(
+        // 🔹 Красный '*' для обязательного поля
         label: RichText(
           text: TextSpan(
             text: label.replaceAll('*', ''),
@@ -184,7 +194,7 @@ class CustomTextField extends StatelessWidget {
 }
 
 // ==========================
-// Дата рождения
+// Поле для выбора даты рождения с календарем
 // ==========================
 class CustomDateField extends StatelessWidget {
   final TextEditingController controller;
@@ -196,6 +206,7 @@ class CustomDateField extends StatelessWidget {
     required this.label,
   });
 
+  /// 🔹 Вызов системного DatePicker
   Future<void> _selectDate(BuildContext context) async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -213,6 +224,7 @@ class CustomDateField extends StatelessWidget {
     return GestureDetector(
       onTap: () => _selectDate(context),
       child: AbsorbPointer(
+        // 🔹 Предотвращаем ручной ввод
         child: TextFormField(
           controller: controller,
           style: const TextStyle(color: Colors.black),
@@ -262,7 +274,7 @@ class CustomDateField extends StatelessWidget {
 }
 
 // ==========================
-// Dropdown белый
+// Dropdown для выбора значения
 // ==========================
 class CustomDropdownField extends StatelessWidget {
   final String label;
@@ -333,7 +345,7 @@ class CustomDropdownField extends StatelessWidget {
 }
 
 // ==========================
-// Кнопка Продолжить
+// Кнопка "Продолжить"
 // ==========================
 class ContinueButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -348,7 +360,9 @@ class ContinueButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: isEnabled ? onPressed : null,
+      onPressed: isEnabled
+          ? onPressed
+          : null, // 🔹 Деактивирована, если форма невалидна
       style: ElevatedButton.styleFrom(
         backgroundColor: isEnabled ? AppColors.primary : Colors.grey.shade400,
         shape: RoundedRectangleBorder(

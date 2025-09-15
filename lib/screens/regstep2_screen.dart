@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 
+// import 'lenta_screen.dart'; // импорт для типа LentaScreen, если нужно
+
 class Regstep2Screen extends StatefulWidget {
   final int userId;
 
@@ -38,11 +40,18 @@ class _Regstep2ScreenState extends State<Regstep2Screen> {
                   ),
                 ),
                 const SizedBox(height: 15),
+
+                // Кнопка "Пропустить" — выравнена справа
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      // TODO: действие кнопки "Пропустить"
+                      // 🔹 Если пользователь пропускает ввод, можно тоже открыть ленту
+                      Navigator.pushReplacementNamed(
+                        context,
+                        '/lenta',
+                        arguments: {'userId': widget.userId},
+                      );
                     },
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,
@@ -62,6 +71,8 @@ class _Regstep2ScreenState extends State<Regstep2Screen> {
                   ),
                 ),
                 const SizedBox(height: 25),
+
+                // Поля ввода
                 CustomTextField(
                   controller: heightController,
                   label: 'Рост, см',
@@ -80,6 +91,7 @@ class _Regstep2ScreenState extends State<Regstep2Screen> {
                   maxLength: 3,
                 ),
                 const SizedBox(height: 20),
+
                 const Text(
                   'Данные необходимы для расчёта калорий, нагрузки, зон темпа и мощности.',
                   textAlign: TextAlign.center,
@@ -90,7 +102,9 @@ class _Regstep2ScreenState extends State<Regstep2Screen> {
                   ),
                 ),
                 const SizedBox(height: 50),
-                const ContinueButton(),
+
+                // Кнопка "Завершить" с переходом на ленту
+                ContinueButton(userId: widget.userId),
               ],
             ),
           ),
@@ -158,15 +172,24 @@ class CustomTextField extends StatelessWidget {
 }
 
 // ==========================
-// Кнопка Продолжить
+// Кнопка Продолжить/Завершить
 // ==========================
 class ContinueButton extends StatelessWidget {
-  const ContinueButton({super.key});
+  final int userId; // передаем userId для следующего экрана
+
+  const ContinueButton({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: () {},
+      onPressed: () {
+        // 🔹 Переход на экран ленты
+        Navigator.pushReplacementNamed(
+          context,
+          '/lenta',
+          arguments: {'userId': userId},
+        );
+      },
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         shape: RoundedRectangleBorder(
