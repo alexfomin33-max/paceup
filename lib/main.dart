@@ -26,6 +26,8 @@ class MyApp extends StatelessWidget {
 
 import 'package:flutter/material.dart';
 import 'routes.dart';
+// import 'screens/splash_screen.dart';
+// import 'screens/home_shell.dart';
 
 void main() {
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -43,7 +45,7 @@ class MyApp extends StatelessWidget {
       title: 'PaceUp',
       theme: ThemeData(fontFamily: 'Inter'),
       initialRoute: '/splash',
-      routes: appRoutes,
+      onGenerateRoute: onGenerateRoute, // ✅ теперь используем кастомный роутер
     );
   }
 }

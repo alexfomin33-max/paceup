@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 
-// import 'lenta_screen.dart'; // импорт для типа LentaScreen, если нужно
-
+/// 🔹 Экран регистрации — шаг 2
+/// Принимает [userId] для продолжения регистрации
 class Regstep2Screen extends StatefulWidget {
   final int userId;
 
   const Regstep2Screen({super.key, required this.userId});
 
   @override
-  _Regstep2ScreenState createState() => _Regstep2ScreenState();
+  Regstep2ScreenState createState() => Regstep2ScreenState();
 }
 
-class _Regstep2ScreenState extends State<Regstep2Screen> {
+/// 🔹 Публичный класс состояния для Regstep2Screen
+class Regstep2ScreenState extends State<Regstep2Screen> {
   final TextEditingController heightController = TextEditingController();
   final TextEditingController weightController = TextEditingController();
   final TextEditingController maxPulseController = TextEditingController();
@@ -40,13 +41,10 @@ class _Regstep2ScreenState extends State<Regstep2Screen> {
                   ),
                 ),
                 const SizedBox(height: 15),
-
-                // Кнопка "Пропустить" — выравнена справа
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      // 🔹 Если пользователь пропускает ввод, можно тоже открыть ленту
                       Navigator.pushReplacementNamed(
                         context,
                         '/lenta',
@@ -71,8 +69,6 @@ class _Regstep2ScreenState extends State<Regstep2Screen> {
                   ),
                 ),
                 const SizedBox(height: 25),
-
-                // Поля ввода
                 CustomTextField(
                   controller: heightController,
                   label: 'Рост, см',
@@ -91,7 +87,6 @@ class _Regstep2ScreenState extends State<Regstep2Screen> {
                   maxLength: 3,
                 ),
                 const SizedBox(height: 20),
-
                 const Text(
                   'Данные необходимы для расчёта калорий, нагрузки, зон темпа и мощности.',
                   textAlign: TextAlign.center,
@@ -102,8 +97,6 @@ class _Regstep2ScreenState extends State<Regstep2Screen> {
                   ),
                 ),
                 const SizedBox(height: 50),
-
-                // Кнопка "Завершить" с переходом на ленту
                 ContinueButton(userId: widget.userId),
               ],
             ),
@@ -114,9 +107,6 @@ class _Regstep2ScreenState extends State<Regstep2Screen> {
   }
 }
 
-// ==========================
-// Текстовое поле белое, только цифры
-// ==========================
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -171,11 +161,8 @@ class CustomTextField extends StatelessWidget {
   }
 }
 
-// ==========================
-// Кнопка Продолжить/Завершить
-// ==========================
 class ContinueButton extends StatelessWidget {
-  final int userId; // передаем userId для следующего экрана
+  final int userId;
 
   const ContinueButton({super.key, required this.userId});
 
@@ -183,7 +170,6 @@ class ContinueButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: () {
-        // 🔹 Переход на экран ленты
         Navigator.pushReplacementNamed(
           context,
           '/lenta',

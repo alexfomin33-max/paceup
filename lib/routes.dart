@@ -1,78 +1,78 @@
 import 'package:flutter/material.dart';
-
-// 🔹 Импорт экранов приложения
-import 'screens/createacc_screen.dart';
 import 'screens/splash_screen.dart';
-import 'screens/home_screen.dart';
+// import 'screens/home_shell.dart';
 import 'screens/lenta_screen.dart';
 import 'screens/regstep1_screen.dart';
 import 'screens/regstep2_screen.dart';
-import 'screens/createacccode_screen.dart';
-// import 'screens/addaccsms_screen.dart'; // пока не используем
-// import 'screens/login_screen.dart';
-// import 'screens/profile_screen.dart';
-// import 'screens/settings_screen.dart';
+import 'screens/addaccsms_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/createacc_screen.dart';
+import 'widgets/app_bottom_nav_shell.dart';
 
-/// 🔹 Словарь маршрутов приложения (routes)
-/// Каждая строка — путь к экрану
-/// Используется в MaterialApp(routes: appRoutes)
-final Map<String, WidgetBuilder> appRoutes = {
-  // 🔹 Экран сплэша — первый экран при запуске
-  '/splash': (context) => const SplashScreen(),
+const bottomNavRoutes = ['/lenta']; // только для экранов с bottom nav
 
-  // 🔹 Главный экран (домашний)
-  '/home': (context) => const HomeScreen(),
+Route<dynamic> onGenerateRoute(RouteSettings settings) {
+  final args = settings.arguments;
 
-  // 🔹 Экран создания аккаунта
-  '/createacc': (context) => const CreateaccScreen(),
+  Widget screen;
 
-  // 🔹 Экран ленты / просмотра активности пользователя
-  // Принимает аргумент userId
-  '/lenta': (context) {
-    final args = ModalRoute.of(context)?.settings.arguments;
+  switch (settings.name) {
+    case '/splash':
+      screen = const SplashScreen();
+      break;
 
-    // Проверяем, что передан userId
-    if (args is Map && args.containsKey('userId')) {
-      return LentaScreen(userId: args['userId'] as int);
-    }
+    case '/home':
+      screen = const HomeScreen();
+      break;
 
-    // Если аргументы не переданы — возвращаем home
-    return const HomeScreen();
-  },
+    case '/lenta':
+      // экран с нижней навигацией
+      if (args is Map && args.containsKey('userId')) {
+        screen = LentaScreen(userId: args['userId'] as int);
+      } else {
+        screen = LentaScreen(userId: 123);
+      }
+      break;
 
-  // 🔹 Регистрация — шаг 1, требует userId
-  '/regstep1': (context) {
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map && args.containsKey('userId')) {
-      return Regstep1Screen(userId: args['userId'] as int);
-    }
-    return const HomeScreen(); // fallback
-  },
+    case '/regstep1':
+      if (args is Map && args.containsKey('userId')) {
+        screen = Regstep1Screen(userId: args['userId'] as int);
+      } else {
+        screen = const HomeScreen();
+      }
+      break;
 
-  // 🔹 Регистрация — шаг 2, требует userId
-  '/regstep2': (context) {
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map && args.containsKey('userId')) {
-      return Regstep2Screen(userId: args['userId'] as int);
-    }
-    return const HomeScreen(); // fallback
-  },
+    case '/regstep2':
+      if (args is Map && args.containsKey('userId')) {
+        screen = Regstep2Screen(userId: args['userId'] as int);
+      } else {
+        screen = const HomeScreen();
+      }
+      break;
 
-  // 🔹 Экран подтверждения номера через SMS
-  // Принимает аргумент phone
-  '/addaccsms': (context) {
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map && args.containsKey('phone')) {
-      return AddAccSmsScreen(phone: args['phone'] as String);
-    }
-    return const HomeScreen(); // fallback
-  },
+    case '/addaccsms':
+      if (args is Map && args.containsKey('phone')) {
+        screen = AddAccSmsScreen(phone: args['phone'] as String);
+      } else {
+        screen = const HomeScreen();
+      }
+      break;
 
-  // 🔹 Экран ввода кода подтверждения (пока закомментирован)
-  // '/createacccode': (context) => const CreateAccCodeScreen(),
+    case '/createacc':
+      screen = const CreateaccScreen();
+      break;
 
-  // 🔹 Примеры экранов для будущего использования:
-  // '/login': (context) => const LoginScreen(),
-  // '/profile': (context) => const ProfileScreen(),
-  // '/settings': (context) => const SettingsScreen(),
-};
+    default:
+      screen = const SplashScreen(); // fallback
+  }
+
+  // ✅ Только оборачиваем в AppBottomNavShell, если маршрут есть в bottomNavRoutes
+  if (bottomNavRoutes.contains(settings.name)) {
+    return MaterialPageRoute(
+      builder: (_) => AppBottomNavShell(screens: [screen]),
+      settings: settings,
+    );
+  } else {
+    return MaterialPageRoute(builder: (_) => screen, settings: settings);
+  }
+}

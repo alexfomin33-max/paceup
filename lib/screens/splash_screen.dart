@@ -5,32 +5,41 @@ class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  SplashScreenState createState() => SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  final auth = AuthService();
+class SplashScreenState extends State<SplashScreen> {
+  final AuthService auth = AuthService();
 
   @override
   void initState() {
     super.initState();
-    checkAuth();
+    _checkAuth();
   }
 
-  void checkAuth() async {
-    bool authorized = await auth.isAuthorized();
+  Future<void> _checkAuth() async {
+    final bool authorized = await auth.isAuthorized();
 
     if (!mounted) return;
 
     if (authorized) {
-      final userId = await auth.getUserId();
+      final int? userId = await auth.getUserId();
+      if (!mounted) return;
+
+      if (userId != null) {
+        Navigator.pushReplacementNamed(
+          context,
+          '/home', // 🔹 авторизован → HomeShell
+          arguments: {'userId': userId},
+        );
+      } else {
+        Navigator.pushReplacementNamed(context, '/homeScreen'); // 🔹 fallback
+      }
+    } else {
       Navigator.pushReplacementNamed(
         context,
-        '/lenta',
-        arguments: {'userId': userId},
-      );
-    } else {
-      Navigator.pushReplacementNamed(context, '/home');
+        '/homeScreen',
+      ); // 🔹 не авторизован → HomeScreen
     }
   }
 
