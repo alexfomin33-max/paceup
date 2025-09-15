@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'regstep2_screen.dart';
 import '../theme/app_theme.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 /// 🔹 Первый экран регистрации — ввод базовых данных спортсмена
 class Regstep1Screen extends StatefulWidget {
@@ -39,14 +40,34 @@ class _Regstep1ScreenState extends State<Regstep1Screen> {
         selectedSport != null;
   }
 
+  /// 🔹 Метод для сохранения в базе введенных данных (перед переходом на следующую странцу)
+  Future<void> saveForm() async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://api.paceup.ru/save_reg_form1.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'user_id': widget.userId, 
+          'name': nameController.text, 
+          'surname': surnameController.text, 
+          'dateage': dobController.text, 
+          'city': cityController.text, 
+          'gender': selectedGender!, 
+          'sport': selectedSport!
+        }),
+      );
+     // print(response.body);
+    } catch (e) {}
+  }
+
   /// 🔹 Переход на следующий экран, если форма валидна
-  void _checkAndContinue() {
+  Future<void> _checkAndContinue() async {
     if (isFormValid) {
-      Navigator.push(
+      await saveForm();
+      Navigator.pushReplacementNamed(
         context,
-        MaterialPageRoute(
-          builder: (context) => Regstep2Screen(userId: widget.userId),
-        ),
+        '/regstep2',
+        arguments: {'userId': widget.userId},
       );
     }
   }

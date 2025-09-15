@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 // import 'lenta_screen.dart'; // импорт для типа LentaScreen, если нужно
 
@@ -104,7 +106,12 @@ class _Regstep2ScreenState extends State<Regstep2Screen> {
                 const SizedBox(height: 50),
 
                 // Кнопка "Завершить" с переходом на ленту
-                ContinueButton(userId: widget.userId),
+                ContinueButton(
+                  userId: widget.userId, 
+                  height: heightController, 
+                  weight: weightController, 
+                  pulse: maxPulseController
+                ),
               ],
             ),
           ),
@@ -174,15 +181,43 @@ class CustomTextField extends StatelessWidget {
 // ==========================
 // Кнопка Продолжить/Завершить
 // ==========================
+
+  /// 🔹 Метод для сохранения в базе введенных данных (перед переходом на следующую странцу)
+  Future<void> saveForm(int userId, dynamic height, dynamic weight, dynamic pulse) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://api.paceup.ru/save_reg_form2.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'user_id': userId,
+          'height': height.text, 
+          'weight': weight.text, 
+          'pulse': pulse.text, 
+        }),
+      );
+      //print(response.body);
+    } catch (e) {}
+  }
+
 class ContinueButton extends StatelessWidget {
   final int userId; // передаем userId для следующего экрана
+  final TextEditingController height;
+  final TextEditingController weight;
+  final TextEditingController pulse;
 
-  const ContinueButton({super.key, required this.userId});
+  const ContinueButton({
+    super.key, 
+    required this.userId, 
+    required this.height, 
+    required this.weight, 
+    required this.pulse
+  });
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: () {
+      onPressed: () async {
+        await saveForm(userId, height, weight, pulse);
         // 🔹 Переход на экран ленты
         Navigator.pushReplacementNamed(
           context,
