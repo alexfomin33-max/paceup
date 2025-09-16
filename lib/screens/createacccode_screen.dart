@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+//import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// 🔹 Экран ввода кода из SMS для подтверждения номера телефона
 /// Используется после регистрации телефона для подтверждения кода.
@@ -20,6 +21,7 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
 
   // 🔹 FocusNode для каждого поля, чтобы автоматически переходить к следующему при вводе
   final nodes = List.generate(6, (_) => FocusNode());
+  //final storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -74,6 +76,9 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
 
         // 🔹 Если код валиден и экран всё ещё "смонтирован", переходим к следующему шагу
         if (codeValue > 0 && mounted) {
+          //await storage.write(key: "access_token", value: data["access_token"]);
+          //await storage.write(key: "refresh_token", value: data["refresh_token"]);
+          //await storage.write(key: "user_id", value: data['code']);
           Navigator.pushReplacementNamed(
             context,
             '/regstep1', // экран следующего шага регистрации

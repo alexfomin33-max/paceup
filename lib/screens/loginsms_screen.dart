@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+//import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// 🔹 Экран для ввода кода из SMS для подтверждения номера телефона
 class LoginSmsScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
 
   /// 🔹 FocusNode для каждого поля, чтобы автоматически переключаться между ними
   final nodes = List.generate(6, (_) => FocusNode());
+  //final storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -31,7 +33,7 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
   Future<void> fetchApiData() async {
     try {
       await http.post(
-        Uri.parse('http://api.paceup.ru/registry_user.php'),
+        Uri.parse('http://api.paceup.ru/login_user.php'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'phone': widget.phone}),
       );
@@ -45,7 +47,7 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
   Future<void> resendCode() async {
     try {
       await http.post(
-        Uri.parse('http://api.paceup.ru/resend_code.php'),
+        Uri.parse('http://api.paceup.ru/resendlgn_code.php'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'phone': widget.phone}),
       );
@@ -58,7 +60,7 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
   Future<void> enterCode(String userCode) async {
     try {
       final response = await http.post(
-        Uri.parse('http://api.paceup.ru/enter_code.php'),
+        Uri.parse('http://api.paceup.ru/enterlgn_code.php'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'code': userCode, 'phone': widget.phone}),
       );
@@ -70,9 +72,12 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
 
         /// 🔹 Если код валиден и виджет всё ещё в дереве
         if (codeValue > 0 && mounted) {
+          //await storage.write(key: "access_token", value: data["access_token"]);
+          //await storage.write(key: "refresh_token", value: data["refresh_token"]);
+          //await storage.write(key: "user_id", value: data['code']);
           Navigator.pushReplacementNamed(
             context,
-            '/regstep1',
+            '/lenta',
             arguments: {
               'userId': codeValue,
             }, // передаем userId на следующий экран
