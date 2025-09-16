@@ -40,41 +40,54 @@ class Regstep1ScreenState extends State<Regstep1Screen> {
         selectedSport != null;
   }
 
-  /// 🔹 Метод для сохранения в базе введенных данных (перед переходом на следующую странцу)
+  /// 🔹 Метод сохранения введённых данных на сервере
   Future<void> saveForm() async {
     try {
+      // Отправляем POST-запрос с данными формы
       final response = await http.post(
         Uri.parse('http://api.paceup.ru/save_reg_form1.php'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'user_id': widget.userId, 
-          'name': nameController.text, 
-          'surname': surnameController.text, 
-          'dateage': dobController.text, 
-          'city': cityController.text, 
-          'gender': selectedGender!, 
-          'sport': selectedSport!
+          'user_id': widget.userId,
+          'name': nameController.text,
+          'surname': surnameController.text,
+          'dateage': dobController.text,
+          'city': cityController.text,
+          'gender': selectedGender!,
+          'sport': selectedSport!,
         }),
       );
-     // print(response.body);
-    } catch (e) {}
+
+      // Проверяем успешность ответа
+      if (response.statusCode != 200) {
+        print('Ошибка при сохранении данных: ${response.body}');
+      }
+    } catch (e) {
+      // Логируем ошибки при отправке запроса
+      print('Ошибка при отправке данных: $e');
+    }
   }
 
-  /// 🔹 Переход на следующий экран, если форма валидна
+  /// 🔹 Метод проверки валидности формы и перехода на следующий экран
   Future<void> _checkAndContinue() async {
-    if (isFormValid) {
-      await saveForm();
-      Navigator.pushReplacementNamed(
-        context,
-        '/regstep2',
-        arguments: {'userId': widget.userId},
-      );
-    }
+    if (!isFormValid) return;
+
+    await saveForm();
+
+    // Проверка, что виджет ещё монтирован перед использованием context
+    if (!mounted) return;
+
+    Navigator.pushReplacementNamed(
+      context,
+      '/regstep2',
+      arguments: {'userId': widget.userId},
+    );
   }
 
   @override
   void initState() {
     super.initState();
+
     // 🔹 Обновление состояния при изменении текста в полях
     nameController.addListener(() => setState(() {}));
     surnameController.addListener(() => setState(() {}));
@@ -88,14 +101,15 @@ class Regstep1ScreenState extends State<Regstep1Screen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          // 🔹 Обертка для скролла при маленьком экране
+          // 🔹 Скролл для маленьких экранов
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // 🔹 Заголовок экрана
                 const Text(
-                  'Данные спортсмена', // Заголовок экрана
+                  'Данные спортсмена',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Color(0xFF323743),
@@ -151,7 +165,7 @@ class Regstep1ScreenState extends State<Regstep1Screen> {
 }
 
 // ==========================
-// 🔹 Текстовое поле с обязательным указанием '*'
+// 🔹 Текстовое поле с обязательной звездочкой
 // ==========================
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -169,7 +183,6 @@ class CustomTextField extends StatelessWidget {
       controller: controller,
       style: const TextStyle(color: Colors.black),
       decoration: InputDecoration(
-        // 🔹 Метка с красной звездочкой, если поле обязательное
         label: RichText(
           text: TextSpan(
             text: label.replaceAll('*', ''),
@@ -225,7 +238,7 @@ class CustomDateField extends StatelessWidget {
     required this.label,
   });
 
-  /// 🔹 Метод выбора даты через DatePicker
+  /// 🔹 Открытие DatePicker
   Future<void> _selectDate(BuildContext context) async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -234,7 +247,6 @@ class CustomDateField extends StatelessWidget {
       lastDate: DateTime.now(),
     );
     if (pickedDate != null) {
-      // Форматируем выбранную дату
       controller.text = DateFormat('dd.MM.yyyy').format(pickedDate);
     }
   }
@@ -244,7 +256,7 @@ class CustomDateField extends StatelessWidget {
     return GestureDetector(
       onTap: () => _selectDate(context),
       child: AbsorbPointer(
-        // 🔹 Поле только для чтения, открываем DatePicker по тапу
+        // 🔹 Только для чтения, открывает DatePicker по тапу
         child: TextFormField(
           controller: controller,
           style: const TextStyle(color: Colors.black),
