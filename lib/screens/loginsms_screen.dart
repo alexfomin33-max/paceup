@@ -64,7 +64,7 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'code': userCode, 'phone': widget.phone}),
       );
-
+      print(response.body);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         // 🔹 Преобразуем код в int, если не получилось — 0
