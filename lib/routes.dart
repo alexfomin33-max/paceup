@@ -7,6 +7,7 @@ import 'screens/regstep2_screen.dart';
 import 'screens/addaccsms_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/createacc_screen.dart';
+import 'screens/enter_screen.dart';
 import 'widgets/app_bottom_nav_shell.dart';
 
 /// 🔹 Список маршрутов, которые должны открываться внутри нижней навигации
@@ -70,6 +71,11 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case '/createacc':
       // 🔹 Экран создания аккаунта
       screen = const CreateaccScreen();
+      break;
+
+    case '/enter':
+      // 🔹 Экран входа (авторизация)
+      screen = const EnterScreen();
       break;
 
     default:
