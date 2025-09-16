@@ -108,7 +108,7 @@ class EnterAccScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // 🔹 Кнопка "Зарегистрироваться"
+                  // 🔹 Кнопка "Войти"
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -117,7 +117,7 @@ class EnterAccScreen extends StatelessWidget {
                         // передаём номер телефона
                         Navigator.pushReplacementNamed(
                           context,
-                          '/addaccsms',
+                          '/loginsms',
                           arguments: {'phone': phoneController.text},
                         );
                       },
@@ -131,7 +131,7 @@ class EnterAccScreen extends StatelessWidget {
                         elevation: 0, // без тени
                       ),
                       child: const Text(
-                        "Зарегистрироваться",
+                        "Войти",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -143,23 +143,6 @@ class EnterAccScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 15),
-
-                  // 🔹 Текст условий
-                  SizedBox(
-                    width: 250,
-                    child: const Text(
-                      "Регистрируясь, вы принимаете Условия предоставления услуг "
-                      "и Политику конфиденциальности",
-                      style: TextStyle(
-                        color: Color.fromARGB(255, 192, 192, 192),
-                        fontSize: 12,
-                        fontFamily: "Inter",
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
 
                   // 🔹 Кнопка "Назад" без рамки
                   SizedBox(
