@@ -4,8 +4,8 @@ import '../theme/app_theme.dart';
 
 /// 🔹 Обёртка для экрана создания аккаунта
 /// Используется для маршрутизации и возможного расширения функционала
-class EnterScreen extends StatelessWidget {
-  const EnterScreen({super.key});
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

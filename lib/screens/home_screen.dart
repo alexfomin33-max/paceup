@@ -88,7 +88,7 @@ class WelcomeScreen extends StatelessWidget {
                     text: "Войти",
                     onPressed: () {
                       // 🔹 Здесь можно добавить переход на экран входа
-                      // Navigator.pushNamed(context, '/login');
+                       Navigator.pushReplacementNamed(context, '/login');
                     },
                   ),
                 ],
