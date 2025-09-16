@@ -115,11 +115,13 @@ class EnterAccScreen extends StatelessWidget {
                       onPressed: () {
                         // 🔹 Переход на экран подтверждения через SMS,
                         // передаём номер телефона
-                        Navigator.pushReplacementNamed(
-                          context,
-                          '/loginsms',
-                          arguments: {'phone': phoneController.text},
-                        );
+                        if(phoneController.text.length >= 11) {
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/loginsms',
+                            arguments: {'phone': phoneController.text},
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white, // фон кнопки
