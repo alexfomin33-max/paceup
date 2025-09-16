@@ -11,25 +11,27 @@ class AuthService {
   //Future<String?> getUserId() async => await storage.read(key: "user_id");
   //временный костыль
   Future<String?> getAccessToken() async {
-    return "13378195076b4b696468b5ed3f522d03";
+    return "50378be4309b33f868ad01bfb3755288";
   }
+
   Future<String?> getRefreshToken() async {
-    return "09be5ed7ad6d166086cd94d654874a16e7dd202e86e69a7d5e85ce23586fd3b1";
+    return "cbf57e89d7de3fb483edc5a0f0e42b0e19a552588bd9acf951430959330f9156";
   }
+
   Future<int?> getUserId() async {
     final userIdStr = "1";
 
     return int.tryParse(userIdStr);
-}
+  }
 
   Future<void> saveTokens(String access, String refresh) async {
-     //временный костыль
-   // await storage.write(key: "access_token", value: access);
-   // await storage.write(key: "refresh_token", value: refresh);
+    //временный костыль
+    // await storage.write(key: "access_token", value: access);
+    // await storage.write(key: "refresh_token", value: refresh);
   }
 
   Future<void> logout() async {
-     //временный костыль
+    //временный костыль
     //await storage.deleteAll();
   }
 
@@ -79,7 +81,7 @@ class AuthService {
       final data = json.decode(response.body);
       if (data["success"] == true) {
         //временный костыль
-       // await storage.write(key: "access_token", value: data["access_token"]);
+        // await storage.write(key: "access_token", value: data["access_token"]);
         return true;
       }
     }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 /// 🔹 Обертка для нижней навигации с сохранением состояния экранов
 class AppBottomNavShell extends StatefulWidget {
@@ -56,39 +55,56 @@ class AppBottomNavShellState extends State<AppBottomNavShell> {
       ),
 
       // 🔹 Нижняя навигационная панель
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // Фиксированные вкладки
-        selectedItemColor: const Color(0xFF579FFF), // Цвет выбранной вкладки
-        unselectedItemColor: Colors.grey, // Цвет невыбранных вкладок
-        currentIndex: _currentIndex, // Текущий выбранный экран
-        onTap: _onNavTap, // Обработка нажатия на вкладку
-        items: const [
-          // 🔹 Вкладка "Лента"
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: "Лента",
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white, // фон всего бара
+          border: Border(
+            top: BorderSide(
+              color: Colors.black12, // линия сверху
+              width: 1,
+            ),
           ),
-          // 🔹 Вкладка "Карта"
-          BottomNavigationBarItem(
-            icon: Icon(Icons.location_on_outlined),
-            label: "Карта",
+        ),
+        child: BottomNavigationBar(
+          backgroundColor:
+              Colors.transparent, // 🔹 фон убираем, используем от контейнера
+          elevation: 0, // 🔹 отключаем тень, если вдруг появится
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: const Color(0xFF56A2FF),
+          unselectedItemColor: Colors.grey,
+          currentIndex: _currentIndex,
+          onTap: _onNavTap,
+          selectedLabelStyle: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
           ),
-          // 🔹 Вкладка "Маркет"
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined),
-            label: "Маркет",
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
           ),
-          // 🔹 Вкладка "Задачи" с иконкой FontAwesome
-          BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.crosshairs),
-            label: "Задачи",
-          ),
-          // 🔹 Вкладка "Профиль"
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: "Профиль",
-          ),
-        ],
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              label: "Лента",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.location_on_outlined),
+              label: "Карта",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart_outlined),
+              label: "Маркет",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.article_outlined),
+              label: "Задачи",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              label: "Профиль",
+            ),
+          ],
+        ),
       ),
     );
   }

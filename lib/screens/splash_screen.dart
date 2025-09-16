@@ -42,7 +42,7 @@ class SplashScreenState extends State<SplashScreen> {
         // 🔹 Если получили userId → переходим на основной экран с данными пользователя
         Navigator.pushReplacementNamed(
           context,
-          '/home', // Можно заменить на HomeShell для bottom nav
+          '/lenta', // Можно заменить на HomeShell для bottom nav
           arguments: {'userId': userId},
         );
       } else {

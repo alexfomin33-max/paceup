@@ -3,86 +3,16 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/text_styles.dart';
 
-/// 🔹 RouteCard — карточка маршрута на карте
-/// Принимает список точек маршрута и отображает:
-/// - линию маршрута (Polyline)
-/// - маркер начала маршрута (зелёный)
-/// - маркер конца маршрута (красный)
-class RouteCard extends StatelessWidget {
-  final List<LatLng> points; // Список точек маршрута
-
-  const RouteCard({super.key, required this.points});
-
-  @override
-  Widget build(BuildContext context) {
-    // Если нет точек, показываем сообщение
-    if (points.isEmpty) return const Text("Нет точек маршрута");
-
-    // 🔹 Вычисляем центр карты по среднему значению lat/lng всех точек
-    final lat =
-        points.map((e) => e.latitude).reduce((a, b) => a + b) / points.length;
-    final lng =
-        points.map((e) => e.longitude).reduce((a, b) => a + b) / points.length;
-    final center = LatLng(lat, lng);
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: SizedBox(
-        height: 200,
-        child: FlutterMap(
-          options: MapOptions(initialCenter: center, initialZoom: 12.0),
-          children: [
-            // 🔹 Слой карты OpenStreetMap
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'paceup.ru',
-            ),
-            // 🔹 Линия маршрута
-            PolylineLayer(
-              polylines: [
-                Polyline(points: points, strokeWidth: 4.0, color: Colors.blue),
-              ],
-            ),
-            // 🔹 Маркеры начала и конца маршрута
-            MarkerLayer(
-              markers: [
-                Marker(
-                  point: points.first,
-                  width: 40,
-                  height: 40,
-                  child: const Icon(
-                    Icons.location_on,
-                    color: Colors.green,
-                    size: 32,
-                  ),
-                ),
-                Marker(
-                  point: points.last,
-                  width: 40,
-                  height: 40,
-                  child: const Icon(Icons.flag, color: Colors.red, size: 28),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// 🔹 Экран Ленты (Feed)
-/// Показывает активности пользователя, рекомендации и посты
 class LentaScreen extends StatelessWidget {
-  final int userId; // Идентификатор пользователя
+  final int userId;
 
   const LentaScreen({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9F9),
+      backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
@@ -100,7 +30,6 @@ class LentaScreen extends StatelessWidget {
         ),
         title: const Text("Лента", style: AppTextStyles.h1),
         actions: [
-          // 🔹 Уведомления с красной точкой
           Stack(
             children: [
               IconButton(
@@ -117,7 +46,7 @@ class LentaScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: const Text(
-                    "9", // Количество уведомлений
+                    "9",
                     style: TextStyle(
                       fontSize: 8,
                       color: Colors.white,
@@ -136,90 +65,108 @@ class LentaScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
-          _buildActivityCard(), // 🔹 Карточка активности
+          _buildActivityCard(context),
           const SizedBox(height: 16),
-          _buildRecommendations(), // 🔹 Рекомендации для пользователя
+          _buildRecommendations(),
           const SizedBox(height: 16),
-          _buildPostCard(), // 🔹 Пример поста
+          _buildPostCard(),
         ],
       ),
     );
   }
 
   /// 🔹 Карточка активности пользователя
-  Widget _buildActivityCard() {
-    return Card(
-      margin: const EdgeInsets.all(12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 🔹 Пользователь и дата
-            Row(
+  Widget _buildActivityCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(width: 0.5, color: Color(0xFFBDC1CA)),
+          bottom: BorderSide(width: 0.5, color: Color(0xFFBDC1CA)),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 🔹 Текст и аватар с паддингом
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const CircleAvatar(
                   radius: 20,
                   backgroundColor: Colors.blueGrey,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
+                // Вся правая часть: текст сверху, метрики снизу
                 Expanded(
-                  child: Text(
-                    "Игорь Зелёный",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Inter',
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 🔹 Текстовые поля
+                      const Text(
+                        "Игорь Зелёный",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        "8 июня 2025, в 10:28",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // 🔹 Метрики под текстом, выровнены по левому краю текста
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          MetricVertical(
+                            mainTitle: "Расстояние",
+                            mainValue: "16,00 км",
+                            subTitle: "Набор высоты",
+                            subValue: "203 м",
+                          ),
+                          SizedBox(width: 24),
+                          MetricVertical(
+                            mainTitle: "Время",
+                            mainValue: "1:12:34",
+                            subTitle: "Каденс",
+                            subValue: "179",
+                          ),
+                          SizedBox(width: 24),
+                          MetricVertical(
+                            mainTitle: "Темп",
+                            mainValue: "4:16 / км",
+                            subTitle: "Пульс",
+                            subValue: "141",
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                Flexible(
-                  child: Text(
-                    "8 июня 2025, в 10:28",
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                      fontFamily: 'Inter',
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    softWrap: false,
-                    textAlign: TextAlign.right,
-                  ),
-                ),
               ],
             ),
-            const SizedBox(height: 12),
-            // 🔹 Метрики активности: расстояние, время, темп
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: const [
-                Metric(title: "Расстояние", value: "16,00 км"),
-                Metric(title: "Время", value: "1:12:34"),
-                Metric(title: "Темп", value: "4:16 / км"),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // 🔹 Дополнительные метрики: набор высоты, каденс, пульс
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: const [
-                Metric(title: "Набор высоты", value: "203 м"),
-                Metric(title: "Каденс", value: "179"),
-                Metric(title: "Пульс", value: "141"),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // 🔹 Карта маршрута
-            RouteCard(
-              points: [LatLng(56.43246, 40.42653), LatLng(56.43242, 40.42624)],
-            ),
-          ],
-        ),
+          ),
+
+          // 🔹 Карта на всю ширину без паддинга
+          const RouteCard(
+            points: [LatLng(56.43246, 40.42653), LatLng(56.43242, 40.42624)],
+          ),
+        ],
       ),
     );
   }
 
-  /// 🔹 Блок рекомендаций: горизонтальный ListView с карточками друзей
+  /// 🔹 Блок рекомендаций
   Widget _buildRecommendations() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,7 +207,6 @@ class LentaScreen extends StatelessWidget {
     );
   }
 
-  /// 🔹 Карточка друга для блока рекомендаций
   Widget _friendCard(String name, String desc, String mutual) {
     return Container(
       width: 220,
@@ -326,7 +272,6 @@ class LentaScreen extends StatelessWidget {
     );
   }
 
-  /// 🔹 Карточка поста в ленте
   Widget _buildPostCard() {
     return Card(
       margin: const EdgeInsets.all(12),
@@ -373,8 +318,10 @@ class LentaScreen extends StatelessWidget {
               ],
             ),
           ),
-          // 🔹 Изображение поста
-          Image.network("https://picsum.photos/400/200", fit: BoxFit.cover),
+          Image.network(
+            "http://uploads.paceup.ru/images/background-min.png",
+            fit: BoxFit.cover,
+          ),
           const Padding(
             padding: EdgeInsets.all(12),
             child: Text(
@@ -382,7 +329,6 @@ class LentaScreen extends StatelessWidget {
               style: TextStyle(fontFamily: 'Inter'),
             ),
           ),
-          // 🔹 Лайки и комментарии
           Row(
             children: const [
               SizedBox(width: 12),
@@ -402,24 +348,103 @@ class LentaScreen extends StatelessWidget {
   }
 }
 
-/// 🔹 Виджет метрики активности (расстояние, время, темп и т.д.)
-class Metric extends StatelessWidget {
-  final String title; // Название метрики
-  final String value; // Значение метрики
+/// 🔹 Виджет вертикальной метрики
+class MetricVertical extends StatelessWidget {
+  final String mainTitle;
+  final String mainValue;
+  final String subTitle;
+  final String subValue;
 
-  const Metric({super.key, required this.title, required this.value});
+  const MetricVertical({
+    super.key,
+    required this.mainTitle,
+    required this.mainValue,
+    required this.subTitle,
+    required this.subValue,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Text(
+          mainTitle,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
         const SizedBox(height: 4),
         Text(
-          value,
+          mainValue,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          subTitle,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subValue,
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
         ),
       ],
+    );
+  }
+}
+
+/// 🔹 Карточка маршрута
+class RouteCard extends StatelessWidget {
+  final List<LatLng> points;
+
+  const RouteCard({super.key, required this.points});
+
+  @override
+  Widget build(BuildContext context) {
+    if (points.isEmpty) return const Text("Нет точек маршрута");
+
+    final lat =
+        points.map((e) => e.latitude).reduce((a, b) => a + b) / points.length;
+    final lng =
+        points.map((e) => e.longitude).reduce((a, b) => a + b) / points.length;
+    final center = LatLng(lat, lng);
+
+    return SizedBox(
+      width: double.infinity,
+      height: 200,
+      child: FlutterMap(
+        options: MapOptions(initialCenter: center, initialZoom: 12.0),
+        children: [
+          TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'paceup.ru',
+          ),
+          PolylineLayer(
+            polylines: [
+              Polyline(points: points, strokeWidth: 4.0, color: Colors.blue),
+            ],
+          ),
+          MarkerLayer(
+            markers: [
+              Marker(
+                point: points.first,
+                width: 40,
+                height: 40,
+                child: const Icon(
+                  Icons.location_on,
+                  color: Colors.green,
+                  size: 32,
+                ),
+              ),
+              Marker(
+                point: points.last,
+                width: 40,
+                height: 40,
+                child: const Icon(Icons.flag, color: Colors.red, size: 28),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
