@@ -32,11 +32,12 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
   /// 🔹 Метод для первоначальной отправки запроса регистрации пользователя
   Future<void> fetchApiData() async {
     try {
-      await http.post(
+      final response = await http.post(
         Uri.parse('http://api.paceup.ru/login_user.php'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'phone': widget.phone}),
       );
+      print(response.body);
     } catch (e) {
       // 🔹 Логируем ошибки в консоль
       debugPrint("fetchApiData error: $e");
@@ -46,11 +47,12 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
   /// 🔹 Метод для повторной отправки кода на номер
   Future<void> resendCode() async {
     try {
-      await http.post(
+      final response = await http.post(
         Uri.parse('http://api.paceup.ru/resendlgn_code.php'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'phone': widget.phone}),
       );
+      print(response.body);
     } catch (e) {
       debugPrint("resendCode error: $e");
     }
@@ -64,7 +66,7 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'code': userCode, 'phone': widget.phone}),
       );
-      print(response.body);
+      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         // 🔹 Преобразуем код в int, если не получилось — 0

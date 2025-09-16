@@ -34,11 +34,12 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
   /// Отправляет номер телефона на сервер для генерации SMS-кода
   Future<void> fetchApiData() async {
     try {
-      await http.post(
+      final response = await http.post(
         Uri.parse('http://api.paceup.ru/registry_user.php'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'phone': widget.phone}),
       );
+      print(response.body);
     } catch (e) {
       // 🔹 Ошибки игнорируются, можно добавить логирование или уведомление
       // debugPrint('fetchApiData error: $e');
@@ -48,11 +49,12 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
   /// 🔹 Метод для повторной отправки кода на номер
   Future<void> resendCode() async {
     try {
-      await http.post(
+      final response = await http.post(
         Uri.parse('http://api.paceup.ru/resend_code.php'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'phone': widget.phone}),
       );
+      print(response.body);
     } catch (e) {
       // 🔹 Лог ошибок при повторной отправке
       // debugPrint('resendCode error: $e');
