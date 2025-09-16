@@ -13,10 +13,20 @@ class LentaScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
+        elevation: 0, // убираем стандартную тень
+        scrolledUnderElevation:
+            0, // 🔹 отключаем затемнение при скролле (Material3)
+        surfaceTintColor: Colors.transparent, // 🔹 фиксируем цвет
+        backgroundColor: Colors.white, // всегда белый фон
         centerTitle: true,
+        automaticallyImplyLeading: false,
         leadingWidth: 100,
+        shape: const Border(
+          bottom: BorderSide(
+            color: Color(0xFFDFE2E8), // тонкая iOS-style линия
+            width: 0.5,
+          ),
+        ),
         leading: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -101,12 +111,14 @@ class LentaScreen extends StatelessWidget {
                 "Екатерина Виноградова",
                 "36 лет, Санкт-Петербург",
                 "6 общих друзей",
+                "assets/Recommended_1.png",
               ),
               const SizedBox(width: 12),
               _friendCard(
                 "Анатолий Курагин",
                 "38 лет, Ковров",
                 "4 общих друга",
+                "assets/Recommended_2.png",
               ),
             ],
           ),
@@ -115,7 +127,12 @@ class LentaScreen extends StatelessWidget {
     );
   }
 
-  Widget _friendCard(String name, String desc, String mutual) {
+  Widget _friendCard(
+    String name,
+    String desc,
+    String mutual,
+    String avatarAsset,
+  ) {
     return Container(
       width: 220,
       padding: const EdgeInsets.all(16),
@@ -127,9 +144,17 @@ class LentaScreen extends StatelessWidget {
         ],
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // 🔹 занимает только нужное место
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const CircleAvatar(radius: 60, backgroundColor: Color(0xFFA3D4EC)),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(60),
+            child: Image.asset(
+              avatarAsset,
+              width: 120,
+              height: 120,
+              fit: BoxFit.cover,
+            ),
+          ),
           const SizedBox(height: 12),
           Text(
             name,
@@ -162,7 +187,7 @@ class LentaScreen extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
-          const SizedBox(height: 8), // можно немного уменьшить
+          const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -201,9 +226,14 @@ class LentaScreen extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                const CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Color(0xFFA3D4EC),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset(
+                    "assets/Avatar_1.png",
+                    width: 40, // 2*radius = 40
+                    height: 40,
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -239,8 +269,8 @@ class LentaScreen extends StatelessWidget {
           ),
 
           // Картинка с фиксированной высотой 300
-          Image.network(
-            "http://uploads.paceup.ru/images/background-min.png",
+          Image.asset(
+            "assets/Image_63.png",
             fit: BoxFit.cover,
             height: 300,
             width: double.infinity,

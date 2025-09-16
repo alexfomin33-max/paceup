@@ -71,6 +71,12 @@ flutter:
   assets:
      - assets/background.png
      - assets/logo_icon.png
+     - assets/Avatar_1.png
+     - assets/Avatar_2.png
+     - assets/Recommended_1.png
+     - assets/Recommended_2.png
+     - assets/Asics.png
+     - assets/Image_63.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

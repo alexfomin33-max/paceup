@@ -105,7 +105,7 @@ class RouteCard extends StatelessWidget {
   }
 }
 
-/// 🔹 Equipment
+// 🔹 Equipment
 class Equipment extends StatelessWidget {
   const Equipment({super.key});
 
@@ -129,7 +129,7 @@ class Equipment extends StatelessWidget {
               height: 50,
               decoration: ShapeDecoration(
                 image: const DecorationImage(
-                  image: NetworkImage("https://placehold.co/50x50"),
+                  image: AssetImage("assets/Asics.png"),
                   fit: BoxFit.fill,
                 ),
                 shape: RoundedRectangleBorder(
@@ -243,9 +243,14 @@ class ActivityBlock extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Color(0xFFA3D4EC),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset(
+                    "assets/Avatar_2.png",
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
