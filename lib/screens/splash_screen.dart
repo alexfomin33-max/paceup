@@ -47,11 +47,11 @@ class SplashScreenState extends State<SplashScreen> {
         );
       } else {
         // 🔹 fallback: userId не найден, переходим на общий HomeScreen
-        Navigator.pushReplacementNamed(context, '/homeScreen');
+        Navigator.pushReplacementNamed(context, '/home');
       }
     } else {
       // 🔹 Пользователь не авторизован → показываем экран приветствия / HomeScreen
-      Navigator.pushReplacementNamed(context, '/homeScreen');
+      Navigator.pushReplacementNamed(context, '/home');
     }
   }
 
