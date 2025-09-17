@@ -14,6 +14,28 @@ class NewPostScreen extends StatefulWidget {
 class _NewPostScreenState extends State<NewPostScreen> {
   final List<File> _images = []; // выбранные картинки
   final ImagePicker _picker = ImagePicker();
+  final TextEditingController _descController = TextEditingController();
+
+  bool _canPublish = false; // доступность кнопки
+
+  @override
+  void initState() {
+    super.initState();
+    _descController.addListener(_updatePublishState);
+  }
+
+  @override
+  void dispose() {
+    _descController.dispose();
+    super.dispose();
+  }
+
+  void _updatePublishState() {
+    setState(() {
+      _canPublish =
+          _images.isNotEmpty || _descController.text.trim().isNotEmpty;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,11 +59,25 @@ class _NewPostScreenState extends State<NewPostScreen> {
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 12),
-                Row(
+          child: Column(
+            children: [
+              const SizedBox(height: 2),
+
+              // 🔹 Заголовок
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Фото поста',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // 🔹 Горизонтальный список фото
+              SizedBox(
+                height: 76,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
                   children: [
                     _addPhotoButton(),
                     const SizedBox(width: 12),
@@ -53,12 +89,16 @@ class _NewPostScreenState extends State<NewPostScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                _descriptionInput(),
-                const SizedBox(height: 24),
-                _publishButton(context),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+
+              // 🔹 описание растягивается
+              Expanded(child: _descriptionInput()),
+              const SizedBox(height: 24),
+
+              // 🔹 Кнопка снова по центру
+              Center(child: _publishButton(context)),
+            ],
           ),
         ),
       ),
@@ -70,11 +110,11 @@ class _NewPostScreenState extends State<NewPostScreen> {
     return GestureDetector(
       onTap: _pickImage,
       child: Container(
-        width: 74,
-        height: 74,
+        width: 76,
+        height: 76,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(6),
-          color: const Color(0xFFF3F4F6),
+          color: AppColors.background,
         ),
         child: CustomPaint(
           painter: _DashedBorderPainter(),
@@ -92,8 +132,8 @@ class _NewPostScreenState extends State<NewPostScreen> {
       clipBehavior: Clip.none,
       children: [
         Container(
-          width: 74,
-          height: 74,
+          width: 76,
+          height: 76,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: const Color(0xFFBDC1CA), width: 1),
@@ -101,12 +141,13 @@ class _NewPostScreenState extends State<NewPostScreen> {
           ),
         ),
         Positioned(
-          top: -6,
-          right: -6,
+          top: 2,
+          right: 2,
           child: GestureDetector(
             onTap: () {
               setState(() {
                 _images.remove(file);
+                _updatePublishState();
               });
             },
             child: Container(
@@ -128,13 +169,16 @@ class _NewPostScreenState extends State<NewPostScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.border, width: 1),
       ),
-      child: const TextField(
-        maxLines: 15,
-        decoration: InputDecoration.collapsed(
+      child: TextField(
+        controller: _descController,
+        expands: true, // 🔹 растягивается по высоте
+        maxLines: null,
+        minLines: null,
+        decoration: const InputDecoration.collapsed(
           hintText: 'Добавьте описание...',
           hintStyle: TextStyle(color: Color(0xFF8F8F8F)),
         ),
@@ -148,13 +192,15 @@ class _NewPostScreenState extends State<NewPostScreen> {
       width: 181,
       height: 40,
       child: ElevatedButton(
-        onPressed: () {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Пост опубликован!')));
-        },
+        onPressed: _canPublish
+            ? () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Пост опубликован!')),
+                );
+              }
+            : null, // 🔹 disabled если _canPublish == false
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.secondary,
+          backgroundColor: _canPublish ? AppColors.secondary : Colors.grey,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -175,6 +221,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
     if (pickedFile != null) {
       setState(() {
         _images.add(File(pickedFile.path));
+        _updatePublishState();
       });
     }
   }
