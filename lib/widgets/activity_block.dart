@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/app_theme.dart';
-import 'app_bottom_nav_shell.dart'; // для доступа к AppBottomNavShellState
+import '../widgets/comments_bottom_sheet.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+// для доступа к AppBottomNavShellState
 
 /// 🔹 Виджет вертикальной метрики
 class MetricVertical extends StatelessWidget {
@@ -629,10 +631,22 @@ class ActivityBlock extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      child: const Icon(
-                        Icons.chat_bubble_outline,
-                        size: 20,
-                        color: AppColors.orange,
+                      onTap: () {
+                        // ⬇️ Меняешь здесь стиль на Material или Cupertino
+                        showCupertinoModalBottomSheet(
+                          context: context,
+                          expand: false,
+                          builder: (context) => const CommentsBottomSheet(),
+                        );
+                      },
+                      child: Row(
+                        children: const [
+                          Icon(
+                            Icons.chat_bubble_outline,
+                            size: 20,
+                            color: AppColors.orange,
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 4),

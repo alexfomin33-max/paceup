@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/activity_block.dart';
 import 'newpost_screen.dart';
+import '../widgets/comments_bottom_sheet.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 /// 🔹 Экран Ленты (Feed)
 class LentaScreen extends StatelessWidget {
@@ -86,7 +88,7 @@ class LentaScreen extends StatelessWidget {
           const SizedBox(height: 16),
           _buildRecommendations(),
           const SizedBox(height: 16),
-          _buildPostCard(),
+          _buildPostCard(context),
         ],
       ),
     );
@@ -217,7 +219,7 @@ class LentaScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPostCard() {
+  Widget _buildPostCard(BuildContext context) {
     return Container(
       width: double.infinity, // растягиваем на весь экран
       decoration: const BoxDecoration(
@@ -238,7 +240,7 @@ class LentaScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   child: Image.asset(
                     "assets/Avatar_1.png",
-                    width: 50, // 2*radius = 40
+                    width: 50,
                     height: 50,
                     fit: BoxFit.cover,
                   ),
@@ -269,7 +271,7 @@ class LentaScreen extends StatelessWidget {
             ),
           ),
 
-          // Картинка с фиксированной высотой 300
+          // Картинка поста
           Image.asset(
             "assets/post.png",
             fit: BoxFit.cover,
@@ -288,18 +290,38 @@ class LentaScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
-              children: const [
-                Icon(Icons.favorite_border, size: 20, color: AppColors.red),
-                SizedBox(width: 4),
-                Text("2707", style: TextStyle(fontFamily: 'Inter')),
-                SizedBox(width: 16),
-                Icon(
-                  Icons.chat_bubble_outline,
+              children: [
+                const Icon(
+                  Icons.favorite_border,
                   size: 20,
-                  color: AppColors.orange,
+                  color: AppColors.red,
                 ),
-                SizedBox(width: 4),
-                Text("50", style: TextStyle(fontFamily: 'Inter')),
+                const SizedBox(width: 4),
+                const Text("2707", style: TextStyle(fontFamily: 'Inter')),
+                const SizedBox(width: 16),
+
+                // 🔹 Кнопка комментариев
+                GestureDetector(
+                  onTap: () {
+                    // ⬇️ Меняешь здесь стиль на Material или Cupertino
+                    showCupertinoModalBottomSheet(
+                      context: context,
+                      expand: false,
+                      builder: (context) => const CommentsBottomSheet(),
+                    );
+                  },
+                  child: Row(
+                    children: const [
+                      Icon(
+                        Icons.chat_bubble_outline,
+                        size: 20,
+                        color: AppColors.orange,
+                      ),
+                      SizedBox(width: 4),
+                      Text("50", style: TextStyle(fontFamily: 'Inter')),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
