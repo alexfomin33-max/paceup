@@ -16,6 +16,13 @@ class AppTextStyles {
     fontFamily: 'Inter',
   );
 
+  static const TextStyle commenttext = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w500,
+    color: AppColors.text,
+    fontFamily: 'Inter',
+  );
+
   static const TextStyle date = TextStyle(
     fontSize: 12,
     color: Colors.grey,

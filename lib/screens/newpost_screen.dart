@@ -18,8 +18,8 @@ class _NewPostScreenState extends State<NewPostScreen> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onHorizontalDragUpdate: (details) {
-        if (details.delta.dx > 10) {
+      onHorizontalDragEnd: (details) {
+        if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
           Navigator.pop(context); // свайп вправо закрывает экран
         }
       },
@@ -86,16 +86,39 @@ class _NewPostScreenState extends State<NewPostScreen> {
     );
   }
 
-  // 🔹 Превью выбранного фото
+  // 🔹 Превью выбранного фото с кнопкой удаления
   Widget _photoPreview(File file) {
-    return Container(
-      width: 74,
-      height: 74,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFFBDC1CA), width: 1),
-        image: DecorationImage(image: FileImage(file), fit: BoxFit.cover),
-      ),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 74,
+          height: 74,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: const Color(0xFFBDC1CA), width: 1),
+            image: DecorationImage(image: FileImage(file), fit: BoxFit.cover),
+          ),
+        ),
+        Positioned(
+          top: -6,
+          right: -6,
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _images.remove(file);
+              });
+            },
+            child: Container(
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.red,
+              ),
+              child: const Icon(Icons.close, size: 18, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -107,18 +130,13 @@ class _NewPostScreenState extends State<NewPostScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFF3F4F6),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppColors.border, // 🔹 рамка по твоей теме
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: const TextField(
         maxLines: 15,
         decoration: InputDecoration.collapsed(
           hintText: 'Добавьте описание...',
-          hintStyle: TextStyle(
-            color: Color(0xFF8F8F8F), // 🔹 красный цвет подсказки
-          ),
+          hintStyle: TextStyle(color: Color(0xFF8F8F8F)),
         ),
       ),
     );
@@ -143,7 +161,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
         ),
         child: const Text(
           'Опубликовать',
-          style: TextStyle(color: Colors.white), // белый текст
+          style: TextStyle(color: Colors.white),
         ),
       ),
     );
@@ -173,12 +191,10 @@ class _DashedBorderPainter extends CustomPainter {
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
 
-    // прямоугольник по периметру
     final rect = Rect.fromLTWH(0, 0, size.width, size.height);
     final path = Path()
       ..addRRect(RRect.fromRectAndRadius(rect, const Radius.circular(6)));
 
-    // превращаем линию в пунктир
     final metrics = path.computeMetrics();
     for (final metric in metrics) {
       double distance = 0;

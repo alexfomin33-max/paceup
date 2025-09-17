@@ -1,43 +1,77 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/activity_block.dart';
 import 'newpost_screen.dart';
 import '../widgets/comments_bottom_sheet.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'chat_screen.dart'; // импортируем страницу чата
+import 'notifications_screen.dart';
+import '../models/notification_item.dart';
 
 /// 🔹 Экран Ленты (Feed)
-class LentaScreen extends StatelessWidget {
+class LentaScreen extends StatefulWidget {
   final int userId;
-
   final VoidCallback? onNewPostPressed;
 
   const LentaScreen({super.key, required this.userId, this.onNewPostPressed});
+
+  @override
+  State<LentaScreen> createState() => _LentaScreenState();
+}
+
+class _LentaScreenState extends State<LentaScreen> {
+  int _unreadCount =
+      3; // пример начального количества непрочитанных уведомлений
+  final List<NotificationItem> _notifications = [
+    NotificationItem(
+      title: "Новая подписка",
+      body: "Пользователь Алексей подписался на вас.",
+      date: DateTime.now().subtract(const Duration(minutes: 5)),
+      avatarAsset: "assets/Avatar_1.png",
+    ),
+    NotificationItem(
+      title: "Новый комментарий",
+      body: "Мария оставила комментарий к вашему посту.",
+      date: DateTime.now().subtract(const Duration(hours: 1)),
+      avatarAsset: "assets/Avatar_2.png",
+    ),
+    NotificationItem(
+      title: "Обновление приложения",
+      body: "Доступна новая версия приложения.",
+      date: DateTime.now().subtract(const Duration(days: 1)),
+      avatarAsset: "assets/Avatar_3.png",
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
-        elevation: 0, // убираем стандартную тень
-        scrolledUnderElevation:
-            0, // 🔹 отключаем затемнение при скролле (Material3)
-        surfaceTintColor: Colors.transparent, // 🔹 фиксируем цвет
-        backgroundColor: Colors.white, // всегда белый фон
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: Colors.white,
         centerTitle: true,
         automaticallyImplyLeading: false,
         leadingWidth: 100,
         shape: const Border(
-          bottom: BorderSide(
-            color: Color(0xFFDFE2E8), // тонкая iOS-style линия
-            width: 0.5,
-          ),
+          bottom: BorderSide(color: Color(0xFFDFE2E8), width: 0.5),
         ),
         leading: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            IconButton(icon: const Icon(Icons.star_border), onPressed: () {}),
             IconButton(
-              icon: const Icon(Icons.add_circle_outline),
+              icon: const Icon(CupertinoIcons.star),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: const Icon(CupertinoIcons.add_circled),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -49,42 +83,58 @@ class LentaScreen extends StatelessWidget {
         ),
         title: const Text("Лента", style: AppTextStyles.h1),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const Basic()),
+              );
+            },
+            icon: const Icon(CupertinoIcons.chat_bubble),
+          ),
           Stack(
             children: [
               IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.notifications_outlined),
+                onPressed: () async {
+                  // Переход на экран уведомлений
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => NotificationsScreen()),
+                  );
+                  // После возвращения можно пометить все уведомления как просмотренные
+                  setState(() {
+                    _unreadCount = 0;
+                  });
+                },
+                icon: const Icon(CupertinoIcons.bell),
               ),
-              Positioned(
-                right: 6,
-                top: 6,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Text(
-                    "9",
-                    style: TextStyle(
-                      fontSize: 8,
-                      color: Colors.white,
-                      fontFamily: 'Inter',
+              if (_unreadCount > 0)
+                Positioned(
+                  right: 10,
+                  top: 5,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      "$_unreadCount",
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.white,
+                        fontFamily: 'Inter',
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.message_outlined),
           ),
         ],
       ),
       body: ListView(
         children: [
-          const ActivityBlock(), // 🔹 Используем наш отдельный виджет
+          const ActivityBlock(),
           const SizedBox(height: 16),
           _buildRecommendations(),
           const SizedBox(height: 16),
@@ -94,7 +144,6 @@ class LentaScreen extends StatelessWidget {
     );
   }
 
-  /// 🔹 Блок рекомендаций
   Widget _buildRecommendations() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,7 +229,7 @@ class LentaScreen extends StatelessWidget {
             desc,
             style: const TextStyle(
               fontSize: 12,
-              color: Colors.grey,
+              color: AppColors.text,
               fontFamily: 'Inter',
             ),
             overflow: TextOverflow.ellipsis,
@@ -191,7 +240,7 @@ class LentaScreen extends StatelessWidget {
             mutual,
             style: const TextStyle(
               fontSize: 12,
-              color: Colors.grey,
+              color: AppColors.text,
               fontFamily: 'Inter',
             ),
             overflow: TextOverflow.ellipsis,
@@ -221,7 +270,7 @@ class LentaScreen extends StatelessWidget {
 
   Widget _buildPostCard(BuildContext context) {
     return Container(
-      width: double.infinity, // растягиваем на весь экран
+      width: double.infinity,
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -265,20 +314,17 @@ class LentaScreen extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: () {},
-                  icon: const Icon(Icons.more_horiz),
+                  icon: const Icon(CupertinoIcons.ellipsis),
                 ),
               ],
             ),
           ),
-
-          // Картинка поста
           Image.asset(
             "assets/post.png",
             fit: BoxFit.cover,
             height: 300,
             width: double.infinity,
           ),
-
           const Padding(
             padding: EdgeInsets.all(12),
             child: Text(
@@ -286,24 +332,20 @@ class LentaScreen extends StatelessWidget {
               style: TextStyle(fontFamily: 'Inter'),
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
                 const Icon(
-                  Icons.favorite_border,
+                  CupertinoIcons.heart,
                   size: 20,
                   color: AppColors.red,
                 ),
                 const SizedBox(width: 4),
                 const Text("2707", style: TextStyle(fontFamily: 'Inter')),
                 const SizedBox(width: 16),
-
-                // 🔹 Кнопка комментариев
                 GestureDetector(
                   onTap: () {
-                    // ⬇️ Меняешь здесь стиль на Material или Cupertino
                     showCupertinoModalBottomSheet(
                       context: context,
                       expand: false,
@@ -313,7 +355,7 @@ class LentaScreen extends StatelessWidget {
                   child: Row(
                     children: const [
                       Icon(
-                        Icons.chat_bubble_outline,
+                        CupertinoIcons.chat_bubble,
                         size: 20,
                         color: AppColors.orange,
                       ),

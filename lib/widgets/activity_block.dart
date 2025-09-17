@@ -1,11 +1,10 @@
-// activity_block.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/app_theme.dart';
 import '../widgets/comments_bottom_sheet.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-// для доступа к AppBottomNavShellState
 
 /// 🔹 Виджет вертикальной метрики
 class MetricVertical extends StatelessWidget {
@@ -130,7 +129,6 @@ class Popup extends StatelessWidget {
           ),
           child: Stack(
             children: [
-              // Верхняя обувь
               Positioned(
                 left: 0,
                 top: 0,
@@ -213,7 +211,6 @@ class Popup extends StatelessWidget {
                   ),
                 ),
               ),
-              // Разделитель
               Positioned(
                 left: 0,
                 top: 56,
@@ -223,7 +220,6 @@ class Popup extends StatelessWidget {
                   color: const Color(0xFFECECEC),
                 ),
               ),
-              // Нижняя обувь
               Positioned(
                 left: 0,
                 top: 57,
@@ -303,7 +299,7 @@ class Popup extends StatelessWidget {
   }
 }
 
-/// 🔹 Equipment с кнопкой, открывающей Popup
+/// 🔹 Equipment с анимацией Popup
 class Equipment extends StatefulWidget {
   const Equipment({super.key});
 
@@ -311,9 +307,36 @@ class Equipment extends StatefulWidget {
   _EquipmentState createState() => _EquipmentState();
 }
 
-class _EquipmentState extends State<Equipment> {
+class _EquipmentState extends State<Equipment>
+    with SingleTickerProviderStateMixin {
   final GlobalKey _buttonKey = GlobalKey();
   OverlayEntry? _overlayEntry;
+  late AnimationController _popupController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _popupController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _popupController, curve: Curves.easeInOut),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1).animate(
+      CurvedAnimation(parent: _popupController, curve: Curves.easeOutBack),
+    );
+  }
+
+  @override
+  void dispose() {
+    _popupController.dispose();
+    super.dispose();
+  }
 
   void _showPopup() {
     final context = _buttonKey.currentContext;
@@ -321,6 +344,10 @@ class _EquipmentState extends State<Equipment> {
     final renderBox = context.findRenderObject() as RenderBox;
     final position = renderBox.localToGlobal(Offset.zero);
     final size = renderBox.size;
+
+    final topPosition = position.dy - 120 < 20
+        ? position.dy + size.height
+        : position.dy - 120;
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Stack(
@@ -332,25 +359,33 @@ class _EquipmentState extends State<Equipment> {
             ),
           ),
           Positioned(
-            top: position.dy - 120,
-            left: position.dx + size.width - 288,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                width: 288,
-                height: 112,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
+            top: topPosition,
+            left: position.dx + size.width - 288 < 0
+                ? 8
+                : position.dx + size.width - 288,
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Container(
+                    width: 288,
+                    height: 112,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
                     ),
-                  ],
+                    child: const Popup(),
+                  ),
                 ),
-                child: const Popup(),
               ),
             ),
           ),
@@ -359,11 +394,14 @@ class _EquipmentState extends State<Equipment> {
     );
 
     Overlay.of(context).insert(_overlayEntry!);
+    _popupController.forward(from: 0);
   }
 
   void _hidePopup() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
+    _popupController.reverse().then((_) {
+      _overlayEntry?.remove();
+      _overlayEntry = null;
+    });
   }
 
   @override
@@ -462,12 +500,12 @@ class _EquipmentState extends State<Equipment> {
                   key: _buttonKey,
                   width: 28,
                   height: 28,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
+                  decoration: BoxDecoration(
+                    color: Colors.white, // фон кнопки
+                    shape: BoxShape.circle, // делает кнопку круглой
                   ),
                   child: const Icon(
-                    Icons.more_horiz_outlined,
+                    CupertinoIcons.ellipsis,
                     size: 16,
                     color: Colors.black,
                   ),
@@ -481,9 +519,49 @@ class _EquipmentState extends State<Equipment> {
   }
 }
 
-/// 🔹 ActivityBlock с кнопкой комментариев через Overlay
-class ActivityBlock extends StatelessWidget {
+/// 🔹 ActivityBlock с анимацией сердечка и плавной интерактивностью
+class ActivityBlock extends StatefulWidget {
   const ActivityBlock({super.key});
+
+  @override
+  _ActivityBlockState createState() => _ActivityBlockState();
+}
+
+class _ActivityBlockState extends State<ActivityBlock>
+    with SingleTickerProviderStateMixin {
+  bool isLiked = false;
+  late AnimationController _likeController;
+  late Animation<double> _likeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _likeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+
+    _likeAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
+      CurvedAnimation(parent: _likeController, curve: Curves.easeOutBack),
+    );
+
+    _likeController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _likeController.reverse();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _likeController.dispose();
+    super.dispose();
+  }
+
+  void _onLikeTap() {
+    setState(() => isLiked = !isLiked);
+    _likeController.forward(from: 0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -582,7 +660,7 @@ class ActivityBlock extends StatelessWidget {
                                   ),
                                   SizedBox(width: 2),
                                   Icon(
-                                    Icons.favorite,
+                                    CupertinoIcons.heart_fill,
                                     color: Colors.red,
                                     size: 12,
                                   ),
@@ -615,10 +693,21 @@ class ActivityBlock extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(
-                      Icons.favorite_border,
-                      size: 20,
-                      color: AppColors.red,
+                    GestureDetector(
+                      onTap: _onLikeTap,
+                      child: ScaleTransition(
+                        scale: _likeAnimation,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          child: Icon(
+                            isLiked
+                                ? CupertinoIcons.heart_solid
+                                : CupertinoIcons.heart,
+                            size: 20,
+                            color: isLiked ? Colors.red : AppColors.red,
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 4),
                     const Text(
@@ -632,21 +721,19 @@ class ActivityBlock extends StatelessWidget {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        // ⬇️ Меняешь здесь стиль на Material или Cupertino
                         showCupertinoModalBottomSheet(
                           context: context,
                           expand: false,
                           builder: (context) => const CommentsBottomSheet(),
                         );
                       },
-                      child: Row(
-                        children: const [
-                          Icon(
-                            Icons.chat_bubble_outline,
-                            size: 20,
-                            color: AppColors.orange,
-                          ),
-                        ],
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        child: const Icon(
+                          CupertinoIcons.chat_bubble,
+                          size: 20,
+                          color: AppColors.orange,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -663,7 +750,7 @@ class ActivityBlock extends StatelessWidget {
                 Row(
                   children: const [
                     Icon(
-                      Icons.group_outlined,
+                      CupertinoIcons.person_2,
                       size: 20,
                       color: AppColors.green,
                     ),
@@ -678,7 +765,7 @@ class ActivityBlock extends StatelessWidget {
                     ),
                     SizedBox(width: 12),
                     Icon(
-                      Icons.person_add_outlined,
+                      CupertinoIcons.person_crop_circle_badge_plus,
                       size: 20,
                       color: AppColors.secondary,
                     ),

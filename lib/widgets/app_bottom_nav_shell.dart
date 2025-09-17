@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 /// 🔹 Обертка для нижней навигации с сохранением состояния экранов
@@ -14,61 +15,47 @@ class AppBottomNavShell extends StatefulWidget {
 class AppBottomNavShellState extends State<AppBottomNavShell> {
   int _currentIndex = 0; // Текущий выбранный экран
   late final List<GlobalKey<NavigatorState>> _navigatorKeys;
-  // 🔹 Ключи для каждого Navigator, чтобы каждый экран имел свою навигацию
 
   @override
   void initState() {
     super.initState();
-    // 🔹 Создаем ключи для каждого экрана, чтобы они сохраняли свое состояние
     _navigatorKeys = List.generate(
       widget.screens.length,
       (index) => GlobalKey<NavigatorState>(),
     );
   }
 
-  /// 🔹 Обработка нажатия на BottomNavigationBar
   void _onNavTap(int index) {
     setState(() {
-      _currentIndex = index; // Меняем выбранный экран
+      _currentIndex = index;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 🔹 Основная часть экрана — Stack с экранами
       body: Stack(
         children: widget.screens.asMap().entries.map((entry) {
           int index = entry.key;
           Widget screen = entry.value;
 
-          // 🔹 Offstage позволяет показывать только выбранный экран, остальные скрыты
           return Offstage(
             offstage: _currentIndex != index,
             child: Navigator(
-              key: _navigatorKeys[index], // Каждому экрану свой Navigator
-              // 🔹 Генерация маршрута для экрана
+              key: _navigatorKeys[index],
               onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => screen),
             ),
           );
         }).toList(),
       ),
-
-      // 🔹 Нижняя навигационная панель
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          color: Colors.white, // фон всего бара
-          border: Border(
-            top: BorderSide(
-              color: Colors.black12, // линия сверху
-              width: 1,
-            ),
-          ),
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.black12, width: 1)),
         ),
         child: BottomNavigationBar(
-          backgroundColor:
-              Colors.transparent, // 🔹 фон убираем, используем от контейнера
-          elevation: 0, // 🔹 отключаем тень, если вдруг появится
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           type: BottomNavigationBarType.fixed,
           selectedItemColor: const Color(0xFF56A2FF),
           unselectedItemColor: Colors.grey,
@@ -84,23 +71,23 @@ class AppBottomNavShellState extends State<AppBottomNavShell> {
           ),
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
+              icon: Icon(CupertinoIcons.news), // Лента
               label: "Лента",
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.location_on_outlined),
+              icon: Icon(CupertinoIcons.map), // Карта
               label: "Карта",
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart_outlined),
+              icon: Icon(CupertinoIcons.shopping_cart), // Маркет
               label: "Маркет",
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.article_outlined),
+              icon: Icon(CupertinoIcons.doc_text), // Задачи
               label: "Задачи",
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
+              icon: Icon(CupertinoIcons.person), // Профиль
               label: "Профиль",
             ),
           ],
