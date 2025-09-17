@@ -4,8 +4,21 @@ import 'app_theme.dart';
 class AppTextStyles {
   static const TextStyle h1 = TextStyle(
     fontSize: 18,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w600,
     color: AppColors.text,
+    fontFamily: 'Inter',
+  );
+
+  static const TextStyle name = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: AppColors.text,
+    fontFamily: 'Inter',
+  );
+
+  static const TextStyle date = TextStyle(
+    fontSize: 12,
+    color: Colors.grey,
     fontFamily: 'Inter',
   );
 

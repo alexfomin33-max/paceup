@@ -34,6 +34,8 @@ dependencies:
   pin_code_fields: ^8.0.1
   mask_input_formatter: ^0.0.3
   font_awesome_flutter: ^10.10.0
+  image_picker: ^0.8.7+6
+  modal_bottom_sheet: ^3.0.0
   intl: ^0.20.2
   flutter_localizations:
     sdk: flutter
@@ -73,10 +75,17 @@ flutter:
      - assets/logo_icon.png
      - assets/Avatar_1.png
      - assets/Avatar_2.png
+     - assets/Avatar_3.png
+    #  - assets/Avatar_4.png
      - assets/Recommended_1.png
      - assets/Recommended_2.png
      - assets/Asics.png
-     - assets/Image_63.png
+     - assets/post.png
+     - assets/Hoka.png
+     - assets/Anta.png
+     - assets/newpost_1.png
+     - assets/newpost_2.png
+     
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/app_theme.dart';
+import 'app_bottom_nav_shell.dart'; // для доступа к AppBottomNavShellState
 
 /// 🔹 Виджет вертикальной метрики
 class MetricVertical extends StatelessWidget {
@@ -105,9 +106,263 @@ class RouteCard extends StatelessWidget {
   }
 }
 
-// 🔹 Equipment
-class Equipment extends StatelessWidget {
+/// 🔹 Popup для обуви (Equipment)
+class Popup extends StatelessWidget {
+  const Popup({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 288,
+          height: 112,
+          clipBehavior: Clip.antiAlias,
+          decoration: ShapeDecoration(
+            color: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              side: const BorderSide(color: Colors.white),
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          child: Stack(
+            children: [
+              // Верхняя обувь
+              Positioned(
+                left: 0,
+                top: 0,
+                child: Container(
+                  width: 288,
+                  height: 56,
+                  color: Colors.transparent,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 56,
+                        decoration: ShapeDecoration(
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            side: const BorderSide(color: Colors.white),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Image.asset(
+                            "assets/Hoka.png",
+                            fit: BoxFit.fill,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 208,
+                        height: 56,
+                        color: Colors.white,
+                        padding: const EdgeInsets.only(left: 5, top: 8),
+                        child: const Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Hoka One One Bondi 8\n',
+                                style: TextStyle(
+                                  color: Color(0xFF323743),
+                                  fontSize: 12,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.67,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'Пробег: ',
+                                style: TextStyle(
+                                  color: Color(0xFF565D6D),
+                                  fontSize: 11,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.64,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '836',
+                                style: TextStyle(
+                                  color: Color(0xFF171A1F),
+                                  fontSize: 11,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.64,
+                                ),
+                              ),
+                              TextSpan(
+                                text: ' км',
+                                style: TextStyle(
+                                  color: Color(0xFF565D6D),
+                                  fontSize: 11,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.64,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Разделитель
+              Positioned(
+                left: 0,
+                top: 56,
+                child: Container(
+                  width: 288,
+                  height: 1,
+                  color: const Color(0xFFECECEC),
+                ),
+              ),
+              // Нижняя обувь
+              Positioned(
+                left: 0,
+                top: 57,
+                child: SizedBox(
+                  width: 288,
+                  height: 56,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 56,
+                        color: Colors.white,
+                        padding: const EdgeInsets.all(5),
+                        child: Image.asset("assets/Anta.png", fit: BoxFit.fill),
+                      ),
+                      Container(
+                        width: 208,
+                        height: 56,
+                        color: Colors.white,
+                        padding: const EdgeInsets.only(left: 5, top: 8),
+                        child: const Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Anta M C202\n',
+                                style: TextStyle(
+                                  color: Color(0xFF323743),
+                                  fontSize: 12,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.67,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'Пробег: ',
+                                style: TextStyle(
+                                  color: Color(0xFF565D6D),
+                                  fontSize: 11,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.64,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '1204',
+                                style: TextStyle(
+                                  color: Color(0xFF171A1F),
+                                  fontSize: 11,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.64,
+                                ),
+                              ),
+                              TextSpan(
+                                text: ' км',
+                                style: TextStyle(
+                                  color: Color(0xFF565D6D),
+                                  fontSize: 11,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.64,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 🔹 Equipment с кнопкой, открывающей Popup
+class Equipment extends StatefulWidget {
   const Equipment({super.key});
+
+  @override
+  _EquipmentState createState() => _EquipmentState();
+}
+
+class _EquipmentState extends State<Equipment> {
+  final GlobalKey _buttonKey = GlobalKey();
+  OverlayEntry? _overlayEntry;
+
+  void _showPopup() {
+    final context = _buttonKey.currentContext;
+    if (context == null) return;
+    final renderBox = context.findRenderObject() as RenderBox;
+    final position = renderBox.localToGlobal(Offset.zero);
+    final size = renderBox.size;
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _hidePopup,
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+          Positioned(
+            top: position.dy - 120,
+            left: position.dx + size.width - 288,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                width: 288,
+                height: 112,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Popup(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _hidePopup() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +374,6 @@ class Equipment extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Иконка слева с отступом 3px
           Positioned(
             left: 3,
             top: 3,
@@ -138,15 +392,13 @@ class Equipment extends StatelessWidget {
               ),
             ),
           ),
-
-          // Текст по центру
           Positioned(
             left: 60,
             top: 7,
             right: 60,
-            child: Text.rich(
+            child: const Text.rich(
               TextSpan(
-                children: const [
+                children: [
                   TextSpan(
                     text: "Asics Jolt 3 Wide 'Dive Blue'\n",
                     style: TextStyle(
@@ -191,24 +443,32 @@ class Equipment extends StatelessWidget {
               ),
             ),
           ),
-
-          // Кнопка справа с иконкой трех точек
           Positioned(
             right: 8,
             top: 0,
             bottom: 0,
             child: Center(
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.more_horiz_outlined,
-                  size: 16,
-                  color: Colors.black,
+              child: GestureDetector(
+                onTap: () {
+                  if (_overlayEntry == null) {
+                    _showPopup();
+                  } else {
+                    _hidePopup();
+                  }
+                },
+                child: Container(
+                  key: _buttonKey,
+                  width: 28,
+                  height: 28,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.more_horiz_outlined,
+                    size: 16,
+                    color: Colors.black,
+                  ),
                 ),
               ),
             ),
@@ -219,7 +479,7 @@ class Equipment extends StatelessWidget {
   }
 }
 
-/// 🔹 ActivityBlock
+/// 🔹 ActivityBlock с кнопкой комментариев через Overlay
 class ActivityBlock extends StatelessWidget {
   const ActivityBlock({super.key});
 
@@ -237,7 +497,7 @@ class ActivityBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔹 Текст и аватар с паддингом
+          // 🔹 Текст и аватар
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -257,72 +517,60 @@ class ActivityBlock extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Игорь Зелёный",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Inter',
-                          fontSize: 16,
-                        ),
-                      ),
+                      const Text("Игорь Зелёный", style: AppTextStyles.name),
                       const SizedBox(height: 2),
                       const Text(
                         "8 июня 2025, в 10:28",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                          fontFamily: 'Inter',
-                        ),
+                        style: AppTextStyles.date,
                       ),
                       const SizedBox(height: 18),
-                      // 🔹 Метрики под текстом
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                        children: const [
                           MetricVertical(
                             mainTitle: "Расстояние",
                             mainValue: "16,00 км",
                             subTitle: "Набор высоты",
                             subValue: "203 м",
                           ),
-                          const SizedBox(width: 24),
+                          SizedBox(width: 24),
                           MetricVertical(
                             mainTitle: "Время",
                             mainValue: "1:12:34",
                             subTitle: "Каденс",
                             subValue: "179",
                           ),
-                          const SizedBox(width: 24),
+                          SizedBox(width: 24),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 "Темп",
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              const Text(
+                              SizedBox(height: 4),
+                              Text(
                                 "4:16 / км",
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              const Text(
+                              SizedBox(height: 8),
+                              Text(
                                 "Средний пульс",
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
-                                children: const [
+                                children: [
                                   Text(
                                     "141",
                                     style: TextStyle(
@@ -348,118 +596,92 @@ class ActivityBlock extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 2),
-
-          // 🔹 Equipment с отступами снаружи
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: const Equipment(),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Equipment(),
           ),
-
           const SizedBox(height: 8),
-
-          // 🔹 Карта маршрута
-          RouteCard(
+          const RouteCard(
             points: [LatLng(56.43246, 40.42653), LatLng(56.43242, 40.42624)],
           ),
-
           const SizedBox(height: 12),
-
-          // 🔹 Иконки под картой с числами (черными)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Слева
                 Row(
-                  children: const [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.favorite_border,
-                          size: 20,
-                          color: AppColors.red,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          "35",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
+                  children: [
+                    const Icon(
+                      Icons.favorite_border,
+                      size: 20,
+                      color: AppColors.red,
                     ),
-                    SizedBox(width: 12),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 20,
-                          color: AppColors.orange,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          "2",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(width: 4),
+                    const Text(
+                      "35",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      child: const Icon(
+                        Icons.chat_bubble_outline,
+                        size: 20,
+                        color: AppColors.orange,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text(
+                      "2",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
                     ),
                   ],
                 ),
-                // Справа
                 Row(
                   children: const [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.group_outlined,
-                          size: 20,
-                          color: AppColors.green,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          "48",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
+                    Icon(
+                      Icons.group_outlined,
+                      size: 20,
+                      color: AppColors.green,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      "48",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
                     ),
                     SizedBox(width: 12),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_add_outlined,
-                          size: 20,
-                          color: AppColors.secondary,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          "3",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
+                    Icon(
+                      Icons.person_add_outlined,
+                      size: 20,
+                      color: AppColors.secondary,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      "3",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-
           const SizedBox(height: 12),
         ],
       ),

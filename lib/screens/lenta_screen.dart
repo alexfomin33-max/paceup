@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/activity_block.dart';
+import 'newpost_screen.dart';
 
 /// 🔹 Экран Ленты (Feed)
 class LentaScreen extends StatelessWidget {
   final int userId;
 
-  const LentaScreen({super.key, required this.userId});
+  final VoidCallback? onNewPostPressed;
+
+  const LentaScreen({super.key, required this.userId, this.onNewPostPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +36,12 @@ class LentaScreen extends StatelessWidget {
             IconButton(icon: const Icon(Icons.star_border), onPressed: () {}),
             IconButton(
               icon: const Icon(Icons.add_circle_outline),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NewPostScreen()),
+                );
+              },
             ),
           ],
         ),
@@ -230,8 +238,8 @@ class LentaScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   child: Image.asset(
                     "assets/Avatar_1.png",
-                    width: 40, // 2*radius = 40
-                    height: 40,
+                    width: 50, // 2*radius = 40
+                    height: 50,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -242,19 +250,12 @@ class LentaScreen extends StatelessWidget {
                     children: const [
                       Text(
                         "Алексей Лукашин",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Inter',
-                        ),
+                        style: AppTextStyles.name,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         "7 июня 2025, в 14:36",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                          fontFamily: 'Inter',
-                        ),
+                        style: AppTextStyles.date,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -270,7 +271,7 @@ class LentaScreen extends StatelessWidget {
 
           // Картинка с фиксированной высотой 300
           Image.asset(
-            "assets/Image_63.png",
+            "assets/post.png",
             fit: BoxFit.cover,
             height: 300,
             width: double.infinity,
