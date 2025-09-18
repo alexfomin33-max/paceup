@@ -1,5 +1,5 @@
 name: paceup
-description: "A new Flutter project."
+description: "A new Sport project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -50,6 +50,7 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   flutter_map: ^8.2.1
   latlong2: ^0.9.1
+  persistent_bottom_nav_bar_v2: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -89,6 +90,8 @@ flutter:
      - assets/Anta.png
      - assets/newpost_1.png
      - assets/newpost_2.png
+     - assets/Vlad_event_1.png
+     - assets/Vlad_event_2.png
      
 
   # An image asset can refer to one or more resolution-specific "variants", see

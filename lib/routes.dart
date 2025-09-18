@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
-// import 'screens/home_shell.dart';
 import 'screens/lenta_screen.dart';
 import 'screens/regstep1_screen.dart';
 import 'screens/regstep2_screen.dart';
@@ -11,98 +10,77 @@ import 'screens/login_screen.dart';
 import 'screens/loginsms_screen.dart';
 import 'widgets/app_bottom_nav_shell.dart';
 
-/// 🔹 Список маршрутов, которые должны открываться внутри нижней навигации
+/// 🔹 Маршруты с нижней навигацией
 const bottomNavRoutes = ['/lenta'];
 
-/// 🔹 Основной метод генерации маршрутов для Navigator
-/// Позволяет динамически создавать экраны и передавать им аргументы
+/// 🔹 Генератор маршрутов
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
-  final args = settings.arguments; // Аргументы, переданные при навигации
-  Widget screen; // Экран, который будем отображать
+  final args = settings.arguments;
+  Widget screen;
 
   switch (settings.name) {
     case '/splash':
-      // 🔹 Стартовый экран приложения
       screen = const SplashScreen();
       break;
 
     case '/home':
-      // 🔹 Главный экран без нижней навигации
       screen = const HomeScreen();
       break;
 
     case '/lenta':
-      // 🔹 Экран ленты — пример использования bottom nav
-      if (args is Map && args.containsKey('userId')) {
-        screen = LentaScreen(userId: args['userId'] as int);
-      } else {
-        // Если userId не передан, используем заглушку
-        screen = LentaScreen(userId: 123);
-      }
+      screen = (args is Map && args.containsKey('userId'))
+          ? LentaScreen(userId: args['userId'] as int)
+          : LentaScreen(userId: 123);
       break;
 
     case '/regstep1':
-      // 🔹 Первый шаг регистрации
-      if (args is Map && args.containsKey('userId')) {
-        screen = Regstep1Screen(userId: args['userId'] as int);
-      } else {
-        // Если userId отсутствует — fallback на главный экран
-        screen = const HomeScreen();
-      }
+      screen = (args is Map && args.containsKey('userId'))
+          ? Regstep1Screen(userId: args['userId'] as int)
+          : const HomeScreen();
       break;
 
     case '/regstep2':
-      // 🔹 Второй шаг регистрации
-      if (args is Map && args.containsKey('userId')) {
-        screen = Regstep2Screen(userId: args['userId'] as int);
-      } else {
-        screen = const HomeScreen();
-      }
+      screen = (args is Map && args.containsKey('userId'))
+          ? Regstep2Screen(userId: args['userId'] as int)
+          : const HomeScreen();
       break;
 
     case '/addaccsms':
-      // 🔹 Экран подтверждения номера через SMS
-      if (args is Map && args.containsKey('phone')) {
-        screen = AddAccSmsScreen(phone: args['phone'] as String);
-      } else {
-        screen = const HomeScreen();
-      }
+      screen = (args is Map && args.containsKey('phone'))
+          ? AddAccSmsScreen(phone: args['phone'] as String)
+          : const HomeScreen();
       break;
 
     case '/createacc':
-      // 🔹 Экран создания аккаунта
       screen = const CreateaccScreen();
       break;
 
     case '/login':
-      // 🔹 Экран входа (авторизация)
       screen = const LoginScreen();
       break;
-    
+
     case '/loginsms':
-      // 🔹 Экран подтверждения номера через SMS при авторизации
-      if (args is Map && args.containsKey('phone')) {
-        screen = LoginSmsScreen(phone: args['phone'] as String);
-      } else {
-        screen = const HomeScreen();
-      }
+      screen = (args is Map && args.containsKey('phone'))
+          ? LoginSmsScreen(phone: args['phone'] as String)
+          : const HomeScreen();
       break;
 
     default:
-      // 🔹 Любой неизвестный маршрут перенаправляется на SplashScreen
       screen = const SplashScreen();
   }
 
-  // 🔹 Если маршрут входит в список bottomNavRoutes — оборачиваем экран в AppBottomNavShell
+  // 🔹 Если маршрут с нижней навигацией — оборачиваем AppBottomNavShell
   if (bottomNavRoutes.contains(settings.name)) {
+    int userId = 123; // fallback
+    if (args is Map && args.containsKey('userId')) {
+      userId = args['userId'] as int;
+    }
+
     return MaterialPageRoute(
-      builder: (_) => AppBottomNavShell(
-        screens: [screen], // Передаем экран внутрь оболочки bottom nav
-      ),
+      builder: (_) => AppBottomNavShell(userId: userId),
       settings: settings,
     );
   } else {
-    // 🔹 Обычная генерация маршрута без нижней навигации
     return MaterialPageRoute(builder: (_) => screen, settings: settings);
   }
 }
