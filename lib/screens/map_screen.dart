@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:paceup/theme/app_theme.dart';
+import '../theme/app_theme.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -83,7 +83,7 @@ class _MapScreenState extends State<MapScreen> {
             children: [
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'paceup.ru',
+                userAgentPackageName: 'com.example.paceip',
               ),
               MarkerLayer(
                 markers: markers.map((marker) {
@@ -281,7 +281,7 @@ class _MapScreenState extends State<MapScreen> {
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),

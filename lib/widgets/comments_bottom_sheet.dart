@@ -116,7 +116,7 @@ class CommentsBottomSheet extends StatelessWidget {
                     ),
                     child: const Icon(
                       Icons.send,
-                      size: 20,
+                      size: 22,
                       color: AppColors.secondary,
                     ),
                   ),

@@ -74,7 +74,7 @@ class RouteCard extends StatelessWidget {
         children: [
           TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'paceup.ru',
+            userAgentPackageName: 'com.example.paceip',
           ),
           PolylineLayer(
             polylines: [
@@ -695,10 +695,17 @@ class _ActivityBlockState extends State<ActivityBlock>
                   children: [
                     GestureDetector(
                       onTap: _onLikeTap,
-                      child: ScaleTransition(
-                        scale: _likeAnimation,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
+                      child: Container(
+                        width: 25, // размер зоны нажатия
+                        height: 25,
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color:
+                              Colors.transparent, // визуально ничего не видно
+                        ),
+                        child: ScaleTransition(
+                          scale: _likeAnimation,
                           child: Icon(
                             isLiked
                                 ? CupertinoIcons.heart_solid
@@ -709,6 +716,7 @@ class _ActivityBlockState extends State<ActivityBlock>
                         ),
                       ),
                     ),
+
                     const SizedBox(width: 4),
                     const Text(
                       "35",
@@ -728,7 +736,14 @@ class _ActivityBlockState extends State<ActivityBlock>
                         );
                       },
                       child: Container(
-                        padding: const EdgeInsets.all(4),
+                        width: 25,
+                        height: 25,
+                        alignment: Alignment.center,
+
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.transparent,
+                        ),
                         child: const Icon(
                           CupertinoIcons.chat_bubble,
                           size: 20,
@@ -736,6 +751,7 @@ class _ActivityBlockState extends State<ActivityBlock>
                         ),
                       ),
                     ),
+
                     const SizedBox(width: 4),
                     const Text(
                       "2",

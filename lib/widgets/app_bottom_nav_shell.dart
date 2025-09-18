@@ -13,6 +13,11 @@ class AppBottomNavShell extends StatelessWidget {
 
   const AppBottomNavShell({super.key, required this.userId});
 
+  // Константа для стиля текста вкладок
+  static const TextStyle tabTextStyle = TextStyle(
+    fontSize: 10, // размер шрифта вкладок
+  );
+
   @override
   Widget build(BuildContext context) {
     return PersistentTabView(
@@ -22,13 +27,15 @@ class AppBottomNavShell extends StatelessWidget {
           item: ItemConfig(
             icon: const Icon(CupertinoIcons.news),
             title: "Лента",
+            textStyle: tabTextStyle,
           ),
         ),
         PersistentTabConfig(
           screen: const MapScreen(),
           item: ItemConfig(
-            icon: const Icon(CupertinoIcons.map),
+            icon: const Icon(CupertinoIcons.placemark),
             title: "Карта",
+            textStyle: tabTextStyle,
           ),
         ),
         PersistentTabConfig(
@@ -36,13 +43,15 @@ class AppBottomNavShell extends StatelessWidget {
           item: ItemConfig(
             icon: const Icon(CupertinoIcons.shopping_cart),
             title: "Маркет",
+            textStyle: tabTextStyle,
           ),
         ),
         PersistentTabConfig(
           screen: const TasksScreen(),
           item: ItemConfig(
-            icon: const Icon(CupertinoIcons.doc_text),
+            icon: const Icon(CupertinoIcons.scope),
             title: "Задачи",
+            textStyle: tabTextStyle,
           ),
         ),
         PersistentTabConfig(
@@ -50,6 +59,7 @@ class AppBottomNavShell extends StatelessWidget {
           item: ItemConfig(
             icon: const Icon(CupertinoIcons.person),
             title: "Профиль",
+            textStyle: tabTextStyle,
           ),
         ),
       ],

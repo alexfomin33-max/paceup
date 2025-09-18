@@ -90,7 +90,7 @@ class _LentaScreenState extends State<LentaScreen> {
                 MaterialPageRoute(builder: (_) => const Basic()),
               );
             },
-            icon: const Icon(CupertinoIcons.chat_bubble),
+            icon: const Icon(CupertinoIcons.bubble_left_bubble_right),
           ),
           Stack(
             children: [
