@@ -55,123 +55,130 @@ class MapScreen extends StatelessWidget {
               child: GestureDetector(
                 onTap: () {
                   showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
+                    context: Navigator.of(context, rootNavigator: true).context,
+                    isScrollControlled:
+                        true, // чтобы при длинном контенте можно было скроллить
                     backgroundColor: Colors.transparent,
-                    builder: (_) => FractionallySizedBox(
-                      heightFactor: 0.35,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(AppRadius.large),
+                    builder: (_) => Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(AppRadius.large),
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(6),
+                      child: Wrap(
+                        // 🔹 Контейнер подстраивается под высоту контента
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Center(
+                                child: Container(
+                                  width: 40,
+                                  height: 4,
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.border,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                              ),
+                              Center(
+                                child: Text(
+                                  marker['title'] as String,
+                                  style: AppTextStyles.h1,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Container(height: 1, color: AppColors.border),
+                              const SizedBox(height: 12),
+                              // Таблица с событиями
+                              Column(
+                                children: [
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Image.asset(
+                                        'assets/Vlad_event_1.png',
+                                        width: 90,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: const [
+                                            Text(
+                                              "Субботний коферан",
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            SizedBox(height: 4),
+                                            Text(
+                                              "14 июня 2025  ·  Участников: 32",
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w400,
+                                                color: AppColors.text,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Image.asset(
+                                        'assets/Vlad_event_2.png',
+                                        width: 90,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: const [
+                                            Text(
+                                              "Владимирский полумарафон «Золотые ворота»",
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            SizedBox(height: 4),
+                                            Text(
+                                              "31 августа 2025  ·  Участников: 1426",
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w400,
+                                                color: AppColors.text,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              // 🔹 Пустое пространство снизу
+                              const SizedBox(height: 50),
+                            ],
                           ),
-                        ),
-                        padding: const EdgeInsets.all(6),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Center(
-                              child: Container(
-                                width: 40,
-                                height: 4,
-                                margin: const EdgeInsets.only(bottom: 10),
-                                decoration: BoxDecoration(
-                                  color: AppColors.border,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                            ),
-                            Center(
-                              child: Text(
-                                marker['title'] as String,
-                                style: AppTextStyles.h1,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(height: 1, color: AppColors.border),
-                            const SizedBox(height: 12),
-                            // Таблица с событиями
-                            Column(
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Image.asset(
-                                      'assets/Vlad_event_1.png',
-                                      width: 90,
-                                      height: 60,
-                                      fit: BoxFit.cover,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: const [
-                                          Text(
-                                            "Субботний коферан",
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          SizedBox(height: 4),
-                                          Text(
-                                            "14 июня 2025  ·  Участников: 32",
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w400,
-                                              color: AppColors.text,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Image.asset(
-                                      'assets/Vlad_event_2.png',
-                                      width: 90,
-                                      height: 60,
-                                      fit: BoxFit.cover,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: const [
-                                          Text(
-                                            "Владимирский полумарафон «Золотые ворота»",
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          SizedBox(height: 4),
-                                          Text(
-                                            "31 августа 2025  ·  Участников: 1426",
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w400,
-                                              color: AppColors.text,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                        ],
                       ),
                     ),
                   );
