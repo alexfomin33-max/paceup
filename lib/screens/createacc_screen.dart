@@ -78,7 +78,6 @@ class AddAccScreen extends StatelessWidget {
                         labelStyle: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
-                          fontFamily: "Inter",
                         ),
                         // 🔹 Стиль рамки поля
                         border: OutlineInputBorder(
@@ -135,7 +134,6 @@ class AddAccScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          fontFamily: "Inter",
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -153,7 +151,6 @@ class AddAccScreen extends StatelessWidget {
                       style: TextStyle(
                         color: Color.fromARGB(255, 192, 192, 192),
                         fontSize: 12,
-                        fontFamily: "Inter",
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -181,7 +178,6 @@ class AddAccScreen extends StatelessWidget {
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          fontFamily: "Inter",
                         ),
                       ),
                     ),

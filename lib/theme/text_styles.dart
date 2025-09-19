@@ -6,28 +6,21 @@ class AppTextStyles {
     fontSize: 18,
     fontWeight: FontWeight.w600,
     color: AppColors.text,
-    fontFamily: 'Inter',
   );
 
   static const TextStyle name = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: AppColors.text,
-    fontFamily: 'Inter',
   );
 
   static const TextStyle commenttext = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w500,
     color: AppColors.text,
-    fontFamily: 'Inter',
   );
 
-  static const TextStyle date = TextStyle(
-    fontSize: 12,
-    color: Colors.grey,
-    fontFamily: 'Inter',
-  );
+  static const TextStyle date = TextStyle(fontSize: 12, color: Colors.grey);
 
   static const TextStyle body = TextStyle(fontSize: 16, color: AppColors.text);
 

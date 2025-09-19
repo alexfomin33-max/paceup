@@ -114,7 +114,7 @@ class Regstep1ScreenState extends State<Regstep1Screen> {
                   style: TextStyle(
                     color: Color(0xFF323743),
                     fontSize: 18,
-                    fontFamily: 'Inter',
+
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -189,7 +189,7 @@ class CustomTextField extends StatelessWidget {
             style: const TextStyle(
               color: Color(0xFF565D6D),
               fontSize: 16,
-              fontFamily: 'Inter',
+
               fontWeight: FontWeight.w500,
             ),
             children: [
@@ -267,7 +267,7 @@ class CustomDateField extends StatelessWidget {
                 style: const TextStyle(
                   color: Color(0xFF565D6D),
                   fontSize: 16,
-                  fontFamily: 'Inter',
+
                   fontWeight: FontWeight.w500,
                 ),
                 children: [
@@ -332,7 +332,7 @@ class CustomDropdownField extends StatelessWidget {
             style: const TextStyle(
               color: Color(0xFF565D6D),
               fontSize: 16,
-              fontFamily: 'Inter',
+
               fontWeight: FontWeight.w500,
             ),
             children: [
@@ -405,7 +405,7 @@ class ContinueButton extends StatelessWidget {
         style: TextStyle(
           color: Colors.white,
           fontSize: 14,
-          fontFamily: 'Inter',
+
           fontWeight: FontWeight.w400,
         ),
       ),

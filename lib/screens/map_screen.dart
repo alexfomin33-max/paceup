@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/app_theme.dart';
+import 'addevent_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -70,6 +71,9 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     final markers = markersByTab[_selectedIndex] ?? [];
     final markerColor = markerColors[_selectedIndex] ?? Colors.blue;
+
+    // отступ снизу, чтобы кнопки не перекрывались системной панелью/навигацией
+    final bottomSafe = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       body: Stack(
@@ -146,7 +150,7 @@ class _MapScreenState extends State<MapScreen> {
                                     ),
                                     const SizedBox(height: 12),
 
-                                    /// 🔹 Контент в зависимости от маркера
+                                    /// 🔹 Контент по маркеру (пример)
                                     if (marker['title'] ==
                                         'События во Владимире')
                                       Column(
@@ -162,11 +166,11 @@ class _MapScreenState extends State<MapScreen> {
                                                 fit: BoxFit.cover,
                                               ),
                                               const SizedBox(width: 8),
-                                              Expanded(
+                                              const Expanded(
                                                 child: Column(
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.start,
-                                                  children: const [
+                                                  children: [
                                                     Text(
                                                       "Субботний коферан",
                                                       style: TextStyle(
@@ -202,11 +206,11 @@ class _MapScreenState extends State<MapScreen> {
                                                 fit: BoxFit.cover,
                                               ),
                                               const SizedBox(width: 8),
-                                              Expanded(
+                                              const Expanded(
                                                 child: Column(
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.start,
-                                                  children: const [
+                                                  children: [
                                                     Text(
                                                       "Владимирский полумарафон «Золотые ворота»",
                                                       style: TextStyle(
@@ -268,22 +272,22 @@ class _MapScreenState extends State<MapScreen> {
             ],
           ),
 
-          /// 🔹 Панель кнопок сверху
+          /// 🔹 Верхняя панель вкладок (без прозрачности, без blur)
           Positioned(
             top: 40,
-            left: 0,
-            right: 0,
+            left: 10,
+            right: 10,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
+                      color: Colors.black12,
                       blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
@@ -292,9 +296,7 @@ class _MapScreenState extends State<MapScreen> {
                   children: List.generate(tabs.length, (index) {
                     final isSelected = _selectedIndex == index;
                     return GestureDetector(
-                      onTap: () {
-                        setState(() => _selectedIndex = index);
-                      },
+                      onTap: () => setState(() => _selectedIndex = index),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -323,7 +325,90 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
           ),
+
+          /// 🔹 Нижние кнопки: "Фильтры" и "Добавить" (без прозрачности)
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: kBottomNavigationBarHeight - 40, // ближе к нижней панели
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _SolidPillButton(
+                  icon: Icons.tune,
+                  label: 'Фильтры',
+                  onTap: () {
+                    // TODO: открыть фильтры
+                  },
+                ),
+                _SolidPillButton(
+                  icon: Icons.add_circle_outline,
+                  label: 'Добавить',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AddEventScreen()),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+/// Кнопка-«таблетка» без прозрачности/blur
+class _SolidPillButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SolidPillButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20), // ← радиус 20
+      elevation: 0,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20), // ← радиус 20
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20), // ← радиус 20
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: Colors.black87),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

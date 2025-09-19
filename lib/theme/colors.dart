@@ -15,6 +15,7 @@ class AppColors {
   static const Color border = Color(0xFFEAEBEE);
 
   // 🔹 Цвета
+  static const Color white = Color(0xFFFFFFFF);
   static const Color red = Color(0xFFE3272D);
   static const Color orange = Color(0xFFEB9D00);
   static const Color green = Color(0xFF17A948);

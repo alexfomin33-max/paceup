@@ -1,7 +1,8 @@
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../theme/app_theme.dart';
-import 'dart:io';
 
 /// 🔹 Экран создания нового поста
 class NewPostScreen extends StatefulWidget {
@@ -105,7 +106,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
     );
   }
 
-  // 🔹 Кнопка добавления фото (пунктирная рамка)
+  // 🔹 Кнопка добавления фото — без пунктира, с иконкой фото
   Widget _addPhotoButton() {
     return GestureDetector(
       onTap: _pickImage,
@@ -115,34 +116,49 @@ class _NewPostScreenState extends State<NewPostScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(6),
           color: AppColors.background,
+          border: Border.all(color: AppColors.border),
         ),
-        child: CustomPaint(
-          painter: _DashedBorderPainter(),
-          child: const Center(
-            child: Icon(Icons.add, size: 36, color: Colors.grey),
-          ),
+        child: const Center(
+          child: Icon(CupertinoIcons.photo, size: 28, color: Colors.grey),
         ),
       ),
     );
   }
 
-  // 🔹 Превью выбранного фото с кнопкой удаления
+  // 🔹 Превью выбранного фото (без рамки) с кнопкой удаления
   Widget _photoPreview(File file) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Container(
-          width: 76,
-          height: 76,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0xFFBDC1CA), width: 1),
-            image: DecorationImage(image: FileImage(file), fit: BoxFit.cover),
+        GestureDetector(
+          onTap: () async {
+            // по тапу можно заменить картинку
+            final XFile? pickedFile = await _picker.pickImage(
+              source: ImageSource.gallery,
+            );
+            if (pickedFile != null) {
+              setState(() {
+                final idx = _images.indexOf(file);
+                if (idx != -1) {
+                  _images[idx] = File(pickedFile.path);
+                }
+                _updatePublishState();
+              });
+            }
+          },
+          child: Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+              // ВАЖНО: без рамки у выбранного фото
+              image: DecorationImage(image: FileImage(file), fit: BoxFit.cover),
+            ),
           ),
         ),
         Positioned(
-          top: 2,
-          right: 2,
+          top: -6,
+          right: -6,
           child: GestureDetector(
             onTap: () {
               setState(() {
@@ -151,11 +167,13 @@ class _NewPostScreenState extends State<NewPostScreen> {
               });
             },
             child: Container(
+              width: 22,
+              height: 22,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.red,
               ),
-              child: const Icon(Icons.close, size: 18, color: Colors.white),
+              child: const Icon(Icons.close, size: 16, color: Colors.white),
             ),
           ),
         ),
@@ -225,34 +243,4 @@ class _NewPostScreenState extends State<NewPostScreen> {
       });
     }
   }
-}
-
-/// 🔹 Кастомный рисовальщик пунктирной рамки
-class _DashedBorderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    const dashWidth = 5.0;
-    const dashSpace = 5.0;
-    final paint = Paint()
-      ..color = const Color(0xFFBDC1CA)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(rect, const Radius.circular(6)));
-
-    final metrics = path.computeMetrics();
-    for (final metric in metrics) {
-      double distance = 0;
-      while (distance < metric.length) {
-        final next = distance + dashWidth;
-        canvas.drawPath(metric.extractPath(distance, next), paint);
-        distance = next + dashSpace;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

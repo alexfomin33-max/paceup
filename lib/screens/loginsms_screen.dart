@@ -66,7 +66,7 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'code': userCode, 'phone': widget.phone}),
       );
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         // 🔹 Преобразуем код в int, если не получилось — 0
@@ -176,11 +176,7 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
                   /// 🔹 Инструкция для пользователя
                   Text(
                     "Введите код, отправленный на номер\n${widget.phone}",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontFamily: "Inter",
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 15),
                     textAlign: TextAlign.left,
                   ),
                   const SizedBox(height: 20),
@@ -209,7 +205,7 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 15,
-                        fontFamily: "Inter",
+
                         fontWeight: FontWeight.w500,
                       ),
                       textAlign: TextAlign.left,

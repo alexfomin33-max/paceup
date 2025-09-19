@@ -78,7 +78,6 @@ class EnterAccScreen extends StatelessWidget {
                         labelStyle: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
-                          fontFamily: "Inter",
                         ),
                         // 🔹 Стиль рамки поля
                         border: OutlineInputBorder(
@@ -115,7 +114,7 @@ class EnterAccScreen extends StatelessWidget {
                       onPressed: () {
                         // 🔹 Переход на экран подтверждения через SMS,
                         // передаём номер телефона
-                        if(phoneController.text.length >= 11) {
+                        if (phoneController.text.length >= 11) {
                           Navigator.pushReplacementNamed(
                             context,
                             '/loginsms',
@@ -137,7 +136,6 @@ class EnterAccScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          fontFamily: "Inter",
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -166,7 +164,6 @@ class EnterAccScreen extends StatelessWidget {
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          fontFamily: "Inter",
                         ),
                       ),
                     ),

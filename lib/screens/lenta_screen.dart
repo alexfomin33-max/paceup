@@ -8,6 +8,7 @@ import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'chat_screen.dart'; // импортируем страницу чата
 import 'notifications_screen.dart';
 import '../models/notification_item.dart';
+import 'dart:ui'; // для ImageFilter.blur
 
 /// 🔹 Экран Ленты (Feed)
 class LentaScreen extends StatefulWidget {
@@ -47,18 +48,37 @@ class _LentaScreenState extends State<LentaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // ⚡️ фон убираем — теперь AppBar будет реально поверх контента
       backgroundColor: const Color(0xFFF3F4F6),
+
+      // ⚡️ разрешаем контенту уходить под AppBar
+      extendBodyBehindAppBar: true,
+
       appBar: AppBar(
+        // лёгкая белая дымка + будет смешиваться с размытым фоном
+        backgroundColor: Colors.white.withValues(alpha: 0.50),
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        backgroundColor: Colors.white,
+
+        // ⬇️ это и есть эффект стекла
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20), // можно 16–28
+            child: Container(color: Colors.transparent), // слой-заглушка
+          ),
+        ),
+
         centerTitle: true,
         automaticallyImplyLeading: false,
         leadingWidth: 100,
+
+        // тонкая разделительная линия сверху контента (по желанию)
         shape: const Border(
-          bottom: BorderSide(color: Color(0xFFDFE2E8), width: 0.5),
+          bottom: BorderSide(color: Color(0x33FFFFFF), width: 0.6),
         ),
+
+        // ——— оставляем твои кнопки как были ———
         leading: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -96,12 +116,10 @@ class _LentaScreenState extends State<LentaScreen> {
             children: [
               IconButton(
                 onPressed: () async {
-                  // Переход на экран уведомлений
                   await Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => NotificationsScreen()),
                   );
-                  // После возвращения можно пометить все уведомления как просмотренные
                   setState(() {
                     _unreadCount = 0;
                   });
@@ -120,11 +138,7 @@ class _LentaScreenState extends State<LentaScreen> {
                     ),
                     child: Text(
                       "$_unreadCount",
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Colors.white,
-                        fontFamily: 'Inter',
-                      ),
+                      style: const TextStyle(fontSize: 10, color: Colors.white),
                     ),
                   ),
                 ),
@@ -132,7 +146,10 @@ class _LentaScreenState extends State<LentaScreen> {
           ),
         ],
       ),
+
       body: ListView(
+        padding: const EdgeInsets.only(top: kToolbarHeight + 38),
+        // ↑ отступ, чтобы контент не залез под AppBar
         children: [
           const ActivityBlock(),
           const SizedBox(height: 16),
@@ -152,11 +169,7 @@ class _LentaScreenState extends State<LentaScreen> {
           padding: EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             "Рекомендации для вас",
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Inter',
-            ),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ),
         const SizedBox(height: 12),
@@ -217,32 +230,21 @@ class _LentaScreenState extends State<LentaScreen> {
           const SizedBox(height: 12),
           Text(
             name,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Inter',
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w600),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 4),
           Text(
             desc,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.text,
-              fontFamily: 'Inter',
-            ),
+            style: const TextStyle(fontSize: 12, color: AppColors.text),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 4),
           Text(
             mutual,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.text,
-              fontFamily: 'Inter',
-            ),
+            style: const TextStyle(fontSize: 12, color: AppColors.text),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
@@ -259,7 +261,7 @@ class _LentaScreenState extends State<LentaScreen> {
               ),
               child: const Text(
                 "Подписаться",
-                style: TextStyle(fontFamily: 'Inter', color: Colors.white),
+                style: TextStyle(color: Colors.white),
               ),
             ),
           ),
@@ -274,8 +276,8 @@ class _LentaScreenState extends State<LentaScreen> {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
-          top: BorderSide(width: 0.5, color: Color(0xFFBDC1CA)),
-          bottom: BorderSide(width: 0.5, color: Color(0xFFBDC1CA)),
+          top: BorderSide(width: 0.5, color: AppColors.border),
+          bottom: BorderSide(width: 0.5, color: AppColors.border),
         ),
       ),
       child: Column(
@@ -327,10 +329,7 @@ class _LentaScreenState extends State<LentaScreen> {
           ),
           const Padding(
             padding: EdgeInsets.all(12),
-            child: Text(
-              "Вот так вот очень легко всех победил",
-              style: TextStyle(fontFamily: 'Inter'),
-            ),
+            child: Text("Вот так вот очень легко всех победил"),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -342,7 +341,7 @@ class _LentaScreenState extends State<LentaScreen> {
                   color: AppColors.red,
                 ),
                 const SizedBox(width: 4),
-                const Text("2707", style: TextStyle(fontFamily: 'Inter')),
+                const Text("2707"),
                 const SizedBox(width: 16),
                 GestureDetector(
                   onTap: () {
@@ -360,7 +359,7 @@ class _LentaScreenState extends State<LentaScreen> {
                         color: AppColors.orange,
                       ),
                       SizedBox(width: 4),
-                      Text("50", style: TextStyle(fontFamily: 'Inter')),
+                      Text("50"),
                     ],
                   ),
                 ),

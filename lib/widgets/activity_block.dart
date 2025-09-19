@@ -83,16 +83,16 @@ class RouteCard extends StatelessWidget {
           ),
           MarkerLayer(
             markers: [
-              Marker(
-                point: points.first,
-                width: 40,
-                height: 40,
-                child: const Icon(
-                  Icons.location_on,
-                  color: Colors.green,
-                  size: 32,
-                ),
-              ),
+              // Marker(
+              //   point: points.first,
+              //   width: 40,
+              //   height: 40,
+              //   child: const Icon(
+              //     Icons.location_on,
+              //     color: Colors.green,
+              //     size: 32,
+              //   ),
+              // ),
               Marker(
                 point: points.last,
                 width: 40,
@@ -168,7 +168,7 @@ class Popup extends StatelessWidget {
                                 style: TextStyle(
                                   color: Color(0xFF323743),
                                   fontSize: 12,
-                                  fontFamily: 'Inter',
+
                                   fontWeight: FontWeight.w400,
                                   height: 1.67,
                                 ),
@@ -178,7 +178,7 @@ class Popup extends StatelessWidget {
                                 style: TextStyle(
                                   color: Color(0xFF565D6D),
                                   fontSize: 11,
-                                  fontFamily: 'Inter',
+
                                   fontWeight: FontWeight.w400,
                                   height: 1.64,
                                 ),
@@ -188,7 +188,7 @@ class Popup extends StatelessWidget {
                                 style: TextStyle(
                                   color: Color(0xFF171A1F),
                                   fontSize: 11,
-                                  fontFamily: 'Inter',
+
                                   fontWeight: FontWeight.w600,
                                   height: 1.64,
                                 ),
@@ -198,7 +198,7 @@ class Popup extends StatelessWidget {
                                 style: TextStyle(
                                   color: Color(0xFF565D6D),
                                   fontSize: 11,
-                                  fontFamily: 'Inter',
+
                                   fontWeight: FontWeight.w400,
                                   height: 1.64,
                                 ),
@@ -248,7 +248,7 @@ class Popup extends StatelessWidget {
                                 style: TextStyle(
                                   color: Color(0xFF323743),
                                   fontSize: 12,
-                                  fontFamily: 'Inter',
+
                                   fontWeight: FontWeight.w400,
                                   height: 1.67,
                                 ),
@@ -258,7 +258,7 @@ class Popup extends StatelessWidget {
                                 style: TextStyle(
                                   color: Color(0xFF565D6D),
                                   fontSize: 11,
-                                  fontFamily: 'Inter',
+
                                   fontWeight: FontWeight.w400,
                                   height: 1.64,
                                 ),
@@ -268,7 +268,7 @@ class Popup extends StatelessWidget {
                                 style: TextStyle(
                                   color: Color(0xFF171A1F),
                                   fontSize: 11,
-                                  fontFamily: 'Inter',
+
                                   fontWeight: FontWeight.w600,
                                   height: 1.64,
                                 ),
@@ -278,7 +278,7 @@ class Popup extends StatelessWidget {
                                 style: TextStyle(
                                   color: Color(0xFF565D6D),
                                   fontSize: 11,
-                                  fontFamily: 'Inter',
+
                                   fontWeight: FontWeight.w400,
                                   height: 1.64,
                                 ),
@@ -444,7 +444,7 @@ class _EquipmentState extends State<Equipment>
                     style: TextStyle(
                       color: Color(0xFF323743),
                       fontSize: 13,
-                      fontFamily: 'Inter',
+
                       fontWeight: FontWeight.w500,
                       height: 1.69,
                     ),
@@ -454,7 +454,7 @@ class _EquipmentState extends State<Equipment>
                     style: TextStyle(
                       color: Color(0xFF565D6D),
                       fontSize: 11,
-                      fontFamily: 'Inter',
+
                       fontWeight: FontWeight.w400,
                       height: 1.64,
                     ),
@@ -464,7 +464,7 @@ class _EquipmentState extends State<Equipment>
                     style: TextStyle(
                       color: Color(0xFF171A1F),
                       fontSize: 12,
-                      fontFamily: 'Inter',
+
                       fontWeight: FontWeight.w600,
                       height: 1.64,
                     ),
@@ -474,7 +474,7 @@ class _EquipmentState extends State<Equipment>
                     style: TextStyle(
                       color: Color(0xFF565D6D),
                       fontSize: 11,
-                      fontFamily: 'Inter',
+
                       fontWeight: FontWeight.w400,
                       height: 1.64,
                     ),
@@ -570,8 +570,8 @@ class _ActivityBlockState extends State<ActivityBlock>
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
-          top: BorderSide(width: 0.5, color: Color(0xFFBDC1CA)),
-          bottom: BorderSide(width: 0.5, color: Color(0xFFBDC1CA)),
+          top: BorderSide(width: 0.5, color: AppColors.border),
+          bottom: BorderSide(width: 0.5, color: AppColors.border),
         ),
       ),
       child: Column(

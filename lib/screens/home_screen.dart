@@ -131,7 +131,6 @@ class WelcomeScreen extends StatelessWidget {
             color: Colors.white, // 🔹 Цвет текста
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            fontFamily: "Inter",
           ),
           textAlign: TextAlign.center,
         ),

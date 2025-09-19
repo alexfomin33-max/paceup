@@ -5,6 +5,9 @@ class MarketScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: Text("Market Screen")));
+    return Scaffold(
+      appBar: AppBar(title: const Text('Маркет')),
+      body: const Center(child: Text('Контент Маркета')),
+    );
   }
 }

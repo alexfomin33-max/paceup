@@ -38,7 +38,7 @@ class Regstep2ScreenState extends State<Regstep2Screen> {
                   style: TextStyle(
                     color: Color(0xFF323743),
                     fontSize: 18,
-                    fontFamily: 'Inter',
+
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -64,7 +64,7 @@ class Regstep2ScreenState extends State<Regstep2Screen> {
                       style: TextStyle(
                         color: AppColors.greytext,
                         fontSize: 13,
-                        fontFamily: 'Inter',
+
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -92,20 +92,16 @@ class Regstep2ScreenState extends State<Regstep2Screen> {
                 const Text(
                   'Данные необходимы для расчёта калорий, нагрузки, зон темпа и мощности.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.greytext,
-                    fontSize: 12,
-                    fontFamily: 'Inter',
-                  ),
+                  style: TextStyle(color: AppColors.greytext, fontSize: 12),
                 ),
                 const SizedBox(height: 50),
 
                 // Кнопка "Завершить" с переходом на ленту
                 ContinueButton(
-                  userId: widget.userId, 
-                  height: heightController, 
-                  weight: weightController, 
-                  pulse: maxPulseController
+                  userId: widget.userId,
+                  height: heightController,
+                  weight: weightController,
+                  pulse: maxPulseController,
                 ),
               ],
             ),
@@ -144,7 +140,7 @@ class CustomTextField extends StatelessWidget {
         labelStyle: const TextStyle(
           color: Color(0xFF565D6D),
           fontSize: 16,
-          fontFamily: 'Inter',
+
           fontWeight: FontWeight.w500,
         ),
         filled: true,
@@ -174,22 +170,27 @@ class CustomTextField extends StatelessWidget {
 // Кнопка Продолжить/Завершить
 // ==========================
 
-  /// 🔹 Метод для сохранения в базе введенных данных (перед переходом на следующую странцу)
-  Future<void> saveForm(int userId, dynamic height, dynamic weight, dynamic pulse) async {
-    try {
-      final response = await http.post(
-        Uri.parse('http://api.paceup.ru/save_reg_form2.php'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'user_id': userId,
-          'height': height.text, 
-          'weight': weight.text, 
-          'pulse': pulse.text, 
-        }),
-      );
-      //print(response.body);
-    } catch (e) {}
-  }
+/// 🔹 Метод для сохранения в базе введенных данных (перед переходом на следующую странцу)
+Future<void> saveForm(
+  int userId,
+  dynamic height,
+  dynamic weight,
+  dynamic pulse,
+) async {
+  try {
+    final response = await http.post(
+      Uri.parse('http://api.paceup.ru/save_reg_form2.php'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'user_id': userId,
+        'height': height.text,
+        'weight': weight.text,
+        'pulse': pulse.text,
+      }),
+    );
+    //print(response.body);
+  } catch (e) {}
+}
 
 class ContinueButton extends StatelessWidget {
   final int userId; // передаем userId для следующего экрана
@@ -198,11 +199,11 @@ class ContinueButton extends StatelessWidget {
   final TextEditingController pulse;
 
   const ContinueButton({
-    super.key, 
-    required this.userId, 
-    required this.height, 
-    required this.weight, 
-    required this.pulse
+    super.key,
+    required this.userId,
+    required this.height,
+    required this.weight,
+    required this.pulse,
   });
 
   @override
@@ -229,7 +230,7 @@ class ContinueButton extends StatelessWidget {
         style: TextStyle(
           color: Colors.white,
           fontSize: 14,
-          fontFamily: 'Inter',
+
           fontWeight: FontWeight.w400,
         ),
       ),

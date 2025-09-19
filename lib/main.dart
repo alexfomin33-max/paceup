@@ -1,29 +1,3 @@
-/*import "package:flutter/material.dart";
-import "screens/home_screen.dart";
-
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      initialRoute: '/',
-      routes: {
-        '/': (context) => HomeScreen(),
-        //'/login': (context) => LoginScreen(),
-        //'/profile': (context) => ProfileScreen(),
-      },
-      theme: ThemeData(
-        fontFamily: "Inter",
-      ),
-    );
-  }
-}*/
-
 import 'package:flutter/material.dart';
 import 'routes.dart';
 // import 'screens/splash_screen.dart';
@@ -43,9 +17,37 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PaceUp',
-      theme: ThemeData(fontFamily: 'Inter'),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        scaffoldBackgroundColor: Colors.white,
+        fontFamily: 'Inter', // глобально для всего текста
+        // чтобы label/hint в полях тоже были Inter
+        inputDecorationTheme: const InputDecorationTheme(
+          hintStyle: TextStyle(fontFamily: 'Inter'),
+          labelStyle: TextStyle(fontFamily: 'Inter'),
+        ),
+
+        // чтобы сам Dropdown и его пункты были Inter
+        dropdownMenuTheme: const DropdownMenuThemeData(
+          textStyle: TextStyle(fontFamily: 'Inter'),
+          // можно добавить ещё menuStyle, если нужно
+        ),
+
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.white.withValues(alpha: 0.6),
+          elevation: 0,
+          centerTitle: true,
+          titleTextStyle: const TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Inter', // на всякий случай
+          ),
+          iconTheme: const IconThemeData(color: Colors.black),
+        ),
+      ),
       initialRoute: '/splash',
-      onGenerateRoute: onGenerateRoute, // ✅ теперь используем кастомный роутер
+      onGenerateRoute: onGenerateRoute,
     );
   }
 }
