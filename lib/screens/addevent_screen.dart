@@ -118,8 +118,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
-    if (ok)
+    if (ok) {
       setState(() => time = TimeOfDay(hour: temp.hour, minute: temp.minute));
+    }
 
     _isPickerOpen = false;
     setState(() {});
@@ -219,8 +220,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
       onHorizontalDragStart: (d) => _dragStartX = d.globalPosition.dx,
       onHorizontalDragEnd: (d) {
         if (_isPickerOpen) return; // если открыт попап — не свайпаем назад
-        if ((_dragStartX ?? 1000) > 24)
+        if ((_dragStartX ?? 1000) > 24) {
           return; // свайп только от самого левого края
+        }
         if ((d.primaryVelocity ?? 0) > 300) {
           Navigator.pop(context);
         }

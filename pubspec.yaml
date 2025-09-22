@@ -92,6 +92,31 @@ flutter:
      - assets/newpost_2.png
      - assets/Vlad_event_1.png
      - assets/Vlad_event_2.png
+     - assets/slot_1.png
+     - assets/slot_2.png
+     - assets/slot_3.png
+     - assets/slot_4.png
+     - assets/slot_5.png
+     - assets/slot_6.png
+     - assets/slot_7.png
+     - assets/sneakers1_1.png
+     - assets/sneakers1_2.png
+     - assets/sneakers1_3.png
+     - assets/sneakers2_1.png
+     - assets/sneakers2_2.png
+     - assets/sneakers2_3.png
+     - assets/sneakers2_4.png
+     - assets/sneakers2_5.png
+     - assets/watch_1.png
+     - assets/watch_2.png
+     - assets/watch_3.png
+     - assets/sneakers3_1.png
+     - assets/sneakers3_2.png
+     - assets/sneakers3_3.png
+     - assets/sneakers3_4.png
+     - assets/Irina.png
+     - assets/Leyla.png
+
      
 
   # An image asset can refer to one or more resolution-specific "variants", see

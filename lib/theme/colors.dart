@@ -6,7 +6,7 @@ class AppColors {
   static const Color secondary = Color(0xFF379AE6);
 
   // 🔹 Фоновые цвета
-  static const Color background = Color(0xFFF3F4F6);
+  static const Color background = Color(0xFFf2f2f7);
   static const Color backgroundRed = Color(0xFFFDF2F2);
   static const Color backgroundYellow = Color(0xFFFFF6E2);
   static const Color backgroundGreen = Color(0xFFEEFDF3);
