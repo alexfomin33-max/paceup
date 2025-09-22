@@ -5,7 +5,7 @@ import 'package:latlong2/latlong.dart';
 import '../theme/app_theme.dart';
 import '../widgets/comments_bottom_sheet.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:paceup/models/activity_lenta.dart';
+import 'package:paceup/models/activity_lenta.dart'; // <-- Модель Activity
 
 /// 🔹 Виджет вертикальной метрики
 class MetricVertical extends StatelessWidget {
@@ -27,25 +27,13 @@ class MetricVertical extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          mainTitle,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
+        Text(mainTitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 4),
-        Text(
-          mainValue,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-        ),
+        Text(mainValue, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Text(
-          subTitle,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
+        Text(subTitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 4),
-        Text(
-          subValue,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-        ),
+        Text(subValue, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
       ],
     );
   }
@@ -59,12 +47,13 @@ class RouteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (points.isEmpty) return const Text("Нет точек маршрута");
+    if (points.isEmpty) return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: Text("Нет точек маршрута"),
+    );
 
-    final lat =
-        points.map((e) => e.latitude).reduce((a, b) => a + b) / points.length;
-    final lng =
-        points.map((e) => e.longitude).reduce((a, b) => a + b) / points.length;
+    final lat = points.map((e) => e.latitude).reduce((a, b) => a + b) / points.length;
+    final lng = points.map((e) => e.longitude).reduce((a, b) => a + b) / points.length;
     final center = LatLng(lat, lng);
 
     return SizedBox(
@@ -84,16 +73,6 @@ class RouteCard extends StatelessWidget {
           ),
           MarkerLayer(
             markers: [
-              // Marker(
-              //   point: points.first,
-              //   width: 40,
-              //   height: 40,
-              //   child: const Icon(
-              //     Icons.location_on,
-              //     color: Colors.green,
-              //     size: 32,
-              //   ),
-              // ),
               Marker(
                 point: points.last,
                 width: 40,
@@ -150,10 +129,7 @@ class Popup extends StatelessWidget {
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Image.asset(
-                            "assets/Hoka.png",
-                            fit: BoxFit.fill,
-                          ),
+                          child: Image.asset("assets/Hoka.png", fit: BoxFit.fill),
                         ),
                       ),
                       Container(
@@ -166,43 +142,19 @@ class Popup extends StatelessWidget {
                             children: [
                               TextSpan(
                                 text: 'Hoka One One Bondi 8\n',
-                                style: TextStyle(
-                                  color: Color(0xFF323743),
-                                  fontSize: 12,
-
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.67,
-                                ),
+                                style: TextStyle(color: Color(0xFF323743), fontSize: 12, fontWeight: FontWeight.w400, height: 1.67),
                               ),
                               TextSpan(
                                 text: 'Пробег: ',
-                                style: TextStyle(
-                                  color: Color(0xFF565D6D),
-                                  fontSize: 11,
-
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.64,
-                                ),
+                                style: TextStyle(color: Color(0xFF565D6D), fontSize: 11, fontWeight: FontWeight.w400, height: 1.64),
                               ),
                               TextSpan(
                                 text: '836',
-                                style: TextStyle(
-                                  color: Color(0xFF171A1F),
-                                  fontSize: 11,
-
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.64,
-                                ),
+                                style: TextStyle(color: Color(0xFF171A1F), fontSize: 11, fontWeight: FontWeight.w600, height: 1.64),
                               ),
                               TextSpan(
                                 text: ' км',
-                                style: TextStyle(
-                                  color: Color(0xFF565D6D),
-                                  fontSize: 11,
-
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.64,
-                                ),
+                                style: TextStyle(color: Color(0xFF565D6D), fontSize: 11, fontWeight: FontWeight.w400, height: 1.64),
                               ),
                             ],
                           ),
@@ -212,15 +164,7 @@ class Popup extends StatelessWidget {
                   ),
                 ),
               ),
-              Positioned(
-                left: 0,
-                top: 56,
-                child: Container(
-                  width: 288,
-                  height: 1,
-                  color: const Color(0xFFECECEC),
-                ),
-              ),
+              Positioned(left: 0, top: 56, child: Container(width: 288, height: 1, color: Color(0xFFECECEC))),
               Positioned(
                 left: 0,
                 top: 57,
@@ -246,43 +190,19 @@ class Popup extends StatelessWidget {
                             children: [
                               TextSpan(
                                 text: 'Anta M C202\n',
-                                style: TextStyle(
-                                  color: Color(0xFF323743),
-                                  fontSize: 12,
-
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.67,
-                                ),
+                                style: TextStyle(color: Color(0xFF323743), fontSize: 12, fontWeight: FontWeight.w400, height: 1.67),
                               ),
                               TextSpan(
                                 text: 'Пробег: ',
-                                style: TextStyle(
-                                  color: Color(0xFF565D6D),
-                                  fontSize: 11,
-
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.64,
-                                ),
+                                style: TextStyle(color: Color(0xFF565D6D), fontSize: 11, fontWeight: FontWeight.w400, height: 1.64),
                               ),
                               TextSpan(
                                 text: '1204',
-                                style: TextStyle(
-                                  color: Color(0xFF171A1F),
-                                  fontSize: 11,
-
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.64,
-                                ),
+                                style: TextStyle(color: Color(0xFF171A1F), fontSize: 11, fontWeight: FontWeight.w600, height: 1.64),
                               ),
                               TextSpan(
                                 text: ' км',
-                                style: TextStyle(
-                                  color: Color(0xFF565D6D),
-                                  fontSize: 11,
-
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.64,
-                                ),
+                                style: TextStyle(color: Color(0xFF565D6D), fontSize: 11, fontWeight: FontWeight.w400, height: 1.64),
                               ),
                             ],
                           ),
@@ -308,8 +228,7 @@ class Equipment extends StatefulWidget {
   _EquipmentState createState() => _EquipmentState();
 }
 
-class _EquipmentState extends State<Equipment>
-    with SingleTickerProviderStateMixin {
+class _EquipmentState extends State<Equipment> with SingleTickerProviderStateMixin {
   final GlobalKey _buttonKey = GlobalKey();
   OverlayEntry? _overlayEntry;
   late AnimationController _popupController;
@@ -319,18 +238,9 @@ class _EquipmentState extends State<Equipment>
   @override
   void initState() {
     super.initState();
-    _popupController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 250),
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _popupController, curve: Curves.easeInOut),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1).animate(
-      CurvedAnimation(parent: _popupController, curve: Curves.easeOutBack),
-    );
+    _popupController = AnimationController(vsync: this, duration: const Duration(milliseconds: 250));
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _popupController, curve: Curves.easeInOut));
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1).animate(CurvedAnimation(parent: _popupController, curve: Curves.easeOutBack));
   }
 
   @override
@@ -346,24 +256,17 @@ class _EquipmentState extends State<Equipment>
     final position = renderBox.localToGlobal(Offset.zero);
     final size = renderBox.size;
 
-    final topPosition = position.dy - 120 < 20
-        ? position.dy + size.height
-        : position.dy - 120;
+    final topPosition = position.dy - 120 < 20 ? position.dy + size.height : position.dy - 120;
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Stack(
         children: [
           Positioned.fill(
-            child: GestureDetector(
-              onTap: _hidePopup,
-              child: Container(color: Colors.transparent),
-            ),
+            child: GestureDetector(onTap: _hidePopup, child: Container(color: Colors.transparent)),
           ),
           Positioned(
             top: topPosition,
-            left: position.dx + size.width - 288 < 0
-                ? 8
-                : position.dx + size.width - 288,
+            left: position.dx + size.width - 288 < 0 ? 8 : position.dx + size.width - 288,
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: ScaleTransition(
@@ -376,13 +279,7 @@ class _EquipmentState extends State<Equipment>
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
+                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
                     ),
                     child: const Popup(),
                   ),
@@ -423,62 +320,33 @@ class _EquipmentState extends State<Equipment>
               width: 50,
               height: 50,
               decoration: ShapeDecoration(
-                image: const DecorationImage(
-                  image: AssetImage("assets/Asics.png"),
-                  fit: BoxFit.fill,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                ),
+                image: const DecorationImage(image: AssetImage("assets/Asics.png"), fit: BoxFit.fill),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
               ),
             ),
           ),
-          Positioned(
+          const Positioned(
             left: 60,
             top: 7,
             right: 60,
-            child: const Text.rich(
+            child: Text.rich(
               TextSpan(
                 children: [
                   TextSpan(
                     text: "Asics Jolt 3 Wide 'Dive Blue'\n",
-                    style: TextStyle(
-                      color: Color(0xFF323743),
-                      fontSize: 13,
-
-                      fontWeight: FontWeight.w500,
-                      height: 1.69,
-                    ),
+                    style: TextStyle(color: Color(0xFF323743), fontSize: 13, fontWeight: FontWeight.w500, height: 1.69),
                   ),
                   TextSpan(
                     text: "Пробег: ",
-                    style: TextStyle(
-                      color: Color(0xFF565D6D),
-                      fontSize: 11,
-
-                      fontWeight: FontWeight.w400,
-                      height: 1.64,
-                    ),
+                    style: TextStyle(color: Color(0xFF565D6D), fontSize: 11, fontWeight: FontWeight.w400, height: 1.64),
                   ),
                   TextSpan(
                     text: "582",
-                    style: TextStyle(
-                      color: Color(0xFF171A1F),
-                      fontSize: 12,
-
-                      fontWeight: FontWeight.w600,
-                      height: 1.64,
-                    ),
+                    style: TextStyle(color: Color(0xFF171A1F), fontSize: 12, fontWeight: FontWeight.w600, height: 1.64),
                   ),
                   TextSpan(
                     text: " км",
-                    style: TextStyle(
-                      color: Color(0xFF565D6D),
-                      fontSize: 11,
-
-                      fontWeight: FontWeight.w400,
-                      height: 1.64,
-                    ),
+                    style: TextStyle(color: Color(0xFF565D6D), fontSize: 11, fontWeight: FontWeight.w400, height: 1.64),
                   ),
                 ],
               ),
@@ -501,15 +369,8 @@ class _EquipmentState extends State<Equipment>
                   key: _buttonKey,
                   width: 28,
                   height: 28,
-                  decoration: BoxDecoration(
-                    color: Colors.white, // фон кнопки
-                    shape: BoxShape.circle, // делает кнопку круглой
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.ellipsis,
-                    size: 16,
-                    color: Colors.black,
-                  ),
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: const Icon(CupertinoIcons.ellipsis, size: 16, color: Colors.black),
                 ),
               ),
             ),
@@ -520,16 +381,17 @@ class _EquipmentState extends State<Equipment>
   }
 }
 
-/// 🔹 ActivityBlock с анимацией сердечка и плавной интерактивностью
+/// 🔹 ActivityBlock c данными из модели Activity
 class ActivityBlock extends StatefulWidget {
-  const ActivityBlock({super.key});
+  final Activity activity;
+
+  const ActivityBlock({super.key, required this.activity});
 
   @override
   _ActivityBlockState createState() => _ActivityBlockState();
 }
 
-class _ActivityBlockState extends State<ActivityBlock>
-    with SingleTickerProviderStateMixin {
+class _ActivityBlockState extends State<ActivityBlock> with SingleTickerProviderStateMixin {
   bool isLiked = false;
   late AnimationController _likeController;
   late Animation<double> _likeAnimation;
@@ -537,19 +399,12 @@ class _ActivityBlockState extends State<ActivityBlock>
   @override
   void initState() {
     super.initState();
-    _likeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-
+    _likeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
     _likeAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
       CurvedAnimation(parent: _likeController, curve: Curves.easeOutBack),
     );
-
     _likeController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _likeController.reverse();
-      }
+      if (status == AnimationStatus.completed) _likeController.reverse();
     });
   }
 
@@ -564,8 +419,39 @@ class _ActivityBlockState extends State<ActivityBlock>
     _likeController.forward(from: 0);
   }
 
+  String _fmtDate(DateTime dt) {
+    // простой формат без intl
+    final dd = dt.day.toString().padLeft(2, '0');
+    final mm = dt.month.toString().padLeft(2, '0');
+    final hh = dt.hour.toString().padLeft(2, '0');
+    final min = dt.minute.toString().padLeft(2, '0');
+    return "$dd.$mm.${dt.year}, $hh:$min";
+    // можно подключить intl и сделать красиво для локали
+  }
+
+  String _fmtDuration(double seconds) {
+    final s = seconds.round();
+    final h = s ~/ 3600;
+    final m = (s % 3600) ~/ 60;
+    final sec = s % 60;
+    if (h > 0) {
+      return '$h:${m.toString().padLeft(2, '0')}:${sec.toString().padLeft(2, '0')}';
+    }
+    return '$m:${sec.toString().padLeft(2, '0')}';
+  }
+
+  String _fmtPace(double paceMinPerKm) {
+    // если avgPace = минуты.десятые (5.3 ≈ 5:18)
+    final minutes = paceMinPerKm.floor();
+    final seconds = ((paceMinPerKm - minutes) * 60).round();
+    return '$minutes:${seconds.toString().padLeft(2, '0')} / км';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final activity = widget.activity;
+    final stats = activity.stats;
+
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -586,85 +472,55 @@ class _ActivityBlockState extends State<ActivityBlock>
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
-                    "assets/Avatar_2.png",
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                  ),
+                  child: _buildAvatar(activity.userAvatar),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Игорь Зелёный", style: AppTextStyles.name),
+                      Text(activity.userName, style: AppTextStyles.name),
                       const SizedBox(height: 2),
-                      const Text(
-                        "8 июня 2025, в 10:28",
-                        style: AppTextStyles.date,
-                      ),
+                      Text(_fmtDate(activity.dateStart), style: AppTextStyles.date),
                       const SizedBox(height: 18),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           MetricVertical(
                             mainTitle: "Расстояние",
-                            mainValue: "16,00 км",
+                            mainValue: stats != null ? "${(stats.distance / 1000).toStringAsFixed(2)} км" : "—",
                             subTitle: "Набор высоты",
-                            subValue: "203 м",
+                            subValue: stats != null ? "${stats.cumulativeElevationGain.toStringAsFixed(0)} м" : "—",
                           ),
-                          SizedBox(width: 24),
+                          const SizedBox(width: 24),
                           MetricVertical(
                             mainTitle: "Время",
-                            mainValue: "1:12:34",
+                            mainValue: stats != null ? _fmtDuration(stats.duration) : "—",
                             subTitle: "Каденс",
-                            subValue: "179",
+                            subValue: "—",
                           ),
-                          SizedBox(width: 24),
+                          const SizedBox(width: 24),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              const Text("Темп", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                              const SizedBox(height: 4),
                               Text(
-                                "Темп",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
+                                stats != null ? _fmtPace(stats.avgPace) : "—",
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                               ),
-                              SizedBox(height: 4),
-                              Text(
-                                "4:16 / км",
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                "Средний пульс",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 8),
+                              const Text("Средний пульс", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                              const SizedBox(height: 4),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    "141",
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    stats?.avgHeartRate?.toStringAsFixed(0) ?? "—",
+                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                                   ),
-                                  SizedBox(width: 2),
-                                  Icon(
-                                    CupertinoIcons.heart_fill,
-                                    color: Colors.red,
-                                    size: 12,
-                                  ),
+                                  const SizedBox(width: 2),
+                                  const Icon(CupertinoIcons.heart_fill, color: Colors.red, size: 12),
                                 ],
                               ),
                             ],
@@ -678,15 +534,15 @@ class _ActivityBlockState extends State<ActivityBlock>
             ),
           ),
           const SizedBox(height: 2),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Equipment(),
-          ),
+          const Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Equipment()),
           const SizedBox(height: 8),
-          const RouteCard(
-            points: [LatLng(56.43246, 40.42653), LatLng(56.43242, 40.42624)],
+          // Маршрут с данными из activity.route
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: RouteCard(points: activity.route),
           ),
           const SizedBox(height: 12),
+          // Нижняя панель: лайки/комменты и прочее
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -697,35 +553,24 @@ class _ActivityBlockState extends State<ActivityBlock>
                     GestureDetector(
                       onTap: _onLikeTap,
                       child: Container(
-                        width: 25, // размер зоны нажатия
+                        width: 25,
                         height: 25,
                         alignment: Alignment.center,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color:
-                              Colors.transparent, // визуально ничего не видно
-                        ),
+                        decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.transparent),
                         child: ScaleTransition(
                           scale: _likeAnimation,
                           child: Icon(
-                            isLiked
-                                ? CupertinoIcons.heart_solid
-                                : CupertinoIcons.heart,
+                            isLiked ? CupertinoIcons.heart_solid : CupertinoIcons.heart,
                             size: 20,
                             color: isLiked ? Colors.red : AppColors.red,
                           ),
                         ),
                       ),
                     ),
-
                     const SizedBox(width: 4),
-                    const Text(
-                      "35",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
+                    Text(
+                      activity.likes.toString(),
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black),
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
@@ -740,61 +585,26 @@ class _ActivityBlockState extends State<ActivityBlock>
                         width: 25,
                         height: 25,
                         alignment: Alignment.center,
-
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.transparent,
-                        ),
-                        child: const Icon(
-                          CupertinoIcons.chat_bubble,
-                          size: 20,
-                          color: AppColors.orange,
-                        ),
+                        decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.transparent),
+                        child: const Icon(CupertinoIcons.chat_bubble, size: 20, color: AppColors.orange),
                       ),
                     ),
-
                     const SizedBox(width: 4),
-                    const Text(
-                      "2",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
+                    Text(
+                      activity.comments.toString(),
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black),
                     ),
                   ],
                 ),
                 Row(
                   children: const [
-                    Icon(
-                      CupertinoIcons.person_2,
-                      size: 20,
-                      color: AppColors.green,
-                    ),
+                    Icon(CupertinoIcons.person_2, size: 20, color: AppColors.green),
                     SizedBox(width: 4),
-                    Text(
-                      "48",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-                    ),
+                    Text("48", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black)),
                     SizedBox(width: 12),
-                    Icon(
-                      CupertinoIcons.person_crop_circle_badge_plus,
-                      size: 20,
-                      color: AppColors.secondary,
-                    ),
+                    Icon(CupertinoIcons.person_crop_circle_badge_plus, size: 20, color: AppColors.secondary),
                     SizedBox(width: 4),
-                    Text(
-                      "3",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-                    ),
+                    Text("3", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black)),
                   ],
                 ),
               ],
@@ -804,5 +614,20 @@ class _ActivityBlockState extends State<ActivityBlock>
         ],
       ),
     );
+  }
+
+  Widget _buildAvatar(String urlOrAsset) {
+    // если это HTTP(S) — грузим как сеть, иначе считаем ассетом
+    final isNetwork = urlOrAsset.startsWith('http://') || urlOrAsset.startsWith('https://');
+    if (isNetwork) {
+      return Image.network(
+        urlOrAsset,
+        width: 50,
+        height: 50,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Image.asset("assets/Avatar_2.png", width: 50, height: 50, fit: BoxFit.cover),
+      );
+    }
+    return Image.asset(urlOrAsset.isNotEmpty ? urlOrAsset : "assets/Avatar_2.png", width: 50, height: 50, fit: BoxFit.cover);
   }
 }
