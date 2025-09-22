@@ -45,6 +45,14 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
   final _ctrl = TextEditingController();
   final _picker = ImagePicker();
 
+  String _today() {
+    final now = DateTime.now();
+    final dd = now.day.toString().padLeft(2, '0');
+    final mm = now.month.toString().padLeft(2, '0');
+    final yyyy = now.year.toString();
+    return '$dd.$mm.$yyyy';
+  }
+
   final List<_ChatMsg> _messages = const [
     _ChatMsg.text(
       side: _MsgSide.right,
@@ -98,6 +106,12 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ─────────────────────────────────────────────────────────────
+    // ВАЖНО: теперь в списке есть «хедеры», которые тоже скроллятся.
+    // headerCount = 5 элементов (дата, 2 участника, Divider, SizedBox)
+    // ─────────────────────────────────────────────────────────────
+    const int headerCount = 5;
+
     return Scaffold(
       backgroundColor: Colors.white, // фон чата — белый
       appBar: AppBar(
@@ -140,6 +154,7 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
                     'Чат продажи вещи',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     widget.itemTitle,
                     maxLines: 1,
@@ -154,30 +169,49 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
       ),
       body: Column(
         children: [
-          const _DateSeparator(
-            text: '30.06.2025, автоматическое создание чата',
-          ),
-          const _ParticipantRow(
-            avatarAsset: 'assets/Irina.png',
-            nameAndRole: 'Ирина Селиванова - продавец',
-          ),
-          const _ParticipantRow(
-            avatarAsset: 'assets/Leyla.png',
-            nameAndRole: 'Лейла Мустафаева - покупатель',
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Divider(height: 16, thickness: 1, color: AppColors.border),
-          ),
-          const SizedBox(height: 8),
-
-          // сообщения
+          // ─────────────────────────────────────────────────────────
+          // Прокручиваемая область: headers + сообщения в одном ListView
+          // ─────────────────────────────────────────────────────────
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              itemCount: _messages.length,
-              itemBuilder: (_, i) {
-                final m = _messages[i];
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+              // bottom padding побольше, чтобы последний элемент не прятался за Composer
+              itemCount: headerCount + _messages.length,
+              itemBuilder: (_, index) {
+                // 0..headerCount-1 — это наши «шапки», которые раньше были над списком.
+                if (index == 0) {
+                  return _DateSeparator(
+                    text: '${_today()}, автоматическое создание чата',
+                  );
+                }
+                if (index == 1) {
+                  return const _ParticipantRow(
+                    avatarAsset: 'assets/Irina.png',
+                    nameAndRole: 'Ирина Селиванова - продавец',
+                  );
+                }
+                if (index == 2) {
+                  return const _ParticipantRow(
+                    avatarAsset: 'assets/Leyla.png',
+                    nameAndRole: 'Лейла Мустафаева - покупатель',
+                  );
+                }
+                if (index == 3) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: Divider(
+                      height: 16,
+                      thickness: 1,
+                      color: AppColors.border,
+                    ),
+                  );
+                }
+                if (index == 4) {
+                  return const SizedBox(height: 8);
+                }
+
+                // дальше — сообщения
+                final m = _messages[index - headerCount];
                 if (m.kind == _MsgKind.image) {
                   return m.side == _MsgSide.right
                       ? _BubbleImageRight(file: m.imageFile!, time: m.time)
@@ -191,6 +225,9 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
             ),
           ),
 
+          // ─────────────────────────────────────────────────────────
+          // Неподвижная нижняя панель ввода (Composer)
+          // ─────────────────────────────────────────────────────────
           _Composer(
             controller: _ctrl,
             onSend: _sendText,
@@ -278,7 +315,6 @@ class _BubbleLeft extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // текст теперь тянется на всю ширину пузыря
                   SizedBox(
                     width: double.infinity,
                     child: Text(
@@ -286,7 +322,6 @@ class _BubbleLeft extends StatelessWidget {
                       style: const TextStyle(fontSize: 14, height: 1.35),
                     ),
                   ),
-                  // убираем SizedBox, делаем маленький верхний отступ
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Align(
@@ -306,10 +341,8 @@ class _BubbleLeft extends StatelessWidget {
           ),
 
           const SizedBox(width: 6),
-          // 👉 иконка справа от серого облака продавца
           const Icon(
             CupertinoIcons.arrowshape_turn_up_left,
-
             size: 18,
             color: Color(0xFF6E6E6E),
           ),
@@ -347,7 +380,6 @@ class _BubbleRight extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // текст теперь тянется на всю ширину пузыря
                   SizedBox(
                     width: double.infinity,
                     child: Text(
@@ -355,7 +387,6 @@ class _BubbleRight extends StatelessWidget {
                       style: const TextStyle(fontSize: 14, height: 1.35),
                     ),
                   ),
-                  // убираем SizedBox, делаем маленький верхний отступ
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Align(
@@ -379,7 +410,7 @@ class _BubbleRight extends StatelessWidget {
   }
 }
 
-/// Пузырь с изображением — слева (если понадобится)
+/// Пузырь с изображением — слева
 class _BubbleImageLeft extends StatelessWidget {
   final File file;
   final String time;
@@ -436,7 +467,7 @@ class _BubbleImageLeft extends StatelessWidget {
   }
 }
 
-/// Пузырь с изображением — справа (для пользователя при отправке фото)
+/// Пузырь с изображением — справа
 class _BubbleImageRight extends StatelessWidget {
   final File file;
   final String time;
@@ -559,9 +590,7 @@ class _ComposerState extends State<_Composer> {
                   maxLines: 4,
                   decoration: const InputDecoration(
                     hintText: 'Сообщение...',
-                    hintStyle: TextStyle(
-                      color: Colors.black38,
-                    ), // серый плейсхолдер
+                    hintStyle: TextStyle(color: Colors.black38),
                     border: InputBorder.none,
                   ),
                 ),

@@ -1,13 +1,9 @@
 // lib/screens/market_screen.dart
 // Экран "Маркет": две вкладки — «Слоты» и «Вещи».
-// Здесь только логика экрана: переключение вкладок, фильтры, списки и демо-данные.
-// Сами карточки (слота и товара) вынесены в отдельные виджеты и импортируются ниже.
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-// Модели и виджеты карточек (мы их вынесли из экрана в отдельные файлы)
 import '../models/market_models.dart';
 import '../widgets/market_slot_card.dart';
 import '../widgets/market_goods_card.dart';
@@ -19,187 +15,240 @@ class MarketScreen extends StatefulWidget {
 }
 
 class _MarketScreenState extends State<MarketScreen> {
-  // Какую вкладку показываем: 0 — «Слоты», 1 — «Вещи»
+  // Какая вкладка: 0 — «Слоты», 1 — «Вещи»
   int _segment = 0;
 
-  // Параметры фильтрации (применяются только к «Слотам»)
-  Set<Gender> _filterGender = {Gender.female, Gender.male}; // показывать Ж и М
-  bool _onlyAvailable = false; // если true — показывать только доступные слоты
-  SortMode _sort = SortMode.relevance; // сортировка
+  // Поиск (используем только на вкладке «Слоты»)
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _searchQuery = '';
 
-  // Наборы «раскрытых» карточек (индексы элементов списка)
-  // Храним отдельно для слотов и для вещей
+  // Фильтр по полу — общий для обеих вкладок (быстрые кнопки пола)
+  Set<Gender> _filterGender = {Gender.female, Gender.male};
+
+  // Категория для «Вещей» (вместо поиска)
+  final List<String> _goodsCategories = const ['Все', 'Обувь', 'Часы'];
+  String _selectedGoodsCategory = 'Все';
+
+  // Наборы раскрытых карточек
   final Set<int> _expandedSlots = {};
   final Set<int> _expandedGoods = {};
 
   @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Применяем фильтры и сортировку к исходным демо-данным (только для слотов)
-    final slotItems = _applyFilters(_demoItems);
+    // Готовим отфильтрованные данные под каждую вкладку
+    final slotItems = _applySlotFilters(_demoItems);
+    final goodsItems = _applyGoodsFilters(_demoGoods);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0.5,
-        // Кнопка слева — открывает фильтры (работают только для «Слоты»)
-        leading: _RoundIconButton(
-          icon: CupertinoIcons.slider_horizontal_3,
-          onPressed: _openFilters,
-        ),
-        // Заголовок — наши «табы» (визуальные переключатели)
-        title: _TopTabs(
-          value: _segment,
-          onChanged: (v) => setState(() => _segment = v), // переключаем вкладку
-          segments: const ['Слоты', 'Вещи'],
-        ),
-        centerTitle: true,
-        // Правая иконка — резерв (пока без действия)
-        actions: [
-          _RoundIconButton(
-            icon: CupertinoIcons.slider_horizontal_below_rectangle,
-            onPressed: () {},
+        elevation: 1, // маленькая тень снизу
+        shadowColor: Colors.black26,
+        automaticallyImplyLeading: false,
+        title: null,
+        flexibleSpace: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Центр: табы «Слоты — Вещи»
+                Center(
+                  child: _TopTabs(
+                    value: _segment,
+                    onChanged: (v) => setState(() => _segment = v),
+                    segments: const ['Слоты', 'Вещи'],
+                  ),
+                ),
+
+                // Правый край: иконка "Продать"
+                Positioned(
+                  right: 12,
+                  child: GestureDetector(
+                    onTap: () {
+                      // TODO: открыть экран добавления слота/вещи
+                      print('Иконка Продать нажата');
+                    },
+                    child: const Icon(
+                      CupertinoIcons.money_rubl_circle,
+                      size: 26,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: 12),
-        ],
+        ),
       ),
 
-      // AnimatedSwitcher красиво анимирует смену целого списка при переключении вкладки
+      // 2) Весь контент — один ListView: «хедеры» (поиск/категория + кнопки пола) И карточки.
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeIn,
-        // Если выбрана вкладка «Слоты» (0) — рисуем список слотов,
-        // иначе — список товаров («Вещи»)
         child: (_segment == 0)
-            ? ListView.separated(
-                key: const ValueKey(
-                  'slots',
-                ), // ключ, чтобы AnimatedSwitcher понимал: это другой список
-                padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
-                itemCount: slotItems.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (_, i) {
-                  final isOpen = _expandedSlots.contains(
-                    i,
-                  ); // раскрыта ли карточка с индексом i
-                  return MarketSlotCard(
-                    item: slotItems[i], // данные слота
-                    expanded: isOpen, // флаг «раскрыто»
-                    onToggle: () {
-                      // переключить раскрытие
-                      setState(() {
-                        _expandedSlots.toggle(i);
-                      });
-                    },
-                  );
-                },
-              )
-            : ListView.separated(
-                key: const ValueKey('goods'),
-                padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
-                itemCount: _demoGoods.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (_, i) {
-                  final isOpen = _expandedGoods.contains(i);
-                  return GoodsCard(
-                    item: _demoGoods[i], // данные товара
-                    expanded: isOpen,
-                    onToggle: () {
-                      setState(() {
-                        _expandedGoods.toggle(i);
-                      });
-                    },
-                  );
-                },
-              ),
+            ? _buildSlotsList(slotItems)
+            : _buildGoodsList(goodsItems),
       ),
     );
   }
 
-  // Применяем фильтры и сортировку к списку слотов.
-  // Вещи (_demoGoods) сейчас не фильтруем — по ТЗ фильтры только для «Слоты».
-  List<MarketItem> _applyFilters(List<MarketItem> source) {
-    // 1) фильтруем по полу и доступности
-    var list = source.where((e) {
-      final okGender = _filterGender.contains(e.gender); // подходит ли пол
-      final okAvail =
-          !_onlyAvailable ||
-          e.buttonEnabled; // если нужен только доступный — проверяем
-      return okGender && okAvail;
+  // ======================= СЛОТЫ =======================
+
+  Widget _buildSlotsList(List<MarketItem> items) {
+    // Два "служебных" элемента-хедера: 0 — поле поиска, 1 — кнопки пола.
+    const int headerCount = 2;
+    return ListView.separated(
+      key: const ValueKey('slots'),
+      padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
+      itemCount: items.length + headerCount,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (_, index) {
+        if (index == 0) {
+          // 3) Поле поиска — белый фон, иконка, скроллится вместе со списком.
+          return _SearchField(
+            controller: _searchCtrl,
+            hintText: 'Название спортивного мероприятия',
+            onChanged: (value) =>
+                setState(() => _searchQuery = value.trim().toLowerCase()),
+            onClear: () {
+              _searchCtrl.clear();
+              setState(() => _searchQuery = '');
+            },
+          );
+        }
+        if (index == 1) {
+          // 4–5) Кнопки пола: порядок "Мужской" → "Женский", компактные + иконки.
+          return _GenderQuickRow(
+            // male first
+            maleSelected: _filterGender.contains(Gender.male),
+            femaleSelected: _filterGender.contains(Gender.female),
+            onMaleTap: () {
+              setState(() {
+                _filterGender.toggle(Gender.male);
+                if (_filterGender.isEmpty) _filterGender.add(Gender.male);
+              });
+            },
+            onFemaleTap: () {
+              setState(() {
+                _filterGender.toggle(Gender.female);
+                if (_filterGender.isEmpty) _filterGender.add(Gender.female);
+              });
+            },
+          );
+        }
+
+        // Сами карточки слотов
+        final i = index - headerCount;
+        final isOpen = _expandedSlots.contains(i);
+        return MarketSlotCard(
+          item: items[i],
+          expanded: isOpen,
+          onToggle: () => setState(() => _expandedSlots.toggle(i)),
+        );
+      },
+    );
+  }
+
+  // ======================= ВЕЩИ =======================
+
+  Widget _buildGoodsList(List<GoodsItem> items) {
+    // Здесь тоже два "хедера":
+    // 0 — выпадающий список (вместо поиска),
+    // 1 — те же быстрые кнопки пола.
+    const int headerCount = 2;
+    return ListView.separated(
+      key: const ValueKey('goods'),
+      padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
+      itemCount: items.length + headerCount,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (_, index) {
+        if (index == 0) {
+          // 6) Выпадающий список категорий (белый фон, скругления).
+          return _CategoryDropdown(
+            value: _selectedGoodsCategory,
+            options: _goodsCategories,
+            onChanged: (val) => setState(() {
+              _selectedGoodsCategory = val ?? 'Все';
+            }),
+          );
+        }
+        if (index == 1) {
+          // Те же быстрые кнопки пола под выпадающим списком
+          return _GenderQuickRow(
+            maleSelected: _filterGender.contains(Gender.male),
+            femaleSelected: _filterGender.contains(Gender.female),
+            onMaleTap: () {
+              setState(() {
+                _filterGender.toggle(Gender.male);
+                if (_filterGender.isEmpty) _filterGender.add(Gender.male);
+              });
+            },
+            onFemaleTap: () {
+              setState(() {
+                _filterGender.toggle(Gender.female);
+                if (_filterGender.isEmpty) _filterGender.add(Gender.female);
+              });
+            },
+          );
+        }
+
+        // Карточки товаров
+        final i = index - headerCount;
+        final isOpen = _expandedGoods.contains(i);
+        return GoodsCard(
+          item: items[i],
+          expanded: isOpen,
+          onToggle: () => setState(() => _expandedGoods.toggle(i)),
+        );
+      },
+    );
+  }
+
+  // ======================= ФИЛЬТРАЦИЯ ДАННЫХ =======================
+
+  // Слоты: фильтр по полу + поиск по названию (без сортировок и доступности, их мы убрали с модальным фильтром).
+  List<MarketItem> _applySlotFilters(List<MarketItem> source) {
+    final q = _searchQuery;
+    return source.where((e) {
+      final okGender = _filterGender.contains(e.gender);
+      final okSearch = q.isEmpty || e.title.toLowerCase().contains(q);
+      return okGender && okSearch;
     }).toList();
-
-    // 2) сортируем по выбранному режиму
-    switch (_sort) {
-      case SortMode.relevance:
-        // «По релевантности» — ничего не делаем (оригинальный порядок)
-        break;
-      case SortMode.priceAsc:
-        list.sort((a, b) => a.price.compareTo(b.price));
-        break;
-      case SortMode.priceDesc:
-        list.sort((a, b) => b.price.compareTo(a.price));
-        break;
-    }
-    return list;
   }
 
-  // Открываем модальное окно с фильтрами (нижний лист).
-  // ВАЖНО: если выбран раздел «Вещи», фильтры не открываем (по ТЗ).
-  Future<void> _openFilters() async {
-    if (_segment == 1) return; // фильтры только для «Слоты»
+  // Вещи: фильтр по полу + категория (выпадающий список).
+  List<GoodsItem> _applyGoodsFilters(List<GoodsItem> source) {
+    return source.where((e) {
+      final okGender = _filterGender.contains(e.gender);
+      final okCat = _selectedGoodsCategory == 'Все'
+          ? true
+          : _categoryOf(e) == _selectedGoodsCategory;
+      return okGender && okCat;
+    }).toList();
+  }
 
-    final result = await showModalBottomSheet<_FiltersResult>(
-      context: context,
-      useSafeArea: true, // учитывать вырезы/панели
-      isScrollControlled: true, // лист может быть высоким
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      // Передаём текущие значения в форму фильтров
-      builder: (_) => _FiltersSheet(
-        gender: _filterGender,
-        onlyAvailable: _onlyAvailable,
-        sort: _sort,
-      ),
-    );
-
-    // Если пользователь нажал «Применить» — придут новые значения
-    if (result != null) {
-      setState(() {
-        _filterGender = result.gender;
-        _onlyAvailable = result.onlyAvailable;
-        _sort = result.sort;
-      });
-    }
+  // Очень простая эвристика для категорий (для демо):
+  // — если в названии есть "Часы" → "Часы"
+  // — иначе считаем "Обувь" (кроссовки и т.п.)
+  String _categoryOf(GoodsItem item) {
+    final t = item.title.toLowerCase();
+    if (t.contains('часы')) return 'Часы';
+    return 'Обувь';
   }
 }
 
-/// ────────────────────── Верхняя панель и фильтры (оставим здесь) ──────────────────────
-
-/// Маленькая круглая кнопка-иконка для AppBar
-class _RoundIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onPressed;
-  const _RoundIconButton({required this.icon, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 8),
-    child: InkWell(
-      customBorder: const CircleBorder(), // круглая форма для эффекта нажатия
-      onTap: onPressed,
-      child: Icon(icon, size: 20, color: AppColors.secondary),
-    ),
-  );
-}
-
-/// Переключатель вкладок «Слоты/Вещи» (простой кастомный таббар)
+/// ───────────────────────── UI: Табы ─────────────────────────
 class _TopTabs extends StatelessWidget {
-  final int value; // выбранный индекс вкладки
-  final List<String> segments; // подписи вкладок
-  final ValueChanged<int> onChanged; // колбэк при нажатии
+  final int value;
+  final List<String> segments;
+  final ValueChanged<int> onChanged;
 
   const _TopTabs({
     required this.value,
@@ -214,7 +263,7 @@ class _TopTabs extends StatelessWidget {
       color: Colors.white,
       borderRadius: BorderRadius.circular(30),
       boxShadow: const [
-        BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1)),
+        BoxShadow(color: Colors.black12, blurRadius: 1, offset: Offset(0, 1)),
       ],
     ),
     child: Row(
@@ -222,7 +271,7 @@ class _TopTabs extends StatelessWidget {
       children: List.generate(segments.length, (index) {
         final isSelected = value == index;
         return GestureDetector(
-          onTap: () => onChanged(index), // переключаем вкладку
+          onTap: () => onChanged(index),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
             decoration: BoxDecoration(
@@ -244,264 +293,221 @@ class _TopTabs extends StatelessWidget {
   );
 }
 
-/// Результат работы листа фильтров — три значения, которые мы возвращаем на экран
-class _FiltersResult {
-  final Set<Gender> gender;
-  final bool onlyAvailable;
-  final SortMode sort;
-  _FiltersResult(this.gender, this.onlyAvailable, this.sort);
-}
+/// ───────────────────────── UI: Поле поиска ─────────────────────────
+/// Белый фон, иконка лупы слева, крестик справа (очистить).
+class _SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hintText;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
 
-/// Внутренний StatefulWidget — сам лист с UI фильтров
-class _FiltersSheet extends StatefulWidget {
-  final Set<Gender> gender; // стартовые значения «Пол»
-  final bool onlyAvailable; // стартовое значение «Только доступные»
-  final SortMode sort; // стартовая сортировка
-
-  const _FiltersSheet({
-    required this.gender,
-    required this.onlyAvailable,
-    required this.sort,
+  const _SearchField({
+    required this.controller,
+    required this.hintText,
+    required this.onChanged,
+    required this.onClear,
   });
 
   @override
-  State<_FiltersSheet> createState() => _FiltersSheetState();
-}
-
-class _FiltersSheetState extends State<_FiltersSheet> {
-  // Локальные копии значений (редактируем их в форме)
-  late Set<Gender> _gender;
-  late bool _onlyAvailable;
-  late SortMode _sort;
-
-  @override
-  void initState() {
-    super.initState();
-    // Делаем копии, чтобы пока пользователь крутит чекбоксы — не менять экран
-    _gender = {...widget.gender};
-    _onlyAvailable = widget.onlyAvailable;
-    _sort = widget.sort;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Padding(
-      // Нужен отступ снизу на случай, если открыта клавиатура (вдруг будет форма)
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min, // высота = по контенту
-        children: [
-          const SizedBox(height: 8),
-          // Маленькая серенькая полоска — «ручка» для перетаскивания листа
-          Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE2E4EA),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          const Text(
-            'Фильтры',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFEDEFF3)),
-
-          // Содержимое фильтров
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Блок «Пол»
-                const Text(
-                  'Пол',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+    final hasText = controller.text.isNotEmpty;
+    return TextField(
+      controller: controller,
+      onChanged: onChanged,
+      textInputAction: TextInputAction.search,
+      style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: const TextStyle(
+          fontFamily: 'Inter',
+          color: AppColors.greytext,
+        ),
+        isDense: true,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+        prefixIcon: const Icon(
+          CupertinoIcons.search,
+          size: 18,
+          color: Colors.black54,
+        ),
+        suffixIcon: hasText
+            ? IconButton(
+                icon: const Icon(
+                  CupertinoIcons.xmark_circle_fill,
+                  size: 18,
+                  color: Colors.black38,
                 ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    // Чип «Ж»
-                    _toggleChip(
-                      'Ж',
-                      _gender.contains(Gender.female),
-                      () => setState(() => _gender.toggle(Gender.female)),
-                    ),
-                    // Чип «М»
-                    _toggleChip(
-                      'М',
-                      _gender.contains(Gender.male),
-                      () => setState(() => _gender.toggle(Gender.male)),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                // Чекбокс «Только доступные»
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _onlyAvailable,
-                      onChanged: (v) =>
-                          setState(() => _onlyAvailable = v ?? false),
-                      side: const BorderSide(color: AppColors.border),
-                      activeColor: AppColors.secondary,
-                    ),
-                    const Text(
-                      'Только доступные',
-                      style: TextStyle(fontFamily: 'Inter'),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-
-                // Выбор сортировки
-                const Text(
-                  'Сортировка',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<SortMode>(
-                  initialValue: _sort,
-                  onChanged: (v) =>
-                      setState(() => _sort = v ?? SortMode.relevance),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: SortMode.relevance,
-                      child: Text('По релевантности'),
-                    ),
-                    DropdownMenuItem(
-                      value: SortMode.priceAsc,
-                      child: Text('Цена по возрастанию'),
-                    ),
-                    DropdownMenuItem(
-                      value: SortMode.priceDesc,
-                      child: Text('Цена по убыванию'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(height: 1, color: Color(0xFFEDEFF3)),
-
-          // Кнопки снизу: «Отмена» и «Применить»
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-            child: Row(
-              children: [
-                // Отмена — просто закрыть лист без возврата результата
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.border),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      minimumSize: const Size.fromHeight(44),
-                    ),
-                    child: const Text(
-                      'Отмена',
-                      style: TextStyle(fontFamily: 'Inter'),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                // Применить — возвращаем выбранные значения на экран через Navigator.pop(result)
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(
-                      context,
-                      _FiltersResult(_gender, _onlyAvailable, _sort),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      minimumSize: const Size.fromHeight(44),
-                    ),
-                    child: const Text('Применить'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+                onPressed: onClear,
+              )
+            : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: AppColors.border, width: 1.2),
+        ),
       ),
     );
   }
+}
 
-  // Маленький самодельный «чип»-переключатель (Ж/М)
-  Widget _toggleChip(String text, bool selected, VoidCallback onTap) {
+/// ───────────────────────── UI: Выпадающий список категорий ─────────────────────────
+/// Белый фон, скругления, варианты из _goodsCategories.
+class _CategoryDropdown extends StatelessWidget {
+  final String value;
+  final List<String> options;
+  final ValueChanged<String?> onChanged;
+
+  const _CategoryDropdown({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      isExpanded: true,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        isDense: true,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: AppColors.border, width: 1.2),
+        ),
+      ),
+      items: options
+          .map(
+            (o) => DropdownMenuItem<String>(
+              value: o,
+              child: Text(o, style: const TextStyle(fontFamily: 'Inter')),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+/// ───────────────────────── UI: Быстрые кнопки пола ─────────────────────────
+/// Порядок: "Мужской" → "Женский". Компактные (ширина по содержимому), с иконками.
+class _GenderQuickRow extends StatelessWidget {
+  final bool maleSelected;
+  final bool femaleSelected;
+  final VoidCallback onMaleTap;
+  final VoidCallback onFemaleTap;
+
+  const _GenderQuickRow({
+    required this.maleSelected,
+    required this.femaleSelected,
+    required this.onMaleTap,
+    required this.onFemaleTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _OvalToggle(
+          label: 'Мужской',
+          icon: Icons.male, // 5) иконка Марса (male)
+          selected: maleSelected,
+          onTap: onMaleTap,
+        ),
+        const SizedBox(width: 8),
+        _OvalToggle(
+          label: 'Женский',
+          icon: Icons.female, // 5) иконка Венеры (female)
+          selected: femaleSelected,
+          onTap: onFemaleTap,
+        ),
+      ],
+    );
+  }
+}
+
+class _OvalToggle extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _OvalToggle({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = selected ? AppColors.secondary : Colors.white;
+    final fg = selected ? Colors.white : Colors.black87;
+
     return GestureDetector(
-      onTap: onTap, // переключаем состояние
+      onTap: onTap,
       child: Container(
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        // Компактная ширина: ширина определяется содержимым + padding
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? Colors.white : const Color(0xFFF6F7F9),
-          borderRadius: BorderRadius.circular(16),
+          color: bg,
+          borderRadius: BorderRadius.circular(20), // овальная форма
           border: Border.all(
             color: selected ? AppColors.secondary : AppColors.border,
           ),
         ),
-        child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w600,
-              color: selected ? Colors.black : Colors.black87,
+        child: Row(
+          mainAxisSize: MainAxisSize.min, // важное: пусть под контент
+          children: [
+            Icon(icon, size: 18, color: fg),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: fg,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
-// Удобное расширение для Set: toggle() — если есть элемент, удалить; если нет — добавить.
+// Удобное расширение: toggle() — если элемент есть, удалить; если нет — добавить.
 extension<T> on Set<T> {
   void toggle(T v) => contains(v) ? remove(v) : add(v);
 }
 
-/// ────────────────────── ДЕМО-ДАННЫЕ (оставим в экране) ──────────────────────
-/// Эти данные просто для примера. В реальном приложении вы будете подгружать их с сервера.
+/// ────────────────────── Д Е М О - Д А Н Н Ы Е ──────────────────────
+/// Эти данные для примера. В реальном приложении подгружайте их из API.
 
 final _demoItems = <MarketItem>[
   MarketItem(

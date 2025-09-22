@@ -4,11 +4,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/market_models.dart';
-import 'image_gallery.dart';
+import '../screens/tradechat_slots_screen.dart';
 import 'pills.dart';
 
 /// Отдельный виджет карточки СЛОТА.
-/// При клике по миниатюре откроется полноэкранная галерея (одна картинка).
+/// Миниатюра НЕ кликабельна.
 class MarketSlotCard extends StatelessWidget {
   final MarketItem item;
   final bool expanded; // сейчас используется только для «Алые Паруса» (пример)
@@ -49,7 +49,7 @@ class MarketSlotCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Миниатюра слева — кликабельна, откроет галерею
+                // Миниатюра слева — НЕ кликабельна
                 _Thumb(imageAsset: item.imageUrl, heroGroup: item),
                 const SizedBox(width: 10),
 
@@ -91,7 +91,7 @@ class MarketSlotCard extends StatelessWidget {
                           ],
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 14),
 
                       // Одна строка: дистанция • пол • цена • кнопка справа
                       Row(
@@ -108,6 +108,22 @@ class MarketSlotCard extends StatelessWidget {
                           _BuyButtonText(
                             text: item.buttonText,
                             enabled: item.buttonEnabled,
+                            onPressed: () {
+                              Navigator.of(context, rootNavigator: true).push(
+                                MaterialPageRoute(
+                                  builder: (_) => TradeChatSlotsScreen(
+                                    itemTitle: item.title,
+                                    itemThumb: item.imageUrl,
+                                    distance: item.distance,
+                                    gender: item.gender,
+                                    price: item.price,
+                                    statusText: item.locked
+                                        ? 'Бронь'
+                                        : 'Свободен',
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -166,8 +182,8 @@ class MarketSlotCard extends StatelessWidget {
   }
 }
 
-/// Кликабельная миниатюра слота.
-/// По нажатию откроет [showImageGallery] с одной картинкой.
+/// НЕ кликабельная миниатюра слота.
+/// Оставил Hero для красивого появления/скролла, но без переходов.
 class _Thumb extends StatelessWidget {
   final String imageAsset;
   final Object? heroGroup;
@@ -176,42 +192,36 @@ class _Thumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        showImageGallery(
-          context,
-          images: [imageAsset],
-          initialIndex: 0,
-          heroGroup: heroGroup ?? imageAsset,
-        );
-      },
-      child: Hero(
-        tag: Object.hash(heroGroup ?? imageAsset, 0),
-        child: Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(4),
-            color: AppColors.background,
-            border: Border.all(color: AppColors.border),
-            image: DecorationImage(
-              image: AssetImage(imageAsset),
-              fit: BoxFit.cover,
-            ),
+    return Hero(
+      tag: Object.hash(heroGroup ?? imageAsset, 0),
+      child: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(4),
+          color: AppColors.background,
+          border: Border.all(color: AppColors.border),
+          image: DecorationImage(
+            image: AssetImage(imageAsset),
+            fit: BoxFit.cover,
           ),
-          clipBehavior: Clip.antiAlias,
         ),
+        clipBehavior: Clip.antiAlias,
       ),
     );
   }
 }
 
-/// Кнопка «Купить» / «Бронь» справа от чипов.
 class _BuyButtonText extends StatelessWidget {
   final String text;
   final bool enabled;
+  final VoidCallback? onPressed; // 🔹 новый параметр
 
-  const _BuyButtonText({required this.text, required this.enabled});
+  const _BuyButtonText({
+    required this.text,
+    required this.enabled,
+    this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -224,7 +234,7 @@ class _BuyButtonText extends StatelessWidget {
       child: SizedBox(
         height: 30,
         child: ElevatedButton.icon(
-          onPressed: enabled ? () {} : null, // если disabled — null
+          onPressed: enabled ? onPressed : null, // 🔹 используем коллбэк
           style: ElevatedButton.styleFrom(
             backgroundColor: bg,
             foregroundColor: fg,
