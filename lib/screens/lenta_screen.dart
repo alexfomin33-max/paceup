@@ -149,7 +149,8 @@ class _LentaScreenState extends State<LentaScreen> {
       ),
 
       body: ListView(
-        padding: const EdgeInsets.only(top: kToolbarHeight + 38),
+        padding: const EdgeInsets.only(top: kToolbarHeight + 38, bottom: 12),
+
         // ↑ отступ, чтобы контент не залез под AppBar
         children: [
           const ActivityBlock(),

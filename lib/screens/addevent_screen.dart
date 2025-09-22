@@ -24,7 +24,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
   DateTime? date = DateTime.now();
   TimeOfDay? time = const TimeOfDay(hour: 12, minute: 00);
 
-  // ✅ вот сюда добавляем список клубов и выбранный клуб:
+  // список клубов
   final List<String> clubs = ['CoffeeRun_vld', 'RunTown', 'TriClub'];
   String? selectedClub = 'CoffeeRun_vld';
 
@@ -43,6 +43,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
       (activity != null) &&
       (date != null) &&
       (time != null);
+
+  bool _isPickerOpen = false; // ← флаг открыт ли сейчас попап
+  double? _dragStartX; // ← для свайпа назад
 
   @override
   void initState() {
@@ -73,32 +76,119 @@ class _AddEventScreenState extends State<AddEventScreen> {
     if (x != null) setState(() => photos[i] = File(x.path));
   }
 
-  Future<void> _pickDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365 * 2)),
-      initialDate: date ?? now,
-      locale: const Locale('ru'),
-      helpText: 'Дата проведения',
+  Future<void> _pickDateCupertino() async {
+    _isPickerOpen = true;
+    setState(() {});
+
+    final today = DateUtils.dateOnly(DateTime.now());
+    DateTime temp = DateUtils.dateOnly(date ?? today);
+
+    final picker = CupertinoDatePicker(
+      mode: CupertinoDatePickerMode.date,
+      minimumDate: today,
+      maximumDate: today.add(const Duration(days: 365 * 2)),
+      initialDateTime: temp.isBefore(today) ? today : temp,
+      onDateTimeChanged: (dt) => temp = DateUtils.dateOnly(dt),
     );
-    if (picked != null) setState(() => date = picked);
+
+    final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
+    if (ok) setState(() => date = temp);
+
+    _isPickerOpen = false;
+    setState(() {});
   }
 
-  Future<void> _pickTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: time ?? const TimeOfDay(hour: 12, minute: 0),
-      helpText: 'Время проведения',
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-          child: child ?? const SizedBox.shrink(),
-        );
-      },
+  Future<void> _pickTimeCupertino() async {
+    _isPickerOpen = true;
+    setState(() {});
+
+    DateTime temp = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+      time?.hour ?? 12,
+      time?.minute ?? 0,
     );
-    if (picked != null) setState(() => time = picked);
+
+    final picker = CupertinoDatePicker(
+      mode: CupertinoDatePickerMode.time,
+      use24hFormat: true,
+      initialDateTime: temp,
+      onDateTimeChanged: (dt) => temp = dt,
+    );
+
+    final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
+    if (ok) {
+      setState(() => time = TimeOfDay(hour: temp.hour, minute: temp.minute));
+    }
+
+    _isPickerOpen = false;
+    setState(() {});
+  }
+
+  Future<T?> _showCupertinoSheet<T>({required Widget child}) {
+    return showCupertinoModalPopup<T>(
+      context: context,
+      useRootNavigator: true,
+      builder: (sheetCtx) => SafeArea(
+        top: false,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                // маленькая серая полоска сверху (grabber)
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E4EA),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 0),
+
+                // 📌 ПАНЕЛЬ С КНОПКАМИ
+                Container(
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Color(0xFFEDEFF3), width: 1),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        onPressed: () => Navigator.of(sheetCtx).pop(),
+                        child: const Text('Отмена'),
+                      ),
+                      const Spacer(),
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        onPressed: () => Navigator.of(sheetCtx).pop(true),
+                        child: const Text('Готово'),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                  ),
+                ),
+
+                // 📌 сам пикер
+                SizedBox(height: 260, child: child),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   String _fmtDate(DateTime? d) {
@@ -118,7 +208,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   void _submit() {
     if (!isFormValid) return;
-    // TODO: отправка формы
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Мероприятие создано (демо)')));
@@ -128,8 +217,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      onHorizontalDragStart: (d) => _dragStartX = d.globalPosition.dx,
       onHorizontalDragEnd: (d) {
-        if (d.primaryVelocity != null && d.primaryVelocity! > 0) {
+        if (_isPickerOpen) return; // если открыт попап — не свайпаем назад
+        if ((_dragStartX ?? 1000) > 24) {
+          return; // свайп только от самого левого края
+        }
+        if ((d.primaryVelocity ?? 0) > 300) {
           Navigator.pop(context);
         }
       },
@@ -144,15 +238,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
             icon: const Icon(CupertinoIcons.back),
             onPressed: () => Navigator.pop(context),
           ),
-          actions: [
-            IconButton(
-              onPressed: () {
-                // TODO: сохранить черновик
-              },
-              icon: const Icon(CupertinoIcons.arrow_down_doc),
-              tooltip: 'Сохранить',
-            ),
-          ],
           bottom: const PreferredSize(
             preferredSize: Size.fromHeight(1),
             child: Divider(height: 1, thickness: 1, color: AppColors.border),
@@ -255,7 +340,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       child: EventDateField(
                         label: 'Дата проведения*',
                         valueText: _fmtDate(date),
-                        onTap: _pickDate,
+                        onTap: _pickDateCupertino,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -264,7 +349,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         label: 'Время',
                         valueText: _fmtTime(time),
                         icon: CupertinoIcons.time,
-                        onTap: _pickTime,
+                        onTap: _pickTimeCupertino,
                       ),
                     ),
                   ],
