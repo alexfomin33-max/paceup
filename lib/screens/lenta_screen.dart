@@ -35,9 +35,11 @@ late Future<List<Activity>> _future;
   }
 
   Future<List<Activity>> _loadActivities() async {
-    final uri = Uri.parse('http://api.paceup.ru/activities_lenta.php?limit=20&page=1');
-
-    final res = await http.get(uri, headers: {'Accept': 'application/json'});
+   final res = await http.post(
+        Uri.parse('http://api.paceup.ru/activities_lenta.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'userId': widget.userId, 'limit': 20, 'page':1}),
+      );
     if (res.statusCode != 200) {
       throw Exception('HTTP ${res.statusCode}: ${res.body}');
     }
