@@ -310,8 +310,8 @@ class _SmallLabel extends StatelessWidget {
       text,
       style: const TextStyle(
         color: Color(0xFF565D6D),
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
         fontFamily: 'Inter',
       ),
     );
@@ -500,35 +500,40 @@ class _LabeledTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      onChanged: onChanged,
-      style: _fieldText, // 4) меньший размер + Inter
-      decoration: InputDecoration(
-        label: _labelWithStar(label),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        hintText: hint,
-        hintStyle: _hintText, // 4) меньший размер + Inter
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 14,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SmallLabel(label), // 🔹 лейбл снаружи
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          onChanged: onChanged,
+          style: _fieldText,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: _hintText,
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 10,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+          ),
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-      ),
+      ],
     );
   }
 }
@@ -548,44 +553,46 @@ class _DropdownField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      isExpanded: true,
-      onChanged: onChanged,
-      style: _fieldText, // 4) текст выбранного значения
-      decoration: InputDecoration(
-        label: _labelWithStar(label),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-      ),
-      items: items
-          .map(
-            (o) => DropdownMenuItem<String>(
-              value: o,
-              child: Text(
-                o,
-                style: _fieldText,
-              ), // 4) пункты списка — тоже Inter 13
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SmallLabel(label), // 🔹 лейбл снаружи
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: value,
+          isExpanded: true,
+          onChanged: onChanged,
+          style: _fieldText,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 10,
             ),
-          )
-          .toList(),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+          ),
+          items: items
+              .map(
+                (o) => DropdownMenuItem<String>(
+                  value: o,
+                  child: Text(o, style: _fieldText),
+                ),
+              )
+              .toList(),
+        ),
+      ],
     );
   }
 }
@@ -597,60 +604,68 @@ class _PriceField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 120, // 🔹 фиксированная ширина поля (можно подогнать)
-          child: TextFormField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            onChanged: onChanged,
-            style: _fieldText,
-            decoration: const InputDecoration(
-              label: _LabelWithStarText('Цена'),
-              floatingLabelBehavior: FloatingLabelBehavior.always,
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 14,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(AppRadius.small),
+        const _SmallLabel('Цена'), // 🔹 лейбл снаружи
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            SizedBox(
+              width: 120,
+              child: TextFormField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                onChanged: onChanged,
+                style: _fieldText,
+                decoration: const InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(AppRadius.small),
+                    ),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(AppRadius.small),
+                    ),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(AppRadius.small),
+                    ),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
                 ),
-                borderSide: BorderSide(color: AppColors.border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(AppRadius.small),
-                ),
-                borderSide: BorderSide(color: AppColors.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(AppRadius.small),
-                ),
-                borderSide: BorderSide(color: AppColors.border),
               ),
             ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: const Color(0xFFEFF5FF),
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.border),
-          ),
-          child: const Center(
-            child: Text(
-              '₽',
-              style: TextStyle(fontSize: 16, fontFamily: 'Inter'),
+            const SizedBox(width: 12),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F8FD),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Text(
+                  '₽',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Inter',
+                    color: AppColors.secondary,
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ],
     );
