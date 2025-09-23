@@ -9,7 +9,6 @@ import 'chat_screen.dart'; // импортируем страницу чата
 import 'notifications_screen.dart';
 import '../models/notification_item.dart';
 import 'dart:ui'; // для ImageFilter.blur
-import 'package:paceup/models/activity_lenta.dart';
 
 /// 🔹 Экран Ленты (Feed)
 class LentaScreen extends StatefulWidget {

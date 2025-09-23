@@ -1,12 +1,12 @@
-// lib/screens/market_screen.dart
 // Экран "Маркет": две вкладки — «Слоты» и «Вещи».
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 
+import '../theme/app_theme.dart';
 import '../models/market_models.dart';
 import '../widgets/market_slot_card.dart';
 import '../widgets/market_goods_card.dart';
+import 'sale_screen.dart';
 
 class MarketScreen extends StatefulWidget {
   const MarketScreen({super.key});
@@ -15,21 +15,21 @@ class MarketScreen extends StatefulWidget {
 }
 
 class _MarketScreenState extends State<MarketScreen> {
-  // Какая вкладка: 0 — «Слоты», 1 — «Вещи»
+  /// 0 — «Слоты», 1 — «Вещи»
   int _segment = 0;
 
-  // Поиск (используем только на вкладке «Слоты»)
+  // Поиск (только для «Слоты»)
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
 
-  // Фильтр по полу — общий для обеих вкладок (быстрые кнопки пола)
-  Set<Gender> _filterGender = {Gender.female, Gender.male};
+  // Быстрые кнопки пола (общие для обеих вкладок)
+  final Set<Gender> _filterGender = {Gender.female, Gender.male};
 
-  // Категория для «Вещей» (вместо поиска)
+  // Категории для «Вещей»
   final List<String> _goodsCategories = const ['Все', 'Обувь', 'Часы'];
   String _selectedGoodsCategory = 'Все';
 
-  // Наборы раскрытых карточек
+  // Раскрытые карточки
   final Set<int> _expandedSlots = {};
   final Set<int> _expandedGoods = {};
 
@@ -41,7 +41,6 @@ class _MarketScreenState extends State<MarketScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Готовим отфильтрованные данные под каждую вкладку
     final slotItems = _applySlotFilters(_demoItems);
     final goodsItems = _applyGoodsFilters(_demoGoods);
 
@@ -49,7 +48,7 @@ class _MarketScreenState extends State<MarketScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 1, // маленькая тень снизу
+        elevation: 1,
         shadowColor: Colors.black26,
         automaticallyImplyLeading: false,
         title: null,
@@ -59,7 +58,6 @@ class _MarketScreenState extends State<MarketScreen> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Центр: табы «Слоты — Вещи»
                 Center(
                   child: _TopTabs(
                     value: _segment,
@@ -67,18 +65,18 @@ class _MarketScreenState extends State<MarketScreen> {
                     segments: const ['Слоты', 'Вещи'],
                   ),
                 ),
-
-                // Правый край: иконка "Продать"
                 Positioned(
                   right: 12,
                   child: GestureDetector(
                     onTap: () {
-                      // TODO: открыть экран добавления слота/вещи
-                      print('Иконка Продать нажата');
+                      Navigator.of(context, rootNavigator: true).push(
+                        CupertinoPageRoute(builder: (_) => const SaleScreen()),
+                      );
                     },
+
                     child: const Icon(
                       CupertinoIcons.money_rubl_circle,
-                      size: 26,
+                      size: 28,
                       color: AppColors.secondary,
                     ),
                   ),
@@ -88,8 +86,6 @@ class _MarketScreenState extends State<MarketScreen> {
           ),
         ),
       ),
-
-      // 2) Весь контент — один ListView: «хедеры» (поиск/категория + кнопки пола) И карточки.
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         child: (_segment == 0)
@@ -99,11 +95,10 @@ class _MarketScreenState extends State<MarketScreen> {
     );
   }
 
-  // ======================= СЛОТЫ =======================
+  // ───────────── СЛОТЫ ─────────────
 
   Widget _buildSlotsList(List<MarketItem> items) {
-    // Два "служебных" элемента-хедера: 0 — поле поиска, 1 — кнопки пола.
-    const int headerCount = 2;
+    const int headerCount = 2; // 0 — поиск, 1 — кнопки пола
     return ListView.separated(
       key: const ValueKey('slots'),
       padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
@@ -111,7 +106,6 @@ class _MarketScreenState extends State<MarketScreen> {
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (_, index) {
         if (index == 0) {
-          // 3) Поле поиска — белый фон, иконка, скроллится вместе со списком.
           return _SearchField(
             controller: _searchCtrl,
             hintText: 'Название спортивного мероприятия',
@@ -124,9 +118,7 @@ class _MarketScreenState extends State<MarketScreen> {
           );
         }
         if (index == 1) {
-          // 4–5) Кнопки пола: порядок "Мужской" → "Женский", компактные + иконки.
           return _GenderQuickRow(
-            // male first
             maleSelected: _filterGender.contains(Gender.male),
             femaleSelected: _filterGender.contains(Gender.female),
             onMaleTap: () {
@@ -144,7 +136,6 @@ class _MarketScreenState extends State<MarketScreen> {
           );
         }
 
-        // Сами карточки слотов
         final i = index - headerCount;
         final isOpen = _expandedSlots.contains(i);
         return MarketSlotCard(
@@ -156,13 +147,10 @@ class _MarketScreenState extends State<MarketScreen> {
     );
   }
 
-  // ======================= ВЕЩИ =======================
+  // ───────────── ВЕЩИ ─────────────
 
   Widget _buildGoodsList(List<GoodsItem> items) {
-    // Здесь тоже два "хедера":
-    // 0 — выпадающий список (вместо поиска),
-    // 1 — те же быстрые кнопки пола.
-    const int headerCount = 2;
+    const int headerCount = 2; // 0 — категория, 1 — кнопки пола
     return ListView.separated(
       key: const ValueKey('goods'),
       padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
@@ -170,7 +158,6 @@ class _MarketScreenState extends State<MarketScreen> {
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (_, index) {
         if (index == 0) {
-          // 6) Выпадающий список категорий (белый фон, скругления).
           return _CategoryDropdown(
             value: _selectedGoodsCategory,
             options: _goodsCategories,
@@ -180,7 +167,6 @@ class _MarketScreenState extends State<MarketScreen> {
           );
         }
         if (index == 1) {
-          // Те же быстрые кнопки пола под выпадающим списком
           return _GenderQuickRow(
             maleSelected: _filterGender.contains(Gender.male),
             femaleSelected: _filterGender.contains(Gender.female),
@@ -199,7 +185,6 @@ class _MarketScreenState extends State<MarketScreen> {
           );
         }
 
-        // Карточки товаров
         final i = index - headerCount;
         final isOpen = _expandedGoods.contains(i);
         return GoodsCard(
@@ -211,9 +196,8 @@ class _MarketScreenState extends State<MarketScreen> {
     );
   }
 
-  // ======================= ФИЛЬТРАЦИЯ ДАННЫХ =======================
+  // ───────────── Фильтрация ─────────────
 
-  // Слоты: фильтр по полу + поиск по названию (без сортировок и доступности, их мы убрали с модальным фильтром).
   List<MarketItem> _applySlotFilters(List<MarketItem> source) {
     final q = _searchQuery;
     return source.where((e) {
@@ -223,7 +207,6 @@ class _MarketScreenState extends State<MarketScreen> {
     }).toList();
   }
 
-  // Вещи: фильтр по полу + категория (выпадающий список).
   List<GoodsItem> _applyGoodsFilters(List<GoodsItem> source) {
     return source.where((e) {
       final okGender = _filterGender.contains(e.gender);
@@ -234,9 +217,6 @@ class _MarketScreenState extends State<MarketScreen> {
     }).toList();
   }
 
-  // Очень простая эвристика для категорий (для демо):
-  // — если в названии есть "Часы" → "Часы"
-  // — иначе считаем "Обувь" (кроссовки и т.п.)
   String _categoryOf(GoodsItem item) {
     final t = item.title.toLowerCase();
     if (t.contains('часы')) return 'Часы';
@@ -244,7 +224,8 @@ class _MarketScreenState extends State<MarketScreen> {
   }
 }
 
-/// ───────────────────────── UI: Табы ─────────────────────────
+// ───────────── UI Подкомпоненты ─────────────
+
 class _TopTabs extends StatelessWidget {
   final int value;
   final List<String> segments;
@@ -293,8 +274,6 @@ class _TopTabs extends StatelessWidget {
   );
 }
 
-/// ───────────────────────── UI: Поле поиска ─────────────────────────
-/// Белый фон, иконка лупы слева, крестик справа (очистить).
 class _SearchField extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
@@ -361,8 +340,6 @@ class _SearchField extends StatelessWidget {
   }
 }
 
-/// ───────────────────────── UI: Выпадающий список категорий ─────────────────────────
-/// Белый фон, скругления, варианты из _goodsCategories.
 class _CategoryDropdown extends StatelessWidget {
   final String value;
   final List<String> options;
@@ -377,7 +354,7 @@ class _CategoryDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       isExpanded: true,
       onChanged: onChanged,
       decoration: InputDecoration(
@@ -413,8 +390,6 @@ class _CategoryDropdown extends StatelessWidget {
   }
 }
 
-/// ───────────────────────── UI: Быстрые кнопки пола ─────────────────────────
-/// Порядок: "Мужской" → "Женский". Компактные (ширина по содержимому), с иконками.
 class _GenderQuickRow extends StatelessWidget {
   final bool maleSelected;
   final bool femaleSelected;
@@ -432,16 +407,10 @@ class _GenderQuickRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _OvalToggle(
-          label: 'Мужской',
-          icon: Icons.male, // 5) иконка Марса (male)
-          selected: maleSelected,
-          onTap: onMaleTap,
-        ),
+        _OvalToggle(label: 'Мужской', selected: maleSelected, onTap: onMaleTap),
         const SizedBox(width: 8),
         _OvalToggle(
           label: 'Женский',
-          icon: Icons.female, // 5) иконка Венеры (female)
           selected: femaleSelected,
           onTap: onFemaleTap,
         ),
@@ -452,13 +421,11 @@ class _GenderQuickRow extends StatelessWidget {
 
 class _OvalToggle extends StatelessWidget {
   final String label;
-  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
   const _OvalToggle({
     required this.label,
-    required this.icon,
     required this.selected,
     required this.onTap,
   });
@@ -466,35 +433,27 @@ class _OvalToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = selected ? AppColors.secondary : Colors.white;
-    final fg = selected ? Colors.white : Colors.black87;
+    final fg = selected ? Colors.white : AppColors.text;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        // Компактная ширина: ширина определяется содержимым + padding
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(20), // овальная форма
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected ? AppColors.secondary : AppColors.border,
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min, // важное: пусть под контент
-          children: [
-            Icon(icon, size: 18, color: fg),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: fg,
-              ),
-            ),
-          ],
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: fg,
+          ),
         ),
       ),
     );
@@ -506,8 +465,7 @@ extension<T> on Set<T> {
   void toggle(T v) => contains(v) ? remove(v) : add(v);
 }
 
-/// ────────────────────── Д Е М О - Д А Н Н Ы Е ──────────────────────
-/// Эти данные для примера. В реальном приложении подгружайте их из API.
+// ───────────── ДЕМО-ДАННЫЕ ─────────────
 
 final _demoItems = <MarketItem>[
   MarketItem(

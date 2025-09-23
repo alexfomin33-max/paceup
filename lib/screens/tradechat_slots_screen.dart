@@ -210,7 +210,7 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
                           SizedBox(width: 6),
                           Text(
                             'Бронь',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                            style: TextStyle(fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
@@ -324,7 +324,7 @@ class _KVLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -366,55 +366,93 @@ class _ChipNeutral extends StatelessWidget {
   }
 }
 
-/// Кнопки действий — ширина по контенту
-class _ActionsWrap extends StatelessWidget {
+/// Кнопки действий:
+/// - старт: две кнопки в одной линии, одинаковой ширины, по центру
+/// - после нажатия: остаётся одна «пилюля» по центру
+class _ActionsWrap extends StatefulWidget {
   const _ActionsWrap();
 
   @override
+  State<_ActionsWrap> createState() => _ActionsWrapState();
+}
+
+enum _DealStatus { initial, bought, cancelled }
+
+class _ActionsWrapState extends State<_ActionsWrap> {
+  _DealStatus _status = _DealStatus.initial;
+
+  @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 8,
-      children: [
-        _ActionButton(
-          icon: CupertinoIcons.check_mark_circled,
-          text: 'Слот куплен',
-          bg: const Color(0xFFE9F7E3),
-          border: const Color(0xFFD7EDCF),
-          fg: const Color(0xFF2E7D32),
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Отмечено: слот куплен')),
-            );
-          },
-        ),
-        _ActionButton(
-          icon: CupertinoIcons.clear_circled,
-          text: 'Отменить сделку',
-          bg: const Color(0xFFFFEBEB),
-          border: const Color(0xFFF6CACA),
-          fg: const Color(0xFFD32F2F),
-          onTap: () {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Сделка отменена')));
-          },
-        ),
-      ],
-    );
+    switch (_status) {
+      case _DealStatus.initial:
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                child: _PillButton(
+                  text: 'Слот куплен',
+                  bg: const Color(0xFFE9F7E3),
+                  border: const Color(0xFFD7EDCF),
+                  fg: const Color(0xFF2E7D32),
+                  onTap: () {
+                    setState(() => _status = _DealStatus.bought);
+                    // ⛔ Убрали SnackBar
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _PillButton(
+                  text: 'Отменить сделку',
+                  bg: const Color(0xFFFFEBEB),
+                  border: const Color(0xFFF6CACA),
+                  fg: const Color(0xFFD32F2F),
+                  onTap: () {
+                    setState(() => _status = _DealStatus.cancelled);
+                    // ⛔ Убрали SnackBar
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+
+      case _DealStatus.bought:
+        return Center(
+          child: _PillFinal(
+            icon: CupertinoIcons.check_mark_circled,
+            text: 'Слот куплен',
+            bg: const Color(0xFFE9F7E3),
+            border: const Color(0xFFD7EDCF),
+            fg: const Color(0xFF2E7D32),
+          ),
+        );
+
+      case _DealStatus.cancelled:
+        return Center(
+          child: _PillFinal(
+            icon: CupertinoIcons.clear_circled,
+            text: 'Сделка отменена',
+            bg: const Color(0xFFFFEBEB),
+            border: const Color(0xFFF6CACA),
+            fg: const Color(0xFFD32F2F),
+          ),
+        );
+    }
   }
 }
 
-class _ActionButton extends StatelessWidget {
-  final IconData icon;
+/// Пилюля без иконки (для стартового состояния)
+class _PillButton extends StatelessWidget {
   final String text;
   final Color bg;
   final Color border;
   final Color fg;
   final VoidCallback onTap;
 
-  const _ActionButton({
-    required this.icon,
+  const _PillButton({
     required this.text,
     required this.bg,
     required this.border,
@@ -429,27 +467,65 @@ class _ActionButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: border),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min, // ширина по контенту
-          children: [
-            Icon(icon, size: 18, color: fg),
-            const SizedBox(width: 8),
-            Text(
-              text,
-              style: TextStyle(
-                color: fg,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-            ),
-          ],
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          style: TextStyle(
+            color: fg,
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+          ),
         ),
+      ),
+    );
+  }
+}
+
+/// Пилюля с иконкой (финальное состояние)
+class _PillFinal extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color bg;
+  final Color border;
+  final Color fg;
+
+  const _PillFinal({
+    required this.icon,
+    required this.text,
+    required this.bg,
+    required this.border,
+    required this.fg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: fg),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              color: fg,
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+            ),
+          ),
+        ],
       ),
     );
   }
