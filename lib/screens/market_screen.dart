@@ -243,9 +243,18 @@ class _TopTabs extends StatelessWidget {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(30),
-      boxShadow: const [
-        BoxShadow(color: Colors.black12, blurRadius: 1, offset: Offset(0, 1)),
-      ],
+      border: Border(
+        top: const BorderSide(
+          color: Color(0xFFEAEAEA), // тонкая линия сверху
+          width: 0.5,
+        ),
+        bottom: const BorderSide(
+          color: Color(0xFFEAEAEA), // тонкая линия снизу
+          width: 0.5,
+        ),
+        left: BorderSide(color: const Color(0xFFEAEAEA), width: 0.5),
+        right: BorderSide(color: const Color(0xFFEAEAEA), width: 0.5),
+      ),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,

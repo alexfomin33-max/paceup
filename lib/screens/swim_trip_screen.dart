@@ -10,29 +10,51 @@ class SwimTripScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor:
-          AppColors.background, // без нижней навигации: обычный пуш
+          AppColors.background, // фоновый серый как на tasks_screen
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             pinned: false,
             floating: false,
-            expandedHeight: 220,
-            backgroundColor: Colors.white,
+            expandedHeight: 130,
             elevation: 0,
-            leading: IconButton(
-              icon: const Icon(CupertinoIcons.back, color: AppColors.text),
-              onPressed: () => Navigator.of(context).pop(),
+            backgroundColor: Colors.white,
+            leadingWidth: 60,
+            // 1) круглая полупрозрачная кнопка назад с белой стрелкой
+            leading: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 10, top: 6, bottom: 6),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        CupertinoIcons.back,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
                 children: [
                   Image.asset('assets/Swim_trip.png', fit: BoxFit.cover),
-                  // лёгкий градиент снизу для читабельности
+                  // лёгкий градиент снизу
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Container(
-                      height: 70,
+                      height: 0,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
@@ -50,10 +72,22 @@ class SwimTripScreen extends StatelessWidget {
             ),
           ),
 
-          // Заголовок и подзаголовок
+          // 2) Белый блок заголовка с тонкой "тенюшкой" снизу
           SliverToBoxAdapter(
-            child: Padding(
+            child: Container(
+              width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  // 1px тень вниз
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    offset: const Offset(0, 1),
+                    blurRadius: 0,
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: const [
@@ -83,80 +117,63 @@ class SwimTripScreen extends StatelessWidget {
             ),
           ),
 
-          // «белая карточка»-контейнер со списком проливов
+          // 3) Список проливов в карточках как на tasks_screen
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppRadius.large),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                child: Column(
-                  children: const [
-                    _RouteCard(
-                      image: AssetImage('assets/Bosfor.png'),
-                      title: 'Пролив Босфор',
-                      distanceKm: 29.9,
-                      percent: 0.0,
-                    ),
-                    SizedBox(height: 10),
-                    _RouteCard(
-                      image: AssetImage('assets/Gibraltar.png'),
-                      title: 'Гибралтарский пролив',
-                      distanceKm: 65.0,
-                      percent: 0.0,
-                    ),
-                    SizedBox(height: 10),
-                    _RouteCard(
-                      image: AssetImage('assets/Kerchensky.png'),
-                      title: 'Керченский пролив',
-                      distanceKm: 45.0,
-                      percent: 0.0,
-                    ),
-                    SizedBox(height: 10),
-                    _RouteCard(
-                      image: AssetImage('assets/Beringov.png'),
-                      title: 'Берингов пролив',
-                      distanceKm: 86.0,
-                      percent: 0.0,
-                    ),
-                    SizedBox(height: 10),
-                    _RouteCard(
-                      image: AssetImage('assets/Panamsky.png'),
-                      title: 'Панамский канал',
-                      distanceKm: 81.6,
-                      percent: 0.0,
-                    ),
-                  ],
-                ),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+              child: Column(
+                children: const [
+                  _StraitCard(
+                    image: AssetImage('assets/Bosfor.png'),
+                    title: 'Пролив Босфор',
+                    distanceKm: 29.9,
+                    percent: 0.0,
+                  ),
+                  SizedBox(height: 12),
+                  _StraitCard(
+                    image: AssetImage('assets/Gibraltar.png'),
+                    title: 'Гибралтарский пролив',
+                    distanceKm: 65.0,
+                    percent: 0.0,
+                  ),
+                  SizedBox(height: 12),
+                  _StraitCard(
+                    image: AssetImage('assets/Kerchensky.png'),
+                    title: 'Керченский пролив',
+                    distanceKm: 45.0,
+                    percent: 0.0,
+                  ),
+                  SizedBox(height: 12),
+                  _StraitCard(
+                    image: AssetImage('assets/Beringov.png'),
+                    title: 'Берингов пролив',
+                    distanceKm: 86.0,
+                    percent: 0.0,
+                  ),
+                  SizedBox(height: 12),
+                  _StraitCard(
+                    image: AssetImage('assets/Panamsky.png'),
+                    title: 'Панамский канал',
+                    distanceKm: 81.6,
+                    percent: 0.0,
+                  ),
+                ],
               ),
             ),
           ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
         ],
       ),
     );
   }
 }
 
-class _RouteCard extends StatelessWidget {
+class _StraitCard extends StatelessWidget {
   final ImageProvider image;
   final String title;
   final double distanceKm;
   final double percent; // 0..1
 
-  const _RouteCard({
+  const _StraitCard({
     required this.image,
     required this.title,
     required this.distanceKm,
@@ -166,11 +183,11 @@ class _RouteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 76,
+      // стили карточек как в tasks_screen.dart
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.large),
         border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(AppRadius.large),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -179,27 +196,23 @@ class _RouteCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          // мини-превью
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image(
               image: image,
-              width: 56,
-              height: 56,
+              width: 64,
+              height: 64,
               fit: BoxFit.cover,
             ),
           ),
           const SizedBox(width: 12),
-
-          // текст + прогресс
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // заголовок
                 Text(
                   title,
                   maxLines: 1,
@@ -211,14 +224,9 @@ class _RouteCard extends StatelessWidget {
                     color: AppColors.text,
                   ),
                 ),
-                const SizedBox(height: 6),
-
-                // прогресс бар
+                const SizedBox(height: 8),
                 _ProgressBar(percent: percent),
-
-                const SizedBox(height: 4),
-
-                // подпись прогресса
+                const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -226,7 +234,7 @@ class _RouteCard extends StatelessWidget {
                       '0 из ${_km(distanceKm)}',
                       style: const TextStyle(
                         fontFamily: 'Inter',
-                        fontSize: 12.5,
+                        fontSize: 13,
                         color: AppColors.greytext,
                       ),
                     ),
@@ -249,7 +257,6 @@ class _RouteCard extends StatelessWidget {
   }
 
   static String _km(double v) {
-    // 29.9 -> "29,9 км" (как в макете)
     final s = v
         .toStringAsFixed(v.truncateToDouble() == v ? 0 : 1)
         .replaceAll('.', ',');
@@ -272,7 +279,7 @@ class _ProgressBar extends StatelessWidget {
               width: w,
               height: 6,
               decoration: BoxDecoration(
-                color: const Color(0xFF22CCB2), // как в tasks_screen
+                color: const Color(0xFF22CCB2), // как на tasks_screen
                 borderRadius: BorderRadius.circular(100),
               ),
             ),

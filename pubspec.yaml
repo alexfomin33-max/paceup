@@ -78,10 +78,12 @@ flutter:
   assets:
      - assets/background.png
      - assets/logo_icon.png
+     - assets/Avatar_0.png
      - assets/Avatar_1.png
      - assets/Avatar_2.png
      - assets/Avatar_3.png
-    #  - assets/Avatar_4.png
+     - assets/Avatar_4.png
+     - assets/Avatar_5.png
      - assets/Recommended_1.png
      - assets/Recommended_2.png
      - assets/Asics.png
@@ -126,6 +128,8 @@ flutter:
      - assets/Kerchensky.png
      - assets/Beringov.png
      - assets/Panamsky.png
+     - assets/200k_run.png
+     
 
 
      
