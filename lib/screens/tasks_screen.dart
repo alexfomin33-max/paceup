@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'swim_trip_screen.dart';
+import '200k_run_screen.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -78,12 +79,16 @@ class _TasksScreenState extends State<TasksScreen> {
 
       TaskCard(
         colorTint: const Color(0xFFE8F7F1),
-
         icon: Icons.directions_run,
         badgeText: '200 км',
         title: '200 км бега',
         progressText: '145,8 из 200 км',
         percent: 0.729,
+        onTap: () {
+          Navigator.of(context, rootNavigator: true).push(
+            MaterialPageRoute(builder: (_) => const Run200kScreen()),
+          ); // ⬅️ без нижней навигации
+        },
       ),
       const SizedBox(height: 12),
 
@@ -179,6 +184,7 @@ class _TasksScreenState extends State<TasksScreen> {
             onTap: () {
               Navigator.of(
                 context,
+                rootNavigator: true,
               ).push(MaterialPageRoute(builder: (_) => const SwimTripScreen()));
             },
           ),
@@ -209,14 +215,10 @@ class _SegmentedPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: const Color(0xFFEAEAEA), // тонкая светло-серая линия
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -286,14 +288,16 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-class TaskCard extends StatelessWidget {
-  final Color colorTint; // светлый фон кружка-иконки
+// внутри tasks_screen.dart
 
+class TaskCard extends StatelessWidget {
+  final Color colorTint;
   final IconData icon;
-  final String badgeText; // «200 км», «10 дней» и т.п.
+  final String badgeText;
   final String title;
-  final String progressText; // «145,8 из 200 км»
-  final double percent; // 0..1
+  final String progressText;
+  final double percent;
+  final VoidCallback? onTap; // ⬅️ добавили
 
   const TaskCard({
     super.key,
@@ -303,11 +307,12 @@ class TaskCard extends StatelessWidget {
     required this.title,
     required this.progressText,
     required this.percent,
+    this.onTap, // ⬅️ добавили
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final card = Container(
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: AppColors.border),
@@ -340,10 +345,8 @@ class TaskCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-
                 _ProgressBar(percent: percent),
                 const SizedBox(height: 6),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -371,6 +374,17 @@ class TaskCard extends StatelessWidget {
         ],
       ),
     );
+
+    return onTap == null
+        ? card
+        : Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.large),
+              onTap: onTap,
+              child: card,
+            ),
+          );
   }
 }
 
@@ -379,6 +393,7 @@ class ExpeditionCard extends StatelessWidget {
   final String progressText;
   final double percent;
   final Widget image;
+  final VoidCallback? onTap; // ⬅️ добавили
 
   const ExpeditionCard({
     super.key,
@@ -386,11 +401,12 @@ class ExpeditionCard extends StatelessWidget {
     required this.progressText,
     required this.percent,
     required this.image,
+    this.onTap, // ⬅️ добавили
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final card = Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -423,10 +439,8 @@ class ExpeditionCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-
                 _ProgressBar(percent: percent),
                 const SizedBox(height: 6),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -454,6 +468,17 @@ class ExpeditionCard extends StatelessWidget {
         ],
       ),
     );
+
+    return onTap == null
+        ? card
+        : Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.large),
+              onTap: onTap,
+              child: card,
+            ),
+          );
   }
 }
 
