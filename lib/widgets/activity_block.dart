@@ -70,7 +70,7 @@ class RouteCard extends StatelessWidget {
       width: double.infinity,
       height: 200,
       child: FlutterMap(
-        options: MapOptions(initialCenter: center, initialZoom: 12.0),
+        options: MapOptions(initialCenter: center, initialZoom: 8.0),
         children: [
           TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -81,26 +81,26 @@ class RouteCard extends StatelessWidget {
               Polyline(points: points, strokeWidth: 4.0, color: Colors.blue),
             ],
           ),
-          MarkerLayer(
-            markers: [
-              // Marker(
-              //   point: points.first,
-              //   width: 40,
-              //   height: 40,
-              //   child: const Icon(
-              //     Icons.location_on,
-              //     color: Colors.green,
-              //     size: 32,
-              //   ),
-              // ),
-              Marker(
-                point: points.last,
-                width: 40,
-                height: 40,
-                child: const Icon(Icons.flag, color: Colors.red, size: 28),
-              ),
-            ],
-          ),
+          // MarkerLayer(
+          //   markers: [
+          //     Marker(
+          //       point: points.first,
+          //       width: 40,
+          //       height: 40,
+          //       child: const Icon(
+          //         Icons.location_on,
+          //         color: Colors.green,
+          //         size: 32,
+          //       ),
+          //     ),
+          //     Marker(
+          //       point: points.last,
+          //       width: 40,
+          //       height: 40,
+          //       child: const Icon(Icons.flag, color: Colors.red, size: 28),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
     );
@@ -406,114 +406,121 @@ class _EquipmentState extends State<Equipment>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      decoration: ShapeDecoration(
-        color: const Color(0xFFF3F4F6),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            left: 3,
-            top: 3,
-            bottom: 3,
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: ShapeDecoration(
-                image: const DecorationImage(
-                  image: AssetImage("assets/Asics.png"),
-                  fit: BoxFit.fill,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                ),
-              ),
-            ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+      ), // 👉 отступы слева и справа
+      child: Container(
+        height: 56,
+        decoration: ShapeDecoration(
+          color: const Color(0xFFF3F4F6),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
           ),
-          Positioned(
-            left: 60,
-            top: 7,
-            right: 60,
-            child: const Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: "Asics Jolt 3 Wide 'Dive Blue'\n",
-                    style: TextStyle(
-                      color: Color(0xFF323743),
-                      fontSize: 13,
-
-                      fontWeight: FontWeight.w500,
-                      height: 1.69,
-                    ),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              left: 3,
+              top: 3,
+              bottom: 3,
+              child: Container(
+                width: 50,
+                height: 50,
+                decoration: ShapeDecoration(
+                  image: const DecorationImage(
+                    image: AssetImage("assets/Asics.png"),
+                    fit: BoxFit.fill,
                   ),
-                  TextSpan(
-                    text: "Пробег: ",
-                    style: TextStyle(
-                      color: Color(0xFF565D6D),
-                      fontSize: 11,
-
-                      fontWeight: FontWeight.w400,
-                      height: 1.64,
-                    ),
-                  ),
-                  TextSpan(
-                    text: "582",
-                    style: TextStyle(
-                      color: Color(0xFF171A1F),
-                      fontSize: 12,
-
-                      fontWeight: FontWeight.w600,
-                      height: 1.64,
-                    ),
-                  ),
-                  TextSpan(
-                    text: " км",
-                    style: TextStyle(
-                      color: Color(0xFF565D6D),
-                      fontSize: 11,
-
-                      fontWeight: FontWeight.w400,
-                      height: 1.64,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            right: 8,
-            top: 0,
-            bottom: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: () {
-                  if (_overlayEntry == null) {
-                    _showPopup();
-                  } else {
-                    _hidePopup();
-                  }
-                },
-                child: Container(
-                  key: _buttonKey,
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: Colors.white, // фон кнопки
-                    shape: BoxShape.circle, // делает кнопку круглой
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.ellipsis,
-                    size: 16,
-                    color: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+            Positioned(
+              left: 60,
+              top: 7,
+              right: 60,
+              child: const Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: "Asics Jolt 3 Wide 'Dive Blue'\n",
+                      style: TextStyle(
+                        color: Color(0xFF323743),
+                        fontSize: 13,
+
+                        fontWeight: FontWeight.w500,
+                        height: 1.69,
+                      ),
+                    ),
+                    TextSpan(
+                      text: "Пробег: ",
+                      style: TextStyle(
+                        color: Color(0xFF565D6D),
+                        fontSize: 11,
+
+                        fontWeight: FontWeight.w400,
+                        height: 1.64,
+                      ),
+                    ),
+                    TextSpan(
+                      text: "582",
+                      style: TextStyle(
+                        color: Color(0xFF171A1F),
+                        fontSize: 12,
+
+                        fontWeight: FontWeight.w600,
+                        height: 1.64,
+                      ),
+                    ),
+                    TextSpan(
+                      text: " км",
+                      style: TextStyle(
+                        color: Color(0xFF565D6D),
+                        fontSize: 11,
+
+                        fontWeight: FontWeight.w400,
+                        height: 1.64,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              right: 8,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: GestureDetector(
+                  onTap: () {
+                    if (_overlayEntry == null) {
+                      _showPopup();
+                    } else {
+                      _hidePopup();
+                    }
+                  },
+                  child: Container(
+                    key: _buttonKey,
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: Colors.white, // фон кнопки
+                      shape: BoxShape.circle, // делает кнопку круглой
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.ellipsis,
+                      size: 16,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
