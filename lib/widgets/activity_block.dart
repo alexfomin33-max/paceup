@@ -63,8 +63,9 @@ class RouteCard extends StatelessWidget {
         options: MapOptions(initialCenter: center, initialZoom: 12.0),
         children: [
           TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.example.paceip',
+            urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',//'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'paceup.ru',
+            subdomains: const ['a','b','c'],
           ),
           PolylineLayer(
             polylines: [
@@ -419,26 +420,28 @@ class _ActivityBlockState extends State<ActivityBlock> with SingleTickerProvider
     _likeController.forward(from: 0);
   }
 
-  String _fmtDate(DateTime dt) {
-    // простой формат без intl
-    final dd = dt.day.toString().padLeft(2, '0');
-    final mm = dt.month.toString().padLeft(2, '0');
-    final hh = dt.hour.toString().padLeft(2, '0');
-    final min = dt.minute.toString().padLeft(2, '0');
-    return "$dd.$mm.${dt.year}, $hh:$min";
-    // можно подключить intl и сделать красиво для локали
-  }
+String _fmtDate(DateTime? dt) {
+  if (dt == null) return ''; // или '—', если хочешь выводить прочерк
 
-  String _fmtDuration(double seconds) {
-    final s = seconds.round();
-    final h = s ~/ 3600;
-    final m = (s % 3600) ~/ 60;
-    final sec = s % 60;
-    if (h > 0) {
-      return '$h:${m.toString().padLeft(2, '0')}:${sec.toString().padLeft(2, '0')}';
-    }
-    return '$m:${sec.toString().padLeft(2, '0')}';
-  }
+  final dd = dt.day.toString().padLeft(2, '0');
+  final mm = dt.month.toString().padLeft(2, '0');
+  final hh = dt.hour.toString().padLeft(2, '0');
+  final min = dt.minute.toString().padLeft(2, '0');
+  return "$dd.$mm.${dt.year}, $hh:$min";
+}
+
+
+String _fmtDuration(num? seconds) {
+  if (seconds == null) return '';
+
+  final totalSeconds = seconds.toInt();
+  final h = (totalSeconds ~/ 3600).toString().padLeft(1, '0');
+  final m = ((totalSeconds % 3600) ~/ 60).toString().padLeft(2, '0');
+  final s = (totalSeconds % 60).toString().padLeft(2, '0');
+
+  return h != '0' ? "$h:$m:$s" : "$m:$s";
+}
+
 
   String _fmtPace(double paceMinPerKm) {
     // если avgPace = минуты.десятые (5.3 ≈ 5:18)
@@ -539,7 +542,8 @@ class _ActivityBlockState extends State<ActivityBlock> with SingleTickerProvider
           // Маршрут с данными из activity.route
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: RouteCard(points: activity.route),
+            child: RouteCard(points: activity.points.map((c) => LatLng(c.lat, c.lng))
+      .toList()),
           ),
           const SizedBox(height: 12),
           // Нижняя панель: лайки/комменты и прочее
