@@ -1,18 +1,326 @@
-// lib/models/activity.dart
-//
-// Готовая модель Activity с вложенными типами,
-// парсингом stats/params/points и маршрутом route для карты.
-//
-// Использование:
-//   import 'package:paceup/models/activity_lenta.dart';
-//
-//   final a = Activity.fromApi(jsonMap);
-//   final pts = a.route; // List<LatLng> для Polyline(points: pts, ...)
+// Single-file rewrite of activity_lenta.dart
+// - Robust parsing for server JSON (array or {"data":[...]})
+// - Safe parsing of SQL-like datetime ("YYYY-MM-DD HH:mm:ss")
+// - Handles params as an object; maps numbers to double
+// - Parses points from ["LatLng(lat, lng)"] strings
+// - Network helper with utf8 decode, timeout, error handling
 
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:http/http.dart' as http;
+
+// ======== MODELS ========
+
+class Activity {
+  final int id;
+  final String type;
+  final DateTime? dateStart; // top-level date_start (SQL-like string)
+  final DateTime? dateEnd;   // top-level date_end (SQL-like string)
+  final int lentaId;
+  final int userId;
+  final String userName;
+  final String userAvatar;
+  final int likes;
+  final int comments;
+  final int userGroup;
+  final List<Equipment> equipments; // note: server key is 'equpments'
+  final ActivityStats? stats; // server key 'params'
+  final List<Coord> points;
+
+  Activity({
+    required this.id,
+    required this.type,
+    required this.dateStart,
+    required this.dateEnd,
+    required this.lentaId,
+    required this.userId,
+    required this.userName,
+    required this.userAvatar,
+    required this.likes,
+    required this.comments,
+    required this.userGroup,
+    required this.equipments,
+    required this.stats,
+    required this.points,
+  });
+
+  factory Activity.fromApi(Map<String, dynamic> j) {
+    final paramsRaw = j['params'];
+
+    return Activity(
+      id: _asInt(j['id']),
+      type: j['type']?.toString() ?? '',
+      dateStart: _parseSqlDateTime(j['date_start']?.toString()),
+      dateEnd: _parseSqlDateTime(j['date_end']?.toString()),
+      lentaId: _asInt(j['lenta_id']),
+      userId: _asInt(j['user_id']),
+      userName: j['user_name']?.toString() ?? '',
+      userAvatar: j['user_avatar']?.toString() ?? '',
+      likes: _asInt(j['likes']),
+      comments: _asInt(j['comments']),
+      userGroup: _asInt(j['user_group']),
+      equipments: _parseEquipments(j['equpments']),
+      stats: paramsRaw is Map<String, dynamic>
+          ? ActivityStats.fromJson(paramsRaw)
+          : null,
+      points: _parsePoints(j['points']),
+    );
+  }
+}
+
+class Equipment {
+  final String name;
+  final int mileage;
+  final String img;
+
+  Equipment({required this.name, required this.mileage, required this.img});
+
+  factory Equipment.fromJson(Map<String, dynamic> j) => Equipment(
+        name: j['name']?.toString() ?? '',
+        mileage: _asInt(j['mileage']),
+        img: j['img']?.toString() ?? '',
+      );
+}
+
+class Coord {
+  final double lat;
+  final double lng;
+
+  const Coord({required this.lat, required this.lng});
+
+  factory Coord.fromJson(Map<String, dynamic> j) => Coord(
+        lat: _asDouble(j['lat']),
+        lng: _asDouble(j['lng']),
+      );
+}
+
+class ActivityStats {
+  final double distance;
+  final double realDistance;
+  final double avgSpeed;
+  final double avgPace;
+  final double minAltitude;
+  final Coord? minAltitudeCoords;
+  final double maxAltitude;
+  final Coord? maxAltitudeCoords;
+  final double cumulativeElevationGain;
+  final double cumulativeElevationLoss;
+  final DateTime? startedAt; // ISO with timezone
+  final Coord? startedAtCoords;
+  final DateTime? finishedAt; // ISO with timezone
+  final Coord? finishedAtCoords;
+  final int duration; // seconds
+  final List<Coord> bounds; // usually 2 points
+  final double? avgHeartRate;
+  final Map<String, double> heartRatePerKm;
+  final Map<String, double> pacePerKm;
+
+  ActivityStats({
+    required this.distance,
+    required this.realDistance,
+    required this.avgSpeed,
+    required this.avgPace,
+    required this.minAltitude,
+    required this.minAltitudeCoords,
+    required this.maxAltitude,
+    required this.maxAltitudeCoords,
+    required this.cumulativeElevationGain,
+    required this.cumulativeElevationLoss,
+    required this.startedAt,
+    required this.startedAtCoords,
+    required this.finishedAt,
+    required this.finishedAtCoords,
+    required this.duration,
+    required this.bounds,
+    required this.avgHeartRate,
+    required this.heartRatePerKm,
+    required this.pacePerKm,
+  });
+
+  factory ActivityStats.fromJson(Map<String, dynamic> j) => ActivityStats(
+        distance: _asDouble(j['distance']),
+        realDistance: _asDouble(j['realDistance']),
+        avgSpeed: _asDouble(j['avgSpeed']),
+        avgPace: _asDouble(j['avgPace']),
+        minAltitude: _asDouble(j['minAltitude']),
+        minAltitudeCoords: j['minAltitudeCoords'] is Map<String, dynamic>
+            ? Coord.fromJson(j['minAltitudeCoords'] as Map<String, dynamic>)
+            : null,
+        maxAltitude: _asDouble(j['maxAltitude']),
+        maxAltitudeCoords: j['maxAltitudeCoords'] is Map<String, dynamic>
+            ? Coord.fromJson(j['maxAltitudeCoords'] as Map<String, dynamic>)
+            : null,
+        cumulativeElevationGain: _asDouble(j['cumulativeElevationGain']),
+        cumulativeElevationLoss: _asDouble(j['cumulativeElevationLoss']),
+        startedAt: _parseIsoDateTime(j['startedAt']?.toString()),
+        startedAtCoords: j['startedAtCoords'] is Map<String, dynamic>
+            ? Coord.fromJson(j['startedAtCoords'] as Map<String, dynamic>)
+            : null,
+        finishedAt: _parseIsoDateTime(j['finishedAt']?.toString()),
+        finishedAtCoords: j['finishedAtCoords'] is Map<String, dynamic>
+            ? Coord.fromJson(j['finishedAtCoords'] as Map<String, dynamic>)
+            : null,
+        duration: _asInt(j['duration']),
+        bounds: _parseCoordList(j['bounds']),
+        avgHeartRate: j['avgHeartRate'] == null ? null : _asDouble(j['avgHeartRate']),
+        heartRatePerKm: _parseNumMap(j['heartRatePerKm']),
+        pacePerKm: _parseNumMap(j['pacePerKm']),
+      );
+}
+
+// ======== NETWORK ========
+
+/// Top-level helper instead of using widget.userId inside a State class
+Future<List<Activity>> loadActivities({
+  required int userId,
+  int limit = 20,
+  int page = 1,
+  Uri? endpoint,
+  Duration timeout = const Duration(seconds: 15),
+}) async {
+  final uri = endpoint ?? Uri.parse('https://api.paceup.ru/activities_lenta.php');
+
+  try {
+    final res = await http
+        .post(
+          uri,
+          headers: const {'Content-Type': 'application/json'},
+          body: json.encode({'userId': userId, 'limit': limit, 'page': page}),
+        )
+        .timeout(timeout);
+
+    if (res.statusCode != 200) {
+      throw HttpException('HTTP ${res.statusCode}: ${res.body}', uri: uri);
+    }
+
+    final dynamic decoded = json.decode(utf8.decode(res.bodyBytes));
+
+    final List rawList = decoded is Map<String, dynamic>
+        ? (decoded['data'] as List? ?? const [])
+        : (decoded as List);
+
+    return rawList
+        .whereType<Map<String, dynamic>>()
+        .map(Activity.fromApi)
+        .toList();
+  } on TimeoutException {
+    rethrow; // let the caller decide; or wrap: throw Exception('Request timeout');
+  } on SocketException catch (e) {
+    throw Exception('Network error: ${e.message}');
+  } on FormatException catch (e) {
+    throw Exception('Bad JSON: ${e.message}');
+  }
+}
+
+// ======== PARSING HELPERS ========
+
+int _asInt(dynamic v) {
+  if (v == null) return 0;
+  if (v is int) return v;
+  if (v is double) return v.round();
+  return int.tryParse(v.toString()) ?? 0;
+}
+
+double _asDouble(dynamic v) {
+  if (v == null) return 0.0;
+  if (v is double) return v;
+  if (v is int) return v.toDouble();
+  return double.tryParse(v.toString()) ?? 0.0;
+}
+
+DateTime? _parseSqlDateTime(String? s) {
+  // Accepts "YYYY-MM-DD HH:mm:ss" -> converts to ISO-local: "YYYY-MM-DDTHH:mm:ss"
+  if (s == null || s.isEmpty) return null;
+  final normalized = s.replaceFirst(' ', 'T');
+  try {
+    return DateTime.parse(normalized);
+  } catch (_) {
+    return null;
+  }
+}
+
+DateTime? _parseIsoDateTime(String? s) {
+  if (s == null || s.isEmpty) return null;
+  try {
+    return DateTime.parse(s);
+  } catch (_) {
+    return null;
+  }
+}
+
+List<Equipment> _parseEquipments(dynamic v) {
+  if (v is List) {
+    return v
+        .whereType<Map<String, dynamic>>()
+        .map(Equipment.fromJson)
+        .toList();
+  }
+  return const [];
+}
+
+List<Coord> _parseCoordList(dynamic v) {
+  final out = <Coord>[];
+  if (v is List) {
+    for (final e in v) {
+      if (e is Map<String, dynamic>) {
+        out.add(Coord.fromJson(e));
+      } else if (e is List && e.length >= 2) {
+        // fallback: [lat, lng]
+        out.add(Coord(lat: _asDouble(e[0]), lng: _asDouble(e[1])));
+      }
+    }
+  }
+  return out;
+}
+
+List<Coord> _parsePoints(dynamic v) {
+  final result = <Coord>[];
+  if (v is List) {
+    final regex = RegExp(r'LatLng\(\s*([\-0-9\.]+)\s*,\s*([\-0-9\.]+)\s*\)');
+    for (final e in v) {
+      if (e is String) {
+        final m = regex.firstMatch(e);
+        if (m != null) {
+          result.add(Coord(
+            lat: double.tryParse(m.group(1)!) ?? 0,
+            lng: double.tryParse(m.group(2)!) ?? 0,
+          ));
+        }
+      } else if (e is Map<String, dynamic>) {
+        // Just in case server one day returns [{"lat":..,"lng":..}]
+        result.add(Coord.fromJson(e));
+      }
+    }
+  }
+  return result;
+}
+
+Map<String, double> _parseNumMap(dynamic v) {
+  final out = <String, double>{};
+  if (v is Map) {
+    v.forEach((key, value) {
+      if (key == null) return;
+      final k = key.toString();
+      final d = _asDouble(value);
+      out[k] = d;
+    });
+  }
+  return out;
+}
+
+
+
+
+
+
+
+
+/*import 'dart:convert';
 import 'package:latlong2/latlong.dart';
 
-/// Обычная точка широта/долгота как объект (удобно для stats.bounds и т.п.)
+/// Простая точка (широта/долгота)
 class Coord {
   final double lat;
   final double lng;
@@ -27,7 +335,7 @@ class Coord {
   Map<String, dynamic> toJson() => {'lat': lat, 'lng': lng};
 }
 
-/// Статистика активности (то, что лежит в "stats").
+/// Статистика активности (из поля "stats")
 class ActivityStats {
   final double distance;
   final double realDistance;
@@ -49,15 +357,12 @@ class ActivityStats {
   final DateTime finishedAt;
   final Coord finishedAtCoords;
 
-  /// Длительность в секундах (как число с плавающей точкой, если приходит float)
   final double duration;
 
-  /// bounds — массив из 2 точек (как отдаёт бек)
   final List<Coord> bounds;
 
   final double? avgHeartRate;
 
-  /// {"km_1": 5.5, ...}
   final Map<String, double>? heartRatePerKm;
   final Map<String, double>? pacePerKm;
 
@@ -124,145 +429,35 @@ class ActivityStats {
           Coord.fromJson(j['finishedAtCoords'] as Map<String, dynamic>),
       duration: (j['duration'] as num).toDouble(),
       bounds: parseBounds(j['bounds']),
-      avgHeartRate:
-          j['avgHeartRate'] == null ? null : (j['avgHeartRate'] as num).toDouble(),
+      avgHeartRate: j['avgHeartRate'] == null
+          ? null
+          : (j['avgHeartRate'] as num).toDouble(),
       heartRatePerKm: toDoubleMap(j['heartRatePerKm']),
       pacePerKm: toDoubleMap(j['pacePerKm']),
     );
   }
-
-  Map<String, dynamic> toJson() => {
-        'distance': distance,
-        'realDistance': realDistance,
-        'avgSpeed': avgSpeed,
-        'avgPace': avgPace,
-        'minAltitude': minAltitude,
-        'minAltitudeCoords': minAltitudeCoords.toJson(),
-        'maxAltitude': maxAltitude,
-        'maxAltitudeCoords': maxAltitudeCoords.toJson(),
-        'cumulativeElevationGain': cumulativeElevationGain,
-        'cumulativeElevationLoss': cumulativeElevationLoss,
-        'startedAt': startedAt.toIso8601String(),
-        'startedAtCoords': startedAtCoords.toJson(),
-        'finishedAt': finishedAt.toIso8601String(),
-        'finishedAtCoords': finishedAtCoords.toJson(),
-        'duration': duration,
-        'bounds': bounds.map((e) => e.toJson()).toList(),
-        if (avgHeartRate != null) 'avgHeartRate': avgHeartRate,
-        if (heartRatePerKm != null) 'heartRatePerKm': heartRatePerKm,
-        if (pacePerKm != null) 'pacePerKm': pacePerKm,
-      };
 }
 
-/// ===== Утилиты парсинга маршрута (List<LatLng>) =====
-
-List<LatLng> _parseLatLngStringList(dynamic v) {
-  // Ждём List<String> вида ["LatLng(56.130535, 40.289521)", ...]
-  if (v is! List) return const <LatLng>[];
-  final reg = RegExp(
-      r'LatLng\(\s*([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)\s*\)');
-  final out = <LatLng>[];
-  for (final item in v) {
-    if (item is! String) continue;
-    final m = reg.firstMatch(item);
-    if (m != null) {
-      final lat = double.parse(m.group(1)!);
-      final lng = double.parse(m.group(2)!);
-      out.add(LatLng(lat, lng));
-    } else {
-      // fallback: "56.13,40.28"
-      final cleaned =
-          item.replaceAll(RegExp(r'[^\d\.\,\-\+\s]'), '');
-      final parts = cleaned.split(',');
-      if (parts.length >= 2) {
-        final lat = double.parse(parts[0].trim());
-        final lng = double.parse(parts[1].trim());
-        out.add(LatLng(lat, lng));
-      }
-    }
-  }
-  return out;
-}
-
-List<LatLng> _parseLatLngObjectList(dynamic v) {
-  // Ждём List<Map> вида [{"lat":..,"lng":..}, ...]
-  if (v is! List) return const <LatLng>[];
-  final out = <LatLng>[];
-  for (final p in v) {
-    if (p is Map && p['lat'] != null && p['lng'] != null) {
-      out.add(LatLng((p['lat'] as num).toDouble(),
-          (p['lng'] as num).toDouble()));
-    }
-  }
-  return out;
-}
-
-List<LatLng> _extractRouteFromPoints(dynamic points) {
-  // points может быть:
-  //  - JSON-строкой
-  //  - List<String> "LatLng(...)" — сразу вернём
-  //  - List<Map{geoPoints:[{lat,lng},...]}> — соберём все geoPoints
-  if (points is String) {
-    try {
-      final decoded = jsonDecode(points);
-      return _extractRouteFromPoints(decoded);
-    } catch (_) {
-      // Вытащим все "LatLng(...)" из строки
-      final matches = RegExp(r'LatLng\([^)]+\)')
-          .allMatches(points)
-          .map((m) => m.group(0)!)
-          .toList();
-      return _parseLatLngStringList(matches);
-    }
-  }
-
-  if (points is List) {
-    // 1) Сразу массив строк LatLng(...)
-    final asStrings = _parseLatLngStringList(points);
-    if (asStrings.isNotEmpty) return asStrings;
-
-    // 2) Массив сегментов с geoPoints
-    final out = <LatLng>[];
-    for (final seg in points) {
-      if (seg is Map && seg['geoPoints'] is List) {
-        out.addAll(_parseLatLngObjectList(seg['geoPoints']));
-      } else if (seg is Map && seg['route'] is List) {
-        out.addAll(_parseLatLngStringList(seg['route']));
-      }
-    }
-    return out;
-  }
-
-  if (points is Map) {
-    // Может быть {"route":[ "LatLng(...)", ... ]} или {"geoPoints":[{lat,lng},...]}
-    if (points['route'] is List) return _parseLatLngStringList(points['route']);
-    if (points['geoPoints'] is List) {
-      return _parseLatLngObjectList(points['geoPoints']);
-    }
-  }
-
-  return const <LatLng>[];
-}
-
-/// Главная модель «Активность».
+/// Главная модель активности
 class Activity {
   final int id;
   final String type;
-
-  /// Даты в удобном формате Dart
   final DateTime dateStart;
   final DateTime dateEnd;
 
-  /// Сырая строка JSON из поля `params` (если нужно хранить как есть)
+  // Новые поля
+  final int lentaId;
+  final int userId;
+  final String userName;
+  final String userAvatar;
+  final int likes;
+  final int comments;
+  final int userGroup;
+  final List<dynamic>? equpments;
+
   final String? paramsRaw;
-
-  /// Сырая строка JSON из поля `points` (если приходит/нужна)
   final String? pointsRaw;
-
-  /// Подробная статистика из `params` -> ... -> `stats`
   final ActivityStats? stats;
-
-  /// Готовый маршрут для карты (flutter_map: Polyline(points: route, ...))
   final List<LatLng> route;
 
   Activity({
@@ -270,86 +465,71 @@ class Activity {
     required this.type,
     required this.dateStart,
     required this.dateEnd,
+    required this.lentaId,
+    required this.userId,
+    required this.userName,
+    required this.userAvatar,
+    required this.likes,
+    required this.comments,
+    required this.userGroup,
+    this.equpments,
     this.paramsRaw,
     this.pointsRaw,
     this.stats,
     this.route = const <LatLng>[],
   });
 
-  /// Если у тебя уже есть объект вида {"stats": {...}} (как в tracksJson)
-  factory Activity.fromJson(Map<String, dynamic> j) {
-    final statsMap = j['stats'] as Map<String, dynamic>;
-    return Activity(
-      id: -1,
-      type: 'unknown',
-      dateStart: DateTime.parse(statsMap['startedAt'] as String),
-      dateEnd: DateTime.parse(statsMap['finishedAt'] as String),
-      paramsRaw: null,
-      pointsRaw: null,
-      stats: ActivityStats.fromJson(statsMap),
-      route: const <LatLng>[],
-    );
-  }
-
-  /// Основной вариант под твой бек:
-  /// { id, type, date_start, date_end, params, points? / route? / route_coords? }
   factory Activity.fromApi(Map<String, dynamic> j) {
-    final id = (j['id'] as num).toInt();
+    // базовые
+    final id = j['id'] as int;
     final type = j['type'] as String;
     final dateStart = DateTime.parse(j['date_start'] as String);
     final dateEnd = DateTime.parse(j['date_end'] as String);
 
-    // ---- params ----
+    // новые
+    final lentaId = j['lenta_id'] as int;
+    final userId = j['user_id'] as int;
+    final userName = j['user_name'] as String;
+    final userAvatar = j['user_avatar'] as String;
+    final likes = j['likes'] as int;
+    final comments = j['comments'] as int;
+    final userGroup = j['user_group'] as int;
+    final equpments = j['equpments'] as List<dynamic>?;
+
+    // stats (если есть)
+    ActivityStats? stats;
     final params = j['params'];
     String? paramsRaw;
-    ActivityStats? stats;
-    dynamic decodedParams;
-
     if (params is String) {
       paramsRaw = params;
       try {
-        decodedParams = jsonDecode(params);
+        final decoded = jsonDecode(params);
+        if (decoded is List && decoded.isNotEmpty) {
+          final first = decoded.first;
+          if (first is Map && first['stats'] is Map) {
+            stats =
+                ActivityStats.fromJson(first['stats'] as Map<String, dynamic>);
+          }
+        }
       } catch (_) {}
-    } else if (params is Map || params is List) {
-      decodedParams = params;
-      paramsRaw = jsonEncode(params);
     }
 
-    if (decodedParams is List && decodedParams.isNotEmpty) {
-      final first = decodedParams.first;
-      if (first is Map && first['stats'] is Map) {
-        stats =
-            ActivityStats.fromJson(first['stats'] as Map<String, dynamic>);
-      }
-    } else if (decodedParams is Map && decodedParams['stats'] is Map) {
-      stats = ActivityStats.fromJson(
-          decodedParams['stats'] as Map<String, dynamic>);
-    }
-
-    // ---- route (из разных возможных полей) ----
-    List<LatLng> route = const <LatLng>[];
-    if (j['route'] != null) {
-      route = _parseLatLngStringList(j['route']);
-    } else if (j['route_coords'] != null) {
-      route = _parseLatLngStringList(j['route_coords']);
-    } else if (j['points'] != null) {
-      route = _extractRouteFromPoints(j['points']);
-    } else if (decodedParams != null) {
-      // на случай, если маршрут положили внутрь params
-      if (decodedParams is Map && decodedParams['route'] is List) {
-        route = _parseLatLngStringList(decodedParams['route']);
-      } else if (decodedParams is List) {
-        route = _extractRouteFromPoints(decodedParams);
-      }
-    }
-
-    // ---- pointsRaw (если нужно хранить сырьё) ----
+    // points / route
     String? pointsRaw;
+    List<LatLng> route = const <LatLng>[];
     final points = j['points'];
     if (points is String) {
       pointsRaw = points;
-    } else if (points != null) {
-      pointsRaw = jsonEncode(points);
+      try {
+        final decoded = jsonDecode(points);
+        if (decoded is List) {
+          route = decoded
+              .whereType<Map<String, dynamic>>()
+              .map((e) =>
+                  LatLng((e['lat'] as num).toDouble(), (e['lng'] as num).toDouble()))
+              .toList();
+        }
+      } catch (_) {}
     }
 
     return Activity(
@@ -357,6 +537,14 @@ class Activity {
       type: type,
       dateStart: dateStart,
       dateEnd: dateEnd,
+      lentaId: lentaId,
+      userId: userId,
+      userName: userName,
+      userAvatar: userAvatar,
+      likes: likes,
+      comments: comments,
+      userGroup: userGroup,
+      equpments: equpments,
       paramsRaw: paramsRaw,
       pointsRaw: pointsRaw,
       stats: stats,
@@ -364,3 +552,4 @@ class Activity {
     );
   }
 }
+*/
