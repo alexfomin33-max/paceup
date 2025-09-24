@@ -6,7 +6,7 @@ import '../screens/lenta_screen.dart';
 import '../screens/map_screen.dart';
 import '../screens/market_screen.dart';
 import '../screens/tasks_screen.dart';
-import '../screens/profile_screen.dart';
+import '../screens/profile/profile_screen.dart';
 
 /// 🔹 Обертка нижней навигации
 class AppBottomNavShell extends StatelessWidget {
@@ -15,6 +15,9 @@ class AppBottomNavShell extends StatelessWidget {
   const AppBottomNavShell({super.key, required this.userId});
 
   static const TextStyle tabTextStyle = TextStyle(fontSize: 10);
+
+  /// Размер иконок во вкладках
+  static const double navIconSize = 22.0;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +29,7 @@ class AppBottomNavShell extends StatelessWidget {
         PersistentTabConfig(
           screen: LentaScreen(userId: userId),
           item: ItemConfig(
-            icon: const Icon(CupertinoIcons.news),
+            icon: const Icon(CupertinoIcons.news, size: navIconSize),
             title: "Лента",
             textStyle: tabTextStyle,
           ),
@@ -34,7 +37,7 @@ class AppBottomNavShell extends StatelessWidget {
         PersistentTabConfig(
           screen: const MapScreen(),
           item: ItemConfig(
-            icon: const Icon(CupertinoIcons.placemark),
+            icon: const Icon(CupertinoIcons.placemark, size: navIconSize),
             title: "Карта",
             textStyle: tabTextStyle,
           ),
@@ -42,7 +45,7 @@ class AppBottomNavShell extends StatelessWidget {
         PersistentTabConfig(
           screen: const MarketScreen(),
           item: ItemConfig(
-            icon: const Icon(CupertinoIcons.shopping_cart),
+            icon: const Icon(CupertinoIcons.shopping_cart, size: navIconSize),
             title: "Маркет",
             textStyle: tabTextStyle,
           ),
@@ -50,15 +53,15 @@ class AppBottomNavShell extends StatelessWidget {
         PersistentTabConfig(
           screen: const TasksScreen(),
           item: ItemConfig(
-            icon: const Icon(CupertinoIcons.scope),
+            icon: const Icon(CupertinoIcons.scope, size: navIconSize),
             title: "Задачи",
             textStyle: tabTextStyle,
           ),
         ),
         PersistentTabConfig(
-          screen: ProfileScreen(),
+          screen: const ProfileScreen(),
           item: ItemConfig(
-            icon: const Icon(CupertinoIcons.person),
+            icon: const Icon(CupertinoIcons.person, size: navIconSize),
             title: "Профиль",
             textStyle: tabTextStyle,
           ),
@@ -67,22 +70,23 @@ class AppBottomNavShell extends StatelessWidget {
 
       // панель с полупрозрачным фоном + лёгкая тень сверху
       navBarBuilder: (navBarConfig) => Container(
-        decoration: BoxDecoration(
-          // белая полупрозрачная «дымка»
-          color: Colors.white.withValues(alpha: 0.1),
-          // маленькая тень СВЕРХУ: отрицательный offset по Y
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08), // мягкая тень
-              blurRadius: 12, // размытость
-              spreadRadius: 0, // без растекания
-              offset: const Offset(0, -1), // тень сверху (отрицательный Y)
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(
+              color: Color(0xFFE0E0E0), // светло-серый разделитель
+              width: 0.5,
             ),
-          ],
+          ),
         ),
         child: SafeArea(
           top: false,
-          child: Style1BottomNavBar(navBarConfig: navBarConfig),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: 2,
+            ), // чуть воздуха сверху/снизу
+            child: Style1BottomNavBar(navBarConfig: navBarConfig),
+          ),
         ),
       ),
     );
