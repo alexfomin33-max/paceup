@@ -129,6 +129,16 @@ flutter:
      - assets/Beringov.png
      - assets/Panamsky.png
      - assets/200k_run.png
+     - assets/avatar.png
+     - assets/walking.png
+     - assets/running.png
+     - assets/cycling.png
+     - assets/swimming.png
+     - assets/bicycle.png
+     - assets/5k.png
+     - assets/10k.png
+     - assets/21k.png
+     - assets/42k.png
      
 
 

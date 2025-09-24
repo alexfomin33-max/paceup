@@ -56,7 +56,7 @@ class AppBottomNavShell extends StatelessWidget {
           ),
         ),
         PersistentTabConfig(
-          screen: ProfileScreen(userId: userId),
+          screen: ProfileScreen(),
           item: ItemConfig(
             icon: const Icon(CupertinoIcons.person),
             title: "Профиль",

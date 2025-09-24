@@ -559,7 +559,7 @@ class _DropdownField extends StatelessWidget {
         _SmallLabel(label), // 🔹 лейбл снаружи
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           isExpanded: true,
           onChanged: onChanged,
           style: _fieldText,
