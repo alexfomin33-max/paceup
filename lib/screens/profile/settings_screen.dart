@@ -269,7 +269,6 @@ class _SettingsTile extends StatelessWidget {
   final Color trailingIconColor;
 
   const _SettingsTile({
-    super.key,
     required this.icon,
     required this.title,
     this.iconColor,

@@ -82,8 +82,9 @@ class _TabsBarState extends State<TabsBar> {
   }
 
   void _ensureVisible(int index, {bool animate = true}) {
-    if (!_scrollCtrl.hasClients || index < 0 || index >= widget.items.length)
+    if (!_scrollCtrl.hasClients || index < 0 || index >= widget.items.length) {
       return;
+    }
     final viewport = _scrollCtrl.position;
     final left = _cumLeft[index];
     final right = left + _itemWidths[index];

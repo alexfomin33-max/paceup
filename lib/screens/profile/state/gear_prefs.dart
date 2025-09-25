@@ -24,9 +24,9 @@ class GearPrefs extends ChangeNotifier {
 class GearPrefsScope extends InheritedNotifier<GearPrefs> {
   const GearPrefsScope({
     super.key,
-    required GearPrefs notifier,
-    required Widget child,
-  }) : super(notifier: notifier, child: child);
+    required GearPrefs super.notifier,
+    required super.child,
+  });
 
   static GearPrefs of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<GearPrefsScope>();

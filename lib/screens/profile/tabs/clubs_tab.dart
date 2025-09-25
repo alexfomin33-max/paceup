@@ -215,8 +215,9 @@ String _formatMembers(int n) {
   for (int i = 0; i < s.length; i++) {
     final rev = s.length - i;
     buf.write(s[i]);
-    if (rev > 1 && rev % 3 == 1)
+    if (rev > 1 && rev % 3 == 1) {
       buf.write('\u202F'); // узкий неразрывный пробел
+    }
   }
   return buf.toString();
 }

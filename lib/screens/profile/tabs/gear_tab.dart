@@ -155,7 +155,7 @@ class _SectionHeaderWithToggle extends StatelessWidget {
           CupertinoSwitch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.secondary,
+            activeTrackColor: AppColors.secondary,
           ),
         ],
       ),

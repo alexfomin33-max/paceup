@@ -47,10 +47,12 @@ class RouteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (points.isEmpty) return const Padding(
+    if (points.isEmpty) {
+      return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Text("Нет точек маршрута"),
     );
+    }
 
     final lat = points.map((e) => e.latitude).reduce((a, b) => a + b) / points.length;
     final lng = points.map((e) => e.longitude).reduce((a, b) => a + b) / points.length;
