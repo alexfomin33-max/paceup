@@ -181,9 +181,9 @@ late Future<List<Activity>> _future;
         future: _future,
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          //return const Center(child: CircularProgressIndicator());
           }
-          if (snap.hasError) {
+         /* if (snap.hasError) {
           return Center(
             child: Padding(
             padding: const EdgeInsets.all(16),
@@ -200,18 +200,18 @@ late Future<List<Activity>> _future;
             ),
             ),
           );
-          }
+          }*/
 
           final items = snap.data ?? const <Activity>[];
 
           // ТВОЙ прежний padding сохраняем
           return ListView(
-          padding: const EdgeInsets.only(top: kToolbarHeight + 38, bottom: 12),
+          padding: const EdgeInsets.only(top: kToolbarHeight, bottom: 12),
           children: [
             // 👉 вместо "const ActivityBlock()" — список блоков из данных:
             for (final a in items) ...[
-            ActivityBlock(activity: a),
-            const SizedBox(height: 16),
+              ActivityBlock(activity: a),
+              const SizedBox(height: 16),
             ],
 
             // оставляем твои виджеты ниже

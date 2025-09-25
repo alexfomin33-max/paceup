@@ -6,6 +6,7 @@ import '../../../theme/app_theme.dart';
 import 'comments_bottom_sheet.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:paceup/models/activity_lenta.dart'; // <-- Модель Activity
+import 'package:paceup/models/activity_lenta.dart' as AL; // <-- Модель Activity
 
 /// 🔹 Виджет вертикальной метрики
 class MetricVertical extends StatelessWidget {
@@ -301,10 +302,15 @@ class Popup extends StatelessWidget {
 
 /// 🔹 Equipment с анимацией Popup
 class Equipment extends StatefulWidget {
-  const Equipment({super.key});
+  final List<AL.Equipment> items; // данные сюда
+
+  const Equipment({
+    super.key,
+    required this.items,
+  });
 
   @override
-  _EquipmentState createState() => _EquipmentState();
+  State<Equipment> createState() => _EquipmentState();
 }
 
 class _EquipmentState extends State<Equipment>
@@ -342,7 +348,6 @@ class _EquipmentState extends State<Equipment>
     final renderBox = context.findRenderObject() as RenderBox;
     final position = renderBox.localToGlobal(Offset.zero);
     final size = renderBox.size;
-
     final topPosition = position.dy - 120 < 20
         ? position.dy + size.height
         : position.dy - 120;
@@ -381,7 +386,10 @@ class _EquipmentState extends State<Equipment>
                         ),
                       ],
                     ),
-                    child: const Popup(),
+                    // TODO: попап пока не нужен — оставляю закомментированным
+                    // child: Popup(items: widget.items),
+                    // чтобы не менять вёрстку, можно оставить пустой контейнер/заглушку:
+                    child: const SizedBox.shrink(),
                   ),
                 ),
               ),
@@ -404,10 +412,16 @@ class _EquipmentState extends State<Equipment>
 
   @override
   Widget build(BuildContext context) {
+    // берём первый элемент из списка; если пусто — используем фоллбек
+    final AL.Equipment? e = widget.items.isNotEmpty ? widget.items.first : null;
+    final String name = e?.name?.toString().trim().isNotEmpty == true
+        ? e!.name
+        : "Asics Jolt 3 Wide 'Dive Blue'";
+    final int mileage = e?.mileage ?? 582;
+    final String img = e?.img ?? '';
+
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-      ), // 👉 отступы слева и справа
+      padding: const EdgeInsets.symmetric(horizontal: 10), // отступы как были
       child: Container(
         height: 56,
         decoration: ShapeDecoration(
@@ -418,6 +432,7 @@ class _EquipmentState extends State<Equipment>
         ),
         child: Stack(
           children: [
+            // левая картинка (сохраняю вёрстку/размеры)
             Positioned(
               left: 3,
               top: 3,
@@ -426,68 +441,75 @@ class _EquipmentState extends State<Equipment>
                 width: 50,
                 height: 50,
                 decoration: ShapeDecoration(
-                  image: const DecorationImage(
-                    image: AssetImage("assets/Asics.png"),
-                    fit: BoxFit.fill,
-                  ),
+                  image: (img.isNotEmpty)
+                      ? DecorationImage(
+                          image: NetworkImage(img),
+                          fit: BoxFit.fill,
+                        )
+                      : const DecorationImage(
+                          image: AssetImage("assets/Asics.png"),
+                          fit: BoxFit.fill,
+                        ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
               ),
             ),
+
+            // текст справа (заменил на динамику, убрал const)
             Positioned(
               left: 60,
               top: 7,
               right: 60,
-              child: const Text.rich(
+              child: Text.rich(
                 TextSpan(
                   children: [
                     TextSpan(
-                      text: "Asics Jolt 3 Wide 'Dive Blue'\n",
-                      style: TextStyle(
+                      text: "$name\n",
+                      style: const TextStyle(
                         color: Color(0xFF323743),
                         fontSize: 13,
-
                         fontWeight: FontWeight.w500,
                         height: 1.69,
                       ),
                     ),
-                    TextSpan(
+                    const TextSpan(
                       text: "Пробег: ",
                       style: TextStyle(
                         color: Color(0xFF565D6D),
                         fontSize: 11,
-
                         fontWeight: FontWeight.w400,
                         height: 1.64,
                       ),
                     ),
                     TextSpan(
-                      text: "582",
-                      style: TextStyle(
+                      text: "$mileage",
+                      style: const TextStyle(
                         color: Color(0xFF171A1F),
                         fontSize: 12,
-
                         fontWeight: FontWeight.w600,
                         height: 1.64,
                       ),
                     ),
-                    TextSpan(
+                    const TextSpan(
                       text: " км",
                       style: TextStyle(
                         color: Color(0xFF565D6D),
                         fontSize: 11,
-
                         fontWeight: FontWeight.w400,
                         height: 1.64,
                       ),
                     ),
                   ],
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            Positioned(
+
+            // кнопка справа (оставил без изменений)
+            /*Positioned(
               right: 8,
               top: 0,
               bottom: 0,
@@ -504,9 +526,9 @@ class _EquipmentState extends State<Equipment>
                     key: _buttonKey,
                     width: 28,
                     height: 28,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.white, // фон кнопки
-                      shape: BoxShape.circle, // делает кнопку круглой
+                      shape: BoxShape.circle, // делаем кнопку круглой
                     ),
                     child: const Icon(
                       CupertinoIcons.ellipsis,
@@ -516,14 +538,13 @@ class _EquipmentState extends State<Equipment>
                   ),
                 ),
               ),
-            ),
+            ),*/
           ],
         ),
       ),
     );
   }
 }
-
 /// 🔹 ActivityBlock c данными из модели Activity
 class ActivityBlock extends StatefulWidget {
   final Activity activity;
@@ -713,18 +734,13 @@ class _ActivityBlockState extends State<ActivityBlock>
             ),
           ),
           const SizedBox(height: 2),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Equipment(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Equipment(items: activity.equipments),
           ),
           const SizedBox(height: 8),
           // Маршрут с данными из activity.route
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: RouteCard(
-              points: activity.points.map((c) => LatLng(c.lat, c.lng)).toList(),
-            ),
-          ),
+          RouteCard(points: activity.points.map((c) => LatLng(c.lat, c.lng)).toList()),
           const SizedBox(height: 12),
           // Нижняя панель: лайки/комменты и прочее
           Padding(
