@@ -116,9 +116,9 @@ class _ClubCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+        border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
       ),
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 9),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

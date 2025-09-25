@@ -109,37 +109,47 @@ class _TabsBarState extends State<TabsBar> {
     return Container(
       color: Colors.white,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
             height: 40,
-            child: ListView.separated(
+            child: SingleChildScrollView(
               controller: _scrollCtrl,
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: _listPad),
-              itemBuilder: (_, i) {
-                final selected = i == widget.value;
-                return GestureDetector(
-                  onTap: () => widget.onChanged(i),
-                  child: Container(
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(horizontal: _hPad),
-                    child: Text(
-                      widget.items[i],
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: selected ? AppColors.secondary : AppColors.text,
-                      ),
-                    ),
-                  ),
-                );
-              },
-              separatorBuilder: (_, __) => const SizedBox(width: _sep),
-              itemCount: widget.items.length,
+              child: Row(
+                children:
+                    List.generate(widget.items.length, (i) {
+                        final selected = i == widget.value;
+                        return GestureDetector(
+                          onTap: () => widget.onChanged(i),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: _hPad,
+                            ),
+                            child: Text(
+                              widget.items[i],
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: selected
+                                    ? AppColors.secondary
+                                    : AppColors.text,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).expand((w) sync* {
+                        yield w;
+                        yield const SizedBox(width: _sep);
+                      }).toList()
+                      ..removeLast(),
+              ),
             ),
           ),
+          const Divider(height: 0.5, thickness: 0.5, color: Color(0xFFEAEAEA)),
         ],
       ),
     );

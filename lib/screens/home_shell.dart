@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_bottom_nav_shell.dart';
-import 'newpost_screen.dart';
+import 'lenta/newpost_screen.dart';
 
 class HomeShell extends StatefulWidget {
   final int userId;

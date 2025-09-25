@@ -14,7 +14,7 @@ import 'tabs/workouts_tab.dart';
 import 'tabs/races_tab.dart';
 import 'tabs/gear_tab.dart';
 import 'tabs/clubs_tab.dart';
-import 'tabs/awards_tab.dart';
+import 'tabs/awards/awards_tab.dart';
 import 'tabs/skills_tab.dart';
 
 // общий стейт видимости снаряжения
@@ -119,7 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
           // Хедер профиля
-          const SliverToBoxAdapter(child: HeaderCard()),
+          const SliverToBoxAdapter(child: RepaintBoundary(child: HeaderCard())),
 
           // TabsBar — обычным сливером (не pinned)
           SliverToBoxAdapter(
@@ -130,7 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ? (_pageController.page ?? _tab.toDouble())
                     : _tab.toDouble();
                 return SizedBox(
-                  height: 40,
+                  height: 40.5,
                   child: TabsBar(
                     value: _tab,
                     page: page,

@@ -39,16 +39,16 @@ dependencies:
   intl: ^0.20.2
   flutter_localizations:
     sdk: flutter
-  flutter_chat_core: ^2.0.0
-  flutter_chat_ui: ^2.0.0
-  flutter_chat_types: ^2.0.0
+  flutter_chat_core: ^2.8.0
+  flutter_chat_ui: ^2.9.0
+  flutter_chat_types: ^3.6.2
   flutter_local_notifications: ^19.4.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   flutter_secure_storage: ^9.2.4
-  flutter_map: ^8.2.1
+  flutter_map: ^8.2.2
   latlong2: ^0.9.1
   persistent_bottom_nav_bar_v2: ^6.1.0
 
@@ -160,6 +160,45 @@ flutter:
      - assets/club_4.png
      - assets/Scott.png
      - assets/pacepro.png
+     - assets/record_1.png
+     - assets/record_2.png
+     - assets/record_3.png
+     - assets/record_4.png
+     - assets/record_5.png
+     - assets/record_6.png
+     - assets/achive_1.png
+     - assets/achive_2.png
+     - assets/achive_3.png
+     - assets/achive_4.png
+     - assets/achive_5.png
+     - assets/achive_6.png
+     - assets/achive_7.png
+     - assets/achive_8.png
+     - assets/achive_9.png
+     - assets/city_1.png
+     - assets/city_2.png
+     - assets/city_3.png
+     - assets/city_4.png
+     - assets/city_5.png
+     - assets/city_6.png
+     - assets/city_7.png
+     - assets/city_8.png
+     - assets/city_9.png
+     - assets/mountain_1.png
+     - assets/mountain_2.png
+     - assets/mountain_3.png
+     - assets/mountain_4.png
+     - assets/mountain_5.png
+     - assets/mountain_6.png
+     - assets/skill_1.png
+     - assets/skill_2.png
+     - assets/skill_3.png
+     - assets/skill_4.png
+     - assets/skill_5.png
+     - assets/skill_6.png
+     - assets/skill_7.png
+
+
 
      
 
