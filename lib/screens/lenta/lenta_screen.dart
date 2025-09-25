@@ -25,8 +25,7 @@ class LentaScreen extends StatefulWidget {
 }
 
 class _LentaScreenState extends State<LentaScreen> {
-
-late Future<List<Activity>> _future;
+  late Future<List<Activity>> _future;
 
   @override
   void initState() {
@@ -35,22 +34,25 @@ late Future<List<Activity>> _future;
   }
 
   Future<List<Activity>> _loadActivities() async {
-   final res = await http.post(
-        Uri.parse('http://api.paceup.ru/activities_lenta.php'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'userId': widget.userId, 'limit': 20, 'page':1}),
-      );
+    final res = await http.post(
+      Uri.parse('http://api.paceup.ru/activities_lenta.php'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'userId': widget.userId, 'limit': 20, 'page': 1}),
+    );
     if (res.statusCode != 200) {
       throw Exception('HTTP ${res.statusCode}: ${res.body}');
     }
 
     final decoded = json.decode(res.body);
     // если бэк отдаёт {"data":[...]} — возьми decoded['data']
-    final List list = decoded is Map<String, dynamic> ? (decoded['data'] as List) : (decoded as List);
+    final List list = decoded is Map<String, dynamic>
+        ? (decoded['data'] as List)
+        : (decoded as List);
 
-    return list.map((e) => Activity.fromApi(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => Activity.fromApi(e as Map<String, dynamic>))
+        .toList();
   }
-
 
   int _unreadCount =
       3; // пример начального количества непрочитанных уведомлений
@@ -181,44 +183,48 @@ late Future<List<Activity>> _future;
         future: _future,
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
-          //return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
-         /* if (snap.hasError) {
-          return Center(
-            child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text('Ошибка: ${snap.error}'),
-              const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: () => setState(() => _future = _loadActivities()),
-                child: const Text('Повторить'),
+          if (snap.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Ошибка: ${snap.error}'),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: () =>
+                          setState(() => _future = _loadActivities()),
+                      child: const Text('Повторить'),
+                    ),
+                  ],
+                ),
               ),
-              ],
-            ),
-            ),
-          );
-          }*/
+            );
+          }
 
           final items = snap.data ?? const <Activity>[];
 
           // ТВОЙ прежний padding сохраняем
           return ListView(
-          padding: const EdgeInsets.only(top: kToolbarHeight, bottom: 12),
-          children: [
-            // 👉 вместо "const ActivityBlock()" — список блоков из данных:
-            for (final a in items) ...[
-              ActivityBlock(activity: a),
-              const SizedBox(height: 16),
-            ],
+            padding: const EdgeInsets.only(
+              top: kToolbarHeight + 38,
+              bottom: 12,
+            ),
+            children: [
+              // 👉 вместо "const ActivityBlock()" — список блоков из данных:
+              for (final a in items) ...[
+                ActivityBlock(activity: a),
+                const SizedBox(height: 16),
+              ],
 
-            // оставляем твои виджеты ниже
-            _buildRecommendations(),
-            const SizedBox(height: 16),
-            _buildPostCard(context),
-          ],
+              // оставляем твои виджеты ниже
+              _buildRecommendations(),
+              const SizedBox(height: 16),
+              _buildPostCard(context),
+            ],
           );
         },
       ),
