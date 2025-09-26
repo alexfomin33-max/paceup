@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
+import '../../../../theme/app_theme.dart';
+import 'walking_skill_tab.dart';
 
 class SkillsTab extends StatefulWidget {
   const SkillsTab({super.key});
@@ -22,7 +23,7 @@ class _SkillsTabState extends State<SkillsTab>
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
         // Главный агрегирующий навык
-        SliverToBoxAdapter(
+        const SliverToBoxAdapter(
           child: SkillCard(
             imageAsset: 'assets/skill_1.png',
             title: 'Уровень спортсмена',
@@ -45,55 +46,62 @@ class _SkillsTabState extends State<SkillsTab>
         // Остальные навыки
         SliverToBoxAdapter(
           child: Column(
-            children: const [
+            children: [
               SkillCard(
                 imageAsset: 'assets/skill_2.png',
                 title: 'Пешеход',
                 levelText: '10-й уровень',
                 current: 5,
                 max: 10,
+                onTap: () {
+                  Navigator.of(context, rootNavigator: true).push(
+                    MaterialPageRoute(
+                      builder: (_) => const WalkingSkillScreen(),
+                    ),
+                  );
+                },
               ),
-              SizedBox(height: 12),
-              SkillCard(
+              const SizedBox(height: 12),
+              const SkillCard(
                 imageAsset: 'assets/skill_3.png',
                 title: 'Бегун',
                 levelText: '7-й уровень',
                 current: 8,
                 max: 10,
               ),
-              SizedBox(height: 12),
-              SkillCard(
+              const SizedBox(height: 12),
+              const SkillCard(
                 imageAsset: 'assets/skill_4.png',
                 title: 'Велосипедист',
                 levelText: '1-й уровень',
                 current: 0,
                 max: 10,
               ),
-              SizedBox(height: 12),
-              SkillCard(
+              const SizedBox(height: 12),
+              const SkillCard(
                 imageAsset: 'assets/skill_5.png',
                 title: 'Пловец',
                 levelText: '1-й уровень',
                 current: 0,
                 max: 10,
               ),
-              SizedBox(height: 12),
-              SkillCard(
+              const SizedBox(height: 12),
+              const SkillCard(
                 imageAsset: 'assets/skill_6.png',
                 title: 'Покоритель вершин',
                 levelText: '1-й уровень',
                 current: 0,
                 max: 10,
               ),
-              SizedBox(height: 12),
-              SkillCard(
+              const SizedBox(height: 12),
+              const SkillCard(
                 imageAsset: 'assets/skill_7.png',
                 title: 'Член клуба PacePro',
                 levelText: '3-й уровень',
                 current: 0,
                 max: 1,
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -109,6 +117,7 @@ class SkillCard extends StatelessWidget {
   final String levelText; // «N-й уровень»
   final int current; // текущее значение
   final int max; // целевое значение (для прогресса)
+  final VoidCallback? onTap;
 
   const SkillCard({
     super.key,
@@ -117,18 +126,19 @@ class SkillCard extends StatelessWidget {
     required this.levelText,
     required this.current,
     required this.max,
+    this.onTap,
   });
 
   double get percent => max <= 0 ? 0 : (current / max).clamp(0.0, 1.0);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final content = Container(
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(
-          color: AppColors.border, // тот же цвет, что и в коллекциях
-          width: 1, // тонкая рамка
+          color: AppColors.border,
+          width: 0.5, // тонкая рамка
         ),
         borderRadius: BorderRadius.circular(AppRadius.large),
       ),
@@ -188,6 +198,17 @@ class SkillCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+
+    if (onTap == null) return content;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.large),
+        onTap: onTap,
+        child: content,
       ),
     );
   }

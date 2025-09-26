@@ -365,7 +365,7 @@ class _FriendRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final row = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
           SizedBox(
@@ -385,8 +385,8 @@ class _FriendRow extends StatelessWidget {
           ClipOval(
             child: Image(
               image: avatar,
-              width: 28,
-              height: 28,
+              width: 32,
+              height: 32,
               fit: BoxFit.cover,
             ),
           ),

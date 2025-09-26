@@ -15,7 +15,7 @@ import 'tabs/races_tab.dart';
 import 'tabs/gear_tab.dart';
 import 'tabs/clubs_tab.dart';
 import 'tabs/awards/awards_tab.dart';
-import 'tabs/skills_tab.dart';
+import 'tabs/skills/skills_tab.dart';
 
 // общий стейт видимости снаряжения
 import 'state/gear_prefs.dart';
