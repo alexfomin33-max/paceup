@@ -6,6 +6,7 @@ import '../../../theme/app_theme.dart';
 import 'comments_bottom_sheet.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:paceup/models/activity_lenta.dart'; // <-- Модель Activity
+import 'package:paceup/models/activity_lenta.dart' as AL;
 
 /// 🔹 Виджет вертикальной метрики
 class MetricVertical extends StatelessWidget {
@@ -301,7 +302,12 @@ class Popup extends StatelessWidget {
 
 /// 🔹 Equipment с анимацией Popup
 class Equipment extends StatefulWidget {
-  const Equipment({super.key});
+  final List<AL.Equipment> items; // данные сюда
+
+  const Equipment({
+  	super.key,
+  	required this.items,
+  });
 
   @override
   _EquipmentState createState() => _EquipmentState();
@@ -404,6 +410,14 @@ class _EquipmentState extends State<Equipment>
 
   @override
   Widget build(BuildContext context) {
+    // берём первый элемент из списка; если пусто — используем фоллбек
+    final AL.Equipment? e = widget.items.isNotEmpty ? widget.items.first : null;
+    final String name = e?.name?.toString().trim().isNotEmpty == true
+      ? e!.name
+      : "Asics Jolt 3 Wide 'Dive Blue'";
+    final int mileage = e?.mileage ?? 582;
+    final String img = e?.img ?? '';
+
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: 10,
@@ -426,10 +440,15 @@ class _EquipmentState extends State<Equipment>
                 width: 50,
                 height: 50,
                 decoration: ShapeDecoration(
-                  image: const DecorationImage(
-                    image: AssetImage("assets/Asics.png"),
-                    fit: BoxFit.fill,
-                  ),
+                  image: (img.isNotEmpty)
+                    ? DecorationImage(
+                      image: NetworkImage(img),
+                      fit: BoxFit.fill,
+                    )
+                    : const DecorationImage(
+                      image: AssetImage("assets/Asics.png"),
+                      fit: BoxFit.fill,
+                    ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
@@ -440,12 +459,12 @@ class _EquipmentState extends State<Equipment>
               left: 60,
               top: 7,
               right: 60,
-              child: const Text.rich(
+              child: Text.rich(
                 TextSpan(
                   children: [
                     TextSpan(
-                      text: "Asics Jolt 3 Wide 'Dive Blue'\n",
-                      style: TextStyle(
+                        text: "$name\n",
+                        style: TextStyle(
                         color: Color(0xFF323743),
                         fontSize: 13,
 
@@ -464,7 +483,7 @@ class _EquipmentState extends State<Equipment>
                       ),
                     ),
                     TextSpan(
-                      text: "582",
+                      text: "$mileage",
                       style: TextStyle(
                         color: Color(0xFF171A1F),
                         fontSize: 12,
@@ -713,18 +732,13 @@ class _ActivityBlockState extends State<ActivityBlock>
             ),
           ),
           const SizedBox(height: 2),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Equipment(),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 6),
+            child: Equipment(items: activity.equipments),
           ),
           const SizedBox(height: 8),
           // Маршрут с данными из activity.route
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: RouteCard(
-              points: activity.points.map((c) => LatLng(c.lat, c.lng)).toList(),
-            ),
-          ),
+          RouteCard(points: activity.points.map((c) => LatLng(c.lat, c.lng)).toList()),
           const SizedBox(height: 12),
           // Нижняя панель: лайки/комменты и прочее
           Padding(
