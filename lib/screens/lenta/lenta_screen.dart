@@ -392,7 +392,7 @@ class _LentaScreenState extends State<LentaScreen> {
             ),
           ),
           Image.asset(
-            "assets/post.png",
+            "assets/post.jpg",
             fit: BoxFit.cover,
             height: 300,
             width: double.infinity,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../utils/image_precache.dart';
 //import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// 🔹 Экран для ввода кода из SMS для подтверждения номера телефона
@@ -27,6 +28,25 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
 
     /// 🔹 При открытии экрана сразу отправляем запрос на регистрацию пользователя
     fetchApiData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // ✅ ДОБАВИЛИ: предзагрузка фона один раз
+    ImagePrecache.precacheOnce(context, 'assets/background.webp');
+  }
+
+  @override
+  void dispose() {
+    // ✅ ДОБАВИЛИ: аккуратно освобождаем ресурсы
+    for (final c in controllers) {
+      c.dispose();
+    }
+    for (final n in nodes) {
+      n.dispose();
+    }
+    super.dispose();
   }
 
   /// 🔹 Метод для первоначальной отправки запроса регистрации пользователя
@@ -140,7 +160,12 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
         fit: StackFit.expand,
         children: [
           /// 🔹 Фоновое изображение
-          Image.asset("assets/background.png", fit: BoxFit.cover),
+          Image.asset(
+            "assets/background.webp",
+            fit: BoxFit.cover,
+            // ✅ Опционально: дешёвый фильтр при масштабировании
+            filterQuality: FilterQuality.low,
+          ),
 
           /// 🔹 Полупрозрачный черный слой поверх фона
           Container(color: Colors.black.withValues(alpha: 0.5)),

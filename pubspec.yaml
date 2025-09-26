@@ -76,7 +76,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-     - assets/background.png
+     - assets/background.webp
      - assets/logo_icon.png
      - assets/Avatar_0.png
      - assets/Avatar_1.png
@@ -87,7 +87,7 @@ flutter:
      - assets/Recommended_1.png
      - assets/Recommended_2.png
      - assets/Asics.png
-     - assets/post.png
+     - assets/post.jpg
      - assets/Hoka.png
      - assets/Anta.png
      - assets/newpost_1.png
@@ -169,11 +169,11 @@ flutter:
      - assets/achive_1.png
      - assets/achive_2.png
      - assets/achive_3.png
-     - assets/achive_4.png
-     - assets/achive_5.png
-     - assets/achive_6.png
-     - assets/achive_7.png
-     - assets/achive_8.png
+     - assets/achive_4.webp
+     - assets/achive_5.webp
+     - assets/achive_6.webp
+     - assets/achive_7.webp
+     - assets/achive_8.webp
      - assets/achive_9.png
      - assets/city_1.png
      - assets/city_2.png
@@ -189,7 +189,7 @@ flutter:
      - assets/mountain_3.png
      - assets/mountain_4.png
      - assets/mountain_5.png
-     - assets/mountain_6.png
+     - assets/mountain_6.webp
      - assets/skill_1.png
      - assets/skill_2.png
      - assets/skill_3.png

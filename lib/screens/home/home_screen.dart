@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 // import 'createacc_screen.dart'; // 🔹 Можно раскомментировать, если понадобится экран создания аккаунта
 import '../../theme/app_theme.dart';
+// ✅ ДОБАВЛЕНО: утилита безопасной предзагрузки изображений (1 раз на путь)
+import '../../utils/image_precache.dart';
 
 /// 🔹 Главный экран приложения
 /// Этот экран выступает контейнером для WelcomeScreen, который пользователь видит при запуске
@@ -16,8 +18,22 @@ class HomeScreen extends StatelessWidget {
 
 /// 🔹 Экран приветствия / Welcome Screen
 /// Показывается при первом запуске приложения с логотипом и кнопками входа/регистрации
-class WelcomeScreen extends StatelessWidget {
+// ⬇ изменено: был StatelessWidget → стал StatefulWidget,
+// чтобы корректно предзагружать фон через didChangeDependencies()
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // ✅ ДОБАВЛЕНО: предзагружаем фон один раз (если уже предзагружен — повтор не делает ничего)
+    ImagePrecache.precacheOnce(context, 'assets/background.webp');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +43,12 @@ class WelcomeScreen extends StatelessWidget {
         fit: StackFit.expand, // 🔹 Stack занимает весь экран
         children: [
           // 🔹 Фоновое изображение приложения
-          Image.asset("assets/background.png", fit: BoxFit.cover),
+          Image.asset(
+            "assets/background.webp",
+            fit: BoxFit.cover,
+            // ✅ Рекомендовано: дешевле для графики при масштабировании
+            filterQuality: FilterQuality.low,
+          ),
 
           // 🔹 Полупрозрачный черный слой для затемнения фона
           Container(color: Colors.black.withValues(alpha: 0.5)),
@@ -37,9 +58,7 @@ class WelcomeScreen extends StatelessWidget {
             alignment: Alignment.topCenter,
             child: Padding(
               padding: EdgeInsets.only(
-                top:
-                    MediaQuery.of(context).size.height *
-                    0.11, // Смещение сверху ~11% высоты экрана
+                top: MediaQuery.of(context).size.height * 0.11,
               ),
               child: Image.asset(
                 "assets/logo_icon.png",
@@ -61,7 +80,7 @@ class WelcomeScreen extends StatelessWidget {
               ), // Отступ снизу и по бокам
               child: Column(
                 mainAxisSize: MainAxisSize
-                    .min, // 🔹 Колонка занимает минимальное пространство по вертикали
+                    .min, // 🔹 Колонка занимает минимум по вертикали
                 children: [
                   // 🔹 Кнопка "Создать аккаунт"
                   _buildButton(
@@ -87,7 +106,7 @@ class WelcomeScreen extends StatelessWidget {
                   _buildButton(
                     text: "Войти",
                     onPressed: () {
-                      // 🔹 Здесь можно добавить переход на экран входа
+                      // 🔹 Переход на экран входа
                       Navigator.pushReplacementNamed(context, '/login');
                     },
                   ),
@@ -109,12 +128,12 @@ class WelcomeScreen extends StatelessWidget {
         onPressed: onPressed,
         style: ButtonStyle(
           // 🔹 Отступы внутри кнопки
-          padding: WidgetStatePropertyAll(
-            const EdgeInsets.symmetric(vertical: 15),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(vertical: 15),
           ),
           // 🔹 Рамка кнопки
-          side: WidgetStatePropertyAll(
-            const BorderSide(color: Colors.white, width: 1),
+          side: const WidgetStatePropertyAll(
+            BorderSide(color: Colors.white, width: 1),
           ),
           // 🔹 Скругление углов кнопки
           shape: WidgetStatePropertyAll(
@@ -123,7 +142,7 @@ class WelcomeScreen extends StatelessWidget {
             ),
           ),
           // 🔹 Цвет overlay при нажатии (сделан прозрачным)
-          overlayColor: WidgetStatePropertyAll(Colors.transparent),
+          overlayColor: const WidgetStatePropertyAll(Colors.transparent),
         ),
         child: Text(
           text,
