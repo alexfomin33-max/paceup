@@ -28,6 +28,9 @@ class Activity {
   final List<Equipment> equipments; // note: server key is 'equpments'
   final ActivityStats? stats; // server key 'params'
   final List<Coord> points;
+  final String postDateText;  // from "dates"
+  final String postMediaUrl;  // from "media"
+  final String postContent;   // from "content"
 
   Activity({
     required this.id,
@@ -44,6 +47,9 @@ class Activity {
     required this.equipments,
     required this.stats,
     required this.points,
+    this.postDateText = '',
+    this.postMediaUrl = '',
+    this.postContent = '',
   });
 
   factory Activity.fromApi(Map<String, dynamic> j) {
@@ -66,6 +72,9 @@ class Activity {
           ? ActivityStats.fromJson(paramsRaw)
           : null,
       points: _parsePoints(j['points']),
+      postDateText: j['dates']?.toString() ?? '',
+      postMediaUrl: j['media']?.toString() ?? '',
+      postContent: j['content']?.toString() ?? '',
     );
   }
 }
