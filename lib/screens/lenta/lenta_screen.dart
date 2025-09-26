@@ -214,16 +214,20 @@ class _LentaScreenState extends State<LentaScreen> {
               bottom: 12,
             ),
             children: [
-              // 👉 вместо "const ActivityBlock()" — список блоков из данных:
-              for (final a in items) ...[
-                ActivityBlock(activity: a),
-                const SizedBox(height: 16),
+              for (int i = 0; i < items.length; i++) ...[
+                if (items[i].type == 'post') ...[
+                  _buildPostCard(context, items[i]),
+                  const SizedBox(height: 16),
+                ] else ...[
+                  ActivityBlock(activity: items[i]),
+                  const SizedBox(height: 16),
+                ],
+                // ВСТАВКА РЕКОМЕНДАЦИЙ ОДИН РАЗ
+                if (i == 0) ...[
+                  _buildRecommendations(),
+                  const SizedBox(height: 16),
+                ],
               ],
-
-              // оставляем твои виджеты ниже
-              _buildRecommendations(),
-              const SizedBox(height: 16),
-              _buildPostCard(context),
             ],
           );
         },
@@ -340,7 +344,9 @@ class _LentaScreenState extends State<LentaScreen> {
     );
   }
 
-  Widget _buildPostCard(BuildContext context) {
+  Widget _buildPostCard(BuildContext context, Activity a) {
+    if (a.type != 'post') return const SizedBox.shrink();
+
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -359,8 +365,8 @@ class _LentaScreenState extends State<LentaScreen> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
-                    "assets/Avatar_1.png",
+                  child: Image.network(
+                    a.userAvatar,
                     width: 50,
                     height: 50,
                     fit: BoxFit.cover,
@@ -370,14 +376,14 @@ class _LentaScreenState extends State<LentaScreen> {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
-                        "Алексей Лукашин",
+                        a.userName,
                         style: AppTextStyles.name,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        "7 июня 2025, в 14:36",
+                        a.postDateText,
                         style: AppTextStyles.date,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -391,15 +397,15 @@ class _LentaScreenState extends State<LentaScreen> {
               ],
             ),
           ),
-          Image.asset(
-            "assets/post.png",
+          Image.network(
+            a.postMediaUrl,
             fit: BoxFit.cover,
             height: 300,
             width: double.infinity,
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(12),
-            child: Text("Вот так вот очень легко всех победил"),
+            child: Text(a.postContent),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -411,7 +417,7 @@ class _LentaScreenState extends State<LentaScreen> {
                   color: AppColors.red,
                 ),
                 const SizedBox(width: 4),
-                const Text("2707"),
+                Text(a.likes.toString()),
                 const SizedBox(width: 16),
                 GestureDetector(
                   onTap: () {
@@ -422,14 +428,14 @@ class _LentaScreenState extends State<LentaScreen> {
                     );
                   },
                   child: Row(
-                    children: const [
+                    children: [
                       Icon(
                         CupertinoIcons.chat_bubble,
                         size: 20,
                         color: AppColors.orange,
                       ),
                       SizedBox(width: 4),
-                      Text("50"),
+                      Text(a.comments.toString()),
                     ],
                   ),
                 ),
