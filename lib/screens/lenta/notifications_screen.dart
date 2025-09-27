@@ -86,6 +86,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
               )
             : ListView.separated(
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
+                cacheExtent: 600,
                 itemCount: _notifications.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) {
@@ -94,11 +98,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     leading: notif.avatarAsset != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(20),
-                            child: Image.asset(
-                              notif.avatarAsset!,
-                              width: 40,
-                              height: 40,
-                              fit: BoxFit.cover,
+                            child: Builder(
+                              builder: (context) {
+                                final dpr = MediaQuery.of(
+                                  context,
+                                ).devicePixelRatio;
+                                final cacheWidth = (40 * dpr)
+                                    .round(); // ровно под 40 px
+                                return Image.asset(
+                                  notif.avatarAsset!,
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                  cacheWidth: cacheWidth,
+                                  filterQuality: FilterQuality.low,
+                                );
+                              },
                             ),
                           )
                         : const Icon(Icons.notifications),

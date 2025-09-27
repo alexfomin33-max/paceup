@@ -22,6 +22,7 @@ import 'state/gear_prefs.dart';
 
 // 👉 экран настроек
 import 'settings_screen.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

@@ -48,7 +48,10 @@ class _PhotosTabState extends State<PhotosTab>
   Widget build(BuildContext context) {
     super.build(context);
     return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
+      cacheExtent: 600, // подгружаем сетку чуть раньше
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 8)),
         SliverPadding(
@@ -79,9 +82,33 @@ class _PhotosTabState extends State<PhotosTab>
                         final Hero toHero = toHeroContext.widget as Hero;
                         return toHero.child;
                       },
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(path, fit: BoxFit.cover),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final dpr = MediaQuery.of(context).devicePixelRatio;
+
+                      // ширина колонки = (ширина экрана - боковые паддинги 8*2 - два промежутка 6*2) / 3
+                      final screenW = MediaQuery.of(context).size.width;
+                      final columns = 3;
+                      const sidePadding = 8.0;
+                      const spacing = 6.0;
+                      final cellW =
+                          (screenW -
+                              sidePadding * 2 -
+                              spacing * (columns - 1)) /
+                          columns;
+
+                      final cacheWidth = (cellW * dpr).round();
+
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          path,
+                          fit: BoxFit.cover,
+                          cacheWidth: cacheWidth, // 👈 дешёвое превью
+                          filterQuality: FilterQuality.low,
+                        ),
+                      );
+                    },
                   ),
                 ),
               );
