@@ -623,12 +623,12 @@ class _PostLikeBarState extends State<_PostLikeBar>
           .post(
             uri,
             // form-urlencoded (сервер уже это принимает)
-            body: {
+            body: jsonEncode({
               'userId': '$userId',
               'activityId': '$activityId', // одно имя для обоих типов
               'type': type, // <-- добавили тип
               'action': isLikedNow ? 'like' : 'dislike',
-            },
+            }),
           )
           .timeout(const Duration(seconds: 10));
 
