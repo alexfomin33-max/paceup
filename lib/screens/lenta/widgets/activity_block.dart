@@ -55,14 +55,53 @@ class MetricVertical extends StatelessWidget {
   }
 }
 
-/// 🔹 Карточка маршрута
-class RouteCard extends StatelessWidget {
+/// 🔹 Карточка маршрута — статичная карта без интерактива + авто-вписывание по треку (без скруглений)
+class RouteCard extends StatefulWidget {
   final List<LatLng> points;
 
   const RouteCard({super.key, required this.points});
 
   @override
+  State<RouteCard> createState() => _RouteCardState();
+}
+
+class _RouteCardState extends State<RouteCard> {
+  late final MapController _mapController;
+
+  @override
+  void initState() {
+    super.initState();
+    _mapController = MapController();
+  }
+
+  // Центр по умолчанию (если fit не успеет)
+  LatLng _centerFromPoints(List<LatLng> pts) {
+    if (pts.isEmpty) return const LatLng(0, 0);
+    double lat = 0, lng = 0;
+    for (final p in pts) {
+      lat += p.latitude;
+      lng += p.longitude;
+    }
+    final n = pts.length.toDouble();
+    return LatLng(lat / n, lng / n);
+  }
+
+  // Границы трека для вписывания
+  LatLngBounds _boundsFromPoints(List<LatLng> pts) {
+    double minLat = pts.first.latitude, maxLat = pts.first.latitude;
+    double minLng = pts.first.longitude, maxLng = pts.first.longitude;
+    for (final p in pts) {
+      if (p.latitude < minLat) minLat = p.latitude;
+      if (p.latitude > maxLat) maxLat = p.latitude;
+      if (p.longitude < minLng) minLng = p.longitude;
+      if (p.longitude > maxLng) maxLng = p.longitude;
+    }
+    return LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng));
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final points = widget.points;
     if (points.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(horizontal: 16),
@@ -70,50 +109,55 @@ class RouteCard extends StatelessWidget {
       );
     }
 
-    final lat =
-        points.map((e) => e.latitude).reduce((a, b) => a + b) / points.length;
-    final lng =
-        points.map((e) => e.longitude).reduce((a, b) => a + b) / points.length;
-    final center = LatLng(lat, lng);
+    final center = _centerFromPoints(points);
 
     return SizedBox(
       width: double.infinity,
       height: 200,
-      child: FlutterMap(
-        options: MapOptions(initialCenter: center, initialZoom: 12.0),
-        children: [
-          TileLayer(
-            urlTemplate:
-                'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', //'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'paceup.ru',
-            subdomains: const ['a', 'b', 'c'],
+      // ❌ Полностью отключаем касания — карта как картинка
+      child: IgnorePointer(
+        ignoring: true,
+        child: FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: center,
+            initialZoom: 12,
+            // ❌ Жесты отключены
+            interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.none,
+            ),
+            backgroundColor: Colors.transparent,
+            // ✅ Вписываем камеру по границам трека с отступами
+            onMapReady: () {
+              final fit = CameraFit.bounds(
+                bounds: _boundsFromPoints(points),
+                padding: const EdgeInsets.all(12),
+              );
+              _mapController.fitCamera(fit);
+            },
           ),
-          PolylineLayer(
-            polylines: [
-              Polyline(points: points, strokeWidth: 4.0, color: Colors.blue),
-            ],
-          ),
-          // MarkerLayer(
-          //   markers: [
-          //     Marker(
-          //       point: points.first,
-          //       width: 40,
-          //       height: 40,
-          //       child: const Icon(
-          //         Icons.location_on,
-          //         color: Colors.green,
-          //         size: 32,
-          //       ),
-          //     ),
-          //     Marker(
-          //       point: points.last,
-          //       width: 40,
-          //       height: 40,
-          //       child: const Icon(Icons.flag, color: Colors.red, size: 28),
-          //     ),
-          //   ],
-          // ),
-        ],
+          children: [
+            TileLayer(
+              urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName:
+                  'com.example.paceip', // подставь свой package id
+              // ⚙️ Полегче по памяти
+              keepBuffer: 1,
+              retinaMode: false,
+              maxZoom: 18,
+              minZoom: 3,
+            ),
+            PolylineLayer(
+              polylines: [
+                Polyline(
+                  points: points,
+                  strokeWidth: 3.0,
+                  color: const Color(0xFF1976D2), // без withOpacity
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -307,10 +351,7 @@ class Popup extends StatelessWidget {
 class Equipment extends StatefulWidget {
   final List<AL.Equipment> items; // данные сюда
 
-  const Equipment({
-  	super.key,
-  	required this.items,
-  });
+  const Equipment({super.key, required this.items});
 
   @override
   _EquipmentState createState() => _EquipmentState();
@@ -415,9 +456,9 @@ class _EquipmentState extends State<Equipment>
   Widget build(BuildContext context) {
     // берём первый элемент из списка; если пусто — используем фоллбек
     final AL.Equipment? e = widget.items.isNotEmpty ? widget.items.first : null;
-    final String name = e?.name?.toString().trim().isNotEmpty == true
-      ? e!.name
-      : "Asics Jolt 3 Wide 'Dive Blue'";
+    final String name = e?.name.toString().trim().isNotEmpty == true
+        ? e!.name
+        : "Asics Jolt 3 Wide 'Dive Blue'";
     final int mileage = e?.mileage ?? 582;
     final String img = e?.img ?? '';
 
@@ -444,14 +485,14 @@ class _EquipmentState extends State<Equipment>
                 height: 50,
                 decoration: ShapeDecoration(
                   image: (img.isNotEmpty)
-                    ? DecorationImage(
-                      image: NetworkImage(img),
-                      fit: BoxFit.fill,
-                    )
-                    : const DecorationImage(
-                      image: AssetImage("assets/Asics.png"),
-                      fit: BoxFit.fill,
-                    ),
+                      ? DecorationImage(
+                          image: NetworkImage(img),
+                          fit: BoxFit.fill,
+                        )
+                      : const DecorationImage(
+                          image: AssetImage("assets/Asics.png"),
+                          fit: BoxFit.fill,
+                        ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
@@ -466,8 +507,8 @@ class _EquipmentState extends State<Equipment>
                 TextSpan(
                   children: [
                     TextSpan(
-                        text: "$name\n",
-                        style: TextStyle(
+                      text: "$name\n",
+                      style: TextStyle(
                         color: Color(0xFF323743),
                         fontSize: 13,
 
@@ -863,7 +904,9 @@ Future<bool> _sendLike({
           ),
           const SizedBox(height: 8),
           // Маршрут с данными из activity.route
-          RouteCard(points: activity.points.map((c) => LatLng(c.lat, c.lng)).toList()),
+          RouteCard(
+            points: activity.points.map((c) => LatLng(c.lat, c.lng)).toList(),
+          ),
           const SizedBox(height: 12),
           // Нижняя панель: лайки/комменты и прочее
           Padding(

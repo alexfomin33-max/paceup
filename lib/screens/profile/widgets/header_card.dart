@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../edit_profile_screen.dart';
 
 class HeaderCard extends StatelessWidget {
   const HeaderCard({super.key});
@@ -53,7 +54,7 @@ class HeaderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -73,7 +74,16 @@ class HeaderCard extends StatelessWidget {
                       ),
                     ),
                     SizedBox(width: 6),
-                    _SmallIconBtn(icon: CupertinoIcons.pencil),
+                    _SmallIconBtn(
+                      icon: CupertinoIcons.pencil,
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (_) => const EditProfileScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
                 SizedBox(height: 2),
@@ -104,18 +114,24 @@ class HeaderCard extends StatelessWidget {
 
 class _SmallIconBtn extends StatelessWidget {
   final IconData icon;
-  const _SmallIconBtn({required this.icon});
+  final VoidCallback? onPressed;
+
+  const _SmallIconBtn({required this.icon, this.onPressed});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(20),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onPressed,
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Icon(icon, size: 16, color: AppColors.text),
       ),
-      child: Icon(icon, size: 16, color: AppColors.text),
     );
   }
 }

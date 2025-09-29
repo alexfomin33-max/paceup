@@ -23,7 +23,7 @@ List<Widget> buildCollectionsSlivers() {
     _CollItem('assets/mountain_3.png', 'Килиманджаро'),
     _CollItem('assets/mountain_4.png', 'Чогори'),
     _CollItem('assets/mountain_5.png', 'Фудзияма'),
-    _CollItem('assets/mountain_6.png', 'Монблан', locked: true),
+    _CollItem('assets/mountain_6.webp', 'Монблан', locked: true),
   ];
 
   return [

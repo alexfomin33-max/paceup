@@ -28,7 +28,12 @@ class AddAccScreen extends StatelessWidget {
         fit: StackFit.expand, // 🔹 Заполнение всего экрана
         children: [
           // 🔹 Фоновое изображение
-          Image.asset("assets/background.png", fit: BoxFit.cover),
+          Image.asset(
+            "assets/background.webp",
+            fit: BoxFit.cover,
+            // ✅ Опционально: дешёвый фильтр при масштабировании
+            filterQuality: FilterQuality.low,
+          ),
 
           // 🔹 Полупрозрачный черный слой поверх фона
           Container(color: Colors.black.withValues(alpha: 0.5)),
