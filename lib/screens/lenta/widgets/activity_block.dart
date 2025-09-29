@@ -7,6 +7,9 @@ import 'comments_bottom_sheet.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:paceup/models/activity_lenta.dart'; // <-- Модель Activity
 import 'package:paceup/models/activity_lenta.dart' as AL;
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 /// 🔹 Виджет вертикальной метрики
 class MetricVertical extends StatelessWidget {
@@ -587,8 +590,9 @@ class _EquipmentState extends State<Equipment>
 /// 🔹 ActivityBlock c данными из модели Activity
 class ActivityBlock extends StatefulWidget {
   final Activity activity;
+  final int currentUserId;
 
-  const ActivityBlock({super.key, required this.activity});
+  const ActivityBlock({super.key, required this.activity, this.currentUserId = 0,});
 
   @override
   _ActivityBlockState createState() => _ActivityBlockState();
@@ -597,12 +601,22 @@ class ActivityBlock extends StatefulWidget {
 class _ActivityBlockState extends State<ActivityBlock>
     with SingleTickerProviderStateMixin {
   bool isLiked = false;
+  int likesCount = 0;
+  bool _likeBusy = false;
+
   late AnimationController _likeController;
   late Animation<double> _likeAnimation;
+
+  static const String _likeEndpoint = 'http://api.paceup.ru/activity_likes_toggle.php';
 
   @override
   void initState() {
     super.initState();
+
+    // Инициализируем локальный счётчик из данных активности
+    likesCount = widget.activity.likes;
+    isLiked = widget.activity.islike;
+
     _likeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
@@ -621,10 +635,121 @@ class _ActivityBlockState extends State<ActivityBlock>
     super.dispose();
   }
 
-  void _onLikeTap() {
+ /* void _onLikeTap() {
     setState(() => isLiked = !isLiked);
     _likeController.forward(from: 0);
+  }*/
+  Future<void> _onLikeTap() async {
+    if (_likeBusy) return; // защита от дабл-кликов
+
+    // Оптимистично меняем UI
+    setState(() {
+      _likeBusy = true;
+      isLiked = !isLiked;
+      likesCount += isLiked ? 1 : -1;
+    });
+    _likeController.forward(from: 0);
+
+    final ok = await _sendLike(
+      activityId: widget.activity.id,
+      userId: widget.currentUserId,
+      isLikedNow: isLiked,
+      type: 'activity',
+    );
+
+    // Откат при ошибке
+    if (!ok && mounted) {
+      setState(() {
+        isLiked = !isLiked;
+        likesCount += isLiked ? 1 : -1;
+      });
+    }
+
+    if (mounted) {
+      setState(() => _likeBusy = false);
+    }
   }
+
+  // ⬇️ Новый метод: запрос на сервер
+Future<bool> _sendLike({
+  required int activityId, //ид активности или поста
+  required int userId,
+  required bool isLikedNow,
+  required String type,
+}) async {
+  final uri = Uri.parse(_likeEndpoint);
+
+  try {
+
+    final res = await http
+        .post(
+          uri,
+          // ВАЖНО: только строки!
+          body: jsonEncode({
+            'userId': '$userId',
+            'activityId': '$activityId',
+            'action': isLikedNow ? 'like' : 'dislike',
+            'type': type,
+          }),
+          // заголовок можно не ставить: http сам проставит form-urlencoded
+          // headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'},
+        )
+        .timeout(const Duration(seconds: 10)); // а не 1 сек
+
+    // эти принты теперь точно выполнятся
+    final raw = utf8.decode(res.bodyBytes);
+
+    bool ok = false;
+    int? serverLikes;
+
+    // пробуем распарсить JSON; если не JSON — оставим data = null
+    dynamic data;
+    try {
+      data = json.decode(raw);
+    } catch (_) {
+      data = null;
+    }
+
+    // 1) нормальный кейс: объект
+    if (data is Map<String, dynamic>) {
+      ok = data['ok'] == true || data['status'] == 'ok';
+      final likesVal = data['likes'];
+      if (likesVal != null) {
+        serverLikes = int.tryParse(likesVal.toString());
+      }
+
+    // 2) сервер вернул массив с одним объектом
+    } else if (data is List && data.isNotEmpty && data.first is Map<String, dynamic>) {
+      final m = data.first as Map<String, dynamic>;
+      ok = m['ok'] == true || m['status'] == 'ok';
+      final likesVal = m['likes'];
+      if (likesVal != null) {
+        serverLikes = int.tryParse(likesVal.toString());
+      }
+
+    // 3) не-JSON: просто "ok", "1", "true" и т.п.
+    } else {
+      final t = raw.trim().toLowerCase();
+      ok = (res.statusCode == 200) && (t == 'ok' || t == '1' || t == 'true');
+      if (!ok) {
+
+      }
+    }
+
+    if (!ok) return false;
+
+    // если сервер прислал число лайков — синхронизируем
+    if (serverLikes != null && mounted) {
+      setState(() => likesCount = serverLikes!);
+    }
+    return true;
+
+  } on TimeoutException catch (e) {
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
 
   String _fmtDate(DateTime? dt) {
     if (dt == null) return ''; // или '—', если хочешь выводить прочерк
@@ -815,7 +940,8 @@ class _ActivityBlockState extends State<ActivityBlock>
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      activity.likes.toString(),
+                      likesCount.toString(),
+                      //activity.likes.toString(),
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -827,8 +953,10 @@ class _ActivityBlockState extends State<ActivityBlock>
                       onTap: () {
                         showCupertinoModalBottomSheet(
                           context: context,
-                          expand: false,
-                          builder: (context) => const CommentsBottomSheet(),
+                          builder: (context) => CommentsBottomSheet(
+                            itemType: 'activity',
+                            itemId: activity.id, // подставь реальный ID активности
+                          ),
                         );
                       },
                       child: Container(

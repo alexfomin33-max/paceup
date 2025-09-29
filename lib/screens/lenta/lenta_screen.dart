@@ -12,6 +12,7 @@ import 'dart:ui'; // для ImageFilter.blur
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:paceup/models/activity_lenta.dart';
+import 'dart:async';
 
 /// Единые размеры для AppBar в iOS-стиле
 const double kAppBarIconSize = 22.0; // сама иконка ~20–22pt
@@ -66,8 +67,7 @@ class _LentaScreenState extends State<LentaScreen>
         .toList();
   }
 
-  int _unreadCount =
-      3; // пример начального количества непрочитанных уведомлений
+  int _unreadCount = 3; // пример начального количества непрочитанных уведомлений
   final List<NotificationItem> _notifications = [
     NotificationItem(
       title: "Новая подписка",
@@ -212,11 +212,11 @@ class _LentaScreenState extends State<LentaScreen>
             return const Center(child: Text('Пока в ленте пусто'));
           }
 
-          // ✅ ленивый список
+          // ✅ ленивый список с «окном» под рекомендации после первого элемента
           return ListView.builder(
-            controller: _scrollController, // ← подключили контроллер
+            controller: _scrollController,
             padding: const EdgeInsets.only(top: kToolbarH + 38, bottom: 12),
-            itemCount: items.length + 1, // +1: вставим рекомендацию после 1-го
+            itemCount: items.length + 1, // +1 — окно под рекомендации
             addAutomaticKeepAlives: false,
             addRepaintBoundaries: true,
             addSemanticIndexes: false,
@@ -233,8 +233,7 @@ class _LentaScreenState extends State<LentaScreen>
                 );
               }
 
-              final idx =
-                  i; // индекс сдвинут на 1 за счёт «окна» под рекомендации
+              final idx = i; // из-за окна индексы совпадают
               if (idx >= items.length) return const SizedBox.shrink();
 
               final item = _buildFeedItem(context, items[idx]);
@@ -252,7 +251,7 @@ class _LentaScreenState extends State<LentaScreen>
     if (a.type == 'post') {
       return _buildPostCard(context, a);
     }
-    return ActivityBlock(activity: a);
+    return ActivityBlock(activity: a, currentUserId: widget.userId);
   }
 
   Widget _buildRecommendations() {
@@ -447,20 +446,16 @@ class _LentaScreenState extends State<LentaScreen>
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
-                const Icon(
-                  CupertinoIcons.heart,
-                  size: 20,
-                  color: AppColors.red,
-                ),
-                const SizedBox(width: 4),
-                Text(a.likes.toString()),
+                _PostLikeBar(post: a, currentUserId: widget.userId),
                 const SizedBox(width: 16),
                 GestureDetector(
                   onTap: () {
                     showCupertinoModalBottomSheet(
                       context: context,
-                      expand: false,
-                      builder: (context) => const CommentsBottomSheet(),
+                      builder: (context) => CommentsBottomSheet(
+                        itemType: 'post',
+                        itemId: a.id, // здесь подставь реальную переменную с ID поста
+                      ),
                     );
                   },
                   child: Row(
@@ -535,6 +530,168 @@ class _Badge extends StatelessWidget {
           color: Colors.white,
           fontWeight: FontWeight.w700,
         ),
+      ),
+    );
+  }
+}
+
+/// Лайк-бар для поста. Ходит в тот же API, но с type='post'
+class _PostLikeBar extends StatefulWidget {
+  final Activity post;
+  final int currentUserId;
+
+  const _PostLikeBar({
+    super.key,
+    required this.post,
+    required this.currentUserId,
+  });
+
+  @override
+  State<_PostLikeBar> createState() => _PostLikeBarState();
+}
+
+class _PostLikeBarState extends State<_PostLikeBar>
+    with SingleTickerProviderStateMixin {
+  bool isLiked = false;
+  int likesCount = 0;
+  bool _busy = false;
+
+  late AnimationController _likeController;
+  late Animation<double> _likeAnimation;
+
+  // тот же эндпойнт, что и для активностей
+  static const String _likeEndpoint =
+      'http://api.paceup.ru/activity_likes_toggle.php';
+
+  @override
+  void initState() {
+    super.initState();
+    isLiked = widget.post.islike; // старт из модели
+    likesCount = widget.post.likes;
+
+    _likeController =
+        AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+    _likeAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
+      CurvedAnimation(parent: _likeController, curve: Curves.easeOutBack),
+    );
+    _likeController.addStatusListener((s) {
+      if (s == AnimationStatus.completed) _likeController.reverse();
+    });
+  }
+
+  @override
+  void dispose() {
+    _likeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onTap() async {
+    if (_busy) return;
+
+    // оптимистичное обновление
+    setState(() {
+      _busy = true;
+      isLiked = !isLiked;
+      likesCount += isLiked ? 1 : -1;
+    });
+    _likeController.forward(from: 0);
+
+    final ok = await _sendLike(
+      activityId: widget.post.id, // id поста
+      userId: widget.currentUserId,
+      isLikedNow: isLiked,
+      type: 'post',
+    );
+
+    if (!ok && mounted) {
+      // откат при ошибке
+      setState(() {
+        isLiked = !isLiked;
+        likesCount += isLiked ? 1 : -1;
+      });
+    }
+    if (mounted) setState(() => _busy = false);
+  }
+
+  Future<bool> _sendLike({
+    required int activityId,
+    required int userId,
+    required bool isLikedNow,
+    required String type, // 'activity' | 'post'
+  }) async {
+    final uri = Uri.parse(_likeEndpoint);
+    try {
+      final res = await http
+          .post(
+            uri,
+            // form-urlencoded (сервер уже это принимает)
+            body: jsonEncode({
+              'userId': '$userId',
+              'activityId': '$activityId', // одно имя для обоих типов
+              'type': type, // <-- добавили тип
+              'action': isLikedNow ? 'like' : 'dislike',
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (res.statusCode != 200) return false;
+
+      final raw = utf8.decode(res.bodyBytes);
+
+      dynamic data;
+      try {
+        data = json.decode(raw);
+      } catch (_) {
+        data = null;
+      }
+
+      bool ok = false;
+      int? serverLikes;
+
+      if (data is Map<String, dynamic>) {
+        ok = data['ok'] == true || data['status'] == 'ok';
+        serverLikes = int.tryParse('${data['likes']}');
+      } else if (data is List &&
+          data.isNotEmpty &&
+          data.first is Map<String, dynamic>) {
+        final m = data.first as Map<String, dynamic>;
+        ok = m['ok'] == true || m['status'] == 'ok';
+        serverLikes = int.tryParse('${m['likes']}');
+      } else {
+        final t = raw.trim().toLowerCase();
+        ok = (res.statusCode == 200) &&
+            (t == 'ok' || t == '1' || t == 'true');
+      }
+
+      if (ok && serverLikes != null && mounted) {
+        setState(() => likesCount = serverLikes!);
+      }
+      return ok;
+    } on TimeoutException {
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _onTap,
+      child: Row(
+        children: [
+          ScaleTransition(
+            scale: _likeAnimation,
+            child: Icon(
+              isLiked ? CupertinoIcons.heart_solid : CupertinoIcons.heart,
+              size: 20,
+              color: AppColors.red,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(likesCount.toString()),
+        ],
       ),
     );
   }
