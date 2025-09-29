@@ -31,6 +31,7 @@ class Activity {
   final String postDateText;  // from "dates"
   final String postMediaUrl;  // from "media"
   final String postContent;   // from "content"
+  final bool islike;
 
   Activity({
     required this.id,
@@ -50,6 +51,7 @@ class Activity {
     this.postDateText = '',
     this.postMediaUrl = '',
     this.postContent = '',
+    this.islike = false,
   });
 
   factory Activity.fromApi(Map<String, dynamic> j) {
@@ -75,6 +77,7 @@ class Activity {
       postDateText: j['dates']?.toString() ?? '',
       postMediaUrl: j['media']?.toString() ?? '',
       postContent: j['content']?.toString() ?? '',
+      islike: _asBool(j['islike'] ?? j['isLiked'] ?? j['is_like'] ?? j['liked']),
     );
   }
 }
@@ -331,3 +334,12 @@ Map<String, double> _parseNumMap(dynamic v) {
   }
   return out;
 }
+
+bool _asBool(dynamic v) {
+  if (v is bool) return v;
+  if (v is num) return v != 0;
+  final s = v?.toString().trim().toLowerCase();
+  if (s == null || s.isEmpty) return false;
+  return s == '1' || s == 'true' || s == 'yes' || s == 'on';
+}
+
