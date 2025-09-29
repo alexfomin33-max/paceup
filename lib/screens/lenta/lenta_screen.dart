@@ -14,6 +14,11 @@ import 'package:http/http.dart' as http;
 import 'package:paceup/models/activity_lenta.dart';
 import 'dart:async';
 
+/// Единые размеры для AppBar в iOS-стиле
+const double kAppBarIconSize = 22.0; // сама иконка ~20–22pt
+const double kAppBarTapTarget = 42.0; // кликабельная область 42×42
+const double kToolbarH = 52.0; // высота AppBar (iOS-лайк, компактнее 56)
+
 /// 🔹 Экран Ленты (Feed)
 class LentaScreen extends StatefulWidget {
   final int userId;
@@ -25,8 +30,16 @@ class LentaScreen extends StatefulWidget {
   State<LentaScreen> createState() => _LentaScreenState();
 }
 
-class _LentaScreenState extends State<LentaScreen> {
+// ✅ сохраняем позицию скролла при переключении вкладок
+class _LentaScreenState extends State<LentaScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   late Future<List<Activity>> _future;
+
+  /// Контроллер списка — нужен для скролла в начало по двойному тапу по заголовку
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -45,7 +58,6 @@ class _LentaScreenState extends State<LentaScreen> {
     }
 
     final decoded = json.decode(res.body);
-    // если бэк отдаёт {"data":[...]} — возьми decoded['data']
     final List list = decoded is Map<String, dynamic>
         ? (decoded['data'] as List)
         : (decoded as List);
@@ -55,8 +67,7 @@ class _LentaScreenState extends State<LentaScreen> {
         .toList();
   }
 
-  int _unreadCount =
-      3; // пример начального количества непрочитанных уведомлений
+  int _unreadCount = 3; // пример начального количества непрочитанных уведомлений
   final List<NotificationItem> _notifications = [
     NotificationItem(
       title: "Новая подписка",
@@ -80,74 +91,73 @@ class _LentaScreenState extends State<LentaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // ⚡️ фон убираем — теперь AppBar будет реально поверх контента
-      backgroundColor: const Color(0xFFF3F4F6),
+    super.build(context); // важно для keep-alive
 
-      // ⚡️ разрешаем контенту уходить под AppBar
+    return Scaffold(
+      backgroundColor: const Color(0xFFF3F4F6),
       extendBodyBehindAppBar: true,
 
       appBar: AppBar(
-        // лёгкая белая дымка + будет смешиваться с размытым фоном
+        toolbarHeight: kToolbarH, // ← явная высота AppBar
         backgroundColor: Colors.white.withValues(alpha: 0.50),
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-
-        // ⬇️ это и есть эффект стекла
         flexibleSpace: ClipRect(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20), // можно 16–28
-            child: Container(color: Colors.transparent), // слой-заглушка
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(color: Colors.transparent),
           ),
         ),
-
         centerTitle: true,
         automaticallyImplyLeading: false,
-        leadingWidth: 100,
 
-        // тонкая разделительная линия сверху контента (по желанию)
+        // Чуть меньше дефолта, чтобы пара иконок слева точно помещалась
+        leadingWidth: 96,
+
         shape: const Border(
           bottom: BorderSide(color: Color(0x33FFFFFF), width: 0.6),
         ),
 
-        // ——— оставляем твои кнопки как были ———
-        leading: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            IconButton(
-              icon: const Icon(CupertinoIcons.star),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: const Icon(CupertinoIcons.add_circled),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NewPostScreen()),
-                );
-              },
-            ),
-          ],
+        // Левая группа иконок
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              _NavIcon(icon: CupertinoIcons.star, onPressed: () {}),
+              const SizedBox(width: 4),
+              _NavIcon(
+                icon: CupertinoIcons.add_circled,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NewPostScreen()),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
+
         title: const Text("Лента", style: AppTextStyles.h1),
+
+        // Правая группа иконок + бейдж
         actions: [
-          IconButton(
+          _NavIcon(
+            icon: CupertinoIcons.bubble_left_bubble_right,
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const Basic()),
               );
             },
-            icon: const Icon(CupertinoIcons.bubble_left_bubble_right),
           ),
           Stack(
+            clipBehavior: Clip.none,
             children: [
-              IconButton(
+              _NavIcon(
+                icon: CupertinoIcons.bell,
                 onPressed: () async {
                   await Navigator.push(
                     context,
@@ -157,26 +167,16 @@ class _LentaScreenState extends State<LentaScreen> {
                     _unreadCount = 0;
                   });
                 },
-                icon: const Icon(CupertinoIcons.bell),
               ),
               if (_unreadCount > 0)
                 Positioned(
-                  right: 10,
-                  top: 5,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      "$_unreadCount",
-                      style: const TextStyle(fontSize: 10, color: Colors.white),
-                    ),
-                  ),
+                  right: 4,
+                  top: 4,
+                  child: _Badge(count: _unreadCount),
                 ),
             ],
           ),
+          const SizedBox(width: 6),
         ],
       ),
 
@@ -208,32 +208,50 @@ class _LentaScreenState extends State<LentaScreen> {
 
           final items = snap.data ?? const <Activity>[];
 
-          // ТВОЙ прежний padding сохраняем
-          return ListView(
-            padding: const EdgeInsets.only(
-              top: kToolbarHeight + 38,
-              bottom: 12,
-            ),
-            children: [
-              for (int i = 0; i < items.length; i++) ...[
-                if (items[i].type == 'post') ...[
-                  _buildPostCard(context, items[i]),
-                  const SizedBox(height: 16),
-                ] else ...[
-                  ActivityBlock(activity: items[i],currentUserId: widget.userId,),
-                  const SizedBox(height: 16),
-                ],
-                // ВСТАВКА РЕКОМЕНДАЦИЙ ОДИН РАЗ
-                if (i == 0) ...[
-                  _buildRecommendations(),
-                  const SizedBox(height: 16),
-                ],
-              ],
-            ],
+          if (items.isEmpty) {
+            return const Center(child: Text('Пока в ленте пусто'));
+          }
+
+          // ✅ ленивый список с «окном» под рекомендации после первого элемента
+          return ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.only(top: kToolbarH + 38, bottom: 12),
+            itemCount: items.length + 1, // +1 — окно под рекомендации
+            addAutomaticKeepAlives: false,
+            addRepaintBoundaries: true,
+            addSemanticIndexes: false,
+            itemBuilder: (context, i) {
+              if (i == 0) {
+                final first = _buildFeedItem(context, items[0]);
+                return Column(
+                  children: [
+                    first,
+                    const SizedBox(height: 16),
+                    _buildRecommendations(),
+                    const SizedBox(height: 16),
+                  ],
+                );
+              }
+
+              final idx = i; // из-за окна индексы совпадают
+              if (idx >= items.length) return const SizedBox.shrink();
+
+              final item = _buildFeedItem(context, items[idx]);
+              return Column(children: [item, const SizedBox(height: 16)]);
+            },
           );
         },
       ),
     );
+  }
+
+  /// Возвращает нужную карточку для элемента ленты:
+  /// пост → карточка поста; тренировка → ActivityBlock.
+  Widget _buildFeedItem(BuildContext context, Activity a) {
+    if (a.type == 'post') {
+      return _buildPostCard(context, a);
+    }
+    return ActivityBlock(activity: a, currentUserId: widget.userId);
   }
 
   Widget _buildRecommendations() {
@@ -252,6 +270,10 @@ class _LentaScreenState extends State<LentaScreen> {
           height: 282,
           child: ListView(
             scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            cacheExtent: 300,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             children: [
               _friendCard(
@@ -398,27 +420,32 @@ class _LentaScreenState extends State<LentaScreen> {
               ],
             ),
           ),
-          Image.network(
-            a.postMediaUrl,
-            fit: BoxFit.cover,
-            height: 300,
-            width: double.infinity,
+
+          // ✅ дешёвое масштабирование и правильный cacheWidth
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final dpr = MediaQuery.of(context).devicePixelRatio;
+              final cacheWidth = (constraints.maxWidth * dpr).round();
+              return Image.network(
+                a.postMediaUrl,
+                fit: BoxFit.cover,
+                height: 300,
+                width: double.infinity,
+                filterQuality: FilterQuality.low, // дешевле для GPU
+                cacheWidth: cacheWidth, // не декодируем лишнее
+                gaplessPlayback: true, // меньше «миганий»
+              );
+            },
           ),
+
           Padding(
-            padding: EdgeInsets.all(12),
+            padding: const EdgeInsets.all(12),
             child: Text(a.postContent),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
-                /*const Icon(
-                  CupertinoIcons.heart,
-                  size: 20,
-                  color: AppColors.red,
-                ),
-                const SizedBox(width: 4),
-                Text(a.likes.toString()),*/
                 _PostLikeBar(post: a, currentUserId: widget.userId),
                 const SizedBox(width: 16),
                 GestureDetector(
@@ -431,12 +458,12 @@ class _LentaScreenState extends State<LentaScreen> {
                   },
                   child: Row(
                     children: [
-                      Icon(
+                      const Icon(
                         CupertinoIcons.chat_bubble,
                         size: 20,
                         color: AppColors.orange,
                       ),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(a.comments.toString()),
                     ],
                   ),
@@ -451,6 +478,62 @@ class _LentaScreenState extends State<LentaScreen> {
   }
 }
 
+/// Единый вид для иконок в AppBar — размер 22, tap-target 44×44
+class _NavIcon extends StatelessWidget {
+  const _NavIcon({required this.icon, required this.onPressed});
+
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: kAppBarTapTarget,
+      height: kAppBarTapTarget,
+      child: IconButton(
+        onPressed: onPressed,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(
+          minWidth: kAppBarTapTarget,
+          minHeight: kAppBarTapTarget,
+        ),
+        icon: Icon(icon, size: kAppBarIconSize),
+        splashRadius: 22,
+      ),
+    );
+  }
+}
+
+/// Компактный бейдж для колокольчика
+class _Badge extends StatelessWidget {
+  const _Badge({required this.count});
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final String text = count > 99 ? '99+' : '$count';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: Colors.red,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 10,
+          height: 1,
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+/// Лайк-бар для поста. Ходит в тот же API, но с type='post'
 class _PostLikeBar extends StatefulWidget {
   final Activity post;
   final int currentUserId;
@@ -465,7 +548,8 @@ class _PostLikeBar extends StatefulWidget {
   State<_PostLikeBar> createState() => _PostLikeBarState();
 }
 
-class _PostLikeBarState extends State<_PostLikeBar> with SingleTickerProviderStateMixin {
+class _PostLikeBarState extends State<_PostLikeBar>
+    with SingleTickerProviderStateMixin {
   bool isLiked = false;
   int likesCount = 0;
   bool _busy = false;
@@ -474,15 +558,17 @@ class _PostLikeBarState extends State<_PostLikeBar> with SingleTickerProviderSta
   late Animation<double> _likeAnimation;
 
   // тот же эндпойнт, что и для активностей
-  static const String _likeEndpoint = 'http://api.paceup.ru/activity_likes_toggle.php';
+  static const String _likeEndpoint =
+      'http://api.paceup.ru/activity_likes_toggle.php';
 
   @override
   void initState() {
     super.initState();
-    isLiked = widget.post.islike;   // берём старт из модели
+    isLiked = widget.post.islike; // старт из модели
     likesCount = widget.post.likes;
 
-    _likeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+    _likeController =
+        AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
     _likeAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
       CurvedAnimation(parent: _likeController, curve: Curves.easeOutBack),
     );
@@ -509,10 +595,10 @@ class _PostLikeBarState extends State<_PostLikeBar> with SingleTickerProviderSta
     _likeController.forward(from: 0);
 
     final ok = await _sendLike(
-      activityId: widget.post.id,              // id поста
-      userId: widget.currentUserId,            // текущий пользователь
+      activityId: widget.post.id, // id поста
+      userId: widget.currentUserId,
       isLikedNow: isLiked,
-      type: 'post',                            // КЛЮЧЕВОЕ: тип пост
+      type: 'post',
     );
 
     if (!ok && mounted) {
@@ -533,27 +619,29 @@ class _PostLikeBarState extends State<_PostLikeBar> with SingleTickerProviderSta
   }) async {
     final uri = Uri.parse(_likeEndpoint);
     try {
-      // можно оставить принты на время отладки
-      print('[LIKE] POST $uri type=$type userId=$userId activityId=$activityId action=${isLikedNow ? 'like' : 'dislike'}');
-
       final res = await http
           .post(
             uri,
-            body: jsonEncode({
+            // form-urlencoded (сервер уже это принимает)
+            body: {
               'userId': '$userId',
-              'activityId': '$activityId',     // одно имя и для активностей, и для постов
-              'type': type,                    // добавили тип
+              'activityId': '$activityId', // одно имя для обоих типов
+              'type': type, // <-- добавили тип
               'action': isLikedNow ? 'like' : 'dislike',
-            }),
+            },
           )
           .timeout(const Duration(seconds: 10));
 
       if (res.statusCode != 200) return false;
 
       final raw = utf8.decode(res.bodyBytes);
-      // гибкий парсинг (Map | List | строка)
+
       dynamic data;
-      try { data = json.decode(raw); } catch (_) { data = null; }
+      try {
+        data = json.decode(raw);
+      } catch (_) {
+        data = null;
+      }
 
       bool ok = false;
       int? serverLikes;
@@ -561,13 +649,16 @@ class _PostLikeBarState extends State<_PostLikeBar> with SingleTickerProviderSta
       if (data is Map<String, dynamic>) {
         ok = data['ok'] == true || data['status'] == 'ok';
         serverLikes = int.tryParse('${data['likes']}');
-      } else if (data is List && data.isNotEmpty && data.first is Map<String, dynamic>) {
+      } else if (data is List &&
+          data.isNotEmpty &&
+          data.first is Map<String, dynamic>) {
         final m = data.first as Map<String, dynamic>;
         ok = m['ok'] == true || m['status'] == 'ok';
         serverLikes = int.tryParse('${m['likes']}');
       } else {
         final t = raw.trim().toLowerCase();
-        ok = (res.statusCode == 200) && (t == 'ok' || t == '1' || t == 'true');
+        ok = (res.statusCode == 200) &&
+            (t == 'ok' || t == '1' || t == 'true');
       }
 
       if (ok && serverLikes != null && mounted) {
@@ -603,4 +694,3 @@ class _PostLikeBarState extends State<_PostLikeBar> with SingleTickerProviderSta
     );
   }
 }
-
