@@ -452,8 +452,10 @@ class _LentaScreenState extends State<LentaScreen>
                   onTap: () {
                     showCupertinoModalBottomSheet(
                       context: context,
-                      expand: false,
-                      builder: (context) => const CommentsBottomSheet(),
+                      builder: (context) => CommentsBottomSheet(
+                        itemType: 'post',
+                        itemId: a.id, // здесь подставь реальную переменную с ID поста
+                      ),
                     );
                   },
                   child: Row(

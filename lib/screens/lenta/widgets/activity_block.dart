@@ -953,8 +953,10 @@ Future<bool> _sendLike({
                       onTap: () {
                         showCupertinoModalBottomSheet(
                           context: context,
-                          expand: false,
-                          builder: (context) => const CommentsBottomSheet(),
+                          builder: (context) => CommentsBottomSheet(
+                            itemType: 'activity',
+                            itemId: activity.id, // подставь реальный ID активности
+                          ),
                         );
                       },
                       child: Container(
