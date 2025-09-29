@@ -84,6 +84,10 @@ flutter:
      - assets/Avatar_3.png
      - assets/Avatar_4.png
      - assets/Avatar_5.png
+     - assets/Avatar_6.png
+     - assets/Avatar_7.png
+     - assets/Avatar_8.png
+     - assets/Avatar_9.png
      - assets/Recommended_1.png
      - assets/Recommended_2.png
      - assets/Asics.png
@@ -197,6 +201,13 @@ flutter:
      - assets/skill_5.png
      - assets/skill_6.png
      - assets/skill_7.png
+     - assets/race_kazan.png
+     - assets/race_moscow.png
+     - assets/race_ivanovo.png
+     - assets/race_spb.png
+     - assets/training_map.png
+
+
 
 
 

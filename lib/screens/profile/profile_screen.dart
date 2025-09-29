@@ -9,9 +9,9 @@ import 'widgets/tabs_bar.dart';
 // вкладки
 import 'tabs/main_tab.dart';
 import 'tabs/photos_tab.dart';
-import 'tabs/stats_tab.dart';
-import 'tabs/workouts_tab.dart';
-import 'tabs/races_tab.dart';
+import 'tabs/stats/stats_tab.dart';
+import 'tabs/training_tab.dart';
+import 'tabs/races/races_tab.dart';
 import 'tabs/gear_tab.dart';
 import 'tabs/clubs_tab.dart';
 import 'tabs/awards/awards_tab.dart';
@@ -22,7 +22,6 @@ import 'state/gear_prefs.dart';
 
 // 👉 экран настроек
 import 'settings_screen.dart';
-import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -154,7 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               MainTab(),
               PhotosTab(),
               StatsTab(),
-              WorkoutsTab(),
+              TrainingTab(),
               RacesTab(),
               GearTab(),
               ClubsTab(),

@@ -149,7 +149,7 @@ class _RouteCardState extends State<RouteCard> {
                 Polyline(
                   points: points,
                   strokeWidth: 3.0,
-                  color: const Color(0xFF1976D2), // без withOpacity
+                  color: const Color(0xFF0080FF), // без withOpacity
                 ),
               ],
             ),
