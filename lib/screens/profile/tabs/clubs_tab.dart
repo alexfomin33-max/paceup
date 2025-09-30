@@ -2,6 +2,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../state/search/search_prefs.dart';
 
 class ClubsTab extends StatefulWidget {
   const ClubsTab({super.key});
@@ -74,7 +75,12 @@ class _ClubsTabState extends State<ClubsTab>
             child: Center(
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // TODO: открыть поиск клубов
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (_) =>
+                          const SearchPrefsPage(startIndex: 1), // сразу «Клубы»
+                    ),
+                  );
                 },
                 icon: const Icon(CupertinoIcons.search, size: 18),
                 label: const Text(

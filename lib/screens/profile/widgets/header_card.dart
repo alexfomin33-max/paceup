@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../edit_profile_screen.dart';
+import '../state/communications/communication_prefs.dart';
 
 class HeaderCard extends StatelessWidget {
   const HeaderCard({super.key});
@@ -95,12 +96,36 @@ class HeaderCard extends StatelessWidget {
                     color: AppColors.text,
                   ),
                 ),
-                SizedBox(height: 10),
+                SizedBox(height: 8),
                 Row(
                   children: [
-                    _FollowStat(label: 'Подписки', value: '736'),
-                    SizedBox(width: 18),
-                    _FollowStat(label: 'Подписчики', value: '659'),
+                    _FollowStat(
+                      label: 'Подписки',
+                      value: '736',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (_) => const CommunicationPrefsPage(
+                              startIndex: 0,
+                            ), // Подписки
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 18),
+                    _FollowStat(
+                      label: 'Подписчики',
+                      value: '659',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (_) => const CommunicationPrefsPage(
+                              startIndex: 1,
+                            ), // Подписчики
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ],
@@ -139,24 +164,37 @@ class _SmallIconBtn extends StatelessWidget {
 class _FollowStat extends StatelessWidget {
   final String label;
   final String value;
-  const _FollowStat({required this.label, required this.value});
+  final VoidCallback? onTap;
+
+  const _FollowStat({required this.label, required this.value, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 13,
-          color: AppColors.text,
-        ),
-        children: [
-          TextSpan(text: '$label: '),
-          TextSpan(
-            text: value,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+    // Делаем удобную область тапа и не меняем внешний вид текста
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: RichText(
+          text: TextSpan(
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 13,
+              color: AppColors.text,
+            ),
+            children: [
+              TextSpan(text: '$label: '),
+              const TextSpan(
+                text: '\u200B',
+              ), // микропробел для ровного переноса
+              TextSpan(
+                text: value,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

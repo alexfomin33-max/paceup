@@ -19,6 +19,7 @@ import 'tabs/skills/skills_tab.dart';
 
 // общий стейт видимости снаряжения
 import 'state/gear_prefs.dart';
+import 'state/search/search_prefs.dart';
 
 // 👉 экран настроек
 import 'settings_screen.dart';
@@ -98,7 +99,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // actions теперь НЕ const, чтобы передать колбэк
             actions: [
               const _AppIcon(CupertinoIcons.square_arrow_up),
-              const _AppIcon(CupertinoIcons.person_badge_plus),
+              _AppIcon(
+                CupertinoIcons.person_badge_plus,
+                onPressed: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (_) =>
+                          const SearchPrefsPage(startIndex: 0), // «Друзья»
+                    ),
+                  );
+                },
+              ),
               _AppIcon(
                 CupertinoIcons.gear,
                 onPressed: () {

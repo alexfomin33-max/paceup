@@ -154,7 +154,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         title: const Text(
           'Профиль',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         actions: [
           TextButton(
@@ -234,7 +234,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     value: _gender,
                     onTap: () => _pickFromList(
                       title: 'Пол',
-                      options: const ['Мужской', 'Женский', 'Другое'],
+                      options: const ['Мужской', 'Женский'],
                       current: _gender,
                       onPicked: (v) => setState(() => _gender = v),
                     ),
@@ -249,13 +249,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     value: _mainSport,
                     onTap: () => _pickFromList(
                       title: 'Основной вид спорта',
-                      options: const [
-                        'Бег',
-                        'Триатлон',
-                        'Велоспорт',
-                        'Плавание',
-                        'Функц. тренинг',
-                      ],
+                      options: const ['Бег', 'Велоспорт', 'Плавание'],
                       current: _mainSport,
                       onPicked: (v) => setState(() => _mainSport = v),
                     ),
