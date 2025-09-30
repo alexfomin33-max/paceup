@@ -2,7 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../theme/app_theme.dart';
-import 'addevent_screen.dart';
+
+// контент вкладок
+import 'events/events_content.dart' as ev;
+import 'clubs/clubs_content.dart' as clb;
+import 'slots/slots_content.dart' as slt;
+import 'travelers/travelers_content.dart' as trv;
+
+// новый путь к экрану добавления события
+import 'events/addevent_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -14,85 +22,63 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   int _selectedIndex = 0;
 
-  final tabs = ["События", "Клубы", "Слоты", "Попутчики"];
+  final tabs = const ["События", "Клубы", "Слоты", "Попутчики"];
 
-  /// 🔹 Маркеры для разных вкладок
-  final markersByTab = {
-    0: [
-      {
-        'point': LatLng(56.129057, 40.406635),
-        'title': 'События во Владимире',
-        'count': 2,
-      },
-      {
-        'point': LatLng(55.755864, 37.617698),
-        'title': 'События в Москве',
-        'count': 5,
-      },
-    ],
-    1: [
-      {
-        'point': LatLng(56.326797, 44.006516),
-        'title': 'Клуб в Нижнем Новгороде',
-        'count': 1,
-      },
-      {
-        'point': LatLng(57.626559, 39.893813),
-        'title': 'Клуб в Ярославле',
-        'count': 3,
-      },
-    ],
-    2: [
-      {
-        'point': LatLng(56.999799, 40.973014),
-        'title': 'Слот в Иванове',
-        'count': 4,
-      },
-    ],
-    3: [
-      {
-        'point': LatLng(55.45, 37.36),
-        'title': 'Попутчик в Подольске',
-        'count': 2,
-      },
-      {'point': LatLng(56.85, 35.9), 'title': 'Попутчик в Твери', 'count': 1},
-    ],
-  };
-
-  /// 🔹 Цвета маркеров по вкладкам
-  final markerColors = {
+  /// Цвета маркеров по вкладкам
+  final markerColors = const {
     0: Colors.blue, // события
     1: Colors.green, // клубы
     2: Colors.orange, // слоты
     3: Colors.purple, // попутчики
   };
 
+  List<Map<String, dynamic>> _markersForTab(BuildContext context) {
+    switch (_selectedIndex) {
+      case 0:
+        return ev.eventsMarkers(context);
+      case 1:
+        return clb.clubsMarkers(context);
+      case 2:
+        return slt.slotsMarkers(context);
+      case 3:
+      default:
+        return trv.travelersMarkers(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final markers = markersByTab[_selectedIndex] ?? [];
+    final markers = _markersForTab(context);
     final markerColor = markerColors[_selectedIndex] ?? Colors.blue;
-
-    // отступ снизу, чтобы кнопки не перекрывались системной панелью/навигацией
-    final bottomSafe = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       body: Stack(
         children: [
-          /// 🔹 Карта
+          /// ───────── Карта
           FlutterMap(
-            options: MapOptions(
+            options: const MapOptions(
               initialCenter: LatLng(56.129057, 40.406635),
               initialZoom: 6.0,
             ),
             children: [
               TileLayer(
+                // без поддоменов, корректный User-Agent
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.paceip',
+                maxZoom: 19,
+                minZoom: 3,
+                keepBuffer: 1,
+                retinaMode: false,
               ),
               MarkerLayer(
-                markers: markers.map((marker) {
+                markers: markers.map((m) {
+                  final LatLng point = m['point'] as LatLng;
+                  final String title = m['title'] as String;
+                  final int count = m['count'] as int;
+                  final Widget? content = m['content'] as Widget?;
+
                   return Marker(
-                    point: marker['point'] as LatLng,
+                    point: point,
                     width: 28,
                     height: 28,
                     child: GestureDetector(
@@ -104,146 +90,9 @@ class _MapScreenState extends State<MapScreen> {
                           ).context,
                           isScrollControlled: true,
                           backgroundColor: Colors.transparent,
-                          builder: (_) => Container(
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(AppRadius.large),
-                              ),
-                            ),
-                            padding: const EdgeInsets.all(6),
-                            child: Wrap(
-                              children: [
-                                Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    /// 🔹 Полоска сверху
-                                    Center(
-                                      child: Container(
-                                        width: 40,
-                                        height: 4,
-                                        margin: const EdgeInsets.only(
-                                          bottom: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.border,
-                                          borderRadius: BorderRadius.circular(
-                                            2,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    /// 🔹 Заголовок
-                                    Center(
-                                      child: Text(
-                                        marker['title'] as String,
-                                        style: AppTextStyles.h1,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Container(
-                                      height: 1,
-                                      color: AppColors.border,
-                                    ),
-                                    const SizedBox(height: 12),
-
-                                    /// 🔹 Контент по маркеру (пример)
-                                    if (marker['title'] ==
-                                        'События во Владимире')
-                                      Column(
-                                        children: [
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Image.asset(
-                                                'assets/Vlad_event_1.png',
-                                                width: 90,
-                                                height: 60,
-                                                fit: BoxFit.cover,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              const Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      "Субботний коферан",
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                    SizedBox(height: 4),
-                                                    Text(
-                                                      "14 июня 2025  ·  Участников: 32",
-                                                      style: TextStyle(
-                                                        fontSize: 13,
-                                                        fontWeight:
-                                                            FontWeight.w400,
-                                                        color: AppColors.text,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 16),
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Image.asset(
-                                                'assets/Vlad_event_2.png',
-                                                width: 90,
-                                                height: 60,
-                                                fit: BoxFit.cover,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              const Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      "Владимирский полумарафон «Золотые ворота»",
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                    SizedBox(height: 4),
-                                                    Text(
-                                                      "31 августа 2025  ·  Участников: 1426",
-                                                      style: TextStyle(
-                                                        fontSize: 13,
-                                                        fontWeight:
-                                                            FontWeight.w400,
-                                                        color: AppColors.text,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      )
-                                    else
-                                      const Text("Здесь будет контент..."),
-
-                                    const SizedBox(height: 50),
-                                  ],
-                                ),
-                              ],
-                            ),
+                          builder: (_) => _BottomSheetScaffold(
+                            title: title,
+                            child: content ?? const _SheetPlaceholder(),
                           ),
                         );
                       },
@@ -257,7 +106,7 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          (marker['count'] as int).toString(),
+                          '$count',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -272,7 +121,7 @@ class _MapScreenState extends State<MapScreen> {
             ],
           ),
 
-          /// 🔹 Верхняя панель вкладок (без прозрачности, без blur)
+          /// ───────── Верхняя панель вкладок (та же эстетика, что была)
           Positioned(
             top: 40,
             left: 10,
@@ -313,7 +162,7 @@ class _MapScreenState extends State<MapScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: isSelected
-                                ? FontWeight.bold
+                                ? FontWeight.w600
                                 : FontWeight.w500,
                             color: isSelected ? Colors.white : Colors.black87,
                           ),
@@ -326,11 +175,11 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          /// 🔹 Нижние кнопки: "Фильтры" и "Добавить" (без прозрачности)
+          /// ───────── Нижние кнопки: «Фильтры» и «Добавить»
           Positioned(
             left: 12,
             right: 12,
-            bottom: kBottomNavigationBarHeight - 40, // ближе к нижней панели
+            bottom: kBottomNavigationBarHeight - 40,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -345,10 +194,22 @@ class _MapScreenState extends State<MapScreen> {
                   icon: Icons.add_circle_outline,
                   label: 'Добавить',
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AddEventScreen()),
-                    );
+                    if (_selectedIndex == 0) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AddEventScreen(),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Добавление сейчас доступно на вкладке «События».',
+                          ),
+                        ),
+                      );
+                    }
                   },
                 ),
               ],
@@ -360,7 +221,83 @@ class _MapScreenState extends State<MapScreen> {
   }
 }
 
-/// Кнопка-«таблетка» без прозрачности/blur
+/// Унифицированный низкий BottomSheet-каркас
+class _BottomSheetScaffold extends StatelessWidget {
+  final String title;
+  final Widget child;
+  const _BottomSheetScaffold({required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.large),
+        ),
+      ),
+      padding: const EdgeInsets.all(6),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // полоска-«ручка»
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 10, top: 6),
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // заголовок
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Center(child: Text(title, style: AppTextStyles.h1)),
+            ),
+            const SizedBox(height: 12),
+            Container(height: 1, color: AppColors.border),
+            const SizedBox(height: 12),
+
+            // контент от вкладки
+            Flexible(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  child: child,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SheetPlaceholder extends StatelessWidget {
+  const _SheetPlaceholder();
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.only(bottom: 40),
+      child: Text(
+        'Здесь будет контент…',
+        style: TextStyle(fontSize: 14, color: AppColors.text),
+      ),
+    );
+  }
+}
+
+/// Кнопка-«таблетка»
 class _SolidPillButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -376,16 +313,16 @@ class _SolidPillButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(20), // ← радиус 20
+      borderRadius: BorderRadius.circular(20),
       elevation: 0,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20), // ← радиус 20
+        borderRadius: BorderRadius.circular(20),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20), // ← радиус 20
+            borderRadius: BorderRadius.circular(20),
             boxShadow: const [
               BoxShadow(
                 color: Colors.black12,

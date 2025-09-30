@@ -64,8 +64,12 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
         ),
         actions: const [
           Padding(
-            padding: EdgeInsets.only(right: 6),
-            child: Icon(CupertinoIcons.qrcode, size: 20, color: AppColors.text),
+            padding: EdgeInsets.only(right: 10),
+            child: Icon(
+              CupertinoIcons.personalhotspot,
+              size: 20,
+              color: AppColors.text,
+            ),
           ),
           Padding(
             padding: EdgeInsets.only(right: 12),
@@ -243,7 +247,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                   bottom: BorderSide(width: 0.5, color: AppColors.border),
                 ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
