@@ -744,7 +744,7 @@ Future<bool> _sendLike({
     }
     return true;
 
-  } on TimeoutException catch (e) {
+  } on TimeoutException {
     return false;
   } catch (e) {
     return false;
