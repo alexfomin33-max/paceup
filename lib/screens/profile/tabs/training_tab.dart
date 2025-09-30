@@ -15,7 +15,7 @@ class _TrainingTabState extends State<TrainingTab>
   DateTime _month = DateTime(2025, 6, 1);
 
   // Мультиселект видов спорта: 0 бег, 1 вело, 2 плавание
-  Set<int> _sports = {0, 1, 2};
+  final Set<int> _sports = {0, 1, 2};
 
   @override
   bool get wantKeepAlive => true;

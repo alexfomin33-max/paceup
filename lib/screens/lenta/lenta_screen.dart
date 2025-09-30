@@ -541,7 +541,6 @@ class _PostLikeBar extends StatefulWidget {
   final int currentUserId;
 
   const _PostLikeBar({
-    super.key,
     required this.post,
     required this.currentUserId,
   });
