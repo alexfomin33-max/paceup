@@ -1,9 +1,17 @@
 // lib/screens/profile/edit_profile_screen.dart
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
-/// Экран редактирования профиля (iOS-стиль)
+import '../../theme/app_theme.dart';
+
+const double kToolbarH = 52.0;
+const double kAvatarSize = 88.0; // увеличенный аватар
+const double kQrBtnSize = 44.0; // круглая кнопка
+const double kQrIconSize = 24.0; // увеличенная иконка
+const double kLabelWidth = 170.0; // ширина лейбла слева (стиль regstep2)
+
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -12,7 +20,7 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  // Контроллеры полей
+  // Контроллеры
   final _firstName = TextEditingController(text: 'Константин');
   final _lastName = TextEditingController(text: 'Разумовский');
   final _nickname = TextEditingController(text: 'bladerunner');
@@ -24,6 +32,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   DateTime? _birthDate = DateTime(1987, 6, 24);
   String _gender = 'Мужской';
   String _mainSport = 'Бег';
+
+  // Выбранная пользователем аватарка (байты)
+  final ImagePicker _picker = ImagePicker();
+  Uint8List? _avatarBytes;
 
   @override
   void dispose() {
@@ -41,7 +53,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (d == null) return '';
     final dd = d.day.toString().padLeft(2, '0');
     final mm = d.month.toString().padLeft(2, '0');
-    final yy = d.year.toString().padLeft(4, '0');
+    final yy = d.year.toString();
     return '$dd.$mm.$yy';
   }
 
@@ -50,79 +62,94 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     await showCupertinoModalPopup(
       context: context,
       builder: (ctx) {
-        return _BottomPickerShell(
-          child: CupertinoDatePicker(
-            mode: CupertinoDatePickerMode.date,
-            initialDateTime: initial,
-            maximumYear: DateTime.now().year,
-            minimumYear: 1900,
-            onDateTimeChanged: (d) => setState(() => _birthDate = d),
+        final bottom = MediaQuery.viewPaddingOf(ctx).bottom;
+        return Container(
+          height: 260 + bottom,
+          color: Colors.white,
+          child: SafeArea(
+            top: false,
+            child: CupertinoDatePicker(
+              mode: CupertinoDatePickerMode.date,
+              initialDateTime: initial,
+              maximumYear: DateTime.now().year,
+              minimumYear: 1900,
+              onDateTimeChanged: (d) => setState(() => _birthDate = d),
+            ),
           ),
         );
       },
     );
   }
 
-  Future<void> _pickGender() async {
-    final res = await showCupertinoModalPopup<String>(
+  Future<void> _pickFromList({
+    required String title,
+    required List<String> options,
+    required String current,
+    required void Function(String) onPicked,
+  }) async {
+    final picked = await showCupertinoModalPopup<String>(
       context: context,
-      builder: (ctx) => _ActionSheet<String>(
-        title: 'Пол',
-        options: const ['Мужской', 'Женский', 'Другое'],
-        selected: _gender,
+      builder: (ctx) => CupertinoActionSheet(
+        title: Text(title),
+        actions: options
+            .map(
+              (o) => CupertinoActionSheetAction(
+                onPressed: () => Navigator.pop(ctx, o),
+                isDefaultAction: o == current,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(o),
+                    if (o == current) ...[
+                      const SizedBox(width: 6),
+                      const Icon(CupertinoIcons.checkmark_alt, size: 16),
+                    ],
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(ctx),
+          isDestructiveAction: true,
+          child: const Text('Отмена'),
+        ),
       ),
     );
-    if (res != null) setState(() => _gender = res);
+    if (picked != null) onPicked(picked);
   }
 
-  Future<void> _pickMainSport() async {
-    final res = await showCupertinoModalPopup<String>(
-      context: context,
-      builder: (ctx) => _ActionSheet<String>(
-        title: 'Основной вид спорта',
-        options: const [
-          'Бег',
-          'Триатлон',
-          'Велоспорт',
-          'Плавание',
-          'Функц. тренинг',
-        ],
-        selected: _mainSport,
-      ),
+  Future<void> _pickAvatar() async {
+    final XFile? file = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      imageQuality: 85,
     );
-    if (res != null) setState(() => _mainSport = res);
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    setState(() => _avatarBytes = bytes);
   }
 
   void _onSave() {
-    // TODO: отправка на сервер
+    // TODO: собрать данные (включая _avatarBytes) и отправить на API
     Navigator.of(context).maybePop();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // ЕДИНЫЙ СТИЛЬ: AppBar статичный, белый, без blur и теней
       backgroundColor: const Color(0xFFF3F4F6),
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        toolbarHeight: 52,
-        backgroundColor: Colors.white.withValues(alpha: 0.50),
+        toolbarHeight: kToolbarH,
+        backgroundColor: Colors.white,
         elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
         centerTitle: true,
         automaticallyImplyLeading: false,
-        shape: const Border(
-          bottom: BorderSide(color: Color(0x33FFFFFF), width: 0.6),
-        ),
-        flexibleSpace: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(color: Colors.transparent),
-          ),
-        ),
         leadingWidth: 56,
         leading: IconButton(
           icon: const Icon(CupertinoIcons.back),
+          splashRadius: 22,
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: const Text(
@@ -133,166 +160,154 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           TextButton(
             onPressed: _onSave,
             style: TextButton.styleFrom(
+              foregroundColor: AppColors.secondary, // ✅ цвет «Сохранить»
               minimumSize: const Size(44, 44),
               padding: const EdgeInsets.symmetric(horizontal: 12),
             ),
             child: const Text('Сохранить'),
           ),
         ],
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(0.5),
+          child: SizedBox(
+            height: 0.5,
+            child: ColoredBox(color: Color(0xFFE5E7EB)), // тонкая нижняя линия
+          ),
+        ),
       ),
+
       body: SafeArea(
-        top: false,
-        child: CustomScrollView(
+        child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
           ),
-          slivers: [
-            SliverPadding(
-              padding: EdgeInsets.only(
-                top: MediaQuery.paddingOf(context).top + 12,
-                left: 16,
-                right: 16,
-                bottom: 16,
-              ),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  // Шапка: аватар + Имя/Фамилия + кнопка (QR/изменить)
-                  _Card(
-                    child: Row(
-                      children: [
-                        _Avatar(
-                          size: 56,
-                          image: const AssetImage('assets/Avatar_1.png'),
-                          onChange: () {
-                            // TODO: выбор аватара / фотопикер
-                          },
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              _LabeledField(
-                                label: null, // без лейбла — как на макете
-                                child: _Input(
-                                  textController: _firstName,
-                                  hint: 'Имя',
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              _LabeledField(
-                                label: null,
-                                child: _Input(
-                                  textController: _lastName,
-                                  hint: 'Фамилия',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _SquareIconButton(
-                          icon: CupertinoIcons.qrcode_viewfinder,
-                          onPressed: () {
-                            // TODO: открыть QR/визитку
-                          },
-                        ),
-                      ],
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── ШАПКА: аватар + Имя/Фамилия в белом блоке + круглая белая кнопка QR ──
+              Row(
+                crossAxisAlignment:
+                    CrossAxisAlignment.center, // ✅ центр по высоте блока имени
+                children: [
+                  _AvatarEditable(
+                    bytes: _avatarBytes,
+                    size: kAvatarSize,
+                    onTap: _pickAvatar, // ✅ выбор новой аватарки
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _NameBlock(
+                      firstController: _firstName,
+                      secondController: _lastName,
+                      firstHint: 'Имя',
+                      secondHint: 'Фамилия',
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(width: 12),
+                  _CircleIconBtn(
+                    icon: CupertinoIcons.qrcode_viewfinder,
+                    onTap: () {
+                      // TODO: открыть визитку/QR
+                    },
+                  ),
+                ],
+              ),
 
-                  // Блок «Никнейм»
-                  _LabeledField(
+              const SizedBox(height: 20),
+
+              // ── ГРУППА 1: Ник/Дата/Пол/Город/Спорт ──
+              _GroupBlock(
+                children: [
+                  _FieldRow.input(
                     label: 'Никнейм',
-                    child: _Input(textController: _nickname, hint: 'nickname'),
+                    controller: _nickname,
+                    hint: 'nickname',
                   ),
-                  const SizedBox(height: 12),
-
-                  // Дата рождения
-                  _LabeledField(
+                  _FieldRow.picker(
                     label: 'Дата рождения',
-                    child: _PickerTile(
-                      value: _formatDate(_birthDate),
-                      onTap: _pickBirthDate,
-                    ),
+                    value: _formatDate(_birthDate),
+                    onTap: _pickBirthDate,
                   ),
-                  const SizedBox(height: 12),
-
-                  // Пол
-                  _LabeledField(
+                  _FieldRow.picker(
                     label: 'Пол',
-                    child: _PickerTile(value: _gender, onTap: _pickGender),
+                    value: _gender,
+                    onTap: () => _pickFromList(
+                      title: 'Пол',
+                      options: const ['Мужской', 'Женский', 'Другое'],
+                      current: _gender,
+                      onPicked: (v) => setState(() => _gender = v),
+                    ),
                   ),
-                  const SizedBox(height: 12),
-
-                  // Город
-                  _LabeledField(
+                  _FieldRow.input(
                     label: 'Город',
-                    child: _Input(textController: _city, hint: 'Город'),
+                    controller: _city,
+                    hint: 'Город',
                   ),
-                  const SizedBox(height: 12),
-
-                  // Основной вид спорта
-                  _LabeledField(
+                  _FieldRow.picker(
                     label: 'Основной вид спорта',
-                    child: _PickerTile(
-                      value: _mainSport,
-                      onTap: _pickMainSport,
+                    value: _mainSport,
+                    onTap: () => _pickFromList(
+                      title: 'Основной вид спорта',
+                      options: const [
+                        'Бег',
+                        'Триатлон',
+                        'Велоспорт',
+                        'Плавание',
+                        'Функц. тренинг',
+                      ],
+                      current: _mainSport,
+                      onPicked: (v) => setState(() => _mainSport = v),
                     ),
                   ),
-                  const SizedBox(height: 20),
-
-                  // Подзаголовок «Параметры»
-                  const Text(
-                    'Параметры',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Рост / Вес / Максимальный пульс
-                  _LabeledField(
-                    label: 'Рост, см',
-                    child: _Input(
-                      textController: _height,
-                      hint: 'Рост',
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  _LabeledField(
-                    label: 'Вес, кг',
-                    child: _Input(
-                      textController: _weight,
-                      hint: 'Вес',
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  _LabeledField(
-                    label: 'Максимальный пульс',
-                    child: _Input(
-                      textController: _hrMax,
-                      hint: 'Макс. пульс',
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  const Text(
-                    'Данные необходимы для расчёта калорий, нагрузки, зон темпа и мощности.',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-                  ),
-                  const SizedBox(height: 24),
-                ]),
+                ],
               ),
-            ),
-          ],
+
+              const SizedBox(height: 20),
+
+              // ── ГРУППА 2: Параметры ──
+              const Text(
+                'Параметры',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _GroupBlock(
+                children: [
+                  _FieldRow.input(
+                    label: 'Рост, см',
+                    controller: _height,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                  _FieldRow.input(
+                    label: 'Вес, кг',
+                    controller: _weight,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                  _FieldRow.input(
+                    label: 'Максимальный пульс',
+                    controller: _hrMax,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+              const Center(
+                child: Text(
+                  'Данные необходимы для расчёта калорий, нагрузки, зон темпа и мощности.',
+                  textAlign: TextAlign.center, // ✅ по центру
+                  style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -301,247 +316,306 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
 /// ───────────────────────────── UI атомы ─────────────────────────────
 
-class _Card extends StatelessWidget {
-  const _Card({required this.child});
+/// Кликабельный аватар с индикатором «камера» снизу справа.
+class _AvatarEditable extends StatelessWidget {
+  const _AvatarEditable({
+    required this.bytes,
+    required this.size,
+    required this.onTap,
+  });
 
-  final Widget child;
+  final Uint8List? bytes;
+  final double size;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ClipOval(
+            child: bytes != null
+                ? Image.memory(
+                    bytes!,
+                    width: size,
+                    height: size,
+                    fit: BoxFit.cover,
+                  )
+                : Image.asset(
+                    'assets/Avatar_0.png',
+                    width: size,
+                    height: size,
+                    fit: BoxFit.cover,
+                  ),
+          ),
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                CupertinoIcons.camera,
+                size: 16,
+                color: Color(0xFF111827),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Белый блок для Имя/Фамилия со своим разделителем (как у групп ниже)
+class _NameBlock extends StatelessWidget {
+  const _NameBlock({
+    required this.firstController,
+    required this.secondController,
+    required this.firstHint,
+    required this.secondHint,
+  });
+
+  final TextEditingController firstController;
+  final TextEditingController secondController;
+  final String firstHint;
+  final String secondHint;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF111827).withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: SizedBox(
+              height: 46,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _BareTextField(
+                  controller: firstController,
+                  hint: firstHint,
+                ),
+              ),
+            ),
+          ),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFE5E7EB)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: SizedBox(
+              height: 46,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _BareTextField(
+                  controller: secondController,
+                  hint: secondHint,
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      child: child,
     );
   }
 }
 
-class _LabeledField extends StatelessWidget {
-  const _LabeledField({required this.child, this.label});
+/// Белая группа с разделителями (как regstep2): без теней
+class _GroupBlock extends StatelessWidget {
+  const _GroupBlock({required this.children});
 
-  final String? label;
-  final Widget child;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (label != null) ...[
-          Text(
-            label!,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF6B7280),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+      ),
+      child: Column(
+        children: [
+          for (int i = 0; i < children.length; i++) ...[
+            if (i > 0)
+              const Divider(height: 1, thickness: 1, color: Color(0xFFE5E7EB)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: children[i],
             ),
-          ),
-          const SizedBox(height: 6),
+          ],
         ],
-        _Card(child: child),
-      ],
+      ),
     );
   }
 }
 
-class _Input extends StatelessWidget {
-  const _Input({required this.textController, this.hint, this.keyboardType});
+/// Одна строка группы: либо input, либо picker
+class _FieldRow extends StatelessWidget {
+  const _FieldRow._({
+    required this.label,
+    this.controller,
+    this.hint,
+    this.keyboardType,
+    this.inputFormatters,
+    this.value,
+    this.onTap,
+    required this.isPicker,
+  });
 
-  final TextEditingController textController;
+  factory _FieldRow.input({
+    required String label,
+    required TextEditingController controller,
+    String? hint,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+  }) => _FieldRow._(
+    label: label,
+    controller: controller,
+    hint: hint,
+    keyboardType: keyboardType,
+    inputFormatters: inputFormatters,
+    isPicker: false,
+  );
+
+  factory _FieldRow.picker({
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+  }) => _FieldRow._(label: label, value: value, onTap: onTap, isPicker: true);
+
+  final String label;
+
+  // input
+  final TextEditingController? controller;
   final String? hint;
   final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+
+  // picker
+  final String? value;
+  final VoidCallback? onTap;
+
+  final bool isPicker;
+
+  @override
+  Widget build(BuildContext context) {
+    const labelStyle = TextStyle(
+      fontSize: 13,
+      color: Color(0xFF6B7280),
+      fontWeight: FontWeight.w500,
+    );
+
+    return SizedBox(
+      height: 50,
+      child: Row(
+        children: [
+          SizedBox(
+            width: kLabelWidth,
+            child: Text(label, style: labelStyle),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: isPicker
+                ? InkWell(
+                    borderRadius: BorderRadius.circular(6),
+                    onTap: onTap,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            (value ?? '').isEmpty ? 'Выбрать' : value!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: (value ?? '').isEmpty
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFF111827),
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          CupertinoIcons.chevron_down,
+                          size: 18,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                      ],
+                    ),
+                  )
+                : TextField(
+                    controller: controller,
+                    keyboardType: keyboardType,
+                    inputFormatters: inputFormatters,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      border: InputBorder.none,
+                      hintText: hint,
+                    ),
+                    style: const TextStyle(fontSize: 14),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Текстовое поле без бордеров/фона, для шапки (Имя/Фамилия)
+class _BareTextField extends StatelessWidget {
+  const _BareTextField({required this.controller, this.hint});
+
+  final TextEditingController controller;
+  final String? hint;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: textController,
-      keyboardType: keyboardType,
+      controller: controller,
       decoration: InputDecoration(
         isDense: true,
         border: InputBorder.none,
         hintText: hint,
       ),
-      style: const TextStyle(fontSize: 16),
+      style: const TextStyle(fontSize: 14),
     );
   }
 }
 
-class _PickerTile extends StatelessWidget {
-  const _PickerTile({required this.value, required this.onTap});
+/// Круглая белая кнопка для QR (без теней)
+class _CircleIconBtn extends StatelessWidget {
+  const _CircleIconBtn({required this.icon, required this.onTap});
 
-  final String value;
+  final IconData icon;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(10),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: SizedBox(
-        height: 44,
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                value.isEmpty ? 'Выбрать' : value,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: value.isEmpty
-                      ? const Color(0xFF9CA3AF)
-                      : const Color(0xFF111827),
-                ),
-              ),
-            ),
-            const Icon(
-              CupertinoIcons.chevron_down,
-              size: 18,
-              color: Color(0xFF9CA3AF),
-            ),
-          ],
+      child: Container(
+        width: kQrBtnSize,
+        height: kQrBtnSize,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         ),
-      ),
-    );
-  }
-}
-
-class _Avatar extends StatelessWidget {
-  const _Avatar({required this.size, required this.image, this.onChange});
-
-  final double size;
-  final ImageProvider image;
-  final VoidCallback? onChange;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        CircleAvatar(radius: size / 2, backgroundImage: image),
-        if (onChange != null)
-          Positioned(
-            right: -2,
-            bottom: -2,
-            child: GestureDetector(
-              onTap: onChange,
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.7),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  CupertinoIcons.camera,
-                  size: 16,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _SquareIconButton extends StatelessWidget {
-  const _SquareIconButton({required this.icon, required this.onPressed});
-
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 40,
-      height: 40,
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: onPressed,
-          child: Icon(icon, size: 20, color: const Color(0xFF111827)),
-        ),
-      ),
-    );
-  }
-}
-
-/// Общая обёртка для iOS-пикеров снизу
-class _BottomPickerShell extends StatelessWidget {
-  const _BottomPickerShell({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.viewPaddingOf(context).bottom;
-    return Container(
-      height: 260 + bottom,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF111827).withValues(alpha: 0.10),
-            blurRadius: 16,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(top: false, child: child),
-    );
-  }
-}
-
-class _ActionSheet<T> extends StatelessWidget {
-  const _ActionSheet({
-    required this.title,
-    required this.options,
-    required this.selected,
-  });
-
-  final String title;
-  final List<String> options;
-  final String selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return CupertinoActionSheet(
-      title: Text(title),
-      actions: options
-          .map(
-            (o) => CupertinoActionSheetAction(
-              onPressed: () => Navigator.pop(context, o),
-              isDefaultAction: o == selected,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(o),
-                  if (o == selected) ...[
-                    const SizedBox(width: 6),
-                    const Icon(CupertinoIcons.checkmark_alt, size: 16),
-                  ],
-                ],
-              ),
-            ),
-          )
-          .toList(),
-      cancelButton: CupertinoActionSheetAction(
-        onPressed: () => Navigator.pop(context),
-        isDestructiveAction: true,
-        child: const Text('Отмена'),
+        alignment: Alignment.center,
+        child: Icon(icon, size: kQrIconSize, color: const Color(0xFF111827)),
       ),
     );
   }

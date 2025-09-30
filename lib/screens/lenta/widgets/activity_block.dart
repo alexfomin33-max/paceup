@@ -592,7 +592,11 @@ class ActivityBlock extends StatefulWidget {
   final Activity activity;
   final int currentUserId;
 
-  const ActivityBlock({super.key, required this.activity, this.currentUserId = 0,});
+  const ActivityBlock({
+    super.key,
+    required this.activity,
+    this.currentUserId = 0,
+  });
 
   @override
   _ActivityBlockState createState() => _ActivityBlockState();
@@ -607,7 +611,8 @@ class _ActivityBlockState extends State<ActivityBlock>
   late AnimationController _likeController;
   late Animation<double> _likeAnimation;
 
-  static const String _likeEndpoint = 'http://api.paceup.ru/activity_likes_toggle.php';
+  static const String _likeEndpoint =
+      'http://api.paceup.ru/activity_likes_toggle.php';
 
   @override
   void initState() {
@@ -635,7 +640,7 @@ class _ActivityBlockState extends State<ActivityBlock>
     super.dispose();
   }
 
- /* void _onLikeTap() {
+  /* void _onLikeTap() {
     setState(() => isLiked = !isLiked);
     _likeController.forward(from: 0);
   }*/
@@ -671,85 +676,83 @@ class _ActivityBlockState extends State<ActivityBlock>
   }
 
   // ⬇️ Новый метод: запрос на сервер
-Future<bool> _sendLike({
-  required int activityId, //ид активности или поста
-  required int userId,
-  required bool isLikedNow,
-  required String type,
-}) async {
-  final uri = Uri.parse(_likeEndpoint);
+  Future<bool> _sendLike({
+    required int activityId, //ид активности или поста
+    required int userId,
+    required bool isLikedNow,
+    required String type,
+  }) async {
+    final uri = Uri.parse(_likeEndpoint);
 
-  try {
-
-    final res = await http
-        .post(
-          uri,
-          // ВАЖНО: только строки!
-          body: jsonEncode({
-            'userId': '$userId',
-            'activityId': '$activityId',
-            'action': isLikedNow ? 'like' : 'dislike',
-            'type': type,
-          }),
-          // заголовок можно не ставить: http сам проставит form-urlencoded
-          // headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'},
-        )
-        .timeout(const Duration(seconds: 10)); // а не 1 сек
-
-    // эти принты теперь точно выполнятся
-    final raw = utf8.decode(res.bodyBytes);
-
-    bool ok = false;
-    int? serverLikes;
-
-    // пробуем распарсить JSON; если не JSON — оставим data = null
-    dynamic data;
     try {
-      data = json.decode(raw);
-    } catch (_) {
-      data = null;
-    }
+      final res = await http
+          .post(
+            uri,
+            // ВАЖНО: только строки!
+            body: jsonEncode({
+              'userId': '$userId',
+              'activityId': '$activityId',
+              'action': isLikedNow ? 'like' : 'dislike',
+              'type': type,
+            }),
+            // заголовок можно не ставить: http сам проставит form-urlencoded
+            // headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'},
+          )
+          .timeout(const Duration(seconds: 10)); // а не 1 сек
 
-    // 1) нормальный кейс: объект
-    if (data is Map<String, dynamic>) {
-      ok = data['ok'] == true || data['status'] == 'ok';
-      final likesVal = data['likes'];
-      if (likesVal != null) {
-        serverLikes = int.tryParse(likesVal.toString());
+      // эти принты теперь точно выполнятся
+      final raw = utf8.decode(res.bodyBytes);
+
+      bool ok = false;
+      int? serverLikes;
+
+      // пробуем распарсить JSON; если не JSON — оставим data = null
+      dynamic data;
+      try {
+        data = json.decode(raw);
+      } catch (_) {
+        data = null;
       }
 
-    // 2) сервер вернул массив с одним объектом
-    } else if (data is List && data.isNotEmpty && data.first is Map<String, dynamic>) {
-      final m = data.first as Map<String, dynamic>;
-      ok = m['ok'] == true || m['status'] == 'ok';
-      final likesVal = m['likes'];
-      if (likesVal != null) {
-        serverLikes = int.tryParse(likesVal.toString());
+      // 1) нормальный кейс: объект
+      if (data is Map<String, dynamic>) {
+        ok = data['ok'] == true || data['status'] == 'ok';
+        final likesVal = data['likes'];
+        if (likesVal != null) {
+          serverLikes = int.tryParse(likesVal.toString());
+        }
+
+        // 2) сервер вернул массив с одним объектом
+      } else if (data is List &&
+          data.isNotEmpty &&
+          data.first is Map<String, dynamic>) {
+        final m = data.first as Map<String, dynamic>;
+        ok = m['ok'] == true || m['status'] == 'ok';
+        final likesVal = m['likes'];
+        if (likesVal != null) {
+          serverLikes = int.tryParse(likesVal.toString());
+        }
+
+        // 3) не-JSON: просто "ok", "1", "true" и т.п.
+      } else {
+        final t = raw.trim().toLowerCase();
+        ok = (res.statusCode == 200) && (t == 'ok' || t == '1' || t == 'true');
+        if (!ok) {}
       }
 
-    // 3) не-JSON: просто "ok", "1", "true" и т.п.
-    } else {
-      final t = raw.trim().toLowerCase();
-      ok = (res.statusCode == 200) && (t == 'ok' || t == '1' || t == 'true');
-      if (!ok) {
+      if (!ok) return false;
 
+      // если сервер прислал число лайков — синхронизируем
+      if (serverLikes != null && mounted) {
+        setState(() => likesCount = serverLikes!);
       }
+      return true;
+    } on TimeoutException {
+      return false;
+    } catch (e) {
+      return false;
     }
-
-    if (!ok) return false;
-
-    // если сервер прислал число лайков — синхронизируем
-    if (serverLikes != null && mounted) {
-      setState(() => likesCount = serverLikes!);
-    }
-    return true;
-
-  } on TimeoutException catch (e) {
-    return false;
-  } catch (e) {
-    return false;
   }
-}
 
   String _fmtDate(DateTime? dt) {
     if (dt == null) return ''; // или '—', если хочешь выводить прочерк
@@ -955,7 +958,8 @@ Future<bool> _sendLike({
                           context: context,
                           builder: (context) => CommentsBottomSheet(
                             itemType: 'activity',
-                            itemId: activity.id, // подставь реальный ID активности
+                            itemId:
+                                activity.id, // подставь реальный ID активности
                           ),
                         );
                       },

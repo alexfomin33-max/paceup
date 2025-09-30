@@ -13,7 +13,7 @@ List<Widget> buildByTypeStatsSlivers() {
 }
 
 class _ByTypeContent extends StatefulWidget {
-  const _ByTypeContent({super.key});
+  const _ByTypeContent();
   @override
   State<_ByTypeContent> createState() => _ByTypeContentState();
 }
