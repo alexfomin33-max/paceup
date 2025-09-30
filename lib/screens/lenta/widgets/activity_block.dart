@@ -10,6 +10,7 @@ import 'package:paceup/models/activity_lenta.dart' as AL;
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../profile/profile_screen.dart';
 
 /// 🔹 Виджет вертикальной метрики
 class MetricVertical extends StatelessWidget {
@@ -138,10 +139,14 @@ class _RouteCardState extends State<RouteCard> {
           ),
           children: [
             TileLayer(
-              urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName:
-                  'com.example.paceip', // подставь свой package id
-              // ⚙️ Полегче по памяти
+              // убрали {s}
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              // нормальный user-agent — OSM это любит
+              userAgentPackageName: 'com.example.paceip',
+              tileProvider: NetworkTileProvider(
+                // при желании можно добавить кастомные заголовки
+                // headers: {'User-Agent': 'PaceUp/1.0 (com.example.paceip)'},
+              ),
               keepBuffer: 1,
               retinaMode: false,
               maxZoom: 18,
@@ -805,10 +810,22 @@ class _ActivityBlockState extends State<ActivityBlock>
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: _buildAvatar(activity.userAvatar),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (_) =>
+                            const ProfileScreen(), // если у вас без аргументов
+                        // builder: (_) => ProfileScreen(userId: activity.userId), // вариант, если экран принимает id
+                      ),
+                    );
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: _buildAvatar(activity.userAvatar),
+                  ),
                 ),
+
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(

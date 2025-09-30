@@ -12,6 +12,8 @@ import 'dart:ui'; // для ImageFilter.blur
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:paceup/models/activity_lenta.dart';
+import 'widgets/activity_description_block.dart';
+
 import 'dart:async';
 
 /// Единые размеры для AppBar в iOS-стиле
@@ -252,7 +254,21 @@ class _LentaScreenState extends State<LentaScreen>
     if (a.type == 'post') {
       return _buildPostCard(context, a);
     }
-    return ActivityBlock(activity: a, currentUserId: widget.userId);
+
+    return GestureDetector(
+      behavior: HitTestBehavior.deferToChild, // не перехватываем тапы детей
+      onTap: () {
+        Navigator.of(context).push(
+          CupertinoPageRoute(
+            builder: (_) => ActivityDescriptionPage(
+              activity: a,
+              currentUserId: widget.userId,
+            ),
+          ),
+        );
+      },
+      child: ActivityBlock(activity: a, currentUserId: widget.userId),
+    );
   }
 
   Widget _buildRecommendations() {
@@ -455,7 +471,7 @@ class _LentaScreenState extends State<LentaScreen>
                       context: context,
                       builder: (context) => CommentsBottomSheet(
                         itemType: 'post',
-                        itemId: a.id, 
+                        itemId: a.id,
                         currentUserId: widget.userId,
                       ),
                     );
