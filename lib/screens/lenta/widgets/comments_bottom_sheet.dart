@@ -113,6 +113,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   bool _initialLoading = true;
   String? _error;
 
+  int _composerReset = 0;
+
   // пагинация
   final ScrollController _scroll = ScrollController();
   int _page = 1;
@@ -120,16 +122,18 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   bool _pageLoading = false;
 
   // отправка
-  final TextEditingController _textCtrl = TextEditingController();
+  late TextEditingController _textCtrl;
   final FocusNode _composerFocus = FocusNode();
   bool _sending = false;
 
   @override
   void initState() {
     super.initState();
+    _textCtrl = TextEditingController(); // ← добавь эту строку
     _loadComments(refresh: true);
     _scroll.addListener(_onScroll);
-  }
+}
+
 
   @override
   void dispose() {
@@ -146,6 +150,24 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       _loadComments();
     }
   }
+
+  void _hardClearComposer() {
+    // 1) отключаем клавиатуру, чтобы она не вернула composing-текст
+    FocusScope.of(context).unfocus();
+
+    // 2) уничтожаем старый контроллер и создаём новый пустой
+    _textCtrl.dispose();
+    _textCtrl = TextEditingController();
+
+    // 3) пересобираем сабдерево (по ключу) и возвращаем фокус
+    setState(() {
+      _composerReset++;
+    });
+    Future.delayed(const Duration(milliseconds: 50), () {
+      if (mounted) _composerFocus.requestFocus();
+    });
+  }
+
 
   Future<void> _loadComments({bool refresh = false}) async {
     if (refresh) {
@@ -211,10 +233,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     }
   }
 
-Future<void> _sendComment() async {
-  final text = _textCtrl.text.trim();
+Future<void> _sendComment(String text) async {
   if (text.isEmpty || _sending) return;
-
   setState(() => _sending = true);
 
   try {
@@ -222,76 +242,39 @@ Future<void> _sendComment() async {
       'type': widget.itemType,
       'item_id': widget.itemId.toString(),
       'text': text,
-      'userId' : widget.currentUserId.toString(),
-      // если прокинут userId:
-      // 'user_id': widget.userId.toString(),
+      'userId': widget.currentUserId.toString(),  // лучше snake_case
     };
 
     final resp = await http.post(
       Uri.parse(ApiConfig.commentsAdd),
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: jsonEncode(payload),
+      body: jsonEncode(payload), // НЕ jsonEncode
     );
 
-    if (resp.statusCode != 200) {
-      throw Exception('HTTP ${resp.statusCode}');
-    }
-
+    if (resp.statusCode != 200) throw Exception('HTTP ${resp.statusCode}');
     final data = safeDecodeJsonAsMap(resp.bodyBytes);
-
-    // ✅ Учитываем разные варианты "успеха"
     final ok = isTruthy(data['success']) || isTruthy(data['status']);
-    if (!ok) {
-      final err = (data['error'] ?? 'Не удалось отправить комментарий').toString();
-      throw Exception(err);
-    }
+    if (!ok) throw Exception((data['error'] ?? 'Не удалось отправить комментарий').toString());
 
-    // ✅ comment может быть объектом или массивом
     CommentItem? newItem;
     final c = data['comment'];
-    if (c is Map<String, dynamic>) {
-      newItem = CommentItem.fromApi(c);
-    } else if (c is List && c.isNotEmpty && c.first is Map<String, dynamic>) {
+    if (c is Map<String, dynamic>) newItem = CommentItem.fromApi(c);
+    else if (c is List && c.isNotEmpty && c.first is Map<String, dynamic>) {
       newItem = CommentItem.fromApi(c.first as Map<String, dynamic>);
     }
 
     if (!mounted) return;
     if (newItem != null) {
-      setState(() {
-        _comments.insert(0, newItem!); // свежие сверху
-      });
-      _scrollToTop();
+      setState(() => _comments.insert(0, newItem!)); // свежие сверху
     } else {
       await _loadComments(refresh: true);
-      _scrollToTop();
     }
-
-    //(надёжно очищает и composing):
-    _textCtrl.value = const TextEditingValue(
-      text: '',
-      selection: TextSelection.collapsed(offset: 0),
-      composing: TextRange.empty,
-    );
-
-    // на некоторых клавиатурах помогает микро-тик перед перерисовкой
-    await Future<void>.delayed(const Duration(milliseconds: 1));
-
-    if (mounted) {
-      setState(() {});           // подсказать TextField, что значение поменялось
-      _composerFocus.requestFocus();
-    }
+    _scrollToTop();
+    // НИЧЕГО не чистим здесь — уже очищено в кнопке
   } catch (e) {
-    // Пробуем тихо обновить список. Если получилось — ошибку не показываем.
     bool refreshOk = false;
-    try {
-      await _loadComments(refresh: true);
-      _scrollToTop();
-      refreshOk = true;
-    } catch (_) {}
-
-    if (!refreshOk && mounted) {
-      showSnack(context, 'Ошибка отправки: $e');
-    }
+    try { await _loadComments(refresh: true); _scrollToTop(); refreshOk = true; } catch (_) {}
+    if (!refreshOk && mounted) showSnack(context, 'Ошибка отправки: $e');
   } finally {
     if (mounted) setState(() => _sending = false);
   }
@@ -334,6 +317,8 @@ Future<void> _sendComment() async {
               Divider(height: 1, color: AppColors.border),
               // Поле ввода — как в примере
               _ComposerBar(
+                key: ValueKey('composerBar_$_composerReset'),           // 👈 ключ бара
+                textFieldKey: ValueKey('composerTF_$_composerReset'),
                 controller: _textCtrl,
                 focusNode: _composerFocus,
                 sending: _sending,
@@ -363,64 +348,50 @@ Future<void> _sendComment() async {
     }
 
     // Стилизуем под твой пример: ListTile со шрифтами из AppTextStyles.
-    return RefreshIndicator(
-      onRefresh: () => _loadComments(refresh: true),
-      child: ListView.builder(
-        controller: _scroll,
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.zero,
-        itemCount: _comments.length + (_pageLoading ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index >= _comments.length) {
-            // Индикатор подгрузки страницы
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: CupertinoActivityIndicator()),
-            );
-          }
-          final c = _comments[index];
-          final humanDate = _formatHumanDate(c.createdAt); // 👈 форматируем время
-
-          return ListTile(
-            leading: CircleAvatar(
-              radius: 20,
-              backgroundImage: (c.userAvatar != null && c.userAvatar!.isNotEmpty)
-                  ? NetworkImage(c.userAvatar!)
-                  : null,
-              child: (c.userAvatar == null || c.userAvatar!.isEmpty)
-                  ? Text(
-                      c.userName.isNotEmpty ? c.userName.characters.first : '?',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    )
-                  : null,
-            ),
-            title: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: Text(
-                    c.userName,
-                    style: AppTextStyles.name,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '· $humanDate',
-                  style: AppTextStyles.commenttext.copyWith(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-            subtitle: Text(
-              c.text,
-              style: AppTextStyles.commenttext,
-            ),
+    // Без pull-to-refresh: просто список
+    return ListView.builder(
+      controller: _scroll,
+      physics: const BouncingScrollPhysics(), // iOS-пружинка, без refresh
+      padding: EdgeInsets.zero,
+      itemCount: _comments.length + (_pageLoading ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index >= _comments.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CupertinoActivityIndicator()),
           );
-        },
-      ),
+        }
+        final c = _comments[index];
+        final humanDate = _formatHumanDate(c.createdAt);
+
+        return ListTile(
+          leading: CircleAvatar(
+            radius: 20,
+            backgroundImage: (c.userAvatar != null && c.userAvatar!.isNotEmpty)
+                ? NetworkImage(c.userAvatar!)
+                : null,
+            child: (c.userAvatar == null || c.userAvatar!.isEmpty)
+                ? Text(
+                    c.userName.isNotEmpty ? c.userName.characters.first : '?',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  )
+                : null,
+          ),
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(c.userName, style: AppTextStyles.name, overflow: TextOverflow.ellipsis),
+              ),
+              const SizedBox(width: 6),
+              Text('· $humanDate',
+                style: AppTextStyles.commenttext.copyWith(color: Colors.grey, fontSize: 12),
+              ),
+            ],
+          ),
+          subtitle: Text(c.text, style: AppTextStyles.commenttext),
+        );
+      },
     );
   }
 
@@ -490,13 +461,16 @@ class _ComposerBar extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final bool sending;
-  final VoidCallback onSend;
+  final Future<void> Function(String text) onSend; // ← передаём текст наружу
+  final Key? textFieldKey;
 
   const _ComposerBar({
+    super.key,
     required this.controller,
     required this.focusNode,
     required this.sending,
     required this.onSend,
+    this.textFieldKey,
   });
 
   @override
@@ -507,6 +481,7 @@ class _ComposerBar extends StatelessWidget {
         children: [
           Expanded(
             child: TextField(
+              key: textFieldKey,
               controller: controller,
               focusNode: focusNode,
               minLines: 1,
@@ -515,14 +490,8 @@ class _ComposerBar extends StatelessWidget {
               keyboardType: TextInputType.multiline,
               decoration: InputDecoration(
                 hintText: "Написать комментарий...",
-                hintStyle: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6, // как в примере
-                ),
+                hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.xlarge),
                   borderSide: BorderSide.none,
@@ -533,7 +502,25 @@ class _ComposerBar extends StatelessWidget {
             ),
           ),
           ElevatedButton(
-            onPressed: sending ? null : onSend,
+            onPressed: sending ? null : () async {
+              // 1) аккуратно забираем текст
+              controller.clearComposing();
+              final text = controller.text.trim();
+              if (text.isEmpty) return;
+
+              // 2) СРАЗУ очищаем поле (до сети)
+              controller.value = const TextEditingValue(
+                text: '',
+                selection: TextSelection.collapsed(offset: 0),
+                composing: TextRange.empty,
+              );
+
+              // 3) Можно оставить фокус в поле
+              focusNode.requestFocus();
+
+              // 4) Отправляем наверх уже «снятый» текст
+              await onSend(text);
+            },
             style: ElevatedButton.styleFrom(
               shape: const CircleBorder(),
               backgroundColor: Colors.white,
@@ -542,11 +529,7 @@ class _ComposerBar extends StatelessWidget {
             ),
             child: sending
                 ? const SizedBox(width: 18, height: 18, child: CupertinoActivityIndicator())
-                : const Icon(
-                    Icons.send,
-                    size: 22,
-                    color: AppColors.secondary,
-                  ),
+                : const Icon(Icons.send, size: 22, color: AppColors.secondary),
           ),
         ],
       ),
