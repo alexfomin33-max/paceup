@@ -67,7 +67,8 @@ class _LentaScreenState extends State<LentaScreen>
         .toList();
   }
 
-  int _unreadCount = 3; // пример начального количества непрочитанных уведомлений
+  int _unreadCount =
+      3; // пример начального количества непрочитанных уведомлений
   final List<NotificationItem> _notifications = [
     NotificationItem(
       title: "Новая подписка",
@@ -454,7 +455,8 @@ class _LentaScreenState extends State<LentaScreen>
                       context: context,
                       builder: (context) => CommentsBottomSheet(
                         itemType: 'post',
-                        itemId: a.id, // здесь подставь реальную переменную с ID поста
+                        itemId: a
+                            .id, // здесь подставь реальную переменную с ID поста
                       ),
                     );
                   },
@@ -540,10 +542,7 @@ class _PostLikeBar extends StatefulWidget {
   final Activity post;
   final int currentUserId;
 
-  const _PostLikeBar({
-    required this.post,
-    required this.currentUserId,
-  });
+  const _PostLikeBar({required this.post, required this.currentUserId});
 
   @override
   State<_PostLikeBar> createState() => _PostLikeBarState();
@@ -568,8 +567,10 @@ class _PostLikeBarState extends State<_PostLikeBar>
     isLiked = widget.post.islike; // старт из модели
     likesCount = widget.post.likes;
 
-    _likeController =
-        AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+    _likeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
     _likeAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
       CurvedAnimation(parent: _likeController, curve: Curves.easeOutBack),
     );
@@ -658,8 +659,7 @@ class _PostLikeBarState extends State<_PostLikeBar>
         serverLikes = int.tryParse('${m['likes']}');
       } else {
         final t = raw.trim().toLowerCase();
-        ok = (res.statusCode == 200) &&
-            (t == 'ok' || t == '1' || t == 'true');
+        ok = (res.statusCode == 200) && (t == 'ok' || t == '1' || t == 'true');
       }
 
       if (ok && serverLikes != null && mounted) {
