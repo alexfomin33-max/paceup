@@ -958,8 +958,8 @@ class _ActivityBlockState extends State<ActivityBlock>
                           context: context,
                           builder: (context) => CommentsBottomSheet(
                             itemType: 'activity',
-                            itemId:
-                                activity.id, // подставь реальный ID активности
+                            itemId: activity.id,
+                            currentUserId: widget.currentUserId,
                           ),
                         );
                       },

@@ -455,8 +455,8 @@ class _LentaScreenState extends State<LentaScreen>
                       context: context,
                       builder: (context) => CommentsBottomSheet(
                         itemType: 'post',
-                        itemId: a
-                            .id, // здесь подставь реальную переменную с ID поста
+                        itemId: a.id, 
+                        currentUserId: widget.userId,
                       ),
                     );
                   },

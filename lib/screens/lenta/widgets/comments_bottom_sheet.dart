@@ -4,6 +4,49 @@ import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import '../../../theme/app_theme.dart';
 
+// ——— Безопасный JSON-декодер: чистит BOM/мусор и вырезает { ... } ———
+Map<String, dynamic> safeDecodeJsonAsMap(List<int> bodyBytes) {
+  final raw = utf8.decode(bodyBytes);
+  // уберём BOM и лишние пробелы
+  final cleaned = raw.replaceFirst(RegExp(r'^\uFEFF'), '').trim();
+  try {
+    final v = json.decode(cleaned);
+    if (v is Map<String, dynamic>) return v;
+    throw const FormatException('JSON is not an object');
+  } catch (_) {
+    // пробуем вырезать первый '{' и последний '}'
+    final start = cleaned.indexOf('{');
+    final end = cleaned.lastIndexOf('}');
+    if (start != -1 && end != -1 && end > start) {
+      final sub = cleaned.substring(start, end + 1);
+      final v2 = json.decode(sub);
+      if (v2 is Map<String, dynamic>) return v2;
+    }
+    throw FormatException('Invalid JSON: $cleaned');
+  }
+}
+
+// ——— Аккуратный показ SnackBar (чтобы не падать без ScaffoldMessenger) ———
+void showSnack(BuildContext context, String message) {
+  final m = ScaffoldMessenger.maybeOf(context);
+  if (m != null) {
+    m.showSnackBar(SnackBar(content: Text(message)));
+  } else {
+    debugPrint('Snack: $message');
+  }
+}
+
+bool isTruthy(dynamic v) {
+  if (v == null) return false;
+  if (v is bool) return v;
+  if (v is num) return v != 0;
+  if (v is String) {
+    final s = v.trim().toLowerCase();
+    return s == 'true' || s == '1' || s == 'ok' || s == 'success' || s == 'yes';
+  }
+  return false;
+}
+
 /// =====================
 /// НАСТРОЙКИ API
 /// =====================
@@ -50,11 +93,13 @@ class CommentItem {
 class CommentsBottomSheet extends StatefulWidget {
   final String itemType; // 'post' | 'activity'
   final int itemId;
+  final int currentUserId;
 
   const CommentsBottomSheet({
     super.key,
     required this.itemType,
     required this.itemId,
+    required this.currentUserId,
   });
 
   @override
@@ -124,6 +169,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
           'item_id': widget.itemId.toString(),
           'page': _page.toString(),
           'limit': ApiConfig.pageSize.toString(),
+          'userId' : widget.currentUserId.toString(),
         }),
       );
 
@@ -131,7 +177,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         throw Exception('HTTP ${resp.statusCode}');
       }
 
-      final data = json.decode(utf8.decode(resp.bodyBytes));
+      final data = safeDecodeJsonAsMap(resp.bodyBytes);
       if (data is! Map || data['success'] != true) {
         throw Exception((data is Map ? data['error'] : null) ?? 'Ошибка формата данных');
       }
@@ -164,59 +210,79 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     }
   }
 
-  Future<void> _sendComment() async {
-    final text = _textCtrl.text.trim();
-    if (text.isEmpty || _sending) return;
+Future<void> _sendComment() async {
+  final text = _textCtrl.text.trim();
+  if (text.isEmpty || _sending) return;
 
-    setState(() => _sending = true);
+  setState(() => _sending = true);
 
-    try {
-      final resp = await http.post(
-        Uri.parse(ApiConfig.commentsAdd),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: jsonEncode({
-          'type': widget.itemType,
-          'item_id': widget.itemId.toString(),
-          'text': text,
-          // при необходимости: 'token': '...', 'user_id': '...'
-        }),
-      );
+  try {
+    final payload = {
+      'type': widget.itemType,
+      'item_id': widget.itemId.toString(),
+      'text': text,
+      'userId' : widget.currentUserId.toString(),
+      // если прокинут userId:
+      // 'user_id': widget.userId.toString(),
+    };
 
-      if (resp.statusCode != 200) {
-        throw Exception('HTTP ${resp.statusCode}');
-      }
+    final resp = await http.post(
+      Uri.parse(ApiConfig.commentsAdd),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: jsonEncode(payload),
+    );
 
-      final data = json.decode(utf8.decode(resp.bodyBytes));
-      if (data is! Map || data['success'] != true) {
-        throw Exception((data is Map ? data['error'] : null) ?? 'Не удалось отправить комментарий');
-      }
-
-      // Если сервер вернул созданный комментарий — добавим его сразу.
-      final newJson = (data['comment'] is Map) ? data['comment'] as Map<String, dynamic> : null;
-      if (newJson != null) {
-        final newItem = CommentItem.fromApi(newJson);
-        if (!mounted) return;
-        setState(() {
-          _comments.insert(0, newItem); // свежие сверху
-        });
-        _scrollToTop();
-      } else {
-        // Иначе перезагрузим первую страницу и прокрутим вверх.
-        await _loadComments(refresh: true);
-        _scrollToTop();
-      }
-
-      _textCtrl.clear();
-      _composerFocus.requestFocus();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _sending = false);
+    if (resp.statusCode != 200) {
+      throw Exception('HTTP ${resp.statusCode}');
     }
+
+    final data = safeDecodeJsonAsMap(resp.bodyBytes);
+
+    // ✅ Учитываем разные варианты "успеха"
+    final ok = isTruthy(data['success']) || isTruthy(data['status']);
+    if (!ok) {
+      final err = (data['error'] ?? 'Не удалось отправить комментарий').toString();
+      throw Exception(err);
+    }
+
+    // ✅ comment может быть объектом или массивом
+    CommentItem? newItem;
+    final c = data['comment'];
+    if (c is Map<String, dynamic>) {
+      newItem = CommentItem.fromApi(c);
+    } else if (c is List && c.isNotEmpty && c.first is Map<String, dynamic>) {
+      newItem = CommentItem.fromApi(c.first as Map<String, dynamic>);
+    }
+
+    if (!mounted) return;
+    if (newItem != null) {
+      setState(() {
+        _comments.insert(0, newItem!); // свежие сверху
+      });
+      _scrollToTop();
+    } else {
+      await _loadComments(refresh: true);
+      _scrollToTop();
+    }
+
+    _textCtrl.clear();
+    _composerFocus.requestFocus();
+  } catch (e) {
+    // Пробуем тихо обновить список. Если получилось — ошибку не показываем.
+    bool refreshOk = false;
+    try {
+      await _loadComments(refresh: true);
+      _scrollToTop();
+      refreshOk = true;
+    } catch (_) {}
+
+    if (!refreshOk && mounted) {
+      showSnack(context, 'Ошибка отправки: $e');
+    }
+  } finally {
+    if (mounted) setState(() => _sending = false);
   }
+}
 
   void _scrollToTop() {
     // После перерисовки анимируем к началу
