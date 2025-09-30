@@ -54,7 +54,7 @@ class ApiConfig {
   static const String base = 'http://api.paceup.ru/';
 
   static String get commentsList => '${base}comments_list.php';
-  static String get commentsAdd  => '${base}comments_add.php';
+  static String get commentsAdd => '${base}comments_add.php';
 
   /// Размер страницы для пагинации
   static const int pageSize = 20;
@@ -132,8 +132,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     _textCtrl = TextEditingController(); // ← добавь эту строку
     _loadComments(refresh: true);
     _scroll.addListener(_onScroll);
-}
-
+  }
 
   @override
   void dispose() {
@@ -168,7 +167,6 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     });
   }
 
-
   Future<void> _loadComments({bool refresh = false}) async {
     if (refresh) {
       _page = 1;
@@ -191,7 +189,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
           'item_id': widget.itemId.toString(),
           'page': _page.toString(),
           'limit': ApiConfig.pageSize.toString(),
-          'userId' : widget.currentUserId.toString(),
+          'userId': widget.currentUserId.toString(),
         }),
       );
 
@@ -201,9 +199,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
       final data = safeDecodeJsonAsMap(resp.bodyBytes);
       if (!(isTruthy(data['success']) || isTruthy(data['status']))) {
-        throw Exception((data is Map ? data['error'] : null) ?? 'Ошибка формата данных');
+        throw Exception((data['error']) ?? 'Ошибка формата данных');
       }
-
 
       final List<CommentItem> list = (data['comments'] as List? ?? [])
           .map((e) => CommentItem.fromApi(e as Map<String, dynamic>))
@@ -233,52 +230,60 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     }
   }
 
-Future<void> _sendComment(String text) async {
-  if (text.isEmpty || _sending) return;
-  setState(() => _sending = true);
+  Future<void> _sendComment(String text) async {
+    if (text.isEmpty || _sending) return;
+    setState(() => _sending = true);
 
-  try {
-    final payload = {
-      'type': widget.itemType,
-      'item_id': widget.itemId.toString(),
-      'text': text,
-      'userId': widget.currentUserId.toString(),  // лучше snake_case
-    };
+    try {
+      final payload = {
+        'type': widget.itemType,
+        'item_id': widget.itemId.toString(),
+        'text': text,
+        'userId': widget.currentUserId.toString(), // лучше snake_case
+      };
 
-    final resp = await http.post(
-      Uri.parse(ApiConfig.commentsAdd),
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: jsonEncode(payload), // НЕ jsonEncode
-    );
+      final resp = await http.post(
+        Uri.parse(ApiConfig.commentsAdd),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: jsonEncode(payload), // НЕ jsonEncode
+      );
 
-    if (resp.statusCode != 200) throw Exception('HTTP ${resp.statusCode}');
-    final data = safeDecodeJsonAsMap(resp.bodyBytes);
-    final ok = isTruthy(data['success']) || isTruthy(data['status']);
-    if (!ok) throw Exception((data['error'] ?? 'Не удалось отправить комментарий').toString());
+      if (resp.statusCode != 200) throw Exception('HTTP ${resp.statusCode}');
+      final data = safeDecodeJsonAsMap(resp.bodyBytes);
+      final ok = isTruthy(data['success']) || isTruthy(data['status']);
+      if (!ok)
+        throw Exception(
+          (data['error'] ?? 'Не удалось отправить комментарий').toString(),
+        );
 
-    CommentItem? newItem;
-    final c = data['comment'];
-    if (c is Map<String, dynamic>) newItem = CommentItem.fromApi(c);
-    else if (c is List && c.isNotEmpty && c.first is Map<String, dynamic>) {
-      newItem = CommentItem.fromApi(c.first as Map<String, dynamic>);
+      CommentItem? newItem;
+      final c = data['comment'];
+      if (c is Map<String, dynamic>) {
+        newItem = CommentItem.fromApi(c);
+      } else if (c is List && c.isNotEmpty && c.first is Map<String, dynamic>) {
+        newItem = CommentItem.fromApi(c.first as Map<String, dynamic>);
+      }
+
+      if (!mounted) return;
+      if (newItem != null) {
+        setState(() => _comments.insert(0, newItem!)); // свежие сверху
+      } else {
+        await _loadComments(refresh: true);
+      }
+      _scrollToTop();
+      // НИЧЕГО не чистим здесь — уже очищено в кнопке
+    } catch (e) {
+      bool refreshOk = false;
+      try {
+        await _loadComments(refresh: true);
+        _scrollToTop();
+        refreshOk = true;
+      } catch (_) {}
+      if (!refreshOk && mounted) showSnack(context, 'Ошибка отправки: $e');
+    } finally {
+      if (mounted) setState(() => _sending = false);
     }
-
-    if (!mounted) return;
-    if (newItem != null) {
-      setState(() => _comments.insert(0, newItem!)); // свежие сверху
-    } else {
-      await _loadComments(refresh: true);
-    }
-    _scrollToTop();
-    // НИЧЕГО не чистим здесь — уже очищено в кнопке
-  } catch (e) {
-    bool refreshOk = false;
-    try { await _loadComments(refresh: true); _scrollToTop(); refreshOk = true; } catch (_) {}
-    if (!refreshOk && mounted) showSnack(context, 'Ошибка отправки: $e');
-  } finally {
-    if (mounted) setState(() => _sending = false);
   }
-}
 
   void _scrollToTop() {
     // После перерисовки анимируем к началу
@@ -299,7 +304,9 @@ Future<void> _sendComment(String text) async {
       child: AnimatedPadding(
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: Container(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.6,
@@ -317,7 +324,7 @@ Future<void> _sendComment(String text) async {
               Divider(height: 1, color: AppColors.border),
               // Поле ввода — как в примере
               _ComposerBar(
-                key: ValueKey('composerBar_$_composerReset'),           // 👈 ключ бара
+                key: ValueKey('composerBar_$_composerReset'), // 👈 ключ бара
                 textFieldKey: ValueKey('composerTF_$_composerReset'),
                 controller: _textCtrl,
                 focusNode: _composerFocus,
@@ -381,11 +388,19 @@ Future<void> _sendComment(String text) async {
             mainAxisSize: MainAxisSize.min,
             children: [
               Flexible(
-                child: Text(c.userName, style: AppTextStyles.name, overflow: TextOverflow.ellipsis),
+                child: Text(
+                  c.userName,
+                  style: AppTextStyles.name,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               const SizedBox(width: 6),
-              Text('· $humanDate',
-                style: AppTextStyles.commenttext.copyWith(color: Colors.grey, fontSize: 12),
+              Text(
+                '· $humanDate',
+                style: AppTextStyles.commenttext.copyWith(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -432,10 +447,23 @@ Future<void> _sendComment(String text) async {
       try {
         final parts = s.split(' ');
         if (parts.length >= 2) {
-          final d = parts[0].split('-').map((e) => int.tryParse(e) ?? 0).toList();
-          final tm = parts[1].split(':').map((e) => int.tryParse(e) ?? 0).toList();
+          final d = parts[0]
+              .split('-')
+              .map((e) => int.tryParse(e) ?? 0)
+              .toList();
+          final tm = parts[1]
+              .split(':')
+              .map((e) => int.tryParse(e) ?? 0)
+              .toList();
           if (d.length >= 3 && tm.length >= 2) {
-            return DateTime(d[0], d[1], d[2], tm[0], tm[1], tm.length >= 3 ? tm[2] : 0);
+            return DateTime(
+              d[0],
+              d[1],
+              d[2],
+              tm[0],
+              tm[1],
+              tm.length >= 3 ? tm[2] : 0,
+            );
           }
         }
       } catch (_) {}
@@ -445,11 +473,32 @@ Future<void> _sendComment(String text) async {
 
   String _ruMonth(int m, {bool short = false}) {
     const monthsShort = [
-      'янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'
+      'янв',
+      'фев',
+      'мар',
+      'апр',
+      'май',
+      'июн',
+      'июл',
+      'авг',
+      'сен',
+      'окт',
+      'ноя',
+      'дек',
     ];
     const monthsFull = [
-      'января','февраля','марта','апреля','мая','июня',
-      'июля','августа','сентября','октября','ноября','декабря'
+      'января',
+      'февраля',
+      'марта',
+      'апреля',
+      'мая',
+      'июня',
+      'июля',
+      'августа',
+      'сентября',
+      'октября',
+      'ноября',
+      'декабря',
     ];
     if (m < 1 || m > 12) return '';
     return short ? monthsShort[m - 1] : monthsFull[m - 1];
@@ -491,7 +540,10 @@ class _ComposerBar extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: "Написать комментарий...",
                 hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.xlarge),
                   borderSide: BorderSide.none,
@@ -502,25 +554,27 @@ class _ComposerBar extends StatelessWidget {
             ),
           ),
           ElevatedButton(
-            onPressed: sending ? null : () async {
-              // 1) аккуратно забираем текст
-              controller.clearComposing();
-              final text = controller.text.trim();
-              if (text.isEmpty) return;
+            onPressed: sending
+                ? null
+                : () async {
+                    // 1) аккуратно забираем текст
+                    controller.clearComposing();
+                    final text = controller.text.trim();
+                    if (text.isEmpty) return;
 
-              // 2) СРАЗУ очищаем поле (до сети)
-              controller.value = const TextEditingValue(
-                text: '',
-                selection: TextSelection.collapsed(offset: 0),
-                composing: TextRange.empty,
-              );
+                    // 2) СРАЗУ очищаем поле (до сети)
+                    controller.value = const TextEditingValue(
+                      text: '',
+                      selection: TextSelection.collapsed(offset: 0),
+                      composing: TextRange.empty,
+                    );
 
-              // 3) Можно оставить фокус в поле
-              focusNode.requestFocus();
+                    // 3) Можно оставить фокус в поле
+                    focusNode.requestFocus();
 
-              // 4) Отправляем наверх уже «снятый» текст
-              await onSend(text);
-            },
+                    // 4) Отправляем наверх уже «снятый» текст
+                    await onSend(text);
+                  },
             style: ElevatedButton.styleFrom(
               shape: const CircleBorder(),
               backgroundColor: Colors.white,
@@ -528,7 +582,11 @@ class _ComposerBar extends StatelessWidget {
               elevation: 0,
             ),
             child: sending
-                ? const SizedBox(width: 18, height: 18, child: CupertinoActivityIndicator())
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CupertinoActivityIndicator(),
+                  )
                 : const Icon(Icons.send, size: 22, color: AppColors.secondary),
           ),
         ],
@@ -547,9 +605,16 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(CupertinoIcons.chat_bubble_text, size: 28, color: Colors.grey),
+          const Icon(
+            CupertinoIcons.chat_bubble_text,
+            size: 28,
+            color: Colors.grey,
+          ),
           const SizedBox(height: 8),
-          const Text('Пока нет комментариев', style: TextStyle(color: Colors.grey)),
+          const Text(
+            'Пока нет комментариев',
+            style: TextStyle(color: Colors.grey),
+          ),
           const SizedBox(height: 12),
           FilledButton.tonal(
             onPressed: onRefresh,
@@ -574,7 +639,11 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(CupertinoIcons.exclamationmark_triangle, size: 28, color: Colors.orange),
+            const Icon(
+              CupertinoIcons.exclamationmark_triangle,
+              size: 28,
+              color: Colors.orange,
+            ),
             const SizedBox(height: 8),
             Text(
               message,
@@ -592,7 +661,6 @@ class _ErrorState extends StatelessWidget {
     );
   }
 }
-
 
 /*class CommentsBottomSheet extends StatelessWidget {
   const CommentsBottomSheet({super.key});

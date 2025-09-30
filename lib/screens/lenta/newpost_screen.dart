@@ -190,8 +190,11 @@ class _NewPostScreenState extends State<NewPostScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.border),
               ),
-              child: const Icon(CupertinoIcons.clear_circled_solid,
-                  size: 20, color: Colors.red),
+              child: const Icon(
+                CupertinoIcons.clear_circled_solid,
+                size: 20,
+                color: Colors.red,
+              ),
             ),
           ),
         ),
@@ -239,12 +242,12 @@ class _NewPostScreenState extends State<NewPostScreen> {
             ? const SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               )
-            : const Text(
-                'Опубликовать',
-                style: TextStyle(color: Colors.white),
-              ),
+            : const Text('Опубликовать', style: TextStyle(color: Colors.white)),
       ),
     );
   }
@@ -293,24 +296,24 @@ class _NewPostScreenState extends State<NewPostScreen> {
           _canPublish = false;
         });
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Пост опубликован')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Пост опубликован')));
           Navigator.pop(context, true);
         }
       } else {
         final msg = (respJson['message'] ?? 'Неизвестная ошибка').toString();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Ошибка: ' + msg)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Ошибка: $msg')));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Сбой сети: ' + e.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Сбой сети: $e')));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
