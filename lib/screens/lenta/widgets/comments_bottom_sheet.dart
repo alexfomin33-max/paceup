@@ -178,9 +178,10 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       }
 
       final data = safeDecodeJsonAsMap(resp.bodyBytes);
-      if (data is! Map || data['success'] != true) {
+      if (!(isTruthy(data['success']) || isTruthy(data['status']))) {
         throw Exception((data is Map ? data['error'] : null) ?? 'Ошибка формата данных');
       }
+
 
       final List<CommentItem> list = (data['comments'] as List? ?? [])
           .map((e) => CommentItem.fromApi(e as Map<String, dynamic>))
@@ -265,8 +266,20 @@ Future<void> _sendComment() async {
       _scrollToTop();
     }
 
-    _textCtrl.clear();
-    _composerFocus.requestFocus();
+    //(надёжно очищает и composing):
+    _textCtrl.value = const TextEditingValue(
+      text: '',
+      selection: TextSelection.collapsed(offset: 0),
+      composing: TextRange.empty,
+    );
+
+    // на некоторых клавиатурах помогает микро-тик перед перерисовкой
+    await Future<void>.delayed(const Duration(milliseconds: 1));
+
+    if (mounted) {
+      setState(() {});           // подсказать TextField, что значение поменялось
+      _composerFocus.requestFocus();
+    }
   } catch (e) {
     // Пробуем тихо обновить список. Если получилось — ошибку не показываем.
     bool refreshOk = false;
