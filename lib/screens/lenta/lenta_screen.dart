@@ -152,7 +152,7 @@ class _LentaScreenState extends State<LentaScreen>
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const Basic()),
+                CupertinoPageRoute(builder: (_) => const ChatScreen()),
               );
             },
           ),
@@ -325,9 +325,6 @@ class _LentaScreenState extends State<LentaScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 1, offset: Offset(0, 1)),
-        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

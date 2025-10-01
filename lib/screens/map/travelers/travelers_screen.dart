@@ -6,16 +6,16 @@ import '../../../theme/app_theme.dart';
 List<Map<String, dynamic>> travelersMarkers(BuildContext context) {
   return [
     {
-      'point': const LatLng(55.45, 37.36),
-      'title': 'Попутчик в Подольске',
-      'count': 2,
+      'point': const LatLng(56.419333, 40.448757),
+      'title': 'Попутчики в Суздаль',
+      'count': 3,
       'content': const _Travelers(),
     },
     {
-      'point': const LatLng(56.85, 35.9),
-      'title': 'Попутчик в Твери',
-      'count': 1,
-      'content': const _SimpleText('Тверь: попутчики скоро здесь'),
+      'point': const LatLng(55.755864, 37.617698),
+      'title': 'Попутчики в Москву',
+      'count': 2,
+      'content': const _Travelers(),
     },
   ];
 }

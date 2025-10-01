@@ -7,15 +7,33 @@ List<Map<String, dynamic>> clubsMarkers(BuildContext context) {
   return [
     {
       'point': const LatLng(56.326797, 44.006516),
-      'title': 'Клуб в Нижнем Новгороде',
-      'count': 1,
+      'title': 'Клубы в Нижнем Новгороде',
+      'count': 7,
       'content': const _ClubsList(),
     },
     {
       'point': const LatLng(57.626559, 39.893813),
-      'title': 'Клуб в Ярославле',
-      'count': 3,
+      'title': 'Клубы в Ярославле',
+      'count': 4,
       'content': const _SimpleText('Ярославль: список клубов скоро здесь'),
+    },
+    {
+      'point': const LatLng(56.999799, 40.973014),
+      'title': 'Клубы в Иваново',
+      'count': 4,
+      'content': const _SimpleText('Иваново: список клубов скоро здесь'),
+    },
+    {
+      'point': const LatLng(56.129057, 40.406635),
+      'title': 'Клубы во Владимире',
+      'count': 3,
+      'content': const _SimpleText('Владимир: список клубов скоро здесь'),
+    },
+    {
+      'point': const LatLng(55.755864, 37.617698),
+      'title': 'Клубы в Москве',
+      'count': 9,
+      'content': const _SimpleText('Москва: список клубов скоро здесь'),
     },
   ];
 }

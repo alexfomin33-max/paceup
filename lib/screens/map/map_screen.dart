@@ -4,10 +4,10 @@ import 'package:latlong2/latlong.dart';
 import '../../theme/app_theme.dart';
 
 // контент вкладок
-import 'events/events_content.dart' as ev;
-import 'clubs/clubs_content.dart' as clb;
-import 'slots/slots_content.dart' as slt;
-import 'travelers/travelers_content.dart' as trv;
+import 'events/events_screen.dart' as ev;
+import 'clubs/clubs_screen.dart' as clb;
+import 'slots/slots_screendart' as slt;
+import 'travelers/travelers_screen.dart' as trv;
 
 // новый путь к экрану добавления события
 import 'events/addevent_screen.dart';
@@ -27,7 +27,7 @@ class _MapScreenState extends State<MapScreen> {
   /// Цвета маркеров по вкладкам
   final markerColors = const {
     0: Colors.blue, // события
-    1: Colors.green, // клубы
+    1: Colors.red, // клубы
     2: Colors.orange, // слоты
     3: Colors.purple, // попутчики
   };
@@ -123,7 +123,7 @@ class _MapScreenState extends State<MapScreen> {
 
           /// ───────── Верхняя панель вкладок (та же эстетика, что была)
           Positioned(
-            top: 40,
+            top: MediaQuery.of(context).padding.top + 10,
             left: 10,
             right: 10,
             child: Center(
@@ -259,7 +259,7 @@ class _BottomSheetScaffold extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Container(height: 1, color: AppColors.border),
-            const SizedBox(height: 12),
+            const SizedBox(height: 6),
 
             // контент от вкладки
             Flexible(
@@ -267,8 +267,8 @@ class _BottomSheetScaffold extends StatelessWidget {
                 physics: const BouncingScrollPhysics(),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
+                    horizontal: 2,
+                    vertical: 2,
                   ),
                   child: child,
                 ),
@@ -339,7 +339,7 @@ class _SolidPillButton extends StatelessWidget {
                 label,
                 style: const TextStyle(
                   fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                   color: Colors.black87,
                 ),
               ),

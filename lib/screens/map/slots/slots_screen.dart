@@ -6,17 +6,10 @@ import '../../../theme/app_theme.dart';
 List<Map<String, dynamic>> slotsMarkers(BuildContext context) {
   return [
     {
-      'point': const LatLng(56.999799, 40.973014),
-      'title': 'Слоты в Иванове',
-      'count': 4,
-      'content': const _SimpleList(
-        items: [
-          'Иваново: слот 5к в субботу',
-          'Иваново: слот 10к во вторник',
-          'Иваново: трейловый слот',
-          'Иваново: слот на стадионе',
-        ],
-      ),
+      'point': const LatLng(56.419333, 40.448757),
+      'title': 'Слоты в Суздале',
+      'count': 2,
+      'content': const _SimpleList(items: ['Суздаль: слот Т100']),
     },
   ];
 }
