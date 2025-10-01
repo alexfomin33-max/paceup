@@ -6,7 +6,7 @@ import '../../theme/app_theme.dart';
 // контент вкладок
 import 'events/events_screen.dart' as ev;
 import 'clubs/clubs_screen.dart' as clb;
-import 'slots/slots_screendart' as slt;
+import 'slots/slots_screen.dart' as slt;
 import 'travelers/travelers_screen.dart' as trv;
 
 // новый путь к экрану добавления события
