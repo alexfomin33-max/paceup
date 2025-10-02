@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import 'coffeerun/coffeerun_screen.dart';
 
-/// Унифицированный bottom sheet для вкладки «События».
+/// Каркас bottom sheet для вкладки «События».
 class EventsBottomSheet extends StatelessWidget {
   final String title;
   final Widget child;
@@ -11,7 +12,7 @@ class EventsBottomSheet extends StatelessWidget {
     super.key,
     required this.title,
     required this.child,
-    this.maxHeightFraction = 0.7, // до 70% высоты экрана
+    this.maxHeightFraction = 0.7, // не выше 70% экрана
   });
 
   @override
@@ -59,10 +60,7 @@ class EventsBottomSheet extends StatelessWidget {
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 2,
-                      vertical: 2,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
                     child: child,
                   ),
                 ),
@@ -77,10 +75,9 @@ class EventsBottomSheet extends StatelessWidget {
   }
 }
 
-/// Заполнитель на случай, если контента нет
+/// Заглушка (если контента нет)
 class EventsSheetPlaceholder extends StatelessWidget {
   const EventsSheetPlaceholder({super.key});
-
   @override
   Widget build(BuildContext context) {
     return const Padding(
@@ -88,6 +85,103 @@ class EventsSheetPlaceholder extends StatelessWidget {
       child: Text(
         'Здесь будет контент…',
         style: TextStyle(fontSize: 14, color: AppColors.text),
+      ),
+    );
+  }
+}
+
+/// Простой текст для шита «События» (замена _SimpleText)
+class EventsSheetText extends StatelessWidget {
+  final String text;
+  const EventsSheetText(this.text, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, style: const TextStyle(fontSize: 14, color: AppColors.text));
+  }
+}
+
+/// Список событий для Владимира (замена _VladimirEvents)
+class EventsListVladimir extends StatelessWidget {
+  const EventsListVladimir({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // Универсальная строка карточки. Если есть onTap — делаем кликабельной.
+    Widget cardRow({
+      required String asset,
+      required String title,
+      required String subtitle,
+      VoidCallback? onTap,
+    }) {
+      final row = Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Image.asset(asset, width: 90, height: 60, fit: BoxFit.cover),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 13, color: AppColors.text),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+
+      if (onTap == null) return row;
+
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: onTap,
+          child: row,
+        ),
+      );
+    }
+
+    return Padding(
+      // небольшой нижний отступ, чтобы не прилипало к краю шита
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
+      child: Column(
+        children: [
+          // Карточка 1 — кликабельная → открывает «Субботний коферан»
+          cardRow(
+            asset: 'assets/Vlad_event_1.png',
+            title: 'Субботний коферан',
+            subtitle: '14 июня 2025  ·  Участников: 32',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const CoffeerunScreen()),
+              );
+            },
+          ),
+
+          const SizedBox(height: 8),
+          const Divider(height: 1, thickness: 0.5, color: AppColors.border),
+          const SizedBox(height: 8),
+
+          // Карточка 2
+          cardRow(
+            asset: 'assets/Vlad_event_2.png',
+            title: 'Владимирский полумарафон «Золотые ворота»',
+            subtitle: '31 августа 2025  ·  Участников: 1426',
+          ),
+        ],
       ),
     );
   }

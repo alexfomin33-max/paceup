@@ -7,7 +7,12 @@ import 'events/events_screen.dart' as ev;
 import 'clubs/clubs_screen.dart' as clb;
 import 'slots/slots_screen.dart' as slt;
 import 'travelers/travelers_screen.dart' as trv;
+
+// нижние выезжающие окна
 import 'events/events_bottom_sheet.dart' as ebs;
+import 'clubs/clubs_bottom_sheet.dart' as cbs;
+import 'slots/slots_bottom_sheet.dart' as sbs;
+import 'travelers/travelers_bottom_sheet.dart' as tbs;
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -80,21 +85,49 @@ class _MapScreenState extends State<MapScreen> {
                     height: 28,
                     child: GestureDetector(
                       onTap: () {
-                        // bottom sheet показываем только на вкладке «События»
-                        if (_selectedIndex != 0) return;
+                        final Widget sheet = () {
+                          switch (_selectedIndex) {
+                            case 0:
+                              return ebs.EventsBottomSheet(
+                                title: title,
+                                child:
+                                    content ??
+                                    const ebs.EventsSheetPlaceholder(),
+                              );
+                            case 1:
+                              return cbs.ClubsBottomSheet(
+                                title: title,
+                                child:
+                                    content ??
+                                    const cbs.ClubsSheetPlaceholder(),
+                              );
+                            case 2:
+                              return sbs.SlotsBottomSheet(
+                                title: title,
+                                child:
+                                    content ??
+                                    const sbs.SlotsSheetPlaceholder(),
+                              );
+                            case 3:
+                            default:
+                              return tbs.TravelersBottomSheet(
+                                title: title,
+                                child:
+                                    content ??
+                                    const tbs.TravelersSheetPlaceholder(),
+                              );
+                          }
+                        }();
 
                         showModalBottomSheet(
                           context: context,
                           useRootNavigator: true,
                           isScrollControlled: true,
                           backgroundColor: Colors.transparent,
-                          builder: (ctx) => ebs.EventsBottomSheet(
-                            title: title,
-                            child:
-                                content ?? const ebs.EventsSheetPlaceholder(),
-                          ),
+                          builder: (_) => sheet,
                         );
                       },
+
                       child: Container(
                         width: 28,
                         height: 28,
@@ -174,6 +207,9 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
           if (_selectedIndex == 0) const ev.EventsFloatingButtons(),
+          if (_selectedIndex == 1) const clb.ClubsFloatingButtons(),
+          if (_selectedIndex == 2) const slt.SlotsFloatingButtons(),
+          if (_selectedIndex == 3) const trv.TravelersFloatingButtons(),
         ],
       ),
     );
