@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 import 'package:paceup/models/activity_lenta.dart';
 import 'widgets/activity_description_block.dart';
 import 'widgets/recommended_block.dart';
+import 'package:flutter/painting.dart';
 
 import 'dart:async';
 
@@ -627,17 +628,44 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
             PageView.builder(
               controller: _pc,
               itemCount: total,
-              onPageChanged: (i) => setState(() => _index = i),
+              // ⛔ не подгружать соседние страницы (экономим RAM/CPU)
+              allowImplicitScrolling: false,
+              physics: const PageScrollPhysics(),
+              onPageChanged: (i) {
+                setState(() => _index = i);
+
+                // Опционально: освобождаем память от далёких кадров (см. метод ниже)
+                // чистим кадр, который остался на 2 позиции позади
+                final evictIndex = i - 2;
+                if (evictIndex >= 0) {
+                  final isImg = evictIndex < widget.imageUrls.length;
+                  if (isImg) {
+                    _evictNetworkImage(widget.imageUrls[evictIndex]);
+                  } else {
+                    // видео-превью у нас плейсхолдером — тут чистить нечего
+                  }
+                }
+              },
               itemBuilder: (context, i) {
                 final isImage = i < widget.imageUrls.length;
                 if (isImage) {
                   final url = widget.imageUrls[i];
+
+                  // сохраняем твою оптимизацию cacheWidth + добавляем cacheHeight
+                  final dpr = MediaQuery.of(context).devicePixelRatio;
+                  final cacheWidth  = (MediaQuery.sizeOf(context).width * dpr).round();
+                  const targetHeight = 300.0; // ты показываешь 300 px высоты
+                  final cacheHeight = (targetHeight * dpr).round();
+
                   return Image.network(
                     url,
                     fit: BoxFit.cover,
                     filterQuality: FilterQuality.low,
-                    cacheWidth: cacheWidth,
+                    cacheWidth:  cacheWidth,
+                    cacheHeight: cacheHeight, // 🔹 важно: ограничиваем вертикаль тоже
                     gaplessPlayback: true,
+                    width: double.infinity,
+                    height: double.infinity,
                   );
                 } else {
                   final vIndex = i - widget.imageUrls.length;
@@ -659,6 +687,12 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
       },
     );
   }
+
+void _evictNetworkImage(String url) {
+  // точечный сброс только конкретной картинки, когда далеко пролистали
+  final provider = NetworkImage(url);
+  imageCache.evict(provider);
+}
 
   Widget _buildVideoPreview(String url) {
     return Stack(
