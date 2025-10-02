@@ -974,7 +974,7 @@ class _LinePainter extends CustomPainter {
 /// Подписи к темпу — в одном блоке с графиком (значения как на макете)
 class _PaceSummary extends StatelessWidget {
   final double horizontalPadding;
-  const _PaceSummary({this.horizontalPadding = 12});
+  const _PaceSummary();
 
   @override
   Widget build(BuildContext context) {

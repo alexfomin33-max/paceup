@@ -251,10 +251,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       if (resp.statusCode != 200) throw Exception('HTTP ${resp.statusCode}');
       final data = safeDecodeJsonAsMap(resp.bodyBytes);
       final ok = isTruthy(data['success']) || isTruthy(data['status']);
-      if (!ok)
+      if (!ok) {
         throw Exception(
           (data['error'] ?? 'Не удалось отправить комментарий').toString(),
         );
+      }
 
       CommentItem? newItem;
       final c = data['comment'];
