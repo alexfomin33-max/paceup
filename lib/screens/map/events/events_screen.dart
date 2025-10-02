@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../theme/app_theme.dart';
 import 'coffeerun/coffeerun_screen.dart';
+import 'addevent_screen.dart';
 
 /// Возвращает маркеры для вкладки «События».
 List<Map<String, dynamic>> eventsMarkers(BuildContext context) {
@@ -117,6 +118,98 @@ class _SimpleText extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(fontSize: 14, color: AppColors.text),
+    );
+  }
+}
+
+class EventsFloatingButtons extends StatelessWidget {
+  const EventsFloatingButtons({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 12,
+      right: 12,
+      bottom: kBottomNavigationBarHeight - 40,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _SolidPillButton(
+            icon: Icons.tune,
+            label: 'Фильтры',
+            onTap: () {
+              // TODO: открыть экран/шит фильтров
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Фильтры скоро будут')),
+              );
+            },
+          ),
+          _SolidPillButton(
+            icon: Icons.add_circle_outline,
+            label: 'Добавить',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddEventScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Локальная копия кнопки-«таблетки» (как было в map_screen.dart)
+class _SolidPillButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SolidPillButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      elevation: 0,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: Colors.black87),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

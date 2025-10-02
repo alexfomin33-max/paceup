@@ -1,6 +1,6 @@
 // lib/screens/lenta/notifications/settings_sheet.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart'; // для WidgetState/WidgetStateProperty
+// для WidgetState/WidgetStateProperty
 import '../../../../theme/app_theme.dart';
 
 class SettingsSheet extends StatefulWidget {
@@ -51,7 +51,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
                     const SizedBox(height: 8),
 
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 0, 8, 0),
+                      padding: const EdgeInsets.fromLTRB(12, 0, 4, 0),
                       child: _ToggleList(
                         children: [
                           _ToggleRow(
@@ -148,9 +148,10 @@ class _ToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    return SizedBox(
+      height: 56, // ← желаемая высота строки (можно 48/52/60)
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Text(
@@ -160,23 +161,32 @@ class _ToggleRow extends StatelessWidget {
                 fontSize: 14,
                 color: AppColors.text,
               ),
+              maxLines: 2, // если подпись длинная
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            // ✅ Замена MaterialStateProperty → WidgetStateProperty
-            activeTrackColor: AppColors.secondary,
-            trackColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return AppColors.secondary;
-              }
-              return const Color(0xFFCFD3DA);
-            }),
-            trackOutlineColor: WidgetStateProperty.all<Color>(
-              Colors.transparent,
+          // ↓ масштабируем сам переключатель
+          Transform.scale(
+            scale: 0.90, // 90% от стандартного размера. Поиграйся: 0.85–1.15
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+
+              // ↓ уменьшаем «обязательную» зону касания
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+
+              activeTrackColor: AppColors.secondary,
+              trackColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return AppColors.secondary;
+                }
+                return const Color(0xFFCFD3DA);
+              }),
+              trackOutlineColor: WidgetStateProperty.all<Color>(
+                Colors.transparent,
+              ),
+              thumbColor: WidgetStateProperty.all<Color>(Colors.white),
             ),
-            thumbColor: WidgetStateProperty.all<Color>(Colors.white),
           ),
         ],
       ),

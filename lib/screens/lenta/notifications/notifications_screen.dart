@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../theme/app_theme.dart';
 
 // ⬇️ наш полноэкранный шит с настройками уведомлений
-import 'settings_sheet.dart';
+import 'settings_bottom_sheet.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});

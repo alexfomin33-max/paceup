@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../../theme/app_theme.dart';
 
 // контент вкладок
 import 'events/events_screen.dart' as ev;
 import 'clubs/clubs_screen.dart' as clb;
 import 'slots/slots_screen.dart' as slt;
 import 'travelers/travelers_screen.dart' as trv;
-
-// новый путь к экрану добавления события
-import 'events/addevent_screen.dart';
+import 'events/events_bottom_sheet.dart' as ebs;
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -83,16 +80,18 @@ class _MapScreenState extends State<MapScreen> {
                     height: 28,
                     child: GestureDetector(
                       onTap: () {
+                        // bottom sheet показываем только на вкладке «События»
+                        if (_selectedIndex != 0) return;
+
                         showModalBottomSheet(
-                          context: Navigator.of(
-                            context,
-                            rootNavigator: true,
-                          ).context,
+                          context: context,
+                          useRootNavigator: true,
                           isScrollControlled: true,
                           backgroundColor: Colors.transparent,
-                          builder: (_) => _BottomSheetScaffold(
+                          builder: (ctx) => ebs.EventsBottomSheet(
                             title: title,
-                            child: content ?? const _SheetPlaceholder(),
+                            child:
+                                content ?? const ebs.EventsSheetPlaceholder(),
                           ),
                         );
                       },
@@ -174,178 +173,8 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
           ),
-
-          /// ───────── Нижние кнопки: «Фильтры» и «Добавить»
-          Positioned(
-            left: 12,
-            right: 12,
-            bottom: kBottomNavigationBarHeight - 40,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _SolidPillButton(
-                  icon: Icons.tune,
-                  label: 'Фильтры',
-                  onTap: () {
-                    // TODO: открыть фильтры
-                  },
-                ),
-                _SolidPillButton(
-                  icon: Icons.add_circle_outline,
-                  label: 'Добавить',
-                  onTap: () {
-                    if (_selectedIndex == 0) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AddEventScreen(),
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Добавление сейчас доступно на вкладке «События».',
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
+          if (_selectedIndex == 0) const ev.EventsFloatingButtons(),
         ],
-      ),
-    );
-  }
-}
-
-/// Унифицированный низкий BottomSheet-каркас
-class _BottomSheetScaffold extends StatelessWidget {
-  final String title;
-  final Widget child;
-  const _BottomSheetScaffold({required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppRadius.large),
-        ),
-      ),
-      padding: const EdgeInsets.all(6),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // полоска-«ручка»
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 10, top: 6),
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            // заголовок
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Center(child: Text(title, style: AppTextStyles.h1)),
-            ),
-            const SizedBox(height: 12),
-            Container(height: 1, color: AppColors.border),
-            const SizedBox(height: 6),
-
-            // контент от вкладки
-            Flexible(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 2,
-                    vertical: 2,
-                  ),
-                  child: child,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SheetPlaceholder extends StatelessWidget {
-  const _SheetPlaceholder();
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.only(bottom: 40),
-      child: Text(
-        'Здесь будет контент…',
-        style: TextStyle(fontSize: 14, color: AppColors.text),
-      ),
-    );
-  }
-}
-
-/// Кнопка-«таблетка»
-class _SolidPillButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _SolidPillButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      elevation: 0,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: Colors.black87),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
