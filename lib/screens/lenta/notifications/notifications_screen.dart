@@ -2,7 +2,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../theme/app_theme.dart';
+import '../../../theme/app_theme.dart';
+
+// ⬇️ наш полноэкранный шит с настройками уведомлений
+import 'settings_sheet.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -38,6 +41,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  void _openSettingsSheet() {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true, // поверх нижней навигации
+      isScrollControlled: true, // высота по контенту
+      backgroundColor: Colors.transparent, // радиусы рисуем сами
+      builder: (_) => const SettingsSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -68,15 +81,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               color: AppColors.text,
             ),
           ),
-          actions: const [
-            // Оставляем только одну иконку справа
-            Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Icon(
+          actions: [
+            IconButton(
+              padding: const EdgeInsets.only(right: 12),
+              icon: const Icon(
                 CupertinoIcons.slider_horizontal_3,
                 size: 20,
                 color: AppColors.text,
               ),
+              onPressed: _openSettingsSheet,
+              splashRadius: 22,
             ),
           ],
           bottom: const PreferredSize(
@@ -119,7 +133,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Первая строка: маленькая иконка слева, время справа
+                        // Первая строка — иконка и время на одной линии
                         Row(
                           children: [
                             Icon(n.icon, size: 16, color: n.color),
@@ -135,7 +149,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        // Вторая строка: сам текст уведомления
+                        // Вторая строка — текст
                         Text(
                           n.text,
                           style: const TextStyle(
@@ -158,7 +172,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 }
 
-/// Демо-данные под макет (иконки — безопасные Material-аналоги)
+/// Демо-данные под макет (иконки — безопасные Material/ Cupertino аналоги)
 List<_Notif> _demo() {
   final now = DateTime.now();
   DateTime onDay(DateTime base, int hour, int min, {int shiftDays = 0}) =>
@@ -195,7 +209,7 @@ List<_Notif> _demo() {
     ),
     _Notif(
       avatar: 'assets/coffeerun.png',
-      icon: Icons.directions_walk, // заменили на материал-иконку
+      icon: Icons.directions_walk,
       color: AppColors.secondary,
       text: 'Клуб "Coffeerun" разместил новое событие',
       when: DateTime(now.year, 3, 21),
@@ -216,7 +230,7 @@ List<_Notif> _demo() {
     ),
     _Notif(
       avatar: 'assets/Avatar_1.png',
-      icon: Icons.emoji_events_outlined, // кубок
+      icon: Icons.emoji_events_outlined,
       color: Colors.purple,
       text:
           'Алексей Лукашин зарегистрировался на забег "Ночь. Стрелка. Ярославль", 19 июля 2025. 42,2 км',
