@@ -1,0 +1,164 @@
+import 'package:flutter/material.dart';
+import 'package:paceup/theme/app_theme.dart';
+import 'dart:ui' show FontFeature;
+
+class CoffeeRunVldStatsContent extends StatefulWidget {
+  const CoffeeRunVldStatsContent({super.key});
+
+  @override
+  State<CoffeeRunVldStatsContent> createState() =>
+      _CoffeeRunVldStatsContentState();
+}
+
+class _CoffeeRunVldStatsContentState extends State<CoffeeRunVldStatsContent> {
+  int _seg = 0; // 0 неделя, 1 месяц, 2 год
+  static const double _kmColW = 70; // подберите 88–110 по вкусу
+
+  static const _week = <_StatRow>[
+    _StatRow(1, 'Алексей Лукашин', 'assets/Avatar_1.png', 67.04),
+    _StatRow(2, 'Татьяна Свиридова', 'assets/Avatar_3.png', 64.46),
+    _StatRow(3, 'Игорь Зелёный', 'assets/Avatar_2.png', 58.01),
+    _StatRow(4, 'Анатолий Курагин', 'assets/Avatar_5.png', 42.82),
+    _StatRow(5, 'Екатерина Виноградова', 'assets/Avatar_4.png', 36.56),
+    _StatRow(6, 'Лейла Мустафаева', 'assets/Avatar_9.png', 25.18),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _week; // демо одинаковые
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // сегмент
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF6F7F9),
+            borderRadius: BorderRadius.circular(20), // было 8
+            border: Border.all(color: AppColors.border),
+          ),
+          padding: const EdgeInsets.all(2),
+          child: Row(
+            children: List.generate(3, (i) {
+              final labels = ['Эта неделя', 'Этот месяц', 'Этот год'];
+              final selected = _seg == i;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _seg = i),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected ? Colors.white : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20), // было 6
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      labels[i],
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: selected ? AppColors.text : AppColors.text,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // список
+        Column(
+          children: List.generate(items.length, (i) {
+            final m = items[i];
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 0,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        child: Text(
+                          m.rank.toString(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            color: AppColors.text,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: Image.asset(
+                          m.avatar,
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          m.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            color: AppColors.text,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: _kmColW,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '${m.km.toStringAsFixed(2).replaceAll('.', ',')} км',
+                            softWrap: false,
+                            overflow: TextOverflow.fade,
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500, // без жирного
+                              color: AppColors.text,
+                              // табличные цифры, чтобы разряды не «прыгали»
+                              fontFeatures: [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (i != items.length - 1)
+                  const Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: AppColors.border,
+                  ),
+              ],
+            );
+          }),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatRow {
+  final int rank;
+  final String name;
+  final String avatar;
+  final double km;
+  const _StatRow(this.rank, this.name, this.avatar, this.km);
+}

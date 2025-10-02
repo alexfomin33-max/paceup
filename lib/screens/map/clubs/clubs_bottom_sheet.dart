@@ -1,8 +1,8 @@
-// lib/screens/map/clubs/clubs_bottom_sheet.dart
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
+import 'package:paceup/theme/app_theme.dart';
+import 'coffeerun_vld/coffeerun_vld_screen.dart';
 
-/// Каркас bottom sheet для вкладки «Клубы» — идентичен events_bottom_sheet.dart
+/// Каркас bottom sheet для вкладки «Клубы» — 1:1 как в events_bottom_sheet.dart
 class ClubsBottomSheet extends StatelessWidget {
   final String title;
   final Widget child;
@@ -12,7 +12,7 @@ class ClubsBottomSheet extends StatelessWidget {
     super.key,
     required this.title,
     required this.child,
-    this.maxHeightFraction = 0.7, // не выше 70% экрана
+    this.maxHeightFraction = 0.5, // не выше 50% экрана
   });
 
   @override
@@ -78,7 +78,7 @@ class ClubsBottomSheet extends StatelessWidget {
   }
 }
 
-/// Заглушка
+/// Заглушка (если контента нет)
 class ClubsSheetPlaceholder extends StatelessWidget {
   const ClubsSheetPlaceholder({super.key});
   @override
@@ -93,7 +93,21 @@ class ClubsSheetPlaceholder extends StatelessWidget {
   }
 }
 
-/// ===== Контент: список клубов для «Клубы Владимира» =====
+/// Простой текст в шите «Клубы» (аналог EventsSheetText)
+class ClubsSheetText extends StatelessWidget {
+  final String text;
+  const ClubsSheetText(this.text, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(fontSize: 14, color: AppColors.text),
+    );
+  }
+}
+
+/// ===== Контент: «Клубы Владимира» =====
 /// Картинки:
 ///  - assets/coffeerun.png
 ///  - assets/club_5.png
@@ -104,15 +118,20 @@ class ClubsListVladimir extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      // нижний отступ как в events_list
+      // нижний отступ как в events
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
       child: Column(
-        children: const [
+        children: [
           _ClubRow(
             asset: 'assets/coffeerun.png',
             name: 'CoffeeRun_vld',
             city: 'Владимир',
             members: 400,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const CoffeeRunVldScreen()),
+              );
+            },
           ),
           _ClubsDivider(),
           _ClubRow(
@@ -128,6 +147,7 @@ class ClubsListVladimir extends StatelessWidget {
             city: 'Владимир',
             members: 708,
           ),
+          _ClubsDivider(),
         ],
       ),
     );
@@ -145,6 +165,7 @@ class _ClubsDivider extends StatelessWidget {
   }
 }
 
+/// Ряд клуба — превью строго 90×60 как в «Событиях», без скруглений
 class _ClubRow extends StatelessWidget {
   final String asset;
   final String name;
@@ -163,39 +184,30 @@ class _ClubRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final row = Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start, // как в events
       children: [
-        // Квадратная аватарка клуба; отступы и типографика как в events
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.asset(asset, width: 56, height: 56, fit: BoxFit.cover),
-        ),
-        const SizedBox(width: 10),
+        Image.asset(asset, width: 90, height: 60),
+        const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // название
               Text(
                 name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 14, // как в events
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColors.text,
                 ),
               ),
               const SizedBox(height: 4),
-              // подзаголовок
               Text(
                 '$city · Участников: $members',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13, // как в events
-                  color: AppColors.text,
-                ),
+                style: const TextStyle(fontSize: 13, color: AppColors.text),
               ),
             ],
           ),

@@ -1,70 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../theme/app_theme.dart';
+import 'slots_bottom_sheet.dart';
 
 /// Возвращает маркеры для вкладки «Слоты».
 List<Map<String, dynamic>> slotsMarkers(BuildContext context) {
   return [
     {
-      'point': const LatLng(58.048640, 38.855711),
-      'title': 'Слоты в Рыбинске',
+      'point': const LatLng(56.129057, 40.406635),
+      'title': 'Слоты Владимира',
       'count': 2,
-      'content': const _SimpleList(items: ['Рыбинск: слот Т100']),
-    },
-    {
-      'point': const LatLng(56.419333, 40.448757),
-      'title': 'Слоты в Суздале',
-      'count': 3,
-      'content': const _SimpleList(items: ['Суздаль: слот Т100']),
-    },
-    {
-      'point': const LatLng(55.579174, 42.052411),
-      'title': 'Слоты в Муроме',
-      'count': 1,
-      'content': const _SimpleList(items: ['Муром: слот Т100']),
+      'content': const SlotsSheetText('Владимир: слоты появятся здесь'),
+      // когда будут ассеты — подставь:
+      // 'content': const SlotsListVladimir(),
     },
     {
       'point': const LatLng(55.755864, 37.617698),
-      'title': 'Слоты в Москве',
-      'count': 6,
-      'content': const _SimpleList(items: ['Москва: слот Т100']),
+      'title': 'Слоты Москвы',
+      'count': 5,
+      'content': const SlotsSheetText('Москва: слоты появятся здесь'),
+    },
+    {
+      'point': const LatLng(56.326797, 44.006516),
+      'title': 'Слоты Нижнего Новгорода',
+      'count': 3,
+      'content': const SlotsSheetText('Нижний Новгород: слоты появятся здесь'),
+    },
+    {
+      'point': const LatLng(57.626559, 39.893813),
+      'title': 'Слоты Ярославля',
+      'count': 1,
+      'content': const SlotsSheetText('Ярославль: слоты появятся здесь'),
     },
   ];
 }
 
-class _SimpleList extends StatelessWidget {
-  final List<String> items;
-  const _SimpleList({required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (final s in items) ...[
-          Row(
-            children: [
-              const Icon(Icons.event_available, color: AppColors.text),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  s,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.greytext,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-        ],
-        const SizedBox(height: 40),
-      ],
-    );
-  }
-}
-
-// === Нижние кнопки для вкладки «Слоты» ===
+// === Нижние кнопки для вкладки «Слоты» (как раньше) ===
 class SlotsFloatingButtons extends StatelessWidget {
   const SlotsFloatingButtons({super.key});
 
@@ -132,8 +102,8 @@ class _SolidPillButton extends StatelessWidget {
             boxShadow: const [
               BoxShadow(
                 color: Colors.black12,
-                blurRadius: 4,
-                offset: Offset(0, 2),
+                blurRadius: 1,
+                offset: Offset(0, 1),
               ),
             ],
           ),

@@ -105,8 +105,8 @@ class _SolidPillButton extends StatelessWidget {
             boxShadow: const [
               BoxShadow(
                 color: Colors.black12,
-                blurRadius: 4,
-                offset: Offset(0, 2),
+                blurRadius: 1,
+                offset: Offset(0, 1),
               ),
             ],
           ),

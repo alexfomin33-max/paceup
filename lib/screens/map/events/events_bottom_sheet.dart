@@ -12,7 +12,7 @@ class EventsBottomSheet extends StatelessWidget {
     super.key,
     required this.title,
     required this.child,
-    this.maxHeightFraction = 0.7, // не выше 70% экрана
+    this.maxHeightFraction = 0.5, // не выше 50% экрана
   });
 
   @override
@@ -60,7 +60,10 @@ class EventsBottomSheet extends StatelessWidget {
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                      vertical: 2,
+                    ),
                     child: child,
                   ),
                 ),
@@ -97,7 +100,10 @@ class EventsSheetText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: const TextStyle(fontSize: 14, color: AppColors.text));
+    return Text(
+      text,
+      style: const TextStyle(fontSize: 14, color: AppColors.text),
+    );
   }
 }
 
@@ -171,9 +177,7 @@ class EventsListVladimir extends StatelessWidget {
             },
           ),
 
-          const SizedBox(height: 8),
-          const Divider(height: 1, thickness: 0.5, color: AppColors.border),
-          const SizedBox(height: 8),
+          _ClubsDivider(),
 
           // Карточка 2
           cardRow(
@@ -181,8 +185,20 @@ class EventsListVladimir extends StatelessWidget {
             title: 'Владимирский полумарафон «Золотые ворота»',
             subtitle: '31 августа 2025  ·  Участников: 1426',
           ),
+          _ClubsDivider(),
         ],
       ),
+    );
+  }
+}
+
+class _ClubsDivider extends StatelessWidget {
+  const _ClubsDivider();
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Divider(height: 1, thickness: 0.5, color: AppColors.border),
     );
   }
 }
