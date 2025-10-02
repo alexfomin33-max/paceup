@@ -5,8 +5,8 @@ import 'widgets/activity_block.dart';
 import 'newpost_screen.dart';
 import 'widgets/comments_bottom_sheet.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'chat_screen.dart'; // импортируем страницу чата
-import 'notifications_screen.dart';
+import 'chat/chat_screen.dart'; // импортируем страницу чата
+import 'notifications/notifications_screen.dart';
 import '../../models/notification_item.dart';
 import 'dart:ui'; // для ImageFilter.blur
 import 'dart:convert';
