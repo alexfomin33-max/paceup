@@ -135,7 +135,7 @@ class _LentaScreenState extends State<LentaScreen>
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const NewPostScreen()),
+                    MaterialPageRoute(builder: (_) => NewPostScreen(userId: widget.userId)),
                   );
                 },
               ),
