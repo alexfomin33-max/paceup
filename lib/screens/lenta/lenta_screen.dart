@@ -7,12 +7,12 @@ import 'widgets/comments_bottom_sheet.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'chat/chat_screen.dart'; // импортируем страницу чата
 import 'notifications/notifications_screen.dart';
-import '../../models/notification_item.dart';
 import 'dart:ui'; // для ImageFilter.blur
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:paceup/models/activity_lenta.dart';
 import 'widgets/activity_description_block.dart';
+import 'widgets/recommended_block.dart';
 
 import 'dart:async';
 
@@ -71,26 +71,6 @@ class _LentaScreenState extends State<LentaScreen>
 
   int _unreadCount =
       3; // пример начального количества непрочитанных уведомлений
-  final List<NotificationItem> _notifications = [
-    NotificationItem(
-      title: "Новая подписка",
-      body: "Пользователь Алексей подписался на вас.",
-      date: DateTime.now().subtract(const Duration(minutes: 5)),
-      avatarAsset: "assets/Avatar_1.png",
-    ),
-    NotificationItem(
-      title: "Новый комментарий",
-      body: "Мария оставила комментарий к вашему посту.",
-      date: DateTime.now().subtract(const Duration(hours: 1)),
-      avatarAsset: "assets/Avatar_2.png",
-    ),
-    NotificationItem(
-      title: "Обновление приложения",
-      body: "Доступна новая версия приложения.",
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      avatarAsset: "assets/Avatar_3.png",
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -230,7 +210,7 @@ class _LentaScreenState extends State<LentaScreen>
                   children: [
                     first,
                     const SizedBox(height: 16),
-                    _buildRecommendations(),
+                    const RecommendedBlock(),
                     const SizedBox(height: 16),
                   ],
                 );
@@ -268,116 +248,6 @@ class _LentaScreenState extends State<LentaScreen>
         );
       },
       child: ActivityBlock(activity: a, currentUserId: widget.userId),
-    );
-  }
-
-  Widget _buildRecommendations() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            "Рекомендации для вас",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 282,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            cacheExtent: 300,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            children: [
-              _friendCard(
-                "Екатерина Виноградова",
-                "36 лет, Санкт-Петербург",
-                "6 общих друзей",
-                "assets/Recommended_1.png",
-              ),
-              const SizedBox(width: 12),
-              _friendCard(
-                "Анатолий Курагин",
-                "38 лет, Ковров",
-                "4 общих друга",
-                "assets/Recommended_2.png",
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _friendCard(
-    String name,
-    String desc,
-    String mutual,
-    String avatarAsset,
-  ) {
-    return Container(
-      width: 220,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(60),
-            child: Image.asset(
-              avatarAsset,
-              width: 120,
-              height: 120,
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            name,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            desc,
-            style: const TextStyle(fontSize: 12, color: AppColors.text),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            mutual,
-            style: const TextStyle(fontSize: 12, color: AppColors.text),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.secondary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: const Text(
-                "Подписаться",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
