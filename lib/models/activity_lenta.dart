@@ -32,6 +32,8 @@ class Activity {
   final String postMediaUrl;  // from "media"
   final String postContent;   // from "content"
   final bool islike;
+  final List<String> mediaImages; // полные URL картинок
+  final List<String> mediaVideos; // полные URL видео
 
   Activity({
     required this.id,
@@ -52,10 +54,28 @@ class Activity {
     this.postMediaUrl = '',
     this.postContent = '',
     this.islike = false,
+    this.mediaImages = const [],
+    this.mediaVideos = const [],
   });
 
   factory Activity.fromApi(Map<String, dynamic> j) {
     final paramsRaw = j['params'];
+
+    // --- разбор media ---
+    List<String> mediaImages = const [];
+    List<String> mediaVideos = const [];
+
+    final media = j['media'];
+    if (media is Map<String, dynamic>) {
+      final imgs = media['images'];
+      final vids = media['videos'];
+      if (imgs is List) {
+        mediaImages = imgs.whereType<String>().toList(growable: false);
+      }
+      if (vids is List) {
+        mediaVideos = vids.whereType<String>().toList(growable: false);
+      }
+    }
 
     return Activity(
       id: _asInt(j['id']),
@@ -78,6 +98,8 @@ class Activity {
       postMediaUrl: j['media']?.toString() ?? '',
       postContent: j['content']?.toString() ?? '',
       islike: _asBool(j['islike'] ?? j['isLiked'] ?? j['is_like'] ?? j['liked']),
+      mediaImages: mediaImages,
+      mediaVideos: mediaVideos,
     );
   }
 }

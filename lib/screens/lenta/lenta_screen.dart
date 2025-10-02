@@ -436,20 +436,13 @@ class _LentaScreenState extends State<LentaScreen>
           ),
 
           // ✅ дешёвое масштабирование и правильный cacheWidth
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final dpr = MediaQuery.of(context).devicePixelRatio;
-              final cacheWidth = (constraints.maxWidth * dpr).round();
-              return Image.network(
-                a.postMediaUrl,
-                fit: BoxFit.cover,
-                height: 300,
-                width: double.infinity,
-                filterQuality: FilterQuality.low, // дешевле для GPU
-                cacheWidth: cacheWidth, // не декодируем лишнее
-                gaplessPlayback: true, // меньше «миганий»
-              );
-            },
+          SizedBox(
+            height: 300,
+            width: double.infinity,
+            child: PostMediaCarousel(
+              imageUrls: a.mediaImages, // массив полных URL картинок
+              videoUrls: a.mediaVideos, // массив полных URL видео
+            ),
           ),
 
           Padding(
@@ -704,6 +697,149 @@ class _PostLikeBarState extends State<_PostLikeBar>
           const SizedBox(width: 4),
           Text(likesCount.toString()),
         ],
+      ),
+    );
+  }
+}
+
+class PostMediaCarousel extends StatefulWidget {
+  final List<String> imageUrls;
+  final List<String> videoUrls;
+
+  const PostMediaCarousel({
+    super.key,
+    required this.imageUrls,
+    required this.videoUrls,
+  });
+
+  @override
+  State<PostMediaCarousel> createState() => _PostMediaCarouselState();
+}
+
+class _PostMediaCarouselState extends State<PostMediaCarousel> {
+  late final PageController _pc;
+  int _index = 0;
+
+  static const _dotsBottom = 10.0;
+  static const _dotsPad = EdgeInsets.symmetric(horizontal: 8, vertical: 4);
+
+  // Можно заменить на свою картинку-заглушку для превью видео
+  static const _videoPlaceholder =
+      'http://uploads.paceup.ru/defaults/video_placeholder.jpg';
+
+  @override
+  void initState() {
+    super.initState();
+    _pc = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pc.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // общий список: сначала картинки, потом видео
+    final total = widget.imageUrls.length + widget.videoUrls.length;
+    if (total == 0) return const SizedBox.shrink();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // переносим твою оптимизацию cacheWidth внутрь каждого слайда
+        final dpr = MediaQuery.of(context).devicePixelRatio;
+        final cacheWidth = (constraints.maxWidth * dpr).round();
+
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            PageView.builder(
+              controller: _pc,
+              itemCount: total,
+              onPageChanged: (i) => setState(() => _index = i),
+              itemBuilder: (context, i) {
+                final isImage = i < widget.imageUrls.length;
+                if (isImage) {
+                  final url = widget.imageUrls[i];
+                  return Image.network(
+                    url,
+                    fit: BoxFit.cover,
+                    filterQuality: FilterQuality.low,
+                    cacheWidth: cacheWidth,
+                    gaplessPlayback: true,
+                  );
+                } else {
+                  final vIndex = i - widget.imageUrls.length;
+                  final url = widget.videoUrls[vIndex];
+                  return _buildVideoPreview(url);
+                }
+              },
+            ),
+
+            // точки-индикаторы поверх, чтобы итоговая высота оставалась 300
+            Positioned(
+              bottom: _dotsBottom,
+              left: 0,
+              right: 0,
+              child: _buildDots(total),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildVideoPreview(String url) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // превью (плейсхолдер) для видео
+        Image.network(_videoPlaceholder, fit: BoxFit.cover),
+        Container(color: const Color(0x33000000)), // лёгкий затемняющий слой
+        const Center(
+          child: Icon(CupertinoIcons.play_circle_fill, size: 64, color: Color(0xFFFFFFFF)),
+        ),
+        Positioned.fill(
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                // TODO: открыть экран плеера, проиграть `url`
+                // Navigator.push(... VideoPlayerScreen(url: url));
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDots(int total) {
+    if (total <= 1) return const SizedBox.shrink();
+    return Center(
+      child: Container(
+        padding: _dotsPad,
+        decoration: BoxDecoration(
+          color: const Color(0x33000000), // полупрозрачный чип под точки
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(total, (i) {
+            final active = i == _index;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: active ? 16 : 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: active ? AppColors.secondary : const Color(0xFFE0E0E0),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
