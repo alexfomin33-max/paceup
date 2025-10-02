@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
-import '../state/gear_prefs.dart';
+import '../../../../theme/app_theme.dart';
+import '../../state/gear_prefs.dart';
+import 'adding_equipment/adding_equipment_screen.dart';
 
 class GearTab extends StatefulWidget {
   const GearTab({super.key});
@@ -83,7 +84,11 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
             child: Center(
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // TODO: обработка добавления снаряжения
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (_) => const AddingEquipmentScreen(),
+                    ),
+                  );
                 },
                 icon: const Icon(CupertinoIcons.plus_circle, size: 18),
                 label: const Text(

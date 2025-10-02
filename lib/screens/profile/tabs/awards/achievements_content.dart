@@ -127,13 +127,38 @@ class _BadgesSliverGrid extends StatelessWidget {
   }
 }
 
+/// Матрица для полного обесцвечивания (sRGB)
+const List<double> _kGreyscaleMatrix = <double>[
+  0.2126,
+  0.7152,
+  0.0722,
+  0,
+  0,
+  0.2126,
+  0.7152,
+  0.0722,
+  0,
+  0,
+  0.2126,
+  0.7152,
+  0.0722,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+];
+
 class _BadgeTile extends StatelessWidget {
   final _BadgeItem item;
   const _BadgeTile({required this.item});
 
   @override
   Widget build(BuildContext context) {
-    final image = item.circle
+    // Базовое изображение с нужной формой (круг/скругление)
+    Widget image = item.circle
         ? ClipOval(
             child: Image.asset(
               item.asset,
@@ -151,6 +176,14 @@ class _BadgeTile extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           );
+
+    // Для "locked" — обесцвечиваем картинку
+    if (item.locked) {
+      image = ColorFiltered(
+        colorFilter: const ColorFilter.matrix(_kGreyscaleMatrix),
+        child: image,
+      );
+    }
 
     final content = Container(
       width: double.infinity,
@@ -179,8 +212,8 @@ class _BadgeTile extends StatelessWidget {
       ),
     );
 
+    // Сохраняем существующий визуальный код: залоченные — немного "приглушены"
     if (!item.locked) return content;
-
     return Opacity(opacity: 0.38, child: content);
   }
 }

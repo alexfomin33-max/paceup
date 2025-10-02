@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../state/search/search_prefs.dart';
+import '../../map/clubs/coffeerun_vld/coffeerun_vld_screen.dart';
 
 class ClubsTab extends StatefulWidget {
   const ClubsTab({super.key});
@@ -118,7 +119,7 @@ class _ClubCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final card = Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -175,6 +176,20 @@ class _ClubCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+
+    // Делает кликабельной ТОЛЬКО карточку CoffeeRun_vld
+    final isCoffee = club.title.replaceAll('"', '') == 'CoffeeRun_vld';
+    if (!isCoffee) return card;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        Navigator.of(
+          context,
+        ).push(CupertinoPageRoute(builder: (_) => const CoffeeRunVldScreen()));
+      },
+      child: card,
     );
   }
 }

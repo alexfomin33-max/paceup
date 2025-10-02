@@ -72,7 +72,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Padding(
               padding: EdgeInsets.only(right: 12),
               child: Icon(
-                CupertinoIcons.slider_horizontal_3,
+                CupertinoIcons.create,
                 size: 20,
                 color: AppColors.text,
               ),

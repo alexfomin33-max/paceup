@@ -12,7 +12,7 @@ import 'tabs/photos_tab.dart';
 import 'tabs/stats/stats_tab.dart';
 import 'tabs/training_tab.dart';
 import 'tabs/races/races_tab.dart';
-import 'tabs/gear_tab.dart';
+import 'tabs/equipment/equipment_tab.dart';
 import 'tabs/clubs_tab.dart';
 import 'tabs/awards/awards_tab.dart';
 import 'tabs/skills/skills_tab.dart';
