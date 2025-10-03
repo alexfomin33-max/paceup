@@ -111,15 +111,30 @@ class _LentaScreenState extends State<LentaScreen>
             children: [
               _NavIcon(icon: CupertinoIcons.star, onPressed: () {}),
               const SizedBox(width: 4),
-              _NavIcon(
-                icon: CupertinoIcons.add_circled,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => NewPostScreen(userId: widget.userId)),
-                  );
-                },
-              ),
+            _NavIcon(
+              icon: CupertinoIcons.add_circled,
+              onPressed: () async {
+                final created = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(builder: (_) => NewPostScreen(userId: widget.userId)),
+                );
+                if (!mounted) return;
+                if (created == true) {
+                  setState(() {
+                    _future = _loadActivities(); // ← перезапрашиваем ленту, FutureBuilder увидит новый Future
+                  });
+                  // опционально прокрутить к началу, чтобы сразу увидеть новый пост
+                  if (_scrollController.hasClients) {
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                    );
+                  }
+                }
+              },
+            ),
+
             ],
           ),
         ),
@@ -662,7 +677,7 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
                     fit: BoxFit.cover,
                     filterQuality: FilterQuality.low,
                     cacheWidth:  cacheWidth,
-                    cacheHeight: cacheHeight, // 🔹 важно: ограничиваем вертикаль тоже
+                   // cacheHeight: cacheHeight, // 🔹 важно: ограничиваем вертикаль тоже
                     gaplessPlayback: true,
                     width: double.infinity,
                     height: double.infinity,

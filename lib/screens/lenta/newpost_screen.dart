@@ -22,7 +22,7 @@ Map<String, dynamic> safeDecodeJsonAsMap(List<int> bodyBytes) {
 /// 🔹 Экран создания нового поста
 class NewPostScreen extends StatefulWidget {
   final int userId;
-const NewPostScreen({super.key, required this.userId});
+  const NewPostScreen({super.key, required this.userId});
 
   @override
   State<NewPostScreen> createState() => _NewPostScreenState();
