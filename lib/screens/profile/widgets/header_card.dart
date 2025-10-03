@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../edit_profile_screen.dart';
 import '../state/communications/communication_prefs.dart';
+import '../../../models/user_profile_header.dart';
 
 class HeaderCard extends StatelessWidget {
-  const HeaderCard({super.key});
+  final UserProfileHeader? profile;
+  const HeaderCard({super.key, this.profile});
 
   @override
   Widget build(BuildContext context) {
@@ -19,13 +21,21 @@ class HeaderCard extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               ClipOval(
-                child: Image.asset(
-                  'assets/avatar.png',
-                  width: 56,
-                  height: 56,
-                  fit: BoxFit.cover,
-                ),
+                child: (profile?.avatar != null && profile!.avatar!.isNotEmpty)
+                    ? Image.network(
+                        profile!.avatar!,
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
+                      )
+                    : Image.asset(
+                        'assets/avatar.png',
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
+                      ),
               ),
+
               Positioned(
                 bottom: -20,
                 left: 0,
@@ -62,8 +72,13 @@ class HeaderCard extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        'Константин Разумовский',
+                      child: Text(                        
+                        (() {
+                          final fn = (profile?.firstName ?? '').trim();
+                          final ln = (profile?.lastName ?? '').trim();
+                          final full = [fn, ln].where((s) => s.isNotEmpty).join(' ').trim();
+                          return full.isNotEmpty ? full : 'Константин Разумовский';
+                        })(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -89,7 +104,7 @@ class HeaderCard extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  '38 лет, Санкт-Петербург',
+                  _subtitleFrom(profile) ?? '38 лет, Санкт-Петербург',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
@@ -101,7 +116,7 @@ class HeaderCard extends StatelessWidget {
                   children: [
                     _FollowStat(
                       label: 'Подписки',
-                      value: '736',
+                      value: (profile?.following ?? 736).toString(),
                       onTap: () {
                         Navigator.of(context).push(
                           CupertinoPageRoute(
@@ -115,7 +130,7 @@ class HeaderCard extends StatelessWidget {
                     const SizedBox(width: 18),
                     _FollowStat(
                       label: 'Подписчики',
-                      value: '659',
+                      value: (profile?.followers ?? 659).toString(),
                       onTap: () {
                         Navigator.of(context).push(
                           CupertinoPageRoute(
@@ -134,6 +149,27 @@ class HeaderCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _yearsRu(int? n) {
+    if (n == null) return 'лет';
+    final last2 = n % 100;
+    if (11 <= last2 && last2 <= 14) return 'лет';
+    switch (n % 10) {
+      case 1: return 'год';
+      case 2:
+      case 3:
+      case 4: return 'года';
+      default: return 'лет';
+    }
+  }
+
+  String? _subtitleFrom(UserProfileHeader? p) {
+    if (p == null) return null;
+    final parts = <String>[];
+    if (p.age != null) parts.add('${p.age} ${_yearsRu(p.age)}');
+    if ((p.city ?? '').isNotEmpty) parts.add(p.city!);
+    return parts.isEmpty ? null : parts.join(', ');
   }
 }
 

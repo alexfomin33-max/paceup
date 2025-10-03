@@ -71,7 +71,7 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
 
   // 🔹 Если маршрут с нижней навигацией — оборачиваем AppBottomNavShell
   if (bottomNavRoutes.contains(settings.name)) {
-    int userId = 123; // fallback
+    int userId = 1; // fallback
     if (args is Map && args.containsKey('userId')) {
       userId = args['userId'] as int;
     }

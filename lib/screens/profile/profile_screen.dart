@@ -24,8 +24,14 @@ import 'state/search/search_prefs.dart';
 // 👉 экран настроек
 import 'settings_screen.dart';
 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../models/user_profile_header.dart';
+
+
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final int userId;
+  const ProfileScreen({super.key, required this.userId});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -46,6 +52,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   final PageController _pageController = PageController();
   final GearPrefs _gearPrefs = GearPrefs();
+
+  UserProfileHeader? _profileHeader;
+
+  Map<String, dynamic> _safeDecodeJsonAsMap(List<int> bodyBytes) {
+    final raw = utf8.decode(bodyBytes);
+    final cleaned = raw.replaceFirst(RegExp(r'^\uFEFF'), '').trim();
+    final v = json.decode(cleaned);
+    if (v is Map<String, dynamic>) return v;
+    throw const FormatException('JSON is not an object');
+  }
+
+  Future<void> _loadProfileHeader() async {
+  try {
+    final uri = Uri.parse('http://api.paceup.ru/user_profile_header.php'); // свой путь
+    final payload = {
+      'user_id': widget.userId,        // ← отправляем userId в JSON
+    };
+
+    final res = await http
+        .post(
+          uri,
+          headers: const {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Accept': 'application/json',
+            // 'Authorization': 'Bearer <token>', // если нужно
+          },
+          body: jsonEncode(payload),
+        )
+        .timeout(const Duration(seconds: 12));
+
+    if (res.statusCode != 200) {
+      throw Exception('HTTP ${res.statusCode}');
+    }
+
+    final map = _safeDecodeJsonAsMap(res.bodyBytes);
+
+    // Поддержим разные обертки ответа:
+    // { ...поля профиля... }   ИЛИ   { "data": { ... } }   ИЛИ   { "profile": { ... } }
+    final dynamic raw = map['profile'] ?? map['data'] ?? map;
+    if (raw is! Map) throw const FormatException('Bad payload: not a JSON object');
+
+    setState(() {
+      _profileHeader = UserProfileHeader.fromJson(Map<String, dynamic>.from(raw as Map));
+    });
+  } catch (e, st) {
+    debugPrint('Profile load error: $e\n$st');
+    // Не рушим верстку: оставим заглушки из HeaderCard как есть
+  }
+}
+
+@override
+void initState() {
+  super.initState();
+  _loadProfileHeader();
+}
+
 
   int _tab = 0;
 
@@ -130,7 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
           // Хедер профиля
-          const SliverToBoxAdapter(child: RepaintBoundary(child: HeaderCard())),
+          SliverToBoxAdapter(child: RepaintBoundary(child: HeaderCard(profile: _profileHeader))),
 
           // TabsBar — обычным сливером (не pinned)
           SliverToBoxAdapter(

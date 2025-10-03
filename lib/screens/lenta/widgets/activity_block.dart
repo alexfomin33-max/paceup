@@ -815,7 +815,7 @@ class _ActivityBlockState extends State<ActivityBlock>
                     Navigator.of(context).push(
                       CupertinoPageRoute(
                         builder: (_) =>
-                            const ProfileScreen(), // если у вас без аргументов
+                            ProfileScreen(userId: activity.userId), // если у вас без аргументов
                         // builder: (_) => ProfileScreen(userId: activity.userId), // вариант, если экран принимает id
                       ),
                     );
