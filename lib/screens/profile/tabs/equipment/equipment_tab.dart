@@ -2,7 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
 import '../../state/gear_prefs.dart';
-import 'adding_equipment/adding_equipment_screen.dart';
+import 'adding/adding_equipment_screen.dart';
+import 'viewing/viewing_equipment_screen.dart';
 
 class GearTab extends StatefulWidget {
   const GearTab({super.key});
@@ -59,8 +60,21 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
             onChanged: (v) => prefs.showShoes = v,
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 8)),
-        const SliverToBoxAdapter(child: _GearListCard(items: _shoes)),
+        const SliverToBoxAdapter(child: SizedBox(height: 2)),
+        SliverToBoxAdapter(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              Navigator.of(context).push(
+                CupertinoPageRoute(
+                  builder: (_) =>
+                      const ViewingEquipmentScreen(initialSegment: 0),
+                ),
+              );
+            },
+            child: const _GearListCard(items: _shoes),
+          ),
+        ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
@@ -72,9 +86,21 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
             onChanged: (v) => prefs.showBikes = v,
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 8)),
-        const SliverToBoxAdapter(child: _GearListCard(items: _bikes)),
-
+        const SliverToBoxAdapter(child: SizedBox(height: 2)),
+        SliverToBoxAdapter(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              Navigator.of(context).push(
+                CupertinoPageRoute(
+                  builder: (_) =>
+                      const ViewingEquipmentScreen(initialSegment: 1),
+                ),
+              );
+            },
+            child: const _GearListCard(items: _bikes),
+          ),
+        ),
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
         // ─── Кнопка "Добавить снаряжение"
