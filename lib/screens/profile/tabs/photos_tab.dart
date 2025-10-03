@@ -53,14 +53,14 @@ class _PhotosTabState extends State<PhotosTab>
       ),
       cacheExtent: 600, // подгружаем сетку чуть раньше
       slivers: [
-        const SliverToBoxAdapter(child: SizedBox(height: 8)),
+        const SliverToBoxAdapter(child: SizedBox(height: 3)),
         SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 3),
           sliver: SliverGrid.builder(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3, // 3 колонки
-              mainAxisSpacing: 6,
-              crossAxisSpacing: 6,
+              mainAxisSpacing: 3,
+              crossAxisSpacing: 3,
               childAspectRatio: 1.0, // квадратные превью
             ),
             itemCount: _assets.length,
