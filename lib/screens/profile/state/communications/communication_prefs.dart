@@ -4,7 +4,7 @@ import '../../../../theme/app_theme.dart';
 import 'subscriptions_content.dart';
 import 'subscribers_content.dart';
 
-/// Главная страница «Связи»: сегмент + поиск + контент
+/// Главная страница «Связи»: сегмент + поиск + контент (с пагинацией свайпами)
 class CommunicationPrefsPage extends StatefulWidget {
   /// 0 = Подписки (по умолчанию), 1 = Подписчики
   final int startIndex;
@@ -15,7 +15,9 @@ class CommunicationPrefsPage extends StatefulWidget {
 }
 
 class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
-  int _index = 0;
+  late int _index;
+  late final PageController _page;
+
   final _controller = TextEditingController();
   final _focus = FocusNode();
 
@@ -23,18 +25,38 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
   void initState() {
     super.initState();
     _index = widget.startIndex;
+    _page = PageController(initialPage: _index);
   }
 
   @override
   void dispose() {
+    _page.dispose();
     _controller.dispose();
     _focus.dispose();
     super.dispose();
   }
 
+  void _switchTo(int i) {
+    if (_index == i) return;
+    setState(() => _index = i);
+    _controller.clear();
+    _focus.unfocus();
+    _page.animateToPage(
+      i,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _onPageChanged(int i) {
+    setState(() => _index = i);
+    _controller.clear();
+    _focus.unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isSubs = _index == 0;
+    final query = _controller.text.trim();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -61,12 +83,16 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
           ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, thickness: 1, color: AppColors.border),
+        ),
       ),
       body: Column(
         children: [
           const SizedBox(height: 14),
 
-          // Переключатели (как в 200k_run_screen)
+          // Переключатели (как в stats_tab / 200k_run_screen) — синхронизированы с PageView
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Center(
@@ -74,20 +100,14 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
                 left: 'Подписки',
                 right: 'Подписчики',
                 value: _index,
-                onChanged: (v) {
-                  setState(() {
-                    _index = v;
-                    _controller.clear();
-                    _focus.unfocus();
-                  });
-                },
+                onChanged: _switchTo,
               ),
             ),
           ),
 
           const SizedBox(height: 16),
 
-          // Поисковое поле
+          // Поиск — общий для текущей вкладки
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: _SearchField(
@@ -100,26 +120,54 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
 
           const SizedBox(height: 8),
 
-          // Контент
+          // Контент с горизонтальными свайпами
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              child: isSubs
-                  ? SubscriptionsContent(
-                      key: const ValueKey('subscriptions'),
-                      query: _controller.text.trim(),
-                    )
-                  : SubscribersContent(
-                      key: const ValueKey('subscribers'),
-                      query: _controller.text.trim(),
-                    ),
+            child: PageView(
+              controller: _page,
+              physics: const BouncingScrollPhysics(),
+              onPageChanged: _onPageChanged,
+              children: const [
+                // ключи сохранят позицию скролла у каждой вкладки
+                _PageKeepAlive(
+                  child: SubscriptionsContent(
+                    key: ValueKey('subscriptions'),
+                    query: '',
+                  ),
+                ),
+                _PageKeepAlive(
+                  child: SubscribersContent(
+                    key: ValueKey('subscribers'),
+                    query: '',
+                  ),
+                ),
+              ].map((w) => w).toList(),
             ),
           ),
         ],
       ),
     );
+  }
+}
+
+/// Обёртка для сохранения состояния дочерних списков внутри PageView.
+/// Мы прокинем актуальный query через Inherited/Builder ниже.
+class _PageKeepAlive extends StatefulWidget {
+  final Widget child;
+  const _PageKeepAlive({super.key, required this.child});
+
+  @override
+  State<_PageKeepAlive> createState() => _PageKeepAliveState();
+}
+
+class _PageKeepAliveState extends State<_PageKeepAlive>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
 

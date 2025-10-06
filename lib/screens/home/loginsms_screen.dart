@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../../utils/image_precache.dart';
+import 'auth_shell.dart';
+
 //import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// 🔹 Экран для ввода кода из SMS для подтверждения номера телефона
@@ -28,13 +29,6 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
 
     /// 🔹 При открытии экрана сразу отправляем запрос на регистрацию пользователя
     fetchApiData();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // ✅ ДОБАВИЛИ: предзагрузка фона один раз
-    ImagePrecache.precacheOnce(context, 'assets/background.webp');
   }
 
   @override
@@ -156,91 +150,48 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          /// 🔹 Фоновое изображение
-          Image.asset(
-            "assets/background.webp",
-            fit: BoxFit.cover,
-            // ✅ Опционально: дешёвый фильтр при масштабировании
-            filterQuality: FilterQuality.low,
-          ),
-
-          /// 🔹 Полупрозрачный черный слой поверх фона
-          Container(color: Colors.black.withValues(alpha: 0.5)),
-
-          /// 🔹 Логотип приложения сверху
-          Align(
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).size.height * 0.11,
+      body: AuthShell(
+        // как в исходнике: горизонтально 40, вертикально 100
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 40,
+          vertical: 100,
+        ),
+        overlayAlpha: 0.5, // было 0.5 в этом файле
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Введите код, отправленный на номер\n${widget.phone}",
+              style: const TextStyle(color: Colors.white, fontSize: 15),
+              textAlign: TextAlign.left,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(6, (index) => _buildCodeField(index)),
+            ),
+            const SizedBox(height: 15),
+            TextButton(
+              onPressed: resendCode,
+              style: const ButtonStyle(
+                overlayColor: WidgetStatePropertyAll(Colors.transparent),
+                padding: WidgetStatePropertyAll(
+                  EdgeInsets.symmetric(vertical: 15),
+                ),
               ),
-              child: Image.asset(
-                "assets/logo_icon.png",
-                width: 175,
-                height: 175,
-                fit: BoxFit.contain,
+              child: const Text(
+                "Отправить заново",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.left,
               ),
             ),
-          ),
-
-          /// 🔹 Блок ввода кода и кнопки
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 40,
-                vertical: 100,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// 🔹 Инструкция для пользователя
-                  Text(
-                    "Введите код, отправленный на номер\n${widget.phone}",
-                    style: const TextStyle(color: Colors.white, fontSize: 15),
-                    textAlign: TextAlign.left,
-                  ),
-                  const SizedBox(height: 20),
-
-                  /// 🔹 Ряд полей для ввода кода
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: List.generate(
-                      6,
-                      (index) => _buildCodeField(index),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-
-                  /// 🔹 Кнопка "Отправить заново"
-                  TextButton(
-                    onPressed: resendCode,
-                    style: const ButtonStyle(
-                      overlayColor: WidgetStatePropertyAll(Colors.transparent),
-                      padding: WidgetStatePropertyAll(
-                        EdgeInsets.symmetric(vertical: 15),
-                      ),
-                    ),
-                    child: const Text(
-                      "Отправить заново",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

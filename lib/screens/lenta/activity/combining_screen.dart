@@ -75,7 +75,7 @@ class CombiningScreen extends StatelessWidget {
             ),
           ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
+          const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
           // ——— Заголовок "После объединения"
           const SliverToBoxAdapter(
@@ -270,7 +270,7 @@ class _TrainingCard extends StatelessWidget {
                       child: _MetricColumn(
                         topTitle: 'Время',
                         topValue: time,
-                        bottomTitle: 'Пульс',
+                        bottomTitle: 'Ср. пульс',
                         bottomValue: hr,
                       ),
                     ),

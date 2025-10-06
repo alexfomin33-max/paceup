@@ -11,6 +11,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../profile/profile_screen.dart';
+import '../activity/together/together_screen.dart'; // добавьте импорт
 
 /// 🔹 Виджет вертикальной метрики
 class MetricVertical extends StatelessWidget {
@@ -34,22 +35,22 @@ class MetricVertical extends StatelessWidget {
       children: [
         Text(
           mainTitle,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          style: const TextStyle(fontSize: 11, color: Colors.grey),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 1),
         Text(
           mainValue,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),
         Text(
           subTitle,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          style: const TextStyle(fontSize: 11, color: Colors.grey),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 1),
         Text(
           subValue,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -852,7 +853,7 @@ class _ActivityBlockState extends State<ActivityBlock>
                                 ? "${stats.cumulativeElevationGain.toStringAsFixed(0)} м"
                                 : "—",
                           ),
-                          const SizedBox(width: 24),
+                          const SizedBox(width: 30),
                           MetricVertical(
                             mainTitle: "Время",
                             mainValue: stats != null
@@ -861,34 +862,34 @@ class _ActivityBlockState extends State<ActivityBlock>
                             subTitle: "Каденс",
                             subValue: "—",
                           ),
-                          const SizedBox(width: 24),
+                          const SizedBox(width: 30),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
                                 "Темп",
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 11,
                                   color: Colors.grey,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 1),
                               Text(
                                 stats != null ? _fmtPace(stats.avgPace) : "—",
                                 style: const TextStyle(
-                                  fontSize: 15,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: 10),
                               const Text(
-                                "Средний пульс",
+                                "Ср. пульс",
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 11,
                                   color: Colors.grey,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 1),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -896,7 +897,7 @@ class _ActivityBlockState extends State<ActivityBlock>
                                     stats?.avgHeartRate?.toStringAsFixed(0) ??
                                         "—",
                                     style: const TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -1008,7 +1009,7 @@ class _ActivityBlockState extends State<ActivityBlock>
                   ],
                 ),
                 Row(
-                  children: const [
+                  children: [
                     Icon(
                       CupertinoIcons.person_2,
                       size: 20,
@@ -1024,11 +1025,30 @@ class _ActivityBlockState extends State<ActivityBlock>
                       ),
                     ),
                     SizedBox(width: 12),
-                    Icon(
-                      CupertinoIcons.person_crop_circle_badge_plus,
-                      size: 20,
-                      color: AppColors.secondary,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (_) => const TogetherScreen(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 25,
+                        height: 25,
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.transparent,
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.person_crop_circle_badge_plus,
+                          size: 20,
+                          color: AppColors.secondary,
+                        ),
+                      ),
                     ),
+
                     SizedBox(width: 4),
                     Text(
                       "3",

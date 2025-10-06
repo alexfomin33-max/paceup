@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 // import 'createacc_screen.dart'; // 🔹 Можно раскомментировать, если понадобится экран создания аккаунта
 import '../../theme/app_theme.dart';
 // ✅ ДОБАВЛЕНО: утилита безопасной предзагрузки изображений (1 раз на путь)
-import '../../utils/image_precache.dart';
+import 'auth_shell.dart';
 
 /// 🔹 Главный экран приложения
 /// Этот экран выступает контейнером для WelcomeScreen, который пользователь видит при запуске
@@ -29,92 +29,26 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // ✅ ДОБАВЛЕНО: предзагружаем фон один раз (если уже предзагружен — повтор не делает ничего)
-    ImagePrecache.precacheOnce(context, 'assets/background.webp');
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 🔹 Используем Stack, чтобы накладывать элементы друг на друга
-      body: Stack(
-        fit: StackFit.expand, // 🔹 Stack занимает весь экран
-        children: [
-          // 🔹 Фоновое изображение приложения
-          Image.asset(
-            "assets/background.webp",
-            fit: BoxFit.cover,
-            // ✅ Рекомендовано: дешевле для графики при масштабировании
-            filterQuality: FilterQuality.low,
-          ),
-
-          // 🔹 Полупрозрачный черный слой для затемнения фона
-          Container(color: Colors.black.withValues(alpha: 0.5)),
-
-          // 🔹 Логотип приложения сверху
-          Align(
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).size.height * 0.11,
-              ),
-              child: Image.asset(
-                "assets/logo_icon.png",
-                width: 175,
-                height: 175,
-                fit: BoxFit.contain,
-              ),
+      body: AuthShell(
+        contentPadding: const EdgeInsets.only(bottom: 177, left: 40, right: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildButton(
+              text: "Создать аккаунт",
+              onPressed: () =>
+                  Navigator.pushReplacementNamed(context, '/createacc'),
             ),
-          ),
-
-          // 🔹 Нижняя часть экрана с кнопками "Создать аккаунт" и "Войти"
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                bottom: 177,
-                left: 40,
-                right: 40,
-              ), // Отступ снизу и по бокам
-              child: Column(
-                mainAxisSize: MainAxisSize
-                    .min, // 🔹 Колонка занимает минимум по вертикали
-                children: [
-                  // 🔹 Кнопка "Создать аккаунт"
-                  _buildButton(
-                    text: "Создать аккаунт",
-                    onPressed: () {
-                      // 🔹 Переход на экран создания аккаунта через именованные маршруты
-                      Navigator.pushReplacementNamed(context, '/createacc');
-
-                      /*
-                      // 🔹 Альтернативный вариант с MaterialPageRoute
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CreateaccScreen(),
-                        ),
-                      );
-                      */
-                    },
-                  ),
-
-                  const SizedBox(height: 20), // 🔹 Отступ между кнопками
-                  // 🔹 Кнопка "Войти"
-                  _buildButton(
-                    text: "Войти",
-                    onPressed: () {
-                      // 🔹 Переход на экран входа
-                      Navigator.pushReplacementNamed(context, '/login');
-                    },
-                  ),
-                ],
-              ),
+            const SizedBox(height: 20),
+            _buildButton(
+              text: "Войти",
+              onPressed: () =>
+                  Navigator.pushReplacementNamed(context, '/login'),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
