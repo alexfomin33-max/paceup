@@ -11,7 +11,7 @@ import 'dart:ui'; // для ImageFilter.blur
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:paceup/models/activity_lenta.dart';
-import 'widgets/activity_description_block.dart';
+import 'activity/description_screen.dart';
 import 'widgets/recommended_block.dart';
 import 'package:flutter/painting.dart';
 

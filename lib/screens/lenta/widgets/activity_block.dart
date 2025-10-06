@@ -36,17 +36,17 @@ class MetricVertical extends StatelessWidget {
           mainTitle,
           style: const TextStyle(fontSize: 12, color: Colors.grey),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           mainValue,
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Text(
           subTitle,
           style: const TextStyle(fontSize: 12, color: Colors.grey),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           subValue,
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
@@ -814,8 +814,9 @@ class _ActivityBlockState extends State<ActivityBlock>
                   onTap: () {
                     Navigator.of(context).push(
                       CupertinoPageRoute(
-                        builder: (_) =>
-                            ProfileScreen(userId: activity.userId), // если у вас без аргументов
+                        builder: (_) => ProfileScreen(
+                          userId: activity.userId,
+                        ), // если у вас без аргументов
                         // builder: (_) => ProfileScreen(userId: activity.userId), // вариант, если экран принимает id
                       ),
                     );
@@ -871,7 +872,7 @@ class _ActivityBlockState extends State<ActivityBlock>
                                   color: Colors.grey,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 2),
                               Text(
                                 stats != null ? _fmtPace(stats.avgPace) : "—",
                                 style: const TextStyle(
@@ -879,7 +880,7 @@ class _ActivityBlockState extends State<ActivityBlock>
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 10),
                               const Text(
                                 "Средний пульс",
                                 style: TextStyle(
@@ -887,7 +888,7 @@ class _ActivityBlockState extends State<ActivityBlock>
                                   color: Colors.grey,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 2),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [

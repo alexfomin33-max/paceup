@@ -6,9 +6,12 @@ import 'package:latlong2/latlong.dart' as ll;
 
 import '../../../theme/app_theme.dart';
 // Берём готовые виджеты (чтобы совпадал верх с ActivityBlock)
-import 'activity_block.dart' as AB show Equipment, RouteCard, MetricVertical;
+import '../widgets/activity_block.dart'
+    as AB
+    show Equipment, RouteCard, MetricVertical;
 // Модель — через алиас, чтобы не конфликтовало имя Equipment
 import 'package:paceup/models/activity_lenta.dart' as AL;
+import '../activity/combining_screen.dart';
 
 /// Страница с подробным описанием тренировки.
 /// Верхний блок (аватар, дата, метрики) полностью повторяет ActivityBlock.
@@ -62,22 +65,28 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
           ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 10),
-            child: Icon(
+        actions: [
+          IconButton(
+            splashRadius: 22,
+            icon: const Icon(
               CupertinoIcons.personalhotspot,
               size: 20,
               color: AppColors.text,
             ),
+            onPressed: () {
+              Navigator.of(context).push(
+                CupertinoPageRoute(builder: (_) => const CombiningScreen()),
+              );
+            },
           ),
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Icon(
+          IconButton(
+            splashRadius: 22,
+            icon: const Icon(
               CupertinoIcons.ellipsis,
               size: 20,
               color: AppColors.text,
             ),
+            onPressed: () {},
           ),
         ],
       ),
@@ -156,7 +165,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                                           color: Colors.grey,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 2),
                                       Text(
                                         stats != null
                                             ? _fmtPace(stats.avgPace)
@@ -166,7 +175,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: 10),
                                       const Text(
                                         "Средний пульс",
                                         style: TextStyle(
@@ -174,7 +183,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                                           color: Colors.grey,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 2),
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
