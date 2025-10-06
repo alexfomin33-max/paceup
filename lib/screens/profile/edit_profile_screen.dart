@@ -3,39 +3,57 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
 
 import '../../theme/app_theme.dart';
 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 const double kToolbarH = 52.0;
 const double kAvatarSize = 88.0; // увеличенный аватар
-const double kQrBtnSize = 44.0; // круглая кнопка
-const double kQrIconSize = 24.0; // увеличенная иконка
+const double kQrBtnSize = 44.0;   // круглая кнопка
+const double kQrIconSize = 24.0;  // увеличенная иконка
 const double kLabelWidth = 170.0; // ширина лейбла слева (стиль regstep2)
 
 class EditProfileScreen extends StatefulWidget {
-  const EditProfileScreen({super.key});
+  final int userId;
+  const EditProfileScreen({super.key, required this.userId});
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  // Контроллеры
-  final _firstName = TextEditingController(text: 'Константин');
-  final _lastName = TextEditingController(text: 'Разумовский');
-  final _nickname = TextEditingController(text: 'bladerunner');
-  final _city = TextEditingController(text: 'Санкт-Петербург');
-  final _height = TextEditingController(text: '182');
-  final _weight = TextEditingController(text: '78');
-  final _hrMax = TextEditingController(text: '190');
+  // --- Состояния загрузки/ошибок ---
+  bool _loadingProfile = false;
+  String? _loadError;
+  bool _saving = false;
 
-  DateTime? _birthDate = DateTime(1987, 6, 24);
-  String _gender = 'Мужской';
-  String _mainSport = 'Бег';
-
-  // Выбранная пользователем аватарка (байты)
+  // --- Аватар (URL с сервера и/или выбранные байты) ---
+  String? _avatarUrl;
   final ImagePicker _picker = ImagePicker();
   Uint8List? _avatarBytes;
+
+  // --- Контроллеры формы (оставлены как в оригинале) ---
+  final _firstName = TextEditingController(text: 'Константин');
+  final _lastName  = TextEditingController(text: 'Разумовский');
+  final _nickname  = TextEditingController(text: 'bladerunner');
+  final _city      = TextEditingController(text: 'Санкт-Петербург');
+  final _height    = TextEditingController(text: '100');
+  final _weight    = TextEditingController(text: '100');
+  final _hrMax     = TextEditingController(text: '100');
+
+  // --- Поля состояния ---
+  DateTime? _birthDate = DateTime(1980, 6, 24);
+  String _gender   = 'Муж';
+  String _mainSport = 'Бег';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile(); // грузим профиль сразу после открытия
+  }
 
   @override
   void dispose() {
@@ -49,6 +67,159 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
+  // ──────────────── Утилиты парсинга/логирования ────────────────
+  Map<String, dynamic> _safeDecodeJsonAsMap(List<int> bodyBytes) {
+    final raw = utf8.decode(bodyBytes, allowMalformed: true);
+    final cleaned = raw.replaceFirst(RegExp(r'^\uFEFF'), '').trim();
+    final v = json.decode(cleaned);
+    if (v is Map<String, dynamic>) return v;
+    throw const FormatException('JSON is not an object');
+  }
+
+  String? _s(dynamic v) {
+    if (v == null) return null;
+    final s = v.toString().trim();
+    return s.isEmpty ? null : s;
+  }
+
+  int? _i(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return int.tryParse(v.toString().trim());
+  }
+
+  DateTime? _date(dynamic v) {
+    final s = _s(v);
+    if (s == null) return null;
+    // ISO: YYYY-MM-DD / полноценный ISO
+    final iso = DateTime.tryParse(s);
+    if (iso != null) return iso;
+    // dd.MM.yyyy
+    final m = RegExp(r'^(\d{2})\.(\d{2})\.(\d{4})$').firstMatch(s);
+    if (m != null) {
+      final d = int.tryParse(m.group(1)!);
+      final mo = int.tryParse(m.group(2)!);
+      final y = int.tryParse(m.group(3)!);
+      if (d != null && mo != null && y != null) return DateTime(y, mo, d);
+    }
+    return null;
+  }
+
+  String? _mapGender(dynamic v) {
+    final s = _s(v)?.toLowerCase();
+    if (s == null) return null;
+    if (s == 'm' || s == 'male' || s.contains('муж') || s.contains('Муж') || s.contains('Мужской')) return 'Мужской';
+    if (s == 'f' || s == 'female' || s.contains('жен') || s.contains('Жен') || s.contains('Женский')) return 'Женский';
+    return 'Другое';
+  }
+
+  String? _mapSport(dynamic v) {
+    final s = _s(v);
+    if (s == null) return null;
+    switch (s.toLowerCase()) {
+      case 'run':
+      case 'running':
+      case 'бег':
+      case 'Бег':
+        return 'Бег';
+      case 'bike':
+      case 'cycling':
+      case 'велоспорт':
+      case 'велосипед':
+      case 'Велосипед':
+        return 'Велоспорт';
+      case 'swim':
+      case 'swimming':
+      case 'плавание':
+      case 'Плавание':
+        return 'Плавание';
+      default:
+        return s;
+    }
+  }
+
+  // ──────────────── HTTP: Загрузка профиля ────────────────
+  Future<void> _loadProfile() async {
+    if (!mounted) return;
+    setState(() {
+      _loadingProfile = true;
+      _loadError = null;
+    });
+
+    try {
+      // ПРАВЬ URL под свой бэкенд при необходимости
+      final uri = Uri.parse('http://api.paceup.ru/user_profile_edit.php');
+      final payload = {'user_id': widget.userId, 'load': true, 'edit': false};
+
+      debugPrint('➡️ [EditProfile] POST $uri\npayload=${jsonEncode(payload)}');
+
+      final res = await http
+          .post(
+            uri,
+            headers: const {
+              'Content-Type': 'application/json; charset=utf-8',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(seconds: 12));
+
+      debugPrint('⬅️ [EditProfile] status=${res.statusCode}');
+      final bodyStr = utf8.decode(res.bodyBytes, allowMalformed: true);
+      final bodyPreview = bodyStr.substring(0, bodyStr.length < 600 ? bodyStr.length : 600);
+      debugPrint('[EditProfile] bodyPreview: $bodyPreview');
+
+      if (res.statusCode != 200) {
+        throw Exception('HTTP ${res.statusCode}');
+      }
+
+      final map = _safeDecodeJsonAsMap(res.bodyBytes);
+      final dynamic raw = map['profile'] ?? map['data'] ?? map;
+      if (raw is! Map) throw const FormatException('Bad payload: not a JSON object');
+      final j = Map<String, dynamic>.from(raw as Map);
+
+      // Контроллеры
+      _firstName.text = _s(j['name']) ?? _firstName.text;
+      _lastName.text  = _s(j['surname'])  ?? _lastName.text;
+      _nickname.text  = _s(j['username'])   ?? _nickname.text;
+      _city.text      = _s(j['city'])       ?? _city.text;
+
+      final height = _i(j['height']) ?? _i(j['height']);
+      final weight = _i(j['weight']) ?? _i(j['weight']);
+      final hrMax  = _i(j['pulse'])    ?? _i(j['pulse']);
+
+      if (height != null) _height.text = '$height';
+      if (weight != null) _weight.text = '$weight';
+      if (hrMax  != null) _hrMax.text  = '$hrMax';
+
+      // Поля состояния
+      final bd     = _date(j['dateage'] ?? j['dateage']);
+      final g      = _mapGender(j['gender']);
+      final sp     = _mapSport(j['sport'] ?? j['sport']);
+      final avatar = _s(j['avatar']); // полный URL
+
+      if (!mounted) return;
+      setState(() {
+        if (bd != null) _birthDate = bd;
+        if (g  != null) _gender    = g;
+        if (sp != null) _mainSport = sp;
+        if (avatar != null && avatar.isNotEmpty) _avatarUrl = avatar;
+      });
+    } catch (e, st) {
+      debugPrint('❌ [EditProfile] error: $e\n$st');
+      if (mounted) {
+        setState(() => _loadError = e.toString());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка загрузки профиля: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loadingProfile = false);
+    }
+  }
+
+  // ──────────────── Хелперы UI ────────────────
   String _formatDate(DateTime? d) {
     if (d == null) return '';
     final dd = d.day.toString().padLeft(2, '0');
@@ -119,6 +290,78 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (picked != null) onPicked(picked);
   }
 
+  String _formatDateIsoOut(DateTime? d) {
+  if (d == null) return '';
+  final y = d.year.toString().padLeft(4, '0');
+  final m = d.month.toString().padLeft(2, '0');
+  final dd = d.day.toString().padLeft(2, '0');
+  return '$y-$m-$dd'; // YYYY-MM-DD
+}
+
+String _canonGenderOut(String g) {
+  final s = g.trim().toLowerCase();
+  if (s.contains('жен')) return 'Женский';
+  if (s.contains('муж')) return 'Мужской';
+  if (s == 'f' || s == 'female') return 'Женский';
+  if (s == 'm' || s == 'male') return 'Мужской';
+  return 'Другое';
+}
+
+String _canonSportOut(String s) {
+  final v = s.trim().toLowerCase();
+  if (v.contains('вел')) return 'Велоспорт';
+  if (v.contains('плав') || v.contains('swim')) return 'Плавание';
+  return 'Бег'; // дефолт — Бег
+}
+
+int? _toInt(String? s) {
+  if (s == null) return null;
+  final t = s.trim();
+  if (t.isEmpty) return null;
+  return int.tryParse(t);
+}
+
+/// Собираем полезную нагрузку (двойные ключи для совместимости бекенда)
+Map<String, dynamic> _buildSavePayload() {
+  final birthIso = _formatDateIsoOut(_birthDate);
+  final gender = _canonGenderOut(_gender);
+  final sport  = _canonSportOut(_mainSport);
+
+  final height = _toInt(_height.text);
+  final weight = _toInt(_weight.text);
+  final hrMax  = _toInt(_hrMax.text);
+
+  final map = <String, dynamic>{
+    'user_id': widget.userId,
+    'edit': true,
+    'load': false,
+
+    // Имя/фамилия/ник
+    'name': _firstName.text.trim(),
+    'surname' : _lastName.text.trim(),
+    'username'  : _nickname.text.trim(),
+
+    // Прочее
+    'city'        : _city.text.trim(),
+    'dateage'     : birthIso,   // дубль
+    'gender'      : gender,
+    'sport'       : sport,
+
+    'height'      : height,     // дубль
+    'weight'      : weight,     // дубль
+    'pulse'       : hrMax,      // дубль
+  };
+
+  // Если пользователь выбрал новый аватар — отправим base64.
+  if (_avatarBytes != null && _avatarBytes!.isNotEmpty) {
+    map['avatar_base64'] = base64Encode(_avatarBytes!);
+    // по желанию можно указать mime
+    map['avatar_mime'] = 'image/jpeg';
+  }
+
+  return map;
+}
+
   Future<void> _pickAvatar() async {
     final XFile? file = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -130,15 +373,72 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _avatarBytes = bytes);
   }
 
-  void _onSave() {
-    // TODO: собрать данные (включая _avatarBytes) и отправить на API
-    Navigator.of(context).maybePop();
+  Future<void> _onSave() async {
+    if (_saving) return;
+    FocusScope.of(context).unfocus();
+
+    final uri = Uri.parse('http://api.paceup.ru/user_profile_edit.php');
+    final payload = _buildSavePayload();
+
+    setState(() => _saving = true);
+    try {
+      debugPrint('➡️ [EditProfile] SAVE POST $uri\npayload=${jsonEncode(payload)}');
+
+      final res = await http
+          .post(
+            uri,
+            headers: const {
+              'Content-Type': 'application/json; charset=utf-8',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      debugPrint('⬅️ [EditProfile] SAVE status=${res.statusCode}');
+      final bodyStr = utf8.decode(res.bodyBytes, allowMalformed: true);
+      debugPrint('[EditProfile] SAVE bodyPreview: ${bodyStr.length > 600 ? bodyStr.substring(0, 600) : bodyStr}');
+
+      if (res.statusCode != 200) {
+        throw Exception('HTTP ${res.statusCode}');
+      }
+
+      // Пытаемся понять ответ (универсально)
+      Map<String, dynamic>? map;
+      try {
+        map = _safeDecodeJsonAsMap(res.bodyBytes);
+      } catch (_) {}
+
+      final ok =
+          (map != null && (map['ok'] == true || map['status'] == 'ok' || map['success'] == true))
+          || (map != null && map['error'] == null);
+
+      if (!ok && map != null && map.containsKey('error')) {
+        throw Exception(map['error'].toString());
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Профиль сохранён')),
+      );
+
+      // Возврат назад после успешного сохранения
+      Navigator.of(context).maybePop();
+    } catch (e, st) {
+      debugPrint('❌ [EditProfile] SAVE error: $e\n$st');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось сохранить: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
+  // ──────────────── UI ────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ЕДИНЫЙ СТИЛЬ: AppBar статичный, белый, без blur и теней
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
         toolbarHeight: kToolbarH,
@@ -158,42 +458,59 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: _onSave,
+            onPressed: _saving ? null : _onSave,
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.secondary, // ✅ цвет «Сохранить»
+              foregroundColor: AppColors.secondary,
               minimumSize: const Size(44, 44),
               padding: const EdgeInsets.symmetric(horizontal: 12),
             ),
-            child: const Text('Сохранить'),
+            child: _saving
+                ? const CupertinoActivityIndicator(radius: 8)
+                : const Text('Сохранить'),
           ),
         ],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(0.5),
           child: SizedBox(
             height: 0.5,
-            child: ColoredBox(color: Color(0xFFE5E7EB)), // тонкая нижняя линия
+            child: ColoredBox(color: Color(0xFFE5E7EB)),
           ),
         ),
       ),
 
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── ШАПКА: аватар + Имя/Фамилия в белом блоке + круглая белая кнопка QR ──
+              // видимый баннер ошибки, если что-то пошло не так
+              if (_loadError != null) ...[
+                Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF1F2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFECACA)),
+                  ),
+                  child: Text(
+                    'Ошибка: $_loadError',
+                    style: const TextStyle(color: Color(0xFF991B1B), fontSize: 12),
+                  ),
+                ),
+              ],
+
+              // ── ШАПКА: аватар + Имя/Фамилия + круглая кнопка QR ──
               Row(
-                crossAxisAlignment:
-                    CrossAxisAlignment.center, // ✅ центр по высоте блока имени
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   _AvatarEditable(
                     bytes: _avatarBytes,
+                    avatarUrl: _avatarUrl,
                     size: kAvatarSize,
-                    onTap: _pickAvatar, // ✅ выбор новой аватарки
+                    onTap: _pickAvatar,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -296,7 +613,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const Center(
                 child: Text(
                   'Данные необходимы для расчёта калорий, нагрузки, зон темпа и мощности.',
-                  textAlign: TextAlign.center, // ✅ по центру
+                  textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
                 ),
               ),
@@ -310,39 +627,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
 /// ───────────────────────────── UI атомы ─────────────────────────────
 
-/// Кликабельный аватар с индикатором «камера» снизу справа.
+/// Кликабельный аватар: байты -> URL -> ассет. Безопасный декодер.
 class _AvatarEditable extends StatelessWidget {
   const _AvatarEditable({
     required this.bytes,
+    required this.avatarUrl,
     required this.size,
     required this.onTap,
   });
 
   final Uint8List? bytes;
+  final String? avatarUrl;
   final double size;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final cacheW = (size * dpr).round();
+
     return GestureDetector(
       onTap: onTap,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           ClipOval(
-            child: bytes != null
-                ? Image.memory(
-                    bytes!,
-                    width: size,
-                    height: size,
-                    fit: BoxFit.cover,
-                  )
-                : Image.asset(
-                    'assets/Avatar_0.png',
-                    width: size,
-                    height: size,
-                    fit: BoxFit.cover,
-                  ),
+            child: _buildAvatarImage(size: size, cacheWidth: cacheW),
           ),
           Positioned(
             right: -2,
@@ -367,9 +677,45 @@ class _AvatarEditable extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildAvatarImage({required double size, required int cacheWidth}) {
+    // 1) Выбранные байты — приоритет
+    if (bytes != null && bytes!.isNotEmpty) {
+      try {
+        return Image.memory(
+          bytes!,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          cacheWidth: cacheWidth,
+          errorBuilder: (_, __, ___) =>
+              Image.asset('assets/Avatar_0.png', width: size, height: size, fit: BoxFit.cover),
+        );
+      } catch (_) {
+        return Image.asset('assets/Avatar_0.png', width: size, height: size, fit: BoxFit.cover);
+      }
+    }
+
+    // 2) URL с сервера
+    final url = avatarUrl?.trim();
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        cacheWidth: cacheWidth,
+        errorBuilder: (_, __, ___) =>
+            Image.asset('assets/Avatar_0.png', width: size, height: size, fit: BoxFit.cover),
+      );
+    }
+
+    // 3) Фолбэк-ассет
+    return Image.asset('assets/Avatar_0.png', width: size, height: size, fit: BoxFit.cover);
+  }
 }
 
-/// Белый блок для Имя/Фамилия со своим разделителем (как у групп ниже)
+/// Белый блок Имя/Фамилия (как в исходнике)
 class _NameBlock extends StatelessWidget {
   const _NameBlock({
     required this.firstController,
@@ -426,7 +772,7 @@ class _NameBlock extends StatelessWidget {
   }
 }
 
-/// Белая группа с разделителями (как regstep2): без теней
+/// Белая группа с разделителями
 class _GroupBlock extends StatelessWidget {
   const _GroupBlock({required this.children});
 
@@ -475,20 +821,22 @@ class _FieldRow extends StatelessWidget {
     String? hint,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
-  }) => _FieldRow._(
-    label: label,
-    controller: controller,
-    hint: hint,
-    keyboardType: keyboardType,
-    inputFormatters: inputFormatters,
-    isPicker: false,
-  );
+  }) =>
+      _FieldRow._(
+        label: label,
+        controller: controller,
+        hint: hint,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        isPicker: false,
+      );
 
   factory _FieldRow.picker({
     required String label,
     required String value,
     required VoidCallback onTap,
-  }) => _FieldRow._(label: label, value: value, onTap: onTap, isPicker: true);
+  }) =>
+      _FieldRow._(label: label, value: value, onTap: onTap, isPicker: true);
 
   final String label;
 
@@ -585,7 +933,7 @@ class _BareTextField extends StatelessWidget {
       ),
       style: const TextStyle(fontSize: 14),
     );
-  }
+    }
 }
 
 /// Круглая белая кнопка для QR (без теней)

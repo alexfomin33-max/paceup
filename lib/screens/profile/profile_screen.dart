@@ -192,7 +192,7 @@ void initState() {
           ),
 
           // Хедер профиля
-          SliverToBoxAdapter(child: RepaintBoundary(child: HeaderCard(profile: _profileHeader))),
+          SliverToBoxAdapter(child: RepaintBoundary(child: HeaderCard(profile: _profileHeader, userId: widget.userId))),
 
           // TabsBar — обычным сливером (не pinned)
           SliverToBoxAdapter(
@@ -222,8 +222,8 @@ void initState() {
             controller: _pageController,
             physics: const BouncingScrollPhysics(),
             onPageChanged: _onPageChanged,
-            children: const [
-              MainTab(),
+            children: [
+              MainTab(userId: widget.userId),
               PhotosTab(),
               StatsTab(),
               TrainingTab(),

@@ -7,7 +7,8 @@ import '../../../models/user_profile_header.dart';
 
 class HeaderCard extends StatelessWidget {
   final UserProfileHeader? profile;
-  const HeaderCard({super.key, this.profile});
+  final int userId;
+  const HeaderCard({super.key, this.profile, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +96,7 @@ class HeaderCard extends StatelessWidget {
                       onPressed: () {
                         Navigator.of(context).push(
                           CupertinoPageRoute(
-                            builder: (_) => const EditProfileScreen(),
+                            builder: (_) => EditProfileScreen(userId: userId),
                           ),
                         );
                       },

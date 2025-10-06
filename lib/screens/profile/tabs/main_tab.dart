@@ -4,12 +4,14 @@ import '../../../theme/app_theme.dart';
 import '../state/gear_prefs.dart';
 
 class MainTab extends StatefulWidget {
-  const MainTab({super.key});
+  final int userId;
+  const MainTab({super.key, required this.userId});
   @override
   State<MainTab> createState() => _MainTabState();
 }
 
 class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
+
   @override
   bool get wantKeepAlive => true;
 
