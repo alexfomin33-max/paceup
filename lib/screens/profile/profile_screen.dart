@@ -222,8 +222,8 @@ void initState() {
             controller: _pageController,
             physics: const BouncingScrollPhysics(),
             onPageChanged: _onPageChanged,
-            children: const [
-              MainTab(),
+            children: [
+              MainTab(userId: widget.userId),
               PhotosTab(),
               StatsTab(),
               TrainingTab(),
