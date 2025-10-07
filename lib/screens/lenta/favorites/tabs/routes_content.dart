@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '/../../../theme/app_theme.dart';
+import '../../../../theme/app_theme.dart';
+import 'rout_description/rout_description_screen.dart';
 
 /// Вкладка «Маршруты» — таблица с чипом сложности
 class RoutesContent extends StatelessWidget {
@@ -47,11 +48,34 @@ class RoutesContent extends StatelessWidget {
                 const SizedBox(height: 2), // зазор между карточками
             itemBuilder: (context, i) {
               final e = _items[i];
-              return _RouteCard(e: e); // отдельная карточка
+
+              // Оборачиваем карточку жестом. Навигация только для нужного маршрута.
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  if (e.title == 'Ладога - Лунёво - Ладога') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RouteDescriptionScreen(
+                          title: e.title,
+                          mapAsset: e.asset,
+                          distanceKm: e.distanceKm,
+                          durationText: e.durationText,
+                          ascentM: e.ascentM,
+                          difficulty: _difficultyKey(
+                            e.difficulty,
+                          ), // 'easy'|'medium'|'hard'
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: _RouteCard(e: e),
+              );
             },
           ),
         ),
-
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ],
     );
@@ -68,12 +92,9 @@ class _RouteCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(0),
-        // тонкая граница вместо столбиков/разделителей
         border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
-        // можно слегка приподнять карточку, если захочешь:
-        // boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
       ),
-      child: _RouteRow(e: e), // внутри — твой текущий контент
+      child: _RouteRow(e: e),
     );
   }
 }
@@ -136,7 +157,7 @@ class _RouteRow extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 6),
-                // Метрики: бегун, набор, время
+                // Метрики: дистанция, время, набор
                 Row(
                   children: [
                     Expanded(
@@ -184,7 +205,7 @@ class _RouteRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: c.withValues(alpha: 0.10), // без рамки, чуть насыщеннее фон
+        color: c.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -211,11 +232,10 @@ class _Metric extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = materialIcon ?? cupertinoIcon!;
     return Row(
-      mainAxisSize: MainAxisSize.max, // растягиваемся на всю ширину колонки
+      mainAxisSize: MainAxisSize.max,
       children: [
         Icon(icon, size: 14, color: AppColors.greytext),
         const SizedBox(width: 4),
-        // Текст занимает остаток своей колонки и обрезается с троеточием
         Expanded(
           child: Text(
             text,
@@ -251,4 +271,16 @@ class _RouteItem {
     required this.durationText,
     required this.difficulty,
   });
+}
+
+// — утилита: перевод enum сложности в строковый ключ для экрана описания
+String _difficultyKey(_Difficulty d) {
+  switch (d) {
+    case _Difficulty.easy:
+      return 'easy';
+    case _Difficulty.medium:
+      return 'medium';
+    case _Difficulty.hard:
+      return 'hard';
+  }
 }
