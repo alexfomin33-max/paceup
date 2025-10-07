@@ -19,7 +19,7 @@ class AuthShell extends StatefulWidget {
       horizontal: 40,
       vertical: 100,
     ),
-    this.overlayAlpha = 0.5,
+    this.overlayAlpha = 0.4,
   });
 
   @override

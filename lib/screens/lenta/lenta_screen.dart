@@ -14,6 +14,7 @@ import 'package:paceup/models/activity_lenta.dart';
 import 'activity/description_screen.dart';
 import 'widgets/recommended_block.dart';
 import 'package:flutter/painting.dart';
+import 'favorites/favorites_screen.dart';
 
 import 'dart:async';
 
@@ -109,7 +110,15 @@ class _LentaScreenState extends State<LentaScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              _NavIcon(icon: CupertinoIcons.star, onPressed: () {}),
+              _NavIcon(
+                icon: CupertinoIcons.star,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+                  );
+                },
+              ),
               const SizedBox(width: 4),
               _NavIcon(
                 icon: CupertinoIcons.add_circled,
