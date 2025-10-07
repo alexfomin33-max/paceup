@@ -365,8 +365,8 @@ Map<String, dynamic> _buildSavePayload() {
   Future<void> _pickAvatar() async {
     final XFile? file = await _picker.pickImage(
       source: ImageSource.gallery,
-      maxWidth: 1024,
-      imageQuality: 85,
+      maxWidth: 2048,
+      imageQuality: 98,
     );
     if (file == null) return;
     final bytes = await file.readAsBytes();
