@@ -14,6 +14,7 @@ import 'package:paceup/models/activity_lenta.dart';
 import 'activity/description_screen.dart';
 import 'widgets/recommended_block.dart';
 import 'package:flutter/painting.dart';
+import 'favorites/favorites_screen.dart';
 
 import 'dart:async';
 
@@ -109,32 +110,42 @@ class _LentaScreenState extends State<LentaScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              _NavIcon(icon: CupertinoIcons.star, onPressed: () {}),
+              _NavIcon(
+                icon: CupertinoIcons.star,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+                  );
+                },
+              ),
               const SizedBox(width: 4),
-            _NavIcon(
-              icon: CupertinoIcons.add_circled,
-              onPressed: () async {
-                final created = await Navigator.push<bool>(
-                  context,
-                  MaterialPageRoute(builder: (_) => NewPostScreen(userId: widget.userId)),
-                );
-                if (!mounted) return;
-                if (created == true) {
-                  setState(() {
-                    _future = _loadActivities(); // ← перезапрашиваем ленту, FutureBuilder увидит новый Future
-                  });
-                  // опционально прокрутить к началу, чтобы сразу увидеть новый пост
-                  if (_scrollController.hasClients) {
-                    _scrollController.animateTo(
-                      0,
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeOut,
-                    );
+              _NavIcon(
+                icon: CupertinoIcons.add_circled,
+                onPressed: () async {
+                  final created = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => NewPostScreen(userId: widget.userId),
+                    ),
+                  );
+                  if (!mounted) return;
+                  if (created == true) {
+                    setState(() {
+                      _future =
+                          _loadActivities(); // ← перезапрашиваем ленту, FutureBuilder увидит новый Future
+                    });
+                    // опционально прокрутить к началу, чтобы сразу увидеть новый пост
+                    if (_scrollController.hasClients) {
+                      _scrollController.animateTo(
+                        0,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOut,
+                      );
+                    }
                   }
-                }
-              },
-            ),
-
+                },
+              ),
             ],
           ),
         ),
@@ -668,7 +679,8 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
 
                   // сохраняем твою оптимизацию cacheWidth + добавляем cacheHeight
                   final dpr = MediaQuery.of(context).devicePixelRatio;
-                  final cacheWidth  = (MediaQuery.sizeOf(context).width * dpr).round();
+                  final cacheWidth = (MediaQuery.sizeOf(context).width * dpr)
+                      .round();
                   const targetHeight = 300.0; // ты показываешь 300 px высоты
                   final cacheHeight = (targetHeight * dpr).round();
 
@@ -676,8 +688,8 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
                     url,
                     fit: BoxFit.cover,
                     filterQuality: FilterQuality.low,
-                    cacheWidth:  cacheWidth,
-                   // cacheHeight: cacheHeight, // 🔹 важно: ограничиваем вертикаль тоже
+                    cacheWidth: cacheWidth,
+                    // cacheHeight: cacheHeight, // 🔹 важно: ограничиваем вертикаль тоже
                     gaplessPlayback: true,
                     width: double.infinity,
                     height: double.infinity,
@@ -703,11 +715,11 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
     );
   }
 
-void _evictNetworkImage(String url) {
-  // точечный сброс только конкретной картинки, когда далеко пролистали
-  final provider = NetworkImage(url);
-  imageCache.evict(provider);
-}
+  void _evictNetworkImage(String url) {
+    // точечный сброс только конкретной картинки, когда далеко пролистали
+    final provider = NetworkImage(url);
+    imageCache.evict(provider);
+  }
 
   Widget _buildVideoPreview(String url) {
     return Stack(
@@ -717,7 +729,11 @@ void _evictNetworkImage(String url) {
         Image.network(_videoPlaceholder, fit: BoxFit.cover),
         Container(color: const Color(0x33000000)), // лёгкий затемняющий слой
         const Center(
-          child: Icon(CupertinoIcons.play_circle_fill, size: 64, color: Color(0xFFFFFFFF)),
+          child: Icon(
+            CupertinoIcons.play_circle_fill,
+            size: 64,
+            color: Color(0xFFFFFFFF),
+          ),
         ),
         Positioned.fill(
           child: Material(
