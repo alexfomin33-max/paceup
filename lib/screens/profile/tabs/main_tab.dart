@@ -35,11 +35,17 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
   }
 
   Future<_MainTabData> _load() async {
-    final uri = Uri.parse(_apiEndpoint).replace(queryParameters: {
-      'user_id': widget.userId.toString(),
-    });
+    final uri = Uri.parse(_apiEndpoint);
 
-    final res = await http.get(uri, headers: {'Accept': 'application/json'});
+    final res = await http.post(
+      uri,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: json.encode({'userId': widget.userId}),
+    );
+
     if (res.statusCode != 200) {
       throw Exception('HTTP ${res.statusCode}');
     }
