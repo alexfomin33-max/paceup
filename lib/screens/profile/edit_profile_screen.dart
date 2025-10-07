@@ -24,6 +24,223 @@ class EditProfileScreen extends StatefulWidget {
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
+class _ErrorPane extends StatelessWidget {
+  const _ErrorPane({super.key, required this.message, required this.onRetry});
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(CupertinoIcons.exclamationmark_triangle, size: 28, color: Color(0xFF991B1B)),
+            const SizedBox(height: 10),
+            Text('Ошибка загрузки:\n$message',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF991B1B)),
+            ),
+            const SizedBox(height: 12),
+            CupertinoButton.filled(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              onPressed: onRetry,
+              child: const Text('Повторить'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FormPane extends StatelessWidget {
+  const _FormPane({
+    super.key,
+    required this.avatarUrl,
+    required this.avatarBytes,
+    required this.onPickAvatar,
+    required this.firstName,
+    required this.lastName,
+    required this.nickname,
+    required this.city,
+    required this.height,
+    required this.weight,
+    required this.hrMax,
+    required this.birthDate,
+    required this.gender,
+    required this.mainSport,
+    required this.setBirthDate,
+    required this.setGender,
+    required this.setSport,
+    required this.pickBirthDate,
+    required this.pickFromList,
+  });
+
+  final String? avatarUrl;
+  final Uint8List? avatarBytes;
+  final VoidCallback onPickAvatar;
+
+  final TextEditingController firstName;
+  final TextEditingController lastName;
+  final TextEditingController nickname;
+  final TextEditingController city;
+  final TextEditingController height;
+  final TextEditingController weight;
+  final TextEditingController hrMax;
+
+  final DateTime? birthDate;
+  final String gender;
+  final String mainSport;
+
+  final void Function(DateTime) setBirthDate;
+  final void Function(String) setGender;
+  final void Function(String) setSport;
+
+  final Future<void> Function() pickBirthDate;
+  final Future<void> Function({
+    required String title,
+    required List<String> options,
+    required String current,
+    required void Function(String) onPicked,
+  }) pickFromList;
+
+  String _formatDate(DateTime? d) {
+    if (d == null) return '';
+    final dd = d.day.toString().padLeft(2, '0');
+    final mm = d.month.toString().padLeft(2, '0');
+    final yy = d.year.toString();
+    return '$dd.$mm.$yy';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── ШАПКА: аватар + Имя/Фамилия + круглая кнопка QR ──
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _AvatarEditable(
+                bytes: avatarBytes,
+                avatarUrl: avatarUrl,
+                size: kAvatarSize,
+                onTap: onPickAvatar,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _NameBlock(
+                  firstController: firstName,
+                  secondController: lastName,
+                  firstHint: 'Имя',
+                  secondHint: 'Фамилия',
+                ),
+              ),
+              const SizedBox(width: 12),
+              _CircleIconBtn(
+                icon: CupertinoIcons.qrcode_viewfinder,
+                onTap: () {},
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // ── ГРУППА 1 ──
+          _GroupBlock(
+            children: [
+              _FieldRow.input(
+                label: 'Никнейм',
+                controller: nickname,
+                hint: 'nickname',
+              ),
+              _FieldRow.picker(
+                label: 'Дата рождения',
+                value: _formatDate(birthDate),
+                onTap: pickBirthDate,
+              ),
+              _FieldRow.picker(
+                label: 'Пол',
+                value: gender,
+                onTap: () => pickFromList(
+                  title: 'Пол',
+                  options: const ['Мужской', 'Женский'],
+                  current: gender,
+                  onPicked: setGender,
+                ),
+              ),
+              _FieldRow.input(
+                label: 'Город',
+                controller: city,
+                hint: 'Город',
+              ),
+              _FieldRow.picker(
+                label: 'Основной вид спорта',
+                value: mainSport,
+                onTap: () => pickFromList(
+                  title: 'Основной вид спорта',
+                  options: const ['Бег', 'Велоспорт', 'Плавание'],
+                  current: mainSport,
+                  onPicked: setSport,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          const Text(
+            'Параметры',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _GroupBlock(
+            children: [
+              _FieldRow.input(
+                label: 'Рост, см',
+                controller: height,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              ),
+              _FieldRow.input(
+                label: 'Вес, кг',
+                controller: weight,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              ),
+              _FieldRow.input(
+                label: 'Максимальный пульс',
+                controller: hrMax,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+          const Center(
+            child: Text(
+              'Данные необходимы для расчёта калорий, нагрузки, зон темпа и мощности.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _EditProfileScreenState extends State<EditProfileScreen> {
   // --- Состояния загрузки/ошибок ---
   bool _loadingProfile = false;
@@ -457,17 +674,17 @@ Map<String, dynamic> _buildSavePayload() {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         actions: [
-          TextButton(
-            onPressed: _saving ? null : _onSave,
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.secondary,
-              minimumSize: const Size(44, 44),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+            TextButton(
+              onPressed: (_saving || _loadingProfile) ? null : _onSave, // ← добавили _loadingProfile
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.secondary,
+                minimumSize: const Size(44, 44),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+              child: _saving
+                  ? const CupertinoActivityIndicator(radius: 8)
+                  : const Text('Сохранить'),
             ),
-            child: _saving
-                ? const CupertinoActivityIndicator(radius: 8)
-                : const Text('Сохранить'),
-          ),
         ],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(0.5),
@@ -479,148 +696,45 @@ Map<String, dynamic> _buildSavePayload() {
       ),
 
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // видимый баннер ошибки, если что-то пошло не так
-              if (_loadError != null) ...[
-                Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF1F2),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFFECACA)),
-                  ),
-                  child: Text(
-                    'Ошибка: $_loadError',
-                    style: const TextStyle(color: Color(0xFF991B1B), fontSize: 12),
-                  ),
-                ),
-              ],
-
-              // ── ШАПКА: аватар + Имя/Фамилия + круглая кнопка QR ──
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  _AvatarEditable(
-                    bytes: _avatarBytes,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        child: _loadingProfile
+            ? const Center(
+                key: ValueKey('loading'),
+                child: CupertinoActivityIndicator(),
+              )
+            : (_loadError != null)
+                ? _ErrorPane(
+                    key: const ValueKey('error'),
+                    message: _loadError!,
+                    onRetry: _loadProfile,
+                  )
+                : _FormPane(
+                    key: const ValueKey('form'),
+                    // ↓ передаём всё, что нужно внутрь формы
                     avatarUrl: _avatarUrl,
-                    size: kAvatarSize,
-                    onTap: _pickAvatar,
+                    avatarBytes: _avatarBytes,
+                    onPickAvatar: _pickAvatar,
+                    firstName: _firstName,
+                    lastName: _lastName,
+                    nickname: _nickname,
+                    city: _city,
+                    height: _height,
+                    weight: _weight,
+                    hrMax: _hrMax,
+                    birthDate: _birthDate,
+                    gender: _gender,
+                    mainSport: _mainSport,
+                    setBirthDate: (d) => setState(() => _birthDate = d),
+                    setGender:   (g) => setState(() => _gender = g),
+                    setSport:    (s) => setState(() => _mainSport = s),
+                    pickBirthDate: _pickBirthDate,
+                    pickFromList: _pickFromList,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _NameBlock(
-                      firstController: _firstName,
-                      secondController: _lastName,
-                      firstHint: 'Имя',
-                      secondHint: 'Фамилия',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  _CircleIconBtn(
-                    icon: CupertinoIcons.qrcode_viewfinder,
-                    onTap: () {
-                      // TODO: открыть визитку/QR
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // ── ГРУППА 1: Ник/Дата/Пол/Город/Спорт ──
-              _GroupBlock(
-                children: [
-                  _FieldRow.input(
-                    label: 'Никнейм',
-                    controller: _nickname,
-                    hint: 'nickname',
-                  ),
-                  _FieldRow.picker(
-                    label: 'Дата рождения',
-                    value: _formatDate(_birthDate),
-                    onTap: _pickBirthDate,
-                  ),
-                  _FieldRow.picker(
-                    label: 'Пол',
-                    value: _gender,
-                    onTap: () => _pickFromList(
-                      title: 'Пол',
-                      options: const ['Мужской', 'Женский'],
-                      current: _gender,
-                      onPicked: (v) => setState(() => _gender = v),
-                    ),
-                  ),
-                  _FieldRow.input(
-                    label: 'Город',
-                    controller: _city,
-                    hint: 'Город',
-                  ),
-                  _FieldRow.picker(
-                    label: 'Основной вид спорта',
-                    value: _mainSport,
-                    onTap: () => _pickFromList(
-                      title: 'Основной вид спорта',
-                      options: const ['Бег', 'Велоспорт', 'Плавание'],
-                      current: _mainSport,
-                      onPicked: (v) => setState(() => _mainSport = v),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // ── ГРУППА 2: Параметры ──
-              const Text(
-                'Параметры',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF6B7280),
-                ),
-              ),
-              const SizedBox(height: 8),
-              _GroupBlock(
-                children: [
-                  _FieldRow.input(
-                    label: 'Рост, см',
-                    controller: _height,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  ),
-                  _FieldRow.input(
-                    label: 'Вес, кг',
-                    controller: _weight,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  ),
-                  _FieldRow.input(
-                    label: 'Максимальный пульс',
-                    controller: _hrMax,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-              const Center(
-                child: Text(
-                  'Данные необходимы для расчёта калорий, нагрузки, зон темпа и мощности.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
+    ),
     );
   }
 }
