@@ -36,18 +36,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Uint8List? _avatarBytes;
 
   // --- Контроллеры формы (оставлены как в оригинале) ---
-  final _firstName = TextEditingController(text: 'Константин');
-  final _lastName  = TextEditingController(text: 'Разумовский');
-  final _nickname  = TextEditingController(text: 'bladerunner');
-  final _city      = TextEditingController(text: 'Санкт-Петербург');
-  final _height    = TextEditingController(text: '100');
-  final _weight    = TextEditingController(text: '100');
-  final _hrMax     = TextEditingController(text: '100');
+  final _firstName = TextEditingController(text: '');
+  final _lastName  = TextEditingController(text: '');
+  final _nickname  = TextEditingController(text: '');
+  final _city      = TextEditingController(text: '');
+  final _height    = TextEditingController(text: '');
+  final _weight    = TextEditingController(text: '');
+  final _hrMax     = TextEditingController(text: '');
 
   // --- Поля состояния ---
   DateTime? _birthDate = DateTime(1980, 6, 24);
-  String _gender   = 'Муж';
-  String _mainSport = 'Бег';
+  String _gender   = '';
+  String _mainSport = '';
 
   @override
   void initState() {
@@ -423,7 +423,7 @@ Map<String, dynamic> _buildSavePayload() {
       );
 
       // Возврат назад после успешного сохранения
-      Navigator.of(context).maybePop();
+      Navigator.of(context).maybePop(true);
     } catch (e, st) {
       debugPrint('❌ [EditProfile] SAVE error: $e\n$st');
       if (!mounted) return;

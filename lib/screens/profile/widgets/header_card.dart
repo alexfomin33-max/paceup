@@ -8,7 +8,8 @@ import '../../../models/user_profile_header.dart';
 class HeaderCard extends StatelessWidget {
   final UserProfileHeader? profile;
   final int userId;
-  const HeaderCard({super.key, this.profile, required this.userId});
+  final VoidCallback onReload;
+  const HeaderCard({super.key, this.profile, required this.userId, required this.onReload,});
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +79,7 @@ class HeaderCard extends StatelessWidget {
                           final fn = (profile?.firstName ?? '').trim();
                           final ln = (profile?.lastName ?? '').trim();
                           final full = [fn, ln].where((s) => s.isNotEmpty).join(' ').trim();
-                          return full.isNotEmpty ? full : 'Константин Разумовский';
+                          return full.isNotEmpty ? full : '';
                         })(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -93,19 +94,18 @@ class HeaderCard extends StatelessWidget {
                     SizedBox(width: 6),
                     _SmallIconBtn(
                       icon: CupertinoIcons.pencil,
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (_) => EditProfileScreen(userId: userId),
-                          ),
+                      onPressed: () async {
+                        final changed = await Navigator.of(context).push<bool>(
+                          CupertinoPageRoute(builder: (_) => EditProfileScreen(userId: userId)),
                         );
+                        if (changed == true) onReload(); // ← одна строка на авто-рефреш
                       },
                     ),
                   ],
                 ),
                 SizedBox(height: 2),
                 Text(
-                  _subtitleFrom(profile) ?? '38 лет, Санкт-Петербург',
+                  _subtitleFrom(profile) ?? '',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
@@ -117,7 +117,7 @@ class HeaderCard extends StatelessWidget {
                   children: [
                     _FollowStat(
                       label: 'Подписки',
-                      value: (profile?.following ?? 736).toString(),
+                      value: (profile?.following ?? '').toString(),
                       onTap: () {
                         Navigator.of(context).push(
                           CupertinoPageRoute(
@@ -131,7 +131,7 @@ class HeaderCard extends StatelessWidget {
                     const SizedBox(width: 18),
                     _FollowStat(
                       label: 'Подписчики',
-                      value: (profile?.followers ?? 659).toString(),
+                      value: (profile?.followers ?? '').toString(),
                       onTap: () {
                         Navigator.of(context).push(
                           CupertinoPageRoute(
