@@ -192,7 +192,7 @@ void initState() {
           ),
 
           // Хедер профиля
-          SliverToBoxAdapter(child: RepaintBoundary(child: HeaderCard(profile: _profileHeader, userId: widget.userId))),
+          SliverToBoxAdapter(child: RepaintBoundary(child: HeaderCard(profile: _profileHeader, userId: widget.userId, onReload: _loadProfileHeader,))),
 
           // TabsBar — обычным сливером (не pinned)
           SliverToBoxAdapter(
