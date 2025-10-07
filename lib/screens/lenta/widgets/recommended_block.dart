@@ -120,9 +120,7 @@ class _FriendCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                // TODO: сюда потом подвяжем действие «Подписаться»
-              },
+              onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.secondary,
                 shape: RoundedRectangleBorder(

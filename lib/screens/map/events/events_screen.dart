@@ -54,7 +54,6 @@ class EventsFloatingButtons extends StatelessWidget {
             icon: Icons.tune,
             label: 'Фильтры',
             onTap: () {
-              // TODO: открыть экран/шит фильтров
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Фильтры скоро будут')),
               );

@@ -57,9 +57,7 @@ class SubscriptionsContent extends StatelessWidget {
                     _RowTile(
                       person: p,
                       trailing: IconButton(
-                        onPressed: () {
-                          // TODO: отписаться
-                        },
+                        onPressed: () {},
                         splashRadius: 24,
                         icon: const Icon(
                           CupertinoIcons.person_crop_circle_badge_xmark,

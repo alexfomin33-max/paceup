@@ -12,8 +12,8 @@ import 'package:http/http.dart' as http;
 
 const double kToolbarH = 52.0;
 const double kAvatarSize = 88.0; // увеличенный аватар
-const double kQrBtnSize = 44.0;   // круглая кнопка
-const double kQrIconSize = 24.0;  // увеличенная иконка
+const double kQrBtnSize = 44.0; // круглая кнопка
+const double kQrIconSize = 24.0; // увеличенная иконка
 const double kLabelWidth = 170.0; // ширина лейбла слева (стиль regstep2)
 
 class EditProfileScreen extends StatefulWidget {
@@ -37,16 +37,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   // --- Контроллеры формы (оставлены как в оригинале) ---
   final _firstName = TextEditingController(text: 'Константин');
-  final _lastName  = TextEditingController(text: 'Разумовский');
-  final _nickname  = TextEditingController(text: 'bladerunner');
-  final _city      = TextEditingController(text: 'Санкт-Петербург');
-  final _height    = TextEditingController(text: '100');
-  final _weight    = TextEditingController(text: '100');
-  final _hrMax     = TextEditingController(text: '100');
+  final _lastName = TextEditingController(text: 'Разумовский');
+  final _nickname = TextEditingController(text: 'bladerunner');
+  final _city = TextEditingController(text: 'Санкт-Петербург');
+  final _height = TextEditingController(text: '100');
+  final _weight = TextEditingController(text: '100');
+  final _hrMax = TextEditingController(text: '100');
 
   // --- Поля состояния ---
   DateTime? _birthDate = DateTime(1980, 6, 24);
-  String _gender   = 'Муж';
+  String _gender = 'Муж';
   String _mainSport = 'Бег';
 
   @override
@@ -109,8 +109,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String? _mapGender(dynamic v) {
     final s = _s(v)?.toLowerCase();
     if (s == null) return null;
-    if (s == 'm' || s == 'male' || s.contains('муж') || s.contains('Муж') || s.contains('Мужской')) return 'Мужской';
-    if (s == 'f' || s == 'female' || s.contains('жен') || s.contains('Жен') || s.contains('Женский')) return 'Женский';
+    if (s == 'm' ||
+        s == 'male' ||
+        s.contains('муж') ||
+        s.contains('Муж') ||
+        s.contains('Мужской'))
+      return 'Мужской';
+    if (s == 'f' ||
+        s == 'female' ||
+        s.contains('жен') ||
+        s.contains('Жен') ||
+        s.contains('Женский'))
+      return 'Женский';
     return 'Другое';
   }
 
@@ -167,7 +177,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       debugPrint('⬅️ [EditProfile] status=${res.statusCode}');
       final bodyStr = utf8.decode(res.bodyBytes, allowMalformed: true);
-      final bodyPreview = bodyStr.substring(0, bodyStr.length < 600 ? bodyStr.length : 600);
+      final bodyPreview = bodyStr.substring(
+        0,
+        bodyStr.length < 600 ? bodyStr.length : 600,
+      );
       debugPrint('[EditProfile] bodyPreview: $bodyPreview');
 
       if (res.statusCode != 200) {
@@ -176,33 +189,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       final map = _safeDecodeJsonAsMap(res.bodyBytes);
       final dynamic raw = map['profile'] ?? map['data'] ?? map;
-      if (raw is! Map) throw const FormatException('Bad payload: not a JSON object');
+      if (raw is! Map)
+        throw const FormatException('Bad payload: not a JSON object');
       final j = Map<String, dynamic>.from(raw as Map);
 
       // Контроллеры
       _firstName.text = _s(j['name']) ?? _firstName.text;
-      _lastName.text  = _s(j['surname'])  ?? _lastName.text;
-      _nickname.text  = _s(j['username'])   ?? _nickname.text;
-      _city.text      = _s(j['city'])       ?? _city.text;
+      _lastName.text = _s(j['surname']) ?? _lastName.text;
+      _nickname.text = _s(j['username']) ?? _nickname.text;
+      _city.text = _s(j['city']) ?? _city.text;
 
       final height = _i(j['height']) ?? _i(j['height']);
       final weight = _i(j['weight']) ?? _i(j['weight']);
-      final hrMax  = _i(j['pulse'])    ?? _i(j['pulse']);
+      final hrMax = _i(j['pulse']) ?? _i(j['pulse']);
 
       if (height != null) _height.text = '$height';
       if (weight != null) _weight.text = '$weight';
-      if (hrMax  != null) _hrMax.text  = '$hrMax';
+      if (hrMax != null) _hrMax.text = '$hrMax';
 
       // Поля состояния
-      final bd     = _date(j['dateage'] ?? j['dateage']);
-      final g      = _mapGender(j['gender']);
-      final sp     = _mapSport(j['sport'] ?? j['sport']);
+      final bd = _date(j['dateage'] ?? j['dateage']);
+      final g = _mapGender(j['gender']);
+      final sp = _mapSport(j['sport'] ?? j['sport']);
       final avatar = _s(j['avatar']); // полный URL
 
       if (!mounted) return;
       setState(() {
         if (bd != null) _birthDate = bd;
-        if (g  != null) _gender    = g;
+        if (g != null) _gender = g;
         if (sp != null) _mainSport = sp;
         if (avatar != null && avatar.isNotEmpty) _avatarUrl = avatar;
       });
@@ -210,9 +224,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       debugPrint('❌ [EditProfile] error: $e\n$st');
       if (mounted) {
         setState(() => _loadError = e.toString());
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка загрузки профиля: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка загрузки профиля: $e')));
       }
     } finally {
       if (mounted) setState(() => _loadingProfile = false);
@@ -291,76 +305,76 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   String _formatDateIsoOut(DateTime? d) {
-  if (d == null) return '';
-  final y = d.year.toString().padLeft(4, '0');
-  final m = d.month.toString().padLeft(2, '0');
-  final dd = d.day.toString().padLeft(2, '0');
-  return '$y-$m-$dd'; // YYYY-MM-DD
-}
-
-String _canonGenderOut(String g) {
-  final s = g.trim().toLowerCase();
-  if (s.contains('жен')) return 'Женский';
-  if (s.contains('муж')) return 'Мужской';
-  if (s == 'f' || s == 'female') return 'Женский';
-  if (s == 'm' || s == 'male') return 'Мужской';
-  return 'Другое';
-}
-
-String _canonSportOut(String s) {
-  final v = s.trim().toLowerCase();
-  if (v.contains('вел')) return 'Велоспорт';
-  if (v.contains('плав') || v.contains('swim')) return 'Плавание';
-  return 'Бег'; // дефолт — Бег
-}
-
-int? _toInt(String? s) {
-  if (s == null) return null;
-  final t = s.trim();
-  if (t.isEmpty) return null;
-  return int.tryParse(t);
-}
-
-/// Собираем полезную нагрузку (двойные ключи для совместимости бекенда)
-Map<String, dynamic> _buildSavePayload() {
-  final birthIso = _formatDateIsoOut(_birthDate);
-  final gender = _canonGenderOut(_gender);
-  final sport  = _canonSportOut(_mainSport);
-
-  final height = _toInt(_height.text);
-  final weight = _toInt(_weight.text);
-  final hrMax  = _toInt(_hrMax.text);
-
-  final map = <String, dynamic>{
-    'user_id': widget.userId,
-    'edit': true,
-    'load': false,
-
-    // Имя/фамилия/ник
-    'name': _firstName.text.trim(),
-    'surname' : _lastName.text.trim(),
-    'username'  : _nickname.text.trim(),
-
-    // Прочее
-    'city'        : _city.text.trim(),
-    'dateage'     : birthIso,   // дубль
-    'gender'      : gender,
-    'sport'       : sport,
-
-    'height'      : height,     // дубль
-    'weight'      : weight,     // дубль
-    'pulse'       : hrMax,      // дубль
-  };
-
-  // Если пользователь выбрал новый аватар — отправим base64.
-  if (_avatarBytes != null && _avatarBytes!.isNotEmpty) {
-    map['avatar_base64'] = base64Encode(_avatarBytes!);
-    // по желанию можно указать mime
-    map['avatar_mime'] = 'image/jpeg';
+    if (d == null) return '';
+    final y = d.year.toString().padLeft(4, '0');
+    final m = d.month.toString().padLeft(2, '0');
+    final dd = d.day.toString().padLeft(2, '0');
+    return '$y-$m-$dd'; // YYYY-MM-DD
   }
 
-  return map;
-}
+  String _canonGenderOut(String g) {
+    final s = g.trim().toLowerCase();
+    if (s.contains('жен')) return 'Женский';
+    if (s.contains('муж')) return 'Мужской';
+    if (s == 'f' || s == 'female') return 'Женский';
+    if (s == 'm' || s == 'male') return 'Мужской';
+    return 'Другое';
+  }
+
+  String _canonSportOut(String s) {
+    final v = s.trim().toLowerCase();
+    if (v.contains('вел')) return 'Велоспорт';
+    if (v.contains('плав') || v.contains('swim')) return 'Плавание';
+    return 'Бег'; // дефолт — Бег
+  }
+
+  int? _toInt(String? s) {
+    if (s == null) return null;
+    final t = s.trim();
+    if (t.isEmpty) return null;
+    return int.tryParse(t);
+  }
+
+  /// Собираем полезную нагрузку (двойные ключи для совместимости бекенда)
+  Map<String, dynamic> _buildSavePayload() {
+    final birthIso = _formatDateIsoOut(_birthDate);
+    final gender = _canonGenderOut(_gender);
+    final sport = _canonSportOut(_mainSport);
+
+    final height = _toInt(_height.text);
+    final weight = _toInt(_weight.text);
+    final hrMax = _toInt(_hrMax.text);
+
+    final map = <String, dynamic>{
+      'user_id': widget.userId,
+      'edit': true,
+      'load': false,
+
+      // Имя/фамилия/ник
+      'name': _firstName.text.trim(),
+      'surname': _lastName.text.trim(),
+      'username': _nickname.text.trim(),
+
+      // Прочее
+      'city': _city.text.trim(),
+      'dateage': birthIso, // дубль
+      'gender': gender,
+      'sport': sport,
+
+      'height': height, // дубль
+      'weight': weight, // дубль
+      'pulse': hrMax, // дубль
+    };
+
+    // Если пользователь выбрал новый аватар — отправим base64.
+    if (_avatarBytes != null && _avatarBytes!.isNotEmpty) {
+      map['avatar_base64'] = base64Encode(_avatarBytes!);
+      // по желанию можно указать mime
+      map['avatar_mime'] = 'image/jpeg';
+    }
+
+    return map;
+  }
 
   Future<void> _pickAvatar() async {
     final XFile? file = await _picker.pickImage(
@@ -382,7 +396,9 @@ Map<String, dynamic> _buildSavePayload() {
 
     setState(() => _saving = true);
     try {
-      debugPrint('➡️ [EditProfile] SAVE POST $uri\npayload=${jsonEncode(payload)}');
+      debugPrint(
+        '➡️ [EditProfile] SAVE POST $uri\npayload=${jsonEncode(payload)}',
+      );
 
       final res = await http
           .post(
@@ -397,7 +413,9 @@ Map<String, dynamic> _buildSavePayload() {
 
       debugPrint('⬅️ [EditProfile] SAVE status=${res.statusCode}');
       final bodyStr = utf8.decode(res.bodyBytes, allowMalformed: true);
-      debugPrint('[EditProfile] SAVE bodyPreview: ${bodyStr.length > 600 ? bodyStr.substring(0, 600) : bodyStr}');
+      debugPrint(
+        '[EditProfile] SAVE bodyPreview: ${bodyStr.length > 600 ? bodyStr.substring(0, 600) : bodyStr}',
+      );
 
       if (res.statusCode != 200) {
         throw Exception('HTTP ${res.statusCode}');
@@ -410,26 +428,29 @@ Map<String, dynamic> _buildSavePayload() {
       } catch (_) {}
 
       final ok =
-          (map != null && (map['ok'] == true || map['status'] == 'ok' || map['success'] == true))
-          || (map != null && map['error'] == null);
+          (map != null &&
+              (map['ok'] == true ||
+                  map['status'] == 'ok' ||
+                  map['success'] == true)) ||
+          (map != null && map['error'] == null);
 
       if (!ok && map != null && map.containsKey('error')) {
         throw Exception(map['error'].toString());
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Профиль сохранён')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Профиль сохранён')));
 
       // Возврат назад после успешного сохранения
       Navigator.of(context).maybePop();
     } catch (e, st) {
       debugPrint('❌ [EditProfile] SAVE error: $e\n$st');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Не удалось сохранить: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Не удалось сохранить: $e')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -480,7 +501,9 @@ Map<String, dynamic> _buildSavePayload() {
 
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,7 +512,10 @@ Map<String, dynamic> _buildSavePayload() {
               if (_loadError != null) ...[
                 Container(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF1F2),
                     borderRadius: BorderRadius.circular(8),
@@ -497,7 +523,10 @@ Map<String, dynamic> _buildSavePayload() {
                   ),
                   child: Text(
                     'Ошибка: $_loadError',
-                    style: const TextStyle(color: Color(0xFF991B1B), fontSize: 12),
+                    style: const TextStyle(
+                      color: Color(0xFF991B1B),
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ],
@@ -524,9 +553,7 @@ Map<String, dynamic> _buildSavePayload() {
                   const SizedBox(width: 12),
                   _CircleIconBtn(
                     icon: CupertinoIcons.qrcode_viewfinder,
-                    onTap: () {
-                      // TODO: открыть визитку/QR
-                    },
+                    onTap: () {},
                   ),
                 ],
               ),
@@ -688,11 +715,20 @@ class _AvatarEditable extends StatelessWidget {
           height: size,
           fit: BoxFit.cover,
           cacheWidth: cacheWidth,
-          errorBuilder: (_, __, ___) =>
-              Image.asset('assets/Avatar_0.png', width: size, height: size, fit: BoxFit.cover),
+          errorBuilder: (_, __, ___) => Image.asset(
+            'assets/Avatar_0.png',
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+          ),
         );
       } catch (_) {
-        return Image.asset('assets/Avatar_0.png', width: size, height: size, fit: BoxFit.cover);
+        return Image.asset(
+          'assets/Avatar_0.png',
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+        );
       }
     }
 
@@ -705,13 +741,22 @@ class _AvatarEditable extends StatelessWidget {
         height: size,
         fit: BoxFit.cover,
         cacheWidth: cacheWidth,
-        errorBuilder: (_, __, ___) =>
-            Image.asset('assets/Avatar_0.png', width: size, height: size, fit: BoxFit.cover),
+        errorBuilder: (_, __, ___) => Image.asset(
+          'assets/Avatar_0.png',
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+        ),
       );
     }
 
     // 3) Фолбэк-ассет
-    return Image.asset('assets/Avatar_0.png', width: size, height: size, fit: BoxFit.cover);
+    return Image.asset(
+      'assets/Avatar_0.png',
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+    );
   }
 }
 
@@ -821,22 +866,20 @@ class _FieldRow extends StatelessWidget {
     String? hint,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
-  }) =>
-      _FieldRow._(
-        label: label,
-        controller: controller,
-        hint: hint,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
-        isPicker: false,
-      );
+  }) => _FieldRow._(
+    label: label,
+    controller: controller,
+    hint: hint,
+    keyboardType: keyboardType,
+    inputFormatters: inputFormatters,
+    isPicker: false,
+  );
 
   factory _FieldRow.picker({
     required String label,
     required String value,
     required VoidCallback onTap,
-  }) =>
-      _FieldRow._(label: label, value: value, onTap: onTap, isPicker: true);
+  }) => _FieldRow._(label: label, value: value, onTap: onTap, isPicker: true);
 
   final String label;
 
@@ -933,7 +976,7 @@ class _BareTextField extends StatelessWidget {
       ),
       style: const TextStyle(fontSize: 14),
     );
-    }
+  }
 }
 
 /// Круглая белая кнопка для QR (без теней)

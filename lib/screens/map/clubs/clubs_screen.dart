@@ -58,7 +58,6 @@ class ClubsFloatingButtons extends StatelessWidget {
             icon: Icons.tune,
             label: 'Фильтры',
             onTap: () {
-              // TODO: открыть фильтры клубов (sheet/экран)
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Фильтры клубов — скоро')),
               );
@@ -68,7 +67,6 @@ class ClubsFloatingButtons extends StatelessWidget {
             icon: Icons.group_add_outlined,
             label: 'Создать клуб',
             onTap: () {
-              // TODO: перейти на экран создания клуба
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Экран создания клуба — скоро')),
               );

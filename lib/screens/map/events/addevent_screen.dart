@@ -314,9 +314,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       width: 40,
                       height: 40,
                       child: OutlinedButton(
-                        onPressed: () {
-                          // TODO: открытие карты выбора точки
-                        },
+                        onPressed: () {},
                         style: OutlinedButton.styleFrom(
                           shape: const CircleBorder(),
                           side: const BorderSide(color: AppColors.border),

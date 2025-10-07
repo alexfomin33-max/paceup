@@ -51,7 +51,6 @@ class TravelersFloatingButtons extends StatelessWidget {
             icon: Icons.tune,
             label: 'Фильтры',
             onTap: () {
-              // TODO: открыть фильтры попутчиков
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Фильтры попутчиков — скоро')),
               );
@@ -61,7 +60,6 @@ class TravelersFloatingButtons extends StatelessWidget {
             icon: Icons.person_search_outlined,
             label: 'Разместить поиск',
             onTap: () {
-              // TODO: форма/шит размещения заявки
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Разместить поиск — скоро')),
               );

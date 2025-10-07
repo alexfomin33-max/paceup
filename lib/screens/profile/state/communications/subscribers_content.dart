@@ -56,9 +56,7 @@ class SubscribersContent extends StatelessWidget {
                 final p = items[i];
                 final trailing = p.followBack
                     ? IconButton(
-                        onPressed: () {
-                          // TODO: отписаться (я уже подписан в ответ)
-                        },
+                        onPressed: () {},
                         splashRadius: 24,
                         icon: const Icon(
                           CupertinoIcons.person_crop_circle_badge_xmark,
@@ -67,9 +65,7 @@ class SubscribersContent extends StatelessWidget {
                         ),
                       )
                     : IconButton(
-                        onPressed: () {
-                          // TODO: подписаться в ответ
-                        },
+                        onPressed: () {},
                         splashRadius: 24,
                         icon: const Icon(
                           CupertinoIcons.person_crop_circle_badge_plus,

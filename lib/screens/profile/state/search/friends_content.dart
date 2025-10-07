@@ -102,9 +102,7 @@ class SearchFriendsContent extends StatelessWidget {
               child: SizedBox(
                 width: 220, // одинаковая ширина с кнопкой «Создать клуб»
                 child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: приглашение/шеринг
-                  },
+                  onPressed: () {},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
                     foregroundColor: Colors.white,
@@ -201,9 +199,7 @@ class _FriendRow extends StatelessWidget {
 
           // Кнопка «добавить»
           IconButton(
-            onPressed: () {
-              // TODO: отправить заявку/добавить
-            },
+            onPressed: () {},
             splashRadius: 24,
             icon: const Icon(
               CupertinoIcons.person_crop_circle_badge_plus,

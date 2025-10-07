@@ -51,7 +51,6 @@ class SlotsFloatingButtons extends StatelessWidget {
             icon: Icons.tune,
             label: 'Фильтры',
             onTap: () {
-              // TODO: открыть фильтры слотов
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Фильтры слотов — скоро')),
               );
@@ -61,7 +60,6 @@ class SlotsFloatingButtons extends StatelessWidget {
             icon: Icons.sell_outlined,
             label: 'Продать слот',
             onTap: () {
-              // TODO: экран/шит продажи слота
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Продать слот — скоро')),
               );

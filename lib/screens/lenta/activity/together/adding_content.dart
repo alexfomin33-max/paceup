@@ -55,9 +55,7 @@ class AddingContent extends StatelessWidget {
                             width: 28,
                             height: 28,
                             child: IconButton(
-                              onPressed: () {
-                                // TODO: отправить приглашение
-                              },
+                              onPressed: () {},
                               icon: const Icon(
                                 CupertinoIcons.add_circled,
                                 size: 22,

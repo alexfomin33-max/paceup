@@ -74,9 +74,7 @@ class SearchClubsContent extends StatelessWidget {
               child: SizedBox(
                 width: 220, // как у «Пригласить»
                 child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: экран создания клуба
-                  },
+                  onPressed: () {},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
                     foregroundColor: Colors.white,
