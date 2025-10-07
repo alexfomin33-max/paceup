@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
-import 'swim_trip_screen.dart';
+import '../../../theme/app_theme.dart';
+import '../swim_trip_screen.dart';
 
 class AvailableContent extends StatelessWidget {
   const AvailableContent({super.key});

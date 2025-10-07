@@ -135,10 +135,7 @@ class _ClubCard extends StatelessWidget {
             width: 100,
             child: club.circleLogo
                 ? ClipOval(child: _LogoImage(path: club.asset))
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: _LogoImage(path: club.asset),
-                  ),
+                : ClipOval(child: _LogoImage(path: club.asset)),
           ),
           const SizedBox(height: 8),
 

@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 
 // контенты по вкладкам
-import 'active_content.dart';
-import 'available_content.dart';
+import 'tabs/active_content.dart';
+import 'tabs/available_content.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});

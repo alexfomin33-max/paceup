@@ -822,10 +822,7 @@ class _ActivityBlockState extends State<ActivityBlock>
                       ),
                     );
                   },
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: _buildAvatar(activity.userAvatar),
-                  ),
+                  child: ClipOval(child: _buildAvatar(activity.userAvatar)),
                 ),
 
                 const SizedBox(width: 12),

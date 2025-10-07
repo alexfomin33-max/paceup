@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
-import '200k_run_screen.dart';
-import 'suzdal_screen.dart';
+import '../../../theme/app_theme.dart';
+import '../200k_run_screen.dart';
+import '../suzdal_screen.dart';
 
 class ActiveContent extends StatelessWidget {
   const ActiveContent({super.key});

@@ -297,8 +297,7 @@ class _LentaScreenState extends State<LentaScreen>
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+                ClipOval(
                   child: Image.network(
                     a.userAvatar,
                     width: 50,

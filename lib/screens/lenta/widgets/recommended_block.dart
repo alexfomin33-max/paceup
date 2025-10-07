@@ -86,8 +86,7 @@ class _FriendCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(60),
+          ClipOval(
             child: Image.asset(
               avatarAsset,
               width: 120,

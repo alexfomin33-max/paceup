@@ -28,7 +28,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/user_profile_header.dart';
 
-
 class ProfileScreen extends StatefulWidget {
   final int userId;
   const ProfileScreen({super.key, required this.userId});
@@ -64,50 +63,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfileHeader() async {
-  try {
-    final uri = Uri.parse('http://api.paceup.ru/user_profile_header.php'); // свой путь
-    final payload = {
-      'user_id': widget.userId,        // ← отправляем userId в JSON
-    };
+    try {
+      final uri = Uri.parse(
+        'http://api.paceup.ru/user_profile_header.php',
+      ); // свой путь
+      final payload = {
+        'user_id': widget.userId, // ← отправляем userId в JSON
+      };
 
-    final res = await http
-        .post(
-          uri,
-          headers: const {
-            'Content-Type': 'application/json; charset=utf-8',
-            'Accept': 'application/json',
-            // 'Authorization': 'Bearer <token>', // если нужно
-          },
-          body: jsonEncode(payload),
-        )
-        .timeout(const Duration(seconds: 12));
+      final res = await http
+          .post(
+            uri,
+            headers: const {
+              'Content-Type': 'application/json; charset=utf-8',
+              'Accept': 'application/json',
+              // 'Authorization': 'Bearer <token>', // если нужно
+            },
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(seconds: 12));
 
-    if (res.statusCode != 200) {
-      throw Exception('HTTP ${res.statusCode}');
+      if (res.statusCode != 200) {
+        throw Exception('HTTP ${res.statusCode}');
+      }
+
+      final map = _safeDecodeJsonAsMap(res.bodyBytes);
+
+      // Поддержим разные обертки ответа:
+      // { ...поля профиля... }   ИЛИ   { "data": { ... } }   ИЛИ   { "profile": { ... } }
+      final dynamic raw = map['profile'] ?? map['data'] ?? map;
+      if (raw is! Map)
+        throw const FormatException('Bad payload: not a JSON object');
+
+      setState(() {
+        _profileHeader = UserProfileHeader.fromJson(
+          Map<String, dynamic>.from(raw as Map),
+        );
+      });
+    } catch (e, st) {
+      debugPrint('Profile load error: $e\n$st');
+      // Не рушим верстку: оставим заглушки из HeaderCard как есть
     }
-
-    final map = _safeDecodeJsonAsMap(res.bodyBytes);
-
-    // Поддержим разные обертки ответа:
-    // { ...поля профиля... }   ИЛИ   { "data": { ... } }   ИЛИ   { "profile": { ... } }
-    final dynamic raw = map['profile'] ?? map['data'] ?? map;
-    if (raw is! Map) throw const FormatException('Bad payload: not a JSON object');
-
-    setState(() {
-      _profileHeader = UserProfileHeader.fromJson(Map<String, dynamic>.from(raw as Map));
-    });
-  } catch (e, st) {
-    debugPrint('Profile load error: $e\n$st');
-    // Не рушим верстку: оставим заглушки из HeaderCard как есть
   }
-}
 
-@override
-void initState() {
-  super.initState();
-  _loadProfileHeader();
-}
-
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileHeader();
+  }
 
   int _tab = 0;
 
@@ -192,7 +195,15 @@ void initState() {
           ),
 
           // Хедер профиля
-          SliverToBoxAdapter(child: RepaintBoundary(child: HeaderCard(profile: _profileHeader, userId: widget.userId, onReload: _loadProfileHeader,))),
+          SliverToBoxAdapter(
+            child: RepaintBoundary(
+              child: HeaderCard(
+                profile: _profileHeader,
+                userId: widget.userId,
+                onReload: _loadProfileHeader,
+              ),
+            ),
+          ),
 
           // TabsBar — обычным сливером (не pinned)
           SliverToBoxAdapter(
