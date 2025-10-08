@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
 import 'member_content.dart';
 import 'adding_content.dart';
-import 'dart:ui' show ImageFilter;
 
 class TogetherScreen extends StatefulWidget {
   const TogetherScreen({super.key});

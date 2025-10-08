@@ -147,7 +147,7 @@ class RouteDescriptionScreen extends StatelessWidget {
               height: 200,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 height: 200,
                 color: Colors.black.withValues(alpha: 0.06),
                 alignment: Alignment.center,
@@ -181,7 +181,7 @@ class RouteDescriptionScreen extends StatelessWidget {
                   Expanded(
                     child: _MetricBlock(
                       label: 'Набор высоты',
-                      value: '${ascentM} м',
+                      value: '$ascentM м',
                     ),
                   ),
                 ],
