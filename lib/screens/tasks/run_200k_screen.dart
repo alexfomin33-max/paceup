@@ -1,4 +1,3 @@
-// lib/screens/200k_run_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
@@ -79,9 +78,9 @@ class _Run200kScreenState extends State<Run200kScreen> {
                   ),
                   // добавили +36 сверху, чтобы нижняя половина круга не перекрывала текст
                   padding: const EdgeInsets.fromLTRB(16, 16 + 36, 16, 16),
-                  child: Column(
+                  child: const Column(
                     children: [
-                      const Text(
+                      Text(
                         '200 км бега',
                         style: TextStyle(
                           fontFamily: 'Inter',
@@ -90,8 +89,8 @@ class _Run200kScreenState extends State<Run200kScreen> {
                           color: AppColors.text,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
+                      SizedBox(height: 6),
+                      Text(
                         'Пробегите за месяц суммарно 200 километров.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -101,17 +100,17 @@ class _Run200kScreenState extends State<Run200kScreen> {
                           height: 1.25,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
 
                       // узкий прогресс-бар по центру
                       Center(
                         child: SizedBox(
                           width: 240,
-                          child: const _MiniProgress(percent: 145.8 / 200.0),
+                          child: _MiniProgress(percent: 145.8 / 200.0),
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
+                      SizedBox(height: 6),
+                      Text(
                         '145,8 из 200 км',
                         style: TextStyle(
                           fontFamily: 'Inter',

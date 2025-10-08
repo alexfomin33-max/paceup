@@ -155,9 +155,9 @@ class _InfoText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text.rich(
+    return const Text.rich(
       TextSpan(
-        children: const [
+        children: [
           TextSpan(
             text:
                 'Объединить возможно только тренировки, выполненные в один день.\n\n',
@@ -170,7 +170,7 @@ class _InfoText extends StatelessWidget {
             text: 'Показаны те тренировки, которые возможно объединить.',
           ),
         ],
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 13,
           height: 1.30,

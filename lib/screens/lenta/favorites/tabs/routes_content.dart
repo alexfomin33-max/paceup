@@ -44,7 +44,7 @@ class RoutesContent extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 4),
           sliver: SliverList.separated(
             itemCount: _items.length,
-            separatorBuilder: (_, __) =>
+            separatorBuilder: (_, _) =>
                 const SizedBox(height: 2), // зазор между карточками
             itemBuilder: (context, i) {
               final e = _items[i];
@@ -118,7 +118,7 @@ class _RouteRow extends StatelessWidget {
               width: 90,
               height: 60,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 width: 90,
                 height: 60,
                 color: Colors.black.withValues(alpha: 0.06),

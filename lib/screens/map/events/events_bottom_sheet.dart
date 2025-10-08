@@ -177,7 +177,7 @@ class EventsListVladimir extends StatelessWidget {
             },
           ),
 
-          _ClubsDivider(),
+          const _ClubsDivider(),
 
           // Карточка 2
           cardRow(
@@ -185,7 +185,7 @@ class EventsListVladimir extends StatelessWidget {
             title: 'Владимирский полумарафон «Золотые ворота»',
             subtitle: '31 августа 2025  ·  Участников: 1426',
           ),
-          _ClubsDivider(),
+          const _ClubsDivider(),
         ],
       ),
     );

@@ -73,9 +73,9 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                 ],
               ),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-              child: Column(
+              child: const Column(
                 children: [
-                  const Text(
+                  Text(
                     'Суздаль',
                     style: TextStyle(
                       fontFamily: 'Inter',
@@ -84,8 +84,8 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                       color: AppColors.text,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
+                  SizedBox(height: 6),
+                  Text(
                     'Это маленький, но очень уютный городок. '
                     'Музей деревянного зодчества погружает в эпоху XIX века. '
                     'Здесь можно увидеть быт крестьян ушедшего времени.',
@@ -97,7 +97,7 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                       height: 1.25,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
 
                   // Узкий прогресс-бар по центру
                   Center(
@@ -106,8 +106,8 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                       child: _MiniProgress(percent: percent),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
+                  SizedBox(height: 6),
+                  Text(
                     '21 784 из 110 033 шагов',
                     style: TextStyle(
                       fontFamily: 'Inter',

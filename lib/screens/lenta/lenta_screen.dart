@@ -10,10 +10,9 @@ import 'notifications/notifications_screen.dart';
 import 'dart:ui'; // для ImageFilter.blur
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:paceup/models/activity_lenta.dart';
+import '../../models/activity_lenta.dart';
 import 'activity/description_screen.dart';
 import 'widgets/recommended_block.dart';
-import 'package:flutter/painting.dart';
 import 'favorites/favorites_screen.dart';
 
 import 'dart:async';
@@ -171,7 +170,7 @@ class _LentaScreenState extends State<LentaScreen>
                 onPressed: () async {
                   await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => NotificationsScreen()),
+                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
                   );
                   setState(() {
                     _unreadCount = 0;
@@ -645,7 +644,7 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
       builder: (context, constraints) {
         // переносим твою оптимизацию cacheWidth внутрь каждого слайда
         final dpr = MediaQuery.of(context).devicePixelRatio;
-        final cacheWidth = (constraints.maxWidth * dpr).round();
+        (constraints.maxWidth * dpr).round();
 
         return Stack(
           fit: StackFit.expand,
@@ -681,7 +680,7 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
                   final cacheWidth = (MediaQuery.sizeOf(context).width * dpr)
                       .round();
                   const targetHeight = 300.0; // ты показываешь 300 px высоты
-                  final cacheHeight = (targetHeight * dpr).round();
+                  (targetHeight * dpr).round();
 
                   return Image.network(
                     url,

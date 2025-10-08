@@ -123,7 +123,7 @@ class _ClubRow extends StatelessWidget {
               width: 90,
               height: 60,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 width: 90,
                 height: 60,
                 color: Colors.black.withValues(alpha: 0.06),

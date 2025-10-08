@@ -13,9 +13,9 @@ class DescriptionContent extends StatelessWidget {
       color: AppColors.text,
     );
 
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
+      children: [
         Text('Бежим в лёгком разговорном темпе 👍🏻', style: style),
         SizedBox(height: 10),
         Text(

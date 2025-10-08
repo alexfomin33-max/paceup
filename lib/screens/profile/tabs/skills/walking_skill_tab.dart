@@ -116,11 +116,11 @@ class _FixedHeader extends StatelessWidget {
             const SizedBox(height: 10),
 
             // «10-й уровень»  |  «5 / 10» — строго в ширину 240
-            Center(
+            const Center(
               child: SizedBox(
                 width: 240,
                 child: Row(
-                  children: const [
+                  children: [
                     Expanded(
                       child: Text(
                         '10-й уровень',

@@ -31,7 +31,7 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final membersCount = MembersContent.demoCount;
+    final _ = MembersContent.demoCount;
 
     return Scaffold(
       backgroundColor: AppColors.background,

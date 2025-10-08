@@ -6,17 +6,17 @@ import '../../../../theme/app_theme.dart';
 List<Widget> buildGeneralStatsSlivers() {
   return [
     const SliverToBoxAdapter(child: _SectionTitle('Дней активности')),
-    SliverToBoxAdapter(
+    const SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+        padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
         child: _YearChartCard(
           initialYear: 2024,
-          color: const Color(0xFF3DA8FF),
+          color: Color(0xFF3DA8FF),
           // ⬇️ вернули прежние "вертикальные поля" графика: шкала 0..30 с шагом 5
           maxY: 30,
           tick: 5,
           height: 170,
-          values: const [6, 10, 14, 19, 22, 28, 30, 25, 24, 22, 18, 12],
+          values: [6, 10, 14, 19, 22, 28, 30, 25, 24, 22, 18, 12],
         ),
       ),
     ),
@@ -24,16 +24,16 @@ List<Widget> buildGeneralStatsSlivers() {
     const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
     const SliverToBoxAdapter(child: _SectionTitle('Время активности, мин')),
-    SliverToBoxAdapter(
+    const SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+        padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
         child: _YearChartCard(
           initialYear: 2024,
-          color: const Color(0xFFE85D9C),
+          color: Color(0xFFE85D9C),
           maxY: 3000,
           tick: 500,
           height: 190,
-          values: const [
+          values: [
             1500,
             1450,
             1400,

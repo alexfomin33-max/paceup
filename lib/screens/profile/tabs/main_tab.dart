@@ -51,7 +51,10 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
     }
 
     // Чистим возможный BOM и лишние пробелы
-    final raw = utf8.decode(res.bodyBytes).replaceFirst(RegExp(r'^\uFEFF'), '').trim();
+    final raw = utf8
+        .decode(res.bodyBytes)
+        .replaceFirst(RegExp(r'^\uFEFF'), '')
+        .trim();
     final jsonMap = json.decode(raw) as Map<String, dynamic>;
 
     if (jsonMap['ok'] == false) {
@@ -73,14 +76,20 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
       future: _future ??= _load(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const SliverFillRemainingCentered(child: CupertinoActivityIndicator());
+          return const SliverFillRemainingCentered(
+            child: CupertinoActivityIndicator(),
+          );
         }
         if (snap.hasError) {
           return SliverFillRemainingCentered(
             child: Text(
               'Не удалось загрузить данные\n${snap.error}',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.text),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                color: AppColors.text,
+              ),
             ),
           );
         }
@@ -96,20 +105,21 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
             SliverToBoxAdapter(child: _ActivityScroller(items: data.activity)),
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // КРОССОВКИ — секция с единым заголовком
-              if (prefs.showShoes && data.shoes.isNotEmpty) ..._buildGearSection(
+            // КРОССОВКИ — секция с единым заголовком
+            if (prefs.showShoes && data.shoes.isNotEmpty)
+              ..._buildGearSection(
                 title: 'Кроссовки',
                 items: data.shoes,
                 isBike: false,
               ),
 
-              // ВЕЛОСИПЕДЫ — секция с единым заголовком
-              if (prefs.showBikes && data.bikes.isNotEmpty) ..._buildGearSection(
+            // ВЕЛОСИПЕДЫ — секция с единым заголовком
+            if (prefs.showBikes && data.bikes.isNotEmpty)
+              ..._buildGearSection(
                 title: 'Велосипед',
                 items: data.bikes,
                 isBike: true,
               ),
-
 
             const SliverToBoxAdapter(child: _SectionTitle('Личные рекорды')),
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
@@ -130,15 +140,15 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
 
 // Фиксированные ассеты для активности (тип → локальный asset)
 const Map<String, String> _kActivityAssetByType = {
-  'walking':  'assets/walking.png',
-  'running':  'assets/running.png',
-  'cycling':  'assets/cycling.png',
+  'walking': 'assets/walking.png',
+  'running': 'assets/running.png',
+  'cycling': 'assets/cycling.png',
   'swimming': 'assets/swimming.png',
 };
 
 // Фиксированные ассеты для PR (код дистанции → локальный asset)
 const Map<String, String> _kPrAssetByCode = {
-  '5k':  'assets/5k.png',
+  '5k': 'assets/5k.png',
   '10k': 'assets/10k.png',
   '21k': 'assets/21k.png',
   '42k': 'assets/42k.png',
@@ -198,13 +208,18 @@ class _MainTabData {
     final act = <_ActItem>[];
     for (final e in (j['activity'] as List? ?? const [])) {
       final m = e as Map<String, dynamic>;
-      final type = (m['type'] as String?)?.toLowerCase() ?? 'walking'; // walking|running|cycling|swimming
-      final asset = _kActivityAssetByType[type] ?? _kActivityAssetByType['walking']!;
-      act.add(_ActItem(
-        asset,
-        m['value'] as String? ?? '0',
-        m['label'] as String? ?? '',
-      ));
+      final type =
+          (m['type'] as String?)?.toLowerCase() ??
+          'walking'; // walking|running|cycling|swimming
+      final asset =
+          _kActivityAssetByType[type] ?? _kActivityAssetByType['walking']!;
+      act.add(
+        _ActItem(
+          asset,
+          m['value'] as String? ?? '0',
+          m['label'] as String? ?? '',
+        ),
+      );
     }
 
     // shoes
@@ -212,12 +227,15 @@ class _MainTabData {
     for (final e in (j['shoes'] as List? ?? const [])) {
       final m = e as Map<String, dynamic>;
       final stats = (m['stats'] as Map?)?.cast<String, dynamic>() ?? const {};
-      shoes.add(_GearItem(
-        title: m['title'] as String? ?? '',
-        imageAsset: m['image'] as String? ?? 'assets/Asics.png',
-        mileage: (stats['mileage'] as String?) ?? '0 км',
-        paceOrSpeed: (stats['pace'] as String?) ?? (stats['speed'] as String?) ?? '-',
-      ));
+      shoes.add(
+        _GearItem(
+          title: m['title'] as String? ?? '',
+          imageAsset: m['image'] as String? ?? 'assets/Asics.png',
+          mileage: (stats['mileage'] as String?) ?? '0 км',
+          paceOrSpeed:
+              (stats['pace'] as String?) ?? (stats['speed'] as String?) ?? '-',
+        ),
+      );
     }
 
     // bikes
@@ -225,19 +243,24 @@ class _MainTabData {
     for (final e in (j['bikes'] as List? ?? const [])) {
       final m = e as Map<String, dynamic>;
       final stats = (m['stats'] as Map?)?.cast<String, dynamic>() ?? const {};
-      bikes.add(_GearItem(
-        title: m['title'] as String? ?? '',
-        imageAsset: m['image'] as String? ?? 'assets/bicycle.png',
-        mileage: (stats['mileage'] as String?) ?? '0 км',
-        paceOrSpeed: (stats['speed'] as String?) ?? (stats['pace'] as String?) ?? '-',
-      ));
+      bikes.add(
+        _GearItem(
+          title: m['title'] as String? ?? '',
+          imageAsset: m['image'] as String? ?? 'assets/bicycle.png',
+          mileage: (stats['mileage'] as String?) ?? '0 км',
+          paceOrSpeed:
+              (stats['speed'] as String?) ?? (stats['pace'] as String?) ?? '-',
+        ),
+      );
     }
 
     // PRs (asset берём локально по коду дистанции)
     final prs = <(_PRAsset, String)>[];
     for (final e in (j['prs'] as List? ?? const [])) {
       final m = e as Map<String, dynamic>;
-      final code = ((m['code'] ?? m['distance']) as String?)?.toLowerCase() ?? '5k'; // '5k'|'10k'|'21k'|'42k'
+      final code =
+          ((m['code'] ?? m['distance']) as String?)?.toLowerCase() ??
+          '5k'; // '5k'|'10k'|'21k'|'42k'
       final assetPath = _kPrAssetByCode[code] ?? _kPrAssetByCode['5k']!;
       prs.add((_PRAsset(assetPath), m['time'] as String? ?? '-'));
     }
@@ -265,8 +288,8 @@ class _MainTabData {
 class _GearItem {
   final String title;
   final String imageAsset;
-  final String mileage;      // '582 км'
-  final String paceOrSpeed;  // бег: '4:18 /км', велик: '35,7 км/ч'
+  final String mileage; // '582 км'
+  final String paceOrSpeed; // бег: '4:18 /км', велик: '35,7 км/ч'
   _GearItem({
     required this.title,
     required this.imageAsset,
@@ -334,7 +357,7 @@ class _ActivityScroller extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemBuilder: (_, i) => _ActivityCard(items[i]),
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemCount: items.length,
       ),
     );
@@ -578,7 +601,11 @@ class _MetricsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = <(IconData, String, String)>[
-      (CupertinoIcons.arrow_right, 'Среднее расстояние в неделю', data.avgWeekDistance),
+      (
+        CupertinoIcons.arrow_right,
+        'Среднее расстояние в неделю',
+        data.avgWeekDistance,
+      ),
       (CupertinoIcons.heart, 'МПК', data.vo2max),
       (CupertinoIcons.speedometer, 'Средний темп', data.avgPace),
       (CupertinoIcons.bolt, 'Мощность', data.power),
@@ -599,7 +626,10 @@ class _MetricsCard extends StatelessWidget {
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
                       Icon(r.$1, size: 18, color: AppColors.secondary),
@@ -627,7 +657,11 @@ class _MetricsCard extends StatelessWidget {
                   ),
                 ),
                 if (i != rows.length - 1)
-                  const Divider(height: 1, thickness: 0.5, color: Color(0xFFEAEAEA)),
+                  const Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: Color(0xFFEAEAEA),
+                  ),
               ],
             );
           }),
@@ -646,10 +680,7 @@ class SliverFillRemainingCentered extends StatelessWidget {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Center(child: child),
-        ),
+        SliverFillRemaining(hasScrollBody: false, child: Center(child: child)),
       ],
     );
   }

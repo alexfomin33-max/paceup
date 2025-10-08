@@ -36,7 +36,7 @@ class OptimizedAvatar extends StatelessWidget {
         cacheWidth: cw,
         filterQuality: FilterQuality.low,
         gaplessPlayback: true,
-        errorBuilder: (_, __, ___) => Image.asset(
+        errorBuilder: (_, _, _) => Image.asset(
           asset ?? fallbackAsset,
           width: size,
           height: size,

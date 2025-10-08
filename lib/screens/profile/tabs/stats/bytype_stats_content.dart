@@ -117,15 +117,15 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           'Расстояние',
           '${(2976 * s).toStringAsFixed(0)} км',
         ),
-        _MetricRowData(
+        const _MetricRowData(
           Icons.favorite,
           'Средний пульс',
           '152',
           color: Color(0xFFE55050), // красный для пульса
         ),
-        _MetricRowData(Icons.speed, 'Средний темп', '5:15 /км'),
-        _MetricRowData(Icons.directions_walk, 'Средний каденс', '173'),
-        _MetricRowData(Icons.insights, 'Относительное усилие', '50'),
+        const _MetricRowData(Icons.speed, 'Средний темп', '5:15 /км'),
+        const _MetricRowData(Icons.directions_walk, 'Средний каденс', '173'),
+        const _MetricRowData(Icons.insights, 'Относительное усилие', '50'),
         _MetricRowData(
           Icons.terrain,
           'Набор высоты',
@@ -150,7 +150,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           'Расстояние',
           '${(6120 * s).toStringAsFixed(0)} км',
         ),
-        _MetricRowData(Icons.speed, 'Средняя скорость', '28,4 км/ч'),
+        const _MetricRowData(Icons.speed, 'Средняя скорость', '28,4 км/ч'),
         _MetricRowData(
           Icons.terrain,
           'Набор высоты',
@@ -171,7 +171,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           'Расстояние',
           '${(320 * s).toStringAsFixed(0)} км',
         ),
-        _MetricRowData(Icons.speed, 'Средний темп', '1:45 /100м'),
+        const _MetricRowData(Icons.speed, 'Средний темп', '1:45 /100м'),
       ];
     }
   }
@@ -236,8 +236,8 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                       width: 0.7,
                     ),
                   ),
-                  child: Row(
-                    children: const [
+                  child: const Row(
+                    children: [
                       Text(
                         'За год',
                         style: TextStyle(

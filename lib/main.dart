@@ -27,7 +27,7 @@ void main() {
   // Глобальный перехватчик ошибок "не из Flutter-мира" (например, из изоляций)
   // В release-сборках полезно: не даём приложению падать молча.
   ui.PlatformDispatcher.instance.onError = (error, stack) {
-    // TODO: сюда можно подключить ваш Crashlytics/Sentry.
+   
     debugPrint('Uncaught error: $error');
     debugPrint('Stack: $stack');
     return true; // true = "ошибка обработана", не валим приложение

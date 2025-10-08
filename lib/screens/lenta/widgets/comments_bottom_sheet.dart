@@ -113,7 +113,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   bool _initialLoading = true;
   String? _error;
 
-  int _composerReset = 0;
+  final int _composerReset = 0;
 
   // пагинация
   final ScrollController _scroll = ScrollController();
@@ -148,23 +148,6 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     if (pos.pixels >= pos.maxScrollExtent - 200) {
       _loadComments();
     }
-  }
-
-  void _hardClearComposer() {
-    // 1) отключаем клавиатуру, чтобы она не вернула composing-текст
-    FocusScope.of(context).unfocus();
-
-    // 2) уничтожаем старый контроллер и создаём новый пустой
-    _textCtrl.dispose();
-    _textCtrl = TextEditingController();
-
-    // 3) пересобираем сабдерево (по ключу) и возвращаем фокус
-    setState(() {
-      _composerReset++;
-    });
-    Future.delayed(const Duration(milliseconds: 50), () {
-      if (mounted) _composerFocus.requestFocus();
-    });
   }
 
   Future<void> _loadComments({bool refresh = false}) async {
@@ -312,9 +295,9 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.6,
           ),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -322,7 +305,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
               // Список комментариев (Flexible как в образце)
               Flexible(child: _buildBody()),
               // Разделитель бледно-серого цвета
-              Divider(height: 1, color: AppColors.border),
+              const Divider(height: 1, color: AppColors.border),
               // Поле ввода — как в примере
               _ComposerBar(
                 key: ValueKey('composerBar_$_composerReset'), // 👈 ключ бара

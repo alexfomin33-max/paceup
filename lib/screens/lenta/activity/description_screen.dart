@@ -7,10 +7,10 @@ import 'package:latlong2/latlong.dart' as ll;
 import '../../../theme/app_theme.dart';
 // Берём готовые виджеты (чтобы совпадал верх с ActivityBlock)
 import '../widgets/activity_block.dart'
-    as AB
+    as ab
     show Equipment, RouteCard, MetricVertical;
 // Модель — через алиас, чтобы не конфликтовало имя Equipment
-import 'package:paceup/models/activity_lenta.dart' as AL;
+import '../../../models/activity_lenta.dart' as al;
 import '../activity/combining_screen.dart';
 
 /// Страница с подробным описанием тренировки.
@@ -18,7 +18,7 @@ import '../activity/combining_screen.dart';
 /// Добавлены: плашка часов, «Отрезки» на всю ширину, сегменты «Темп/Пульс/Высота»,
 /// единый блок «График + сводка темпа».
 class ActivityDescriptionPage extends StatefulWidget {
-  final AL.Activity activity;
+  final al.Activity activity;
   final int currentUserId;
 
   const ActivityDescriptionPage({
@@ -133,7 +133,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  AB.MetricVertical(
+                                  ab.MetricVertical(
                                     mainTitle: "Расстояние",
                                     mainValue: stats != null
                                         ? "${(stats.distance / 1000).toStringAsFixed(2)} км"
@@ -144,7 +144,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                                         : "—",
                                   ),
                                   const SizedBox(width: 24),
-                                  AB.MetricVertical(
+                                  ab.MetricVertical(
                                     mainTitle: "Время",
                                     mainValue: stats != null
                                         ? _fmtDuration(stats.duration)
@@ -218,7 +218,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                   // Плашка «обувь» (из ActivityBlock)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: AB.Equipment(items: a.equipments),
+                    child: ab.Equipment(items: a.equipments),
                   ),
                   const SizedBox(height: 4),
 
@@ -242,7 +242,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
 
           // ───────── Карта маршрута
           SliverToBoxAdapter(
-            child: AB.RouteCard(
+            child: ab.RouteCard(
               points: a.points.map((c) => ll.LatLng(c.lat, c.lng)).toList(),
             ),
           ),
@@ -293,8 +293,8 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                       ),
                     ],
                   ),
-                  Row(
-                    children: const [
+                  const Row(
+                    children: [
                       Icon(
                         CupertinoIcons.person_2,
                         size: 20,
@@ -334,10 +334,10 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
           // ───────── «Отрезки» — таблица на всю ширину экрана
-          SliverToBoxAdapter(
+          const SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Padding(
                   padding: EdgeInsets.fromLTRB(12, 6, 12, 6),
                   child: Text(
@@ -990,7 +990,7 @@ class _PaceSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget row(String name, String val) {
       return Padding(
-        padding: EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

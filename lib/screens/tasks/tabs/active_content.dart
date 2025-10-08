@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
-import '../200k_run_screen.dart';
+import '../run_200k_screen.dart';
 import '../suzdal_screen.dart';
 
 class ActiveContent extends StatelessWidget {
@@ -15,8 +15,8 @@ class ActiveContent extends StatelessWidget {
         const _MonthLabel('Июнь 2025'),
         const SizedBox(height: 8),
 
-        TaskCard(
-          colorTint: const Color(0xFFE9F7E3),
+        const TaskCard(
+          colorTint: Color(0xFFE9F7E3),
           icon: CupertinoIcons.star,
           badgeText: '10 дней',
           title: '10 дней активности',
@@ -41,8 +41,8 @@ class ActiveContent extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        TaskCard(
-          colorTint: const Color(0xFFE8F5FF),
+        const TaskCard(
+          colorTint: Color(0xFFE8F5FF),
           icon: CupertinoIcons.arrow_up,
           badgeText: '1000 м',
           title: '1000 метров набора высоты',
@@ -51,8 +51,8 @@ class ActiveContent extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        TaskCard(
-          colorTint: const Color(0xFFF7F0FF),
+        const TaskCard(
+          colorTint: Color(0xFFF7F0FF),
           icon: CupertinoIcons.stopwatch,
           badgeText: '1000 мин',
           title: '1000 минут активности',
@@ -78,11 +78,11 @@ class ActiveContent extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        ExpeditionCard(
+        const ExpeditionCard(
           title: 'Монблан',
           progressText: '3 521 из 4 810 метров',
           percent: 0.732,
-          image: const _RoundImage(provider: AssetImage('assets/Monblan.png')),
+          image: _RoundImage(provider: AssetImage('assets/Monblan.png')),
         ),
       ],
     );

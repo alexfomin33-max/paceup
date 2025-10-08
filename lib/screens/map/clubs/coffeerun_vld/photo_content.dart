@@ -20,9 +20,9 @@ class CoffeeRunVldPhotoContent extends StatelessWidget {
       PageRouteBuilder(
         opaque: true,
         barrierColor: Colors.black.withValues(alpha: 0.98),
-        pageBuilder: (_, __, ___) =>
+        pageBuilder: (_, _, _) =>
             _FullscreenGallery(initialIndex: index, assets: photos),
-        transitionsBuilder: (_, animation, __, child) =>
+        transitionsBuilder: (_, animation, _, child) =>
             FadeTransition(opacity: animation, child: child),
       ),
     );

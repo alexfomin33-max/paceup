@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:paceup/theme/app_theme.dart';
+import '../../../../theme/app_theme.dart';
 
 import 'photo_content.dart';
 import 'members_content.dart';
@@ -152,8 +152,8 @@ class _CoffeeRunVldScreenState extends State<CoffeeRunVldScreen> {
                         horizontal: 12,
                         vertical: 10,
                       ),
-                      child: Column(
-                        children: const [
+                      child: const Column(
+                        children: [
                           _InfoRow(
                             icon: CupertinoIcons.lock_fill,
                             text: 'Закрытое беговое сообщество',

@@ -30,7 +30,7 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case '/lenta':
       screen = (args is Map && args.containsKey('userId'))
           ? LentaScreen(userId: args['userId'] as int)
-          : LentaScreen(userId: 123);
+          : const LentaScreen(userId: 123);
       break;
 
     case '/regstep1':

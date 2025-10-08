@@ -119,7 +119,7 @@ class _MyEventsContentState extends State<MyEventsContent> {
           padding: const EdgeInsets.symmetric(horizontal: 4),
           sliver: SliverList.separated(
             itemCount: _items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 2),
+            separatorBuilder: (_, _) => const SizedBox(height: 2),
             itemBuilder: (context, i) => _EventCard(e: _items[i]),
           ),
         ),
@@ -183,7 +183,7 @@ class _EventRow extends StatelessWidget {
               width: 90,
               height: 60,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 width: 90,
                 height: 60,
                 color: Colors.black.withValues(alpha: 0.06),
@@ -277,9 +277,9 @@ class _InlineCalendar extends StatelessWidget {
         child: Column(
           children: [
             // Заголовки дней недели
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
+              children: [
                 _D('Пн'),
                 _D('Вт'),
                 _D('Ср'),

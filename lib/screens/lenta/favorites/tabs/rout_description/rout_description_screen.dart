@@ -104,7 +104,7 @@ class RouteDescriptionScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.emoji_events,
                         size: 18,
                         color: AppColors.secondary,
@@ -149,7 +149,7 @@ class RouteDescriptionScreen extends StatelessWidget {
                   height: 200,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     height: 200,
                     color: Colors.black.withValues(alpha: 0.06),
                     alignment: Alignment.center,
@@ -201,7 +201,7 @@ class RouteDescriptionScreen extends StatelessWidget {
                       Expanded(
                         child: _MetricBlock(
                           label: 'Набор высоты',
-                          value: '${ascentM} м',
+                          value: '$ascentM м',
                         ),
                       ),
                     ],
@@ -226,8 +226,8 @@ class RouteDescriptionScreen extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(0),
                 ),
-                child: Column(
-                  children: const [
+                child: const Column(
+                  children: [
                     _ActionRow(
                       icon: CupertinoIcons.rosette,
                       title: 'Личный рекорд',

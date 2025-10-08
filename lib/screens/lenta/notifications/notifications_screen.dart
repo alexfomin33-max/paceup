@@ -107,7 +107,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           itemCount: _items.length,
-          separatorBuilder: (_, __) =>
+          separatorBuilder: (_, _) =>
               const Divider(height: 1, thickness: 0.5, color: AppColors.border),
           itemBuilder: (context, i) {
             final n = _items[i];

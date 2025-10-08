@@ -650,8 +650,8 @@ class _PriceField extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F8FD),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF1F8FD),
                 shape: BoxShape.circle,
               ),
               child: const Center(

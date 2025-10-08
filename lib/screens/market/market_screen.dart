@@ -103,7 +103,7 @@ class _MarketScreenState extends State<MarketScreen> {
       key: const ValueKey('slots'),
       padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
       itemCount: items.length + headerCount,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (_, index) {
         if (index == 0) {
           return _SearchField(
@@ -155,7 +155,7 @@ class _MarketScreenState extends State<MarketScreen> {
       key: const ValueKey('goods'),
       padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
       itemCount: items.length + headerCount,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (_, index) {
         if (index == 0) {
           return _CategoryDropdown(
@@ -243,17 +243,17 @@ class _TopTabs extends StatelessWidget {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(30),
-      border: Border(
-        top: const BorderSide(
+      border: const Border(
+        top: BorderSide(
           color: Color(0xFFEAEAEA), // тонкая линия сверху
           width: 0.5,
         ),
-        bottom: const BorderSide(
+        bottom: BorderSide(
           color: Color(0xFFEAEAEA), // тонкая линия снизу
           width: 0.5,
         ),
-        left: BorderSide(color: const Color(0xFFEAEAEA), width: 0.5),
-        right: BorderSide(color: const Color(0xFFEAEAEA), width: 0.5),
+        left: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
+        right: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
       ),
     ),
     child: Row(
@@ -477,7 +477,7 @@ extension<T> on Set<T> {
 // ───────────── ДЕМО-ДАННЫЕ ─────────────
 
 final _demoItems = <MarketItem>[
-  MarketItem(
+  const MarketItem(
     title: '«Ночь. Стрелка. Ярославль»',
     distance: '21,1 км',
     price: 3000,
@@ -487,7 +487,7 @@ final _demoItems = <MarketItem>[
     locked: false,
     imageUrl: 'assets/slot_1.png',
   ),
-  MarketItem(
+  const MarketItem(
     title: 'Марафон "Алые Паруса"',
     distance: '42,2 км',
     price: 4500,
@@ -500,7 +500,7 @@ final _demoItems = <MarketItem>[
     placeText: 'Санкт-Петербург',
     typeText: 'Марафон',
   ),
-  MarketItem(
+  const MarketItem(
     title: 'Соревнования "Медный Всадник" SWIM',
     distance: '1 500 м',
     price: 5000,
@@ -510,7 +510,7 @@ final _demoItems = <MarketItem>[
     locked: false,
     imageUrl: 'assets/slot_3.png',
   ),
-  MarketItem(
+  const MarketItem(
     title: 'LUKA ULTRA BIKE г.Самара 2025',
     distance: '100 К',
     price: 6800,
@@ -520,7 +520,7 @@ final _demoItems = <MarketItem>[
     locked: false,
     imageUrl: 'assets/slot_4.png',
   ),
-  MarketItem(
+  const MarketItem(
     title: 'Минский полумарафон 2025',
     distance: '10 км',
     price: 3500,
@@ -530,7 +530,7 @@ final _demoItems = <MarketItem>[
     locked: true,
     imageUrl: 'assets/slot_5.png',
   ),
-  MarketItem(
+  const MarketItem(
     title: 'Полумарафон «Красная нить»',
     distance: '21,1 км',
     price: 2500,
@@ -540,7 +540,7 @@ final _demoItems = <MarketItem>[
     locked: false,
     imageUrl: 'assets/slot_6.png',
   ),
-  MarketItem(
+  const MarketItem(
     title: 'Женский забег "Медный Всадник"',
     distance: '5 км',
     price: 2200,
@@ -553,7 +553,7 @@ final _demoItems = <MarketItem>[
 ];
 
 final _demoGoods = <GoodsItem>[
-  GoodsItem(
+  const GoodsItem(
     title: 'Трейловые кроссовки Ino8 Trailfly Ultra G300',
     images: [
       'assets/sneakers1_1.png',
@@ -568,7 +568,7 @@ final _demoGoods = <GoodsItem>[
         'Личная встреча в Липецке или Москве, отправка Сдэком, Почтой, Авито-доставкой.\n'
         'Возможно привезти на Белые ночи или Кудыкину гору.',
   ),
-  GoodsItem(
+  const GoodsItem(
     title: 'Salomon XT-Rush 2',
     images: [
       'assets/sneakers2_1.png',
@@ -585,14 +585,14 @@ final _demoGoods = <GoodsItem>[
         'Куплены в Мюнхене, ни разу не носились.\n'
         'Передача по договоренности в Москве.',
   ),
-  GoodsItem(
+  const GoodsItem(
     title: 'Часы Garmin Forerunner 255',
     images: ['assets/watch_1.png', 'assets/watch_2.png', 'assets/watch_3.png'],
     price: 20000,
     gender: Gender.female,
     city: 'Москва',
   ),
-  GoodsItem(
+  const GoodsItem(
     title: 'Adidas Boston 11',
     images: [
       'assets/sneakers3_1.png',

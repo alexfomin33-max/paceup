@@ -100,9 +100,9 @@ class AddAccScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 15),
-            SizedBox(
+            const SizedBox(
               width: 250,
-              child: const Text(
+              child: Text(
                 "Регистрируясь, вы принимаете Условия предоставления услуг и Политику конфиденциальности",
                 style: TextStyle(
                   color: Color.fromARGB(255, 192, 192, 192),

@@ -271,7 +271,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               itemCount: 3,
-                              separatorBuilder: (_, __) =>
+                              separatorBuilder: (_, _) =>
                                   const SizedBox(width: 12),
                               itemBuilder: (_, i) => _MediaTile(
                                 file: photos[i],
@@ -372,7 +372,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         value: createFromClub,
                         onChanged: (v) =>
                             setState(() => createFromClub = v ?? false),
-                        side: BorderSide(color: AppColors.border),
+                        side: const BorderSide(color: AppColors.border),
                         activeColor: AppColors.secondary,
                       ),
                     ),
@@ -807,35 +807,6 @@ class _MediaTile extends StatelessWidget {
       ],
     );
   }
-}
-
-class _DashedBorderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    const dashWidth = 5.0;
-    const dashSpace = 5.0;
-    final paint = Paint()
-      ..color = const Color(0xFFBDC1CA)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(rect, const Radius.circular(6)));
-
-    final metrics = path.computeMetrics();
-    for (final m in metrics) {
-      double d = 0;
-      while (d < m.length) {
-        final next = d + dashWidth;
-        canvas.drawPath(m.extractPath(d, next), paint);
-        d = next + dashSpace;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 //

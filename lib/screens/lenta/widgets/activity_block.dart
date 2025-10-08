@@ -5,13 +5,13 @@ import 'package:latlong2/latlong.dart';
 import '../../../theme/app_theme.dart';
 import 'comments_bottom_sheet.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:paceup/models/activity_lenta.dart'; // <-- Модель Activity
-import 'package:paceup/models/activity_lenta.dart' as AL;
+import '../../../models/activity_lenta.dart'; // <-- Модель Activity
+import '../../../models/activity_lenta.dart' as al;
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../profile/profile_screen.dart';
-import '../activity/together/together_screen.dart'; // добавьте импорт
+import '../activity/together/together_screen.dart'; 
 
 /// 🔹 Виджет вертикальной метрики
 class MetricVertical extends StatelessWidget {
@@ -203,10 +203,10 @@ class Popup extends StatelessWidget {
                       Container(
                         width: 80,
                         height: 56,
-                        decoration: ShapeDecoration(
+                        decoration: const ShapeDecoration(
                           color: Colors.white,
                           shape: RoundedRectangleBorder(
-                            side: const BorderSide(color: Colors.white),
+                            side: BorderSide(color: Colors.white),
                           ),
                         ),
                         child: Padding(
@@ -275,7 +275,7 @@ class Popup extends StatelessWidget {
                 child: Container(
                   width: 288,
                   height: 1,
-                  color: Color(0xFFECECEC),
+                  color: const Color(0xFFECECEC),
                 ),
               ),
               Positioned(
@@ -355,7 +355,7 @@ class Popup extends StatelessWidget {
 
 /// 🔹 Equipment с анимацией Popup
 class Equipment extends StatefulWidget {
-  final List<AL.Equipment> items; // данные сюда
+  final List<al.Equipment> items; // данные сюда
 
   const Equipment({super.key, required this.items});
 
@@ -461,7 +461,7 @@ class _EquipmentState extends State<Equipment>
   @override
   Widget build(BuildContext context) {
     // берём первый элемент из списка; если пусто — используем фоллбек
-    final AL.Equipment? e = widget.items.isNotEmpty ? widget.items.first : null;
+    final al.Equipment? e = widget.items.isNotEmpty ? widget.items.first : null;
     final String name = e?.name.toString().trim().isNotEmpty == true
         ? e!.name
         : "Asics Jolt 3 Wide 'Dive Blue'";
@@ -514,7 +514,7 @@ class _EquipmentState extends State<Equipment>
                   children: [
                     TextSpan(
                       text: "$name\n",
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Color(0xFF323743),
                         fontSize: 13,
 
@@ -522,7 +522,7 @@ class _EquipmentState extends State<Equipment>
                         height: 1.69,
                       ),
                     ),
-                    TextSpan(
+                    const TextSpan(
                       text: "Пробег: ",
                       style: TextStyle(
                         color: Color(0xFF565D6D),
@@ -534,7 +534,7 @@ class _EquipmentState extends State<Equipment>
                     ),
                     TextSpan(
                       text: "$mileage",
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Color(0xFF171A1F),
                         fontSize: 12,
 
@@ -542,7 +542,7 @@ class _EquipmentState extends State<Equipment>
                         height: 1.64,
                       ),
                     ),
-                    TextSpan(
+                    const TextSpan(
                       text: " км",
                       style: TextStyle(
                         color: Color(0xFF565D6D),
@@ -573,7 +573,7 @@ class _EquipmentState extends State<Equipment>
                     key: _buttonKey,
                     width: 28,
                     height: 28,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.white, // фон кнопки
                       shape: BoxShape.circle, // делает кнопку круглой
                     ),
@@ -918,7 +918,7 @@ class _ActivityBlockState extends State<ActivityBlock>
           ),
           const SizedBox(height: 2),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Equipment(items: activity.equipments),
           ),
           const SizedBox(height: 8),
@@ -1007,13 +1007,13 @@ class _ActivityBlockState extends State<ActivityBlock>
                 ),
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       CupertinoIcons.person_2,
                       size: 20,
                       color: AppColors.green,
                     ),
-                    SizedBox(width: 4),
-                    Text(
+                    const SizedBox(width: 4),
+                    const Text(
                       "48",
                       style: TextStyle(
                         fontSize: 14,
@@ -1021,7 +1021,7 @@ class _ActivityBlockState extends State<ActivityBlock>
                         color: Colors.black,
                       ),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
                         Navigator.of(context).push(
@@ -1046,8 +1046,8 @@ class _ActivityBlockState extends State<ActivityBlock>
                       ),
                     ),
 
-                    SizedBox(width: 4),
-                    Text(
+                    const SizedBox(width: 4),
+                    const Text(
                       "3",
                       style: TextStyle(
                         fontSize: 14,
@@ -1076,7 +1076,7 @@ class _ActivityBlockState extends State<ActivityBlock>
         width: 50,
         height: 50,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Image.asset(
+        errorBuilder: (_, _, _) => Image.asset(
           "assets/Avatar_2.png",
           width: 50,
           height: 50,

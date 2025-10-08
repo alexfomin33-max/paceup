@@ -200,7 +200,7 @@ class _LogoImage extends StatelessWidget {
     return Image.asset(
       path,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(
+      errorBuilder: (_, _, _) => Container(
         color: Colors.black.withValues(alpha: 0.06),
         alignment: Alignment.center,
         child: const Icon(

@@ -22,7 +22,7 @@ class UserProfileHeader {
   });
 
   factory UserProfileHeader.fromJson(Map<String, dynamic> j) {
-    int? _toInt(dynamic v) {
+    int? toInt(dynamic v) {
       if (v == null) return null;
       if (v is int) return v;
       if (v is num) return v.toInt();
@@ -30,7 +30,7 @@ class UserProfileHeader {
       return int.tryParse(s);
     }
 
-    String? _toStr(dynamic v) {
+    String? toStr(dynamic v) {
       if (v == null) return null;
       final s = v.toString().trim(); // ← безопасно, т.к. v уже не null
       return s.isEmpty ? null : s;
@@ -41,14 +41,14 @@ class UserProfileHeader {
         : const <String, dynamic>{};
 
     return UserProfileHeader(
-      id: _toInt(j['id']) ?? 0,
+      id: toInt(j['id']) ?? 0,
       firstName: (j['first_name'] ?? '').toString(),
       lastName: (j['last_name'] ?? '').toString(),
-      avatar: _toStr(j['avatar']),
-      city: _toStr(j['city']),
-      age: _toInt(j['age']),
-      followers: _toInt(stats['followers']),
-      following: _toInt(stats['following']),
+      avatar: toStr(j['avatar']),
+      city: toStr(j['city']),
+      age: toInt(j['age']),
+      followers: toInt(stats['followers']),
+      following: toInt(stats['following']),
       status: (j['status'] ?? '').toString(),
     );
   }

@@ -37,7 +37,7 @@ class BookmarksContent extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 4),
           sliver: SliverList.separated(
             itemCount: _items.length,
-            separatorBuilder: (_, __) =>
+            separatorBuilder: (_, _) =>
                 const SizedBox(height: 2), // такой же зазор, как в Маршрутах
             itemBuilder: (context, i) => _BookmarkCard(e: _items[i]),
           ),
@@ -83,7 +83,7 @@ class _BookmarkRow extends StatelessWidget {
               width: 90,
               height: 60,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 width: 90,
                 height: 60,
                 color: Colors.black.withValues(alpha: 0.06),
@@ -123,7 +123,7 @@ class _BookmarkRow extends StatelessWidget {
                       padding: EdgeInsets.zero,
                       minSize: 28,
                       onPressed: () {
-                        // TODO: меню действий по закладке
+                      
                       },
                       child: const Icon(
                         CupertinoIcons.ellipsis_vertical,

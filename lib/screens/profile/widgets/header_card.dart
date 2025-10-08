@@ -83,7 +83,7 @@ class HeaderCard extends StatelessWidget {
                         })(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -91,7 +91,7 @@ class HeaderCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SizedBox(width: 6),
+                    const SizedBox(width: 6),
                     _SmallIconBtn(
                       icon: CupertinoIcons.pencil,
                       onPressed: () async {
@@ -103,16 +103,16 @@ class HeaderCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
                   _subtitleFrom(profile) ?? '',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
                     color: AppColors.text,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     _FollowStat(

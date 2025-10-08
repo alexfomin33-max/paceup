@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:paceup/theme/app_theme.dart';
+import '../../../../theme/app_theme.dart';
 
 class CoffeeRunVldGloryContent extends StatelessWidget {
   const CoffeeRunVldGloryContent({super.key});

@@ -114,11 +114,11 @@ class SlotsListVladimir extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return const Padding(
       // нижний отступ как в events/clubs
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
+      padding: EdgeInsets.fromLTRB(0, 0, 0, 50),
       child: Column(
-        children: const [
+        children: [
           // Примеры: замени asset/тексты на реальные, когда появятся
           _SlotRow(
             asset: 'assets/slot_example_1.png',

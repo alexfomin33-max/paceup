@@ -88,9 +88,9 @@ class SwimTripScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
-                children: const [
+                children: [
                   Text(
                     'Плавательное путешествие',
                     textAlign: TextAlign.center,
@@ -118,11 +118,11 @@ class SwimTripScreen extends StatelessWidget {
           ),
 
           // 3) Список проливов в карточках как на tasks_screen
-          SliverToBoxAdapter(
+          const SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+              padding: EdgeInsets.fromLTRB(12, 12, 12, 16),
               child: Column(
-                children: const [
+                children: [
                   _StraitCard(
                     image: AssetImage('assets/Bosfor.png'),
                     title: 'Пролив Босфор',

@@ -20,7 +20,7 @@ class EquipmentItem {
   });
 
   factory EquipmentItem.fromJson(Map<String, dynamic> j) {
-    double? _toD(dynamic v) {
+    double? toD(dynamic v) {
       if (v == null) return null;
       if (v is num) return v.toDouble();
       final s = v.toString().trim().replaceAll(',', '.');
@@ -34,7 +34,7 @@ class EquipmentItem {
       brand: (j['brand']?.toString().trim().isEmpty ?? true) ? null : j['brand'].toString(),
       model: (j['model']?.toString().trim().isEmpty ?? true) ? null : j['model'].toString(),
       photo: (j['photo']?.toString().trim().isEmpty ?? true) ? null : j['photo'].toString(),
-      distanceKm: _toD(j['distance_km']),
+      distanceKm: toD(j['distance_km']),
       primary: j['primary'] == true || j['primary'] == 1 || j['primary'] == '1',
     );
   }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:paceup/theme/app_theme.dart';
+import '../../../theme/app_theme.dart';
 import 'coffeerun_vld/coffeerun_vld_screen.dart';
 
 /// Каркас bottom sheet для вкладки «Клубы» — 1:1 как в events_bottom_sheet.dart
@@ -133,21 +133,21 @@ class ClubsListVladimir extends StatelessWidget {
               );
             },
           ),
-          _ClubsDivider(),
-          _ClubRow(
+          const _ClubsDivider(),
+          const _ClubRow(
             asset: 'assets/club_5.png',
             name: 'Велоклуб "Владимир"',
             city: 'Владимир',
             members: 2508,
           ),
-          _ClubsDivider(),
-          _ClubRow(
+          const _ClubsDivider(),
+          const _ClubRow(
             asset: 'assets/club_6.png',
             name: 'I Love Running Владимир',
             city: 'Владимир',
             members: 708,
           ),
-          _ClubsDivider(),
+          const _ClubsDivider(),
         ],
       ),
     );

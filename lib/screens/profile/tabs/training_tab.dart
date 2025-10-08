@@ -273,8 +273,8 @@ class _CalendarCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
       child: Column(
         children: [
-          Row(
-            children: const [
+          const Row(
+            children: [
               _Dow('Пн'),
               _Dow('Вт'),
               _Dow('Ср'),

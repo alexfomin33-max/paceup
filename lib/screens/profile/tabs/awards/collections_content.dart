@@ -5,25 +5,25 @@ import '../../../../theme/app_theme.dart';
 List<Widget> buildCollectionsSlivers() {
   // ── Города Золотого кольца
   final cities = <_CollItem>[
-    _CollItem('assets/city_1.png', 'Сергиев Посад'),
-    _CollItem('assets/city_2.png', 'Переславль'),
-    _CollItem('assets/city_3.png', 'Ростов Великий'),
-    _CollItem('assets/city_4.png', 'Углич'),
-    _CollItem('assets/city_5.png', 'Ярославль'),
-    _CollItem('assets/city_6.png', 'Кострома'),
-    _CollItem('assets/city_7.png', 'Иваново'),
-    _CollItem('assets/city_8.png', 'Суздаль', locked: true),
-    _CollItem('assets/city_9.png', 'Владимир', locked: true),
+    const _CollItem('assets/city_1.png', 'Сергиев Посад'),
+    const _CollItem('assets/city_2.png', 'Переславль'),
+    const _CollItem('assets/city_3.png', 'Ростов Великий'),
+    const _CollItem('assets/city_4.png', 'Углич'),
+    const _CollItem('assets/city_5.png', 'Ярославль'),
+    const _CollItem('assets/city_6.png', 'Кострома'),
+    const _CollItem('assets/city_7.png', 'Иваново'),
+    const _CollItem('assets/city_8.png', 'Суздаль', locked: true),
+    const _CollItem('assets/city_9.png', 'Владимир', locked: true),
   ];
 
   // ── Горы
   final mountains = <_CollItem>[
-    _CollItem('assets/mountain_1.png', 'Эверест'),
-    _CollItem('assets/mountain_2.png', 'Эльбрус'),
-    _CollItem('assets/mountain_3.png', 'Килиманджаро'),
-    _CollItem('assets/mountain_4.png', 'Чогори'),
-    _CollItem('assets/mountain_5.png', 'Фудзияма'),
-    _CollItem('assets/mountain_6.webp', 'Монблан', locked: true),
+    const _CollItem('assets/mountain_1.png', 'Эверест'),
+    const _CollItem('assets/mountain_2.png', 'Эльбрус'),
+    const _CollItem('assets/mountain_3.png', 'Килиманджаро'),
+    const _CollItem('assets/mountain_4.png', 'Чогори'),
+    const _CollItem('assets/mountain_5.png', 'Фудзияма'),
+    const _CollItem('assets/mountain_6.webp', 'Монблан', locked: true),
   ];
 
   return [

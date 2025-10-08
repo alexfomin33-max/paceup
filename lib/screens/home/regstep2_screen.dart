@@ -178,7 +178,7 @@ Future<void> saveForm(
   dynamic pulse,
 ) async {
   try {
-    final response = await http.post(
+    await http.post(
       Uri.parse('http://api.paceup.ru/save_reg_form2.php'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({

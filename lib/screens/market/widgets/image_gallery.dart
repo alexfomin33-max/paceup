@@ -19,7 +19,7 @@ Future<void> showImageGallery(
     // Делаем прозрачный barrier, чтобы управлять затемнением сами и анимировать его.
     barrierColor: Colors.transparent,
     transitionDuration: const Duration(milliseconds: 220),
-    pageBuilder: (_, __, ___) {
+    pageBuilder: (_, _, _) {
       return _FullscreenGallery(
         images: images,
         initialIndex: initialIndex,

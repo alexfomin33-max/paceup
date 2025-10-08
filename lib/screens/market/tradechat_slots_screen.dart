@@ -196,12 +196,12 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
 
                 // 1..4 — инфо-строки (значение сразу после подписи)
                 if (index == 1) {
-                  return _KVLine(
+                  return const _KVLine(
                     k: 'Слот переведён в статус',
                     v: _ChipNeutral(
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
+                        children: [
                           Icon(
                             CupertinoIcons.lock,
                             size: 14,
@@ -420,24 +420,24 @@ class _ActionsWrapState extends State<_ActionsWrap> {
         );
 
       case _DealStatus.bought:
-        return Center(
+        return const Center(
           child: _PillFinal(
             icon: CupertinoIcons.check_mark_circled,
             text: 'Слот куплен',
-            bg: const Color(0xFFE9F7E3),
-            border: const Color(0xFFD7EDCF),
-            fg: const Color(0xFF2E7D32),
+            bg: Color(0xFFE9F7E3),
+            border: Color(0xFFD7EDCF),
+            fg: Color(0xFF2E7D32),
           ),
         );
 
       case _DealStatus.cancelled:
-        return Center(
+        return const Center(
           child: _PillFinal(
             icon: CupertinoIcons.clear_circled,
             text: 'Сделка отменена',
-            bg: const Color(0xFFFFEBEB),
-            border: const Color(0xFFF6CACA),
-            fg: const Color(0xFFD32F2F),
+            bg: Color(0xFFFFEBEB),
+            border: Color(0xFFF6CACA),
+            fg: Color(0xFFD32F2F),
           ),
         );
     }

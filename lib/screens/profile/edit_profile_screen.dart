@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:typed_data';
 
 import '../../theme/app_theme.dart';
 
@@ -334,14 +333,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         s == 'male' ||
         s.contains('муж') ||
         s.contains('Муж') ||
-        s.contains('Мужской'))
+        s.contains('Мужской')) {
       return 'Мужской';
+    }
     if (s == 'f' ||
         s == 'female' ||
         s.contains('жен') ||
         s.contains('Жен') ||
-        s.contains('Женский'))
+        s.contains('Женский')) {
       return 'Женский';
+    }
     return 'Другое';
   }
 
@@ -410,9 +411,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       final map = _safeDecodeJsonAsMap(res.bodyBytes);
       final dynamic raw = map['profile'] ?? map['data'] ?? map;
-      if (raw is! Map)
+      if (raw is! Map) {
         throw const FormatException('Bad payload: not a JSON object');
-      final j = Map<String, dynamic>.from(raw as Map);
+      }
+      final j = Map<String, dynamic>.from(raw);
 
       // Контроллеры
       _firstName.text = _s(j['name']) ?? _firstName.text;
@@ -829,7 +831,7 @@ class _AvatarEditable extends StatelessWidget {
           height: size,
           fit: BoxFit.cover,
           cacheWidth: cacheWidth,
-          errorBuilder: (_, __, ___) => Image.asset(
+          errorBuilder: (_, _, _) => Image.asset(
             'assets/Avatar_0.png',
             width: size,
             height: size,
@@ -855,7 +857,7 @@ class _AvatarEditable extends StatelessWidget {
         height: size,
         fit: BoxFit.cover,
         cacheWidth: cacheWidth,
-        errorBuilder: (_, __, ___) => Image.asset(
+        errorBuilder: (_, _, _) => Image.asset(
           'assets/Avatar_0.png',
           width: size,
           height: size,

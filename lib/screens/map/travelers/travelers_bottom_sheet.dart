@@ -113,11 +113,11 @@ class TravelersListVladimir extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return const Padding(
       // нижний отступ как в других листах
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
+      padding: EdgeInsets.fromLTRB(0, 0, 0, 50),
       child: Column(
-        children: const [
+        children: [
           _TravelerRow(
             asset: 'assets/traveler_example_1.png',
             title: 'Ищу попутчиков на «Коферан»',

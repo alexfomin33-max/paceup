@@ -92,12 +92,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Поддержим разные обертки ответа:
       // { ...поля профиля... }   ИЛИ   { "data": { ... } }   ИЛИ   { "profile": { ... } }
       final dynamic raw = map['profile'] ?? map['data'] ?? map;
-      if (raw is! Map)
+      if (raw is! Map) {
         throw const FormatException('Bad payload: not a JSON object');
+      }
 
       setState(() {
         _profileHeader = UserProfileHeader.fromJson(
-          Map<String, dynamic>.from(raw as Map),
+          Map<String, dynamic>.from(raw),
         );
       });
     } catch (e, st) {
@@ -209,7 +210,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SliverToBoxAdapter(
             child: AnimatedBuilder(
               animation: _pageController,
-              builder: (_, __) {
+              builder: (_, _) {
                 final page = _pageController.hasClients
                     ? (_pageController.page ?? _tab.toDouble())
                     : _tab.toDouble();
@@ -235,14 +236,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPageChanged: _onPageChanged,
             children: [
               MainTab(userId: widget.userId),
-              PhotosTab(),
-              StatsTab(),
-              TrainingTab(),
-              RacesTab(),
-              GearTab(),
-              ClubsTab(),
-              AwardsTab(),
-              SkillsTab(),
+              const PhotosTab(),
+              const StatsTab(),
+              const TrainingTab(),
+              const RacesTab(),
+              const GearTab(),
+              const ClubsTab(),
+              const AwardsTab(),
+              const SkillsTab(),
             ],
           ),
         ),
