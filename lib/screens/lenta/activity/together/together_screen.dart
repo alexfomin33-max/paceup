@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
 import 'member_content.dart';
 import 'adding_content.dart';
+import 'dart:ui' show ImageFilter;
 
 class TogetherScreen extends StatefulWidget {
   const TogetherScreen({super.key});
@@ -66,7 +67,6 @@ class _TogetherScreenState extends State<TogetherScreen> {
                 items: const ['Участники', 'Добавить'],
                 value: _segment,
                 onChanged: (v) {
-                  setState(() => _segment = v);
                   _page.animateToPage(
                     v,
                     duration: const Duration(milliseconds: 220),
@@ -120,7 +120,8 @@ class _PageWrapper extends StatelessWidget {
   }
 }
 
-/// Пилюльный переключатель — стиль, как в stats_tab.dart
+/// Более дёшевый вариант: один «ползунок» + статичные тексты.
+/// Просто замени твой _SegmentedPill2 этим классом.
 class _SegmentedPill2 extends StatelessWidget {
   final List<String> items;
   final int value;
@@ -135,44 +136,68 @@ class _SegmentedPill2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = Container(
+    final pill = Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
       ),
-      child: Row(
-        children: [
-          Expanded(child: _seg(0, items[0])),
-          Expanded(child: _seg(1, items[1])),
-        ],
+      child: SizedBox(
+        height: 36,
+        child: Stack(
+          children: [
+            // Скользящий фон — двигаем только его
+            AnimatedAlign(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              alignment: value == 0
+                  ? Alignment.centerLeft
+                  : Alignment.centerRight,
+              child: FractionallySizedBox(
+                widthFactor: 0.5,
+                child: RepaintBoundary(
+                  child: Container(
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF379AE6),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Статичные кликабельные области + текст (не перерисовываются при движении фона)
+            Row(
+              children: [
+                _seg(0, items[0], selected: value == 0),
+                _seg(1, items[1], selected: value == 1),
+              ],
+            ),
+          ],
+        ),
       ),
     );
 
-    if (width == null) return content;
-    return SizedBox(width: width, child: content);
+    if (width == null) return pill;
+    return SizedBox(width: width, child: pill);
   }
 
-  Widget _seg(int idx, String text) {
-    final selected = value == idx;
-    return GestureDetector(
-      onTap: () => onChanged(idx),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? Colors.black87 : AppColors.background,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          text,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? Colors.white : AppColors.text,
+  Widget _seg(int idx, String text, {required bool selected}) {
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onChanged(idx),
+        child: Center(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              color: selected ? Colors.white : AppColors.text,
+            ),
           ),
         ),
       ),

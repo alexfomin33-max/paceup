@@ -38,7 +38,6 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
 
   void _switchTo(int i) {
     if (_index == i) return;
-    setState(() => _index = i);
     _controller.clear();
     _focus.unfocus();
     _page.animateToPage(
@@ -49,9 +48,7 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
   }
 
   void _onPageChanged(int i) {
-    setState(() => _index = i);
-    _controller.clear();
-    _focus.unfocus();
+    if (_index != i) setState(() => _index = i);
   }
 
   @override

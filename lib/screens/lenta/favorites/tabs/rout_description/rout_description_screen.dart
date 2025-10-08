@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../../../../../theme/app_theme.dart';
 
-/// Экран описания маршрута (без внешних общих карточек)
+/// Экран описания маршрута (без общих виджетов)
 class RouteDescriptionScreen extends StatelessWidget {
   const RouteDescriptionScreen({
     super.key,
@@ -57,42 +57,46 @@ class RouteDescriptionScreen extends StatelessWidget {
             color: AppColors.text,
           ),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 6),
-            child: Icon(
-              CupertinoIcons.ellipsis_vertical,
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(
+              CupertinoIcons.ellipsis,
               size: 18,
               color: AppColors.text,
             ),
+            tooltip: 'Ещё',
           ),
         ],
       ),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-          // ── Заголовок + чип + дата + автор
+          // ── Заголовок + чип — по центру
           SliverToBoxAdapter(
             child: Container(
               color: Colors.white,
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.text,
+                  Center(
+                    child: Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 15, // меньше, чем было
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.text,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  chip,
+                  Center(child: chip),
                   const SizedBox(height: 12),
+
+                  // Ниже можно оставить служебную инфу слева (как была)
                   Text(
                     'Создан: $createdText',
                     style: const TextStyle(
@@ -106,12 +110,12 @@ class RouteDescriptionScreen extends StatelessWidget {
                     children: [
                       const Icon(
                         Icons.emoji_events,
-                        size: 18,
-                        color: AppColors.secondary,
+                        size: 22,
+                        color: AppColors.gold,
                       ),
                       const SizedBox(width: 8),
                       CircleAvatar(
-                        radius: 14,
+                        radius: 18,
                         backgroundColor: Colors.black.withValues(alpha: 0.06),
                         backgroundImage: AssetImage(authorAvatar),
                       ),
@@ -136,123 +140,93 @@ class RouteDescriptionScreen extends StatelessWidget {
             ),
           ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-          // ── Карта-превью
+          // ── Карта-превью — без паддингов и без скруглений
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  mapAsset,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(
-                    height: 200,
-                    color: Colors.black.withValues(alpha: 0.06),
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      CupertinoIcons.map,
-                      size: 28,
-                      color: AppColors.greytext,
-                    ),
-                  ),
+            child: Image.asset(
+              mapAsset,
+              height: 200,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                height: 200,
+                color: Colors.black.withValues(alpha: 0.06),
+                alignment: Alignment.center,
+                child: const Icon(
+                  CupertinoIcons.map,
+                  size: 28,
+                  color: AppColors.greytext,
                 ),
               ),
             ),
           ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 10)),
-
-          // ── Три метрики (равные колонки) — локальная "карточка"
+          // ── Три метрики — карточка БЕЗ внутренних паддингов
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(
-                    color: const Color(0xFFEAEAEA),
-                    width: 0.5,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _MetricBlock(
+                      label: 'Расстояние',
+                      value: '${distanceKm.toStringAsFixed(2)} км',
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(0),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 10,
+                  Expanded(
+                    child: _MetricBlock(label: 'Время', value: durationText),
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _MetricBlock(
-                          label: 'Расстояние',
-                          value: '${distanceKm.toStringAsFixed(2)} км',
-                        ),
-                      ),
-                      Expanded(
-                        child: _MetricBlock(
-                          label: 'Время',
-                          value: durationText,
-                        ),
-                      ),
-                      Expanded(
-                        child: _MetricBlock(
-                          label: 'Набор высоты',
-                          value: '$ascentM м',
-                        ),
-                      ),
-                    ],
+                  Expanded(
+                    child: _MetricBlock(
+                      label: 'Набор высоты',
+                      value: '${ascentM} м',
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+          const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-          // ── Нижний список действий — локальная "карточка"
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            sliver: SliverToBoxAdapter(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(
-                    color: const Color(0xFFEAEAEA),
-                    width: 0.5,
+          // ── Нижняя карточка: 3 колонки (иконка+тайтл | правый текст | шеврон)
+          SliverToBoxAdapter(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+              ),
+              child: const Column(
+                children: [
+                  _ActionRow(
+                    icon: CupertinoIcons.rosette,
+                    title: 'Личный рекорд',
+                    trailingText: '1:32:57',
+                    trailingChevron: false, // у первой строки нет галочки
                   ),
-                  borderRadius: BorderRadius.circular(0),
-                ),
-                child: const Column(
-                  children: [
-                    _ActionRow(
-                      icon: CupertinoIcons.rosette,
-                      title: 'Личный рекорд',
-                      trailingText: '1:32:57',
-                    ),
-                    _DividerLine(),
-                    _ActionRow(
-                      icon: CupertinoIcons.timer,
-                      title: 'Мои результаты',
-                      trailingText: 'Забегов: 10',
-                    ),
-                    _DividerLine(),
-                    _ActionRow(
-                      icon: CupertinoIcons.chart_bar_alt_fill,
-                      title: 'Общие результаты',
-                      trailingChevron: true,
-                    ),
-                    _DividerLine(),
-                    _ActionRow(
-                      icon: CupertinoIcons.person_2_fill,
-                      title: 'Все участники маршрута',
-                      trailingText: '124',
-                    ),
-                  ],
-                ),
+                  _DividerLine(),
+                  _ActionRow(
+                    icon: CupertinoIcons.timer,
+                    title: 'Мои результаты',
+                    trailingText: 'Забегов: 10',
+                    trailingChevron: true,
+                  ),
+                  _DividerLine(),
+                  _ActionRow(
+                    icon: CupertinoIcons.chart_bar_alt_fill,
+                    title: 'Общие результаты',
+                    trailingChevron: true,
+                  ),
+                  _DividerLine(),
+                  _ActionRow(
+                    icon: CupertinoIcons.person_2_fill,
+                    title: 'Все участники маршрута',
+                    trailingText: '124',
+                    trailingChevron: true,
+                  ),
+                ],
               ),
             ),
           ),
@@ -280,9 +254,9 @@ class RouteDescriptionScreen extends StatelessWidget {
         t = 'Сложный маршрут';
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: c.withValues(alpha: 0.14),
+        color: c.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -290,7 +264,7 @@ class RouteDescriptionScreen extends StatelessWidget {
         style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 12,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w500,
           color: c,
         ),
       ),
@@ -298,7 +272,7 @@ class RouteDescriptionScreen extends StatelessWidget {
   }
 }
 
-// — блок метрики
+// ── блок метрики (без внешних паддингов у карточки)
 class _MetricBlock extends StatelessWidget {
   final String label;
   final String value;
@@ -306,37 +280,41 @@ class _MetricBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 12,
-            color: AppColors.greytext,
+    // внутренний минимальный отступ, чтобы текст не прилипал к границам между колонками
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 11,
+              color: AppColors.greytext,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.text,
+          const SizedBox(height: 2),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.text,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-// — строка действий
+// ── строка действий: 3 колонки
 class _ActionRow extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -354,45 +332,71 @@ class _ActionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 48,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: AppColors.secondary),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  color: AppColors.text,
-                ),
+      child: Row(
+        children: [
+          // 1-я колонка: иконка + тайтл (лево)
+          Expanded(
+            flex: 6,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                children: [
+                  Icon(icon, size: 18, color: AppColors.secondary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        color: AppColors.text,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            if (trailingText != null)
-              Text(
-                trailingText!,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.text,
-                ),
+          ),
+
+          // 2-я колонка: trailingText (правое выравнивание)
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: trailingText == null
+                    ? const SizedBox.shrink()
+                    : Text(
+                        trailingText!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.text,
+                        ),
+                      ),
               ),
-            if (trailingChevron)
-              const Padding(
-                padding: EdgeInsets.only(left: 6),
-                child: Icon(
-                  CupertinoIcons.chevron_forward,
-                  size: 16,
-                  color: AppColors.greytext,
-                ),
-              ),
-          ],
-        ),
+            ),
+          ),
+
+          // 3-я колонка: chevron (правый край)
+          SizedBox(
+            width: 28,
+            child: trailingChevron
+                ? const Icon(
+                    CupertinoIcons.chevron_forward,
+                    size: 16,
+                    color: AppColors.secondary,
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
       ),
     );
   }
