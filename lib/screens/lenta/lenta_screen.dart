@@ -41,21 +41,117 @@ class _LentaScreenState extends State<LentaScreen>
 
   late Future<List<Activity>> _future;
 
+  // Пагинация + pull-to-refresh
+  final int _limit = 5;                // по задаче: грузим 5 самых свежих
+  int _page = 1;                       // текущая страница
+  bool _hasMore = true;                // есть ли ещё записи на сервере
+  bool _isLoadingMore = false;         // идёт ли нижняя догрузка
+  List<Activity> _items = [];          // локальный список элементов ленты
+  // Уникальность элементов (чтобы не было дублей при глючном page)
+  final Set<int> _seenIds = {};
+
+  // Если у тебя поле идентификатора называется иначе (postId/activityId) — поменяй тут один раз.
+  int _getId(Activity a) => a.lentaId;
+
+
   /// Контроллер списка — нужен для скролла в начало по двойному тапу по заголовку
   final ScrollController _scrollController = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    _future = _loadActivities();
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
-  Future<List<Activity>> _loadActivities() async {
+  @override
+  void initState() {
+    super.initState();
+
+    // первая загрузка: 5 самых свежих
+    _future = _loadActivities(page: 1, limit: _limit).then((list) {
+      _items = list;
+      _page = 1;
+      _hasMore = list.length == _limit;
+
+      // заполняем набор «увиденных»
+      _seenIds
+        ..clear()
+        ..addAll(_items.map(_getId));
+
+      return list;
+    });
+
+
+    // догрузка по достижении низа
+    _scrollController.addListener(() {
+      final pos = _scrollController.position;
+      // extentAfter — сколько пикселей осталось вниз; если мало — грузим
+      if (_hasMore && !_isLoadingMore && pos.extentAfter < 400) {
+        _loadNextPage();
+      }
+    });
+  }
+
+  Future<void> _loadNextPage() async {
+    if (!_hasMore || _isLoadingMore) return;
+    setState(() => _isLoadingMore = true);
+
+    final nextPage = _page + 1;
+    final newItems = await _loadActivities(page: nextPage, limit: _limit);
+
+    // отсекаем уже встречавшиеся элементы
+    final unique = <Activity>[];
+    for (final a in newItems) {
+      final id = _getId(a);
+      if (_seenIds.add(id)) {
+        unique.add(a);
+      }
+    }
+
+    if (!mounted) return;
+    setState(() {
+      if (unique.isEmpty) {
+        // сервер вернул те же записи — считаем, что дальше ничего нет
+        _hasMore = false;
+      } else {
+        _items.addAll(unique);
+        _page = nextPage;
+        _hasMore = unique.length == _limit; // меньше лимита — конец
+      }
+      _isLoadingMore = false;
+    });
+  }
+
+  Future<void> _onRefresh() async {
+    final fresh = await _loadActivities(page: 1, limit: _limit);
+    _seenIds
+      ..clear()
+      ..addAll(fresh.map(_getId));
+    if (!mounted) return;
+    setState(() {
+      _items = fresh;
+      _page = 0;
+      _hasMore = fresh.length == _limit;
+      // чтобы FutureBuilder сразу отрисовал обновлённый список
+      _future = Future.value(fresh);
+    });
+  }
+
+  Future<List<Activity>> _loadActivities({required int page, required int limit}) async {
+    final payload = {
+      'userId': widget.userId,
+      'limit': limit,
+      'page': page,                          // если бэк понимает page
+      'offset': (page - 1) * limit,          // если бэк понимает offset — тоже ок
+      'order': 'desc',                       // если бэк умеет — гарант свежести
+    };
+
     final res = await http.post(
       Uri.parse('http://api.paceup.ru/activities_lenta.php'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({'userId': widget.userId, 'limit': 20, 'page': 1}),
+      body: json.encode(payload),
     );
+
     if (res.statusCode != 200) {
       throw Exception('HTTP ${res.statusCode}: ${res.body}');
     }
@@ -65,9 +161,7 @@ class _LentaScreenState extends State<LentaScreen>
         ? (decoded['data'] as List)
         : (decoded as List);
 
-    return list
-        .map((e) => Activity.fromApi(e as Map<String, dynamic>))
-        .toList();
+    return list.map((e) => Activity.fromApi(e as Map<String, dynamic>)).toList();
   }
 
   int _unreadCount =
@@ -131,8 +225,15 @@ class _LentaScreenState extends State<LentaScreen>
                   if (!mounted) return;
                   if (created == true) {
                     setState(() {
-                      _future =
-                          _loadActivities(); // ← перезапрашиваем ленту, FutureBuilder увидит новый Future
+                      _future = _loadActivities(page: 1, limit: _limit).then((list) {
+                        _items = list;
+                        _page = 1;
+                        _hasMore = list.length == _limit;
+                        _seenIds
+                          ..clear()
+                          ..addAll(list.map(_getId)); // ← важная строка: обновили набор «увиденных»
+                        return list;
+                      });
                     });
                     // опционально прокрутить к началу, чтобы сразу увидеть новый пост
                     if (_scrollController.hasClients) {
@@ -205,8 +306,17 @@ class _LentaScreenState extends State<LentaScreen>
                     Text('Ошибка: ${snap.error}'),
                     const SizedBox(height: 12),
                     OutlinedButton(
-                      onPressed: () =>
-                          setState(() => _future = _loadActivities()),
+                      onPressed: () => setState(() {
+                        _future = _loadActivities(page: 1, limit: _limit).then((list) {
+                          _items = list;
+                          _page = 1;
+                          _hasMore = list.length == _limit;
+                          _seenIds
+                            ..clear()
+                            ..addAll(list.map(_getId)); // ← обновили набор «увиденных»
+                          return list;
+                        });
+                      }),
                       child: const Text('Повторить'),
                     ),
                   ],
@@ -215,40 +325,65 @@ class _LentaScreenState extends State<LentaScreen>
             );
           }
 
-          final items = snap.data ?? const <Activity>[];
+          final items = _items.isNotEmpty ? _items : (snap.data ?? const <Activity>[]);
 
+          // если совсем пусто — покажем только pull-to-refresh
           if (items.isEmpty) {
-            return const Center(child: Text('Пока в ленте пусто'));
+            return RefreshIndicator.adaptive(
+              onRefresh: _onRefresh,
+              child: ListView(
+                controller: _scrollController,
+                padding: const EdgeInsets.only(top: kToolbarH + 38, bottom: 12),
+                children: const [
+                  SizedBox(height: 120),
+                  Center(child: Text('ока в ленте пусто')),
+                  SizedBox(height: 120),
+                ],
+              ),
+            );
           }
 
           // ✅ ленивый список с «окном» под рекомендации после первого элемента
-          return ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.only(top: kToolbarH + 38, bottom: 12),
-            itemCount: items.length + 1, // +1 — окно под рекомендации
-            addAutomaticKeepAlives: false,
-            addRepaintBoundaries: true,
-            addSemanticIndexes: false,
-            itemBuilder: (context, i) {
-              if (i == 0) {
-                final first = _buildFeedItem(context, items[0]);
-                return Column(
-                  children: [
-                    first,
-                    const SizedBox(height: 16),
-                    const RecommendedBlock(),
-                    const SizedBox(height: 16),
-                  ],
-                );
-              }
+          return RefreshIndicator.adaptive(
+            onRefresh: _onRefresh,
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.only(top: kToolbarH + 38, bottom: 12),
+              // столько же, сколько элементов, +1 если идёт догрузка (подвал-лоадер)
+              itemCount: items.length + (_isLoadingMore ? 1 : 0),
+              addAutomaticKeepAlives: false,
+              addRepaintBoundaries: true,
+              addSemanticIndexes: false,
+              itemBuilder: (context, i) {
+                // Последняя строка — индикатор догрузки
+                if (_isLoadingMore && i == items.length) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(child: CupertinoActivityIndicator()),
+                  );
+                }
 
-              final idx = i; // из-за окна индексы совпадают
-              if (idx >= items.length) return const SizedBox.shrink();
+                // i всегда в [0 .. items.length - 1]
+                if (i == 0) {
+                  // первый элемент + блок рекомендаций — в ОДНОЙ карточке
+                  final first = _buildFeedItem(context, items[0]);
+                  return Column(
+                    children: [
+                      first,
+                      const SizedBox(height: 16),
+                      const RecommendedBlock(),
+                      const SizedBox(height: 16),
+                    ],
+                  );
+                }
 
-              final item = _buildFeedItem(context, items[idx]);
-              return Column(children: [item, const SizedBox(height: 16)]);
-            },
+                // остальные обычные элементы
+                final item = _buildFeedItem(context, items[i]);
+                return Column(children: [item, const SizedBox(height: 16)]);
+              },
+            ),
           );
+
         },
       ),
     );
