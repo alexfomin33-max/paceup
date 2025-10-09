@@ -1,6 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../theme/app_theme.dart';
+import 'my_results/my_results_screen.dart';
+import 'all_results/all_results_screen.dart';
+import 'members_route/members_route_screen.dart';
 
 /// Экран описания маршрута (без общих виджетов)
 class RouteDescriptionScreen extends StatelessWidget {
@@ -109,7 +112,7 @@ class RouteDescriptionScreen extends StatelessWidget {
                   Row(
                     children: [
                       const Icon(
-                        Icons.emoji_events,
+                        Icons.emoji_events_outlined,
                         size: 22,
                         color: AppColors.gold,
                       ),
@@ -198,33 +201,69 @@ class RouteDescriptionScreen extends StatelessWidget {
                 color: Colors.white,
                 border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
               ),
-              child: const Column(
+              child: Column(
                 children: [
-                  _ActionRow(
+                  const _ActionRow(
                     icon: CupertinoIcons.rosette,
                     title: 'Личный рекорд',
                     trailingText: '1:32:57',
                     trailingChevron: false, // у первой строки нет галочки
+                    onTap: null, // не кликается
                   ),
-                  _DividerLine(),
+                  const _DividerLine(),
                   _ActionRow(
                     icon: CupertinoIcons.timer,
                     title: 'Мои результаты',
                     trailingText: 'Забегов: 10',
                     trailingChevron: true,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (_) => MyResultsScreen(
+                            routeId: 0, // int
+                            routeTitle: title, // String
+                            difficultyText: _difficultyText(
+                              difficulty,
+                            ), // String? (по желанию)
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  _DividerLine(),
+                  const _DividerLine(),
                   _ActionRow(
                     icon: CupertinoIcons.chart_bar_alt_fill,
                     title: 'Общие результаты',
                     trailingChevron: true,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (_) => AllResultsScreen(
+                            routeId: 0, // подставь реальный
+                            routeTitle: title,
+                            difficultyText: _difficultyText(difficulty),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  _DividerLine(),
+                  const _DividerLine(),
                   _ActionRow(
                     icon: CupertinoIcons.person_2_fill,
                     title: 'Все участники маршрута',
                     trailingText: '124',
                     trailingChevron: true,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (_) => MembersRouteScreen(
+                            routeId: 0, // твой id
+                            routeTitle: title,
+                            difficultyText: _difficultyText(difficulty),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -254,7 +293,7 @@ class RouteDescriptionScreen extends StatelessWidget {
         t = 'Сложный маршрут';
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(20),
@@ -270,6 +309,17 @@ class RouteDescriptionScreen extends StatelessWidget {
       ),
     );
   }
+
+  String _difficultyText(String d) {
+    switch (d) {
+      case 'easy':
+        return 'Лёгкий маршрут';
+      case 'medium':
+        return 'Средний маршрут';
+      default:
+        return 'Сложный маршрут';
+    }
+  }
 }
 
 // ── блок метрики (без внешних паддингов у карточки)
@@ -282,7 +332,7 @@ class _MetricBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     // внутренний минимальный отступ, чтобы текст не прилипал к границам между колонками
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -303,7 +353,7 @@ class _MetricBlock extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontFamily: 'Inter',
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: FontWeight.w700,
               color: AppColors.text,
             ),
@@ -320,83 +370,88 @@ class _ActionRow extends StatelessWidget {
   final String title;
   final String? trailingText;
   final bool trailingChevron;
+  final VoidCallback? onTap;
 
   const _ActionRow({
     required this.icon,
     required this.title,
     this.trailingText,
     this.trailingChevron = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: Row(
-        children: [
-          // 1-я колонка: иконка + тайтл (лево)
-          Expanded(
-            flex: 6,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Row(
-                children: [
-                  Icon(icon, size: 18, color: AppColors.secondary),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        color: AppColors.text,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // 2-я колонка: trailingText (правое выравнивание)
-          Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: trailingText == null
-                    ? const SizedBox.shrink()
-                    : Text(
-                        trailingText!,
+    return InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        height: 48,
+        child: Row(
+          children: [
+            // 1-я колонка: иконка + тайтл (лево)
+            Expanded(
+              flex: 6,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Row(
+                  children: [
+                    Icon(icon, size: 18, color: AppColors.secondary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.right,
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
                           color: AppColors.text,
                         ),
                       ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // 3-я колонка: chevron (правый край)
-          SizedBox(
-            width: 28,
-            child: trailingChevron
-                ? const Icon(
-                    CupertinoIcons.chevron_forward,
-                    size: 16,
-                    color: AppColors.secondary,
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
+            // 2-я колонка: trailingText (правое выравнивание)
+            Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: trailingText == null
+                      ? const SizedBox.shrink()
+                      : Text(
+                          trailingText!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.text,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+
+            // 3-я колонка: chevron (правый край)
+            SizedBox(
+              width: 28,
+              child: trailingChevron
+                  ? const Icon(
+                      CupertinoIcons.chevron_forward,
+                      size: 16,
+                      color: AppColors.secondary,
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
       ),
     );
   }

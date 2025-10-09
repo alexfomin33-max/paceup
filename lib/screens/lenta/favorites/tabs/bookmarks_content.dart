@@ -72,7 +72,7 @@ class _BookmarkRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       child: Row(
         children: [
           // Превью
@@ -96,7 +96,7 @@ class _BookmarkRow extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
 
           // Правый столбец
           Expanded(
@@ -122,9 +122,7 @@ class _BookmarkRow extends StatelessWidget {
                     CupertinoButton(
                       padding: EdgeInsets.zero,
                       minSize: 28,
-                      onPressed: () {
-                      
-                      },
+                      onPressed: () {},
                       child: const Icon(
                         CupertinoIcons.ellipsis_vertical,
                         size: 18,
@@ -133,7 +131,7 @@ class _BookmarkRow extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 // Вторая строка: дата + участники
                 Text(
                   '${e.dateText}  ·  Участников: ${_fmt(e.members)}',

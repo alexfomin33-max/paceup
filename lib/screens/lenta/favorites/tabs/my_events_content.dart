@@ -139,8 +139,8 @@ class _EventCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
+
         // стиль карточки такой же, как в других вкладках
-        borderRadius: BorderRadius.circular(0),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
       ),
       child: _EventRow(e: e),
@@ -172,7 +172,7 @@ class _EventRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       // внутренние отступы карточки
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -196,7 +196,7 @@ class _EventRow extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,7 +212,7 @@ class _EventRow extends StatelessWidget {
                     color: AppColors.text,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
                   '${e.dateText}  ·  Участников: ${_fmt(e.members)}',
                   maxLines: 1,

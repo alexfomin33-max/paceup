@@ -156,7 +156,7 @@ class _RouteRow extends StatelessWidget {
                     chip,
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 // Метрики: дистанция, время, набор
                 Row(
                   children: [
