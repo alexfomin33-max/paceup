@@ -139,7 +139,27 @@ class _RouteCardState extends State<RouteCard> {
             },
           ),
           children: [
-            TileLayer(
+            TileLayer(// https://api.maptiler.com/maps/topo-v2/{z}/{x}/{y}.png?
+              urlTemplate: 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={apiKey}',
+              additionalOptions: {'apiKey': '5Ssg96Nz79IHOCKB0MLL'},
+              keepBuffer: 1,
+              retinaMode: true,
+              maxZoom: 18,
+              minZoom: 3,
+              userAgentPackageName: 'paceup.ru',
+            ),
+            // ⬇️ Перенесли атрибуцию сюда
+            const RichAttributionWidget(
+              attributions: [
+                TextSourceAttribution(
+                  'MapTiler © OpenStreetMap',
+                  // onTap: () => launchUrl(Uri.parse('https://www.openstreetmap.org/copyright')),
+                ),
+              ],
+              // (необязательно) место и отступы подписи
+              // popupInitialDisplayDuration: const Duration(seconds: 0),
+            ),
+            /*TileLayer(
               // убрали {s}
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               // нормальный user-agent — OSM это любит
@@ -152,7 +172,7 @@ class _RouteCardState extends State<RouteCard> {
               retinaMode: false,
               maxZoom: 18,
               minZoom: 3,
-            ),
+            ),*/
             PolylineLayer(
               polylines: [
                 Polyline(
