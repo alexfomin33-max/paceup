@@ -322,7 +322,7 @@ class _PRAsset {
 
 class _SectionTitle extends StatelessWidget {
   final String text;
-  const _SectionTitle(this.text, {super.key});
+  const _SectionTitle(this.text);
 
   @override
   Widget build(BuildContext context) {
@@ -346,7 +346,7 @@ class _SectionTitle extends StatelessWidget {
 
 class _ActivityScroller extends StatelessWidget {
   final List<_ActItem> items;
-  const _ActivityScroller({super.key, required this.items});
+  const _ActivityScroller({required this.items});
 
   @override
   Widget build(BuildContext context) {
@@ -437,7 +437,6 @@ class _GearCard extends StatelessWidget {
   final String stat2Value;
 
   const _GearCard({
-    super.key,
     required this.title,
     required this.imageAsset,
     required this.stat1Label,
@@ -546,7 +545,7 @@ class _InlineStat extends StatelessWidget {
 
 class _PRRow extends StatelessWidget {
   final List<(_PRAsset, String)> items;
-  const _PRRow({super.key, required this.items});
+  const _PRRow({required this.items});
 
   @override
   Widget build(BuildContext context) {
@@ -573,7 +572,7 @@ class _PRRow extends StatelessWidget {
 class _PRBadge extends StatelessWidget {
   final String asset;
   final String time;
-  const _PRBadge({super.key, required this.asset, required this.time});
+  const _PRBadge({required this.asset, required this.time});
 
   @override
   Widget build(BuildContext context) {
@@ -596,7 +595,7 @@ class _PRBadge extends StatelessWidget {
 
 class _MetricsCard extends StatelessWidget {
   final _MetricsData data;
-  const _MetricsCard({super.key, required this.data});
+  const _MetricsCard({required this.data});
 
   @override
   Widget build(BuildContext context) {

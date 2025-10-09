@@ -65,12 +65,24 @@ class _MapScreenState extends State<MapScreen> {
             children: [
               TileLayer(
                 // без поддоменов, корректный User-Agent
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.paceip',
+                //urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={apiKey}',
+                additionalOptions: {'apiKey': '5Ssg96Nz79IHOCKB0MLL'},
+                userAgentPackageName: 'paceup.ru',
                 maxZoom: 19,
                 minZoom: 3,
                 keepBuffer: 1,
                 retinaMode: false,
+              ),
+              const RichAttributionWidget(
+                attributions: [
+                  TextSourceAttribution(
+                    'MapTiler © OpenStreetMap',
+                    // onTap: () => launchUrl(Uri.parse('https://www.openstreetmap.org/copyright')),
+                  ),
+                ],
+                // (необязательно) место и отступы подписи
+                // popupInitialDisplayDuration: const Duration(seconds: 0),
               ),
               MarkerLayer(
                 markers: markers.map((m) {

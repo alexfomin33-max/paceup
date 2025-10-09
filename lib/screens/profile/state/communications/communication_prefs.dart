@@ -150,7 +150,7 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
 /// Мы прокинем актуальный query через Inherited/Builder ниже.
 class _PageKeepAlive extends StatefulWidget {
   final Widget child;
-  const _PageKeepAlive({super.key, required this.child});
+  const _PageKeepAlive({required this.child});
 
   @override
   State<_PageKeepAlive> createState() => _PageKeepAliveState();
