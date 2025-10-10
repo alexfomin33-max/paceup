@@ -7,7 +7,7 @@ import 'widgets/header_card.dart';
 import 'widgets/tabs_bar.dart';
 
 // вкладки
-import 'tabs/main_tab.dart';
+import 'tabs/main/main_tab.dart';
 import 'tabs/photos_tab.dart';
 import 'tabs/stats/stats_tab.dart';
 import 'tabs/training_tab.dart';
