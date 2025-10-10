@@ -6,12 +6,14 @@ import 'package:latlong2/latlong.dart' as ll;
 
 import '../../../theme/app_theme.dart';
 // Берём готовые виджеты (чтобы совпадал верх с ActivityBlock)
-import '../widgets/activity_block.dart'
+import '../widgets/activity/stats/stats_row.dart' as ab show MetricVertical;
+import '../widgets/activity/equipment/equipment_chip.dart'
     as ab
-    show Equipment, RouteCard, MetricVertical;
+    show EquipmentChip;
+import '../widgets/activity/route/route_card.dart' as ab show RouteCard;
 // Модель — через алиас, чтобы не конфликтовало имя Equipment
 import '../../../models/activity_lenta.dart' as al;
-import '../activity/combining_screen.dart';
+import 'combining_screen.dart';
 
 /// Страница с подробным описанием тренировки.
 /// Верхний блок (аватар, дата, метрики) полностью повторяет ActivityBlock.
@@ -218,7 +220,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                   // Плашка «обувь» (из ActivityBlock)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: ab.Equipment(items: a.equipments),
+                    child: ab.EquipmentChip(items: a.equipments),
                   ),
                   const SizedBox(height: 4),
 
