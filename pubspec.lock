@@ -53,10 +53,10 @@ packages:
     dependency: transitive
     description:
       name: cross_cache
-      sha256: "1388a52af3550d043bdff29f3686dbf3cb31642d4a44f2017a821ec09b4086e5"
+      sha256: ddf99059e2174d141efa03bea6d51eb7c8983f4a4af43ddee7556bbc43399522
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.4"
+    version: "1.0.5"
   cross_file:
     dependency: transitive
     description:
@@ -218,10 +218,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_chat_ui
-      sha256: aafab2afe71c034ec6353a2b109cbaba73ce4be572692ebd29889e4d82227b49
+      sha256: "08a13577ea943d7965e3b1766d3a2119b07b56aced5336900ab7fb4c377d4ca0"
       url: "https://pub.dev"
     source: hosted
-    version: "2.9.0"
+    version: "2.9.1"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -279,10 +279,10 @@ packages:
     dependency: transitive
     description:
       name: flutter_plugin_android_lifecycle
-      sha256: b0694b7fb1689b0e6cc193b3f1fcac6423c4f93c74fb20b806c6b6f196db0c31
+      sha256: c2fe1001710127dfa7da89977a08d591398370d099aacdaa6d44da7eb14b8476
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.30"
+    version: "2.0.31"
   flutter_secure_storage:
     dependency: "direct main"
     description:
@@ -401,10 +401,10 @@ packages:
     dependency: transitive
     description:
       name: image_picker_android
-      sha256: "8dfe08ea7fcf7467dbaf6889e72eebd5e0d6711caae201fdac780eb45232cd02"
+      sha256: dd7a61daaa5896cc34b7bc95f66c60225ae6bee0d167dde0e21a9d9016cac0dc
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.13+3"
+    version: "0.8.13+4"
   image_picker_for_web:
     dependency: transitive
     description:
@@ -529,10 +529,10 @@ packages:
     dependency: transitive
     description:
       name: logger
-      sha256: "55d6c23a6c15db14920e037fe7e0dc32e7cdaf3b64b4b25df2d541b5b6b81c0c"
+      sha256: a7967e31b703831a893bbc3c3dd11db08126fe5f369b5c648a36f821979f5be3
       url: "https://pub.dev"
     source: hosted
-    version: "2.6.1"
+    version: "2.6.2"
   logging:
     dependency: transitive
     description:
@@ -625,10 +625,10 @@ packages:
     dependency: transitive
     description:
       name: path_provider_android
-      sha256: "993381400e94d18469750e5b9dcb8206f15bc09f9da86b9e44a9b0092a0066db"
+      sha256: "3b4c1fc3aa55ddc9cd4aa6759984330d5c8e66aa7702a6223c61540dc6380c37"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.18"
+    version: "2.2.19"
   path_provider_foundation:
     dependency: transitive
     description:
@@ -862,10 +862,10 @@ packages:
     dependency: transitive
     description:
       name: win32
-      sha256: "66814138c3562338d05613a6e368ed8cfb237ad6d64a9e9334be3f309acfca03"
+      sha256: d7cb55e04cd34096cd3a79b3330245f54cb96a370a1c27adb3c84b917de8b08e
       url: "https://pub.dev"
     source: hosted
-    version: "5.14.0"
+    version: "5.15.0"
   wkt_parser:
     dependency: transitive
     description:
