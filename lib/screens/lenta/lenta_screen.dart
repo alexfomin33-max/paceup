@@ -2,18 +2,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import 'widgets/activity_block.dart';
-import 'newpost_screen.dart';
+import 'state/newpost/newpost_screen.dart';
 import 'widgets/comments_bottom_sheet.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'chat/chat_screen.dart'; // импортируем страницу чата
-import 'notifications/notifications_screen.dart';
+import 'state/chat/chat_screen.dart'; // импортируем страницу чата
+import 'state/notifications/notifications_screen.dart';
 import 'dart:ui'; // для ImageFilter.blur
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/activity_lenta.dart';
 import 'activity/description_screen.dart';
 import 'widgets/recommended_block.dart';
-import 'favorites/favorites_screen.dart';
+import 'state/favorites/favorites_screen.dart';
 
 import 'dart:async';
 
@@ -170,7 +170,9 @@ class _LentaScreenState extends State<LentaScreen>
                 onPressed: () async {
                   await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationsScreen(),
+                    ),
                   );
                   setState(() {
                     _unreadCount = 0;

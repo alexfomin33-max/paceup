@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../../theme/app_theme.dart';
 
 /// Вкладка «Закладки» — карточный список с промежутками (как в Маршрутах)
 class BookmarksContent extends StatelessWidget {

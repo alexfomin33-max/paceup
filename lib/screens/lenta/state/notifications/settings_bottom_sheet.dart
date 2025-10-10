@@ -1,7 +1,7 @@
 // lib/screens/lenta/notifications/settings_sheet.dart
 import 'package:flutter/material.dart';
 // для WidgetState/WidgetStateProperty
-import '../../../../theme/app_theme.dart';
+import '../../../../../theme/app_theme.dart';
 
 class SettingsSheet extends StatefulWidget {
   const SettingsSheet({super.key});

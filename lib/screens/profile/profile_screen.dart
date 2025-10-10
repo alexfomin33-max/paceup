@@ -116,6 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _tab = 0;
 
   void _onTabTap(int i) {
+    if (_tab == i) return;
     setState(() => _tab = i);
     _pageController.animateToPage(
       i,
@@ -208,22 +209,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           // TabsBar — обычным сливером (не pinned)
           SliverToBoxAdapter(
-            child: AnimatedBuilder(
-              animation: _pageController,
-              builder: (_, _) {
-                final page = _pageController.hasClients
-                    ? (_pageController.page ?? _tab.toDouble())
-                    : _tab.toDouble();
-                return SizedBox(
-                  height: 40.5,
-                  child: TabsBar(
-                    value: _tab,
-                    page: page,
-                    items: _tabTitles,
-                    onChanged: _onTabTap,
-                  ),
-                );
-              },
+            child: RepaintBoundary(
+              // 👈 добавили
+              child: AnimatedBuilder(
+                animation: _pageController,
+                builder: (_, _) {
+                  final page = _pageController.hasClients
+                      ? (_pageController.page ?? _tab.toDouble())
+                      : _tab.toDouble();
+                  return SizedBox(
+                    height: 40.5,
+                    child: TabsBar(
+                      value: _tab,
+                      page: page,
+                      items: _tabTitles,
+                      onChanged: _onTabTap,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ],

@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
-import '../../theme/app_theme.dart';
+import '../../../../theme/app_theme.dart';
 
 /// 👉 ЗАМЕНИ на свой URL эндпоинта создания поста
 const String kCreatePostUrl = 'http://api.paceup.ru/create_post.php';
@@ -192,8 +192,11 @@ class _NewPostScreenState extends State<NewPostScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.border),
               ),
-              child: const Icon(CupertinoIcons.clear_circled_solid,
-                  size: 20, color: Colors.red),
+              child: const Icon(
+                CupertinoIcons.clear_circled_solid,
+                size: 20,
+                color: Colors.red,
+              ),
             ),
           ),
         ),
@@ -241,127 +244,135 @@ class _NewPostScreenState extends State<NewPostScreen> {
             ? const SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               )
-            : const Text(
-                'Опубликовать',
-                style: TextStyle(color: Colors.white),
-              ),
+            : const Text('Опубликовать', style: TextStyle(color: Colors.white)),
       ),
     );
   }
 
   // 🔹 Отправка поста на API
   Future<void> _submitPost() async {
-  if (_loading) return;
-  final text = _descController.text.trim();
-  if (_images.isEmpty && text.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Добавьте текст или вложения')),
-    );
-    return;
-  }
-
-  setState(() => _loading = true);
-  final uri = Uri.parse(kCreatePostUrl);
-
-  try {
-    Map<String, dynamic> data;
-
-    if (_images.isEmpty) {
-      // JSON-запрос (без файлов)
-      final res = await http
-          .post(
-            uri,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'user_id': widget.userId,
-              'text': text,
-              'privacy': 'public',
-            }),
-          )
-          .timeout(const Duration(seconds: 30));
-
-      if (res.statusCode < 200 || res.statusCode >= 300) {
-        debugPrint('POST ${res.request?.url} -> ${res.statusCode}\n${res.body}');
-        throw Exception('HTTP ${res.statusCode}');
-      }
-
-      try {
-        data = safeDecodeJsonAsMap(res.bodyBytes);
-      } catch (_) {
-        debugPrint('Bad JSON from server: ${res.body}');
-        throw const FormatException('Невалидный JSON от сервера');
-      }
-    } else {
-      // Multipart-запрос (с файлами)
-      final req = http.MultipartRequest('POST', uri);
-      req.fields['user_id'] = widget.userId.toString();
-      req.fields['text'] = text;
-      req.fields['privacy'] = 'public';
-
-      for (final file in _images) {
-        req.files.add(await http.MultipartFile.fromPath('images[]', file.path));
-      }
-
-      final streamed = await req.send().timeout(const Duration(seconds: 60));
-      final res = await http.Response.fromStream(streamed);
-
-      if (res.statusCode < 200 || res.statusCode >= 300) {
-        debugPrint('POST(multipart) ${res.request?.url} -> ${res.statusCode}\n${res.body}');
-        throw Exception('HTTP ${res.statusCode}');
-      }
-
-      try {
-        data = safeDecodeJsonAsMap(res.bodyBytes);
-      } catch (_) {
-        debugPrint('Bad JSON from server: ${res.body}');
-        throw const FormatException('Невалидный JSON от сервера');
-      }
+    if (_loading) return;
+    final text = _descController.text.trim();
+    if (_images.isEmpty && text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Добавьте текст или вложения')),
+      );
+      return;
     }
 
-    if (data['success'] == true) {
-      _descController.clear();
-      setState(() {
-        _images.clear();
-      });
-      if (mounted) {
+    setState(() => _loading = true);
+    final uri = Uri.parse(kCreatePostUrl);
+
+    try {
+      Map<String, dynamic> data;
+
+      if (_images.isEmpty) {
+        // JSON-запрос (без файлов)
+        final res = await http
+            .post(
+              uri,
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({
+                'user_id': widget.userId,
+                'text': text,
+                'privacy': 'public',
+              }),
+            )
+            .timeout(const Duration(seconds: 30));
+
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          debugPrint(
+            'POST ${res.request?.url} -> ${res.statusCode}\n${res.body}',
+          );
+          throw Exception('HTTP ${res.statusCode}');
+        }
+
+        try {
+          data = safeDecodeJsonAsMap(res.bodyBytes);
+        } catch (_) {
+          debugPrint('Bad JSON from server: ${res.body}');
+          throw const FormatException('Невалидный JSON от сервера');
+        }
+      } else {
+        // Multipart-запрос (с файлами)
+        final req = http.MultipartRequest('POST', uri);
+        req.fields['user_id'] = widget.userId.toString();
+        req.fields['text'] = text;
+        req.fields['privacy'] = 'public';
+
+        for (final file in _images) {
+          req.files.add(
+            await http.MultipartFile.fromPath('images[]', file.path),
+          );
+        }
+
+        final streamed = await req.send().timeout(const Duration(seconds: 60));
+        final res = await http.Response.fromStream(streamed);
+
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          debugPrint(
+            'POST(multipart) ${res.request?.url} -> ${res.statusCode}\n${res.body}',
+          );
+          throw Exception('HTTP ${res.statusCode}');
+        }
+
+        try {
+          data = safeDecodeJsonAsMap(res.bodyBytes);
+        } catch (_) {
+          debugPrint('Bad JSON from server: ${res.body}');
+          throw const FormatException('Невалидный JSON от сервера');
+        }
+      }
+
+      if (data['success'] == true) {
+        _descController.clear();
+        setState(() {
+          _images.clear();
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Пост опубликован')));
+          Navigator.pop(context, true);
+        }
+      } else {
+        final msg = (data['message'] ?? 'Ошибка сервера').toString();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
+      }
+    } catch (e) {
+      // Один catch без «мертвых» веток: разбираем типы внутри
+      if (e is TimeoutException) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Таймаут запроса')));
+      } else if (e is SocketException) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Пост опубликован')),
+          SnackBar(content: Text('Сеть недоступна: ${e.message}')),
         );
-        Navigator.pop(context, true);
+      } else if (e is http.ClientException) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка HTTP-клиента: ${e.message}')),
+        );
+      } else if (e is FormatException) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Невалидный JSON от сервера')),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка запроса: $e')));
       }
-    } else {
-      final msg = (data['message'] ?? 'Ошибка сервера').toString();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
-  } catch (e) {
-    // Один catch без «мертвых» веток: разбираем типы внутри
-    if (e is TimeoutException) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Таймаут запроса')),
-      );
-    } else if (e is SocketException) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Сеть недоступна: ${e.message}')),
-      );
-    } else if (e is http.ClientException) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка HTTP-клиента: ${e.message}')),
-      );
-    } else if (e is FormatException) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Невалидный JSON от сервера')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка запроса: $e')),
-      );
-    }
-  } finally {
-    if (mounted) setState(() => _loading = false);
   }
-}
 
   // 🔹 Выбор изображения из галереи
   Future<void> _pickImage() async {

@@ -2,14 +2,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../edit_profile_screen.dart';
-import '../state/communications/communication_prefs.dart';
+import '../state/subscribe/communication_prefs.dart';
 import '../../../models/user_profile_header.dart';
 
 class HeaderCard extends StatelessWidget {
   final UserProfileHeader? profile;
   final int userId;
   final VoidCallback onReload;
-  const HeaderCard({super.key, this.profile, required this.userId, required this.onReload,});
+  const HeaderCard({
+    super.key,
+    this.profile,
+    required this.userId,
+    required this.onReload,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -74,11 +79,14 @@ class HeaderCard extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(                        
+                      child: Text(
                         (() {
                           final fn = (profile?.firstName ?? '').trim();
                           final ln = (profile?.lastName ?? '').trim();
-                          final full = [fn, ln].where((s) => s.isNotEmpty).join(' ').trim();
+                          final full = [
+                            fn,
+                            ln,
+                          ].where((s) => s.isNotEmpty).join(' ').trim();
                           return full.isNotEmpty ? full : '';
                         })(),
                         maxLines: 1,
@@ -96,9 +104,12 @@ class HeaderCard extends StatelessWidget {
                       icon: CupertinoIcons.pencil,
                       onPressed: () async {
                         final changed = await Navigator.of(context).push<bool>(
-                          CupertinoPageRoute(builder: (_) => EditProfileScreen(userId: userId)),
+                          CupertinoPageRoute(
+                            builder: (_) => EditProfileScreen(userId: userId),
+                          ),
                         );
-                        if (changed == true) onReload(); // ← одна строка на авто-рефреш
+                        if (changed == true)
+                          onReload(); // ← одна строка на авто-рефреш
                       },
                     ),
                   ],
@@ -157,11 +168,14 @@ class HeaderCard extends StatelessWidget {
     final last2 = n % 100;
     if (11 <= last2 && last2 <= 14) return 'лет';
     switch (n % 10) {
-      case 1: return 'год';
+      case 1:
+        return 'год';
       case 2:
       case 3:
-      case 4: return 'года';
-      default: return 'лет';
+      case 4:
+        return 'года';
+      default:
+        return 'лет';
     }
   }
 
