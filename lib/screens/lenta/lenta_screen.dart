@@ -72,12 +72,11 @@ class _LentaScreenState extends State<LentaScreen>
       _items = list;
       _page = 1;
       _hasMore = list.length == _limit;
-
-      // заполняем набор «увиденных»
       _seenIds
         ..clear()
-        ..addAll(_items.map(_getId));
-
+        ..addAll(list.map(_getId));
+      // Автодогрузка, если 5 элементов не заполнили экран
+      WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoLoadMore());
       return list;
     });
 
@@ -122,19 +121,36 @@ class _LentaScreenState extends State<LentaScreen>
     });
   }
 
-  Future<void> _onRefresh() async {
-    final fresh = await _loadActivities(page: 1, limit: _limit);
+Future<void> _onRefresh() async {
+  final fresh = await _loadActivities(page: 1, limit: _limit);
+  if (!mounted) return;
+  setState(() {
+    _items = fresh;
+    _page = 1;
+    _hasMore = fresh.length == _limit;
+    _isLoadingMore = false; // ← важно сбросить, если был незавершённый load
     _seenIds
       ..clear()
       ..addAll(fresh.map(_getId));
-    if (!mounted) return;
-    setState(() {
-      _items = fresh;
-      _page = 0;
-      _hasMore = fresh.length == _limit;
-      // чтобы FutureBuilder сразу отрисовал обновлённый список
-      _future = Future.value(fresh);
-    });
+    _future = Future.value(fresh);
+  });
+
+  // После перестройки кадра — проверим, нужно ли сразу догружать
+  WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoLoadMore());
+}
+
+  void _maybeAutoLoadMore() {
+    if (!_hasMore || _isLoadingMore) return;
+    if (!_scrollController.hasClients) return;
+
+    final pos = _scrollController.position;
+    // Если контент НЕ заполняет экран, или мы почти внизу — догружаем
+    final isShortList = pos.maxScrollExtent <= 0;
+    final nearBottom = pos.extentAfter < 400;
+
+    if (isShortList || nearBottom) {
+      _loadNextPage();
+    }
   }
 
   Future<List<Activity>> _loadActivities({required int page, required int limit}) async {
@@ -229,9 +245,12 @@ class _LentaScreenState extends State<LentaScreen>
                         _items = list;
                         _page = 1;
                         _hasMore = list.length == _limit;
+                        _isLoadingMore = false; // на всякий случай
                         _seenIds
                           ..clear()
-                          ..addAll(list.map(_getId)); // ← важная строка: обновили набор «увиденных»
+                          ..addAll(list.map(_getId));
+
+                        WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoLoadMore());
                         return list;
                       });
                     });
@@ -311,9 +330,12 @@ class _LentaScreenState extends State<LentaScreen>
                           _items = list;
                           _page = 1;
                           _hasMore = list.length == _limit;
+                          _isLoadingMore = false; // на всякий случай
                           _seenIds
                             ..clear()
-                            ..addAll(list.map(_getId)); // ← обновили набор «увиденных»
+                            ..addAll(list.map(_getId));
+
+                          WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoLoadMore());
                           return list;
                         });
                       }),
