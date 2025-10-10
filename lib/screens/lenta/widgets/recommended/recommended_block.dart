@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
+import '../../../../theme/app_theme.dart';
 
 /// Блок «Рекомендации для вас», вынесенный в отдельный виджет.
 /// Пока данные захардкожены — позже можно передать список через параметры.

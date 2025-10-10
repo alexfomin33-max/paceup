@@ -1,21 +1,27 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import '../../theme/app_theme.dart';
-import 'widgets/activity_block.dart';
+import '../../models/activity_lenta.dart';
+
+import 'widgets/activity/activity_block.dart'; // карточка тренировки
+import 'widgets/recommended/recommended_block.dart'; // блок «Рекомендации»
+import 'widgets/post/post_card.dart'; // карточка поста (с попапом «…» внутри)
+
 import 'state/newpost/newpost_screen.dart';
 import 'widgets/comments_bottom_sheet.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'state/chat/chat_screen.dart'; // импортируем страницу чата
-import 'state/notifications/notifications_screen.dart';
-import 'dart:ui'; // для ImageFilter.blur
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../../models/activity_lenta.dart';
-import 'activity/description_screen.dart';
-import 'widgets/recommended_block.dart';
-import 'state/favorites/favorites_screen.dart';
 
-import 'dart:async';
+import 'state/chat/chat_screen.dart';
+import 'state/notifications/notifications_screen.dart';
+import 'state/favorites/favorites_screen.dart';
+import 'activity/description_screen.dart';
+import '../../widgets/more_menu_hub.dart';
 
 /// Единые размеры для AppBar в iOS-стиле
 const double kAppBarIconSize = 22.0; // сама иконка ~20–22pt
@@ -23,6 +29,10 @@ const double kAppBarTapTarget = 42.0; // кликабельная область
 const double kToolbarH = 52.0; // высота AppBar (iOS-лайк, компактнее 56)
 
 /// 🔹 Экран Ленты (Feed)
+/// Ответственности:
+/// 1) Держит состояние ленты (список, пагинация, pull-to-refresh)
+/// 2) Управляет навигацией верхних кнопок (чат/уведомления/избранное/создать пост)
+/// 3) Решает поведение карточек (комменты/редактирование/удаление) через колбэки
 class LentaScreen extends StatefulWidget {
   final int userId;
   final VoidCallback? onNewPostPressed;
@@ -33,29 +43,90 @@ class LentaScreen extends StatefulWidget {
   State<LentaScreen> createState() => _LentaScreenState();
 }
 
-// ✅ сохраняем позицию скролла при переключении вкладок
+/// ✅ Держим состояние живым при перелистывании вкладок
 class _LentaScreenState extends State<LentaScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
+  // ——— Загрузка начального состояния ———
   late Future<List<Activity>> _future;
 
-  /// Контроллер списка — нужен для скролла в начало по двойному тапу по заголовку
+  // ——— Пагинация ———
+  final int _limit = 5; // грузим пачками по 5
+  int _page = 1; // текущая страница (1-индексация)
+  bool _hasMore = true; // признак «на сервере есть ещё»
+  bool _isLoadingMore = false; // сейчас идёт нижняя догрузка
+
+  // ——— Данные ленты ———
+  List<Activity> _items = []; // локальный буфер элементов
+  final Set<int> _seenIds = {}; // защита от дублей (по id элементов)
+  int _unreadCount =
+      3; // пример счётчика уведомлений (обновляется после визита в Notifications)
+
+  // ——— Служебное ———
   final ScrollController _scrollController = ScrollController();
+
+  /// Нормализованная точка уникальности элемента
+  /// Если в модели id другой (например, `lentaId`), поменяй здесь.
+  int _getId(Activity a) => a.lentaId;
 
   @override
   void initState() {
     super.initState();
-    _future = _loadActivities();
+
+    // Первая загрузка — «самые свежие»
+    _future = _loadActivities(page: 1, limit: _limit).then((list) {
+      _items = list;
+      _page = 1;
+      _hasMore = list.length == _limit;
+      _seenIds
+        ..clear()
+        ..addAll(list.map(_getId));
+
+      // Если на экране мало контента — авто-догружаем ещё одну пачку
+      WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoLoadMore());
+      return list;
+    });
+
+    // Нижняя догрузка при прокрутке
+    _scrollController.addListener(() {
+      final pos = _scrollController.position;
+      if (_hasMore && !_isLoadingMore && pos.extentAfter < 400) {
+        _loadNextPage();
+      }
+    });
   }
 
-  Future<List<Activity>> _loadActivities() async {
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // ————————————————————————————————————————————————————————————————
+  //                            API
+  // ————————————————————————————————————————————————————————————————
+
+  /// Загрузка пачки элементов ленты с сервера
+  Future<List<Activity>> _loadActivities({
+    required int page,
+    required int limit,
+  }) async {
+    final payload = {
+      'userId': widget.userId,
+      'limit': limit,
+      'page': page, // если бэк понимает page
+      'offset': (page - 1) * limit, // если бэк понимает offset
+      'order': 'desc',
+    };
+
     final res = await http.post(
       Uri.parse('http://api.paceup.ru/activities_lenta.php'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({'userId': widget.userId, 'limit': 20, 'page': 1}),
+      body: json.encode(payload),
     );
+
     if (res.statusCode != 200) {
       throw Exception('HTTP ${res.statusCode}: ${res.body}');
     }
@@ -70,8 +141,224 @@ class _LentaScreenState extends State<LentaScreen>
         .toList();
   }
 
-  int _unreadCount =
-      3; // пример начального количества непрочитанных уведомлений
+  // ————————————————————————————————————————————————————————————————
+  //                        Пагинация/Refresh
+  // ————————————————————————————————————————————————————————————————
+
+  /// Догрузить следующую страницу
+  Future<void> _loadNextPage() async {
+    if (!_hasMore || _isLoadingMore) return;
+
+    setState(() => _isLoadingMore = true);
+
+    final nextPage = _page + 1;
+    final newItems = await _loadActivities(page: nextPage, limit: _limit);
+
+    // Отбрасываем дубли
+    final unique = <Activity>[];
+    for (final a in newItems) {
+      final id = _getId(a);
+      if (_seenIds.add(id)) unique.add(a);
+    }
+
+    if (!mounted) return;
+    setState(() {
+      if (unique.isEmpty) {
+        // Сервер вернул уже виденные записи — считаем, что дальше пусто
+        _hasMore = false;
+      } else {
+        _items.addAll(unique);
+        _page = nextPage;
+        _hasMore = unique.length == _limit; // меньше лимита — хвост
+      }
+      _isLoadingMore = false;
+    });
+  }
+
+  /// Pull-to-refresh: полностью перезагрузить «самые свежие»
+  Future<void> _onRefresh() async {
+    final fresh = await _loadActivities(page: 1, limit: _limit);
+    if (!mounted) return;
+
+    setState(() {
+      _items = fresh;
+      _page = 1;
+      _hasMore = fresh.length == _limit;
+      _isLoadingMore = false; // важно сбросить флаг
+      _seenIds
+        ..clear()
+        ..addAll(fresh.map(_getId));
+      _future = Future.value(fresh);
+    });
+
+    // Если контента снова мало — авто-догружаем
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoLoadMore());
+  }
+
+  /// Если список маленький (не заполняет экран) — грузим ещё
+  void _maybeAutoLoadMore() {
+    if (!_hasMore || _isLoadingMore) return;
+    if (!_scrollController.hasClients) return;
+
+    final pos = _scrollController.position;
+    final isShortList = pos.maxScrollExtent <= 0;
+    final nearBottom = pos.extentAfter < 400;
+
+    if (isShortList || nearBottom) _loadNextPage();
+  }
+
+  // ————————————————————————————————————————————————————————————————
+  //                       Навигация / Колбэки
+  // ————————————————————————————————————————————————————————————————
+
+  /// Открыть чат
+  void _openChat() {
+    MoreMenuHub.hide();
+    Navigator.push(
+      context,
+      CupertinoPageRoute(builder: (_) => const ChatScreen()),
+    );
+  }
+
+  /// Открыть уведомления
+  Future<void> _openNotifications() async {
+    MoreMenuHub.hide();
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+    );
+    if (!mounted) return;
+    setState(() => _unreadCount = 0);
+  }
+
+  /// Создать пост
+  Future<void> _createPost() async {
+    MoreMenuHub.hide();
+    final created = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => NewPostScreen(userId: widget.userId)),
+    );
+    if (!mounted) return;
+    if (created == true) {
+      // После создания — жёсткий перезапрос «самых свежих» и сброс set'ов
+      setState(() {
+        _future = _loadActivities(page: 1, limit: _limit).then((list) {
+          _items = list;
+          _page = 1;
+          _hasMore = list.length == _limit;
+          _isLoadingMore = false;
+          _seenIds
+            ..clear()
+            ..addAll(list.map(_getId));
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _maybeAutoLoadMore(),
+          );
+          return list;
+        });
+      });
+
+      // Прокрутить к началу, чтобы увидеть новый пост
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    }
+  }
+
+  /// Открыть список «Избранное»
+  void _openFavorites() {
+    MoreMenuHub.hide();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+    );
+  }
+
+  /// Открыть экран описания тренировки
+  void _openActivity(Activity a) {
+    MoreMenuHub.hide();
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (_) =>
+            ActivityDescriptionPage(activity: a, currentUserId: widget.userId),
+      ),
+    );
+  }
+
+  /// Открыть комментарии (тип='post' | 'activity') в Купертино-bottom-sheet.
+  /// Важно: showCupertinoModalBottomSheet живёт здесь (в экране), а не в карточке.
+  void _openComments({required String type, required int itemId}) {
+    MoreMenuHub.hide();
+    showCupertinoModalBottomSheet(
+      context: context,
+      builder: (_) => CommentsBottomSheet(
+        itemType: type,
+        itemId: itemId,
+        currentUserId: widget.userId,
+      ),
+    );
+  }
+
+  /// Редактировать пост (заглушка: подключишь экран редактора при необходимости)
+  void _editPost(Activity post) {
+    // Navigator.push(context, CupertinoPageRoute(builder: (_) => EditPostScreen(postId: post.id)));
+    debugPrint('Редактировать пост id=${post.id}');
+  }
+
+  bool _deleteInProgress = false; // защита от повторных кликов
+
+  Future<void> _deletePost(Activity post) async {
+    if (_deleteInProgress) return; // не даём открыть два диалога подряд
+    _deleteInProgress = true;
+
+    // Захватываем РУТовый навигатор и его контекст заранее.
+    // Так мы точно не будем обращаться к "мертвому" context из поддерева карточки.
+    final NavigatorState rootNav = Navigator.of(context, rootNavigator: true);
+    final BuildContext dialogHost = rootNav.context;
+
+    // Показываем диалог на rootNavigator. Внутри экшенов тоже пользуемся rootNav.pop(...)
+    final bool? ok = await showCupertinoDialog<bool>(
+      context: dialogHost,
+      barrierDismissible: true, // по желанию
+      builder: (_) => CupertinoAlertDialog(
+        title: const Text('Удалить пост?'),
+        content: const Text('Действие нельзя отменить.'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => rootNav.pop(false), // важно: используем rootNav
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => rootNav.pop(true), // важно: используем rootNav
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+
+    // Диалог уже закрылся. Экран мог успеть быть демонтирован (например, пользователь ушёл назад).
+    if (!mounted) {
+      _deleteInProgress = false;
+      return;
+    }
+
+    if (ok == true) {
+      // TODO: тут вызов API удаления. После успеха — обновляем список.
+      setState(() {
+        _items.removeWhere((e) => e.id == post.id);
+      });
+    }
+
+    _deleteInProgress = false;
+  }
+
+  // ————————————————————————————————————————————————————————————————
+  //                             UI
+  // ————————————————————————————————————————————————————————————————
 
   @override
   Widget build(BuildContext context) {
@@ -81,104 +368,59 @@ class _LentaScreenState extends State<LentaScreen>
       backgroundColor: const Color(0xFFF3F4F6),
       extendBodyBehindAppBar: true,
 
+      // ——— Верхняя панель ———
       appBar: AppBar(
-        toolbarHeight: kToolbarH, // ← явная высота AppBar
+        toolbarHeight: kToolbarH,
+        // Если у вас старая версия Flutter — замените на .withOpacity(0.5)
         backgroundColor: Colors.white.withValues(alpha: 0.50),
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+        leadingWidth: 96,
+        shape: const Border(
+          bottom: BorderSide(color: Color(0x33FFFFFF), width: 0.6),
+        ),
+        // стеклянное размытие
         flexibleSpace: ClipRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(color: Colors.transparent),
           ),
         ),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-
-        // Чуть меньше дефолта, чтобы пара иконок слева точно помещалась
-        leadingWidth: 96,
-
-        shape: const Border(
-          bottom: BorderSide(color: Color(0x33FFFFFF), width: 0.6),
-        ),
 
         // Левая группа иконок
         leading: Padding(
           padding: const EdgeInsets.only(left: 6),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              _NavIcon(
-                icon: CupertinoIcons.star,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const FavoritesScreen()),
-                  );
-                },
-              ),
+              _NavIcon(icon: CupertinoIcons.star, onPressed: _openFavorites),
               const SizedBox(width: 4),
               _NavIcon(
                 icon: CupertinoIcons.add_circled,
-                onPressed: () async {
-                  final created = await Navigator.push<bool>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => NewPostScreen(userId: widget.userId),
-                    ),
-                  );
-                  if (!mounted) return;
-                  if (created == true) {
-                    setState(() {
-                      _future =
-                          _loadActivities(); // ← перезапрашиваем ленту, FutureBuilder увидит новый Future
-                    });
-                    // опционально прокрутить к началу, чтобы сразу увидеть новый пост
-                    if (_scrollController.hasClients) {
-                      _scrollController.animateTo(
-                        0,
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOut,
-                      );
-                    }
-                  }
-                },
+                onPressed: _createPost,
               ),
             ],
           ),
         ),
 
-        title: const Text("Лента", style: AppTextStyles.h1),
+        title: const Text('Лента', style: AppTextStyles.h1),
 
-        // Правая группа иконок + бейдж
+        // Правая группа: чат + колокол с бейджем
         actions: [
           _NavIcon(
             icon: CupertinoIcons.bubble_left_bubble_right,
-            onPressed: () {
-              Navigator.push(
-                context,
-                CupertinoPageRoute(builder: (_) => const ChatScreen()),
-              );
-            },
+            onPressed: _openChat,
           ),
           Stack(
             clipBehavior: Clip.none,
             children: [
               _NavIcon(
                 icon: CupertinoIcons.bell,
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const NotificationsScreen(),
-                    ),
-                  );
-                  setState(() {
-                    _unreadCount = 0;
-                  });
-                },
+                onPressed: _openNotifications,
               ),
+              // ⚠️ Фикс: показываем реальное значение _unreadCount (раньше было «3» жестко)
               if (_unreadCount > 0)
                 Positioned(
                   right: 4,
@@ -191,12 +433,16 @@ class _LentaScreenState extends State<LentaScreen>
         ],
       ),
 
+      // ——— Тело экрана ———
       body: FutureBuilder<List<Activity>>(
         future: _future,
         builder: (context, snap) {
+          // 1) Идёт начальная загрузка
           if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
+          // 2) Ошибка начальной загрузки
           if (snap.hasError) {
             return Center(
               child: Padding(
@@ -207,8 +453,24 @@ class _LentaScreenState extends State<LentaScreen>
                     Text('Ошибка: ${snap.error}'),
                     const SizedBox(height: 12),
                     OutlinedButton(
-                      onPressed: () =>
-                          setState(() => _future = _loadActivities()),
+                      onPressed: () {
+                        setState(() {
+                          _future = _loadActivities(page: 1, limit: _limit)
+                              .then((list) {
+                                _items = list;
+                                _page = 1;
+                                _hasMore = list.length == _limit;
+                                _isLoadingMore = false;
+                                _seenIds
+                                  ..clear()
+                                  ..addAll(list.map(_getId));
+                                WidgetsBinding.instance.addPostFrameCallback(
+                                  (_) => _maybeAutoLoadMore(),
+                                );
+                                return list;
+                              });
+                        });
+                      },
                       child: const Text('Повторить'),
                     ),
                   ],
@@ -217,173 +479,111 @@ class _LentaScreenState extends State<LentaScreen>
             );
           }
 
-          final items = snap.data ?? const <Activity>[];
+          // 3) Берём фактические элементы из локального буфера (он актуальнее)
+          final items = _items.isNotEmpty
+              ? _items
+              : (snap.data ?? const <Activity>[]);
 
+          // 4) Совсем пусто — отдаём пустой список, но с pull-to-refresh
           if (items.isEmpty) {
-            return const Center(child: Text('Пока в ленте пусто'));
+            return RefreshIndicator.adaptive(
+              onRefresh: _onRefresh,
+              child: ListView(
+                controller: _scrollController,
+                padding: const EdgeInsets.only(top: kToolbarH + 38, bottom: 12),
+                children: const [
+                  SizedBox(height: 120),
+                  Center(child: Text('Пока в ленте пусто')),
+                  SizedBox(height: 120),
+                ],
+              ),
+            );
           }
 
-          // ✅ ленивый список с «окном» под рекомендации после первого элемента
-          return ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.only(top: kToolbarH + 38, bottom: 12),
-            itemCount: items.length + 1, // +1 — окно под рекомендации
-            addAutomaticKeepAlives: false,
-            addRepaintBoundaries: true,
-            addSemanticIndexes: false,
-            itemBuilder: (context, i) {
-              if (i == 0) {
-                final first = _buildFeedItem(context, items[0]);
-                return Column(
-                  children: [
-                    first,
-                    const SizedBox(height: 16),
-                    const RecommendedBlock(),
-                    const SizedBox(height: 16),
-                  ],
-                );
-              }
+          // 5) Основной сценарий — ленивый список, «рекомендации» после первого элемента
+          return RefreshIndicator.adaptive(
+            onRefresh: _onRefresh,
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (n) {
+                if (n is ScrollStartNotification ||
+                    n is ScrollUpdateNotification ||
+                    n is OverscrollNotification ||
+                    n is UserScrollNotification) {
+                  MoreMenuHub.hide(); // скрыть активное меню
+                }
+                return false;
+              },
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.only(top: kToolbarH + 38, bottom: 12),
+                itemCount: items.length + (_isLoadingMore ? 1 : 0),
+                addAutomaticKeepAlives: false,
+                addRepaintBoundaries: true,
+                addSemanticIndexes: false,
+                itemBuilder: (context, i) {
+                  // «подвал» — индикатор нижней догрузки
+                  if (_isLoadingMore && i == items.length) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Center(child: CupertinoActivityIndicator()),
+                    );
+                  }
 
-              final idx = i; // из-за окна индексы совпадают
-              if (idx >= items.length) return const SizedBox.shrink();
+                  // Первый элемент + блок рекомендаций — одной группой
+                  if (i == 0) {
+                    final first = _buildFeedItem(items[0]);
+                    return Column(
+                      children: [
+                        first,
+                        const SizedBox(height: 16),
+                        const RecommendedBlock(),
+                        const SizedBox(height: 16),
+                      ],
+                    );
+                  }
 
-              final item = _buildFeedItem(context, items[idx]);
-              return Column(children: [item, const SizedBox(height: 16)]);
-            },
+                  // Обычные элементы
+                  final card = _buildFeedItem(items[i]);
+                  return Column(children: [card, const SizedBox(height: 16)]);
+                },
+              ),
+            ),
           );
         },
       ),
     );
   }
 
-  /// Возвращает нужную карточку для элемента ленты:
-  /// пост → карточка поста; тренировка → ActivityBlock.
-  Widget _buildFeedItem(BuildContext context, Activity a) {
+  /// Вернём нужную карточку в зависимости от типа элемента:
+  ///  - post  → PostCard (вынос, с попапом «…»; комментарии открываем здесь)
+  ///  - other → ActivityBlock (тренировка). Тап по карточке — в описание.
+  Widget _buildFeedItem(Activity a) {
     if (a.type == 'post') {
-      return _buildPostCard(context, a);
+      return PostCard(
+        post: a,
+        currentUserId: widget.userId,
+        onOpenComments: () => _openComments(type: 'post', itemId: a.id),
+        onEdit: () => _editPost(a),
+        onDelete: () => _deletePost(a),
+      );
     }
 
+    // Тренировка
     return GestureDetector(
-      behavior: HitTestBehavior.deferToChild, // не перехватываем тапы детей
-      onTap: () {
-        Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (_) => ActivityDescriptionPage(
-              activity: a,
-              currentUserId: widget.userId,
-            ),
-          ),
-        );
-      },
-      child: ActivityBlock(activity: a, currentUserId: widget.userId),
-    );
-  }
-
-  Widget _buildPostCard(BuildContext context, Activity a) {
-    if (a.type != 'post') return const SizedBox.shrink();
-
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(width: 0.5, color: AppColors.border),
-          bottom: BorderSide(width: 0.5, color: AppColors.border),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                ClipOval(
-                  child: Image.network(
-                    a.userAvatar,
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        a.userName,
-                        style: AppTextStyles.name,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        a.postDateText,
-                        style: AppTextStyles.date,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(CupertinoIcons.ellipsis),
-                ),
-              ],
-            ),
-          ),
-
-          // ✅ дешёвое масштабирование и правильный cacheWidth
-          SizedBox(
-            height: 300,
-            width: double.infinity,
-            child: PostMediaCarousel(
-              imageUrls: a.mediaImages, // массив полных URL картинок
-              videoUrls: a.mediaVideos, // массив полных URL видео
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(a.postContent),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                _PostLikeBar(post: a, currentUserId: widget.userId),
-                const SizedBox(width: 16),
-                GestureDetector(
-                  onTap: () {
-                    showCupertinoModalBottomSheet(
-                      context: context,
-                      builder: (context) => CommentsBottomSheet(
-                        itemType: 'post',
-                        itemId: a.id,
-                        currentUserId: widget.userId,
-                      ),
-                    );
-                  },
-                  child: Row(
-                    children: [
-                      const Icon(
-                        CupertinoIcons.chat_bubble,
-                        size: 20,
-                        color: AppColors.orange,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(a.comments.toString()),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
+      behavior: HitTestBehavior.deferToChild,
+      onTap: () => _openActivity(a),
+      child: ActivityBlock(
+        activity: a,
+        currentUserId: widget.userId,
+        // если добавишь onAvatarTap в ActivityBlock — сюда можно прокинуть переход в профиль
       ),
     );
   }
 }
+
+// ————————————————————————————————————————————————————————————————
+//                 Мелкие утилиты UI: иконка и бейдж
+// ————————————————————————————————————————————————————————————————
 
 /// Единый вид для иконок в AppBar — размер 22, tap-target 44×44
 class _NavIcon extends StatelessWidget {
@@ -418,7 +618,7 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String text = count > 99 ? '99+' : '$count';
+    final text = count > 99 ? '99+' : '$count';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5),
       constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
@@ -437,344 +637,6 @@ class _Badge extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// Лайк-бар для поста. Ходит в тот же API, но с type='post'
-class _PostLikeBar extends StatefulWidget {
-  final Activity post;
-  final int currentUserId;
-
-  const _PostLikeBar({required this.post, required this.currentUserId});
-
-  @override
-  State<_PostLikeBar> createState() => _PostLikeBarState();
-}
-
-class _PostLikeBarState extends State<_PostLikeBar>
-    with SingleTickerProviderStateMixin {
-  bool isLiked = false;
-  int likesCount = 0;
-  bool _busy = false;
-
-  late AnimationController _likeController;
-  late Animation<double> _likeAnimation;
-
-  // тот же эндпойнт, что и для активностей
-  static const String _likeEndpoint =
-      'http://api.paceup.ru/activity_likes_toggle.php';
-
-  @override
-  void initState() {
-    super.initState();
-    isLiked = widget.post.islike; // старт из модели
-    likesCount = widget.post.likes;
-
-    _likeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-    _likeAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
-      CurvedAnimation(parent: _likeController, curve: Curves.easeOutBack),
-    );
-    _likeController.addStatusListener((s) {
-      if (s == AnimationStatus.completed) _likeController.reverse();
-    });
-  }
-
-  @override
-  void dispose() {
-    _likeController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _onTap() async {
-    if (_busy) return;
-
-    // оптимистичное обновление
-    setState(() {
-      _busy = true;
-      isLiked = !isLiked;
-      likesCount += isLiked ? 1 : -1;
-    });
-    _likeController.forward(from: 0);
-
-    final ok = await _sendLike(
-      activityId: widget.post.id, // id поста
-      userId: widget.currentUserId,
-      isLikedNow: isLiked,
-      type: 'post',
-    );
-
-    if (!ok && mounted) {
-      // откат при ошибке
-      setState(() {
-        isLiked = !isLiked;
-        likesCount += isLiked ? 1 : -1;
-      });
-    }
-    if (mounted) setState(() => _busy = false);
-  }
-
-  Future<bool> _sendLike({
-    required int activityId,
-    required int userId,
-    required bool isLikedNow,
-    required String type, // 'activity' | 'post'
-  }) async {
-    final uri = Uri.parse(_likeEndpoint);
-    try {
-      final res = await http
-          .post(
-            uri,
-            // form-urlencoded (сервер уже это принимает)
-            body: jsonEncode({
-              'userId': '$userId',
-              'activityId': '$activityId', // одно имя для обоих типов
-              'type': type, // <-- добавили тип
-              'action': isLikedNow ? 'like' : 'dislike',
-            }),
-          )
-          .timeout(const Duration(seconds: 10));
-
-      if (res.statusCode != 200) return false;
-
-      final raw = utf8.decode(res.bodyBytes);
-
-      dynamic data;
-      try {
-        data = json.decode(raw);
-      } catch (_) {
-        data = null;
-      }
-
-      bool ok = false;
-      int? serverLikes;
-
-      if (data is Map<String, dynamic>) {
-        ok = data['ok'] == true || data['status'] == 'ok';
-        serverLikes = int.tryParse('${data['likes']}');
-      } else if (data is List &&
-          data.isNotEmpty &&
-          data.first is Map<String, dynamic>) {
-        final m = data.first as Map<String, dynamic>;
-        ok = m['ok'] == true || m['status'] == 'ok';
-        serverLikes = int.tryParse('${m['likes']}');
-      } else {
-        final t = raw.trim().toLowerCase();
-        ok = (res.statusCode == 200) && (t == 'ok' || t == '1' || t == 'true');
-      }
-
-      if (ok && serverLikes != null && mounted) {
-        setState(() => likesCount = serverLikes!);
-      }
-      return ok;
-    } on TimeoutException {
-      return false;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: _onTap,
-      child: Row(
-        children: [
-          ScaleTransition(
-            scale: _likeAnimation,
-            child: Icon(
-              isLiked ? CupertinoIcons.heart_solid : CupertinoIcons.heart,
-              size: 20,
-              color: AppColors.red,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text(likesCount.toString()),
-        ],
-      ),
-    );
-  }
-}
-
-class PostMediaCarousel extends StatefulWidget {
-  final List<String> imageUrls;
-  final List<String> videoUrls;
-
-  const PostMediaCarousel({
-    super.key,
-    required this.imageUrls,
-    required this.videoUrls,
-  });
-
-  @override
-  State<PostMediaCarousel> createState() => _PostMediaCarouselState();
-}
-
-class _PostMediaCarouselState extends State<PostMediaCarousel> {
-  late final PageController _pc;
-  int _index = 0;
-
-  static const _dotsBottom = 10.0;
-  static const _dotsPad = EdgeInsets.symmetric(horizontal: 8, vertical: 4);
-
-  // Можно заменить на свою картинку-заглушку для превью видео
-  static const _videoPlaceholder =
-      'http://uploads.paceup.ru/defaults/video_placeholder.jpg';
-
-  @override
-  void initState() {
-    super.initState();
-    _pc = PageController();
-  }
-
-  @override
-  void dispose() {
-    _pc.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // общий список: сначала картинки, потом видео
-    final total = widget.imageUrls.length + widget.videoUrls.length;
-    if (total == 0) return const SizedBox.shrink();
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // переносим твою оптимизацию cacheWidth внутрь каждого слайда
-        final dpr = MediaQuery.of(context).devicePixelRatio;
-        (constraints.maxWidth * dpr).round();
-
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            PageView.builder(
-              controller: _pc,
-              itemCount: total,
-              // ⛔ не подгружать соседние страницы (экономим RAM/CPU)
-              allowImplicitScrolling: false,
-              physics: const PageScrollPhysics(),
-              onPageChanged: (i) {
-                setState(() => _index = i);
-
-                // Опционально: освобождаем память от далёких кадров (см. метод ниже)
-                // чистим кадр, который остался на 2 позиции позади
-                final evictIndex = i - 2;
-                if (evictIndex >= 0) {
-                  final isImg = evictIndex < widget.imageUrls.length;
-                  if (isImg) {
-                    _evictNetworkImage(widget.imageUrls[evictIndex]);
-                  } else {
-                    // видео-превью у нас плейсхолдером — тут чистить нечего
-                  }
-                }
-              },
-              itemBuilder: (context, i) {
-                final isImage = i < widget.imageUrls.length;
-                if (isImage) {
-                  final url = widget.imageUrls[i];
-
-                  // сохраняем твою оптимизацию cacheWidth + добавляем cacheHeight
-                  final dpr = MediaQuery.of(context).devicePixelRatio;
-                  final cacheWidth = (MediaQuery.sizeOf(context).width * dpr)
-                      .round();
-                  const targetHeight = 300.0; // ты показываешь 300 px высоты
-                  (targetHeight * dpr).round();
-
-                  return Image.network(
-                    url,
-                    fit: BoxFit.cover,
-                    filterQuality: FilterQuality.low,
-                    cacheWidth: cacheWidth,
-                    // cacheHeight: cacheHeight, // 🔹 важно: ограничиваем вертикаль тоже
-                    gaplessPlayback: true,
-                    width: double.infinity,
-                    height: double.infinity,
-                  );
-                } else {
-                  final vIndex = i - widget.imageUrls.length;
-                  final url = widget.videoUrls[vIndex];
-                  return _buildVideoPreview(url);
-                }
-              },
-            ),
-
-            // точки-индикаторы поверх, чтобы итоговая высота оставалась 300
-            Positioned(
-              bottom: _dotsBottom,
-              left: 0,
-              right: 0,
-              child: _buildDots(total),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _evictNetworkImage(String url) {
-    // точечный сброс только конкретной картинки, когда далеко пролистали
-    final provider = NetworkImage(url);
-    imageCache.evict(provider);
-  }
-
-  Widget _buildVideoPreview(String url) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // превью (плейсхолдер) для видео
-        Image.network(_videoPlaceholder, fit: BoxFit.cover),
-        Container(color: const Color(0x33000000)), // лёгкий затемняющий слой
-        const Center(
-          child: Icon(
-            CupertinoIcons.play_circle_fill,
-            size: 64,
-            color: Color(0xFFFFFFFF),
-          ),
-        ),
-        Positioned.fill(
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                // Navigator.push(... VideoPlayerScreen(url: url));
-              },
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDots(int total) {
-    if (total <= 1) return const SizedBox.shrink();
-    return Center(
-      child: Container(
-        padding: _dotsPad,
-        decoration: BoxDecoration(
-          color: const Color(0x33000000), // полупрозрачный чип под точки
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(total, (i) {
-            final active = i == _index;
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: active ? 16 : 7,
-              height: 7,
-              decoration: BoxDecoration(
-                color: active ? AppColors.secondary : const Color(0xFFE0E0E0),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            );
-          }),
-        ),
-      ),
-    );
+    // Если хочется «более iOS», можно поменять на Capsule + тонкий шрифт.
   }
 }

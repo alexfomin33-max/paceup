@@ -305,15 +305,15 @@ class _MetricCenter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final IconData? _resolved = icon ?? materialIcon ?? cupertinoIcon;
+    final IconData? resolved = icon ?? materialIcon ?? cupertinoIcon;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (_resolved != null) const SizedBox(width: 2), // чуть воздуха слева
-        if (_resolved != null)
-          Icon(_resolved, size: 14, color: AppColors.greytext),
-        if (_resolved != null) const SizedBox(width: 4),
+        if (resolved != null) const SizedBox(width: 2), // чуть воздуха слева
+        if (resolved != null)
+          Icon(resolved, size: 14, color: AppColors.greytext),
+        if (resolved != null) const SizedBox(width: 4),
         Flexible(
           child: Text(
             text,
@@ -327,7 +327,7 @@ class _MetricCenter extends StatelessWidget {
             ),
           ),
         ),
-        if (_resolved != null) const SizedBox(width: 2),
+        if (resolved != null) const SizedBox(width: 2),
       ],
     );
   }

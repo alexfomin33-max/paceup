@@ -9,7 +9,7 @@ class AppTextStyles {
   );
 
   static const TextStyle name = TextStyle(
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: FontWeight.w600,
     color: AppColors.text,
   );
