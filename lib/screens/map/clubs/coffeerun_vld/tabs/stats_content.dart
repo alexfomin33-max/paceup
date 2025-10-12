@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../../theme/app_theme.dart';
 
 class CoffeeRunVldStatsContent extends StatefulWidget {
   const CoffeeRunVldStatsContent({super.key});
@@ -100,8 +100,8 @@ class _CoffeeRunVldStatsContentState extends State<CoffeeRunVldStatsContent> {
                         borderRadius: BorderRadius.circular(18),
                         child: Image.asset(
                           m.avatar,
-                          width: 40,
-                          height: 40,
+                          width: 36,
+                          height: 36,
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -112,7 +112,7 @@ class _CoffeeRunVldStatsContentState extends State<CoffeeRunVldStatsContent> {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 14,
+                            fontSize: 13,
                             color: AppColors.text,
                           ),
                         ),
@@ -127,8 +127,8 @@ class _CoffeeRunVldStatsContentState extends State<CoffeeRunVldStatsContent> {
                             overflow: TextOverflow.fade,
                             style: const TextStyle(
                               fontFamily: 'Inter',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500, // без жирного
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
                               color: AppColors.text,
                               // табличные цифры, чтобы разряды не «прыгали»
                               fontFeatures: [FontFeature.tabularFigures()],

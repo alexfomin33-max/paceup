@@ -10,7 +10,7 @@ import 'travelers/travelers_screen.dart' as trv;
 
 // нижние выезжающие окна
 import 'events/events_bottom_sheet.dart' as ebs;
-import 'clubs/clubs_bottom_sheet.dart' as cbs;
+import 'clubs/widgets/clubs_bottom_sheet.dart' as cbs;
 import 'slots/slots_bottom_sheet.dart' as sbs;
 import 'travelers/travelers_bottom_sheet.dart' as tbs;
 
@@ -66,7 +66,8 @@ class _MapScreenState extends State<MapScreen> {
               TileLayer(
                 // без поддоменов, корректный User-Agent
                 //urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                urlTemplate: 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={apiKey}',
+                urlTemplate:
+                    'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={apiKey}',
                 additionalOptions: {'apiKey': '5Ssg96Nz79IHOCKB0MLL'},
                 userAgentPackageName: 'paceup.ru',
                 maxZoom: 19,
@@ -153,7 +154,7 @@ class _MapScreenState extends State<MapScreen> {
                           '$count',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w500,
                             fontSize: 14,
                           ),
                         ),
@@ -206,8 +207,8 @@ class _MapScreenState extends State<MapScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.w500,
+                                ? FontWeight.w500
+                                : FontWeight.w400,
                             color: isSelected ? Colors.white : Colors.black87,
                           ),
                         ),

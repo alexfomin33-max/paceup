@@ -51,14 +51,14 @@ class MarketSlotCard extends StatelessWidget {
               children: [
                 // Миниатюра слева — НЕ кликабельна
                 _Thumb(imageAsset: item.imageUrl, heroGroup: item),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
 
                 // Текстовая часть и чипы
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       // Заголовок + стрелка (если есть детали)
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,13 +66,13 @@ class MarketSlotCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               item.title,
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                height: 1.2,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                height: 1,
                                 color: Colors.black,
                               ),
                             ),
@@ -84,14 +84,15 @@ class MarketSlotCard extends StatelessWidget {
                               turns: expanded ? 0.5 : 0.0,
                               child: Icon(
                                 CupertinoIcons.chevron_down,
-                                size: 18,
+                                size: 14,
                                 color: AppColors.text.withValues(alpha: 0.6),
                               ),
                             ),
+                            const SizedBox(width: 4),
                           ],
                         ],
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 12),
 
                       // Одна строка: дистанция • пол • цена • кнопка справа
                       Row(
@@ -195,12 +196,12 @@ class _Thumb extends StatelessWidget {
     return Hero(
       tag: Object.hash(heroGroup ?? imageAsset, 0),
       child: Container(
-        width: 64,
-        height: 64,
+        width: 58,
+        height: 58,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(4),
           color: AppColors.background,
-          border: Border.all(color: AppColors.border),
+
           image: DecorationImage(
             image: AssetImage(imageAsset),
             fit: BoxFit.cover,
@@ -232,7 +233,7 @@ class _BuyButtonText extends StatelessWidget {
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: 72),
       child: SizedBox(
-        height: 30,
+        height: 28,
         child: ElevatedButton.icon(
           onPressed: enabled ? onPressed : null, // 🔹 используем коллбэк
           style: ElevatedButton.styleFrom(
@@ -251,7 +252,7 @@ class _BuyButtonText extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ),

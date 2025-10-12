@@ -71,7 +71,10 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
     }
 
     // Убираем возможный BOM и лишние пробелы в начале/конце
-    final raw = utf8.decode(res.bodyBytes).replaceFirst(RegExp(r'^\uFEFF'), '').trim();
+    final raw = utf8
+        .decode(res.bodyBytes)
+        .replaceFirst(RegExp(r'^\uFEFF'), '')
+        .trim();
     final jsonMap = json.decode(raw) as Map<String, dynamic>;
 
     // Универсальная обработка ошибок API
@@ -90,7 +93,9 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context); // важно для AutomaticKeepAliveClientMixin
-    final prefs = GearPrefsScope.of(context); // локальные настройки видимости снаряжения
+    final prefs = GearPrefsScope.of(
+      context,
+    ); // локальные настройки видимости снаряжения
 
     return FutureBuilder<MainTabData>(
       future: _future ??= _load(), // повторная подстраховка
@@ -142,10 +147,18 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
             // ───────────────── Снаряжение (кроссовки / велосипеды) ─────────────────
             // Вставляем секцию как полноценный sliver без дополнительных обёрток.
             if (prefs.showShoes && data.shoes.isNotEmpty)
-              GearSectionSliver(title: 'Кроссовки', items: data.shoes, isBike: false),
+              GearSectionSliver(
+                title: 'Кроссовки',
+                items: data.shoes,
+                isBike: false,
+              ),
 
             if (prefs.showBikes && data.bikes.isNotEmpty)
-              GearSectionSliver(title: 'Велосипед', items: data.bikes, isBike: true),
+              GearSectionSliver(
+                title: 'Велосипед',
+                items: data.bikes,
+                isBike: true,
+              ),
 
             // ───────────────── Личные рекорды ─────────────────
             const SliverToBoxAdapter(child: _SectionTitle('Личные рекорды')),
@@ -194,14 +207,15 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _ActivityScroller extends StatelessWidget {
-  final List<_ActItem> items; // список элементов активности (иконка + значение + подпись)
+  final List<_ActItem>
+  items; // список элементов активности (иконка + значение + подпись)
   const _ActivityScroller({required this.items});
 
   @override
   Widget build(BuildContext context) {
     // Горизонтальный список карточек активности (ходьба/бег/вел/плавание)
     return SizedBox(
-      height: 132,
+      height: 120,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -230,14 +244,14 @@ class _ActivityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Одна карточка активности
     return SizedBox(
-      width: 132,
+      width: 120,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(AppRadius.large),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
         ),
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -245,20 +259,20 @@ class _ActivityCard extends StatelessWidget {
             ClipOval(
               child: Image.asset(
                 item.asset,
-                width: 72,
-                height: 72,
+                width: 60,
+                height: 60,
                 fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 8),
             // Значение (крупный текст)
             Text(
               item.value,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontFamily: 'Inter',
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
                 height: 1.0,
               ),
             ),
@@ -312,7 +326,7 @@ class _PRRow extends StatelessWidget {
 
 class _PRBadge extends StatelessWidget {
   final String asset; // путь к локальной картинке медали/дистанции
-  final String time;  // строка времени PR
+  final String time; // строка времени PR
   const _PRBadge({required this.asset, required this.time});
 
   @override
@@ -343,7 +357,11 @@ class _MetricsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Готовим строки для отображения: иконка, подпись, значение справа
     final rows = <(IconData, String, String)>[
-      (CupertinoIcons.arrow_right, 'Среднее расстояние в неделю', data.avgWeekDistance),
+      (
+        CupertinoIcons.arrow_right,
+        'Среднее расстояние в неделю',
+        data.avgWeekDistance,
+      ),
       (CupertinoIcons.heart, 'МПК', data.vo2max),
       (CupertinoIcons.speedometer, 'Средний темп', data.avgPace),
       (CupertinoIcons.bolt, 'Мощность', data.power),
@@ -364,7 +382,10 @@ class _MetricsCard extends StatelessWidget {
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
                       Icon(r.$1, size: 18, color: AppColors.secondary),
@@ -384,7 +405,7 @@ class _MetricsCard extends StatelessWidget {
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.text,
                         ),
                       ),
@@ -392,7 +413,11 @@ class _MetricsCard extends StatelessWidget {
                   ),
                 ),
                 if (i != rows.length - 1)
-                  const Divider(height: 1, thickness: 0.5, color: Color(0xFFEAEAEA)),
+                  const Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: Color(0xFFEAEAEA),
+                  ),
               ],
             );
           }),

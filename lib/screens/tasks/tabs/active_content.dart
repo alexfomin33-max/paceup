@@ -102,7 +102,7 @@ class _MonthLabel extends StatelessWidget {
       style: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 15,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
         color: AppColors.text,
       ),
     );
@@ -120,7 +120,7 @@ class _SectionLabel extends StatelessWidget {
       style: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 15,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
         color: AppColors.text,
       ),
     );
@@ -153,7 +153,7 @@ class TaskCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(AppRadius.large),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -177,7 +177,7 @@ class TaskCard extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     color: AppColors.text,
                   ),
                 ),
@@ -217,7 +217,7 @@ class TaskCard extends StatelessWidget {
         : Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.large),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               onTap: onTap,
               child: card,
             ),
@@ -248,7 +248,7 @@ class ExpeditionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(AppRadius.large),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -271,7 +271,7 @@ class ExpeditionCard extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     color: AppColors.text,
                   ),
                 ),
@@ -311,7 +311,7 @@ class ExpeditionCard extends StatelessWidget {
         : Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.large),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               onTap: onTap,
               child: card,
             ),

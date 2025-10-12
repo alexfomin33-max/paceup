@@ -2,10 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
 
-import 'photo_content.dart';
-import 'members_content.dart';
-import 'stats_content.dart';
-import 'glory_content.dart';
+import 'tabs/photo_content.dart';
+import 'tabs/members_content.dart';
+import 'tabs/stats_content.dart';
+import 'tabs/glory_content.dart';
 
 class CoffeeRunVldScreen extends StatefulWidget {
   const CoffeeRunVldScreen({super.key});
@@ -120,7 +120,7 @@ class _CoffeeRunVldScreenState extends State<CoffeeRunVldScreen> {
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 18,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w500,
                               color: AppColors.text,
                             ),
                           ),
@@ -134,12 +134,12 @@ class _CoffeeRunVldScreenState extends State<CoffeeRunVldScreen> {
                       'Сообщество любителей городских пробежек.\n• Бегаем по субботам\n• Финиш с горячим кофе и чаем',
                       style: TextStyle(
                         fontFamily: 'Inter',
-                        fontSize: 14,
-                        height: 1.35,
+                        fontSize: 13,
+                        height: 1.5,
                         color: AppColors.text,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
 
                     // Инфо-блок
                     Container(
@@ -158,12 +158,12 @@ class _CoffeeRunVldScreenState extends State<CoffeeRunVldScreen> {
                             icon: CupertinoIcons.lock_fill,
                             text: 'Закрытое беговое сообщество',
                           ),
-                          SizedBox(height: 8),
+                          SizedBox(height: 6),
                           _InfoRow(
                             icon: CupertinoIcons.calendar,
                             text: 'Создано: 16 октября 2023',
                           ),
-                          SizedBox(height: 8),
+                          SizedBox(height: 6),
                           _InfoRow(
                             icon: CupertinoIcons.person_2_fill,
                             text: 'Участников: 400',
@@ -195,7 +195,7 @@ class _CoffeeRunVldScreenState extends State<CoffeeRunVldScreen> {
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -220,7 +220,7 @@ class _CoffeeRunVldScreenState extends State<CoffeeRunVldScreen> {
                 child: Column(
                   children: [
                     SizedBox(
-                      height: 52,
+                      height: 48,
                       child: Row(
                         children: [
                           _TabBtn(
@@ -330,14 +330,14 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.secondary),
+        Icon(icon, size: 14, color: AppColors.secondary),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
             style: const TextStyle(
               fontFamily: 'Inter',
-              fontSize: 14,
+              fontSize: 13,
               color: AppColors.text,
             ),
           ),
@@ -370,7 +370,7 @@ class _TabBtn extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w400,
             color: color,
           ),
         ),

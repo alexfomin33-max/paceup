@@ -483,21 +483,21 @@ class EventTextField extends StatelessWidget {
 
         // обычные рамки
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: BorderSide(color: borderColor),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: BorderSide(color: borderColor),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: BorderSide(color: borderColor),
         ),
 
         // 🔸 рамка, когда поле отключено
         disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: BorderSide(color: disabledBorderColor),
         ),
       ),
@@ -557,15 +557,15 @@ class EventDateField extends StatelessWidget {
               minWidth: 18 + 14,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               borderSide: const BorderSide(color: AppColors.border),
             ),
           ),
@@ -608,20 +608,20 @@ class EventDropdownField extends StatelessWidget {
         fillColor: fill,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: BorderSide(color: borderColor),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: BorderSide(color: borderColor),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: BorderSide(color: borderColor),
         ),
         // 🔸 рамка, когда поле отключено
         disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: BorderSide(color: disabledBorderColor),
         ),
       ),
@@ -679,7 +679,7 @@ class CreateButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: isEnabled ? AppColors.primary : Colors.grey.shade400,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xlarge),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         padding: const EdgeInsets.symmetric(vertical: 14),
       ),

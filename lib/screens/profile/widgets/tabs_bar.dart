@@ -133,7 +133,7 @@ class _TabsBarState extends State<TabsBar> {
                               style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w400,
                                 color: selected
                                     ? AppColors.secondary
                                     : AppColors.text,

@@ -23,19 +23,11 @@ class SettingsScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: AppColors.text),
+          icon: const Icon(CupertinoIcons.back, color: AppColors.iconPrimary),
           onPressed: () => Navigator.of(context).maybePop(),
           splashRadius: 18,
         ),
-        title: const Text(
-          'Настройки',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: AppColors.text,
-          ),
-        ),
+        title: const Text('Настройки', style: AppTextStyles.h1),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(0.5),
           child: SizedBox(
@@ -59,7 +51,7 @@ class SettingsScreen extends StatelessWidget {
             children: [
               _SettingsTile(
                 icon: CupertinoIcons.slider_horizontal_3,
-                iconColor: AppColors.secondary,
+                iconColor: AppColors.brandPrimary,
                 title: 'Подключенные трекеры',
                 onTap: () => _open(context, 'Подключенные трекеры'),
               ),
@@ -73,7 +65,7 @@ class SettingsScreen extends StatelessWidget {
             children: [
               _SettingsTile(
                 icon: CupertinoIcons.phone,
-                iconColor: AppColors.secondary,
+                iconColor: AppColors.brandPrimary,
                 title: 'Телефон',
                 trailingText: '+7 (9**) ***–25–38',
                 onTap: () => _open(context, 'Телефон'),
@@ -81,7 +73,7 @@ class SettingsScreen extends StatelessWidget {
               const _Divider(),
               _SettingsTile(
                 icon: CupertinoIcons.envelope,
-                iconColor: AppColors.secondary,
+                iconColor: AppColors.brandPrimary,
                 title: 'E-mail',
                 trailingText: 'pa*****@ya.ru',
                 onTap: () => _open(context, 'E-mail'),
@@ -89,7 +81,7 @@ class SettingsScreen extends StatelessWidget {
               const _Divider(),
               _SettingsTile(
                 icon: CupertinoIcons.lock,
-                iconColor: AppColors.secondary,
+                iconColor: AppColors.brandPrimary,
                 title: 'Пароль',
                 trailingText: '********',
                 onTap: () => _open(context, 'Пароль'),
@@ -97,7 +89,7 @@ class SettingsScreen extends StatelessWidget {
               const _Divider(),
               _SettingsTile(
                 icon: CupertinoIcons.rectangle_on_rectangle_angled,
-                iconColor: AppColors.secondary,
+                iconColor: AppColors.brandPrimary,
                 title: 'Код-пароль и Face ID',
                 trailingText: 'Откл.',
                 onTap: () => _open(context, 'Код-пароль и Face ID'),
@@ -112,35 +104,35 @@ class SettingsScreen extends StatelessWidget {
             children: [
               _SettingsTile(
                 icon: CupertinoIcons.bell,
-                iconColor: AppColors.secondary,
+                iconColor: AppColors.brandPrimary,
                 title: 'Push-уведомления',
                 onTap: () => _open(context, 'Push-уведомления'),
               ),
               const _Divider(),
               _SettingsTile(
                 icon: CupertinoIcons.arrow_2_circlepath,
-                iconColor: AppColors.secondary,
+                iconColor: AppColors.brandPrimary,
                 title: 'Доступ к данным',
                 onTap: () => _open(context, 'Доступ к данным'),
               ),
               const _Divider(),
               _SettingsTile(
                 icon: CupertinoIcons.person_2,
-                iconColor: AppColors.secondary,
+                iconColor: AppColors.brandPrimary,
                 title: 'Контакты',
                 onTap: () => _open(context, 'Контакты'),
               ),
               const _Divider(),
               _SettingsTile(
                 icon: CupertinoIcons.question_circle,
-                iconColor: AppColors.secondary,
+                iconColor: AppColors.brandPrimary,
                 title: 'Справочная информация',
                 onTap: () => _open(context, 'Справочная информация'),
               ),
               const _Divider(),
               _SettingsTile(
                 icon: CupertinoIcons.bubble_left,
-                iconColor: AppColors.secondary,
+                iconColor: AppColors.brandPrimary,
                 title: 'Предложения по улучшению',
                 onTap: () => _open(context, 'Предложения по улучшению'),
               ),
@@ -154,13 +146,11 @@ class SettingsScreen extends StatelessWidget {
             children: [
               _SettingsTile(
                 icon: CupertinoIcons.heart,
-                iconColor: const Color(0xFFD32F2F),
+                iconColor: AppColors.error,
                 title: 'На кофе разработчикам',
                 trailingText: '99 ₽',
-                trailingTextColor: const Color(0xFFD32F2F),
-                trailingIconColor: const Color(
-                  0xFFD32F2F,
-                ), // 🔹 красная стрелка
+                trailingTextColor: AppColors.error,
+                trailingIconColor: AppColors.error, // 🔹 красная стрелка
                 onTap: () => _open(
                   context,
                   'На кофе разработчикам',
@@ -177,7 +167,7 @@ class SettingsScreen extends StatelessWidget {
             children: [
               _SettingsTile(
                 icon: CupertinoIcons.square_arrow_right,
-                iconColor: AppColors.secondary,
+                iconColor: AppColors.brandPrimary,
                 title: 'Выйти',
                 onTap: () => _open(
                   context,
@@ -221,13 +211,7 @@ class _SubscriptionCard extends StatelessWidget {
             const Expanded(
               child: Text(
                 'Управление подпиской PacePro',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.text,
-                  height: 1.2,
-                ),
+                style: AppTextStyles.numberstat,
               ),
             ),
             const Icon(
@@ -297,23 +281,12 @@ class _SettingsTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 15,
-                  color: AppColors.text,
-                ),
-              ),
-            ),
+            Expanded(child: Text(title, style: AppTextStyles.normaltext)),
             if (trailingText != null) ...[
               Text(
                 trailingText!,
                 style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  color: trailingTextColor ?? const Color(0xFF5E6A7D),
+                  color: trailingTextColor ?? AppColors.textTertiary,
                 ),
               ),
               const SizedBox(width: 6),
@@ -346,7 +319,7 @@ class _Divider extends StatelessWidget {
 }
 
 const _cardDecoration = BoxDecoration(
-  color: Colors.white,
+  color: AppColors.surface,
   borderRadius: BorderRadius.all(Radius.circular(12)),
   border: Border.fromBorderSide(BorderSide(color: Color(0xFFEAEAEA), width: 1)),
 );

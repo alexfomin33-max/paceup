@@ -17,7 +17,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
 
   static const _shoes = <_GearItem>[
     _GearItem(
-      title: "Asics Jolt 3 Wide 'Dive Blue'",
+      title: "Asics Jolt 3 Wide",
       asset: 'assets/Asics.png',
       value: '582 км',
     ),
@@ -122,7 +122,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -236,7 +236,7 @@ class _GearListCard extends StatelessWidget {
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.text,
                           ),
                         ),
@@ -247,7 +247,7 @@ class _GearListCard extends StatelessWidget {
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.text,
                         ),
                       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
 import 'more_menu_hub.dart';
 
 /// Пункт всплывающего меню.
@@ -39,7 +40,7 @@ class MoreMenuOverlay {
       BoxShadow(color: Color(0x33000000), blurRadius: 4, offset: Offset(0, 1)),
     ],
     this.innerPadding = const EdgeInsets.symmetric(vertical: 6),
-    this.dividerColor = const Color(0xFFECECEC),
+    this.dividerColor = AppColors.divider,
   });
 
   final GlobalKey anchorKey;
@@ -163,20 +164,14 @@ class MoreMenuOverlay {
                 Expanded(
                   child: Text(
                     it.text,
-                    style:
-                        it.textStyle ??
-                        const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF171A1F),
-                        ),
+                    style: it.textStyle ?? AppTextStyles.normaltext,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Icon(
                   it.icon,
                   size: 18,
-                  color: it.iconColor ?? const Color(0xFF171A1F),
+                  color: it.iconColor ?? AppColors.iconPrimary,
                 ),
               ],
             ),

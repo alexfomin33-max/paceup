@@ -11,7 +11,7 @@ class DistancePill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 70,
-      height: 30,
+      height: 28,
       decoration: BoxDecoration(
         color: const Color(0xFFF3F4F6),
         borderRadius: BorderRadius.circular(14),
@@ -41,8 +41,8 @@ class GenderPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 30,
-      height: 30,
+      width: 28,
+      height: 28,
       decoration: BoxDecoration(
         color: female ? const Color(0xFFFDF1F5) : const Color(0xFFF1F8FD),
         shape: BoxShape.circle,
@@ -53,7 +53,7 @@ class GenderPill extends StatelessWidget {
         style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 13,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w400,
           color: female ? const Color(0xFFE8618C) : const Color(0xFF379AE6),
         ),
       ),
@@ -70,7 +70,7 @@ class PricePill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 76,
-      height: 30,
+      height: 28,
       decoration: BoxDecoration(
         color: const Color(0xFFFEF9EE),
         borderRadius: BorderRadius.circular(14),
@@ -83,7 +83,7 @@ class PricePill extends StatelessWidget {
         style: const TextStyle(
           fontFamily: 'Inter',
           fontSize: 13,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w400,
           color: Color(0xFF98690C),
         ),
       ),

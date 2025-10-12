@@ -272,7 +272,7 @@ class _TopTabs extends StatelessWidget {
               segments[index],
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
                 color: isSelected ? Colors.white : Colors.black87,
               ),
             ),
@@ -460,7 +460,7 @@ class _OvalToggle extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w400,
             color: fg,
           ),
         ),

@@ -25,7 +25,7 @@ class SlotsBottomSheet extends StatelessWidget {
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.large),
+            top: Radius.circular(AppRadius.lg),
           ),
         ),
         padding: const EdgeInsets.all(6),

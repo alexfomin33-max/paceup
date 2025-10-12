@@ -26,25 +26,13 @@ class MetricVertical extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          mainTitle,
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
-        ),
+        Text(mainTitle, style: AppTextStyles.smallsofttext),
         const SizedBox(height: 1),
-        Text(
-          mainValue,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
+        Text(mainValue, style: AppTextStyles.numberstat),
         const SizedBox(height: 10),
-        Text(
-          subTitle,
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
-        ),
+        Text(subTitle, style: AppTextStyles.smallsofttext),
         const SizedBox(height: 1),
-        Text(
-          subValue,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
+        Text(subValue, style: AppTextStyles.numberstat),
       ],
     );
   }
@@ -109,35 +97,20 @@ class StatsRow extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Темп',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
-            ),
+            const Text('Темп', style: AppTextStyles.smallsofttext),
             const SizedBox(height: 1),
-            Text(
-              paceText,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
+            Text(paceText, style: AppTextStyles.numberstat),
             const SizedBox(height: 10),
-            const Text(
-              'Ср. пульс',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
-            ),
+            const Text('Ср. пульс', style: AppTextStyles.smallsofttext),
             const SizedBox(height: 1),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  hrText,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(hrText, style: AppTextStyles.numberstat),
                 const SizedBox(width: 2),
                 const Icon(
                   CupertinoIcons.heart_fill,
-                  color: Colors.red,
+                  color: AppColors.error,
                   size: 12,
                 ),
               ],

@@ -1,6 +1,7 @@
 class AppRadius {
-  static const double small = 6;
-  static const double medium = 10;
-  static const double large = 20;
-  static const double xlarge = 26;
+  static const double xs = 4; // редкий случай, бейджи
+  static const double sm = 8; // основной UI: кнопки, чипы
+  static const double md = 12; // карточки, блоки
+  static const double lg = 16; // панели, крупные контейнеры
+  static const double xl = 20; // модалки, popover, всплывашки
 }

@@ -140,7 +140,7 @@ class SkillCard extends StatelessWidget {
           color: AppColors.border,
           width: 0.5, // тонкая рамка
         ),
-        borderRadius: BorderRadius.circular(AppRadius.large),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.symmetric(horizontal: 12),
@@ -206,7 +206,7 @@ class SkillCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.large),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: onTap,
         child: content,
       ),

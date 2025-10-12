@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 // Контент шитов теперь здесь:
-import 'clubs_bottom_sheet.dart';
+import 'widgets/clubs_bottom_sheet.dart';
 
 /// Возвращает маркеры для вкладки «Клубы».
 List<Map<String, dynamic>> clubsMarkers(BuildContext context) {
@@ -119,7 +119,7 @@ class _SolidPillButton extends StatelessWidget {
                 label,
                 style: const TextStyle(
                   fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w400,
                   color: Colors.black87,
                 ),
               ),

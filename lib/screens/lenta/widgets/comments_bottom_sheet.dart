@@ -374,7 +374,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
               Flexible(
                 child: Text(
                   c.userName,
-                  style: AppTextStyles.name,
+                  style: AppTextStyles.normaltext,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -529,7 +529,7 @@ class _ComposerBar extends StatelessWidget {
                   vertical: 6,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.xlarge),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   borderSide: BorderSide.none,
                 ),
                 filled: true,

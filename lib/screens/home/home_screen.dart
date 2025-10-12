@@ -72,7 +72,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           // 🔹 Скругление углов кнопки
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.xlarge),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
             ),
           ),
           // 🔹 Цвет overlay при нажатии (сделан прозрачным)

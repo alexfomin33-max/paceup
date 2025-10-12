@@ -171,7 +171,7 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
                   child: Icon(
                     isLiked ? CupertinoIcons.heart_solid : CupertinoIcons.heart,
                     size: 20,
-                    color: isLiked ? Colors.red : AppColors.red,
+                    color: isLiked ? AppColors.error : AppColors.error,
                   ),
                 ),
               ),
@@ -187,7 +187,7 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
               child: const Icon(
                 CupertinoIcons.chat_bubble,
                 size: 20,
-                color: AppColors.orange,
+                color: AppColors.warning,
               ),
             ),
             const SizedBox(width: 4),
@@ -204,27 +204,21 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
             const Icon(
               CupertinoIcons.person_2,
               size: 20,
-              color: AppColors.green,
+              color: AppColors.success,
             ),
             const SizedBox(width: 4),
-            const Text(
-              '48',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
+            const Text('48', style: AppTextStyles.numberstat),
             const SizedBox(width: 12),
             GestureDetector(
               onTap: widget.onOpenTogether,
               child: const Icon(
                 CupertinoIcons.person_crop_circle_badge_plus,
                 size: 20,
-                color: AppColors.secondary,
+                color: AppColors.brandPrimary,
               ),
             ),
             const SizedBox(width: 4),
-            const Text(
-              '3',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
+            const Text('3', style: AppTextStyles.numberstat),
           ],
         ),
       ],

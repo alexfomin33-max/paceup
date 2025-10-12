@@ -370,7 +370,7 @@ class _TopTabsSwitch extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
-            fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+            fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
             color: selected ? Colors.white : Colors.black87,
           ),
         ),
@@ -472,7 +472,7 @@ class _ChipsRow extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w400,
                 color: sel ? Colors.white : AppColors.text,
               ),
             ),
@@ -520,15 +520,15 @@ class _LabeledTextField extends StatelessWidget {
               vertical: 10,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               borderSide: const BorderSide(color: AppColors.border),
             ),
           ),
@@ -571,15 +571,15 @@ class _DropdownField extends StatelessWidget {
               vertical: 10,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.small),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               borderSide: const BorderSide(color: AppColors.border),
             ),
           ),
@@ -627,19 +627,19 @@ class _PriceField extends StatelessWidget {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(
-                      Radius.circular(AppRadius.small),
+                      Radius.circular(AppRadius.sm),
                     ),
                     borderSide: BorderSide(color: AppColors.border),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.all(
-                      Radius.circular(AppRadius.small),
+                      Radius.circular(AppRadius.sm),
                     ),
                     borderSide: BorderSide(color: AppColors.border),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.all(
-                      Radius.circular(AppRadius.small),
+                      Radius.circular(AppRadius.sm),
                     ),
                     borderSide: BorderSide(color: AppColors.border),
                   ),
@@ -691,7 +691,7 @@ class _PrimaryButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: enabled ? AppColors.primary : Colors.grey.shade400,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xlarge),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           padding: const EdgeInsets.symmetric(
             horizontal: 40, // 🔹 горизонтальный паддинг
@@ -728,7 +728,7 @@ Widget _labelWithStar(String label) {
       style: const TextStyle(
         color: Color(0xFF565D6D),
         fontSize: 15, // слегка меньше
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w400,
         fontFamily: 'Inter', // 4) Inter
       ),
       children: [
@@ -776,7 +776,7 @@ class _OvalToggle extends StatelessWidget {
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w400,
             color: null,
           ).copyWith(color: fg),
         ),

@@ -32,7 +32,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
             width: double.infinity, // на всю ширину
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppRadius.large), // только верхние углы
+                top: Radius.circular(AppRadius.lg), // только верхние углы
               ),
               child: Material(
                 color: Colors.white,
@@ -113,7 +113,7 @@ class _ToggleList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.medium),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
         color: Colors.white,
         child: Column(

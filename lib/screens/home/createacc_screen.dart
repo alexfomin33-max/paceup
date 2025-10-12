@@ -53,21 +53,21 @@ class AddAccScreen extends StatelessWidget {
                       width: 1.0,
                       color: Colors.white,
                     ),
-                    borderRadius: BorderRadius.circular(AppRadius.xlarge),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderSide: const BorderSide(
                       width: 1.0,
                       color: Colors.white,
                     ),
-                    borderRadius: BorderRadius.circular(AppRadius.xlarge),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderSide: const BorderSide(
                       width: 1.0,
                       color: Colors.white,
                     ),
-                    borderRadius: BorderRadius.circular(AppRadius.xlarge),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                 ),
               ),
@@ -88,7 +88,7 @@ class AddAccScreen extends StatelessWidget {
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.xlarge),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                   elevation: 0,
                 ),

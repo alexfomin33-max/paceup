@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../../theme/app_theme.dart';
 
 class CoffeeRunVldMembersContent extends StatelessWidget {
   const CoffeeRunVldMembersContent({super.key});
@@ -22,7 +22,7 @@ class CoffeeRunVldMembersContent extends StatelessWidget {
         return Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               child: Row(
                 children: [
                   SizedBox(
@@ -32,7 +32,7 @@ class CoffeeRunVldMembersContent extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontFamily: 'Inter',
-                        fontSize: 14,
+                        fontSize: 13,
                         color: AppColors.text,
                       ),
                     ),
@@ -42,8 +42,8 @@ class CoffeeRunVldMembersContent extends StatelessWidget {
                     borderRadius: BorderRadius.circular(22),
                     child: Image.asset(
                       m.avatar,
-                      width: 40,
-                      height: 40,
+                      width: 36,
+                      height: 36,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -57,8 +57,8 @@ class CoffeeRunVldMembersContent extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.text,
                           ),
                         ),

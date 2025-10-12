@@ -77,7 +77,7 @@ class _MonthLabel extends StatelessWidget {
       style: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 15,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
         color: AppColors.text,
       ),
     );
@@ -95,7 +95,7 @@ class _SectionLabel extends StatelessWidget {
       style: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 15,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
         color: AppColors.text,
       ),
     );
@@ -142,7 +142,7 @@ class AvailableTaskCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(AppRadius.large),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -166,7 +166,7 @@ class AvailableTaskCard extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w400,
               color: AppColors.text,
             ),
           ),
@@ -198,7 +198,7 @@ class AvailableExpeditionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(AppRadius.large),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -228,7 +228,7 @@ class AvailableExpeditionCard extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w400,
               color: AppColors.text,
             ),
           ),
@@ -306,7 +306,7 @@ class _PrimarySmallButton extends StatelessWidget {
           backgroundColor: AppColors.secondary,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.small),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           elevation: 0,
         ),
@@ -315,7 +315,7 @@ class _PrimarySmallButton extends StatelessWidget {
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),

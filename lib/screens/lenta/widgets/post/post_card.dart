@@ -45,7 +45,7 @@ class PostCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(
           top: BorderSide(width: 0.5, color: AppColors.border),
           bottom: BorderSide(width: 0.5, color: AppColors.border),
@@ -78,12 +78,8 @@ class PostCard extends StatelessWidget {
                     MoreMenuItem(
                       text: 'Удалить пост',
                       icon: CupertinoIcons.minus_circle,
-                      iconColor: const Color(0xFFE53935),
-                      textStyle: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFFE53935),
-                      ),
+                      iconColor: AppColors.error,
+                      textStyle: const TextStyle(color: AppColors.error),
                       onTap: onDelete ?? () {},
                     ),
                   ];
@@ -137,7 +133,7 @@ class PostCard extends StatelessWidget {
                       const Icon(
                         CupertinoIcons.chat_bubble,
                         size: 20,
-                        color: AppColors.orange,
+                        color: AppColors.warning,
                       ),
                       const SizedBox(width: 4),
                       Text(post.comments.toString()),
@@ -306,7 +302,7 @@ class _PostLikeBarState extends State<_PostLikeBar>
             child: Icon(
               isLiked ? CupertinoIcons.heart_solid : CupertinoIcons.heart,
               size: 20,
-              color: AppColors.red,
+              color: AppColors.error,
             ),
           ),
           const SizedBox(width: 4),

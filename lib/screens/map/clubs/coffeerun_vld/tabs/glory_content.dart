@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../../theme/app_theme.dart';
 
 class CoffeeRunVldGloryContent extends StatelessWidget {
   const CoffeeRunVldGloryContent({super.key});
@@ -59,7 +59,7 @@ class CoffeeRunVldGloryContent extends StatelessWidget {
             _RaceHeader(group: groups[i]),
             const SizedBox(height: 8),
             _RaceTable(group: groups[i]),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
           ],
         );
       }),
@@ -102,8 +102,8 @@ class _RaceHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontFamily: 'Inter',
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
                 color: AppColors.text,
               ),
             ),
@@ -114,7 +114,7 @@ class _RaceHeader extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
-              color: Color(0xFF6B6B6B),
+              color: AppColors.greytext,
             ),
           ),
         ],
@@ -173,8 +173,8 @@ class _RaceTable extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontFamily: 'Inter',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w400,
                                   color: AppColors.text,
                                 ),
                               ),
@@ -203,7 +203,7 @@ class _RaceTable extends StatelessWidget {
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w400,
                               color: AppColors.text,
                             ),
                           ),
@@ -229,7 +229,7 @@ class _RaceTable extends StatelessWidget {
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w400,
                               color: AppColors.text,
                             ),
                           ),
@@ -255,7 +255,7 @@ class _RaceTable extends StatelessWidget {
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w400,
                               color: AppColors.text,
                             ),
                           ),

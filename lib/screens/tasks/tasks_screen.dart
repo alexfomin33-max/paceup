@@ -110,7 +110,7 @@ class _SegmentedPill extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
             color: selected ? Colors.white : AppColors.text,
           ),
         ),

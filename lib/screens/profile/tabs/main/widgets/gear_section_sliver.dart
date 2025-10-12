@@ -112,7 +112,7 @@ class _GearCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
         ),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
         child: Row(
           children: [
             // Превью изображения (лого/фото)
@@ -197,7 +197,7 @@ class _InlineStat extends StatelessWidget {
           ),
           TextSpan(
             text: value,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: const TextStyle(fontWeight: FontWeight.w500),
           ),
         ],
       ),
