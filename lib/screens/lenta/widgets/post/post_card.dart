@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import '../../../../theme/app_theme.dart';
 import '../../../../models/activity_lenta.dart';
 import 'post_media_carousel.dart';
+import '../../../../widgets/user_header.dart';
 
 // ✅ универсальное всплывающее меню (уже вынесено в lib/widgets)
 import '../../../../widgets/more_menu_overlay.dart';
@@ -54,81 +55,44 @@ class PostCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ──────────────────────────────────────────────────────────────
-          // ШАПКА: аватар, имя, дата, иконка "…"
+          // ШАПКА: единый UserHeader (аватар, имя, дата, trailing-меню)
           // ──────────────────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                // Аватар пользователя
-                ClipOval(
-                  child: Image.network(
-                    post.userAvatar,
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Image.asset(
-                      "assets/Avatar_2.png",
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
+            child: UserHeader(
+              userName: post.userName,
+              userAvatar: post.userAvatar,
+              dateText: post.postDateText,
+
+              // trailing — наша кнопка "…"
+              trailing: IconButton(
+                key: menuKey,
+                icon: const Icon(CupertinoIcons.ellipsis),
+                onPressed: () {
+                  final items = <MoreMenuItem>[
+                    MoreMenuItem(
+                      text: 'Редактировать пост',
+                      icon: CupertinoIcons.pencil,
+                      onTap: onEdit ?? () {},
                     ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // Имя и дата поста — в одну колонку
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        post.userName,
-                        style: AppTextStyles.name,
-                        overflow: TextOverflow.ellipsis,
+                    MoreMenuItem(
+                      text: 'Удалить пост',
+                      icon: CupertinoIcons.minus_circle,
+                      iconColor: const Color(0xFFE53935),
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFFE53935),
                       ),
-                      Text(
-                        post.postDateText,
-                        style: AppTextStyles.date,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Меню "…" — показываем универсальный Overlay-виджет
-                IconButton(
-                  key: menuKey,
-                  icon: const Icon(CupertinoIcons.ellipsis),
-                  onPressed: () {
-                    // Собираем пункты меню под конкретный пост.
-                    final items = <MoreMenuItem>[
-                      MoreMenuItem(
-                        text: 'Редактировать пост',
-                        icon: CupertinoIcons.pencil,
-                        onTap: onEdit ?? () {},
-                      ),
-                      MoreMenuItem(
-                        text: 'Удалить пост',
-                        icon: CupertinoIcons.minus_circle,
-                        iconColor: const Color(0xFFE53935),
-                        textStyle: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFFE53935),
-                        ),
-                        onTap: onDelete ?? () {},
-                      ),
-                    ];
-
-                    // Показываем всплывашку, привязанную к кнопке.
-                    MoreMenuOverlay(
-                      anchorKey: menuKey,
-                      items: items,
-                    ).show(context);
-                  },
-                ),
-              ],
+                      onTap: onDelete ?? () {},
+                    ),
+                  ];
+                  MoreMenuOverlay(
+                    anchorKey: menuKey,
+                    items: items,
+                  ).show(context);
+                },
+              ),
             ),
           ),
 

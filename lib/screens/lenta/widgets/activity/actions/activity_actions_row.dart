@@ -176,7 +176,7 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
                 ),
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 0),
             Text(
               likesCount.toString(),
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),

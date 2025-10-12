@@ -1,63 +1,57 @@
 // lib/screens/lenta/widgets/activity/equipment/equipment_popup.dart
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Простой статичный попап экипировки.
-/// - Рисуется поверх всего через OverlayEntry (без навигации/диалогов).
-/// - Сам закрывается по тапу по фону.
-/// - Размеры/верстка совпадают с твоим макетом (288×112, 2 строки по 56).
-/// - Вынесен в отдельный файл, чтобы переиспользовать где угодно.
-///
-/// Использование:
-///   EquipmentPopup.show(context);
+/// Попап экипировки, якорящийся к кнопке справа от чипа.
+/// Поведение и размеры совпадают с исходным вариантом:
+/// - 288×112, 2 строки по 56, тонкий разделитель 1px (#ECECEC)
+/// - Появление с анимацией Fade + Scale(0.8→1.0, easeOutBack ~250мс)
+/// - Позиция: стараемся показать НАД кнопкой; если не влезает — ПОД кнопкой.
+/// - Горизонталь: прижимаем правым краем к кнопке; не выходим за границы экрана.
 class EquipmentPopup {
-  /// Показать попап в rootOverlay.
-  static void show(BuildContext context) {
+  /// Показать попап, привязанный к виджету с [anchorKey].
+  static void showAnchored(
+    BuildContext context, {
+    required GlobalKey anchorKey,
+  }) {
     final overlay = Overlay.of(context, rootOverlay: true);
     if (overlay == null) return;
+    final anchorContext = anchorKey.currentContext;
+    if (anchorContext == null) return;
+
+    final box = anchorContext.findRenderObject() as RenderBox?;
+    if (box == null) return;
+
+    final size = box.size;
+    final offset = box.localToGlobal(Offset.zero);
+    final screenSize = MediaQuery.of(context).size;
+
+    const double popupW = 288;
+    const double popupH = 114;
+
+    // Горизонталь: выравниваем правым краем по кнопке, но в пределах экрана.
+    double left = offset.dx + size.width - popupW;
+    left = left.clamp(8.0, screenSize.width - popupW - 8.0);
+
+    // Вертикаль: если над кнопкой хватает места — ставим над; иначе — под.
+    final topWouldBe = offset.dy - popupH;
+    final double top = (topWouldBe < 20)
+        ? (offset.dy + size.height)
+        : topWouldBe;
 
     late OverlayEntry entry;
 
-    /// Локальная функция закрытия — чтобы можно было вызывать изнутри.
     void close() {
       entry.remove();
     }
 
     entry = OverlayEntry(
-      builder: (_) => Stack(
-        children: [
-          // Тап по фону закрывает попап
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: close,
-              behavior: HitTestBehavior.opaque,
-            ),
-          ),
-
-          // Сам "пузырь" по центру (можно позиционировать иначе при желании)
-          Center(
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                width: 288,
-                height: 112,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  // Тень как в твоём изначальном варианте для этого попапа
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: const _PopupContent(),
-              ),
-            ),
-          ),
-        ],
+      builder: (_) => _AnimatedPopup(
+        left: left,
+        top: top,
+        width: popupW,
+        height: popupH,
+        onDismiss: close,
       ),
     );
 
@@ -65,8 +59,105 @@ class EquipmentPopup {
   }
 }
 
-/// Внутренний контент попапа: две строки обуви 56px + тонкий разделитель.
-/// Разметка повторяет твою из `Popup`, но упрощена за счёт переиспользуемого `_ShoeRow`.
+class _AnimatedPopup extends StatefulWidget {
+  final double left;
+  final double top;
+  final double width;
+  final double height;
+  final VoidCallback onDismiss;
+
+  const _AnimatedPopup({
+    required this.left,
+    required this.top,
+    required this.width,
+    required this.height,
+    required this.onDismiss,
+  });
+
+  @override
+  State<_AnimatedPopup> createState() => _AnimatedPopupState();
+}
+
+class _AnimatedPopupState extends State<_AnimatedPopup>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+  late final Animation<double> _fade;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _fade = CurvedAnimation(parent: _c, curve: Curves.easeInOut);
+    _scale = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _c, curve: Curves.easeOutBack));
+    _c.forward();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Тап по полупрозрачному фону — закрыть
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onDismiss,
+            child: FadeTransition(
+              opacity: _fade.drive(Tween(begin: 0.0, end: 1.0)),
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+        ),
+        Positioned(
+          left: widget.left,
+          top: widget.top,
+          width: widget.width,
+          height: widget.height,
+          child: FadeTransition(
+            opacity: _fade,
+            child: ScaleTransition(
+              scale: _scale,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: widget.width,
+                  height: widget.height,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 8,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: const _PopupContent(),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Контент попапа: 2 строки обуви по 56px и разделитель 1px.
 class _PopupContent extends StatelessWidget {
   const _PopupContent();
 
@@ -90,9 +181,7 @@ class _PopupContent extends StatelessWidget {
   }
 }
 
-/// Одна строка обуви в попапе.
-/// Слева — 80px под картинку, справа — текстовый блок 208px.
-/// Общая высота — 56px (как в твоём макете).
+/// Одна строка 56px: слева 80px под картинку, справа — текстовый блок.
 class _ShoeRow extends StatelessWidget {
   final String imageAsset;
   final String name;
@@ -111,7 +200,7 @@ class _ShoeRow extends StatelessWidget {
       width: double.infinity,
       child: Row(
         children: [
-          // Левая область под картинку 80×56
+          // Слева 80×56
           Container(
             width: 80,
             height: 56,
@@ -119,8 +208,7 @@ class _ShoeRow extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             child: Image.asset(imageAsset, fit: BoxFit.fill),
           ),
-
-          // Правая область 208×56 — текст в две строки
+          // Справа 208×56
           Expanded(
             child: Container(
               height: 56,
@@ -144,7 +232,7 @@ class _ShoeRow extends StatelessWidget {
                         color: Color(0xFF565D6D),
                         fontSize: 11,
                         fontWeight: FontWeight.w400,
-                        height: 1.64,
+                        height: 2,
                       ),
                     ),
                     TextSpan(
@@ -153,7 +241,7 @@ class _ShoeRow extends StatelessWidget {
                         color: Color(0xFF171A1F),
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        height: 1.64,
+                        height: 2,
                       ),
                     ),
                     const TextSpan(

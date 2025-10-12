@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
+// Токены/модели
 import '../../../../theme/app_theme.dart';
 import '../../../../models/activity_lenta.dart';
 
@@ -13,9 +14,13 @@ import 'route/route_card.dart';
 import 'equipment/equipment_chip.dart';
 import 'actions/activity_actions_row.dart';
 
+// Для комментариев и «вместе» — поведение как в исходном коде
+import '../comments_bottom_sheet.dart';
+import '../../activity/together/together_screen.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+
 /// Главный виджет «тренировка».
-/// Здесь — только «сборка» из подвиджетов + проброс колбэков.
-/// Вся логика форматирования/анимаций/сетевых вызовов разложена по частям.
+/// Задача: сохранить визуал 1-в-1 с дорефакторинговым activity_block.dart.
 class ActivityBlock extends StatelessWidget {
   final Activity activity;
   final int currentUserId;
@@ -28,6 +33,10 @@ class ActivityBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Достаём статистику. Даже если её нет — рисуем блок (он покажет «—»),
+    // чтобы сохранить стабильную вертикальную ритмику и высоту карточки.
+    final stats = activity.stats;
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -39,47 +48,52 @@ class ActivityBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Шапка: аватар + имя + дата (сам по себе компактный)
+          // ──────────────────────────────────────────────────────────────
+          // ШАПКА + МЕТРИКИ (одна секция с отступом 16)
+          // ──────────────────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.all(16),
             child: ActivityHeader(
               userId: activity.userId,
               userName: activity.userName,
               userAvatar: activity.userAvatar,
               dateStart: activity.dateStart,
+
+              // ⬇️ если в модели Activity есть готовая строка, как в Посте — используем её
+              dateTextOverride: activity
+                  .postDateText, // <-- ПОДСТАВЬ СВОЁ НАЗВАНИЕ ПОЛЯ, если оно другое
+              // Нижний слот — метрики
+              bottom: StatsRow(
+                distanceMeters: stats?.distance,
+                durationSec: stats?.duration,
+                elevationGainM: stats?.cumulativeElevationGain,
+                avgPaceMinPerKm: stats?.avgPace,
+                avgHeartRate: stats?.avgHeartRate,
+              ),
+              bottomGap: 18.0,
             ),
           ),
 
-          /// Метрики тренировки: расстояние/время/темп/пульс и т.п.
-          if (activity.stats != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
-              child: StatsRow(
-                distanceMeters: activity.stats!.distance, // double/num
-                durationSec: (activity.stats!.duration).toInt(), // num -> int
-                elevationGainM: activity.stats!.cumulativeElevationGain, // num
-                avgPaceMinPerKm: activity.stats!.avgPace, // double
-                avgHeartRate: activity.stats!.avgHeartRate, // double/num?
-              ),
-            ),
+          // Тонкий промежуток после шапки+метрик (было const SizedBox(height: 2))
+          const SizedBox(height: 2),
 
-          /// Чип с экипировкой (обувь) — отдельно от попапа
-          if (activity.equipments.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: EquipmentChip(items: activity.equipments),
-            ),
+          // ───────────────── ЭКИПИРОВКА ─────────────────
+          // Как в исходнике: снаружи паддинг 6, внутри сам чип имеет собственный горизонтальный паддинг 10 (мы добавили его в EquipmentChip).
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: EquipmentChip(items: activity.equipments),
+          ),
 
           const SizedBox(height: 8),
 
-          /// Маршрут (миникарта)
+          // ───────────────── МАРШРУТ ─────────────────
           RouteCard(
             points: activity.points.map((c) => LatLng(c.lat, c.lng)).toList(),
           ),
 
           const SizedBox(height: 12),
 
-          /// Нижняя панель действий (лайк/комменты/совместно)
+          // ───────────────── НИЖНЯЯ ПАНЕЛЬ ДЕЙСТВИЙ ─────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: ActivityActionsRow(
@@ -88,16 +102,28 @@ class ActivityBlock extends StatelessWidget {
               initialLikes: activity.likes,
               initiallyLiked: activity.islike,
               commentsCount: activity.comments,
+
+              // Открываем комментарии — поведение как было
               onOpenComments: () {
-                // Комментарии открывает родительский экран (через showCupertinoModalBottomSheet).
-                // Если хочется — можно пробросить наружу ещё один колбэк.
-                // Пока оставим заглушку: родитель ловит тапом по карточке или через GestureDetector.
+                showCupertinoModalBottomSheet(
+                  context: context,
+                  builder: (context) => CommentsBottomSheet(
+                    itemType: 'activity',
+                    itemId: activity.id,
+                    currentUserId: currentUserId,
+                  ),
+                );
               },
+
+              // «Вместе» — пушим экран совместных активностей
               onOpenTogether: () {
-                // Тоже лучше пробрасывать наружу. Здесь — только UI.
+                Navigator.of(context).push(
+                  CupertinoPageRoute(builder: (_) => const TogetherScreen()),
+                );
               },
             ),
           ),
+
           const SizedBox(height: 12),
         ],
       ),

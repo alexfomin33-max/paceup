@@ -4,6 +4,7 @@ import '../../../theme/app_theme.dart';
 import '../edit_profile_screen.dart';
 import '../state/subscribe/communication_prefs.dart';
 import '../../../models/user_profile_header.dart';
+import '../../../widgets/optimized_avatar.dart';
 
 class HeaderCard extends StatelessWidget {
   final UserProfileHeader? profile;

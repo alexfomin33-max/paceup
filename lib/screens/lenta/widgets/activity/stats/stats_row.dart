@@ -33,7 +33,7 @@ class MetricVertical extends StatelessWidget {
         const SizedBox(height: 1),
         Text(
           mainValue,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
         Text(
@@ -43,7 +43,7 @@ class MetricVertical extends StatelessWidget {
         const SizedBox(height: 1),
         Text(
           subValue,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ],
     );
@@ -116,7 +116,7 @@ class StatsRow extends StatelessWidget {
             const SizedBox(height: 1),
             Text(
               paceText,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 10),
             const Text(
@@ -131,7 +131,7 @@ class StatsRow extends StatelessWidget {
                   hrText,
                   style: const TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(width: 2),
