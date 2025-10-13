@@ -45,14 +45,21 @@ class _RecommendedList extends StatelessWidget {
             name: 'Екатерина Виноградова',
             desc: '36 лет, Санкт-Петербург',
             mutual: '6 общих друзей',
-            avatarAsset: 'assets/Recommended_1.png',
+            avatarAsset: 'assets/recommended_1.png',
           ),
           SizedBox(width: 12),
           _FriendCard(
             name: 'Анатолий Курагин',
             desc: '38 лет, Ковров',
             mutual: '4 общих друга',
-            avatarAsset: 'assets/Recommended_2.png',
+            avatarAsset: 'assets/recommended_2.jpg',
+          ),
+          SizedBox(width: 12),
+          _FriendCard(
+            name: 'Евгения Миронова',
+            desc: '29 лет, Иваново',
+            mutual: '3 общих друга',
+            avatarAsset: 'assets/recommended_3.png',
           ),
         ],
       ),
@@ -80,8 +87,8 @@ class _FriendCard extends StatelessWidget {
       width: 220,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -97,7 +104,7 @@ class _FriendCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             name,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: const TextStyle(fontWeight: FontWeight.w500),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
@@ -123,12 +130,12 @@ class _FriendCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.secondary,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
               ),
               child: const Text(
                 'Подписаться',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: AppColors.surface),
               ),
             ),
           ),

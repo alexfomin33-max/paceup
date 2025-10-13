@@ -85,14 +85,7 @@ class SearchClubsContent extends StatelessWidget {
                     ),
                     shape: const StadiumBorder(),
                   ),
-                  child: const Text(
-                    'Создать клуб',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: const Text('Создать клуб', style: AppTextStyles.name),
                 ),
               ),
             ),

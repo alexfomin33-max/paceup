@@ -77,13 +77,9 @@ class _RaceBlock extends StatelessWidget {
                 child: Text(
                   item.title,
                   maxLines: 1,
+                  softWrap: false,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.text,
-                  ),
+                  style: AppTextStyles.name,
                 ),
               ),
               const SizedBox(width: 8),
@@ -98,7 +94,7 @@ class _RaceBlock extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
 
         // Табличная карточка — во всю ширину экрана
         Container(

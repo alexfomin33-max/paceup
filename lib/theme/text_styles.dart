@@ -11,6 +11,7 @@ class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w400,
   );
+  // style: AppTextStyles.normaltext
 
   static const TextStyle softtext = TextStyle(
     fontSize: 14,
@@ -22,12 +23,20 @@ class AppTextStyles {
     fontSize: 15,
     fontWeight: FontWeight.w500,
   );
+  // style: AppTextStyles.name
 
   static const TextStyle date = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
   );
+  // style: AppTextStyles.date
+
+  static const TextStyle tablestat = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+  );
+  // style: AppTextStyles.tablestat
 
   static const TextStyle numberstat = TextStyle(
     fontSize: 14,

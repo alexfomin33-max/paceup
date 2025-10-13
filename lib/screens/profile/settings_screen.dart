@@ -313,13 +313,13 @@ class _Divider extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(left: 48, right: 12),
       height: hairline,
-      color: const Color(0xFFE0E0E0),
+      color: AppColors.divider,
     );
   }
 }
 
 const _cardDecoration = BoxDecoration(
   color: AppColors.surface,
-  borderRadius: BorderRadius.all(Radius.circular(12)),
-  border: Border.fromBorderSide(BorderSide(color: Color(0xFFEAEAEA), width: 1)),
+  borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+  border: Border.fromBorderSide(BorderSide(color: AppColors.border, width: 1)),
 );

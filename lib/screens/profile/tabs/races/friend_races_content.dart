@@ -105,12 +105,7 @@ class _RaceFriendsBlock extends StatelessWidget {
                   group.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.text,
-                  ),
+                  style: AppTextStyles.name,
                 ),
               ),
               const SizedBox(width: 8),
@@ -125,7 +120,7 @@ class _RaceFriendsBlock extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
 
         // Таблица: верх/низ границы, внутри строки с вертикальными разделителями
         Container(
@@ -171,12 +166,7 @@ class _RaceFriendsBlock extends StatelessWidget {
                                     r.name,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.text,
-                                    ),
+                                    style: AppTextStyles.normaltext,
                                   ),
                                 ),
                               ],
@@ -200,12 +190,7 @@ class _RaceFriendsBlock extends StatelessWidget {
                                 '${r.km.toStringAsFixed(1)} км',
                                 softWrap: false,
                                 overflow: TextOverflow.fade,
-                                style: const TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500, // без жирного
-                                  color: AppColors.text,
-                                ),
+                                style: AppTextStyles.tablestat,
                               ),
                             ),
                           ),
@@ -226,12 +211,7 @@ class _RaceFriendsBlock extends StatelessWidget {
                                 r.time,
                                 softWrap: false,
                                 overflow: TextOverflow.fade,
-                                style: const TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500, // без жирного
-                                  color: AppColors.text,
-                                ),
+                                style: AppTextStyles.tablestat,
                               ),
                             ),
                           ),
@@ -252,12 +232,7 @@ class _RaceFriendsBlock extends StatelessWidget {
                                 r.pace,
                                 softWrap: false,
                                 overflow: TextOverflow.fade,
-                                style: const TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500, // без жирного
-                                  color: AppColors.text,
-                                ),
+                                style: AppTextStyles.tablestat,
                               ),
                             ),
                           ),

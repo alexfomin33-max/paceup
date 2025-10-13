@@ -88,8 +88,9 @@ flutter:
      - assets/Avatar_8.png
      - assets/Avatar_9.png
      - assets/Avatar_10.png
-     - assets/Recommended_1.png
-     - assets/Recommended_2.png
+     - assets/recommended_1.png
+     - assets/recommended_2.jpg
+     - assets/recommended_3.png
      - assets/Asics.png
      - assets/post.jpg
      - assets/Hoka.png
