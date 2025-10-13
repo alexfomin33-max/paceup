@@ -247,7 +247,7 @@ class _ActivityCard extends StatelessWidget {
       width: 120,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
         ),
@@ -308,7 +308,7 @@ class _PRRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
         ),
@@ -372,7 +372,7 @@ class _MetricsCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
         ),

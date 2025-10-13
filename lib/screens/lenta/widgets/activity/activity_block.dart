@@ -39,7 +39,7 @@ class ActivityBlock extends StatelessWidget {
 
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(
           top: BorderSide(width: 0.5, color: AppColors.border),
           bottom: BorderSide(width: 0.5, color: AppColors.border),

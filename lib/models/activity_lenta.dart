@@ -17,7 +17,7 @@ class Activity {
   final int id;
   final String type;
   final DateTime? dateStart; // top-level date_start (SQL-like string)
-  final DateTime? dateEnd;   // top-level date_end (SQL-like string)
+  final DateTime? dateEnd; // top-level date_end (SQL-like string)
   final int lentaId;
   final int userId;
   final String userName;
@@ -28,9 +28,9 @@ class Activity {
   final List<Equipment> equipments; // note: server key is 'equpments'
   final ActivityStats? stats; // server key 'params'
   final List<Coord> points;
-  final String postDateText;  // from "dates"
-  final String postMediaUrl;  // from "media"
-  final String postContent;   // from "content"
+  final String postDateText; // from "dates"
+  final String postMediaUrl; // from "media"
+  final String postContent; // from "content"
   final bool islike;
   final List<String> mediaImages; // полные URL картинок
   final List<String> mediaVideos; // полные URL видео
@@ -97,7 +97,9 @@ class Activity {
       postDateText: j['dates']?.toString() ?? '',
       postMediaUrl: j['media']?.toString() ?? '',
       postContent: j['content']?.toString() ?? '',
-      islike: _asBool(j['islike'] ?? j['isLiked'] ?? j['is_like'] ?? j['liked']),
+      islike: _asBool(
+        j['islike'] ?? j['isLiked'] ?? j['is_like'] ?? j['liked'],
+      ),
       mediaImages: mediaImages,
       mediaVideos: mediaVideos,
     );
@@ -122,13 +124,13 @@ class Equipment {
   });
 
   factory Equipment.fromJson(Map<String, dynamic> j) => Equipment(
-        name: j['name']?.toString() ?? '',
-        mileage: _asInt(j['mileage']),
-        img: j['img']?.toString() ?? '',
-        main: j['main'].toString() == '1' || j['main'] == true,
-        myRating: _asDouble(j['myraiting']),
-        type: j['type']?.toString() ?? '',
-      );
+    name: j['name']?.toString() ?? '',
+    mileage: _asInt(j['mileage']),
+    img: j['img']?.toString() ?? '',
+    main: j['main'].toString() == '1' || j['main'] == true,
+    myRating: _asDouble(j['myraiting']),
+    type: j['type']?.toString() ?? '',
+  );
 }
 
 class Coord {
@@ -137,10 +139,8 @@ class Coord {
 
   const Coord({required this.lat, required this.lng});
 
-  factory Coord.fromJson(Map<String, dynamic> j) => Coord(
-        lat: _asDouble(j['lat']),
-        lng: _asDouble(j['lng']),
-      );
+  factory Coord.fromJson(Map<String, dynamic> j) =>
+      Coord(lat: _asDouble(j['lat']), lng: _asDouble(j['lng']));
 }
 
 class ActivityStats {
@@ -187,34 +187,36 @@ class ActivityStats {
   });
 
   factory ActivityStats.fromJson(Map<String, dynamic> j) => ActivityStats(
-        distance: _asDouble(j['distance']),
-        realDistance: _asDouble(j['realDistance']),
-        avgSpeed: _asDouble(j['avgSpeed']),
-        avgPace: _asDouble(j['avgPace']),
-        minAltitude: _asDouble(j['minAltitude']),
-        minAltitudeCoords: j['minAltitudeCoords'] is Map<String, dynamic>
-            ? Coord.fromJson(j['minAltitudeCoords'] as Map<String, dynamic>)
-            : null,
-        maxAltitude: _asDouble(j['maxAltitude']),
-        maxAltitudeCoords: j['maxAltitudeCoords'] is Map<String, dynamic>
-            ? Coord.fromJson(j['maxAltitudeCoords'] as Map<String, dynamic>)
-            : null,
-        cumulativeElevationGain: _asDouble(j['cumulativeElevationGain']),
-        cumulativeElevationLoss: _asDouble(j['cumulativeElevationLoss']),
-        startedAt: _parseIsoDateTime(j['startedAt']?.toString()),
-        startedAtCoords: j['startedAtCoords'] is Map<String, dynamic>
-            ? Coord.fromJson(j['startedAtCoords'] as Map<String, dynamic>)
-            : null,
-        finishedAt: _parseIsoDateTime(j['finishedAt']?.toString()),
-        finishedAtCoords: j['finishedAtCoords'] is Map<String, dynamic>
-            ? Coord.fromJson(j['finishedAtCoords'] as Map<String, dynamic>)
-            : null,
-        duration: _asInt(j['duration']),
-        bounds: _parseCoordList(j['bounds']),
-        avgHeartRate: j['avgHeartRate'] == null ? null : _asDouble(j['avgHeartRate']),
-        heartRatePerKm: _parseNumMap(j['heartRatePerKm']),
-        pacePerKm: _parseNumMap(j['pacePerKm']),
-      );
+    distance: _asDouble(j['distance']),
+    realDistance: _asDouble(j['realDistance']),
+    avgSpeed: _asDouble(j['avgSpeed']),
+    avgPace: _asDouble(j['avgPace']),
+    minAltitude: _asDouble(j['minAltitude']),
+    minAltitudeCoords: j['minAltitudeCoords'] is Map<String, dynamic>
+        ? Coord.fromJson(j['minAltitudeCoords'] as Map<String, dynamic>)
+        : null,
+    maxAltitude: _asDouble(j['maxAltitude']),
+    maxAltitudeCoords: j['maxAltitudeCoords'] is Map<String, dynamic>
+        ? Coord.fromJson(j['maxAltitudeCoords'] as Map<String, dynamic>)
+        : null,
+    cumulativeElevationGain: _asDouble(j['cumulativeElevationGain']),
+    cumulativeElevationLoss: _asDouble(j['cumulativeElevationLoss']),
+    startedAt: _parseIsoDateTime(j['startedAt']?.toString()),
+    startedAtCoords: j['startedAtCoords'] is Map<String, dynamic>
+        ? Coord.fromJson(j['startedAtCoords'] as Map<String, dynamic>)
+        : null,
+    finishedAt: _parseIsoDateTime(j['finishedAt']?.toString()),
+    finishedAtCoords: j['finishedAtCoords'] is Map<String, dynamic>
+        ? Coord.fromJson(j['finishedAtCoords'] as Map<String, dynamic>)
+        : null,
+    duration: _asInt(j['duration']),
+    bounds: _parseCoordList(j['bounds']),
+    avgHeartRate: j['avgHeartRate'] == null
+        ? null
+        : _asDouble(j['avgHeartRate']),
+    heartRatePerKm: _parseNumMap(j['heartRatePerKm']),
+    pacePerKm: _parseNumMap(j['pacePerKm']),
+  );
 }
 
 // ======== NETWORK ========
@@ -227,7 +229,8 @@ Future<List<Activity>> loadActivities({
   Uri? endpoint,
   Duration timeout = const Duration(seconds: 15),
 }) async {
-  final uri = endpoint ?? Uri.parse('https://api.paceup.ru/activities_lenta.php');
+  final uri =
+      endpoint ?? Uri.parse('https://api.paceup.ru/activities_lenta.php');
 
   try {
     final res = await http
@@ -299,10 +302,7 @@ DateTime? _parseIsoDateTime(String? s) {
 
 List<Equipment> _parseEquipments(dynamic v) {
   if (v is List) {
-    return v
-        .whereType<Map<String, dynamic>>()
-        .map(Equipment.fromJson)
-        .toList();
+    return v.whereType<Map<String, dynamic>>().map(Equipment.fromJson).toList();
   }
   return const [];
 }
@@ -330,10 +330,12 @@ List<Coord> _parsePoints(dynamic v) {
       if (e is String) {
         final m = regex.firstMatch(e);
         if (m != null) {
-          result.add(Coord(
-            lat: double.tryParse(m.group(1)!) ?? 0,
-            lng: double.tryParse(m.group(2)!) ?? 0,
-          ));
+          result.add(
+            Coord(
+              lat: double.tryParse(m.group(1)!) ?? 0,
+              lng: double.tryParse(m.group(2)!) ?? 0,
+            ),
+          );
         }
       } else if (e is Map<String, dynamic>) {
         // Just in case server one day returns [{"lat":..,"lng":..}]
@@ -364,4 +366,3 @@ bool _asBool(dynamic v) {
   if (s == null || s.isEmpty) return false;
   return s == '1' || s == 'true' || s == 'yes' || s == 'on';
 }
-

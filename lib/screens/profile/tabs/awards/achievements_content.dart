@@ -188,7 +188,7 @@ class _BadgeTile extends StatelessWidget {
     final content = Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 0.7),
       ),

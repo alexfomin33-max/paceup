@@ -35,7 +35,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 top: Radius.circular(AppRadius.lg), // только верхние углы
               ),
               child: Material(
-                color: Colors.white,
+                color: AppColors.surface,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -115,7 +115,7 @@ class _ToggleList extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
-        color: Colors.white,
+        color: AppColors.surface,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -185,7 +185,7 @@ class _ToggleRow extends StatelessWidget {
               trackOutlineColor: WidgetStateProperty.all<Color>(
                 Colors.transparent,
               ),
-              thumbColor: WidgetStateProperty.all<Color>(Colors.white),
+              thumbColor: WidgetStateProperty.all<Color>(AppColors.surface),
             ),
           ),
         ],

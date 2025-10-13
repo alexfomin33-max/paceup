@@ -32,10 +32,10 @@ class Avatar extends StatelessWidget {
         url: isNet ? image : null,
         asset: isNet
             ? null
-            : (image.isNotEmpty ? image : 'assets/Avatar_2.png'),
+            : (image.isNotEmpty ? image : 'assets/avatar_2.png'),
         size: size,
         radius: size / 2, // скругление выше, оставлено для совместимости
-        fallbackAsset: 'assets/Avatar_2.png',
+        fallbackAsset: 'assets/avatar_2.png',
         gaplessPlayback: gapless, // Зачем: «без разрыва» → нет мигания
         fadeIn: fadeIn, // Что даст: мягкая смена кадра
         // fadeDuration / fadeCurve можно кастомизировать при желании

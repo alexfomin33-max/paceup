@@ -108,7 +108,7 @@ class _YearChartCardState extends State<_YearChartCard> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 0.7),
       ),

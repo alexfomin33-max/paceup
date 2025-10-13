@@ -18,10 +18,10 @@ class _SaleScreenState extends State<SaleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
 
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF6F7F9),
+        backgroundColor: AppColors.surface,
         elevation: 0,
         leadingWidth: 36, // ширина зоны leading
         leading: Padding(
@@ -339,7 +339,7 @@ class _TopTabsSwitch extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(30),
         boxShadow: const [
           BoxShadow(color: Colors.black12, blurRadius: 1, offset: Offset(0, 1)),
@@ -371,7 +371,7 @@ class _TopTabsSwitch extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 14,
             fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-            color: selected ? Colors.white : Colors.black87,
+            color: selected ? AppColors.surface : Colors.black87,
           ),
         ),
       ),
@@ -461,7 +461,7 @@ class _ChipsRow extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: sel ? AppColors.secondary : Colors.white,
+              color: sel ? AppColors.secondary : AppColors.surface,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: sel ? AppColors.secondary : AppColors.border,
@@ -473,7 +473,7 @@ class _ChipsRow extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
-                color: sel ? Colors.white : AppColors.text,
+                color: sel ? AppColors.surface : AppColors.text,
               ),
             ),
           ),
@@ -514,7 +514,7 @@ class _LabeledTextField extends StatelessWidget {
             hintText: hint,
             hintStyle: _hintText,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 10,
               vertical: 10,
@@ -565,7 +565,7 @@ class _DropdownField extends StatelessWidget {
           style: _fieldText,
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 10,
               vertical: 10,
@@ -620,7 +620,7 @@ class _PriceField extends StatelessWidget {
                 style: _fieldText,
                 decoration: const InputDecoration(
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: AppColors.surface,
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 10,
@@ -701,7 +701,7 @@ class _PrimaryButton extends StatelessWidget {
         child: Text(
           text,
           style: const TextStyle(
-            color: Colors.white,
+            color: AppColors.surface,
             fontSize: 14,
             fontWeight: FontWeight.w400,
             fontFamily: 'Inter',
@@ -736,7 +736,7 @@ Widget _labelWithStar(String label) {
           const TextSpan(
             text: '*',
             style: TextStyle(
-              color: Colors.red,
+              color: AppColors.error,
               fontSize: 15,
               fontFamily: 'Inter',
             ),
@@ -758,8 +758,8 @@ class _OvalToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = selected ? AppColors.secondary : Colors.white;
-    final fg = selected ? Colors.white : AppColors.text;
+    final bg = selected ? AppColors.secondary : AppColors.surface;
+    final fg = selected ? AppColors.surface : AppColors.text;
     return GestureDetector(
       onTap: onTap,
       child: Container(

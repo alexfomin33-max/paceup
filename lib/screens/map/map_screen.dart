@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../../theme/app_theme.dart';
 
 // контент вкладок
 import 'events/events_screen.dart' as ev;
@@ -29,7 +30,7 @@ class _MapScreenState extends State<MapScreen> {
   /// Цвета маркеров по вкладкам
   final markerColors = const {
     0: Colors.blue, // события
-    1: Colors.red, // клубы
+    1: AppColors.error, // клубы
     2: Colors.orange, // слоты
     3: Colors.purple, // попутчики
   };
@@ -147,13 +148,16 @@ class _MapScreenState extends State<MapScreen> {
                         decoration: BoxDecoration(
                           color: markerColor,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1),
+                          border: Border.all(
+                            color: AppColors.surface,
+                            width: 1,
+                          ),
                         ),
                         alignment: Alignment.center,
                         child: Text(
                           '$count',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             fontWeight: FontWeight.w500,
                             fontSize: 14,
                           ),
@@ -175,7 +179,7 @@ class _MapScreenState extends State<MapScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: const [
                     BoxShadow(
@@ -209,7 +213,9 @@ class _MapScreenState extends State<MapScreen> {
                             fontWeight: isSelected
                                 ? FontWeight.w500
                                 : FontWeight.w400,
-                            color: isSelected ? Colors.white : Colors.black87,
+                            color: isSelected
+                                ? AppColors.surface
+                                : Colors.black87,
                           ),
                         ),
                       ),

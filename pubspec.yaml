@@ -77,17 +77,17 @@ flutter:
   assets:
      - assets/background.webp
      - assets/logo_icon.png
-     - assets/Avatar_0.png
-     - assets/Avatar_1.png
-     - assets/Avatar_2.png
-     - assets/Avatar_3.png
-     - assets/Avatar_4.png
-     - assets/Avatar_5.png
-     - assets/Avatar_6.png
-     - assets/Avatar_7.png
-     - assets/Avatar_8.png
-     - assets/Avatar_9.png
-     - assets/Avatar_10.png
+     - assets/avatar_0.png
+     - assets/avatar_1.png
+     - assets/avatar_2.png
+     - assets/avatar_3.png
+     - assets/avatar_4.png
+     - assets/avatar_5.png
+     - assets/avatar_6.png
+     - assets/avatar_7.png
+     - assets/avatar_8.png
+     - assets/avatar_9.png
+     - assets/avatar_10.png
      - assets/recommended_1.png
      - assets/recommended_2.jpg
      - assets/recommended_3.png
@@ -121,8 +121,6 @@ flutter:
      - assets/sneakers3_2.png
      - assets/sneakers3_3.png
      - assets/sneakers3_4.png
-     - assets/Irina.png
-     - assets/Leyla.png
      - assets/Suzdal.png
      - assets/Monblan.png
      - assets/Travel_velo.png
@@ -134,7 +132,6 @@ flutter:
      - assets/Beringov.png
      - assets/Panamsky.png
      - assets/200k_run.png
-     - assets/avatar.png
      - assets/walking.png
      - assets/running.png
      - assets/cycling.png

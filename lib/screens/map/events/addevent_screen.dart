@@ -136,7 +136,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
           color: Colors.transparent,
           child: Container(
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Column(
@@ -228,11 +228,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         appBar: AppBar(
           title: const Text('Добавление события', style: AppTextStyles.h1),
           centerTitle: true,
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.surface,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(CupertinoIcons.back),
@@ -319,7 +319,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           shape: const CircleBorder(),
                           side: const BorderSide(color: AppColors.border),
                           foregroundColor: Colors.black87,
-                          backgroundColor: Colors.white,
+                          backgroundColor: AppColors.surface,
                           padding:
                               EdgeInsets.zero, // чтобы иконка была по центру
                         ),
@@ -461,7 +461,9 @@ class EventTextField extends StatelessWidget {
     final textColor = enabled
         ? Colors.black
         : Colors.black.withValues(alpha: 0.4);
-    final fill = enabled ? Colors.white : const Color(0xFFF6F7F9); // чуть серее
+    final fill = enabled
+        ? AppColors.surface
+        : const Color(0xFFF6F7F9); // чуть серее
     final borderColor = AppColors.border;
     final disabledBorderColor = AppColors.border.withValues(alpha: 0.6);
 
@@ -543,7 +545,7 @@ class EventDateField extends StatelessWidget {
             label: _labelWithStar(label),
             floatingLabelBehavior: FloatingLabelBehavior.always,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 14,
@@ -596,7 +598,7 @@ class EventDropdownField extends StatelessWidget {
     final textColor = enabled
         ? Colors.black
         : Colors.black.withValues(alpha: 0.4);
-    final fill = enabled ? Colors.white : const Color(0xFFF6F7F9);
+    final fill = enabled ? AppColors.surface : const Color(0xFFF6F7F9);
     final borderColor = AppColors.border;
     final disabledBorderColor = AppColors.border.withValues(alpha: 0.6);
 
@@ -686,7 +688,7 @@ class CreateButton extends StatelessWidget {
       child: Text(
         text,
         style: const TextStyle(
-          color: Colors.white,
+          color: AppColors.surface,
           fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
@@ -798,9 +800,13 @@ class _MediaTile extends StatelessWidget {
               height: 22,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.red,
+                color: AppColors.error,
               ),
-              child: const Icon(Icons.close, size: 16, color: Colors.white),
+              child: const Icon(
+                Icons.close,
+                size: 16,
+                color: AppColors.surface,
+              ),
             ),
           ),
         ),
@@ -826,7 +832,7 @@ Widget _labelWithStar(String label) {
         if (label.contains('*'))
           const TextSpan(
             text: '*',
-            style: TextStyle(color: Colors.red, fontSize: 16),
+            style: TextStyle(color: AppColors.error, fontSize: 16),
           ),
       ],
     ),

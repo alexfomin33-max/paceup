@@ -22,7 +22,7 @@ class _ViewingEquipmentScreenState extends State<ViewingEquipmentScreen> {
       backgroundColor: const Color(0xFFF5F6F8),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         centerTitle: true,
         title: const Text(
           'Просмотр снаряжения',
@@ -89,7 +89,7 @@ class _SegmentedPill2 extends StatelessWidget {
     final content = Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
       ),
@@ -121,7 +121,7 @@ class _SegmentedPill2 extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 14,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? Colors.white : AppColors.text,
+            color: selected ? AppColors.surface : AppColors.text,
           ),
         ),
       ),

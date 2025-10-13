@@ -24,7 +24,7 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
             floating: false,
             expandedHeight: 160,
             elevation: 0,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             leadingWidth: 60,
             leading: SafeArea(
               child: Padding(
@@ -42,7 +42,7 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                     child: const Center(
                       child: Icon(
                         CupertinoIcons.back,
-                        color: Colors.white,
+                        color: AppColors.surface,
                         size: 20,
                       ),
                     ),
@@ -62,7 +62,7 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
           SliverToBoxAdapter(
             child: Container(
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 boxShadow: [
                   // тонкая тень вниз ~1px
                   BoxShadow(
@@ -133,7 +133,7 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                 ),
                 Container(
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     border: Border(
                       top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
                       bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
@@ -310,25 +310,20 @@ class _RowData {
 }
 
 const _rows = <_RowData>[
-  _RowData(1, 'Алексей Лукашин', '110 033', AssetImage('assets/Avatar_1.png')),
+  _RowData(1, 'Алексей Лукашин', '110 033', AssetImage('assets/avatar_1.png')),
   _RowData(
     2,
     'Татьяна Свиридова',
     '110 033',
-    AssetImage('assets/Avatar_3.png'),
+    AssetImage('assets/avatar_3.png'),
   ),
-  _RowData(3, 'Игорь Зелёный', '75 971', AssetImage('assets/Avatar_2.png')),
-  _RowData(4, 'Анатолий Курагин', '42 426', AssetImage('assets/Avatar_5.png')),
+  _RowData(3, 'Борис Жарких', '75 971', AssetImage('assets/avatar_2.png')),
+  _RowData(4, 'Юрий Селиванов', '42 426', AssetImage('assets/avatar_5.png')),
   _RowData(
     5,
     'Екатерина Виноградова',
     '29 756',
-    AssetImage('assets/Avatar_4.png'),
+    AssetImage('assets/avatar_4.png'),
   ),
-  _RowData(
-    6,
-    'Константин Разумовский',
-    '21 784',
-    AssetImage('assets/Avatar_0.png'),
-  ),
+  _RowData(6, 'Евгений Бойко', '21 784', AssetImage('assets/avatar_0.png')),
 ];

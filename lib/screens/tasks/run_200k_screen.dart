@@ -24,7 +24,7 @@ class _Run200kScreenState extends State<Run200kScreen> {
             floating: false,
             expandedHeight: 140,
             elevation: 0,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             leadingWidth: 60,
             leading: SafeArea(
               child: Padding(
@@ -42,7 +42,7 @@ class _Run200kScreenState extends State<Run200kScreen> {
                     child: const Center(
                       child: Icon(
                         CupertinoIcons.back,
-                        color: Colors.white,
+                        color: AppColors.surface,
                         size: 20,
                       ),
                     ),
@@ -66,7 +66,7 @@ class _Run200kScreenState extends State<Run200kScreen> {
                 // Белый блок с заголовком, подписью и узким прогресс-баром
                 Container(
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     boxShadow: [
                       // тонкая тень вниз ~1px
                       BoxShadow(
@@ -136,7 +136,7 @@ class _Run200kScreenState extends State<Run200kScreen> {
                         color: const Color(0xFFE8A376),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           width: 2,
                         ), // белая рамка 2px
                         boxShadow: [
@@ -151,7 +151,7 @@ class _Run200kScreenState extends State<Run200kScreen> {
                         child: Icon(
                           Icons.directions_run,
                           size: 34,
-                          color: Colors.white,
+                          color: AppColors.surface,
                         ),
                       ),
                     ),
@@ -188,7 +188,7 @@ class _Run200kScreenState extends State<Run200kScreen> {
 
                 Container(
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     border: Border(
                       top: BorderSide(
                         color: Color(0xFFEAEAEA), // тонкая линия сверху
@@ -281,7 +281,7 @@ class _SegmentedPill extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: const Color(0xFFEAEAEA), // тонкая светло-серая линия
@@ -317,7 +317,7 @@ class _SegmentedPill extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              color: selected ? Colors.white : AppColors.text,
+              color: selected ? AppColors.surface : AppColors.text,
             ),
           ),
         ),
@@ -439,20 +439,15 @@ class _RowData {
 }
 
 const _rows = <_RowData>[
-  _RowData(1, 'Алексей Лукашин', '272,8', AssetImage('assets/Avatar_1.png')),
-  _RowData(2, 'Татьяна Свиридова', '214,7', AssetImage('assets/Avatar_3.png')),
-  _RowData(3, 'Игорь Зелёный', '197,2', AssetImage('assets/Avatar_2.png')),
-  _RowData(
-    4,
-    'Константин Разумовский',
-    '145,8',
-    AssetImage('assets/Avatar_0.png'),
-  ),
+  _RowData(1, 'Алексей Лукашин', '272,8', AssetImage('assets/avatar_1.png')),
+  _RowData(2, 'Татьяна Свиридова', '214,7', AssetImage('assets/avatar_3.png')),
+  _RowData(3, 'Борис Жарких', '197,2', AssetImage('assets/avatar_2.png')),
+  _RowData(4, 'Евгений Бойко', '145,8', AssetImage('assets/avatar_0.png')),
   _RowData(
     5,
     'Екатерина Виноградова',
     '108,5',
-    AssetImage('assets/Avatar_4.png'),
+    AssetImage('assets/avatar_4.png'),
   ),
-  _RowData(6, 'Анатолий Курагин', '96,4', AssetImage('assets/Avatar_5.png')),
+  _RowData(6, 'Юрий Селиванов', '96,4', AssetImage('assets/avatar_5.png')),
 ];

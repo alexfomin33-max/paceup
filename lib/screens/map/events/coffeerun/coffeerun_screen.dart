@@ -45,7 +45,7 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
             SliverToBoxAdapter(
               child: Container(
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   border: Border(
                     bottom: BorderSide(color: AppColors.border, width: 1),
                   ),
@@ -153,7 +153,7 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
                                   onPressed: () {},
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.secondary,
-                                    foregroundColor: Colors.white,
+                                    foregroundColor: AppColors.surface,
                                     elevation: 0,
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 12,
@@ -178,7 +178,7 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
                                   onPressed: () {},
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.secondary,
-                                    foregroundColor: Colors.white,
+                                    foregroundColor: AppColors.surface,
                                     elevation: 0,
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 12,
@@ -213,7 +213,7 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
             SliverToBoxAdapter(
               child: Container(
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   border: Border(
                     top: BorderSide(color: AppColors.border, width: 1),
                     bottom: BorderSide(color: AppColors.border, width: 1),
@@ -303,7 +303,7 @@ class _CircleIconBtn extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 18, color: Colors.white),
+          child: Icon(icon, size: 18, color: AppColors.surface),
         ),
       ),
     );
@@ -439,13 +439,13 @@ class _GalleryViewerState extends State<_GalleryViewer> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: AppColors.surface.withValues(alpha: 0.5),
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
                   child: const Icon(
                     CupertinoIcons.xmark,
-                    color: Colors.white,
+                    color: AppColors.surface,
                     size: 18,
                   ),
                 ),

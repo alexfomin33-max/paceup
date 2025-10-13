@@ -93,7 +93,7 @@ class _CoffeeRunVldScreenState extends State<CoffeeRunVldScreen> {
             SliverToBoxAdapter(
               child: Container(
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   border: Border(
                     bottom: BorderSide(color: AppColors.border, width: 1),
                   ),
@@ -180,7 +180,7 @@ class _CoffeeRunVldScreenState extends State<CoffeeRunVldScreen> {
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.secondary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.surface,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
@@ -211,7 +211,7 @@ class _CoffeeRunVldScreenState extends State<CoffeeRunVldScreen> {
             SliverToBoxAdapter(
               child: Container(
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   border: Border(
                     top: BorderSide(color: AppColors.border, width: 1),
                     bottom: BorderSide(color: AppColors.border, width: 1),
@@ -314,7 +314,7 @@ class _CircleIconBtn extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 18, color: Colors.white),
+          child: Icon(icon, size: 18, color: AppColors.surface),
         ),
       ),
     );

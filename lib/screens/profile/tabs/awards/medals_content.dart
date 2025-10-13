@@ -21,8 +21,18 @@ List<Widget> buildMedalsSlivers() {
     const _MedalSpec(CupertinoIcons.arrow_up, '1000 м'),
     const _MedalSpec(CupertinoIcons.arrow_up, '1500 м'),
     const _MedalSpec(CupertinoIcons.arrow_up, '2000 м'),
-    const _MedalSpec(CupertinoIcons.stopwatch, '250 мин', done: true, tint: green),
-    const _MedalSpec(CupertinoIcons.stopwatch, '500 мин', done: true, tint: green),
+    const _MedalSpec(
+      CupertinoIcons.stopwatch,
+      '250 мин',
+      done: true,
+      tint: green,
+    ),
+    const _MedalSpec(
+      CupertinoIcons.stopwatch,
+      '500 мин',
+      done: true,
+      tint: green,
+    ),
     const _MedalSpec(CupertinoIcons.stopwatch, '1000 мин'),
     const _MedalSpec(CupertinoIcons.stopwatch, '2000 мин'),
   ];
@@ -37,13 +47,48 @@ List<Widget> buildMedalsSlivers() {
     const _MedalSpec(Icons.directions_run, '100 км', done: true, tint: yellow),
     const _MedalSpec(Icons.directions_run, '200 км', done: true, tint: yellow),
     const _MedalSpec(Icons.directions_run, '300 км'),
-    const _MedalSpec(CupertinoIcons.arrow_up, '500 м', done: true, tint: yellow),
-    const _MedalSpec(CupertinoIcons.arrow_up, '1000 м', done: true, tint: yellow),
-    const _MedalSpec(CupertinoIcons.arrow_up, '1500 м', done: true, tint: yellow),
-    const _MedalSpec(CupertinoIcons.arrow_up, '2000 м', done: true, tint: yellow),
-    const _MedalSpec(CupertinoIcons.stopwatch, '250 мин', done: true, tint: yellow),
-    const _MedalSpec(CupertinoIcons.stopwatch, '500 мин', done: true, tint: yellow),
-    const _MedalSpec(CupertinoIcons.stopwatch, '1000 мин', done: true, tint: yellow),
+    const _MedalSpec(
+      CupertinoIcons.arrow_up,
+      '500 м',
+      done: true,
+      tint: yellow,
+    ),
+    const _MedalSpec(
+      CupertinoIcons.arrow_up,
+      '1000 м',
+      done: true,
+      tint: yellow,
+    ),
+    const _MedalSpec(
+      CupertinoIcons.arrow_up,
+      '1500 м',
+      done: true,
+      tint: yellow,
+    ),
+    const _MedalSpec(
+      CupertinoIcons.arrow_up,
+      '2000 м',
+      done: true,
+      tint: yellow,
+    ),
+    const _MedalSpec(
+      CupertinoIcons.stopwatch,
+      '250 мин',
+      done: true,
+      tint: yellow,
+    ),
+    const _MedalSpec(
+      CupertinoIcons.stopwatch,
+      '500 мин',
+      done: true,
+      tint: yellow,
+    ),
+    const _MedalSpec(
+      CupertinoIcons.stopwatch,
+      '1000 мин',
+      done: true,
+      tint: yellow,
+    ),
     const _MedalSpec(CupertinoIcons.stopwatch, '2000 мин'),
   ];
 
@@ -107,7 +152,7 @@ class _MedalsMonthCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           border: Border.all(
             color: const Color(0xFFEAEAEA),
             width: 0.5,
@@ -182,7 +227,7 @@ class _MedalBadge extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 border: Border.all(color: AppColors.border),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [

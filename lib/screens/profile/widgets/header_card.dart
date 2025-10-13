@@ -20,7 +20,7 @@ class HeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      color: AppColors.surface,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,7 +37,7 @@ class HeaderCard extends StatelessWidget {
                         fit: BoxFit.cover,
                       )
                     : Image.asset(
-                        'assets/avatar.png',
+                        'assets/avatar_0.png',
                         width: 56,
                         height: 56,
                         fit: BoxFit.cover,

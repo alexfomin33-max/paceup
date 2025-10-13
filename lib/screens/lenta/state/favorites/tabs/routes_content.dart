@@ -90,7 +90,7 @@ class _RouteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(0),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
       ),
@@ -147,7 +147,7 @@ class _RouteRow extends StatelessWidget {
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                           color: AppColors.text,
                         ),
                       ),
@@ -213,7 +213,7 @@ class _RouteRow extends StatelessWidget {
         style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 11,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w400,
           color: c,
         ),
       ),

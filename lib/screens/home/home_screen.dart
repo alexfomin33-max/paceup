@@ -67,7 +67,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           ),
           // 🔹 Рамка кнопки
           side: const WidgetStatePropertyAll(
-            BorderSide(color: Colors.white, width: 1),
+            BorderSide(color: AppColors.surface, width: 1),
           ),
           // 🔹 Скругление углов кнопки
           shape: WidgetStatePropertyAll(
@@ -81,7 +81,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         child: Text(
           text,
           style: const TextStyle(
-            color: Colors.white, // 🔹 Цвет текста
+            color: AppColors.surface, // 🔹 Цвет текста
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),

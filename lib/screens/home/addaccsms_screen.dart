@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'auth_shell.dart';
+import '../../../theme/app_theme.dart';
 
 //import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -116,18 +117,18 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
       child: TextFormField(
         controller: controllers[index],
         focusNode: nodes[index],
-        style: const TextStyle(color: Colors.white, fontSize: 20),
+        style: const TextStyle(color: AppColors.surface, fontSize: 20),
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
         maxLength: 1, // 🔹 Ограничение на одну цифру
         decoration: InputDecoration(
           counterText: "", // 🔹 Скрываем счетчик символов
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.white),
+            borderSide: const BorderSide(color: AppColors.surface),
             borderRadius: BorderRadius.circular(10),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.white),
+            borderSide: const BorderSide(color: AppColors.surface),
             borderRadius: BorderRadius.circular(10),
           ),
           filled: true,
@@ -167,7 +168,7 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
           children: [
             Text(
               "Введите код, отправленный на номер\n${widget.phone}",
-              style: const TextStyle(color: Colors.white, fontSize: 15),
+              style: const TextStyle(color: AppColors.surface, fontSize: 15),
             ),
             const SizedBox(height: 20),
             Row(
@@ -186,7 +187,7 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
               child: const Text(
                 "Отправить заново",
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),

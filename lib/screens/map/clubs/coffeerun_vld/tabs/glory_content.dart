@@ -13,14 +13,14 @@ class CoffeeRunVldGloryContent extends StatelessWidget {
         const [
           _RaceResult(
             'Алексей Лукашин',
-            'assets/Avatar_1.png',
+            'assets/avatar_1.png',
             42.2,
             '3:38:37',
             '4:15 /км',
           ),
           _RaceResult(
             'Татьяна Свиридова',
-            'assets/Avatar_3.png',
+            'assets/avatar_3.png',
             10.0,
             '43:50',
             '4:48 /км',
@@ -29,22 +29,22 @@ class CoffeeRunVldGloryContent extends StatelessWidget {
       ),
       _RaceGroup('Московский полумарафон 2025', DateTime(2025, 4, 27), const [
         _RaceResult(
-          'Игорь Зелёный',
-          'assets/Avatar_2.png',
+          'Борис Жарких',
+          'assets/avatar_2.png',
           21.1,
           '1:36:42',
           '4:11 /км',
         ),
         _RaceResult(
-          'Дмитрий Фадеев',
-          'assets/Avatar_6.png',
+          'Александр Палаткин',
+          'assets/avatar_6.png',
           21.1,
           '1:44:51',
           '4:58 /км',
         ),
         _RaceResult(
-          'Полина Холина',
-          'assets/Avatar_7.png',
+          'Светлана Алешина',
+          'assets/avatar_7.png',
           21.1,
           '2:03:14',
           '5:52 /км',
@@ -135,7 +135,7 @@ class _RaceTable extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(
           top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
           bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),

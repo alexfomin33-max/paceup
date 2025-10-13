@@ -47,7 +47,7 @@ class _MarketScreenState extends State<MarketScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 1,
         shadowColor: Colors.black26,
         automaticallyImplyLeading: false,
@@ -241,7 +241,7 @@ class _TopTabs extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(30),
       border: const Border(
         top: BorderSide(
@@ -273,7 +273,7 @@ class _TopTabs extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-                color: isSelected ? Colors.white : Colors.black87,
+                color: isSelected ? AppColors.surface : Colors.black87,
               ),
             ),
           ),
@@ -312,7 +312,7 @@ class _SearchField extends StatelessWidget {
         ),
         isDense: true,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 12,
@@ -369,7 +369,7 @@ class _CategoryDropdown extends StatelessWidget {
       decoration: InputDecoration(
         isDense: true,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 12,
@@ -441,8 +441,8 @@ class _OvalToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = selected ? AppColors.secondary : Colors.white;
-    final fg = selected ? Colors.white : AppColors.text;
+    final bg = selected ? AppColors.secondary : AppColors.surface;
+    final fg = selected ? AppColors.surface : AppColors.text;
 
     return GestureDetector(
       onTap: onTap,

@@ -49,7 +49,7 @@ class _RecommendedList extends StatelessWidget {
           ),
           SizedBox(width: 12),
           _FriendCard(
-            name: 'Анатолий Курагин',
+            name: 'Юрий Селиванов',
             desc: '38 лет, Ковров',
             mutual: '4 общих друга',
             avatarAsset: 'assets/recommended_2.jpg',

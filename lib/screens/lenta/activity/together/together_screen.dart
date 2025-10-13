@@ -28,7 +28,7 @@ class _TogetherScreenState extends State<TogetherScreen> {
       backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: const Text(
@@ -195,7 +195,7 @@ class _SegmentedPill2 extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              color: selected ? Colors.white : AppColors.text,
+              color: selected ? AppColors.surface : AppColors.text,
             ),
           ),
         ),

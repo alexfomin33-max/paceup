@@ -81,7 +81,7 @@ class GearViewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
         borderRadius: BorderRadius.circular(16),
       ),
@@ -156,7 +156,7 @@ class GearViewCard extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 11,
-                    color: Colors.white,
+                    color: AppColors.surface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

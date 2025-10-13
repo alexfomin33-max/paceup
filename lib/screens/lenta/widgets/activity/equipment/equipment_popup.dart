@@ -1,6 +1,7 @@
 // lib/screens/lenta/widgets/activity/equipment/equipment_popup.dart
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../../../../theme/app_theme.dart';
 
 /// Попап экипировки, якорящийся к кнопке справа от чипа.
 /// Поведение и размеры совпадают с исходным вариантом:
@@ -135,7 +136,7 @@ class _AnimatedPopupState extends State<_AnimatedPopup>
                   width: widget.width,
                   height: widget.height,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: const [
                       BoxShadow(
@@ -204,7 +205,7 @@ class _ShoeRow extends StatelessWidget {
           Container(
             width: 80,
             height: 56,
-            color: Colors.white,
+            color: AppColors.surface,
             padding: const EdgeInsets.all(8),
             child: Image.asset(imageAsset, fit: BoxFit.fill),
           ),
@@ -212,7 +213,7 @@ class _ShoeRow extends StatelessWidget {
           Expanded(
             child: Container(
               height: 56,
-              color: Colors.white,
+              color: AppColors.surface,
               padding: const EdgeInsets.only(left: 5, top: 8, right: 8),
               child: Text.rich(
                 TextSpan(

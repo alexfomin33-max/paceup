@@ -7,6 +7,7 @@ import '../screens/map/map_screen.dart';
 import '../screens/market/market_screen.dart';
 import '../screens/tasks/tasks_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../../../../../theme/app_theme.dart';
 
 class AppBottomNavShell extends StatefulWidget {
   final int userId;
@@ -91,7 +92,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
       // нижняя панель — белая с тонким разделителем
       navBarBuilder: (navBarConfig) => Container(
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           border: Border(top: BorderSide(color: Color(0xFFE0E0E0), width: 0.5)),
         ),
         child: SafeArea(

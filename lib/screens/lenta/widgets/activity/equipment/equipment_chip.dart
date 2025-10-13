@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../models/activity_lenta.dart' as al;
 import 'equipment_popup.dart';
+import '../../../../../theme/app_theme.dart';
 
 /// Чип экипировки с якорным попапом (поведение как в дорефакторинговом Equipment).
 /// Важные детали пиксель-паритета:
@@ -128,7 +129,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                     width: 28,
                     height: 28,
                     decoration: const BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(

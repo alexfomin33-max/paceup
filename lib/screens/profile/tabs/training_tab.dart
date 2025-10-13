@@ -232,14 +232,14 @@ class _SportIcon extends StatelessWidget {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: selected ? Colors.black87 : Colors.white,
+          color: selected ? Colors.black87 : AppColors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
         ),
         child: Icon(
           icon,
           size: 16,
-          color: selected ? Colors.white : AppColors.text,
+          color: selected ? AppColors.surface : AppColors.text,
         ),
       ),
     );
@@ -266,7 +266,7 @@ class _CalendarCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 0.7),
       ),
@@ -413,7 +413,7 @@ class _MonthGrid extends StatelessWidget {
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 11,
-                              color: Colors.white,
+                              color: AppColors.surface,
                             ),
                           ),
                         ),
@@ -444,7 +444,7 @@ class _WorkoutTable extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(
           top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
           bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),

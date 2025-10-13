@@ -28,7 +28,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
       backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(
@@ -54,7 +54,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         children: [
           // ── Вкладки: иконка + текст в одну строку
           Container(
-            color: Colors.white,
+            color: AppColors.surface,
             child: TabBar(
               controller: _tab,
               isScrollable: false,

@@ -32,7 +32,7 @@ class MarketSlotCard extends StatelessWidget {
       onTap: onToggle,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
@@ -227,7 +227,7 @@ class _BuyButtonText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = enabled ? AppColors.secondary : Colors.grey.shade300;
-    final fg = enabled ? Colors.white : Colors.grey.shade700;
+    final fg = enabled ? AppColors.surface : Colors.grey.shade700;
     final icon = text == 'Бронь' ? CupertinoIcons.lock : CupertinoIcons.cart;
 
     return ConstrainedBox(

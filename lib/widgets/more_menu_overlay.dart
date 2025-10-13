@@ -33,7 +33,7 @@ class MoreMenuOverlay {
     this.width = 220,
     this.margin = 0,
     this.horizontalInset = 8,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor = AppColors.surface,
     this.borderRadius = const BorderRadius.all(Radius.circular(12)),
     this.boxShadow = const [
       // тень по твоим спекам

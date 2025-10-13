@@ -107,7 +107,7 @@ class _TabsBarState extends State<TabsBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      color: AppColors.surface,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

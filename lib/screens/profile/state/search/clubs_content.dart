@@ -39,7 +39,7 @@ class SearchClubsContent extends StatelessWidget {
         SliverToBoxAdapter(
           child: Container(
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               border: Border(
                 top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
                 bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
@@ -76,8 +76,8 @@ class SearchClubsContent extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.brandPrimary,
+                    foregroundColor: AppColors.surface,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 26,

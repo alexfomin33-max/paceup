@@ -56,10 +56,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return GestureDetector(
       onHorizontalDragEnd: _onHorizontalDrag,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.surface,
           surfaceTintColor: Colors.transparent,
           centerTitle: true,
           leadingWidth: 60,
@@ -180,28 +180,28 @@ List<_Notif> _demo() {
 
   return [
     _Notif(
-      avatar: 'assets/Avatar_2.png',
+      avatar: 'assets/avatar_2.png',
       icon: Icons.directions_run,
       color: AppColors.secondary,
-      text: 'Игорь Зелёный закончил забег 10,5 км.',
+      text: 'Борис Жарких закончил забег 10,5 км.',
       when: onDay(now, 7, 14),
     ),
     _Notif(
-      avatar: 'assets/Avatar_1.png',
+      avatar: 'assets/avatar_1.png',
       icon: Icons.directions_bike,
       color: Colors.blue,
       text: 'Алексей Лукашин закончил заезд 54,2 км.',
       when: onDay(now, 14, 32, shiftDays: -1),
     ),
     _Notif(
-      avatar: 'assets/Avatar_9.png',
+      avatar: 'assets/avatar_9.png',
       icon: CupertinoIcons.heart,
       color: Colors.pink,
-      text: 'Лейла Мустафаева оценила вашу тренировку',
+      text: 'Анастасия Бутузова оценила вашу тренировку',
       when: onDay(now, 10, 48, shiftDays: -1),
     ),
     _Notif(
-      avatar: 'assets/Avatar_3.png',
+      avatar: 'assets/avatar_3.png',
       icon: CupertinoIcons.square_pencil,
       color: AppColors.green,
       text: 'Татьяна Свиридова опубликовала новый пост',
@@ -215,21 +215,21 @@ List<_Notif> _demo() {
       when: DateTime(now.year, 3, 21),
     ),
     _Notif(
-      avatar: 'assets/Avatar_4.png',
+      avatar: 'assets/avatar_4.png',
       icon: CupertinoIcons.text_bubble,
       color: AppColors.orange,
       text: 'Екатерина Виноградова оставила комментарий к посту',
       when: DateTime(now.year, 3, 20),
     ),
     _Notif(
-      avatar: 'assets/Avatar_6.png',
+      avatar: 'assets/avatar_6.png',
       icon: Icons.pool,
       color: Colors.lightBlue,
-      text: 'Дмитрий Фадеев закончил заплыв 3,8 км.',
+      text: 'Александр Палаткин закончил заплыв 3,8 км.',
       when: DateTime(now.year, 3, 18),
     ),
     _Notif(
-      avatar: 'assets/Avatar_1.png',
+      avatar: 'assets/avatar_1.png',
       icon: Icons.emoji_events_outlined,
       color: Colors.purple,
       text:

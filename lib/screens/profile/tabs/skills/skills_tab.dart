@@ -135,7 +135,7 @@ class SkillCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final content = Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border.all(
           color: AppColors.border,
           width: 0.5, // тонкая рамка

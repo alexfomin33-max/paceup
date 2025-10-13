@@ -7,13 +7,13 @@ class AddingContent extends StatelessWidget {
 
   static const _candidates = <_Person>[
     _Person(
-      'Игорь Зелёный',
+      'Борис Жарких',
       40,
       'Владимир',
-      'assets/Avatar_2.png',
+      'assets/avatar_2.png',
       pending: true,
     ),
-    _Person('Светлана Никитина', 35, 'Ростов', 'assets/Avatar_3.png'),
+    _Person('Светлана Никитина', 35, 'Ростов', 'assets/avatar_3.png'),
   ];
 
   @override
@@ -29,7 +29,7 @@ class AddingContent extends StatelessWidget {
         Container(
           width: double.infinity, // ← full width
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             // border: Border(
             //   top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
             //   bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
@@ -112,7 +112,7 @@ class _SearchField extends StatelessWidget {
         ),
         prefixIconConstraints: const BoxConstraints(minWidth: 30),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: AppColors.border, width: 1),

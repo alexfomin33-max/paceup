@@ -24,7 +24,7 @@ class Regstep2ScreenState extends State<Regstep2Screen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -144,7 +144,7 @@ class CustomTextField extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 14,
@@ -228,7 +228,7 @@ class ContinueButton extends StatelessWidget {
       child: const Text(
         'Завершить',
         style: TextStyle(
-          color: Colors.white,
+          color: AppColors.surface,
           fontSize: 14,
 
           fontWeight: FontWeight.w400,

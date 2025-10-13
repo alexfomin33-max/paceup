@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../../../theme/app_theme.dart';
 
 class PostMediaCarousel extends StatefulWidget {
   final List<String> imageUrls;
@@ -114,7 +115,7 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
           child: Icon(
             CupertinoIcons.play_circle_fill,
             size: 64,
-            color: Colors.white,
+            color: AppColors.surface,
           ),
         ),
         Positioned.fill(

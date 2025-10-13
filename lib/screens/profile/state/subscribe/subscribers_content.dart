@@ -10,18 +10,24 @@ class SubscribersContent extends StatelessWidget {
   // followBack = я уже подписан в ответ (иконка красная X для «отписаться»),
   // иначе — синяя «плюс» (подписаться в ответ).
   static const _people = <_Follower>[
-    _Follower('Алексей Лукашин', 35, 'Владимир', 'assets/Avatar_1.png', true),
-    _Follower('Татьяна Свиридова', 39, 'Владимир', 'assets/Avatar_3.png', true),
-    _Follower('Игорь Зелёный', 40, 'Владимир', 'assets/Avatar_2.png', true),
-    _Follower('Дмитрий Фадеев', 38, 'Воронеж', 'assets/Avatar_6.png', false),
+    _Follower('Алексей Лукашин', 35, 'Владимир', 'assets/avatar_1.png', true),
+    _Follower('Татьяна Свиридова', 39, 'Владимир', 'assets/avatar_3.png', true),
+    _Follower('Борис Жарких', 40, 'Владимир', 'assets/avatar_2.png', true),
+    _Follower(
+      'Александр Палаткин',
+      38,
+      'Воронеж',
+      'assets/avatar_6.png',
+      false,
+    ),
     _Follower(
       'Екатерина Виноградова',
       30,
       'Санкт-Петербург',
-      'assets/Avatar_4.png',
+      'assets/avatar_4.png',
       true,
     ),
-    _Follower('Светлана Никитина', 35, 'Ростов', 'assets/Avatar_8.png', false),
+    _Follower('Светлана Никитина', 35, 'Ростов', 'assets/avatar_8.png', false),
   ];
 
   @override
@@ -45,7 +51,7 @@ class SubscribersContent extends StatelessWidget {
         SliverToBoxAdapter(
           child: Container(
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               border: Border(
                 top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
                 bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),

@@ -9,17 +9,17 @@ class SearchFriendsContent extends StatelessWidget {
   const SearchFriendsContent({super.key, required this.query});
 
   static const _friends = <_Friend>[
-    _Friend('Алексей Лукашин', 35, 'Владимир', 'assets/Avatar_1.png'),
-    _Friend('Татьяна Свиридова', 39, 'Владимир', 'assets/Avatar_3.png'),
-    _Friend('Игорь Зелёный', 40, 'Владимир', 'assets/Avatar_2.png'),
-    _Friend('Анатолий Курагин', 37, 'Москва', 'assets/Avatar_5.png'),
+    _Friend('Алексей Лукашин', 35, 'Владимир', 'assets/avatar_1.png'),
+    _Friend('Татьяна Свиридова', 39, 'Владимир', 'assets/avatar_3.png'),
+    _Friend('Борис Жарких', 40, 'Владимир', 'assets/avatar_2.png'),
+    _Friend('Юрий Селиванов', 37, 'Москва', 'assets/avatar_5.png'),
     _Friend(
       'Екатерина Виноградова',
       30,
       'Санкт-Петербург',
-      'assets/Avatar_4.png',
+      'assets/avatar_4.png',
     ),
-    _Friend('Лейла Мустафаева', 35, 'Ярославль', 'assets/Avatar_9.png'),
+    _Friend('Анастасия Бутузова', 35, 'Ярославль', 'assets/avatar_9.png'),
   ];
 
   @override
@@ -47,7 +47,7 @@ class SearchFriendsContent extends StatelessWidget {
         SliverToBoxAdapter(
           child: Container(
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               border: Border(
                 top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
                 bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
@@ -105,7 +105,7 @@ class SearchFriendsContent extends StatelessWidget {
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.surface,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 28,

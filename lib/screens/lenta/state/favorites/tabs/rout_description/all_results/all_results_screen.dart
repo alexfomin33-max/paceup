@@ -34,7 +34,7 @@ class _AllResultsScreenState extends State<AllResultsScreen>
       backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(
@@ -60,7 +60,7 @@ class _AllResultsScreenState extends State<AllResultsScreen>
         children: [
           // ── подшапка в стиле my_results_screen.dart
           Container(
-            color: Colors.white,
+            color: AppColors.surface,
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -72,7 +72,7 @@ class _AllResultsScreenState extends State<AllResultsScreen>
                     style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 15,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.text,
                     ),
                   ),
@@ -87,7 +87,7 @@ class _AllResultsScreenState extends State<AllResultsScreen>
 
           // ── слайдер «Все / Друзья» как в favorites_screen.dart
           Container(
-            color: Colors.white,
+            color: AppColors.surface,
             child: TabBar(
               controller: _tab,
               isScrollable: false,
@@ -157,7 +157,7 @@ class _ResultsList extends StatelessWidget {
           sliver: SliverToBoxAdapter(
             child: Container(
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 border: Border(
                   top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
                   bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
@@ -195,7 +195,7 @@ class _LeaderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
         boxShadow: [
@@ -258,7 +258,7 @@ class _LeaderCard extends StatelessWidget {
                 style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                   color: AppColors.text,
                 ),
               ),
@@ -358,7 +358,7 @@ class _ResultRow extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 13,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w400,
                 color: highlight ? const Color(0xFF22CCB2) : AppColors.text,
               ),
             ),
@@ -425,7 +425,7 @@ class _ResultRow extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w400,
                       color: highlight
                           ? const Color(0xFF22CCB2)
                           : AppColors.text,
@@ -525,11 +525,11 @@ class _RowData {
 const _demoAll = <_RowData>[
   _RowData(
     rank: 1,
-    name: 'Константин Разумовский',
+    name: 'Евгений Бойко',
     dateText: '08.05.2024',
     timeText: '1:25:46',
     paceText: '4:15 /км',
-    avatar: AssetImage('assets/Avatar_0.png'),
+    avatar: AssetImage('assets/avatar_0.png'),
   ),
   _RowData(
     rank: 2,
@@ -537,7 +537,7 @@ const _demoAll = <_RowData>[
     dateText: '18 июня 2025',
     timeText: '1:26:03',
     paceText: '4:16 /км',
-    avatar: AssetImage('assets/Avatar_1.png'),
+    avatar: AssetImage('assets/avatar_1.png'),
   ),
   _RowData(
     rank: 3,
@@ -545,23 +545,23 @@ const _demoAll = <_RowData>[
     dateText: '26 сентября 2024',
     timeText: '1:27:12',
     paceText: '4:20 /км',
-    avatar: AssetImage('assets/Avatar_3.png'),
+    avatar: AssetImage('assets/avatar_3.png'),
   ),
   _RowData(
     rank: 4,
-    name: 'Игорь Зелёный',
+    name: 'Борис Жарких',
     dateText: '11 мая 2025',
     timeText: '1:27:23',
     paceText: '4:21 /км',
-    avatar: AssetImage('assets/Avatar_2.png'),
+    avatar: AssetImage('assets/avatar_2.png'),
   ),
   _RowData(
     rank: 5,
-    name: 'Анатолий Курагин',
+    name: 'Юрий Селиванов',
     dateText: '7 августа 2023',
     timeText: '1:27:30',
     paceText: '4:21 /км',
-    avatar: AssetImage('assets/Avatar_5.png'),
+    avatar: AssetImage('assets/avatar_5.png'),
   ),
   _RowData(
     rank: 6,
@@ -569,23 +569,23 @@ const _demoAll = <_RowData>[
     dateText: '18 апреля 2024',
     timeText: '1:27:44',
     paceText: '4:22 /км',
-    avatar: AssetImage('assets/Avatar_4.png'),
+    avatar: AssetImage('assets/avatar_4.png'),
   ),
   _RowData(
     rank: 7,
-    name: 'Дмитрий Фадеев',
+    name: 'Александр Палаткин',
     dateText: '22 июля 2025',
     timeText: '1:28:01',
     paceText: '4:23 /км',
-    avatar: AssetImage('assets/Avatar_2.png'),
+    avatar: AssetImage('assets/avatar_6.png'),
   ),
   _RowData(
     rank: 8,
-    name: 'Полина Холина',
+    name: 'Анастасия Бутузова',
     dateText: '18 мая 2025',
     timeText: '1:30:23',
     paceText: '4:31 /км',
-    avatar: AssetImage('assets/Avatar_3.png'),
+    avatar: AssetImage('assets/avatar_9.png'),
   ),
 ];
 
@@ -593,11 +593,11 @@ const _demoAll = <_RowData>[
 const _demoFriends = <_RowData>[
   _RowData(
     rank: 1,
-    name: 'Константин Разумовский',
+    name: 'Евгений Бойко',
     dateText: '08.05.2024',
     timeText: '1:25:46',
     paceText: '4:15 /км',
-    avatar: AssetImage('assets/Avatar_0.png'),
+    avatar: AssetImage('assets/avatar_0.png'),
   ),
   _RowData(
     rank: 2,
@@ -605,7 +605,7 @@ const _demoFriends = <_RowData>[
     dateText: '18 июня 2025',
     timeText: '1:26:03',
     paceText: '4:16 /км',
-    avatar: AssetImage('assets/Avatar_1.png'),
+    avatar: AssetImage('assets/avatar_1.png'),
   ),
   _RowData(
     rank: 3,
@@ -613,14 +613,14 @@ const _demoFriends = <_RowData>[
     dateText: '26 сентября 2024',
     timeText: '1:27:12',
     paceText: '4:20 /км',
-    avatar: AssetImage('assets/Avatar_3.png'),
+    avatar: AssetImage('assets/avatar_3.png'),
   ),
   _RowData(
     rank: 4,
-    name: 'Игорь Зелёный',
+    name: 'Борис Жарких',
     dateText: '11 мая 2025',
     timeText: '1:27:23',
     paceText: '4:21 /км',
-    avatar: AssetImage('assets/Avatar_2.png'),
+    avatar: AssetImage('assets/avatar_2.png'),
   ),
 ];

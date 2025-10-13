@@ -30,7 +30,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
       builder: (_) {
         return Container(
           height: 280,
-          color: Colors.white,
+          color: AppColors.surface,
           child: Column(
             children: [
               SizedBox(
@@ -92,7 +92,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
           ),
@@ -115,7 +115,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
                       right: 70,
                       bottom: 18,
                       child: Material(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         shape: const CircleBorder(),
                         child: IconButton(
                           tooltip: 'Добавить фото (заглушка)',
@@ -206,7 +206,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondary,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.surface,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 70, vertical: 14),
               shape: const StadiumBorder(),

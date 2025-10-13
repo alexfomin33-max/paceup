@@ -209,7 +209,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                 onTap: () async {
                   final picked = await showModalBottomSheet<String>(
                     context: context,
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.surface,
                     shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.vertical(
                         top: Radius.circular(16),
@@ -229,7 +229,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: const Color(0xFFEAEAEA),
@@ -324,14 +324,14 @@ class _SportIcon extends StatelessWidget {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: selected ? Colors.black87 : Colors.white,
+          color: selected ? Colors.black87 : AppColors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
         ),
         child: Icon(
           icon,
           size: 16,
-          color: selected ? Colors.white : AppColors.text,
+          color: selected ? AppColors.surface : AppColors.text,
         ),
       ),
     );
@@ -400,7 +400,7 @@ class _YearChartCardState extends State<_YearChartCard> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 0.7),
       ),
@@ -472,7 +472,7 @@ class _MetricsList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 0.7),
       ),

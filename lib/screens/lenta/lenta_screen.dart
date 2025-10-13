@@ -372,7 +372,7 @@ class _LentaScreenState extends State<LentaScreen>
       appBar: AppBar(
         toolbarHeight: kToolbarH,
         // Если у вас старая версия Flutter — замените на .withOpacity(0.5)
-        backgroundColor: Colors.white.withValues(alpha: 0.50),
+        backgroundColor: AppColors.surface.withValues(alpha: 0.50),
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
@@ -624,7 +624,7 @@ class _Badge extends StatelessWidget {
       constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
       alignment: Alignment.center,
       decoration: const BoxDecoration(
-        color: Colors.red,
+        color: AppColors.error,
         shape: BoxShape.circle,
       ),
       child: Text(
@@ -632,7 +632,7 @@ class _Badge extends StatelessWidget {
         style: const TextStyle(
           fontSize: 10,
           height: 1,
-          color: Colors.white,
+          color: AppColors.surface,
           fontWeight: FontWeight.w700,
         ),
       ),

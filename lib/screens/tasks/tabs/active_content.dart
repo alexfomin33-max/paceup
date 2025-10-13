@@ -151,7 +151,7 @@ class TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final card = Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
@@ -246,7 +246,7 @@ class ExpeditionCard extends StatelessWidget {
     final card = Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
@@ -377,7 +377,7 @@ class _IconBadge extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 border: Border.all(color: AppColors.border),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
@@ -424,7 +424,11 @@ class _RoundImage extends StatelessWidget {
               : null,
         ),
         child: provider == null
-            ? const Icon(CupertinoIcons.photo, size: 22, color: Colors.white70)
+            ? const Icon(
+                CupertinoIcons.photo,
+                size: 22,
+                color: AppColors.surface,
+              )
             : null,
       ),
     );

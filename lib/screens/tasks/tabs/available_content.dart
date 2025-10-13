@@ -140,7 +140,7 @@ class AvailableTaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
@@ -196,7 +196,7 @@ class AvailableExpeditionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
@@ -265,7 +265,7 @@ class _SmallCircleBadgeIcon extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               border: Border.all(color: AppColors.border),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
@@ -304,7 +304,7 @@ class _PrimarySmallButton extends StatelessWidget {
         onPressed: onPressed ?? () {},
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.secondary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),

@@ -296,7 +296,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
             maxHeight: MediaQuery.of(context).size.height * 0.6,
           ),
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
@@ -561,7 +561,7 @@ class _ComposerBar extends StatelessWidget {
                   },
             style: ElevatedButton.styleFrom(
               shape: const CircleBorder(),
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.surface,
               padding: const EdgeInsets.all(10),
               elevation: 0,
             ),
@@ -657,7 +657,7 @@ class _ErrorState extends StatelessWidget {
           maxHeight: MediaQuery.of(context).size.height * 0.6,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
@@ -672,7 +672,7 @@ class _ErrorState extends StatelessWidget {
                     ListTile(
                       leading: CircleAvatar(
                         radius: 20,
-                        backgroundImage: AssetImage("assets/Avatar_3.png"),
+                        backgroundImage: AssetImage("assets/avatar_3.png"),
                       ),
                       title: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -696,7 +696,7 @@ class _ErrorState extends StatelessWidget {
                     ListTile(
                       leading: CircleAvatar(
                         radius: 20,
-                        backgroundImage: AssetImage("assets/Avatar_1.png"),
+                        backgroundImage: AssetImage("assets/avatar_1.png"),
                       ),
                       title: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -753,7 +753,7 @@ class _ErrorState extends StatelessWidget {
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
                       shape: const CircleBorder(),
-                      backgroundColor: Colors.white,
+                      backgroundColor: AppColors.surface,
                       padding: const EdgeInsets.all(
                         10,
                       ), // уменьшили отступ кнопки

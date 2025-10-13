@@ -127,7 +127,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.secondary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.surface,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -205,7 +205,7 @@ class _GearListCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
         ),

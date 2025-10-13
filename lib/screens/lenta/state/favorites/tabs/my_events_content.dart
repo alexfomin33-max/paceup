@@ -138,7 +138,7 @@ class _EventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
 
         // стиль карточки такой же, как в других вкладках
         border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
@@ -268,7 +268,7 @@ class _InlineCalendar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
       ),

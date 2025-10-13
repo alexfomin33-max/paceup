@@ -156,7 +156,6 @@ abstract class AppColors {
 
   // Базовые
   static const Color white = Color(0xFFFFFFFF);
-  static const Color red = error;
   static const Color orange = warning;
   static const Color green = success;
 

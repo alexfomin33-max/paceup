@@ -143,7 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           // Закреплённый AppBar
           SliverAppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             pinned: true,
             elevation: 0,
             centerTitle: false,

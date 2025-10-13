@@ -1,6 +1,7 @@
 // lib/widgets/image_gallery.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../../../../theme/app_theme.dart';
 
 /// Публичная функция — покажет диалог-галерею поверх экрана.
 /// [images] — список путей к ассетам.
@@ -223,7 +224,7 @@ class _FullscreenGalleryState extends State<_FullscreenGallery>
                 icon: const Icon(
                   CupertinoIcons.xmark_circle_fill,
                   size: 28,
-                  color: Colors.white,
+                  color: AppColors.surface,
                 ),
                 splashRadius: 24,
               ),
@@ -249,7 +250,7 @@ class _FullscreenGalleryState extends State<_FullscreenGallery>
                       '${_index + 1} / ${images.length}',
                       style: const TextStyle(
                         fontFamily: 'Inter',
-                        color: Colors.white,
+                        color: AppColors.surface,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

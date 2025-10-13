@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../theme/app_theme.dart';
 
 class CoffeeRunVldPhotoContent extends StatelessWidget {
   const CoffeeRunVldPhotoContent({super.key});
@@ -164,10 +165,10 @@ class _CircleIconButton extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.18),
+          color: AppColors.surface.withValues(alpha: 0.18),
           borderRadius: BorderRadius.circular(18),
         ),
-        child: Icon(icon, size: 20, color: Colors.white),
+        child: Icon(icon, size: 20, color: AppColors.surface),
       ),
     );
   }
@@ -183,7 +184,7 @@ class _CounterBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
+        color: AppColors.surface.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -191,7 +192,7 @@ class _CounterBadge extends StatelessWidget {
         style: const TextStyle(
           fontFamily: 'Inter',
           fontSize: 13,
-          color: Colors.white,
+          color: AppColors.surface,
           fontWeight: FontWeight.w500,
         ),
       ),

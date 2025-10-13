@@ -18,6 +18,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w400,
     color: AppColors.textTertiary,
   );
+  // style: AppTextStyles.softtext
 
   static const TextStyle name = TextStyle(
     fontSize: 15,
@@ -42,22 +43,18 @@ class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w500,
   );
+  // style: AppTextStyles.numberstat
 
   static const TextStyle smallsofttext = TextStyle(
     fontSize: 11,
     fontWeight: FontWeight.w400,
     color: AppColors.textTertiary,
   );
+  // style: AppTextStyles.smallsofttext
 
   static const TextStyle commenttext = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w500,
   );
-
-  // static const TextStyle body = TextStyle(fontSize: 16);
-
-  // static const TextStyle button = TextStyle(
-  //   fontSize: 14,
-  //   fontWeight: FontWeight.w500,
-  // );
+  // style: AppTextStyles.commenttext
 }

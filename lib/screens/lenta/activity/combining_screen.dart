@@ -11,7 +11,7 @@ class CombiningScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: const Text(
@@ -123,7 +123,7 @@ class CombiningScreen extends StatelessWidget {
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.secondary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.surface,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 40),
                       shape: const StadiumBorder(),
@@ -202,7 +202,7 @@ class _TrainingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(6),
         boxShadow: [

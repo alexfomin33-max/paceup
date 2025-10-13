@@ -28,7 +28,7 @@ class WalkingSkillScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 Container(
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     border: Border(
                       top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
                       bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
@@ -69,7 +69,7 @@ class _FixedHeader extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: Container(
-        color: Colors.white,
+        color: AppColors.surface,
         child: Column(
           children: [
             // Стрелка и большая иконка — в одной строке
@@ -339,15 +339,10 @@ class _RowData {
 }
 
 const _rows = <_RowData>[
-  _RowData(1, 'Алексей Лукашин', '17', AssetImage('assets/Avatar_1.png')),
-  _RowData(2, 'Татьяна Свиридова', '12', AssetImage('assets/Avatar_3.png')),
-  _RowData(
-    3,
-    'Константин Разумовский',
-    '10',
-    AssetImage('assets/Avatar_0.png'),
-  ),
-  _RowData(4, 'Анатолий Курагин', '8', AssetImage('assets/Avatar_5.png')),
-  _RowData(5, 'Екатерина Виноградова', '8', AssetImage('assets/Avatar_4.png')),
-  _RowData(6, 'Игорь Зелёный', '6', AssetImage('assets/Avatar_2.png')),
+  _RowData(1, 'Алексей Лукашин', '17', AssetImage('assets/avatar_1.png')),
+  _RowData(2, 'Татьяна Свиридова', '12', AssetImage('assets/avatar_3.png')),
+  _RowData(3, 'Евгений Бойко', '10', AssetImage('assets/avatar_0.png')),
+  _RowData(4, 'Юрий Селиванов', '8', AssetImage('assets/avatar_5.png')),
+  _RowData(5, 'Екатерина Виноградова', '8', AssetImage('assets/avatar_4.png')),
+  _RowData(6, 'Борис Жарких', '6', AssetImage('assets/avatar_2.png')),
 ];

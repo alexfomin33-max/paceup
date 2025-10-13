@@ -64,11 +64,11 @@ class _NewPostScreenState extends State<NewPostScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         appBar: AppBar(
           title: const Text('Новый пост', style: AppTextStyles.h1),
           centerTitle: true,
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.surface,
           elevation: 0,
           bottom: const PreferredSize(
             preferredSize: Size.fromHeight(1),
@@ -188,14 +188,14 @@ class _NewPostScreenState extends State<NewPostScreen> {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.border),
               ),
               child: const Icon(
                 CupertinoIcons.clear_circled_solid,
                 size: 20,
-                color: Colors.red,
+                color: AppColors.error,
               ),
             ),
           ),
@@ -246,10 +246,13 @@ class _NewPostScreenState extends State<NewPostScreen> {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white,
+                  color: AppColors.surface,
                 ),
               )
-            : const Text('Опубликовать', style: TextStyle(color: Colors.white)),
+            : const Text(
+                'Опубликовать',
+                style: TextStyle(color: AppColors.surface),
+              ),
       ),
     );
   }

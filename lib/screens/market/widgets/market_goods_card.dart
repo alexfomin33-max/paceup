@@ -33,7 +33,7 @@ class GoodsCard extends StatelessWidget {
           : null, // клик по карточке — раскрыть описание
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
@@ -194,7 +194,7 @@ class GoodsCard extends StatelessWidget {
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.secondary,
-                              foregroundColor: Colors.white,
+                              foregroundColor: AppColors.surface,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,

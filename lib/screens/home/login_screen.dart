@@ -35,7 +35,7 @@ class EnterAccScreen extends StatelessWidget {
               child: TextFormField(
                 controller: phoneController,
                 keyboardType: TextInputType.phone,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: AppColors.surface),
                 inputFormatters: [
                   MaskInputFormatter(mask: '+# (###) ###-##-##'),
                 ],
@@ -45,27 +45,27 @@ class EnterAccScreen extends StatelessWidget {
                   floatingLabelBehavior: FloatingLabelBehavior.always,
                   hintStyle: const TextStyle(color: Colors.grey),
                   labelStyle: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     fontSize: 16,
                   ),
                   border: OutlineInputBorder(
                     borderSide: const BorderSide(
                       width: 1.0,
-                      color: Colors.white,
+                      color: AppColors.surface,
                     ),
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderSide: const BorderSide(
                       width: 1.0,
-                      color: Colors.white,
+                      color: AppColors.surface,
                     ),
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderSide: const BorderSide(
                       width: 1.0,
-                      color: Colors.white,
+                      color: AppColors.surface,
                     ),
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
@@ -86,7 +86,7 @@ class EnterAccScreen extends StatelessWidget {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppColors.surface,
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
@@ -115,7 +115,7 @@ class EnterAccScreen extends StatelessWidget {
                 child: const Text(
                   "<-- Назад",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),

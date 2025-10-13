@@ -124,10 +124,10 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
     const headerCount = 9;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       // ⛔️ никаких bottomNavigationBar — экран отдельный
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 1, // как в market_screen.dart
         shadowColor: Colors.black26, // та же маленькая тень
         leadingWidth: 40,
@@ -241,14 +241,14 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
                 // 5..6 — участники
                 if (index == 5) {
                   return const _ParticipantRow(
-                    avatarAsset: 'assets/Irina.png',
-                    nameAndRole: 'Ирина Селиванова - продавец',
+                    avatarAsset: 'assets/avatar_4.png',
+                    nameAndRole: 'Ирина Курагина - продавец',
                   );
                 }
                 if (index == 6) {
                   return const _ParticipantRow(
-                    avatarAsset: 'assets/Leyla.png',
-                    nameAndRole: 'Лейла Мустафаева - покупатель',
+                    avatarAsset: 'assets/avatar_9.png',
+                    nameAndRole: 'Анастасия Бутузова - покупатель',
                   );
                 }
 
@@ -581,7 +581,7 @@ class _BubbleLeft extends StatelessWidget {
         children: [
           const CircleAvatar(
             radius: 14,
-            backgroundImage: AssetImage('assets/Irina.png'),
+            backgroundImage: AssetImage('assets/avatar_4.png'),
           ),
           const SizedBox(width: 8),
           ConstrainedBox(
@@ -701,7 +701,7 @@ class _BubbleImageLeft extends StatelessWidget {
         children: [
           const CircleAvatar(
             radius: 14,
-            backgroundImage: AssetImage('assets/Irina.png'),
+            backgroundImage: AssetImage('assets/avatar_4.png'),
           ),
           const SizedBox(width: 8),
           ConstrainedBox(
@@ -773,7 +773,7 @@ class _TimeBadge extends StatelessWidget {
     ),
     child: Text(
       time,
-      style: const TextStyle(color: Colors.white, fontSize: 11),
+      style: const TextStyle(color: AppColors.surface, fontSize: 11),
     ),
   );
 }
@@ -813,7 +813,7 @@ class _ComposerState extends State<_Composer> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),

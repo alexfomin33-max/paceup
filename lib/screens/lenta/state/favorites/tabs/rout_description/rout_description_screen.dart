@@ -16,8 +16,8 @@ class RouteDescriptionScreen extends StatelessWidget {
     required this.ascentM,
     required this.difficulty, // 'easy' | 'medium' | 'hard'
     this.createdText = '8 июня 2025',
-    this.authorName = 'Константин Разумовский',
-    this.authorAvatar = 'assets/Avatar_0.png',
+    this.authorName = 'Евгений Бойко',
+    this.authorAvatar = 'assets/avatar_0.png',
   });
 
   final String title;
@@ -39,7 +39,7 @@ class RouteDescriptionScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(
@@ -78,7 +78,7 @@ class RouteDescriptionScreen extends StatelessWidget {
           // ── Заголовок + чип — по центру
           SliverToBoxAdapter(
             child: Container(
-              color: Colors.white,
+              color: AppColors.surface,
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -90,7 +90,7 @@ class RouteDescriptionScreen extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 15, // меньше, чем было
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w500,
                         color: AppColors.text,
                       ),
                     ),
@@ -131,7 +131,7 @@ class RouteDescriptionScreen extends StatelessWidget {
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                             color: AppColors.text,
                           ),
                         ),
@@ -167,7 +167,7 @@ class RouteDescriptionScreen extends StatelessWidget {
           SliverToBoxAdapter(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
               ),
               child: Row(
@@ -198,7 +198,7 @@ class RouteDescriptionScreen extends StatelessWidget {
           SliverToBoxAdapter(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
               ),
               child: Column(
@@ -354,7 +354,7 @@ class _MetricBlock extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w500,
               color: AppColors.text,
             ),
           ),
@@ -395,7 +395,7 @@ class _ActionRow extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Row(
                   children: [
-                    Icon(icon, size: 18, color: AppColors.secondary),
+                    Icon(icon, size: 16, color: AppColors.secondary),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -404,7 +404,7 @@ class _ActionRow extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontFamily: 'Inter',
-                          fontSize: 14,
+                          fontSize: 13,
                           color: AppColors.text,
                         ),
                       ),
@@ -430,8 +430,8 @@ class _ActionRow extends StatelessWidget {
                           textAlign: TextAlign.right,
                           style: const TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.text,
                           ),
                         ),

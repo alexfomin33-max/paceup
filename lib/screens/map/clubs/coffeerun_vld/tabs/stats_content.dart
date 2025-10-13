@@ -14,12 +14,12 @@ class _CoffeeRunVldStatsContentState extends State<CoffeeRunVldStatsContent> {
   static const double _kmColW = 70; // подберите 88–110 по вкусу
 
   static const _week = <_StatRow>[
-    _StatRow(1, 'Алексей Лукашин', 'assets/Avatar_1.png', 67.04),
-    _StatRow(2, 'Татьяна Свиридова', 'assets/Avatar_3.png', 64.46),
-    _StatRow(3, 'Игорь Зелёный', 'assets/Avatar_2.png', 58.01),
-    _StatRow(4, 'Анатолий Курагин', 'assets/Avatar_5.png', 42.82),
-    _StatRow(5, 'Екатерина Виноградова', 'assets/Avatar_4.png', 36.56),
-    _StatRow(6, 'Лейла Мустафаева', 'assets/Avatar_9.png', 25.18),
+    _StatRow(1, 'Алексей Лукашин', 'assets/avatar_1.png', 67.04),
+    _StatRow(2, 'Татьяна Свиридова', 'assets/avatar_3.png', 64.46),
+    _StatRow(3, 'Борис Жарких', 'assets/avatar_2.png', 58.01),
+    _StatRow(4, 'Юрий Селиванов', 'assets/avatar_5.png', 42.82),
+    _StatRow(5, 'Екатерина Виноградова', 'assets/avatar_4.png', 36.56),
+    _StatRow(6, 'Анастасия Бутузова', 'assets/avatar_9.png', 25.18),
   ];
 
   @override
@@ -49,7 +49,7 @@ class _CoffeeRunVldStatsContentState extends State<CoffeeRunVldStatsContent> {
                       horizontal: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: selected ? Colors.white : Colors.transparent,
+                      color: selected ? AppColors.surface : Colors.transparent,
                       borderRadius: BorderRadius.circular(20), // было 6
                     ),
                     alignment: Alignment.center,

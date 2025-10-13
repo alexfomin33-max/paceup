@@ -37,7 +37,7 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
               primary: AppColors.primary,
-              onPrimary: Colors.white,
+              onPrimary: AppColors.surface,
               onSurface: AppColors.text,
             ),
           ),
@@ -60,7 +60,7 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(
@@ -88,7 +88,7 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
           // Подшапка: название + чип сложности + поле даты
           SliverToBoxAdapter(
             child: Container(
-              color: Colors.white,
+              color: AppColors.surface,
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -186,7 +186,7 @@ class _LabeledDateField extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 12,
@@ -251,7 +251,7 @@ class _MembersTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(
           top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
           bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
@@ -503,14 +503,14 @@ class _MemberRow {
 const _todayRows = <_MemberRow>[
   _MemberRow(
     name: 'Алексей Лукашин',
-    avatarAsset: 'assets/Avatar_1.png',
+    avatarAsset: 'assets/avatar_1.png',
     km: 26.05,
     time: '1:26:03',
     hr: 143,
   ),
   _MemberRow(
     name: 'Татьяна Свиридова',
-    avatarAsset: 'assets/Avatar_3.png',
+    avatarAsset: 'assets/avatar_3.png',
     km: 23.18,
     time: '2:07:32',
     hr: 157,
@@ -519,22 +519,22 @@ const _todayRows = <_MemberRow>[
 
 const _july22Rows = <_MemberRow>[
   _MemberRow(
-    name: 'Игорь Зелёный',
-    avatarAsset: 'assets/Avatar_2.png',
+    name: 'Борис Жарких',
+    avatarAsset: 'assets/avatar_2.png',
     km: 25.31,
     time: '1:48:23',
     hr: 135,
   ),
   _MemberRow(
-    name: 'Дмитрий Фадеев',
-    avatarAsset: 'assets/Avatar_6.png',
+    name: 'Александр Палаткин',
+    avatarAsset: 'assets/avatar_6.png',
     km: 22.10,
     time: '1:57:42',
     hr: 149,
   ),
   _MemberRow(
     name: 'Екатерина Виноградова',
-    avatarAsset: 'assets/Avatar_4.png',
+    avatarAsset: 'assets/avatar_4.png',
     km: 18.46,
     time: '2:18:36',
     hr: 163,
@@ -543,8 +543,8 @@ const _july22Rows = <_MemberRow>[
 
 const _july16Rows = <_MemberRow>[
   _MemberRow(
-    name: 'Анатолий Курагин',
-    avatarAsset: 'assets/Avatar_5.png',
+    name: 'Юрий Селиванов',
+    avatarAsset: 'assets/avatar_5.png',
     km: 20.16,
     time: '1:42:55',
     hr: 140,

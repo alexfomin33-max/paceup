@@ -18,7 +18,7 @@ class SwimTripScreen extends StatelessWidget {
             floating: false,
             expandedHeight: 130,
             elevation: 0,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             leadingWidth: 60,
             // 1) круглая полупрозрачная кнопка назад с белой стрелкой
             leading: SafeArea(
@@ -37,7 +37,7 @@ class SwimTripScreen extends StatelessWidget {
                     child: const Center(
                       child: Icon(
                         CupertinoIcons.back,
-                        color: Colors.white,
+                        color: AppColors.surface,
                         size: 20,
                       ),
                     ),
@@ -78,7 +78,7 @@ class SwimTripScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 boxShadow: [
                   // 1px тень вниз
                   BoxShadow(
@@ -185,7 +185,7 @@ class _StraitCard extends StatelessWidget {
     return Container(
       // стили карточек как в tasks_screen.dart
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [

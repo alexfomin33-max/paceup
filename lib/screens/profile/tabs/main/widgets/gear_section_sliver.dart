@@ -108,7 +108,7 @@ class _GearCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
         ),

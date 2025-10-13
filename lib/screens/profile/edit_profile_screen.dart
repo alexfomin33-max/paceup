@@ -473,7 +473,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final bottom = MediaQuery.viewPaddingOf(ctx).bottom;
         return Container(
           height: 260 + bottom,
-          color: Colors.white,
+          color: AppColors.surface,
           child: SafeArea(
             top: false,
             child: CupertinoDatePicker(
@@ -686,7 +686,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
         toolbarHeight: kToolbarH,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
         centerTitle: true,
         automaticallyImplyLeading: false,
@@ -804,7 +804,7 @@ class _AvatarEditable extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 shape: BoxShape.circle,
                 border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
               ),
@@ -832,7 +832,7 @@ class _AvatarEditable extends StatelessWidget {
           fit: BoxFit.cover,
           cacheWidth: cacheWidth,
           errorBuilder: (_, _, _) => Image.asset(
-            'assets/Avatar_0.png',
+            'assets/avatar_0.png',
             width: size,
             height: size,
             fit: BoxFit.cover,
@@ -840,7 +840,7 @@ class _AvatarEditable extends StatelessWidget {
         );
       } catch (_) {
         return Image.asset(
-          'assets/Avatar_0.png',
+          'assets/avatar_0.png',
           width: size,
           height: size,
           fit: BoxFit.cover,
@@ -858,7 +858,7 @@ class _AvatarEditable extends StatelessWidget {
         fit: BoxFit.cover,
         cacheWidth: cacheWidth,
         errorBuilder: (_, _, _) => Image.asset(
-          'assets/Avatar_0.png',
+          'assets/avatar_0.png',
           width: size,
           height: size,
           fit: BoxFit.cover,
@@ -868,7 +868,7 @@ class _AvatarEditable extends StatelessWidget {
 
     // 3) Фолбэк-ассет
     return Image.asset(
-      'assets/Avatar_0.png',
+      'assets/avatar_0.png',
       width: size,
       height: size,
       fit: BoxFit.cover,
@@ -894,7 +894,7 @@ class _NameBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
@@ -943,7 +943,7 @@ class _GroupBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
@@ -1111,7 +1111,7 @@ class _CircleIconBtn extends StatelessWidget {
         width: kQrBtnSize,
         height: kQrBtnSize,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           shape: BoxShape.circle,
           border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         ),

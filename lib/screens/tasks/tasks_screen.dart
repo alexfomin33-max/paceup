@@ -21,7 +21,7 @@ class _TasksScreenState extends State<TasksScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
         centerTitle: true,
         title: const Text(
@@ -83,7 +83,7 @@ class _SegmentedPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
       ),
@@ -111,7 +111,7 @@ class _SegmentedPill extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 14,
             fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-            color: selected ? Colors.white : AppColors.text,
+            color: selected ? AppColors.surface : AppColors.text,
           ),
         ),
       ),

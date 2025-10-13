@@ -46,7 +46,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: const Text(
@@ -100,7 +100,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
             child: Container(
               width: double.infinity,
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 border: Border(
                   top: BorderSide(width: 0.5, color: AppColors.border),
                   bottom: BorderSide(width: 0.5, color: AppColors.border),
@@ -201,7 +201,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                                           const SizedBox(width: 2),
                                           const Icon(
                                             CupertinoIcons.heart_fill,
-                                            color: Colors.red,
+                                            color: AppColors.error,
                                             size: 12,
                                           ),
                                         ],
@@ -253,7 +253,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
           SliverToBoxAdapter(
             child: Container(
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 border: Border(
                   bottom: BorderSide(width: 0.5, color: AppColors.border),
                 ),
@@ -267,7 +267,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                       const Icon(
                         CupertinoIcons.heart,
                         size: 20,
-                        color: AppColors.red,
+                        color: AppColors.error,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -384,7 +384,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
               child: Container(
                 padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.border, width: 1),
                 ),
@@ -456,7 +456,7 @@ class _Avatar extends StatelessWidget {
     return isNet
         ? Image.network(urlOrAsset, width: 50, height: 50, fit: BoxFit.cover)
         : Image.asset(
-            urlOrAsset.isNotEmpty ? urlOrAsset : 'assets/Avatar_2.png',
+            urlOrAsset.isNotEmpty ? urlOrAsset : 'assets/avatar_2.png',
             width: 50,
             height: 50,
             fit: BoxFit.cover,
@@ -578,7 +578,7 @@ class _SplitsTableFull extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(
           top: BorderSide(color: AppColors.border, width: 1),
           bottom: BorderSide(color: AppColors.border, width: 1),
@@ -741,7 +741,7 @@ class _SegmentedPill extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
         ),
@@ -774,7 +774,7 @@ class _SegmentedPill extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              color: selected ? Colors.white : AppColors.text,
+              color: selected ? AppColors.surface : AppColors.text,
             ),
           ),
         ),

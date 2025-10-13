@@ -100,7 +100,7 @@ class _RaceBlock extends StatelessWidget {
         Container(
           width: double.infinity,
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             border: Border(
               top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
               bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),

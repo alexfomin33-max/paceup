@@ -24,7 +24,7 @@ class MyResultsScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(
@@ -53,7 +53,7 @@ class MyResultsScreen extends StatelessWidget {
           // — подшапка как в rout_description_screen.dart
           SliverToBoxAdapter(
             child: Container(
-              color: Colors.white,
+              color: AppColors.surface,
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -141,7 +141,7 @@ class _ResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(0), // как в routes_content.dart
         border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
       ),

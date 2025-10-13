@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'travelers_bottom_sheet.dart';
+import '../../../../../theme/app_theme.dart';
 
 /// Возвращает маркеры для вкладки «Попутчики».
 List<Map<String, dynamic>> travelersMarkers(BuildContext context) {
@@ -86,7 +87,7 @@ class _SolidPillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(20),
       elevation: 0,
       child: InkWell(
@@ -95,7 +96,7 @@ class _SolidPillButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(20),
             boxShadow: const [
               BoxShadow(

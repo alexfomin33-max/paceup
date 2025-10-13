@@ -6,12 +6,12 @@ class CoffeeRunVldMembersContent extends StatelessWidget {
   const CoffeeRunVldMembersContent({super.key});
 
   static const _members = <_Member>[
-    _Member(1, 'Алексей Лукашин', 'Владелец', 'assets/Avatar_1.png'),
-    _Member(2, 'Татьяна Свиридова', 'Админ', 'assets/Avatar_3.png'),
-    _Member(3, 'Игорь Зелёный', null, 'assets/Avatar_2.png'),
-    _Member(4, 'Анатолий Курагин', null, 'assets/Avatar_5.png'),
-    _Member(5, 'Екатерина Виноградова', null, 'assets/Avatar_4.png'),
-    _Member(6, 'Игорь Балеев', null, 'assets/Avatar_10.png'),
+    _Member(1, 'Алексей Лукашин', 'Владелец', 'assets/avatar_1.png'),
+    _Member(2, 'Татьяна Свиридова', 'Админ', 'assets/avatar_3.png'),
+    _Member(3, 'Борис Жарких', null, 'assets/avatar_2.png'),
+    _Member(4, 'Юрий Селиванов', null, 'assets/avatar_5.png'),
+    _Member(5, 'Екатерина Виноградова', null, 'assets/avatar_4.png'),
+    _Member(6, 'Игорь Балеев', null, 'assets/avatar_10.png'),
   ];
 
   @override

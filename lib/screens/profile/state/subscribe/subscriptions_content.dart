@@ -8,17 +8,17 @@ class SubscriptionsContent extends StatelessWidget {
   const SubscriptionsContent({super.key, required this.query});
 
   static const _people = <_Person>[
-    _Person('Алексей Лукашин', 35, 'Владимир', 'assets/Avatar_1.png'),
-    _Person('Татьяна Свиридова', 39, 'Владимир', 'assets/Avatar_3.png'),
-    _Person('Игорь Зелёный', 40, 'Владимир', 'assets/Avatar_2.png'),
-    _Person('Анатолий Курагин', 37, 'Москва', 'assets/Avatar_5.png'),
+    _Person('Алексей Лукашин', 35, 'Владимир', 'assets/avatar_1.png'),
+    _Person('Татьяна Свиридова', 39, 'Владимир', 'assets/avatar_3.png'),
+    _Person('Борис Жарких', 40, 'Владимир', 'assets/avatar_2.png'),
+    _Person('Юрий Селиванов', 37, 'Москва', 'assets/avatar_5.png'),
     _Person(
       'Екатерина Виноградова',
       30,
       'Санкт-Петербург',
-      'assets/Avatar_4.png',
+      'assets/avatar_4.png',
     ),
-    _Person('Лейла Мустафаева', 35, 'Ярославль', 'assets/Avatar_9.png'),
+    _Person('Анастасия Бутузова', 35, 'Ярославль', 'assets/avatar_9.png'),
   ];
 
   @override
@@ -43,7 +43,7 @@ class SubscriptionsContent extends StatelessWidget {
         SliverToBoxAdapter(
           child: Container(
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               border: Border(
                 top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
                 bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
@@ -62,9 +62,7 @@ class SubscriptionsContent extends StatelessWidget {
                         icon: const Icon(
                           CupertinoIcons.person_crop_circle_badge_xmark,
                           size: 26,
-                          color: Color(
-                            0xFFE74D4D,
-                          ), // красная иконка «отписаться»
+                          color: AppColors.error,
                         ),
                       ),
                     ),
@@ -72,7 +70,7 @@ class SubscriptionsContent extends StatelessWidget {
                       const Divider(
                         height: 1,
                         thickness: 0.5,
-                        color: Color(0xFFEAEAEA),
+                        color: AppColors.divider,
                       ),
                   ],
                 );

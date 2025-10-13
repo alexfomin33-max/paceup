@@ -56,7 +56,7 @@ class _BookmarkCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(0),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
       ),

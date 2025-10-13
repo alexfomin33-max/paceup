@@ -94,7 +94,7 @@ class _ClubsTabState extends State<ClubsTab>
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.secondary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.surface,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 30,
@@ -121,7 +121,7 @@ class _ClubCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final card = Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
       ),

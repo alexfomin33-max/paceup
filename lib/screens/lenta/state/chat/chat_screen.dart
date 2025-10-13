@@ -43,10 +43,10 @@ class _ChatScreenState extends State<ChatScreen> {
     return GestureDetector(
       onHorizontalDragEnd: _onHorizontalDrag,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.surface,
           surfaceTintColor: Colors.transparent,
           centerTitle: true,
           leadingWidth: 60,
@@ -195,15 +195,15 @@ List<_Chat> _demo() {
 
   return [
     _Chat(
-      name: 'Дмитрий Фадеев',
-      avatar: 'assets/Avatar_6.png',
+      name: 'Александр Палаткин',
+      avatar: 'assets/avatar_6.png',
       preview: 'Ты в субботу на коферан или может поедем на трейл?',
       when: at(9, 35),
       unread: true,
     ),
     _Chat(
       name: 'Алексей Лукашин',
-      avatar: 'assets/Avatar_1.png',
+      avatar: 'assets/avatar_1.png',
       preview: 'Завтра утром со мной побежали в Мосино',
       when: at(8, 07),
       unread: true,
@@ -216,22 +216,22 @@ List<_Chat> _demo() {
       unread: true,
     ),
     _Chat(
-      name: 'Игорь Зелёный',
-      avatar: 'assets/Avatar_2.png',
+      name: 'Борис Жарких',
+      avatar: 'assets/avatar_2.png',
       preview: 'Вы: Ну чего, в Мишку то когда пойдём?',
       when: at(10, 52, shiftDays: -1),
       unread: false,
     ),
     _Chat(
       name: 'Татьяна Свиридова',
-      avatar: 'assets/Avatar_3.png',
+      avatar: 'assets/avatar_3.png',
       preview: 'Ты когда уже GRUT T100 побежишь?',
       when: at(11, 34, shiftDays: -2),
       unread: false,
     ),
     _Chat(
       name: 'Екатерина Виноградова',
-      avatar: 'assets/Avatar_4.png',
+      avatar: 'assets/avatar_4.png',
       preview: 'Приезжай ещё к нам в Казань на массовые старты…',
       when: DateTime(now.year, 3, 21),
       unread: false,

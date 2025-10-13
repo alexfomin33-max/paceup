@@ -9,24 +9,24 @@ class MembersContent extends StatelessWidget {
     _Member(
       'Татьяна Свиридова',
       'Организатор',
-      'assets/Avatar_3.png',
+      'assets/avatar_3.png',
       roleIcon: CupertinoIcons.person_crop_circle_fill_badge_checkmark,
     ),
     _Member(
-      'Игорь Зелёный',
+      'Борис Жарких',
       null,
-      'assets/Avatar_2.png',
+      'assets/avatar_2.png',
       roleIcon: CupertinoIcons.person_crop_circle_fill_badge_checkmark,
     ),
     _Member(
-      'Анатолий Курагин',
+      'Юрий Селиванов',
       null,
-      'assets/Avatar_5.png',
+      'assets/avatar_5.png',
       roleIcon: CupertinoIcons.person_crop_circle_fill_badge_checkmark,
     ),
-    _Member('Алексей Лукашин', null, 'assets/Avatar_1.png'),
-    _Member('Екатерина Виноградова', null, 'assets/Avatar_4.png'),
-    _Member('Игорь Балеев', null, 'assets/Avatar_10.png'), // заменили 7 -> 10
+    _Member('Алексей Лукашин', null, 'assets/avatar_1.png'),
+    _Member('Екатерина Виноградова', null, 'assets/avatar_4.png'),
+    _Member('Игорь Балеев', null, 'assets/avatar_10.png'), // заменили 7 -> 10
   ];
   static int get demoCount => demo.length;
 

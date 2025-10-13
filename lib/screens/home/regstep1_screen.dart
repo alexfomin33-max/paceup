@@ -98,7 +98,7 @@ class Regstep1ScreenState extends State<Regstep1Screen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       body: SafeArea(
         child: SingleChildScrollView(
           // 🔹 Скролл для маленьких экранов
@@ -196,14 +196,14 @@ class CustomTextField extends StatelessWidget {
               if (label.contains('*'))
                 const TextSpan(
                   text: '*',
-                  style: TextStyle(color: Colors.red, fontSize: 16),
+                  style: TextStyle(color: AppColors.error, fontSize: 16),
                 ),
             ],
           ),
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 14,
@@ -274,14 +274,14 @@ class CustomDateField extends StatelessWidget {
                   if (label.contains('*'))
                     const TextSpan(
                       text: '*',
-                      style: TextStyle(color: Colors.red, fontSize: 16),
+                      style: TextStyle(color: AppColors.error, fontSize: 16),
                     ),
                 ],
               ),
             ),
             floatingLabelBehavior: FloatingLabelBehavior.always,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 14,
@@ -339,14 +339,14 @@ class CustomDropdownField extends StatelessWidget {
               if (label.contains('*'))
                 const TextSpan(
                   text: '*',
-                  style: TextStyle(color: Colors.red, fontSize: 16),
+                  style: TextStyle(color: AppColors.error, fontSize: 16),
                 ),
             ],
           ),
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
@@ -403,7 +403,7 @@ class ContinueButton extends StatelessWidget {
       child: const Text(
         'Продолжить',
         style: TextStyle(
-          color: Colors.white,
+          color: AppColors.surface,
           fontSize: 14,
 
           fontWeight: FontWeight.w400,

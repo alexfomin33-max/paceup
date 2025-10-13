@@ -113,9 +113,9 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
     const int headerCount = 5;
 
     return Scaffold(
-      backgroundColor: Colors.white, // фон чата — белый
+      backgroundColor: AppColors.surface, // фон чата — белый
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0.5,
         leadingWidth: 40,
         leading: Transform.translate(
@@ -186,14 +186,14 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
                 }
                 if (index == 1) {
                   return const _ParticipantRow(
-                    avatarAsset: 'assets/Irina.png',
-                    nameAndRole: 'Ирина Селиванова - продавец',
+                    avatarAsset: 'assets/avatar_4.png',
+                    nameAndRole: 'Ирина Курагина - продавец',
                   );
                 }
                 if (index == 2) {
                   return const _ParticipantRow(
-                    avatarAsset: 'assets/Leyla.png',
-                    nameAndRole: 'Лейла Мустафаева - покупатель',
+                    avatarAsset: 'assets/avatar_9.png',
+                    nameAndRole: 'Анастасия Бутузова - покупатель',
                   );
                 }
                 if (index == 3) {
@@ -300,7 +300,7 @@ class _BubbleLeft extends StatelessWidget {
         children: [
           const CircleAvatar(
             radius: 14,
-            backgroundImage: AssetImage('assets/Irina.png'),
+            backgroundImage: AssetImage('assets/avatar_4.png'),
           ),
           const SizedBox(width: 8),
           ConstrainedBox(
@@ -426,7 +426,7 @@ class _BubbleImageLeft extends StatelessWidget {
         children: [
           const CircleAvatar(
             radius: 14,
-            backgroundImage: AssetImage('assets/Irina.png'),
+            backgroundImage: AssetImage('assets/avatar_4.png'),
           ),
           const SizedBox(width: 8),
           ConstrainedBox(
@@ -451,7 +451,7 @@ class _BubbleImageLeft extends StatelessWidget {
                       child: Text(
                         time,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           fontSize: 11,
                         ),
                       ),
@@ -504,7 +504,7 @@ class _BubbleImageRight extends StatelessWidget {
                       child: Text(
                         time,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           fontSize: 11,
                         ),
                       ),
@@ -560,7 +560,7 @@ class _ComposerState extends State<_Composer> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
