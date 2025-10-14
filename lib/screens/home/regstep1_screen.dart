@@ -394,7 +394,9 @@ class ContinueButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: isEnabled ? onPressed : null,
       style: ElevatedButton.styleFrom(
-        backgroundColor: isEnabled ? AppColors.primary : Colors.grey.shade400,
+        backgroundColor: isEnabled
+            ? AppColors.brandPrimary
+            : Colors.grey.shade400,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),

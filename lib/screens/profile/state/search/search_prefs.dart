@@ -49,7 +49,6 @@ class _SearchPrefsPageState extends State<SearchPrefsPage> {
             fontFamily: 'Inter',
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
           ),
         ),
         leading: IconButton(
@@ -57,7 +56,7 @@ class _SearchPrefsPageState extends State<SearchPrefsPage> {
           icon: const Icon(
             CupertinoIcons.back,
             size: 22,
-            color: AppColors.text,
+            color: AppColors.iconPrimary,
           ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
@@ -146,7 +145,7 @@ class _SegmentedPill extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
+          border: Border.all(color: AppColors.border, width: 1),
         ),
         child: Row(
           children: [
@@ -176,7 +175,7 @@ class _SegmentedPill extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              color: selected ? AppColors.surface : AppColors.text,
+              color: selected ? AppColors.surface : AppColors.textPrimary,
             ),
           ),
         ),
@@ -206,17 +205,13 @@ class _SearchField extends StatelessWidget {
         controller: controller,
         focusNode: focusNode,
         onChanged: onChanged,
-        cursorColor: AppColors.secondary,
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 16,
-          color: AppColors.text,
-        ),
+        cursorColor: AppColors.brandPrimary,
+        style: const TextStyle(fontFamily: 'Inter', fontSize: 16),
         decoration: InputDecoration(
           prefixIcon: const Icon(
             CupertinoIcons.search,
             size: 18,
-            color: AppColors.greytext,
+            color: AppColors.textSecondary,
           ),
           isDense: true,
           filled: true,
@@ -225,7 +220,7 @@ class _SearchField extends StatelessWidget {
           hintStyle: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 15,
-            color: AppColors.greytext,
+            color: AppColors.textSecondary,
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
@@ -238,7 +233,7 @@ class _SearchField extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderSide: const BorderSide(
-              color: AppColors.secondary,
+              color: AppColors.brandPrimary,
               width: 1.2,
             ),
             borderRadius: BorderRadius.circular(10),

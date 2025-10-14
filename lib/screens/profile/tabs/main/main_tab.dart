@@ -113,11 +113,7 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
             child: Text(
               'Не удалось загрузить данные\n${snap.error}',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                color: AppColors.text,
-              ),
+              style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
             ),
           );
         }
@@ -198,7 +194,6 @@ class _SectionTitle extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
           ),
         ),
       ),
@@ -249,7 +244,7 @@ class _ActivityCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+          border: Border.all(color: AppColors.border, width: 0.5),
         ),
         padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
         child: Column(
@@ -287,7 +282,6 @@ class _ActivityCard extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 12,
                 height: 1.0,
-                color: AppColors.text,
               ),
             ),
           ],
@@ -310,7 +304,7 @@ class _PRRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+          border: Border.all(color: AppColors.border, width: 0.5),
         ),
         padding: const EdgeInsets.all(12),
         child: Row(
@@ -336,14 +330,7 @@ class _PRBadge extends StatelessWidget {
       children: [
         Image.asset(asset, width: 72, height: 72, fit: BoxFit.contain),
         const SizedBox(height: 6),
-        Text(
-          time,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 12,
-            color: AppColors.text,
-          ),
-        ),
+        Text(time, style: const TextStyle(fontFamily: 'Inter', fontSize: 12)),
       ],
     );
   }
@@ -374,7 +361,7 @@ class _MetricsCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+          border: Border.all(color: AppColors.border, width: 0.5),
         ),
         child: Column(
           children: List.generate(rows.length, (i) {
@@ -388,7 +375,7 @@ class _MetricsCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(r.$1, size: 18, color: AppColors.secondary),
+                      Icon(r.$1, size: 18, color: AppColors.brandPrimary),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -396,7 +383,6 @@ class _MetricsCard extends StatelessWidget {
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 14,
-                            color: AppColors.text,
                           ),
                         ),
                       ),
@@ -406,7 +392,6 @@ class _MetricsCard extends StatelessWidget {
                           fontFamily: 'Inter',
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
-                          color: AppColors.text,
                         ),
                       ),
                     ],
@@ -416,7 +401,7 @@ class _MetricsCard extends StatelessWidget {
                   const Divider(
                     height: 1,
                     thickness: 0.5,
-                    color: Color(0xFFEAEAEA),
+                    color: AppColors.divider,
                   ),
               ],
             );

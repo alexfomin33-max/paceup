@@ -30,11 +30,7 @@ class CoffeeRunVldMembersContent extends StatelessWidget {
                     child: Text(
                       m.rank.toString(),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 13,
-                        color: AppColors.text,
-                      ),
+                      style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -59,7 +55,6 @@ class CoffeeRunVldMembersContent extends StatelessWidget {
                             fontFamily: 'Inter',
                             fontSize: 13,
                             fontWeight: FontWeight.w400,
-                            color: AppColors.text,
                           ),
                         ),
                         if (m.role != null) ...[
@@ -69,7 +64,7 @@ class CoffeeRunVldMembersContent extends StatelessWidget {
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12,
-                              color: AppColors.greytext,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -85,7 +80,7 @@ class CoffeeRunVldMembersContent extends StatelessWidget {
                                 .person_crop_circle_fill_badge_checkmark
                           : CupertinoIcons.person_crop_circle_badge_plus,
                       size: 24,
-                      color: AppColors.secondary,
+                      color: AppColors.brandPrimary,
                     ),
                   ),
                 ],

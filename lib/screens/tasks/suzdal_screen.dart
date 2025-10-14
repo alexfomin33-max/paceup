@@ -81,7 +81,6 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                       fontFamily: 'Inter',
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.text,
                     ),
                   ),
                   SizedBox(height: 6),
@@ -93,7 +92,7 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 13,
-                      color: AppColors.greytext,
+                      color: AppColors.textSecondary,
                       height: 1.25,
                     ),
                   ),
@@ -112,7 +111,7 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 13,
-                      color: AppColors.greytext,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -135,8 +134,8 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                   decoration: const BoxDecoration(
                     color: AppColors.surface,
                     border: Border(
-                      top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
-                      bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
+                      top: BorderSide(color: AppColors.border, width: 0.5),
+                      bottom: BorderSide(color: AppColors.border, width: 0.5),
                     ),
                   ),
                   child: Column(
@@ -213,7 +212,6 @@ class _SectionTitle extends StatelessWidget {
         fontFamily: 'Inter',
         fontSize: 15,
         fontWeight: FontWeight.w600,
-        color: AppColors.text,
       ),
     );
   }
@@ -251,7 +249,9 @@ class _FriendRow extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: highlight ? const Color(0xFF22CCB2) : AppColors.text,
+                color: highlight
+                    ? const Color(0xFF22CCB2)
+                    : AppColors.textPrimary,
               ),
             ),
           ),
@@ -269,11 +269,7 @@ class _FriendRow extends StatelessWidget {
             child: Text(
               name,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: AppColors.text,
-              ),
+              style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
             ),
           ),
           const SizedBox(width: 8),
@@ -283,7 +279,9 @@ class _FriendRow extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: highlight ? const Color(0xFF22CCB2) : AppColors.text,
+              color: highlight
+                  ? const Color(0xFF22CCB2)
+                  : AppColors.textPrimary,
             ),
           ),
         ],
@@ -294,7 +292,7 @@ class _FriendRow extends StatelessWidget {
       children: [
         row,
         if (!isLast)
-          const Divider(height: 1, thickness: 0.5, color: Color(0xFFEAEAEA)),
+          const Divider(height: 1, thickness: 0.5, color: AppColors.divider),
       ],
     );
   }

@@ -126,7 +126,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondary,
+                  backgroundColor: AppColors.brandPrimary,
                   foregroundColor: AppColors.surface,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(
@@ -170,23 +170,18 @@ class _SectionHeaderWithToggle extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: AppColors.text,
               ),
             ),
           ),
           const Text(
             'На главном экране',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              color: AppColors.text,
-            ),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 13),
           ),
           const SizedBox(width: 8),
           CupertinoSwitch(
             value: value,
             onChanged: onChanged,
-            activeTrackColor: AppColors.secondary,
+            activeTrackColor: AppColors.brandPrimary,
           ),
         ],
       ),
@@ -207,7 +202,7 @@ class _GearListCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+          border: Border.all(color: AppColors.border, width: 0.5),
         ),
         child: Column(
           children: List.generate(items.length, (i) {
@@ -237,7 +232,6 @@ class _GearListCard extends StatelessWidget {
                             fontFamily: 'Inter',
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
-                            color: AppColors.text,
                           ),
                         ),
                       ),
@@ -248,7 +242,6 @@ class _GearListCard extends StatelessWidget {
                           fontFamily: 'Inter',
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
-                          color: AppColors.text,
                         ),
                       ),
                     ],
@@ -258,7 +251,7 @@ class _GearListCard extends StatelessWidget {
                   const Divider(
                     height: 1,
                     thickness: 0.5,
-                    color: Color(0xFFEAEAEA),
+                    color: AppColors.divider,
                   ),
               ],
             );

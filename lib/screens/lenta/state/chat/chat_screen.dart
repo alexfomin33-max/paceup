@@ -55,7 +55,7 @@ class _ChatScreenState extends State<ChatScreen> {
             icon: const Icon(
               CupertinoIcons.back,
               size: 22,
-              color: AppColors.text,
+              color: AppColors.iconPrimary,
             ),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
@@ -65,7 +65,6 @@ class _ChatScreenState extends State<ChatScreen> {
               fontFamily: 'Inter',
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors.text,
             ),
           ),
           actions: const [
@@ -74,7 +73,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Icon(
                 CupertinoIcons.create,
                 size: 20,
-                color: AppColors.text,
+                color: AppColors.iconPrimary,
               ),
             ),
           ],
@@ -130,7 +129,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                   fontFamily: 'Inter',
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.text,
                                 ),
                               ),
                             ),
@@ -140,7 +138,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               style: const TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 12,
-                                color: AppColors.greytext,
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           ],
@@ -158,7 +156,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                 style: const TextStyle(
                                   fontFamily: 'Inter',
                                   fontSize: 13,
-                                  color: AppColors.text,
                                 ),
                               ),
                             ),

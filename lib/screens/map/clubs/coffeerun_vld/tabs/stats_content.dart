@@ -59,7 +59,9 @@ class _CoffeeRunVldStatsContentState extends State<CoffeeRunVldStatsContent> {
                         fontFamily: 'Inter',
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: selected ? AppColors.text : AppColors.text,
+                        color: selected
+                            ? AppColors.textPrimary
+                            : AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -91,7 +93,6 @@ class _CoffeeRunVldStatsContentState extends State<CoffeeRunVldStatsContent> {
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 14,
-                            color: AppColors.text,
                           ),
                         ),
                       ),
@@ -113,7 +114,6 @@ class _CoffeeRunVldStatsContentState extends State<CoffeeRunVldStatsContent> {
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 13,
-                            color: AppColors.text,
                           ),
                         ),
                       ),
@@ -129,7 +129,7 @@ class _CoffeeRunVldStatsContentState extends State<CoffeeRunVldStatsContent> {
                               fontFamily: 'Inter',
                               fontSize: 13,
                               fontWeight: FontWeight.w400,
-                              color: AppColors.text,
+
                               // табличные цифры, чтобы разряды не «прыгали»
                               fontFeatures: [FontFeature.tabularFigures()],
                             ),

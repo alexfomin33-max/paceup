@@ -161,7 +161,6 @@ class SkillCard extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.text,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -176,7 +175,6 @@ class SkillCard extends StatelessWidget {
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 13,
-                          color: AppColors.text,
                         ),
                       ),
                     ),
@@ -186,7 +184,7 @@ class SkillCard extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.greytext,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -277,7 +275,7 @@ class _InfoNote extends StatelessWidget {
         style: const TextStyle(
           fontFamily: 'Inter',
           fontSize: 13,
-          color: AppColors.greytext,
+          color: AppColors.textSecondary,
           height: 1.35,
         ),
       ),

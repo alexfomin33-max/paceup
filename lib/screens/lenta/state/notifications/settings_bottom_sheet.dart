@@ -156,11 +156,7 @@ class _ToggleRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                color: AppColors.text,
-              ),
+              style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
               maxLines: 2, // если подпись длинная
               overflow: TextOverflow.ellipsis,
             ),
@@ -175,10 +171,10 @@ class _ToggleRow extends StatelessWidget {
               // ↓ уменьшаем «обязательную» зону касания
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
 
-              activeTrackColor: AppColors.secondary,
+              activeTrackColor: AppColors.brandPrimary,
               trackColor: WidgetStateProperty.resolveWith((states) {
                 if (states.contains(WidgetState.selected)) {
-                  return AppColors.secondary;
+                  return AppColors.brandPrimary;
                 }
                 return const Color(0xFFCFD3DA);
               }),

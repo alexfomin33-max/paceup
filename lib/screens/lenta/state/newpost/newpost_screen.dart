@@ -235,7 +235,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
       child: ElevatedButton(
         onPressed: (_canPublish && !_loading) ? _submitPost : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: _canPublish ? AppColors.secondary : Colors.grey,
+          backgroundColor: _canPublish ? AppColors.brandPrimary : Colors.grey,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),

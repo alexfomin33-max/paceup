@@ -41,8 +41,8 @@ class SearchClubsContent extends StatelessWidget {
             decoration: const BoxDecoration(
               color: AppColors.surface,
               border: Border(
-                top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
-                bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
+                top: BorderSide(color: AppColors.border, width: 0.5),
+                bottom: BorderSide(color: AppColors.border, width: 0.5),
               ),
             ),
             child: Column(
@@ -55,7 +55,7 @@ class SearchClubsContent extends StatelessWidget {
                       const Divider(
                         height: 1,
                         thickness: 0.5,
-                        color: Color(0xFFEAEAEA),
+                        color: AppColors.divider,
                       ),
                   ],
                 );
@@ -124,7 +124,7 @@ class _ClubRow extends StatelessWidget {
                 child: const Icon(
                   CupertinoIcons.photo,
                   size: 20,
-                  color: AppColors.greytext,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
@@ -144,7 +144,6 @@ class _ClubRow extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.text,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -152,11 +151,7 @@ class _ClubRow extends StatelessWidget {
                   '${c.city}  ·  Участников: ${_fmt(c.members)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    color: AppColors.text,
-                  ),
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
                 ),
               ],
             ),
@@ -181,7 +176,6 @@ class _SectionTitle extends StatelessWidget {
           fontFamily: 'Inter',
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: AppColors.text,
         ),
       ),
     );

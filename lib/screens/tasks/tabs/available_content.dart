@@ -78,7 +78,6 @@ class _MonthLabel extends StatelessWidget {
         fontFamily: 'Inter',
         fontSize: 15,
         fontWeight: FontWeight.w500,
-        color: AppColors.text,
       ),
     );
   }
@@ -96,7 +95,6 @@ class _SectionLabel extends StatelessWidget {
         fontFamily: 'Inter',
         fontSize: 15,
         fontWeight: FontWeight.w500,
-        color: AppColors.text,
       ),
     );
   }
@@ -167,7 +165,6 @@ class AvailableTaskCard extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 13,
               fontWeight: FontWeight.w400,
-              color: AppColors.text,
             ),
           ),
           const Spacer(),
@@ -229,7 +226,6 @@ class AvailableExpeditionCard extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 13,
               fontWeight: FontWeight.w400,
-              color: AppColors.text,
             ),
           ),
           const Spacer(),
@@ -258,7 +254,7 @@ class _SmallCircleBadgeIcon extends StatelessWidget {
             color: Color(0xFFEFF6EE),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, size: 28, color: AppColors.text),
+          child: Icon(icon, size: 28, color: AppColors.iconPrimary),
         ),
         Positioned(
           bottom: -2,
@@ -278,11 +274,7 @@ class _SmallCircleBadgeIcon extends StatelessWidget {
             ),
             child: Text(
               badge,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 11,
-                color: AppColors.text,
-              ),
+              style: const TextStyle(fontFamily: 'Inter', fontSize: 11),
             ),
           ),
         ),
@@ -303,7 +295,7 @@ class _PrimarySmallButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed ?? () {},
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.secondary,
+          backgroundColor: AppColors.brandPrimary,
           foregroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),

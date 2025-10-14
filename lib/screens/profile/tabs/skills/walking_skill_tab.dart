@@ -30,8 +30,8 @@ class WalkingSkillScreen extends StatelessWidget {
                   decoration: const BoxDecoration(
                     color: AppColors.surface,
                     border: Border(
-                      top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
-                      bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
+                      top: BorderSide(color: AppColors.border, width: 0.5),
+                      bottom: BorderSide(color: AppColors.border, width: 0.5),
                     ),
                   ),
                   child: Column(
@@ -81,7 +81,7 @@ class _FixedHeader extends StatelessWidget {
                     splashRadius: 22,
                     icon: const Icon(
                       CupertinoIcons.back,
-                      color: AppColors.text,
+                      color: AppColors.iconPrimary,
                     ),
                     onPressed: onBack,
                   ),
@@ -109,7 +109,6 @@ class _FixedHeader extends StatelessWidget {
                   fontFamily: 'Inter',
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.text,
                 ),
               ),
             ),
@@ -126,11 +125,7 @@ class _FixedHeader extends StatelessWidget {
                         '10-й уровень',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 13,
-                          color: AppColors.text,
-                        ),
+                        style: TextStyle(fontFamily: 'Inter', fontSize: 13),
                       ),
                     ),
                     SizedBox(width: 8),
@@ -139,7 +134,7 @@ class _FixedHeader extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.greytext,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -164,7 +159,6 @@ class _FixedHeader extends StatelessWidget {
                   fontFamily: 'Inter',
                   fontSize: 13,
                   height: 1.25,
-                  color: AppColors.text,
                 ),
               ),
             ),
@@ -180,12 +174,12 @@ class _FixedHeader extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 13,
-                color: AppColors.greytext,
+                color: AppColors.textSecondary,
               ),
             ),
 
             const SizedBox(height: 10),
-            const Divider(height: 1, thickness: 0.5, color: Color(0xFFEAEAEA)),
+            const Divider(height: 1, thickness: 0.5, color: AppColors.border),
           ],
         ),
       ),
@@ -242,7 +236,6 @@ class _SectionTitle extends StatelessWidget {
         fontFamily: 'Inter',
         fontSize: 15,
         fontWeight: FontWeight.w600,
-        color: AppColors.text,
       ),
     );
   }
@@ -280,7 +273,9 @@ class _FriendRow extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: highlight ? const Color(0xFF22CCB2) : AppColors.text,
+                color: highlight
+                    ? const Color(0xFF22CCB2)
+                    : AppColors.textPrimary,
               ),
             ),
           ),
@@ -298,11 +293,7 @@ class _FriendRow extends StatelessWidget {
             child: Text(
               name,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: AppColors.text,
-              ),
+              style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
             ),
           ),
           const SizedBox(width: 8),
@@ -312,7 +303,9 @@ class _FriendRow extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: highlight ? const Color(0xFF22CCB2) : AppColors.text,
+              color: highlight
+                  ? const Color(0xFF22CCB2)
+                  : AppColors.textPrimary,
             ),
           ),
         ],
@@ -323,7 +316,7 @@ class _FriendRow extends StatelessWidget {
       children: [
         row,
         if (!isLast)
-          const Divider(height: 1, thickness: 0.5, color: Color(0xFFEAEAEA)),
+          const Divider(height: 1, thickness: 0.5, color: AppColors.border),
       ],
     );
   }

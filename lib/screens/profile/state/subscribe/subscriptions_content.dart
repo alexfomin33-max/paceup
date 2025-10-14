@@ -45,8 +45,8 @@ class SubscriptionsContent extends StatelessWidget {
             decoration: const BoxDecoration(
               color: AppColors.surface,
               border: Border(
-                top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
-                bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
+                top: BorderSide(color: AppColors.border, width: 0.5),
+                bottom: BorderSide(color: AppColors.border, width: 0.5),
               ),
             ),
             child: Column(
@@ -111,7 +111,7 @@ class _RowTile extends StatelessWidget {
                 child: const Icon(
                   CupertinoIcons.person,
                   size: 20,
-                  color: AppColors.greytext,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
@@ -129,7 +129,6 @@ class _RowTile extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.text,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -140,7 +139,7 @@ class _RowTile extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
-                    color: AppColors.greytext,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],

@@ -16,7 +16,7 @@ class SettingsPlaceholderScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: AppColors.text),
+          icon: const Icon(CupertinoIcons.back, color: AppColors.iconPrimary),
           onPressed: () => Navigator.of(context).maybePop(),
           splashRadius: 18,
         ),
@@ -26,14 +26,13 @@ class SettingsPlaceholderScreen extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
           ),
         ),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(0.5),
           child: SizedBox(
             height: 0.5,
-            child: ColoredBox(color: Color(0xFFEAEAEA)),
+            child: ColoredBox(color: AppColors.divider),
           ),
         ),
       ),
@@ -46,7 +45,7 @@ class SettingsPlaceholderScreen extends StatelessWidget {
               const Icon(
                 CupertinoIcons.cube_box,
                 size: 56,
-                color: AppColors.secondary,
+                color: AppColors.brandPrimary,
               ),
               const SizedBox(height: 16),
               Text(
@@ -56,7 +55,6 @@ class SettingsPlaceholderScreen extends StatelessWidget {
                   fontFamily: 'Inter',
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.text,
                 ),
               ),
               if (note != null) ...[

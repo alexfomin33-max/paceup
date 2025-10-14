@@ -77,7 +77,7 @@ class _MarketScreenState extends State<MarketScreen> {
                     child: const Icon(
                       CupertinoIcons.money_rubl_circle,
                       size: 28,
-                      color: AppColors.secondary,
+                      color: AppColors.brandPrimary,
                     ),
                   ),
                 ),
@@ -245,15 +245,15 @@ class _TopTabs extends StatelessWidget {
       borderRadius: BorderRadius.circular(30),
       border: const Border(
         top: BorderSide(
-          color: Color(0xFFEAEAEA), // тонкая линия сверху
+          color: AppColors.border, // тонкая линия сверху
           width: 0.5,
         ),
         bottom: BorderSide(
-          color: Color(0xFFEAEAEA), // тонкая линия снизу
+          color: AppColors.border, // тонкая линия снизу
           width: 0.5,
         ),
-        left: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
-        right: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
+        left: BorderSide(color: AppColors.border, width: 0.5),
+        right: BorderSide(color: AppColors.border, width: 0.5),
       ),
     ),
     child: Row(
@@ -308,7 +308,7 @@ class _SearchField extends StatelessWidget {
         hintText: hintText,
         hintStyle: const TextStyle(
           fontFamily: 'Inter',
-          color: AppColors.greytext,
+          color: AppColors.textSecondary,
         ),
         isDense: true,
         filled: true,
@@ -441,8 +441,8 @@ class _OvalToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = selected ? AppColors.secondary : AppColors.surface;
-    final fg = selected ? AppColors.surface : AppColors.text;
+    final bg = selected ? AppColors.brandPrimary : AppColors.surface;
+    final fg = selected ? AppColors.surface : AppColors.textPrimary;
 
     return GestureDetector(
       onTap: onTap,
@@ -452,7 +452,7 @@ class _OvalToggle extends StatelessWidget {
           color: bg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.secondary : AppColors.border,
+            color: selected ? AppColors.brandPrimary : AppColors.border,
           ),
         ),
         child: Text(

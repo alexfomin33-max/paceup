@@ -30,7 +30,7 @@ class MyResultsScreen extends StatelessWidget {
           icon: const Icon(
             CupertinoIcons.back,
             size: 22,
-            color: AppColors.text,
+            color: AppColors.iconPrimary,
           ),
           onPressed: () => Navigator.maybePop(context),
           tooltip: 'Назад',
@@ -42,7 +42,6 @@ class MyResultsScreen extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
           ),
         ),
         // actions: [] — убрано по требованию
@@ -66,7 +65,6 @@ class MyResultsScreen extends StatelessWidget {
                         fontFamily: 'Inter',
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.text,
                       ),
                     ),
                   ),
@@ -143,7 +141,7 @@ class _ResultCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(0), // как в routes_content.dart
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+        border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: _ResultRow(e: e),
     );
@@ -177,7 +175,7 @@ class _ResultRow extends StatelessWidget {
                 child: const Icon(
                   CupertinoIcons.map,
                   size: 20,
-                  color: AppColors.greytext,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
@@ -198,7 +196,7 @@ class _ResultRow extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.greytext,
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -212,7 +210,7 @@ class _ResultRow extends StatelessWidget {
                         text: e.durationText,
                         align: MainAxisAlignment.start, // влево
                         textAlign: TextAlign.left,
-                        iconColor: AppColors.secondary,
+                        iconColor: AppColors.brandPrimary,
                       ),
                     ),
                     Expanded(
@@ -221,7 +219,7 @@ class _ResultRow extends StatelessWidget {
                         text: e.paceText,
                         align: MainAxisAlignment.center, // по центру
                         textAlign: TextAlign.center,
-                        iconColor: AppColors.secondary,
+                        iconColor: AppColors.brandPrimary,
                       ),
                     ),
                     Expanded(
@@ -269,7 +267,7 @@ class _MetricAligned extends StatelessWidget {
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: align,
       children: [
-        Icon(icon, size: 14, color: iconColor ?? AppColors.greytext),
+        Icon(icon, size: 14, color: iconColor ?? AppColors.textSecondary),
         const SizedBox(width: 4),
         // Flexible, чтобы корректно ужиматься при правом/центральном выравнивании
         Flexible(
@@ -278,11 +276,7 @@ class _MetricAligned extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: textAlign,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              color: AppColors.text,
-            ),
+            style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
           ),
         ),
       ],

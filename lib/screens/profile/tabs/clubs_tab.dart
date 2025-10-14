@@ -93,7 +93,7 @@ class _ClubsTabState extends State<ClubsTab>
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondary,
+                  backgroundColor: AppColors.brandPrimary,
                   foregroundColor: AppColors.surface,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(
@@ -123,7 +123,7 @@ class _ClubCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 9),
       child: Column(
@@ -149,7 +149,6 @@ class _ClubCard extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.text,
             ),
           ),
           const SizedBox(height: 6),
@@ -162,11 +161,7 @@ class _ClubCard extends StatelessWidget {
               children: [
                 Text(
                   'Участников: ${_formatMembers(club.members)}',
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    color: AppColors.text,
-                  ),
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
                 ),
               ],
             ),
@@ -206,7 +201,7 @@ class _LogoImage extends StatelessWidget {
         child: const Icon(
           CupertinoIcons.photo,
           size: 24,
-          color: AppColors.greytext,
+          color: AppColors.textSecondary,
         ),
       ),
     );

@@ -64,7 +64,6 @@ class HeaderCard extends StatelessWidget {
                         fontFamily: 'Inter',
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.text,
                       ),
                     ),
                   ),
@@ -96,7 +95,6 @@ class HeaderCard extends StatelessWidget {
                           fontFamily: 'Inter',
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.text,
                         ),
                       ),
                     ),
@@ -118,11 +116,7 @@ class HeaderCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   _subtitleFrom(profile) ?? '',
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    color: AppColors.text,
-                  ),
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -207,7 +201,7 @@ class _SmallIconBtn extends StatelessWidget {
           color: Colors.black.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Icon(icon, size: 16, color: AppColors.text),
+        child: Icon(icon, size: 16, color: AppColors.iconPrimary),
       ),
     );
   }
@@ -230,11 +224,7 @@ class _FollowStat extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: RichText(
           text: TextSpan(
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              color: AppColors.text,
-            ),
+            style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
             children: [
               TextSpan(text: '$label: '),
               const TextSpan(

@@ -45,7 +45,7 @@ class RouteDescriptionScreen extends StatelessWidget {
           icon: const Icon(
             CupertinoIcons.back,
             size: 22,
-            color: AppColors.text,
+            color: AppColors.iconPrimary,
           ),
           onPressed: () => Navigator.maybePop(context),
           tooltip: 'Назад',
@@ -57,7 +57,6 @@ class RouteDescriptionScreen extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
           ),
         ),
         actions: [
@@ -66,7 +65,7 @@ class RouteDescriptionScreen extends StatelessWidget {
             icon: const Icon(
               CupertinoIcons.ellipsis,
               size: 18,
-              color: AppColors.text,
+              color: AppColors.iconPrimary,
             ),
             tooltip: 'Ещё',
           ),
@@ -91,7 +90,6 @@ class RouteDescriptionScreen extends StatelessWidget {
                         fontFamily: 'Inter',
                         fontSize: 15, // меньше, чем было
                         fontWeight: FontWeight.w500,
-                        color: AppColors.text,
                       ),
                     ),
                   ),
@@ -102,11 +100,7 @@ class RouteDescriptionScreen extends StatelessWidget {
                   // Ниже можно оставить служебную инфу слева (как была)
                   Text(
                     'Создан: $createdText',
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      color: AppColors.text,
-                    ),
+                    style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -132,7 +126,6 @@ class RouteDescriptionScreen extends StatelessWidget {
                             fontFamily: 'Inter',
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.text,
                           ),
                         ),
                       ),
@@ -157,7 +150,7 @@ class RouteDescriptionScreen extends StatelessWidget {
                 child: const Icon(
                   CupertinoIcons.map,
                   size: 28,
-                  color: AppColors.greytext,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
@@ -168,7 +161,7 @@ class RouteDescriptionScreen extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+                border: Border.all(color: AppColors.border, width: 0.5),
               ),
               child: Row(
                 children: [
@@ -199,7 +192,7 @@ class RouteDescriptionScreen extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+                border: Border.all(color: AppColors.border, width: 0.5),
               ),
               child: Column(
                 children: [
@@ -343,7 +336,7 @@ class _MetricBlock extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 11,
-              color: AppColors.greytext,
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 2),
@@ -355,7 +348,6 @@ class _MetricBlock extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: AppColors.text,
             ),
           ),
         ],
@@ -395,7 +387,7 @@ class _ActionRow extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Row(
                   children: [
-                    Icon(icon, size: 16, color: AppColors.secondary),
+                    Icon(icon, size: 16, color: AppColors.brandPrimary),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -405,7 +397,6 @@ class _ActionRow extends StatelessWidget {
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 13,
-                          color: AppColors.text,
                         ),
                       ),
                     ),
@@ -432,7 +423,6 @@ class _ActionRow extends StatelessWidget {
                             fontFamily: 'Inter',
                             fontSize: 13,
                             fontWeight: FontWeight.w400,
-                            color: AppColors.text,
                           ),
                         ),
                 ),
@@ -446,7 +436,7 @@ class _ActionRow extends StatelessWidget {
                   ? const Icon(
                       CupertinoIcons.chevron_forward,
                       size: 16,
-                      color: AppColors.secondary,
+                      color: AppColors.brandPrimary,
                     )
                   : const SizedBox.shrink(),
             ),
@@ -462,6 +452,6 @@ class _DividerLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(height: 1, thickness: 0.5, color: Color(0xFFEAEAEA));
+    return const Divider(height: 1, thickness: 0.5, color: AppColors.divider);
   }
 }

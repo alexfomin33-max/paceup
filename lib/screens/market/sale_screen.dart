@@ -297,7 +297,7 @@ const TextStyle _fieldText = TextStyle(
 const TextStyle _hintText = TextStyle(
   fontFamily: 'Inter',
   fontSize: 14,
-  color: AppColors.greytext,
+  color: AppColors.textSecondary,
 );
 
 class _SmallLabel extends StatelessWidget {
@@ -461,10 +461,10 @@ class _ChipsRow extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: sel ? AppColors.secondary : AppColors.surface,
+              color: sel ? AppColors.brandPrimary : AppColors.surface,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: sel ? AppColors.secondary : AppColors.border,
+                color: sel ? AppColors.brandPrimary : AppColors.border,
               ),
             ),
             child: Text(
@@ -473,7 +473,7 @@ class _ChipsRow extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
-                color: sel ? AppColors.surface : AppColors.text,
+                color: sel ? AppColors.surface : AppColors.textPrimary,
               ),
             ),
           ),
@@ -660,7 +660,7 @@ class _PriceField extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontFamily: 'Inter',
-                    color: AppColors.secondary,
+                    color: AppColors.brandPrimary,
                   ),
                 ),
               ),
@@ -689,7 +689,9 @@ class _PrimaryButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: enabled ? onPressed : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: enabled ? AppColors.primary : Colors.grey.shade400,
+          backgroundColor: enabled
+              ? AppColors.brandPrimary
+              : Colors.grey.shade400,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
@@ -758,8 +760,8 @@ class _OvalToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = selected ? AppColors.secondary : AppColors.surface;
-    final fg = selected ? AppColors.surface : AppColors.text;
+    final bg = selected ? AppColors.brandPrimary : AppColors.surface;
+    final fg = selected ? AppColors.surface : AppColors.textPrimary;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -768,7 +770,7 @@ class _OvalToggle extends StatelessWidget {
           color: bg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.secondary : AppColors.border,
+            color: selected ? AppColors.brandPrimary : AppColors.border,
           ),
         ),
         child: Text(

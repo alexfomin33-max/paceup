@@ -150,15 +150,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             titleSpacing: 8,
             title: const Row(
               children: [
-                Icon(CupertinoIcons.sparkles, size: 18, color: AppColors.text),
+                Icon(
+                  CupertinoIcons.sparkles,
+                  size: 18,
+                  color: AppColors.iconPrimary,
+                ),
                 SizedBox(width: 8),
                 Text(
                   'AI тренер',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 16,
-                    color: AppColors.text,
-                  ),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 16),
                 ),
                 SizedBox(width: 6),
               ],
@@ -191,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               preferredSize: Size.fromHeight(0.5),
               child: SizedBox(
                 height: 0.5,
-                child: ColoredBox(color: Color(0xFFEAEAEA)),
+                child: ColoredBox(color: AppColors.divider),
               ),
             ),
           ),
@@ -264,7 +264,7 @@ class _AppIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: Icon(icon, color: AppColors.text, size: 20),
+      icon: Icon(icon, color: AppColors.iconPrimary, size: 20),
       onPressed: onPressed ?? () {},
       splashRadius: 18,
     );

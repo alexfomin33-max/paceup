@@ -83,7 +83,6 @@ class _MyEventsContentState extends State<MyEventsContent> {
                         fontFamily: 'Inter',
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.text,
                       ),
                     ),
                   ),
@@ -141,7 +140,7 @@ class _EventCard extends StatelessWidget {
         color: AppColors.surface,
 
         // стиль карточки такой же, как в других вкладках
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+        border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: _EventRow(e: e),
     );
@@ -159,7 +158,7 @@ class _MonthButton extends StatelessWidget {
       padding: const EdgeInsets.all(6),
       minSize: 28,
       onPressed: onTap,
-      child: Icon(icon, size: 18, color: AppColors.text),
+      child: Icon(icon, size: 18, color: AppColors.iconPrimary),
     );
   }
 }
@@ -191,7 +190,7 @@ class _EventRow extends StatelessWidget {
                 child: const Icon(
                   CupertinoIcons.photo,
                   size: 20,
-                  color: AppColors.greytext,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
@@ -209,7 +208,6 @@ class _EventRow extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.text,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -217,11 +215,7 @@ class _EventRow extends StatelessWidget {
                   '${e.dateText}  ·  Участников: ${_fmt(e.members)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    color: AppColors.text,
-                  ),
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
                 ),
               ],
             ),
@@ -270,7 +264,7 @@ class _InlineCalendar extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+        border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
@@ -312,12 +306,12 @@ class _InlineCalendar extends StatelessWidget {
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.secondary.withValues(alpha: 0.11)
+                              ? AppColors.brandPrimary.withValues(alpha: 0.11)
                               : null,
                           shape: BoxShape.circle,
                           border: marked
                               ? Border.all(
-                                  color: AppColors.secondary,
+                                  color: AppColors.brandPrimary,
                                   width: 1.4,
                                 )
                               : null,
@@ -332,7 +326,7 @@ class _InlineCalendar extends StatelessWidget {
                                 : FontWeight.w500,
                             color: (c >= 5)
                                 ? const Color(0xFFDA3F3F)
-                                : AppColors.text,
+                                : AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -364,7 +358,7 @@ class _D extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: weekend ? const Color(0xFFDA3F3F) : AppColors.greytext,
+            color: weekend ? const Color(0xFFDA3F3F) : AppColors.textSecondary,
           ),
         ),
       ),

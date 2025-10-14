@@ -103,7 +103,6 @@ class _MonthLabel extends StatelessWidget {
         fontFamily: 'Inter',
         fontSize: 15,
         fontWeight: FontWeight.w500,
-        color: AppColors.text,
       ),
     );
   }
@@ -121,7 +120,6 @@ class _SectionLabel extends StatelessWidget {
         fontFamily: 'Inter',
         fontSize: 15,
         fontWeight: FontWeight.w500,
-        color: AppColors.text,
       ),
     );
   }
@@ -178,7 +176,6 @@ class TaskCard extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.text,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -192,7 +189,7 @@ class TaskCard extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.greytext,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     Text(
@@ -200,7 +197,7 @@ class TaskCard extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: AppColors.greytext,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -272,7 +269,6 @@ class ExpeditionCard extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.text,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -286,7 +282,7 @@ class ExpeditionCard extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.greytext,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     Text(
@@ -294,7 +290,7 @@ class ExpeditionCard extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: AppColors.greytext,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -371,7 +367,7 @@ class _IconBadge extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Icon(icon, size: 28, color: AppColors.text),
+          Icon(icon, size: 28, color: AppColors.iconPrimary),
           Positioned(
             bottom: 0,
             child: Container(
@@ -390,11 +386,7 @@ class _IconBadge extends StatelessWidget {
               ),
               child: Text(
                 text,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 11,
-                  color: AppColors.text,
-                ),
+                style: const TextStyle(fontFamily: 'Inter', fontSize: 11),
               ),
             ),
           ),

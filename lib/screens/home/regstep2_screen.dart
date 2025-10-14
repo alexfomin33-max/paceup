@@ -62,7 +62,7 @@ class Regstep2ScreenState extends State<Regstep2Screen> {
                     child: const Text(
                       'Пропустить',
                       style: TextStyle(
-                        color: AppColors.greytext,
+                        color: AppColors.textSecondary,
                         fontSize: 13,
 
                         fontWeight: FontWeight.w500,
@@ -92,7 +92,10 @@ class Regstep2ScreenState extends State<Regstep2Screen> {
                 const Text(
                   'Данные необходимы для расчёта калорий, нагрузки, зон темпа и мощности.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.greytext, fontSize: 12),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(height: 50),
 
@@ -219,7 +222,7 @@ class ContinueButton extends StatelessWidget {
         );
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.brandPrimary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),

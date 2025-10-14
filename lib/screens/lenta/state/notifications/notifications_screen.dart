@@ -68,7 +68,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             icon: const Icon(
               CupertinoIcons.back,
               size: 22,
-              color: AppColors.text,
+              color: AppColors.iconPrimary,
             ),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
@@ -78,7 +78,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               fontFamily: 'Inter',
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors.text,
             ),
           ),
           actions: [
@@ -87,7 +86,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               icon: const Icon(
                 CupertinoIcons.slider_horizontal_3,
                 size: 20,
-                color: AppColors.text,
+                color: AppColors.iconPrimary,
               ),
               onPressed: _openSettingsSheet,
               splashRadius: 22,
@@ -143,7 +142,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               style: const TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 12,
-                                color: AppColors.greytext,
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           ],
@@ -155,7 +154,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 13,
-                            color: AppColors.text,
+
                             height: 1.25,
                           ),
                         ),
@@ -182,7 +181,7 @@ List<_Notif> _demo() {
     _Notif(
       avatar: 'assets/avatar_2.png',
       icon: Icons.directions_run,
-      color: AppColors.secondary,
+      color: AppColors.brandPrimary,
       text: 'Борис Жарких закончил забег 10,5 км.',
       when: onDay(now, 7, 14),
     ),
@@ -203,21 +202,21 @@ List<_Notif> _demo() {
     _Notif(
       avatar: 'assets/avatar_3.png',
       icon: CupertinoIcons.square_pencil,
-      color: AppColors.green,
+      color: AppColors.success,
       text: 'Татьяна Свиридова опубликовала новый пост',
       when: onDay(now, 16, 26, shiftDays: -2),
     ),
     _Notif(
       avatar: 'assets/coffeerun.png',
       icon: Icons.directions_walk,
-      color: AppColors.secondary,
+      color: AppColors.brandPrimary,
       text: 'Клуб "Coffeerun" разместил новое событие',
       when: DateTime(now.year, 3, 21),
     ),
     _Notif(
       avatar: 'assets/avatar_4.png',
       icon: CupertinoIcons.text_bubble,
-      color: AppColors.orange,
+      color: AppColors.warning,
       text: 'Екатерина Виноградова оставила комментарий к посту',
       when: DateTime(now.year, 3, 20),
     ),

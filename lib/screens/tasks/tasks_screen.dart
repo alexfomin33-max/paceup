@@ -30,7 +30,6 @@ class _TasksScreenState extends State<TasksScreen> {
             fontFamily: 'Inter',
             fontWeight: FontWeight.w600,
             fontSize: 18,
-            color: AppColors.text,
           ),
         ),
         bottom: const PreferredSize(
@@ -85,7 +84,7 @@ class _SegmentedPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -111,7 +110,7 @@ class _SegmentedPill extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 14,
             fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-            color: selected ? AppColors.surface : AppColors.text,
+            color: selected ? AppColors.surface : AppColors.textPrimary,
           ),
         ),
       ),

@@ -111,14 +111,14 @@ class _FriendCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             desc,
-            style: const TextStyle(fontSize: 12, color: AppColors.text),
+            style: const TextStyle(fontSize: 12),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 4),
           Text(
             mutual,
-            style: const TextStyle(fontSize: 12, color: AppColors.text),
+            style: const TextStyle(fontSize: 12),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
@@ -128,7 +128,7 @@ class _FriendCard extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.secondary,
+                backgroundColor: AppColors.brandPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),

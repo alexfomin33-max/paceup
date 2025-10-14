@@ -231,26 +231,19 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: const Color(0xFFEAEAEA),
-                      width: 0.7,
-                    ),
+                    border: Border.all(color: AppColors.border, width: 0.7),
                   ),
                   child: const Row(
                     children: [
                       Text(
                         'За год',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 13,
-                          color: AppColors.text,
-                        ),
+                        style: TextStyle(fontFamily: 'Inter', fontSize: 13),
                       ),
                       SizedBox(width: 4),
                       Icon(
                         CupertinoIcons.chevron_down,
                         size: 14,
-                        color: AppColors.text,
+                        color: AppColors.iconPrimary,
                       ),
                     ],
                   ),
@@ -326,12 +319,12 @@ class _SportIcon extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? Colors.black87 : AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
+          border: Border.all(color: AppColors.border, width: 1),
         ),
         child: Icon(
           icon,
           size: 16,
-          color: selected ? AppColors.surface : AppColors.text,
+          color: selected ? AppColors.surface : AppColors.iconPrimary,
         ),
       ),
     );
@@ -357,7 +350,6 @@ class _PeriodSheet extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 15,
                 fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
-                color: AppColors.text,
               ),
             ),
             trailing: sel
@@ -402,7 +394,7 @@ class _YearChartCardState extends State<_YearChartCard> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 0.7),
+        border: Border.all(color: AppColors.border, width: 0.7),
       ),
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       child: Column(
@@ -421,7 +413,6 @@ class _YearChartCardState extends State<_YearChartCard> {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.text,
                   ),
                 ),
               ),
@@ -457,7 +448,7 @@ class _NavIcon extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.all(4),
-        child: Icon(icon, size: 18, color: AppColors.text),
+        child: Icon(icon, size: 18, color: AppColors.iconPrimary),
       ),
     );
   }
@@ -474,7 +465,7 @@ class _MetricsList extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 0.7),
+        border: Border.all(color: AppColors.border, width: 0.7),
       ),
       child: Column(
         children: List.generate(metrics.length * 2 - 1, (i) {
@@ -482,7 +473,7 @@ class _MetricsList extends StatelessWidget {
             return const Divider(
               height: 1,
               thickness: 0.5,
-              color: Color(0xFFEAEAEA),
+              color: AppColors.divider,
             );
           }
           final r = metrics[i ~/ 2];
@@ -499,11 +490,7 @@ class _MetricsList extends StatelessWidget {
                 Expanded(
                   child: Text(
                     r.title,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      color: AppColors.text,
-                    ),
+                    style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -513,7 +500,6 @@ class _MetricsList extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.text,
                   ),
                 ),
               ],
@@ -606,7 +592,7 @@ class _MonthLabels extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: fontSize,
-                color: AppColors.greytext,
+                color: AppColors.textSecondary,
               ),
             ),
           ),
@@ -640,7 +626,7 @@ class _BarsPainter extends CustomPainter {
     final chartH = size.height - topPad - bottomPad;
 
     final gridPaint = Paint()
-      ..color = const Color(0xFFEAEAEA)
+      ..color = AppColors.border
       ..strokeWidth = 0.7;
 
     // сетка и подписи по Y
@@ -659,7 +645,7 @@ class _BarsPainter extends CustomPainter {
         style: const TextStyle(
           fontFamily: 'Inter',
           fontSize: 10,
-          color: AppColors.greytext,
+          color: AppColors.textSecondary,
         ),
       );
       tp.layout();

@@ -600,7 +600,7 @@ class _ComposerState extends State<_Composer> {
             IconButton(
               icon: const Icon(CupertinoIcons.paperplane_fill),
               onPressed: enabled ? widget.onSend : null,
-              color: enabled ? AppColors.primary : Colors.black26,
+              color: enabled ? AppColors.brandPrimary : Colors.black26,
             ),
           ],
         ),

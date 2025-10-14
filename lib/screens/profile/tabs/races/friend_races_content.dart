@@ -128,8 +128,8 @@ class _RaceFriendsBlock extends StatelessWidget {
           decoration: const BoxDecoration(
             color: AppColors.surface,
             border: Border(
-              top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
-              bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
+              top: BorderSide(color: AppColors.border, width: 0.5),
+              bottom: BorderSide(color: AppColors.border, width: 0.5),
             ),
           ),
           child: Column(
@@ -179,7 +179,7 @@ class _RaceFriendsBlock extends StatelessWidget {
                             child: VerticalDivider(
                               width: 1,
                               thickness: 0.5,
-                              color: Color(0xFFEAEAEA),
+                              color: AppColors.divider,
                             ),
                           ),
 
@@ -200,7 +200,7 @@ class _RaceFriendsBlock extends StatelessWidget {
                             child: VerticalDivider(
                               width: 1,
                               thickness: 0.5,
-                              color: Color(0xFFEAEAEA),
+                              color: AppColors.divider,
                             ),
                           ),
 
@@ -221,7 +221,7 @@ class _RaceFriendsBlock extends StatelessWidget {
                             child: VerticalDivider(
                               width: 1,
                               thickness: 0.5,
-                              color: Color(0xFFEAEAEA),
+                              color: AppColors.divider,
                             ),
                           ),
 
@@ -246,7 +246,7 @@ class _RaceFriendsBlock extends StatelessWidget {
                     const Divider(
                       height: 1,
                       thickness: 0.5,
-                      color: Color(0xFFEAEAEA),
+                      color: AppColors.divider,
                     ),
                 ],
               );

@@ -92,7 +92,7 @@ class _RouteCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(0),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+        border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: _RouteRow(e: e),
     );
@@ -126,7 +126,7 @@ class _RouteRow extends StatelessWidget {
                 child: const Icon(
                   CupertinoIcons.map,
                   size: 20,
-                  color: AppColors.greytext,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
@@ -148,7 +148,6 @@ class _RouteRow extends StatelessWidget {
                           fontFamily: 'Inter',
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.text,
                         ),
                       ),
                     ),
@@ -234,18 +233,14 @@ class _Metric extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.max,
       children: [
-        Icon(icon, size: 14, color: AppColors.greytext),
+        Icon(icon, size: 14, color: AppColors.textSecondary),
         const SizedBox(width: 4),
         Expanded(
           child: Text(
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              color: AppColors.text,
-            ),
+            style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
           ),
         ),
       ],

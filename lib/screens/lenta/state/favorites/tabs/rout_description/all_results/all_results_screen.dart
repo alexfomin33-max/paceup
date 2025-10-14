@@ -40,7 +40,7 @@ class _AllResultsScreenState extends State<AllResultsScreen>
           icon: const Icon(
             CupertinoIcons.back,
             size: 22,
-            color: AppColors.text,
+            color: AppColors.iconPrimary,
           ),
           onPressed: () => Navigator.maybePop(context),
           tooltip: 'Назад',
@@ -52,7 +52,6 @@ class _AllResultsScreenState extends State<AllResultsScreen>
             fontFamily: 'Inter',
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
           ),
         ),
       ),
@@ -73,7 +72,6 @@ class _AllResultsScreenState extends State<AllResultsScreen>
                       fontFamily: 'Inter',
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.text,
                     ),
                   ),
                 ),
@@ -91,9 +89,9 @@ class _AllResultsScreenState extends State<AllResultsScreen>
             child: TabBar(
               controller: _tab,
               isScrollable: false,
-              labelColor: AppColors.secondary,
-              unselectedLabelColor: AppColors.text,
-              indicatorColor: AppColors.secondary,
+              labelColor: AppColors.brandPrimary,
+              unselectedLabelColor: AppColors.textPrimary,
+              indicatorColor: AppColors.brandPrimary,
               indicatorWeight: 1,
               labelPadding: const EdgeInsets.symmetric(horizontal: 8),
               tabs: const [
@@ -159,8 +157,8 @@ class _ResultsList extends StatelessWidget {
               decoration: const BoxDecoration(
                 color: AppColors.surface,
                 border: Border(
-                  top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
-                  bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
+                  top: BorderSide(color: AppColors.border, width: 0.5),
+                  bottom: BorderSide(color: AppColors.border, width: 0.5),
                 ),
               ),
               child: Column(
@@ -197,7 +195,7 @@ class _LeaderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+        border: Border.all(color: AppColors.border, width: 0.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -228,7 +226,7 @@ class _LeaderCard extends StatelessWidget {
               style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
-                color: AppColors.greytext,
+                color: AppColors.textSecondary,
               ),
             ),
           ),
@@ -259,7 +257,6 @@ class _LeaderCard extends StatelessWidget {
                   fontFamily: 'Inter',
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.text,
                 ),
               ),
 
@@ -312,7 +309,7 @@ class _MetricCenter extends StatelessWidget {
       children: [
         if (resolved != null) const SizedBox(width: 2), // чуть воздуха слева
         if (resolved != null)
-          Icon(resolved, size: 14, color: AppColors.greytext),
+          Icon(resolved, size: 14, color: AppColors.textSecondary),
         if (resolved != null) const SizedBox(width: 4),
         Flexible(
           child: Text(
@@ -320,11 +317,7 @@ class _MetricCenter extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              color: AppColors.text,
-            ),
+            style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
           ),
         ),
         if (resolved != null) const SizedBox(width: 2),
@@ -359,7 +352,9 @@ class _ResultRow extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
-                color: highlight ? const Color(0xFF22CCB2) : AppColors.text,
+                color: highlight
+                    ? const Color(0xFF22CCB2)
+                    : AppColors.textPrimary,
               ),
             ),
           ),
@@ -383,11 +378,7 @@ class _ResultRow extends StatelessWidget {
                   item.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    color: AppColors.text,
-                  ),
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -397,7 +388,7 @@ class _ResultRow extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 12,
-                    color: AppColors.greytext,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -413,7 +404,7 @@ class _ResultRow extends StatelessWidget {
                 const Icon(
                   CupertinoIcons.time,
                   size: 14,
-                  color: AppColors.greytext,
+                  color: AppColors.textSecondary,
                 ),
                 const SizedBox(width: 4),
                 Flexible(
@@ -428,7 +419,7 @@ class _ResultRow extends StatelessWidget {
                       fontWeight: FontWeight.w400,
                       color: highlight
                           ? const Color(0xFF22CCB2)
-                          : AppColors.text,
+                          : AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -443,7 +434,7 @@ class _ResultRow extends StatelessWidget {
       children: [
         row,
         if (!isLast)
-          const Divider(height: 1, thickness: 0.5, color: Color(0xFFEAEAEA)),
+          const Divider(height: 1, thickness: 0.5, color: AppColors.divider),
       ],
     );
   }

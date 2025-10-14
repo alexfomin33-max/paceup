@@ -20,7 +20,7 @@ class CombiningScreen extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
+            color: AppColors.textPrimary,
           ),
         ),
         leading: IconButton(
@@ -29,7 +29,7 @@ class CombiningScreen extends StatelessWidget {
           icon: const Icon(
             CupertinoIcons.back,
             size: 22,
-            color: AppColors.text,
+            color: AppColors.iconPrimary,
           ),
         ),
         bottom: const PreferredSize(
@@ -87,7 +87,7 @@ class CombiningScreen extends StatelessWidget {
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.text,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
@@ -122,7 +122,7 @@ class CombiningScreen extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.secondary,
+                      backgroundColor: AppColors.brandPrimary,
                       foregroundColor: AppColors.surface,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -174,7 +174,7 @@ class _InfoText extends StatelessWidget {
           fontFamily: 'Inter',
           fontSize: 13,
           height: 1.30,
-          color: AppColors.greytext,
+          color: AppColors.textSecondary,
         ),
       ),
       textAlign: TextAlign.center,
@@ -223,16 +223,12 @@ class _TrainingCard extends StatelessWidget {
               const Icon(
                 CupertinoIcons.calendar,
                 size: 16,
-                color: AppColors.text,
+                color: AppColors.iconPrimary,
               ),
               const SizedBox(width: 8),
               Text(
                 dateText,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 13,
-                  color: AppColors.text,
-                ),
+                style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
               ),
             ],
           ),
@@ -302,13 +298,13 @@ class _MetricColumn extends StatelessWidget {
     const label = TextStyle(
       fontFamily: 'Inter',
       fontSize: 11,
-      color: AppColors.greytext,
+      color: AppColors.textSecondary,
     );
     const value = TextStyle(
       fontFamily: 'Inter',
       fontSize: 14,
       fontWeight: FontWeight.w600,
-      color: AppColors.text,
+      color: AppColors.textPrimary,
     );
 
     return Column(

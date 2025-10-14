@@ -98,7 +98,6 @@ class SwimTripScreen extends StatelessWidget {
                       fontFamily: 'Inter',
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.text,
                     ),
                   ),
                   SizedBox(height: 8),
@@ -108,7 +107,7 @@ class SwimTripScreen extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 13,
-                      color: AppColors.greytext,
+                      color: AppColors.textSecondary,
                       height: 1.25,
                     ),
                   ),
@@ -221,7 +220,6 @@ class _StraitCard extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.text,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -235,7 +233,7 @@ class _StraitCard extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.greytext,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     Text(
@@ -243,7 +241,7 @@ class _StraitCard extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: AppColors.greytext,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],

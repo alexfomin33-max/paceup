@@ -125,7 +125,6 @@ class _SectionTitle extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
           ),
         ),
       ),
@@ -154,7 +153,7 @@ class _MedalsMonthCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           border: Border.all(
-            color: const Color(0xFFEAEAEA),
+            color: AppColors.border,
             width: 0.5,
           ), // ← тонкий бордер
           borderRadius: BorderRadius.circular(12),
@@ -207,7 +206,7 @@ class _MedalBadge extends StatelessWidget {
     final circle = done
         ? (spec.tint ?? const Color(0xFFEFF6EE))
         : const Color(0xFFF1F3F5);
-    final iconColor = done ? AppColors.text : AppColors.greytext;
+    final iconColor = done ? AppColors.iconPrimary : AppColors.textSecondary;
 
     return Center(
       child: Stack(
@@ -242,11 +241,7 @@ class _MedalBadge extends StatelessWidget {
                 spec.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 11,
-                  color: AppColors.text,
-                ),
+                style: const TextStyle(fontFamily: 'Inter', fontSize: 11),
               ),
             ),
           ),

@@ -32,7 +32,7 @@ class SettingsScreen extends StatelessWidget {
           preferredSize: Size.fromHeight(0.5),
           child: SizedBox(
             height: 0.5,
-            child: ColoredBox(color: Color(0xFFEAEAEA)),
+            child: ColoredBox(color: AppColors.divider),
           ),
         ),
       ),
@@ -217,7 +217,7 @@ class _SubscriptionCard extends StatelessWidget {
             const Icon(
               CupertinoIcons.chevron_forward,
               size: 18,
-              color: AppColors.secondary,
+              color: AppColors.brandPrimary,
             ),
           ],
         ),
@@ -259,7 +259,7 @@ class _SettingsTile extends StatelessWidget {
     this.trailingText,
     this.trailingTextColor,
     this.onTap,
-    this.trailingIconColor = AppColors.secondary, // по умолчанию серый
+    this.trailingIconColor = AppColors.brandPrimary, // по умолчанию серый
   });
 
   @override

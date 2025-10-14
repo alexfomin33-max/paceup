@@ -55,7 +55,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
             fontFamily: 'Inter',
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
+            color: AppColors.iconPrimary,
           ),
         ),
         leading: IconButton(
@@ -63,7 +63,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
           icon: const Icon(
             CupertinoIcons.back,
             size: 22,
-            color: AppColors.text,
+            color: AppColors.iconPrimary,
           ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
@@ -73,7 +73,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
             icon: const Icon(
               CupertinoIcons.personalhotspot,
               size: 20,
-              color: AppColors.text,
+              color: AppColors.iconPrimary,
             ),
             onPressed: () {
               Navigator.of(context).push(
@@ -86,7 +86,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
             icon: const Icon(
               CupertinoIcons.ellipsis,
               size: 20,
-              color: AppColors.text,
+              color: AppColors.iconPrimary,
             ),
             onPressed: () {},
           ),
@@ -282,7 +282,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                       const Icon(
                         CupertinoIcons.chat_bubble,
                         size: 20,
-                        color: AppColors.orange,
+                        color: AppColors.warning,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -300,7 +300,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                       Icon(
                         CupertinoIcons.person_2,
                         size: 20,
-                        color: AppColors.green,
+                        color: AppColors.success,
                       ),
                       SizedBox(width: 4),
                       Text(
@@ -315,7 +315,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                       Icon(
                         CupertinoIcons.person_crop_circle_badge_plus,
                         size: 20,
-                        color: AppColors.secondary,
+                        color: AppColors.brandPrimary,
                       ),
                       SizedBox(width: 4),
                       Text(
@@ -348,7 +348,6 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                       fontFamily: 'Inter',
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.text,
                     ),
                   ),
                 ),
@@ -513,7 +512,6 @@ class _WatchPill extends StatelessWidget {
                   fontFamily: 'Inter',
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.text,
                 ),
               ),
             ),
@@ -595,22 +593,14 @@ class _SplitsTableFull extends StatelessWidget {
                   width: 28,
                   child: Text(
                     'Км',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      color: AppColors.text,
-                    ),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 12),
                   ),
                 ),
                 SizedBox(
                   width: 52,
                   child: Text(
                     'Темп',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      color: AppColors.text,
-                    ),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 12),
                   ),
                 ),
                 Expanded(child: SizedBox()),
@@ -622,7 +612,7 @@ class _SplitsTableFull extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
-                      color: AppColors.text,
+
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -648,7 +638,6 @@ class _SplitsTableFull extends StatelessWidget {
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 13,
-                            color: AppColors.text,
                           ),
                         ),
                       ),
@@ -659,7 +648,6 @@ class _SplitsTableFull extends StatelessWidget {
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 13,
-                            color: AppColors.text,
                           ),
                         ),
                       ),
@@ -696,7 +684,6 @@ class _SplitsTableFull extends StatelessWidget {
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 13,
-                            color: AppColors.text,
                           ),
                         ),
                       ),
@@ -743,7 +730,7 @@ class _SegmentedPill extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
+          border: Border.all(color: AppColors.border, width: 1),
         ),
         child: Row(
           children: [
@@ -774,7 +761,7 @@ class _SegmentedPill extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              color: selected ? AppColors.surface : AppColors.text,
+              color: selected ? AppColors.surface : AppColors.textPrimary,
             ),
           ),
         ),
@@ -926,7 +913,7 @@ class _LinePainter extends CustomPainter {
     final tpXStyle = const TextStyle(
       fontFamily: 'Inter',
       fontSize: 10,
-      color: AppColors.greytext,
+      color: AppColors.textSecondary,
     );
     for (int k = 0; k <= xMax; k++) {
       final x = left + w * (k / xMax);
@@ -961,7 +948,7 @@ class _LinePainter extends CustomPainter {
     final tpYStyle = const TextStyle(
       fontFamily: 'Inter',
       fontSize: 10,
-      color: AppColors.greytext,
+      color: AppColors.textSecondary,
     );
     final labels = <double>[maxY, minY + (maxY - minY) * 0.5, minY];
     for (int i = 0; i < labels.length; i++) {
@@ -998,11 +985,7 @@ class _PaceSummary extends StatelessWidget {
           children: [
             Text(
               name,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: AppColors.text,
-              ),
+              style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
             ),
             Text(
               val,
@@ -1010,7 +993,6 @@ class _PaceSummary extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: AppColors.text,
               ),
             ),
           ],

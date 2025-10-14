@@ -135,8 +135,8 @@ class _TabsBarState extends State<TabsBar> {
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: selected
-                                    ? AppColors.secondary
-                                    : AppColors.text,
+                                    ? AppColors.brandPrimary
+                                    : AppColors.textPrimary,
                               ),
                             ),
                           ),
@@ -149,7 +149,7 @@ class _TabsBarState extends State<TabsBar> {
               ),
             ),
           ),
-          const Divider(height: 0.5, thickness: 0.5, color: Color(0xFFEAEAEA)),
+          const Divider(height: 0.5, thickness: 0.5, color: AppColors.divider),
         ],
       ),
     );

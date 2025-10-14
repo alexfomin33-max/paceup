@@ -58,7 +58,7 @@ class _BookmarkCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(0),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+        border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: _BookmarkRow(e: e),
     );
@@ -91,7 +91,7 @@ class _BookmarkRow extends StatelessWidget {
                 child: const Icon(
                   CupertinoIcons.photo,
                   size: 20,
-                  color: AppColors.greytext,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
@@ -115,7 +115,6 @@ class _BookmarkRow extends StatelessWidget {
                           fontFamily: 'Inter',
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.text,
                         ),
                       ),
                     ),
@@ -126,7 +125,7 @@ class _BookmarkRow extends StatelessWidget {
                       child: const Icon(
                         CupertinoIcons.ellipsis_vertical,
                         size: 18,
-                        color: AppColors.greytext,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -137,11 +136,7 @@ class _BookmarkRow extends StatelessWidget {
                   '${e.dateText}  ·  Участников: ${_fmt(e.members)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    color: AppColors.text,
-                  ),
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
                 ),
               ],
             ),

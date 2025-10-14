@@ -93,7 +93,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
       navBarBuilder: (navBarConfig) => Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
-          border: Border(top: BorderSide(color: Color(0xFFE0E0E0), width: 0.5)),
+          border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
         ),
         child: SafeArea(
           top: false,

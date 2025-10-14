@@ -36,9 +36,9 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
+              primary: AppColors.brandPrimary,
               onPrimary: AppColors.surface,
-              onSurface: AppColors.text,
+              onSurface: AppColors.textPrimary,
             ),
           ),
           child: child!,
@@ -66,7 +66,7 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
           icon: const Icon(
             CupertinoIcons.back,
             size: 22,
-            color: AppColors.text,
+            color: AppColors.iconPrimary,
           ),
           onPressed: () => Navigator.maybePop(context),
           tooltip: 'Назад',
@@ -78,7 +78,6 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
             fontFamily: 'Inter',
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
           ),
         ),
       ),
@@ -101,7 +100,6 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
                         fontFamily: 'Inter',
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.text,
                       ),
                     ),
                   ),
@@ -175,7 +173,7 @@ class _LabeledDateField extends StatelessWidget {
       style: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 14,
-        color: AppColors.greytext,
+        color: AppColors.textSecondary,
       ),
       decoration: InputDecoration(
         labelText: label,
@@ -208,7 +206,7 @@ class _LabeledDateField extends StatelessWidget {
           child: Icon(
             Icons.calendar_today_rounded,
             size: 16,
-            color: AppColors.greytext,
+            color: AppColors.textSecondary,
           ),
         ),
         suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
@@ -235,7 +233,7 @@ class _HalfVDivider extends StatelessWidget {
         child: VerticalDivider(
           width: _kVDivW,
           thickness: 0.5,
-          color: Color(0xFFEAEAEA),
+          color: AppColors.divider,
         ),
       ),
     );
@@ -253,8 +251,8 @@ class _MembersTable extends StatelessWidget {
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(
-          top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
-          bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
+          top: BorderSide(color: AppColors.border, width: 0.5),
+          bottom: BorderSide(color: AppColors.border, width: 0.5),
         ),
       ),
       child: Column(
@@ -293,7 +291,6 @@ class _MembersTable extends StatelessWidget {
                                     style: const TextStyle(
                                       fontFamily: 'Inter',
                                       fontSize: 13,
-                                      color: AppColors.text,
                                     ),
                                   ),
                                   if (r.subtitle != null) ...[
@@ -305,7 +302,7 @@ class _MembersTable extends StatelessWidget {
                                       style: const TextStyle(
                                         fontFamily: 'Inter',
                                         fontSize: 12,
-                                        color: AppColors.greytext,
+                                        color: AppColors.textSecondary,
                                       ),
                                     ),
                                   ],
@@ -331,7 +328,6 @@ class _MembersTable extends StatelessWidget {
                               fontFamily: 'Inter',
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.text,
                             ),
                           ),
                         ),
@@ -356,7 +352,6 @@ class _MembersTable extends StatelessWidget {
                                     fontFamily: 'Inter',
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: AppColors.text,
                                   ),
                                 ),
                               ),
@@ -390,7 +385,6 @@ class _MembersTable extends StatelessWidget {
                                     fontFamily: 'Inter',
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: AppColors.text,
                                   ),
                                 ),
                               ),
@@ -407,7 +401,7 @@ class _MembersTable extends StatelessWidget {
                 const Divider(
                   height: 1,
                   thickness: 0.5,
-                  color: Color(0xFFEAEAEA),
+                  color: AppColors.divider,
                 ),
             ],
           );
@@ -439,7 +433,7 @@ class _SectionHeader extends StatelessWidget {
           fontFamily: 'Inter',
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: AppColors.greytext,
+          color: AppColors.textSecondary,
         ),
       ),
     );

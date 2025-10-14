@@ -49,8 +49,8 @@ class SearchFriendsContent extends StatelessWidget {
             decoration: const BoxDecoration(
               color: AppColors.surface,
               border: Border(
-                top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
-                bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
+                top: BorderSide(color: AppColors.border, width: 0.5),
+                bottom: BorderSide(color: AppColors.border, width: 0.5),
               ),
             ),
             child: Column(
@@ -63,7 +63,7 @@ class SearchFriendsContent extends StatelessWidget {
                       const Divider(
                         height: 1,
                         thickness: 0.5,
-                        color: Color(0xFFEAEAEA),
+                        color: AppColors.divider,
                       ),
                   ],
                 );
@@ -85,7 +85,7 @@ class SearchFriendsContent extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 13,
-                  color: AppColors.greytext,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
@@ -104,7 +104,7 @@ class SearchFriendsContent extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
+                    backgroundColor: AppColors.brandPrimary,
                     foregroundColor: AppColors.surface,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
@@ -152,7 +152,7 @@ class _FriendRow extends StatelessWidget {
                 child: const Icon(
                   CupertinoIcons.person,
                   size: 20,
-                  color: AppColors.greytext,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
@@ -188,7 +188,7 @@ class _FriendRow extends StatelessWidget {
             icon: const Icon(
               CupertinoIcons.person_crop_circle_badge_plus,
               size: 26, // можно 28, если хочется ещё крупнее
-              color: AppColors.secondary,
+              color: AppColors.brandPrimary,
             ),
           ),
         ],
@@ -219,7 +219,6 @@ class _SectionTitle extends StatelessWidget {
           fontFamily: 'Inter',
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: AppColors.text,
         ),
       ),
     );

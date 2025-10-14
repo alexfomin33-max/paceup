@@ -57,7 +57,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
               const Divider(
                 height: 1,
                 thickness: 0.5,
-                color: Color(0xFFEAEAEA),
+                color: AppColors.divider,
                 indent: 12,
                 endIndent: 12,
               ),
@@ -94,7 +94,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+            border: Border.all(color: AppColors.border, width: 0.5),
           ),
           child: Column(
             children: [
@@ -131,7 +131,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
                           icon: const Icon(
                             Icons.add_a_photo_outlined,
                             size: 28,
-                            color: AppColors.greytext,
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -143,7 +143,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
               const Divider(
                 height: 1,
                 thickness: 0.5,
-                color: Color(0xFFEAEAEA),
+                color: AppColors.divider,
                 indent: 12,
                 endIndent: 12,
               ),
@@ -175,7 +175,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
-                        color: AppColors.greytext, // правые значения серым
+                        color: AppColors.textSecondary, // правые значения серым
                       ),
                     ),
                   ),
@@ -205,7 +205,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.secondary,
+              backgroundColor: AppColors.brandPrimary,
               foregroundColor: AppColors.surface,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 70, vertical: 14),
@@ -245,11 +245,7 @@ class _FieldRow extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      color: AppColors.text,
-                    ),
+                    style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -261,7 +257,7 @@ class _FieldRow extends StatelessWidget {
         const Divider(
           height: 1,
           thickness: 0.5,
-          color: Color(0xFFEAEAEA),
+          color: AppColors.divider,
           indent: 12,
           endIndent: 12,
         ),
@@ -293,13 +289,13 @@ class _RightTextField extends StatelessWidget {
         hintStyle: TextStyle(
           fontFamily: 'Inter',
           fontSize: 14,
-          color: AppColors.greytext,
+          color: AppColors.textSecondary,
         ),
       ),
       style: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 14,
-        color: AppColors.greytext,
+        color: AppColors.textSecondary,
       ),
     );
   }

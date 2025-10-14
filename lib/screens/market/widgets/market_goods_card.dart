@@ -74,7 +74,7 @@ class GoodsCard extends StatelessWidget {
                       child: Icon(
                         CupertinoIcons.chevron_down,
                         size: 18,
-                        color: AppColors.text.withValues(alpha: 0.6),
+                        color: AppColors.iconPrimary.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -193,7 +193,7 @@ class GoodsCard extends StatelessWidget {
                               style: TextStyle(fontFamily: 'Inter'),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.secondary,
+                              backgroundColor: AppColors.brandPrimary,
                               foregroundColor: AppColors.surface,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(

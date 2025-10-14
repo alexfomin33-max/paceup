@@ -85,7 +85,9 @@ class MarketSlotCard extends StatelessWidget {
                               child: Icon(
                                 CupertinoIcons.chevron_down,
                                 size: 14,
-                                color: AppColors.text.withValues(alpha: 0.6),
+                                color: AppColors.iconPrimary.withValues(
+                                  alpha: 0.6,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 4),
@@ -226,7 +228,7 @@ class _BuyButtonText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = enabled ? AppColors.secondary : Colors.grey.shade300;
+    final bg = enabled ? AppColors.brandPrimary : Colors.grey.shade300;
     final fg = enabled ? AppColors.surface : Colors.grey.shade700;
     final icon = text == 'Бронь' ? CupertinoIcons.lock : CupertinoIcons.cart;
 

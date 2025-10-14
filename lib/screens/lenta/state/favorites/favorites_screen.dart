@@ -34,7 +34,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           icon: const Icon(
             CupertinoIcons.back,
             size: 22,
-            color: AppColors.text,
+            color: AppColors.iconPrimary,
           ),
           onPressed: () => Navigator.maybePop(context),
           tooltip: 'Назад',
@@ -46,7 +46,6 @@ class _FavoritesScreenState extends State<FavoritesScreen>
             fontFamily: 'Inter',
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
           ),
         ),
       ),
@@ -58,9 +57,9 @@ class _FavoritesScreenState extends State<FavoritesScreen>
             child: TabBar(
               controller: _tab,
               isScrollable: false,
-              labelColor: AppColors.secondary,
-              unselectedLabelColor: AppColors.text,
-              indicatorColor: AppColors.secondary,
+              labelColor: AppColors.brandPrimary,
+              unselectedLabelColor: AppColors.textPrimary,
+              indicatorColor: AppColors.brandPrimary,
               indicatorWeight: 2,
               labelPadding: const EdgeInsets.symmetric(horizontal: 8),
               tabs: const [

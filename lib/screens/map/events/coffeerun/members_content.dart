@@ -81,7 +81,6 @@ class _MemberRow extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.text,
                   ),
                 ),
                 if (member.role != null) ...[
@@ -91,7 +90,7 @@ class _MemberRow extends StatelessWidget {
                     style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
-                      color: AppColors.greytext,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -105,7 +104,7 @@ class _MemberRow extends StatelessWidget {
             icon: Icon(
               member.roleIcon ?? CupertinoIcons.person_crop_circle_badge_plus,
               size: 24,
-              color: AppColors.secondary,
+              color: AppColors.brandPrimary,
             ),
           ),
         ],

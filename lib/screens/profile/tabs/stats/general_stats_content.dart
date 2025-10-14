@@ -71,7 +71,6 @@ class _SectionTitle extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
           ),
         ),
       ),
@@ -110,7 +109,7 @@ class _YearChartCardState extends State<_YearChartCard> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 0.7),
+        border: Border.all(color: AppColors.border, width: 0.7),
       ),
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       child: Column(
@@ -129,7 +128,6 @@ class _YearChartCardState extends State<_YearChartCard> {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.text,
                   ),
                 ),
               ),
@@ -165,7 +163,7 @@ class _NavIcon extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.all(4),
-        child: Icon(icon, size: 18, color: AppColors.text),
+        child: Icon(icon, size: 18, color: AppColors.iconPrimary),
       ),
     );
   }
@@ -247,7 +245,7 @@ class _MonthLabels extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: fontSize,
-                color: AppColors.greytext,
+                color: AppColors.textSecondary,
               ),
             ),
           ),
@@ -282,7 +280,7 @@ class _BarsPainter extends CustomPainter {
     final chartH = size.height - topPad - bottomPad;
 
     final gridPaint = Paint()
-      ..color = const Color(0xFFEAEAEA)
+      ..color = AppColors.border
       ..strokeWidth = 0.7;
 
     final tp = TextPainter(textDirection: TextDirection.ltr);
@@ -301,7 +299,7 @@ class _BarsPainter extends CustomPainter {
         style: const TextStyle(
           fontFamily: 'Inter',
           fontSize: 10,
-          color: AppColors.greytext,
+          color: AppColors.textSecondary,
         ),
       );
       tp.layout();

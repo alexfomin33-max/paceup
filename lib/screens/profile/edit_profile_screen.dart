@@ -706,7 +706,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ? null
                 : _onSave, // ← добавили _loadingProfile
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.secondary,
+              foregroundColor: AppColors.brandPrimary,
               minimumSize: const Size(44, 44),
               padding: const EdgeInsets.symmetric(horizontal: 12),
             ),

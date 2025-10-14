@@ -72,7 +72,7 @@ class _SegmentedPill2 extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Row(
         children: [
@@ -106,7 +106,7 @@ class _SegmentedPill2 extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 14,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? AppColors.surface : AppColors.text,
+            color: selected ? AppColors.surface : AppColors.textPrimary,
           ),
         ),
       ),

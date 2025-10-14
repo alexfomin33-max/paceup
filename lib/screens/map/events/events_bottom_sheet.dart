@@ -85,10 +85,7 @@ class EventsSheetPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.only(bottom: 40),
-      child: Text(
-        'Здесь будет контент…',
-        style: TextStyle(fontSize: 14, color: AppColors.text),
-      ),
+      child: Text('Здесь будет контент…', style: TextStyle(fontSize: 14)),
     );
   }
 }
@@ -100,10 +97,7 @@ class EventsSheetText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(fontSize: 14, color: AppColors.text),
-    );
+    return Text(text, style: const TextStyle(fontSize: 14));
   }
 }
 
@@ -134,14 +128,10 @@ class EventsListVladimir extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.text,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(fontSize: 13, color: AppColors.text),
-                ),
+                Text(subtitle, style: const TextStyle(fontSize: 13)),
               ],
             ),
           ),

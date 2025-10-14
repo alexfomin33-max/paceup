@@ -76,7 +76,6 @@ class _SectionTitle extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
           ),
         ),
       ),
@@ -110,7 +109,7 @@ class _GearCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFEAEAEA), width: 0.5),
+          border: Border.all(color: AppColors.border, width: 0.5),
         ),
         padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
         child: Row(
@@ -143,7 +142,6 @@ class _GearCard extends StatelessWidget {
                             fontFamily: 'Inter',
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.text,
                           ),
                         ),
                       ),
@@ -151,7 +149,7 @@ class _GearCard extends StatelessWidget {
                       const Icon(
                         CupertinoIcons.pencil,
                         size: 16,
-                        color: AppColors.greytext,
+                        color: AppColors.textSecondary,
                       ),
                       const SizedBox(width: 2),
                     ],
@@ -185,15 +183,11 @@ class _InlineStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return RichText(
       text: TextSpan(
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 13,
-          color: AppColors.text,
-        ),
+        style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
         children: [
           TextSpan(
             text: '$label ',
-            style: const TextStyle(color: AppColors.greytext),
+            style: const TextStyle(color: AppColors.textSecondary),
           ),
           TextSpan(
             text: value,

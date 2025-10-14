@@ -37,7 +37,6 @@ class _TogetherScreenState extends State<TogetherScreen> {
             fontFamily: 'Inter',
             fontWeight: FontWeight.w600,
             fontSize: 18,
-            color: AppColors.text,
           ),
         ),
         leading: IconButton(
@@ -45,7 +44,7 @@ class _TogetherScreenState extends State<TogetherScreen> {
           icon: const Icon(
             CupertinoIcons.back,
             size: 22,
-            color: AppColors.text,
+            color: AppColors.iconPrimary,
           ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
@@ -140,7 +139,7 @@ class _SegmentedPill2 extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: SizedBox(
         height: 36,
@@ -195,7 +194,7 @@ class _SegmentedPill2 extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              color: selected ? AppColors.surface : AppColors.text,
+              color: selected ? AppColors.surface : AppColors.textPrimary,
             ),
           ),
         ),

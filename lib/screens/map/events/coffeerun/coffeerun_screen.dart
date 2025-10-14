@@ -101,7 +101,6 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
                               fontFamily: 'Inter',
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.text,
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -152,7 +151,7 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
                                 child: ElevatedButton(
                                   onPressed: () {},
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.secondary,
+                                    backgroundColor: AppColors.brandPrimary,
                                     foregroundColor: AppColors.surface,
                                     elevation: 0,
                                     padding: const EdgeInsets.symmetric(
@@ -177,7 +176,7 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
                                 child: ElevatedButton(
                                   onPressed: () {},
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.secondary,
+                                    backgroundColor: AppColors.brandPrimary,
                                     foregroundColor: AppColors.surface,
                                     elevation: 0,
                                     padding: const EdgeInsets.symmetric(
@@ -319,16 +318,12 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.secondary),
+        Icon(icon, size: 18, color: AppColors.brandPrimary),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              color: AppColors.text,
-            ),
+            style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
           ),
         ),
       ],
@@ -372,7 +367,7 @@ class _HalfTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.secondary : AppColors.text;
+    final color = selected ? AppColors.brandPrimary : AppColors.textPrimary;
     return InkWell(
       onTap: onTap,
       child: Center(

@@ -373,7 +373,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         onChanged: (v) =>
                             setState(() => createFromClub = v ?? false),
                         side: const BorderSide(color: AppColors.border),
-                        activeColor: AppColors.secondary,
+                        activeColor: AppColors.brandPrimary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -404,7 +404,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         onChanged: (v) =>
                             setState(() => saveTemplate = v ?? false),
                         side: const BorderSide(color: AppColors.border),
-                        activeColor: AppColors.secondary,
+                        activeColor: AppColors.brandPrimary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -679,7 +679,9 @@ class CreateButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: isEnabled ? onPressed : null,
       style: ElevatedButton.styleFrom(
-        backgroundColor: isEnabled ? AppColors.primary : Colors.grey.shade400,
+        backgroundColor: isEnabled
+            ? AppColors.brandPrimary
+            : Colors.grey.shade400,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
@@ -707,10 +709,7 @@ class _SmallLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(fontSize: 14, color: AppColors.text, height: 1.4),
-    );
+    return Text(text, style: const TextStyle(fontSize: 14, height: 1.4));
   }
 }
 

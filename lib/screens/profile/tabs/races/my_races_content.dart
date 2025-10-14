@@ -102,8 +102,8 @@ class _RaceBlock extends StatelessWidget {
           decoration: const BoxDecoration(
             color: AppColors.surface,
             border: Border(
-              top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
-              bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
+              top: BorderSide(color: AppColors.border, width: 0.5),
+              bottom: BorderSide(color: AppColors.border, width: 0.5),
             ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -130,7 +130,7 @@ class _RaceBlock extends StatelessWidget {
                     child: VerticalDivider(
                       width: 1,
                       thickness: 0.5,
-                      color: Color(0xFFEAEAEA),
+                      color: AppColors.divider,
                     ),
                   ),
                 ),
@@ -152,7 +152,7 @@ class _RaceBlock extends StatelessWidget {
                     child: VerticalDivider(
                       width: 1,
                       thickness: 0.5,
-                      color: Color(0xFFEAEAEA),
+                      color: AppColors.divider,
                     ),
                   ),
                 ),
@@ -169,7 +169,7 @@ class _RaceBlock extends StatelessWidget {
                     child: VerticalDivider(
                       width: 1,
                       thickness: 0.5,
-                      color: Color(0xFFEAEAEA),
+                      color: AppColors.divider,
                     ),
                   ),
                 ),
@@ -201,7 +201,6 @@ class _RaceBlock extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 12,
               fontWeight: FontWeight.w400, // мягче, как в «Друзьях»
-              color: AppColors.text,
             ),
           ),
         ),

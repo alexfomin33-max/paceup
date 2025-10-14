@@ -82,7 +82,7 @@ class GearViewCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
+        border: Border.all(color: AppColors.border, width: 1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -104,7 +104,6 @@ class GearViewCard extends StatelessWidget {
                             fontFamily: 'Inter',
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.text,
                           ),
                         ),
                         TextSpan(
@@ -113,7 +112,6 @@ class GearViewCard extends StatelessWidget {
                             fontFamily: 'Inter',
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.text,
                           ),
                         ),
                       ],
@@ -131,7 +129,7 @@ class GearViewCard extends StatelessWidget {
                   icon: const Icon(
                     CupertinoIcons.ellipsis, // горизонтальная иконка
                     size: 18,
-                    color: AppColors.text,
+                    color: AppColors.iconPrimary,
                   ),
                 ),
               ],
@@ -178,11 +176,7 @@ class GearViewCard extends StatelessWidget {
             child: Center(
               child: RichText(
                 text: TextSpan(
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    color: AppColors.text,
-                  ),
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
                   children: [
                     const TextSpan(text: 'Пробег '),
                     TextSpan(
@@ -200,7 +194,7 @@ class GearViewCard extends StatelessWidget {
           const Divider(
             height: 1,
             thickness: 0.5,
-            color: Color(0xFFEAEAEA),
+            color: AppColors.divider,
             indent: 12,
             endIndent: 12,
           ),
@@ -225,7 +219,7 @@ class GearViewCard extends StatelessWidget {
               style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
-                color: AppColors.greytext,
+                color: AppColors.textSecondary,
               ),
             ),
           ),
@@ -241,11 +235,7 @@ class GearViewCard extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              color: AppColors.text,
-            ),
+            style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
           ),
           const SizedBox(height: 2),
           Text(
@@ -255,7 +245,6 @@ class GearViewCard extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.text,
             ),
           ),
         ],

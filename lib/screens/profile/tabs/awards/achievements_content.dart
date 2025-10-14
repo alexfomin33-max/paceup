@@ -82,7 +82,6 @@ class _SectionTitle extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
           ),
         ),
       ),
@@ -190,7 +189,7 @@ class _BadgeTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 0.7),
+        border: Border.all(color: AppColors.border, width: 0.7),
       ),
       padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
       child: Column(
@@ -202,11 +201,7 @@ class _BadgeTile extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              color: AppColors.text,
-            ),
+            style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
           ),
         ],
       ),

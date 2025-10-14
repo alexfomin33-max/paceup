@@ -146,7 +146,6 @@ class _MonthToolbar extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
           ),
         ),
         const SizedBox(width: 4),
@@ -207,7 +206,7 @@ class _NavIcon extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.all(4),
-        child: Icon(icon, size: 18, color: AppColors.text),
+        child: Icon(icon, size: 18, color: AppColors.iconPrimary),
       ),
     );
   }
@@ -234,12 +233,12 @@ class _SportIcon extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? Colors.black87 : AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFEAEAEA), width: 1),
+          border: Border.all(color: AppColors.border, width: 1),
         ),
         child: Icon(
           icon,
           size: 16,
-          color: selected ? AppColors.surface : AppColors.text,
+          color: selected ? AppColors.surface : AppColors.textPrimary,
         ),
       ),
     );
@@ -268,7 +267,7 @@ class _CalendarCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 0.7),
+        border: Border.all(color: AppColors.border, width: 0.7),
       ),
       padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
       child: Column(
@@ -313,7 +312,7 @@ class _Dow extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 12,
-            color: weekend ? const Color(0xFFE55050) : AppColors.greytext,
+            color: weekend ? const Color(0xFFE55050) : AppColors.textSecondary,
           ),
         ),
       ),
@@ -392,7 +391,7 @@ class _MonthGrid extends StatelessWidget {
                           fontSize: 12,
                           color: isWeekend
                               ? const Color(0xFFE55050)
-                              : AppColors.text,
+                              : AppColors.textPrimary,
                         ),
                       ),
                     ),
@@ -446,8 +445,8 @@ class _WorkoutTable extends StatelessWidget {
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(
-          top: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
-          bottom: BorderSide(color: Color(0xFFEAEAEA), width: 0.5),
+          top: BorderSide(color: AppColors.border, width: 0.5),
+          bottom: BorderSide(color: AppColors.border, width: 0.5),
         ),
       ),
       child: Column(
@@ -461,7 +460,7 @@ class _WorkoutTable extends StatelessWidget {
                 const Divider(
                   height: 1,
                   thickness: 0.5,
-                  color: Color(0xFFEAEAEA),
+                  color: AppColors.divider,
                 ),
             ],
           );
@@ -507,7 +506,7 @@ class _WorkoutRow extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: AppColors.greytext,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const Spacer(),
@@ -565,14 +564,7 @@ class _WorkoutRow extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: const Color(0xFF6B6B6B)),
         const SizedBox(width: 6),
-        Text(
-          text,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 13,
-            color: AppColors.text,
-          ),
-        ),
+        Text(text, style: const TextStyle(fontFamily: 'Inter', fontSize: 13)),
       ],
     );
   }
