@@ -25,13 +25,13 @@ class SwimTripScreen extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(left: 10, top: 6, bottom: 6),
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   onTap: () => Navigator.of(context).pop(),
                   child: Container(
                     width: 36,
                     height: 36,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.35),
+                    decoration: const BoxDecoration(
+                      color: AppColors.scrim40,
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
@@ -55,14 +55,11 @@ class SwimTripScreen extends StatelessWidget {
                     alignment: Alignment.bottomCenter,
                     child: Container(
                       height: 0,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.20),
-                          ],
+                          colors: [Colors.transparent, AppColors.scrim20],
                         ),
                       ),
                     ),
@@ -77,13 +74,13 @@ class SwimTripScreen extends StatelessWidget {
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.surface,
                 boxShadow: [
                   // 1px тень вниз
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    offset: const Offset(0, 1),
+                    color: AppColors.shadowSoft,
+                    offset: Offset(0, 1),
                     blurRadius: 0,
                   ),
                 ],
@@ -188,10 +185,10 @@ class _StraitCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+          const BoxShadow(
+            color: AppColors.shadowSoft,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -199,7 +196,7 @@ class _StraitCard extends StatelessWidget {
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             child: Image(
               image: image,
               width: 64,
@@ -276,17 +273,23 @@ class _ProgressBar extends StatelessWidget {
             Container(
               width: w,
               height: 6,
-              decoration: BoxDecoration(
-                color: const Color(0xFF22CCB2), // как на tasks_screen
-                borderRadius: BorderRadius.circular(100),
+              decoration: const BoxDecoration(
+                color: AppColors.accentMint, // как на tasks_screen
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(AppRadius.xs),
+                  bottomLeft: Radius.circular(AppRadius.xs),
+                ),
               ),
             ),
             Expanded(
               child: Container(
                 height: 6,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.border,
-                  borderRadius: BorderRadius.circular(100),
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(AppRadius.xs),
+                    bottomRight: Radius.circular(AppRadius.xs),
+                  ),
                 ),
               ),
             ),

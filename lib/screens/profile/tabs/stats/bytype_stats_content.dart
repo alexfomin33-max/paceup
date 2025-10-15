@@ -121,7 +121,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           Icons.favorite,
           'Средний пульс',
           '152',
-          color: Color(0xFFE55050), // красный для пульса
+          color: AppColors.error, // красный для пульса
         ),
         const _MetricRowData(Icons.speed, 'Средний темп', '5:15 /км'),
         const _MetricRowData(Icons.directions_walk, 'Средний каденс', '173'),
@@ -177,10 +177,10 @@ class _ByTypeContentState extends State<_ByTypeContent> {
   }
 
   Color _barColor() => _sport == 0
-      ? const Color(0xFF3DA8FF)
+      ? AppColors.male
       : _sport == 1
-      ? const Color(0xFF22CCB2)
-      : const Color(0xFFE85D9C);
+      ? AppColors.accentMint
+      : AppColors.female;
   double _maxY() => _sport == 0
       ? 1000
       : _sport == 1
@@ -212,7 +212,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                     backgroundColor: AppColors.surface,
                     shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(16),
+                        top: Radius.circular(AppRadius.lg),
                       ),
                     ),
                     builder: (_) =>
@@ -222,7 +222,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                     setState(() => _period = picked);
                   }
                 },
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -230,7 +230,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(color: AppColors.border, width: 0.7),
                   ),
                   child: const Row(
@@ -312,13 +312,13 @@ class _SportIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: selected ? Colors.black87 : AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
+          color: selected ? AppColors.brandPrimary : AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border, width: 1),
         ),
         child: Icon(
@@ -393,7 +393,7 @@ class _YearChartCardState extends State<_YearChartCard> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border, width: 0.7),
       ),
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
@@ -445,7 +445,7 @@ class _NavIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Icon(icon, size: 18, color: AppColors.iconPrimary),
@@ -464,7 +464,7 @@ class _MetricsList extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border, width: 0.7),
       ),
       child: Column(
@@ -484,7 +484,7 @@ class _MetricsList extends StatelessWidget {
                 Icon(
                   r.icon,
                   size: 18,
-                  color: r.color ?? const Color(0xFF6B6B6B),
+                  color: r.color ?? AppColors.iconSecondary,
                 ),
                 const SizedBox(width: 10),
                 Expanded(

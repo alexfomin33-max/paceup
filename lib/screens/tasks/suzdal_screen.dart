@@ -30,13 +30,13 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(left: 10, top: 6, bottom: 6),
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   onTap: () => Navigator.of(context).pop(),
                   child: Container(
                     width: 36,
                     height: 36,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.35),
+                    decoration: const BoxDecoration(
+                      color: AppColors.scrim40,
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
@@ -66,7 +66,7 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                 boxShadow: [
                   // тонкая тень вниз ~1px
                   BoxShadow(
-                    color: Color(0x14000000),
+                    color: AppColors.shadowSoft,
                     offset: Offset(0, 1),
                     blurRadius: 0,
                   ),
@@ -179,17 +179,23 @@ class _MiniProgress extends StatelessWidget {
             Container(
               width: w,
               height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFF22CCB2),
-                borderRadius: BorderRadius.circular(100),
+              decoration: const BoxDecoration(
+                color: AppColors.accentMint,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(AppRadius.xs),
+                  bottomLeft: Radius.circular(AppRadius.xs),
+                ),
               ),
             ),
             Expanded(
               child: Container(
                 height: 4,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.border,
-                  borderRadius: BorderRadius.circular(100),
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(AppRadius.xs),
+                    bottomRight: Radius.circular(AppRadius.xs),
+                  ),
                 ),
               ),
             ),
@@ -249,9 +255,7 @@ class _FriendRow extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: highlight
-                    ? const Color(0xFF22CCB2)
-                    : AppColors.textPrimary,
+                color: highlight ? AppColors.accentMint : AppColors.textPrimary,
               ),
             ),
           ),
@@ -279,9 +283,7 @@ class _FriendRow extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: highlight
-                  ? const Color(0xFF22CCB2)
-                  : AppColors.textPrimary,
+              color: highlight ? AppColors.accentMint : AppColors.textPrimary,
             ),
           ),
         ],

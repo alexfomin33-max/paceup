@@ -142,10 +142,10 @@ class AvailableTaskCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+          const BoxShadow(
+            color: AppColors.shadowSoft,
             blurRadius: 1,
-            offset: const Offset(0, 1),
+            offset: Offset(0, 1),
           ),
         ],
       ),
@@ -197,10 +197,10 @@ class AvailableExpeditionCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+          const BoxShadow(
+            color: AppColors.shadowSoft,
             blurRadius: 1,
-            offset: const Offset(0, 1),
+            offset: Offset(0, 1),
           ),
         ],
       ),
@@ -251,7 +251,7 @@ class _SmallCircleBadgeIcon extends StatelessWidget {
           width: 72,
           height: 72,
           decoration: const BoxDecoration(
-            color: Color(0xFFEFF6EE),
+            color: AppColors.backgroundGreen,
             shape: BoxShape.circle,
           ),
           child: Icon(icon, size: 28, color: AppColors.iconPrimary),
@@ -263,12 +263,12 @@ class _SmallCircleBadgeIcon extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.surface,
               border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
+                const BoxShadow(
+                  color: AppColors.shadowSoft,
                   blurRadius: 1,
-                  offset: const Offset(0, 1),
+                  offset: Offset(0, 1),
                 ),
               ],
             ),

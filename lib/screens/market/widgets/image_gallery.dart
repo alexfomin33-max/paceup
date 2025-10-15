@@ -243,8 +243,8 @@ class _FullscreenGalleryState extends State<_FullscreenGallery>
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(20),
+                      color: AppColors.scrim40,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                     ),
                     child: Text(
                       '${_index + 1} / ${images.length}',

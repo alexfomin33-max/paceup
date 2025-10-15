@@ -25,7 +25,7 @@ class _TogetherScreenState extends State<TogetherScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: AppColors.surface,
@@ -138,7 +138,7 @@ class _SegmentedPill2 extends StatelessWidget {
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: AppColors.background,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.border, width: 1),
       ),
       child: SizedBox(
@@ -158,8 +158,8 @@ class _SegmentedPill2 extends StatelessWidget {
                   child: Container(
                     height: 36,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF379AE6),
-                      borderRadius: BorderRadius.circular(20),
+                      color: AppColors.brandPrimary,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                     ),
                   ),
                 ),

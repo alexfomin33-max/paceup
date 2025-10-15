@@ -34,12 +34,12 @@ class GoodsCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+            const BoxShadow(
+              color: AppColors.shadowSoft,
               blurRadius: 1,
-              offset: const Offset(0, 1),
+              offset: Offset(0, 1),
             ),
           ],
         ),
@@ -62,7 +62,6 @@ class GoodsCard extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         height: 1.2,
-                        color: Colors.black,
                       ),
                     ),
                   ),
@@ -111,7 +110,7 @@ class GoodsCard extends StatelessWidget {
                         height: 64,
                         clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
                           color: AppColors.background,
                           border: Border.all(color: AppColors.border),
                           image: DecorationImage(
@@ -151,9 +150,9 @@ class GoodsCard extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8F9FB),
+                      color: AppColors.surfaceMuted,
                       border: Border.all(color: AppColors.border),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,7 +162,7 @@ class GoodsCard extends StatelessWidget {
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 13,
-                            color: Colors.black,
+
                             height: 1.35,
                           ),
                         ),
@@ -200,7 +199,9 @@ class GoodsCard extends StatelessWidget {
                                 horizontal: 12,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                               ),
                             ),
                           ),

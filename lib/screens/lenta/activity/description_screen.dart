@@ -115,10 +115,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: _Avatar(a.userAvatar),
-                        ),
+                        ClipOval(child: _Avatar(a.userAvatar)),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -275,7 +272,6 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -290,7 +286,6 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black,
                         ),
                       ),
                     ],
@@ -308,7 +303,6 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black,
                         ),
                       ),
                       SizedBox(width: 12),
@@ -323,7 +317,6 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black,
                         ),
                       ),
                     ],
@@ -384,7 +377,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                 padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(color: AppColors.border, width: 1),
                 ),
                 child: Column(
@@ -474,8 +467,10 @@ class _WatchPill extends StatelessWidget {
     return Container(
       height: 56,
       decoration: ShapeDecoration(
-        color: const Color(0xFFF3F4F6),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        color: const Color.fromARGB(255, 14, 14, 230),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+        ),
       ),
       child: Stack(
         children: [
@@ -492,7 +487,7 @@ class _WatchPill extends StatelessWidget {
                   fit: BoxFit.fill,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
+                  borderRadius: BorderRadius.circular(AppRadius.xxl),
                 ),
               ),
             ),
@@ -659,16 +654,20 @@ class _SplitsTableFull extends StatelessWidget {
                               Container(
                                 height: 8,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFE9EEF5),
-                                  borderRadius: BorderRadius.circular(6),
+                                  color: AppColors.skeletonBase,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.sm,
+                                  ),
                                 ),
                               ),
                               Container(
                                 width: c.maxWidth * frac,
                                 height: 8,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF3B82F6),
-                                  borderRadius: BorderRadius.circular(6),
+                                  color: AppColors.brandPrimary,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.sm,
+                                  ),
                                 ),
                               ),
                             ],
@@ -729,7 +728,7 @@ class _SegmentedPill extends StatelessWidget {
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(color: AppColors.border, width: 1),
         ),
         child: Row(
@@ -751,8 +750,8 @@ class _SegmentedPill extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? Colors.black87 : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          color: selected ? AppColors.textPrimary : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Center(
           child: Text(
@@ -883,11 +882,11 @@ class _LinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paintGrid = Paint()
-      ..color = const Color(0xFFE9EEF5)
+      ..color = AppColors.skeletonBase
       ..strokeWidth = 1;
 
     final paintLine = Paint()
-      ..color = const Color(0xFF3B82F6)
+      ..color = AppColors.brandPrimary
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 

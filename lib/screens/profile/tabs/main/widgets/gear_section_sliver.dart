@@ -108,7 +108,7 @@ class _GearCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border, width: 0.5),
         ),
         padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
@@ -116,7 +116,7 @@ class _GearCard extends StatelessWidget {
           children: [
             // Превью изображения (лого/фото)
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               child: Image.asset(
                 imageAsset,
                 width: 72,

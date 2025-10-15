@@ -91,7 +91,7 @@ class _RouteCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(0),
+
         border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: _RouteRow(e: e),
@@ -112,7 +112,7 @@ class _RouteRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
             child: Image.asset(
               e.asset,
               width: 90,
@@ -121,7 +121,7 @@ class _RouteRow extends StatelessWidget {
               errorBuilder: (_, _, _) => Container(
                 width: 90,
                 height: 60,
-                color: Colors.black.withValues(alpha: 0.06),
+                color: AppColors.skeletonBase,
                 alignment: Alignment.center,
                 child: const Icon(
                   CupertinoIcons.map,
@@ -192,20 +192,20 @@ class _RouteRow extends StatelessWidget {
     late final String t;
     switch (d) {
       case _Difficulty.easy:
-        c = const Color(0xFF37C76A);
+        c = AppColors.success;
         t = 'Лёгкий';
       case _Difficulty.medium:
-        c = const Color(0xFFF3A536);
+        c = AppColors.warning;
         t = 'Средний';
       case _Difficulty.hard:
-        c = const Color(0xFFE8534A);
+        c = AppColors.error;
         t = 'Сложный';
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Text(
         t,

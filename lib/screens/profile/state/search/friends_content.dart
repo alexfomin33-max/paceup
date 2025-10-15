@@ -137,8 +137,7 @@ class _FriendRow extends StatelessWidget {
       child: Row(
         children: [
           // Аватар
-          ClipRRect(
-            borderRadius: BorderRadius.circular(22),
+          ClipOval(
             child: Image.asset(
               friend.avatar,
               width: 44,
@@ -147,7 +146,7 @@ class _FriendRow extends StatelessWidget {
               errorBuilder: (_, _, _) => Container(
                 width: 44,
                 height: 44,
-                color: Colors.black.withValues(alpha: 0.06),
+                color: AppColors.skeletonBase,
                 alignment: Alignment.center,
                 child: const Icon(
                   CupertinoIcons.person,

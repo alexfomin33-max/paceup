@@ -114,7 +114,7 @@ class _RaceFriendsBlock extends StatelessWidget {
                 style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
-                  color: Color(0xFF6B6B6B),
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],

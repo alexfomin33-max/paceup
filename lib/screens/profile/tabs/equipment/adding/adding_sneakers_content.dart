@@ -94,7 +94,7 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
         Container(
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: AppColors.border, width: 0.5),
           ),
           child: Column(

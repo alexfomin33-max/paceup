@@ -110,7 +110,7 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
       fit: StackFit.expand,
       children: [
         Image.network(_videoPlaceholder, fit: BoxFit.cover),
-        Container(color: const Color(0x33000000)),
+        Container(color: AppColors.scrim20),
         const Center(
           child: Icon(
             CupertinoIcons.play_circle_fill,
@@ -138,8 +138,8 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
       child: Container(
         padding: _dotsPad,
         decoration: BoxDecoration(
-          color: const Color(0x33000000),
-          borderRadius: BorderRadius.circular(999),
+          color: AppColors.scrim20,
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -151,10 +151,8 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
               width: active ? 16 : 7,
               height: 7,
               decoration: BoxDecoration(
-                color: active
-                    ? const Color(0xFF4D8EFF)
-                    : const Color(0xFFE0E0E0),
-                borderRadius: BorderRadius.circular(4),
+                color: active ? AppColors.brandPrimary : AppColors.skeletonBase,
+                borderRadius: BorderRadius.circular(AppRadius.xs),
               ),
             );
           }),

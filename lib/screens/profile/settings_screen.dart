@@ -192,14 +192,14 @@ class _SubscriptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
         decoration: _cardDecoration,
         padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               child: Image.asset(
                 'assets/pacepro.png',
                 width: 50,
@@ -266,7 +266,7 @@ class _SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap ?? () {},
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Row(
@@ -277,7 +277,7 @@ class _SettingsTile extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 20,
-                color: iconColor ?? const Color(0xFF5E6A7D),
+                color: iconColor ?? AppColors.iconSecondary,
               ),
             ),
             const SizedBox(width: 8),

@@ -297,7 +297,9 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
           ),
           decoration: const BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

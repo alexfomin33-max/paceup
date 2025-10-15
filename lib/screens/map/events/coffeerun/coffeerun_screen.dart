@@ -24,7 +24,7 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
   void _openGallery(int startIndex) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.90),
+      barrierColor: AppColors.scrim40,
       builder: (_) => _GalleryViewer(images: _gallery, startIndex: startIndex),
     );
   }
@@ -158,7 +158,9 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
                                       vertical: 12,
                                     ),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.xs,
+                                      ),
                                     ),
                                   ),
                                   child: const Text(
@@ -183,7 +185,9 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
                                       vertical: 12,
                                     ),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.xs,
+                                      ),
                                     ),
                                   ),
                                   child: const Text(
@@ -297,8 +301,8 @@ class _CircleIconBtn extends StatelessWidget {
         child: Container(
           width: 34,
           height: 34,
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.30),
+          decoration: const BoxDecoration(
+            color: AppColors.scrim20,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
@@ -342,7 +346,7 @@ class _SquarePhoto extends StatelessWidget {
       child: AspectRatio(
         aspectRatio: 1,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
           child: InkWell(
             onTap: onTap,
             child: Image.asset(path, fit: BoxFit.cover),
@@ -408,7 +412,7 @@ class _GalleryViewerState extends State<_GalleryViewer> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.black,
+      color: AppColors.textPrimary,
       child: SafeArea(
         child: Stack(
           children: [

@@ -39,8 +39,8 @@ class _EquipmentChipState extends State<EquipmentChip> {
       child: Container(
         height: 56,
         decoration: BoxDecoration(
-          color: const Color(0xFFF3F4F6),
-          borderRadius: BorderRadius.circular(28),
+          color: AppColors.surfaceMuted,
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
         ),
         child: Stack(
           children: [
@@ -49,8 +49,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
               left: 3,
               top: 3,
               bottom: 3,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(25),
+              child: ClipOval(
                 child: img.isNotEmpty
                     ? Image.network(
                         img,
@@ -79,7 +78,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF323743),
+
                         height: 1.69, // как в исходнике
                       ),
                     ),
@@ -87,7 +86,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                       text: "Пробег: ",
                       style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF565D6D),
+                        color: AppColors.textSecondary,
                         height: 1.64,
                       ),
                     ),
@@ -96,7 +95,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF171A1F),
+
                         height: 1.64,
                       ),
                     ),
@@ -104,7 +103,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                       text: " км",
                       style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF565D6D),
+                        color: AppColors.textSecondary,
                         height: 1.64,
                       ),
                     ),
@@ -135,7 +134,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                     child: const Icon(
                       CupertinoIcons.ellipsis,
                       size: 16,
-                      color: Colors.black,
+                      color: AppColors.iconPrimary,
                     ),
                   ),
                 ),

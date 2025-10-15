@@ -105,17 +105,17 @@ class _DifficultyChip extends StatelessWidget {
     final lc = text.toLowerCase();
     Color c;
     if (lc.contains('лёгк')) {
-      c = const Color(0xFF37C76A);
+      c = AppColors.success;
     } else if (lc.contains('средн')) {
-      c = const Color(0xFFF3A536);
+      c = AppColors.warning;
     } else {
-      c = const Color(0xFFE8534A);
+      c = AppColors.error;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Text(
         text,
@@ -161,7 +161,7 @@ class _ResultRow extends StatelessWidget {
         children: [
           // превью 90x60 со скруглением 4 — одинаково с routes_content.dart
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
             child: Image.asset(
               e.asset,
               width: 90,
@@ -170,7 +170,7 @@ class _ResultRow extends StatelessWidget {
               errorBuilder: (_, _, _) => Container(
                 width: 90,
                 height: 60,
-                color: Colors.black.withValues(alpha: 0.06),
+                color: AppColors.skeletonBase,
                 alignment: Alignment.center,
                 child: const Icon(
                   CupertinoIcons.map,
@@ -228,7 +228,7 @@ class _ResultRow extends StatelessWidget {
                         text: '${e.hr}',
                         align: MainAxisAlignment.center, // вправо
                         textAlign: TextAlign.center,
-                        iconColor: const Color(0xFFFF3B30),
+                        iconColor: AppColors.error,
                       ),
                     ),
                   ],

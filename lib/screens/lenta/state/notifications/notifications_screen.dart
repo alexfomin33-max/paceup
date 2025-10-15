@@ -116,8 +116,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Аватар
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
+                  ClipOval(
                     child: Image.asset(
                       n.avatar,
                       width: 40,

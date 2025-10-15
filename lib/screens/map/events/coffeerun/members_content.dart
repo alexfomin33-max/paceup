@@ -58,8 +58,7 @@ class _MemberRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(22),
+          ClipOval(
             child: Image.asset(
               member.avatar,
               width: 42,

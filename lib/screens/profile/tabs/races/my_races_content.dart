@@ -88,7 +88,7 @@ class _RaceBlock extends StatelessWidget {
                 style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
-                  color: Color(0xFF6B6B6B),
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -116,7 +116,7 @@ class _RaceBlock extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(0),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
                       child: Image.asset(item.asset, width: 80, height: 53),
                     ),
                   ),
@@ -191,7 +191,7 @@ class _RaceBlock extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: const Color(0xFF6B6B6B)),
+        Icon(icon, size: 16, color: AppColors.iconSecondary),
         const SizedBox(width: 6),
         Flexible(
           child: Text(

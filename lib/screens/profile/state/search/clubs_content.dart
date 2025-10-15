@@ -110,7 +110,7 @@ class _ClubRow extends StatelessWidget {
         children: [
           // Превью
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
             child: Image.asset(
               c.asset,
               width: 90,
@@ -119,7 +119,7 @@ class _ClubRow extends StatelessWidget {
               errorBuilder: (_, _, _) => Container(
                 width: 90,
                 height: 60,
-                color: Colors.black.withValues(alpha: 0.06),
+                color: AppColors.skeletonBase,
                 alignment: Alignment.center,
                 child: const Icon(
                   CupertinoIcons.photo,

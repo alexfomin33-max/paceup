@@ -39,13 +39,13 @@ class _ErrorPane extends StatelessWidget {
             const Icon(
               CupertinoIcons.exclamationmark_triangle,
               size: 28,
-              color: Color(0xFF991B1B),
+              color: AppColors.error,
             ),
             const SizedBox(height: 10),
             Text(
               'Ошибка загрузки:\n$message',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: Color(0xFF991B1B)),
+              style: const TextStyle(fontSize: 13, color: AppColors.error),
             ),
             const SizedBox(height: 12),
             CupertinoButton.filled(
@@ -203,7 +203,7 @@ class _FormPane extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF6B7280),
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 8),
@@ -235,7 +235,7 @@ class _FormPane extends StatelessWidget {
             child: Text(
               'Данные необходимы для расчёта калорий, нагрузки, зон темпа и мощности.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 12, color: AppColors.textPlaceholder),
             ),
           ),
         ],
@@ -683,7 +683,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: AppColors.surfaceMuted,
       appBar: AppBar(
         toolbarHeight: kToolbarH,
         backgroundColor: AppColors.surface,
@@ -719,7 +719,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           preferredSize: Size.fromHeight(0.5),
           child: SizedBox(
             height: 0.5,
-            child: ColoredBox(color: Color(0xFFE5E7EB)),
+            child: ColoredBox(color: AppColors.divider),
           ),
         ),
       ),
@@ -806,13 +806,13 @@ class _AvatarEditable extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                border: Border.all(color: AppColors.border, width: 1),
               ),
               alignment: Alignment.center,
               child: const Icon(
                 CupertinoIcons.camera,
                 size: 16,
-                color: Color(0xFF111827),
+                color: AppColors.iconPrimary,
               ),
             ),
           ),
@@ -895,8 +895,8 @@ class _NameBlock extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Column(
         children: [
@@ -913,7 +913,7 @@ class _NameBlock extends StatelessWidget {
               ),
             ),
           ),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFE5E7EB)),
+          const Divider(height: 1, thickness: 1, color: AppColors.divider),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: SizedBox(
@@ -944,14 +944,14 @@ class _GroupBlock extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Column(
         children: [
           for (int i = 0; i < children.length; i++) ...[
             if (i > 0)
-              const Divider(height: 1, thickness: 1, color: Color(0xFFE5E7EB)),
+              const Divider(height: 1, thickness: 1, color: AppColors.divider),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: children[i],
@@ -1015,7 +1015,7 @@ class _FieldRow extends StatelessWidget {
   Widget build(BuildContext context) {
     const labelStyle = TextStyle(
       fontSize: 13,
-      color: Color(0xFF6B7280),
+      color: AppColors.textSecondary,
       fontWeight: FontWeight.w500,
     );
 
@@ -1031,7 +1031,7 @@ class _FieldRow extends StatelessWidget {
           Expanded(
             child: isPicker
                 ? InkWell(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     onTap: onTap,
                     child: Row(
                       children: [
@@ -1043,15 +1043,15 @@ class _FieldRow extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               color: (value ?? '').isEmpty
-                                  ? const Color(0xFF9CA3AF)
-                                  : const Color(0xFF111827),
+                                  ? AppColors.textTertiary
+                                  : AppColors.textPrimary,
                             ),
                           ),
                         ),
                         const Icon(
                           CupertinoIcons.chevron_down,
                           size: 18,
-                          color: Color(0xFF9CA3AF),
+                          color: AppColors.iconTertiary,
                         ),
                       ],
                     ),
@@ -1113,10 +1113,10 @@ class _CircleIconBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+          border: Border.all(color: AppColors.border, width: 1),
         ),
         alignment: Alignment.center,
-        child: Icon(icon, size: kQrIconSize, color: const Color(0xFF111827)),
+        child: Icon(icon, size: kQrIconSize, color: AppColors.iconPrimary),
       ),
     );
   }

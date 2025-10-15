@@ -35,12 +35,7 @@ class Regstep2ScreenState extends State<Regstep2Screen> {
                 const Text(
                   'Параметры спортсмена',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF323743),
-                    fontSize: 18,
-
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 15),
                 Align(
@@ -136,12 +131,12 @@ class CustomTextField extends StatelessWidget {
         FilteringTextInputFormatter.digitsOnly,
         LengthLimitingTextInputFormatter(maxLength),
       ],
-      style: const TextStyle(color: Colors.black),
+      style: const TextStyle(color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: label,
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          color: Color(0xFF565D6D),
+          color: AppColors.textSecondary,
           fontSize: 16,
 
           fontWeight: FontWeight.w500,

@@ -34,10 +34,10 @@ class MoreMenuOverlay {
     this.margin = 0,
     this.horizontalInset = 8,
     this.backgroundColor = AppColors.surface,
-    this.borderRadius = const BorderRadius.all(Radius.circular(12)),
+    this.borderRadius = const BorderRadius.all(Radius.circular(AppRadius.md)),
     this.boxShadow = const [
       // тень по твоим спекам
-      BoxShadow(color: Color(0x33000000), blurRadius: 4, offset: Offset(0, 1)),
+      BoxShadow(color: AppColors.scrim20, blurRadius: 4, offset: Offset(0, 1)),
     ],
     this.innerPadding = const EdgeInsets.symmetric(vertical: 6),
     this.dividerColor = AppColors.divider,
@@ -156,7 +156,7 @@ class MoreMenuOverlay {
             hide(); // сперва закрываем меню
             it.onTap(); // потом действие
           },
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(

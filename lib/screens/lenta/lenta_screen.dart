@@ -365,7 +365,7 @@ class _LentaScreenState extends State<LentaScreen>
     super.build(context); // важно для keep-alive
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: AppColors.surfaceMuted,
       extendBodyBehindAppBar: true,
 
       // ——— Верхняя панель ———
@@ -380,7 +380,7 @@ class _LentaScreenState extends State<LentaScreen>
         automaticallyImplyLeading: false,
         leadingWidth: 96,
         shape: const Border(
-          bottom: BorderSide(color: Color(0x33FFFFFF), width: 0.6),
+          bottom: BorderSide(color: AppColors.scrim20, width: 0.6),
         ),
         // стеклянное размытие
         flexibleSpace: ClipRect(

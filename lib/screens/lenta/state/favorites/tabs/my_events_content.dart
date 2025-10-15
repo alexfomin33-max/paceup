@@ -176,7 +176,7 @@ class _EventRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
             child: Image.asset(
               e.asset,
               width: 90,
@@ -185,7 +185,7 @@ class _EventRow extends StatelessWidget {
               errorBuilder: (_, _, _) => Container(
                 width: 90,
                 height: 60,
-                color: Colors.black.withValues(alpha: 0.06),
+                color: AppColors.skeletonBase,
                 alignment: Alignment.center,
                 child: const Icon(
                   CupertinoIcons.photo,
@@ -263,7 +263,7 @@ class _InlineCalendar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: Padding(
@@ -325,7 +325,7 @@ class _InlineCalendar extends StatelessWidget {
                                 ? FontWeight.w700
                                 : FontWeight.w500,
                             color: (c >= 5)
-                                ? const Color(0xFFDA3F3F)
+                                ? AppColors.error
                                 : AppColors.textPrimary,
                           ),
                         ),
@@ -358,7 +358,7 @@ class _D extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: weekend ? const Color(0xFFDA3F3F) : AppColors.textSecondary,
+            color: weekend ? AppColors.error : AppColors.textSecondary,
           ),
         ),
       ),

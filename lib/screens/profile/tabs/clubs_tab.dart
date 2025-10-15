@@ -122,7 +122,7 @@ class _ClubCard extends StatelessWidget {
     final card = Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border, width: 1),
       ),
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 9),
@@ -196,7 +196,7 @@ class _LogoImage extends StatelessWidget {
       path,
       fit: BoxFit.cover,
       errorBuilder: (_, _, _) => Container(
-        color: Colors.black.withValues(alpha: 0.06),
+        color: AppColors.skeletonBase,
         alignment: Alignment.center,
         child: const Icon(
           CupertinoIcons.photo,

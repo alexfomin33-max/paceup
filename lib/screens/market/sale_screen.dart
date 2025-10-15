@@ -309,7 +309,7 @@ class _SmallLabel extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-        color: Color(0xFF565D6D),
+        color: AppColors.textSecondary,
         fontSize: 14,
         fontWeight: FontWeight.w600,
         fontFamily: 'Inter',
@@ -340,9 +340,13 @@ class _TopTabsSwitch extends StatelessWidget {
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 1, offset: Offset(0, 1)),
+          BoxShadow(
+            color: AppColors.shadowMedium,
+            blurRadius: 1,
+            offset: Offset(0, 1),
+          ),
         ],
       ),
       child: Row(
@@ -362,8 +366,8 @@ class _TopTabsSwitch extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? Colors.black87 : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          color: selected ? AppColors.textPrimary : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Text(
           text,
@@ -371,7 +375,7 @@ class _TopTabsSwitch extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 14,
             fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-            color: selected ? AppColors.surface : Colors.black87,
+            color: selected ? AppColors.surface : AppColors.textPrimary,
           ),
         ),
       ),
@@ -462,7 +466,7 @@ class _ChipsRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: sel ? AppColors.brandPrimary : AppColors.surface,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               border: Border.all(
                 color: sel ? AppColors.brandPrimary : AppColors.border,
               ),
@@ -651,7 +655,7 @@ class _PriceField extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: const BoxDecoration(
-                color: Color(0xFFF1F8FD),
+                color: AppColors.backgroundBlue,
                 shape: BoxShape.circle,
               ),
               child: const Center(
@@ -728,7 +732,7 @@ Widget _labelWithStar(String label) {
     text: TextSpan(
       text: label.replaceAll('*', ''),
       style: const TextStyle(
-        color: Color(0xFF565D6D),
+        color: AppColors.textSecondary,
         fontSize: 15, // слегка меньше
         fontWeight: FontWeight.w400,
         fontFamily: 'Inter', // 4) Inter
@@ -768,7 +772,7 @@ class _OvalToggle extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
             color: selected ? AppColors.brandPrimary : AppColors.border,
           ),

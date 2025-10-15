@@ -144,7 +144,7 @@ class _SegmentedPill extends StatelessWidget {
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(color: AppColors.border, width: 1),
         ),
         child: Row(
@@ -165,8 +165,8 @@ class _SegmentedPill extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? Colors.black87 : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          color: selected ? AppColors.textPrimary : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Center(
           child: Text(
@@ -224,19 +224,19 @@ class _SearchField extends StatelessWidget {
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
-            borderSide: const BorderSide(color: Color(0xFFE6E6E8), width: 1),
-            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: AppColors.outline, width: 1),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Color(0xFFE6E6E8), width: 1),
-            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: AppColors.outline, width: 1),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           focusedBorder: OutlineInputBorder(
             borderSide: const BorderSide(
               color: AppColors.brandPrimary,
               width: 1.2,
             ),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
         ),
       ),

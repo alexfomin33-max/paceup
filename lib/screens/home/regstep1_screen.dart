@@ -112,7 +112,7 @@ class Regstep1ScreenState extends State<Regstep1Screen> {
                   'Данные спортсмена',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Color(0xFF323743),
+                    color: AppColors.textPrimary,
                     fontSize: 18,
 
                     fontWeight: FontWeight.w500,
@@ -181,13 +181,13 @@ class CustomTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
-      style: const TextStyle(color: Colors.black),
+      style: const TextStyle(color: AppColors.textPrimary),
       decoration: InputDecoration(
         label: RichText(
           text: TextSpan(
             text: label.replaceAll('*', ''),
             style: const TextStyle(
-              color: Color(0xFF565D6D),
+              color: AppColors.textSecondary,
               fontSize: 16,
 
               fontWeight: FontWeight.w500,
@@ -259,13 +259,13 @@ class CustomDateField extends StatelessWidget {
         // 🔹 Только для чтения, открывает DatePicker по тапу
         child: TextFormField(
           controller: controller,
-          style: const TextStyle(color: Colors.black),
+          style: const TextStyle(color: AppColors.textPrimary),
           decoration: InputDecoration(
             label: RichText(
               text: TextSpan(
                 text: label.replaceAll('*', ''),
                 style: const TextStyle(
-                  color: Color(0xFF565D6D),
+                  color: AppColors.textSecondary,
                   fontSize: 16,
 
                   fontWeight: FontWeight.w500,
@@ -330,7 +330,7 @@ class CustomDropdownField extends StatelessWidget {
           text: TextSpan(
             text: label.replaceAll('*', ''),
             style: const TextStyle(
-              color: Color(0xFF565D6D),
+              color: AppColors.textSecondary,
               fontSize: 16,
 
               fontWeight: FontWeight.w500,
@@ -349,15 +349,15 @@ class CustomDropdownField extends StatelessWidget {
         fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: const BorderSide(color: AppColors.border),
         ),
       ),

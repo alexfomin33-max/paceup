@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../../../theme/app_theme.dart';
 
 /// Карточка маршрута.
 /// - Рендерит статичную карту с треком (без интерактива).
@@ -106,9 +107,7 @@ class _RouteCardState extends State<RouteCard> {
                 Polyline(
                   points: points,
                   strokeWidth: 3.0,
-                  color: const Color(
-                    0xFF0080FF,
-                  ), // сплошной синий без прозрачности
+                  color: AppColors.brandPrimary,
                 ),
               ],
             ),

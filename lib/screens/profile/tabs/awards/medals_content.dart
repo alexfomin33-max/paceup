@@ -4,8 +4,8 @@ import '../../../../theme/app_theme.dart';
 
 /// Sliver-контент для вкладки «Медали»
 List<Widget> buildMedalsSlivers() {
-  const green = Color(0xFFE9F7E3);
-  const yellow = Color(0xFFFFF0D9);
+  const green = AppColors.backgroundGreen;
+  const yellow = AppColors.backgroundYellow;
 
   // ИЮНЬ 2025 — зелёный тинт у выполненных
   final june = <_MedalSpec>[
@@ -156,7 +156,7 @@ class _MedalsMonthCard extends StatelessWidget {
             color: AppColors.border,
             width: 0.5,
           ), // ← тонкий бордер
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         padding: const EdgeInsets.all(12),
         child: _BadgesWrap(items: items),
@@ -204,8 +204,8 @@ class _MedalBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final done = spec.done;
     final circle = done
-        ? (spec.tint ?? const Color(0xFFEFF6EE))
-        : const Color(0xFFF1F3F5);
+        ? (spec.tint ?? AppColors.skeletonBase)
+        : AppColors.surfaceMuted;
     final iconColor = done ? AppColors.iconPrimary : AppColors.textSecondary;
 
     return Center(
@@ -228,12 +228,12 @@ class _MedalBadge extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
+                  const BoxShadow(
+                    color: AppColors.shadowSoft,
                     blurRadius: 6,
-                    offset: const Offset(0, 1),
+                    offset: Offset(0, 1),
                   ),
                 ],
               ),

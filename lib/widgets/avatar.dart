@@ -26,8 +26,7 @@ class Avatar extends StatelessWidget {
     final bool isNet =
         image.startsWith('http://') || image.startsWith('https://');
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(size / 2),
+    return ClipOval(
       child: OptimizedAvatar(
         url: isNet ? image : null,
         asset: isNet

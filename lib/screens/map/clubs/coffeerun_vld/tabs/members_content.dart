@@ -34,8 +34,7 @@ class CoffeeRunVldMembersContent extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(22),
+                  ClipOval(
                     child: Image.asset(
                       m.avatar,
                       width: 36,

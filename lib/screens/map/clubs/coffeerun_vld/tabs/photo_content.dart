@@ -20,7 +20,7 @@ class CoffeeRunVldPhotoContent extends StatelessWidget {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: true,
-        barrierColor: Colors.black.withValues(alpha: 0.98),
+        barrierColor: AppColors.scrim40,
         pageBuilder: (_, _, _) =>
             _FullscreenGallery(initialIndex: index, assets: photos),
         transitionsBuilder: (_, animation, _, child) =>
@@ -72,7 +72,9 @@ class CoffeeRunVldPhotoContent extends StatelessWidget {
                         return toHero.child;
                       },
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8), // как в photos_tab
+                    borderRadius: BorderRadius.circular(
+                      AppRadius.sm,
+                    ), // как в photos_tab
                     child: Image.asset(
                       path,
                       fit: BoxFit.cover,
@@ -111,7 +113,7 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.scrim90,
       body: Stack(
         children: [
           PageView.builder(
@@ -166,7 +168,7 @@ class _CircleIconButton extends StatelessWidget {
         height: 36,
         decoration: BoxDecoration(
           color: AppColors.surface.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Icon(icon, size: 20, color: AppColors.surface),
       ),
@@ -185,7 +187,7 @@ class _CounterBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.surface.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Text(
         text,

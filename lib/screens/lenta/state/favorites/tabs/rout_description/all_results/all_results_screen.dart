@@ -194,13 +194,13 @@ class _LeaderCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border, width: 0.5),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+          const BoxShadow(
+            color: AppColors.shadowSoft,
             blurRadius: 1,
-            offset: const Offset(0, 1),
+            offset: Offset(0, 1),
           ),
         ],
       ),
@@ -352,9 +352,7 @@ class _ResultRow extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
-                color: highlight
-                    ? const Color(0xFF22CCB2)
-                    : AppColors.textPrimary,
+                color: highlight ? AppColors.success : AppColors.textPrimary,
               ),
             ),
           ),
@@ -418,7 +416,7 @@ class _ResultRow extends StatelessWidget {
                       fontSize: 13,
                       fontWeight: FontWeight.w400,
                       color: highlight
-                          ? const Color(0xFF22CCB2)
+                          ? AppColors.success
                           : AppColors.textPrimary,
                     ),
                   ),
@@ -467,17 +465,17 @@ class _DifficultyChip extends StatelessWidget {
     final lc = text.toLowerCase();
     Color c;
     if (lc.contains('лёгк')) {
-      c = const Color(0xFF37C76A);
+      c = AppColors.success;
     } else if (lc.contains('средн')) {
-      c = const Color(0xFFF3A536);
+      c = AppColors.warning;
     } else {
-      c = const Color(0xFFE8534A);
+      c = AppColors.error;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Text(
         text,

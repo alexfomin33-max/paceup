@@ -131,7 +131,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
         width: 76,
         height: 76,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           color: AppColors.background,
           border: Border.all(color: AppColors.border),
         ),
@@ -167,7 +167,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
             width: 76,
             height: 76,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               color: AppColors.background,
             ),
             clipBehavior: Clip.hardEdge,
@@ -189,7 +189,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
               height: 24,
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(color: AppColors.border),
               ),
               child: const Icon(
@@ -211,7 +211,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.background,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: AppColors.border, width: 1),
       ),
       child: TextField(
@@ -221,7 +221,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
         minLines: null,
         decoration: const InputDecoration.collapsed(
           hintText: 'Добавьте описание...',
-          hintStyle: TextStyle(color: Color(0xFF8F8F8F)),
+          hintStyle: TextStyle(color: AppColors.textPlaceholder),
         ),
       ),
     );
@@ -237,7 +237,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: _canPublish ? AppColors.brandPrimary : Colors.grey,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
         ),
         child: _loading

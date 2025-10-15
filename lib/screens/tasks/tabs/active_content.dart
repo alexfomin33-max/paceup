@@ -16,7 +16,7 @@ class ActiveContent extends StatelessWidget {
         const SizedBox(height: 8),
 
         const TaskCard(
-          colorTint: Color(0xFFE9F7E3),
+          colorTint: AppColors.backgroundGreen,
           icon: CupertinoIcons.star,
           badgeText: '10 дней',
           title: '10 дней активности',
@@ -26,7 +26,7 @@ class ActiveContent extends StatelessWidget {
         const SizedBox(height: 12),
 
         TaskCard(
-          colorTint: const Color(0xFFE8F7F1),
+          colorTint: AppColors.backgroundYellow,
           icon: Icons.directions_run,
           badgeText: '200 км',
           title: '200 км бега',
@@ -42,7 +42,7 @@ class ActiveContent extends StatelessWidget {
         const SizedBox(height: 12),
 
         const TaskCard(
-          colorTint: Color(0xFFE8F5FF),
+          colorTint: AppColors.backgroundBlue,
           icon: CupertinoIcons.arrow_up,
           badgeText: '1000 м',
           title: '1000 метров набора высоты',
@@ -52,7 +52,7 @@ class ActiveContent extends StatelessWidget {
         const SizedBox(height: 12),
 
         const TaskCard(
-          colorTint: Color(0xFFF7F0FF),
+          colorTint: AppColors.backgroundPurple,
           icon: CupertinoIcons.stopwatch,
           badgeText: '1000 мин',
           title: '1000 минут активности',
@@ -153,10 +153,10 @@ class TaskCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+          const BoxShadow(
+            color: AppColors.shadowSoft,
             blurRadius: 1,
-            offset: const Offset(0, 1),
+            offset: Offset(0, 1),
           ),
         ],
       ),
@@ -247,10 +247,10 @@ class ExpeditionCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+          const BoxShadow(
+            color: AppColors.shadowSoft,
             blurRadius: 1,
-            offset: const Offset(0, 1),
+            offset: Offset(0, 1),
           ),
         ],
       ),
@@ -331,17 +331,23 @@ class _ProgressBar extends StatelessWidget {
             Container(
               width: currentWidth,
               height: 6,
-              decoration: BoxDecoration(
-                color: const Color(0xFF22CCB2),
-                borderRadius: BorderRadius.circular(100),
+              decoration: const BoxDecoration(
+                color: AppColors.accentMint,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(AppRadius.xs),
+                  bottomLeft: Radius.circular(AppRadius.xs),
+                ),
               ),
             ),
             Expanded(
               child: Container(
                 height: 6,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.border,
-                  borderRadius: BorderRadius.circular(100),
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(AppRadius.xs),
+                    bottomRight: Radius.circular(AppRadius.xs),
+                  ),
                 ),
               ),
             ),
@@ -375,12 +381,12 @@ class _IconBadge extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
+                  const BoxShadow(
+                    color: AppColors.shadowSoft,
                     blurRadius: 1,
-                    offset: const Offset(0, 1),
+                    offset: Offset(0, 1),
                   ),
                 ],
               ),
@@ -405,12 +411,12 @@ class _RoundImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
         width: 64,
         height: 64,
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.06),
+          color: AppColors.skeletonBase,
           image: provider != null
               ? DecorationImage(image: provider!, fit: BoxFit.cover)
               : null,

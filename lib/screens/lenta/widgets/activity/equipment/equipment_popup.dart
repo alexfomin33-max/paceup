@@ -137,10 +137,10 @@ class _AnimatedPopupState extends State<_AnimatedPopup>
                   height: widget.height,
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     boxShadow: const [
                       BoxShadow(
-                        color: Colors.black26,
+                        color: AppColors.textTertiary,
                         blurRadius: 8,
                         offset: Offset(0, 1),
                       ),
@@ -171,7 +171,7 @@ class _PopupContent extends StatelessWidget {
           name: 'Hoka One One Bondi 8',
           mileageKm: 836,
         ),
-        Divider(height: 1, thickness: 1, color: Color(0xFFECECEC)),
+        Divider(height: 1, thickness: 1, color: AppColors.divider),
         _ShoeRow(
           imageAsset: 'assets/Anta.png',
           name: 'Anta M C202',
@@ -221,7 +221,6 @@ class _ShoeRow extends StatelessWidget {
                     TextSpan(
                       text: '$name\n',
                       style: const TextStyle(
-                        color: Color(0xFF323743),
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
                         height: 1.67,
@@ -230,7 +229,7 @@ class _ShoeRow extends StatelessWidget {
                     const TextSpan(
                       text: 'Пробег: ',
                       style: TextStyle(
-                        color: Color(0xFF565D6D),
+                        color: AppColors.textSecondary,
                         fontSize: 11,
                         fontWeight: FontWeight.w400,
                         height: 2,
@@ -239,7 +238,6 @@ class _ShoeRow extends StatelessWidget {
                     TextSpan(
                       text: '$mileageKm',
                       style: const TextStyle(
-                        color: Color(0xFF171A1F),
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         height: 2,
@@ -248,7 +246,7 @@ class _ShoeRow extends StatelessWidget {
                     const TextSpan(
                       text: ' км',
                       style: TextStyle(
-                        color: Color(0xFF565D6D),
+                        color: AppColors.textSecondary,
                         fontSize: 11,
                         fontWeight: FontWeight.w400,
                         height: 1.64,

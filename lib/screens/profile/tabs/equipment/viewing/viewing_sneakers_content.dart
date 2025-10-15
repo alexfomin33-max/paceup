@@ -83,7 +83,7 @@ class GearViewCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border.all(color: AppColors.border, width: 1),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,8 +146,8 @@ class GearViewCard extends StatelessWidget {
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(20), // пилюля
+                  color: AppColors.textPrimary,
+                  borderRadius: BorderRadius.circular(AppRadius.xl), // пилюля
                 ),
                 child: Text(
                   mainBadgeText!,

@@ -65,7 +65,7 @@ class SettingsPlaceholderScreen extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
-                    color: Color(0xFF5E6A7D),
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],

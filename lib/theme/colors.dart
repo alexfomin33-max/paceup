@@ -28,13 +28,11 @@ abstract class AppColors {
   // └───────────────────────────────────────────────────────────────────────┘
   // Системные iOS-лайк фоны
   static const Color background = Color(0xFFF2F2F7); // systemGroupedBackground
-  // «поднятая» карточка на фоне
-  static const Color backgroundElevated = Color(0xFFFFFFFF);
   // основная поверхность (карточки)
   static const Color surface = Color(0xFFFFFFFF);
   // слегка приглушённая поверхность
   static const Color surfaceMuted = Color(0xFFFAFAFC);
-  static const Color surfaceContrast = Color(0xFFF7F7FA); // для секций/групп
+  static const Color disabled = Color(0xFFF7F7FA);
 
   // ┌───────────────────────────────────────────────────────────────────────┐
   // │ РАЗДЕЛИТЕЛИ / БОРДЕРЫ / СТРОКИ                                       │
@@ -79,6 +77,9 @@ abstract class AppColors {
   static const Color scrim10 = Color(0x19000000); // 10% — очень лёгкий
   static const Color scrim20 = Color(0x33000000); // 20% — стандартный скрим
   static const Color scrim40 = Color(0x66000000); // 40% — для модалок
+  static const Color scrim90 = Color(
+    0xE6000000,
+  ); // ≈90% чёрного — почти чёрный экран
 
   // Тени (мягкие iOS-лайк)
   static const Color shadowSoft = Color(0x14000000); // ~8%   (карточки)
@@ -127,4 +128,17 @@ abstract class AppColors {
   static const Color backgroundRed = Color(0xFFFDF2F2);
   static const Color backgroundYellow = Color(0xFFFFF6E2);
   static const Color backgroundGreen = Color(0xFFEEFDF3);
+  static const Color backgroundBlue = Color(0xFFE8F5FF);
+  static const Color backgroundPurple = Color(0xFFF7F0FF);
+  static const Color backgroundMint = Color(0xFFE8F7F1);
+
+  static const Color female = Color(0xFFE8618C);
+  static const Color bgfemale = Color(0xFFFDF1F5);
+  static const Color male = Color(0xFF379AE6);
+  static const Color bgmale = Color(0xFFF1F8FD);
+  static const Color price = Color(0xFF98690C);
+  static const Color cancel = Color(0xFFD32F2F);
+  static const Color accept = Color(0xFF2E7D32);
+  static const Color bordercancel = Color(0xFFF6CACA);
+  static const Color borderaccept = Color(0xFFD7EDCF);
 }

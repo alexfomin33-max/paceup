@@ -18,7 +18,7 @@ class _AddingEquipmentScreenState extends State<AddingEquipmentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6F8),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: AppColors.surface,
@@ -94,7 +94,7 @@ class _SegmentedPill2 extends StatelessWidget {
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Row(
@@ -117,8 +117,8 @@ class _SegmentedPill2 extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? Colors.black87 : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          color: selected ? AppColors.brandPrimary : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         alignment: Alignment.center,
         child: Text(

@@ -94,19 +94,19 @@ class _SolidPillButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       elevation: 0,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             boxShadow: const [
               BoxShadow(
-                color: Colors.black12,
+                color: AppColors.shadowMedium,
                 blurRadius: 1,
                 offset: Offset(0, 1),
               ),
@@ -114,14 +114,13 @@ class _SolidPillButton extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(icon, size: 20, color: Colors.black87),
+              Icon(icon, size: 20, color: AppColors.iconPrimary),
               const SizedBox(width: 8),
               Text(
                 label,
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  color: Colors.black87,
                 ),
               ),
             ],

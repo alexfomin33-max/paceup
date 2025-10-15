@@ -239,17 +239,23 @@ class _SkillProgressBar extends StatelessWidget {
             Container(
               width: cur,
               height: 6,
-              decoration: BoxDecoration(
-                color: const Color(0xFF22CCB2),
-                borderRadius: BorderRadius.circular(100),
+              decoration: const BoxDecoration(
+                color: AppColors.accentMint,
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(AppRadius.xs),
+                  bottomRight: Radius.circular(AppRadius.xs),
+                ),
               ),
             ),
             Expanded(
               child: Container(
                 height: 6,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.border,
-                  borderRadius: BorderRadius.circular(100),
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(AppRadius.xs),
+                    bottomRight: Radius.circular(AppRadius.xs),
+                  ),
                 ),
               ),
             ),

@@ -63,7 +63,7 @@ class MemberContent extends StatelessWidget {
               foregroundColor: AppColors.error,
               backgroundColor: AppColors.surface,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
             ),
             child: const Text(
@@ -92,8 +92,7 @@ class _RowTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(22),
+          ClipOval(
             child: Image.asset(
               person.avatar,
               width: 44,
@@ -102,7 +101,7 @@ class _RowTile extends StatelessWidget {
               errorBuilder: (_, _, _) => Container(
                 width: 44,
                 height: 44,
-                color: Colors.black.withValues(alpha: 0.06),
+                color: AppColors.skeletonBase,
                 alignment: Alignment.center,
                 child: const Icon(
                   CupertinoIcons.person,

@@ -203,7 +203,7 @@ class _NavIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Icon(icon, size: 18, color: AppColors.iconPrimary),
@@ -226,13 +226,13 @@ class _SportIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: selected ? Colors.black87 : AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
+          color: selected ? AppColors.brandPrimary : AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border, width: 1),
         ),
         child: Icon(
@@ -266,7 +266,7 @@ class _CalendarCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border, width: 0.7),
       ),
       padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
@@ -312,7 +312,7 @@ class _Dow extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 12,
-            color: weekend ? const Color(0xFFE55050) : AppColors.textSecondary,
+            color: weekend ? AppColors.error : AppColors.textSecondary,
           ),
         ),
       ),
@@ -390,7 +390,7 @@ class _MonthGrid extends StatelessWidget {
                           fontFamily: 'Inter',
                           fontSize: 12,
                           color: isWeekend
-                              ? const Color(0xFFE55050)
+                              ? AppColors.error
                               : AppColors.textPrimary,
                         ),
                       ),
@@ -404,8 +404,8 @@ class _MonthGrid extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF3DA8FF),
-                            borderRadius: BorderRadius.circular(14),
+                            color: AppColors.brandPrimary,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           child: Text(
                             bubble,
@@ -483,7 +483,7 @@ class _WorkoutRow extends StatelessWidget {
         children: [
           // Мини-карта 70x46
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
             child: const Image(
               image: AssetImage('assets/training_map.png'),
               width: 70,
@@ -513,7 +513,7 @@ class _WorkoutRow extends StatelessWidget {
                     const Icon(
                       Icons.more_horiz,
                       size: 18,
-                      color: Color(0xFF6B6B6B),
+                      color: AppColors.iconSecondary,
                     ),
                   ],
                 ),
@@ -562,7 +562,7 @@ class _WorkoutRow extends StatelessWidget {
   Widget _metric(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: const Color(0xFF6B6B6B)),
+        Icon(icon, size: 16, color: AppColors.iconSecondary),
         const SizedBox(width: 6),
         Text(text, style: const TextStyle(fontFamily: 'Inter', fontSize: 13)),
       ],

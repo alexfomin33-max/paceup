@@ -125,11 +125,11 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
           counterText: "", // 🔹 Скрываем счетчик символов
           enabledBorder: OutlineInputBorder(
             borderSide: const BorderSide(color: AppColors.surface),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           focusedBorder: OutlineInputBorder(
             borderSide: const BorderSide(color: AppColors.surface),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           filled: true,
           fillColor: Colors.transparent,

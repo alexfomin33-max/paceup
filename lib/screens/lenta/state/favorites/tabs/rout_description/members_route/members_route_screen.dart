@@ -179,7 +179,7 @@ class _LabeledDateField extends StatelessWidget {
         labelText: label,
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          color: Color(0xFF565D6D),
+          color: AppColors.textSecondary,
           fontSize: 13,
           fontWeight: FontWeight.w500,
         ),
@@ -373,7 +373,7 @@ class _MembersTable extends StatelessWidget {
                               const Icon(
                                 CupertinoIcons.heart,
                                 size: 12,
-                                color: Color(0xFFFF3B30),
+                                color: AppColors.error,
                               ),
                               const SizedBox(width: 4),
                               Flexible(
@@ -449,17 +449,17 @@ class _DifficultyChip extends StatelessWidget {
     final lc = text.toLowerCase();
     Color c;
     if (lc.contains('лёгк')) {
-      c = const Color(0xFF37C76A);
+      c = AppColors.success;
     } else if (lc.contains('средн')) {
-      c = const Color(0xFFF3A536);
+      c = AppColors.warning;
     } else {
-      c = const Color(0xFFE8534A);
+      c = AppColors.error;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Text(
         text,

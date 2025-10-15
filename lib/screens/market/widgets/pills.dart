@@ -1,6 +1,7 @@
 // lib/widgets/pills.dart
 
 import 'package:flutter/material.dart';
+import '../../../../../theme/app_theme.dart';
 
 /// Пилюля с дистанцией (фикс. ширина, серый фон)
 class DistancePill extends StatelessWidget {
@@ -13,19 +14,15 @@ class DistancePill extends StatelessWidget {
       width: 70,
       height: 28,
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       alignment: Alignment.center,
       child: Text(
         text,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 13,
-          color: Colors.black,
-        ),
+        style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
       ),
     );
   }
@@ -44,7 +41,7 @@ class GenderPill extends StatelessWidget {
       width: 28,
       height: 28,
       decoration: BoxDecoration(
-        color: female ? const Color(0xFFFDF1F5) : const Color(0xFFF1F8FD),
+        color: female ? AppColors.bgfemale : AppColors.bgmale,
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
@@ -54,7 +51,7 @@ class GenderPill extends StatelessWidget {
           fontFamily: 'Inter',
           fontSize: 13,
           fontWeight: FontWeight.w400,
-          color: female ? const Color(0xFFE8618C) : const Color(0xFF379AE6),
+          color: female ? AppColors.female : AppColors.male,
         ),
       ),
     );
@@ -72,8 +69,8 @@ class PricePill extends StatelessWidget {
       width: 76,
       height: 28,
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF9EE),
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.backgroundYellow,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       alignment: Alignment.center,
       child: Text(
@@ -84,7 +81,7 @@ class PricePill extends StatelessWidget {
           fontFamily: 'Inter',
           fontSize: 13,
           fontWeight: FontWeight.w400,
-          color: Color(0xFF98690C),
+          color: AppColors.price,
         ),
       ),
     );
@@ -102,17 +99,13 @@ class CityPill extends StatelessWidget {
       height: 30,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       alignment: Alignment.center,
       child: Text(
         text,
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 13,
-          color: Colors.black,
-        ),
+        style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
       ),
     );
   }

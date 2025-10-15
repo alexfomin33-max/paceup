@@ -11,7 +11,7 @@ List<Widget> buildGeneralStatsSlivers() {
         padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
         child: _YearChartCard(
           initialYear: 2024,
-          color: Color(0xFF3DA8FF),
+          color: AppColors.male,
           // ⬇️ вернули прежние "вертикальные поля" графика: шкала 0..30 с шагом 5
           maxY: 30,
           tick: 5,
@@ -29,7 +29,7 @@ List<Widget> buildGeneralStatsSlivers() {
         padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
         child: _YearChartCard(
           initialYear: 2024,
-          color: Color(0xFFE85D9C),
+          color: AppColors.female,
           maxY: 3000,
           tick: 500,
           height: 190,
@@ -108,7 +108,7 @@ class _YearChartCardState extends State<_YearChartCard> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border, width: 0.7),
       ),
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
@@ -160,7 +160,7 @@ class _NavIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Icon(icon, size: 18, color: AppColors.iconPrimary),

@@ -129,7 +129,7 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 1, // как в market_screen.dart
-        shadowColor: Colors.black26, // та же маленькая тень
+        shadowColor: AppColors.shadowStrong, // та же маленькая тень
         leadingWidth: 40,
         leading: Transform.translate(
           offset: const Offset(-4, 0),
@@ -150,7 +150,7 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
                 height: 36,
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   image: DecorationImage(
                     image: AssetImage(widget.itemThumb!),
                     fit: BoxFit.cover,
@@ -172,7 +172,10 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
                     widget.itemTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -205,7 +208,7 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
                           Icon(
                             CupertinoIcons.lock,
                             size: 14,
-                            color: Colors.black54,
+                            color: AppColors.iconSecondary,
                           ),
                           SizedBox(width: 6),
                           Text(
@@ -332,7 +335,7 @@ class _KVLine extends StatelessWidget {
             fit: FlexFit.loose,
             child: Text(
               k,
-              style: const TextStyle(fontSize: 13, color: Colors.black87),
+              style: const TextStyle(fontSize: 13),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -355,11 +358,11 @@ class _ChipNeutral extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6), // без рамки
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.surfaceMuted, // без рамки
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: DefaultTextStyle(
-        style: const TextStyle(fontSize: 13, color: Colors.black87),
+        style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
         child: child,
       ),
     );
@@ -393,9 +396,9 @@ class _ActionsWrapState extends State<_ActionsWrap> {
               Expanded(
                 child: _PillButton(
                   text: 'Слот куплен',
-                  bg: const Color(0xFFE9F7E3),
-                  border: const Color(0xFFD7EDCF),
-                  fg: const Color(0xFF2E7D32),
+                  bg: AppColors.bgmale,
+                  border: AppColors.borderaccept,
+                  fg: AppColors.accept,
                   onTap: () {
                     setState(() => _status = _DealStatus.bought);
                     // ⛔ Убрали SnackBar
@@ -406,9 +409,9 @@ class _ActionsWrapState extends State<_ActionsWrap> {
               Expanded(
                 child: _PillButton(
                   text: 'Отменить сделку',
-                  bg: const Color(0xFFFFEBEB),
-                  border: const Color(0xFFF6CACA),
-                  fg: const Color(0xFFD32F2F),
+                  bg: AppColors.bgfemale,
+                  border: AppColors.bordercancel,
+                  fg: AppColors.cancel,
                   onTap: () {
                     setState(() => _status = _DealStatus.cancelled);
                     // ⛔ Убрали SnackBar
@@ -424,9 +427,9 @@ class _ActionsWrapState extends State<_ActionsWrap> {
           child: _PillFinal(
             icon: CupertinoIcons.check_mark_circled,
             text: 'Слот куплен',
-            bg: Color(0xFFE9F7E3),
-            border: Color(0xFFD7EDCF),
-            fg: Color(0xFF2E7D32),
+            bg: AppColors.bgmale,
+            border: AppColors.borderaccept,
+            fg: AppColors.accept,
           ),
         );
 
@@ -435,9 +438,9 @@ class _ActionsWrapState extends State<_ActionsWrap> {
           child: _PillFinal(
             icon: CupertinoIcons.clear_circled,
             text: 'Сделка отменена',
-            bg: Color(0xFFFFEBEB),
-            border: Color(0xFFF6CACA),
-            fg: Color(0xFFD32F2F),
+            bg: AppColors.bgfemale,
+            border: AppColors.bordercancel,
+            fg: AppColors.cancel,
           ),
         );
     }
@@ -463,13 +466,13 @@ class _PillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       onTap: onTap,
       child: Container(
         height: 36,
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(color: border),
         ),
         alignment: Alignment.center,
@@ -509,7 +512,7 @@ class _PillFinal extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: border),
       ),
       child: Row(
@@ -542,7 +545,7 @@ class _DateSeparator extends StatelessWidget {
     alignment: Alignment.center,
     child: Text(
       text,
-      style: const TextStyle(fontSize: 12, color: Colors.black45),
+      style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
     ),
   );
 }
@@ -558,10 +561,7 @@ class _ParticipantRow extends StatelessWidget {
       children: [
         CircleAvatar(radius: 14, backgroundImage: AssetImage(avatarAsset)),
         const SizedBox(width: 8),
-        Text(
-          nameAndRole,
-          style: const TextStyle(fontSize: 13, color: Colors.black87),
-        ),
+        Text(nameAndRole, style: const TextStyle(fontSize: 13)),
       ],
     ),
   );
@@ -589,9 +589,9 @@ class _BubbleLeft extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: AppColors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -611,7 +611,7 @@ class _BubbleLeft extends StatelessWidget {
                         time,
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Colors.black45,
+                          color: AppColors.textTertiary,
                         ),
                       ),
                     ),
@@ -624,7 +624,7 @@ class _BubbleLeft extends StatelessWidget {
           const Icon(
             CupertinoIcons.arrowshape_turn_up_left,
             size: 18,
-            color: Color(0xFF6E6E6E),
+            color: AppColors.iconSecondary,
           ),
         ],
       ),
@@ -650,9 +650,9 @@ class _BubbleRight extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFE9F7E3),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFD7EDCF)),
+                color: AppColors.backgroundGreen,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: AppColors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -672,7 +672,7 @@ class _BubbleRight extends StatelessWidget {
                         time,
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Colors.black45,
+                          color: AppColors.textTertiary,
                         ),
                       ),
                     ),
@@ -707,7 +707,7 @@ class _BubbleImageLeft extends StatelessWidget {
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: max),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               child: Stack(
                 children: [
                   Image.file(file, fit: BoxFit.cover),
@@ -742,7 +742,7 @@ class _BubbleImageRight extends StatelessWidget {
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: max),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               child: Stack(
                 children: [
                   Image.file(file, fit: BoxFit.cover),
@@ -768,8 +768,8 @@ class _TimeBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
     decoration: BoxDecoration(
-      color: Colors.black54,
-      borderRadius: BorderRadius.circular(8),
+      color: AppColors.textSecondary,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
     ),
     child: Text(
       time,
@@ -812,30 +812,30 @@ class _ComposerState extends State<_Composer> {
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppColors.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: AppColors.shadowSoft,
               blurRadius: 8,
-              offset: const Offset(0, -2),
+              offset: Offset(0, -2),
             ),
           ],
-          border: const Border(top: BorderSide(color: AppColors.border)),
+          border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: Row(
           children: [
             IconButton(
               icon: const Icon(CupertinoIcons.plus_circle),
               onPressed: widget.onPickImage,
-              color: Colors.black54,
+              color: AppColors.iconSecondary,
             ),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: TextField(
                   controller: widget.controller,
@@ -843,7 +843,7 @@ class _ComposerState extends State<_Composer> {
                   maxLines: 4,
                   decoration: const InputDecoration(
                     hintText: 'Сообщение...',
-                    hintStyle: TextStyle(color: Colors.black38),
+                    hintStyle: TextStyle(color: AppColors.textPlaceholder),
                     border: InputBorder.none,
                   ),
                 ),
@@ -853,7 +853,7 @@ class _ComposerState extends State<_Composer> {
             IconButton(
               icon: const Icon(CupertinoIcons.paperplane_fill),
               onPressed: enabled ? widget.onSend : null,
-              color: enabled ? AppColors.brandPrimary : Colors.black26,
+              color: enabled ? AppColors.brandPrimary : AppColors.iconTertiary,
             ),
           ],
         ),

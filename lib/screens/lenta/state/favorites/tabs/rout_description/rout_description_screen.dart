@@ -113,7 +113,7 @@ class RouteDescriptionScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       CircleAvatar(
                         radius: 18,
-                        backgroundColor: Colors.black.withValues(alpha: 0.06),
+                        backgroundColor: AppColors.skeletonBase,
                         backgroundImage: AssetImage(authorAvatar),
                       ),
                       const SizedBox(width: 8),
@@ -145,7 +145,7 @@ class RouteDescriptionScreen extends StatelessWidget {
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => Container(
                 height: 200,
-                color: Colors.black.withValues(alpha: 0.06),
+                color: AppColors.skeletonBase,
                 alignment: Alignment.center,
                 child: const Icon(
                   CupertinoIcons.map,
@@ -274,22 +274,22 @@ class RouteDescriptionScreen extends StatelessWidget {
     late final String t;
     switch (d) {
       case 'easy':
-        c = const Color(0xFF37C76A);
+        c = AppColors.success;
         t = 'Лёгкий маршрут';
         break;
       case 'medium':
-        c = const Color(0xFFF3A536);
+        c = AppColors.warning;
         t = 'Средний маршрут';
         break;
       default:
-        c = const Color(0xFFE8534A);
+        c = AppColors.error;
         t = 'Сложный маршрут';
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Text(
         t,

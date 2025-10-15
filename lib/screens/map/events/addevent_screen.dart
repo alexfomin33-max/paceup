@@ -137,7 +137,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
           child: Container(
             decoration: const BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppRadius.lg),
+              ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -148,8 +150,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE2E4EA),
-                    borderRadius: BorderRadius.circular(2),
+                    color: AppColors.backgroundBlue,
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
                   ),
                 ),
                 const SizedBox(height: 0),
@@ -160,7 +162,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: const BoxDecoration(
                     border: Border(
-                      bottom: BorderSide(color: Color(0xFFEDEFF3), width: 1),
+                      bottom: BorderSide(color: AppColors.border, width: 1),
                     ),
                   ),
                   child: Row(
@@ -318,7 +320,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         style: OutlinedButton.styleFrom(
                           shape: const CircleBorder(),
                           side: const BorderSide(color: AppColors.border),
-                          foregroundColor: Colors.black87,
+                          foregroundColor: AppColors.textPrimary,
                           backgroundColor: AppColors.surface,
                           padding:
                               EdgeInsets.zero, // чтобы иконка была по центру
@@ -459,11 +461,9 @@ class EventTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     // цвета/бордеры в зависимости от enabled
     final textColor = enabled
-        ? Colors.black
-        : Colors.black.withValues(alpha: 0.4);
-    final fill = enabled
-        ? AppColors.surface
-        : const Color(0xFFF6F7F9); // чуть серее
+        ? AppColors.textPrimary
+        : AppColors.textPlaceholder; // «плейсхолдер/disabled»
+    final fill = enabled ? AppColors.surface : AppColors.disabled;
     final borderColor = AppColors.border;
     final disabledBorderColor = AppColors.border.withValues(alpha: 0.6);
 
@@ -540,7 +540,7 @@ class EventDateField extends StatelessWidget {
       child: AbsorbPointer(
         child: TextFormField(
           controller: TextEditingController(text: valueText),
-          style: const TextStyle(color: Colors.black),
+          style: const TextStyle(color: AppColors.textPrimary),
           decoration: InputDecoration(
             label: _labelWithStar(label),
             floatingLabelBehavior: FloatingLabelBehavior.always,
@@ -552,7 +552,7 @@ class EventDateField extends StatelessWidget {
             ),
             prefixIcon: Padding(
               padding: const EdgeInsets.only(left: 8, right: 6),
-              child: Icon(icon, size: 18, color: Colors.black87),
+              child: Icon(icon, size: 18, color: AppColors.iconPrimary),
             ),
             prefixIconConstraints: const BoxConstraints(
               minHeight: 18,
@@ -596,9 +596,9 @@ class EventDropdownField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor = enabled
-        ? Colors.black
-        : Colors.black.withValues(alpha: 0.4);
-    final fill = enabled ? AppColors.surface : const Color(0xFFF6F7F9);
+        ? AppColors.textPrimary
+        : AppColors.textPlaceholder;
+    final fill = enabled ? AppColors.surface : AppColors.disabled;
     final borderColor = AppColors.border;
     final disabledBorderColor = AppColors.border.withValues(alpha: 0.6);
 
@@ -634,7 +634,7 @@ class EventDropdownField extends StatelessWidget {
           // бледная стрелка, когда выключено
           icon: Icon(
             Icons.arrow_drop_down,
-            color: enabled ? Colors.black54 : Colors.black26,
+            color: enabled ? AppColors.iconSecondary : AppColors.iconTertiary,
           ),
           style: TextStyle(color: textColor, fontFamily: 'Inter'),
           // показываем текущее значение в бледном виде, если disabled
@@ -760,7 +760,7 @@ class _MediaTile extends StatelessWidget {
           width: 70,
           height: 70,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             color: AppColors.background,
             border: Border.all(color: AppColors.border), // ← рамка только здесь
           ),
@@ -781,7 +781,7 @@ class _MediaTile extends StatelessWidget {
             width: 70,
             height: 70,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               image: DecorationImage(
                 image: FileImage(file!),
                 fit: BoxFit.cover,
@@ -823,7 +823,7 @@ Widget _labelWithStar(String label) {
     text: TextSpan(
       text: label.replaceAll('*', ''),
       style: const TextStyle(
-        color: Color(0xFF565D6D),
+        color: AppColors.textSecondary,
         fontSize: 16,
         fontWeight: FontWeight.w500,
       ),

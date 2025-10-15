@@ -41,7 +41,7 @@ class TravelersBottomSheet extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 10, top: 6),
                 decoration: BoxDecoration(
                   color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
                 ),
               ),
 
@@ -194,7 +194,7 @@ class _TravelerRow extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         onTap: onTap,
         child: row,
       ),

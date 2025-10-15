@@ -148,10 +148,7 @@ class _MapScreenState extends State<MapScreen> {
                         decoration: BoxDecoration(
                           color: markerColor,
                           shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.surface,
-                            width: 1,
-                          ),
+                          border: Border.all(color: AppColors.border, width: 1),
                         ),
                         alignment: Alignment.center,
                         child: Text(
@@ -180,10 +177,10 @@ class _MapScreenState extends State<MapScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   boxShadow: const [
                     BoxShadow(
-                      color: Colors.black12,
+                      color: AppColors.shadowMedium,
                       blurRadius: 1,
                       offset: Offset(0, 1),
                     ),
@@ -202,9 +199,9 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? Colors.black87
+                              ? AppColors.textPrimary
                               : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
                         ),
                         child: Text(
                           tabs[index],
@@ -215,7 +212,7 @@ class _MapScreenState extends State<MapScreen> {
                                 : FontWeight.w400,
                             color: isSelected
                                 ? AppColors.surface
-                                : Colors.black87,
+                                : AppColors.textPrimary,
                           ),
                         ),
                       ),

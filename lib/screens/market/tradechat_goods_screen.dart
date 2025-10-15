@@ -137,7 +137,7 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
                 height: 36,
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   image: DecorationImage(
                     image: AssetImage(widget.itemThumb!),
                     fit: BoxFit.cover,
@@ -159,7 +159,10 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
                     widget.itemTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -252,7 +255,7 @@ class _DateSeparator extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         text,
-        style: const TextStyle(fontSize: 12, color: Colors.black45),
+        style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
       ),
     );
   }
@@ -272,10 +275,7 @@ class _ParticipantRow extends StatelessWidget {
         children: [
           CircleAvatar(radius: 14, backgroundImage: AssetImage(avatarAsset)),
           const SizedBox(width: 8),
-          Text(
-            nameAndRole,
-            style: const TextStyle(fontSize: 13, color: Colors.black87),
-          ),
+          Text(nameAndRole, style: const TextStyle(fontSize: 13)),
         ],
       ),
     );
@@ -308,9 +308,9 @@ class _BubbleLeft extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: AppColors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,7 +330,7 @@ class _BubbleLeft extends StatelessWidget {
                         time,
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Colors.black45,
+                          color: AppColors.textTertiary,
                         ),
                       ),
                     ),
@@ -344,7 +344,7 @@ class _BubbleLeft extends StatelessWidget {
           const Icon(
             CupertinoIcons.arrowshape_turn_up_left,
             size: 18,
-            color: Color(0xFF6E6E6E),
+            color: AppColors.iconSecondary,
           ),
         ],
       ),
@@ -373,9 +373,9 @@ class _BubbleRight extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFE9F7E3), // мягкий зелёный
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFD7EDCF)),
+                color: AppColors.backgroundGreen, // мягкий зелёный
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: AppColors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,7 +395,7 @@ class _BubbleRight extends StatelessWidget {
                         time,
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Colors.black45,
+                          color: AppColors.textTertiary,
                         ),
                       ),
                     ),
@@ -432,7 +432,7 @@ class _BubbleImageLeft extends StatelessWidget {
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: max),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               child: Stack(
                 children: [
                   Image.file(file, fit: BoxFit.cover),
@@ -445,8 +445,8 @@ class _BubbleImageLeft extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppColors.textSecondary,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Text(
                         time,
@@ -485,7 +485,7 @@ class _BubbleImageRight extends StatelessWidget {
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: max),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               child: Stack(
                 children: [
                   Image.file(file, fit: BoxFit.cover),
@@ -498,8 +498,8 @@ class _BubbleImageRight extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppColors.textSecondary,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Text(
                         time,
@@ -559,30 +559,30 @@ class _ComposerState extends State<_Composer> {
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppColors.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: AppColors.shadowSoft,
               blurRadius: 8,
-              offset: const Offset(0, -2),
+              offset: Offset(0, -2),
             ),
           ],
-          border: const Border(top: BorderSide(color: AppColors.border)),
+          border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: Row(
           children: [
             IconButton(
               icon: const Icon(CupertinoIcons.plus_circle),
               onPressed: widget.onPickImage, // открыть галерею
-              color: Colors.black54,
+              color: AppColors.iconSecondary,
             ),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
-                  borderRadius: BorderRadius.circular(20), // радиус 20
+                  color: AppColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: TextField(
                   controller: widget.controller,
@@ -590,7 +590,7 @@ class _ComposerState extends State<_Composer> {
                   maxLines: 4,
                   decoration: const InputDecoration(
                     hintText: 'Сообщение...',
-                    hintStyle: TextStyle(color: Colors.black38),
+                    hintStyle: TextStyle(color: AppColors.textPlaceholder),
                     border: InputBorder.none,
                   ),
                 ),
@@ -600,7 +600,7 @@ class _ComposerState extends State<_Composer> {
             IconButton(
               icon: const Icon(CupertinoIcons.paperplane_fill),
               onPressed: enabled ? widget.onSend : null,
-              color: enabled ? AppColors.brandPrimary : Colors.black26,
+              color: enabled ? AppColors.brandPrimary : AppColors.iconTertiary,
             ),
           ],
         ),

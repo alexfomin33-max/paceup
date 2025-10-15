@@ -101,8 +101,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Аватар
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
+                  ClipOval(
                     child: Image.asset(
                       c.avatar,
                       width: 40,
@@ -165,7 +164,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                 height: 8,
                                 margin: const EdgeInsets.only(left: 8),
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFF2F7BFF), // синий индикатор
+                                  color:
+                                      AppColors.brandPrimary, // синий индикатор
                                   shape: BoxShape.circle,
                                 ),
                               ),

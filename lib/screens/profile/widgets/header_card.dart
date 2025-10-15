@@ -55,8 +55,8 @@ class HeaderCard extends StatelessWidget {
                       vertical: 0,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(4),
+                      color: AppColors.chipBg,
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
                     ),
                     child: const Text(
                       'Pro',
@@ -198,8 +198,8 @@ class _SmallIconBtn extends StatelessWidget {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(20),
+          color: AppColors.skeletonBase,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Icon(icon, size: 16, color: AppColors.iconPrimary),
       ),

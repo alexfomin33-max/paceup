@@ -33,12 +33,12 @@ class MarketSlotCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+            const BoxShadow(
+              color: AppColors.shadowSoft,
               blurRadius: 1,
-              offset: const Offset(0, 1),
+              offset: Offset(0, 1),
             ),
           ],
         ),
@@ -72,8 +72,6 @@ class MarketSlotCard extends StatelessWidget {
                                 fontFamily: 'Inter',
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
-                                height: 1,
-                                color: Colors.black,
                               ),
                             ),
                           ),
@@ -146,18 +144,14 @@ class MarketSlotCard extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8F9FB),
+                      color: AppColors.surfaceMuted,
                       border: Border.all(color: AppColors.border),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: const Text(
                       'Имя: Илья. Время: 3:01 - 3:15. '
                       'Передача по доверенности в Москве, либо в СПб на экспо.',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 13,
-                        color: Colors.black,
-                      ),
+                      style: TextStyle(fontFamily: 'Inter', fontSize: 13),
                     ),
                   ),
                 ),
@@ -201,7 +195,7 @@ class _Thumb extends StatelessWidget {
         width: 58,
         height: 58,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
           color: AppColors.background,
 
           image: DecorationImage(
@@ -245,7 +239,7 @@ class _BuyButtonText extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8),
             minimumSize: Size.zero,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
           ),
           icon: Icon(icon, size: 14),

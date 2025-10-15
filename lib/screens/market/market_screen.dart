@@ -49,7 +49,7 @@ class _MarketScreenState extends State<MarketScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 1,
-        shadowColor: Colors.black26,
+        shadowColor: AppColors.shadowStrong,
         automaticallyImplyLeading: false,
         title: null,
         flexibleSpace: SafeArea(
@@ -242,7 +242,7 @@ class _TopTabs extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
     decoration: BoxDecoration(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       border: const Border(
         top: BorderSide(
           color: AppColors.border, // тонкая линия сверху
@@ -265,15 +265,15 @@ class _TopTabs extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? Colors.black87 : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
+              color: isSelected ? AppColors.textPrimary : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppRadius.xl),
             ),
             child: Text(
               segments[index],
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-                color: isSelected ? AppColors.surface : Colors.black87,
+                color: isSelected ? AppColors.surface : AppColors.textPrimary,
               ),
             ),
           ),
@@ -320,28 +320,28 @@ class _SearchField extends StatelessWidget {
         prefixIcon: const Icon(
           CupertinoIcons.search,
           size: 18,
-          color: Colors.black54,
+          color: AppColors.iconSecondary,
         ),
         suffixIcon: hasText
             ? IconButton(
                 icon: const Icon(
                   CupertinoIcons.xmark_circle_fill,
                   size: 18,
-                  color: Colors.black38,
+                  color: AppColors.iconTertiary,
                 ),
                 onPressed: onClear,
               )
             : null,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: const BorderSide(color: AppColors.border, width: 1.2),
         ),
       ),
@@ -375,15 +375,15 @@ class _CategoryDropdown extends StatelessWidget {
           vertical: 12,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: const BorderSide(color: AppColors.border, width: 1.2),
         ),
       ),
@@ -450,7 +450,7 @@ class _OvalToggle extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
             color: selected ? AppColors.brandPrimary : AppColors.border,
           ),
