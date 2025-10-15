@@ -2,7 +2,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../../../theme/app_theme.dart';
 
@@ -177,10 +176,7 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
               ),
             ),
             const SizedBox(width: 0),
-            Text(
-              likesCount.toString(),
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
+            Text(likesCount.toString(), style: AppTextStyles.normaltext),
             const SizedBox(width: 12),
             GestureDetector(
               onTap: widget.onOpenComments,
@@ -193,7 +189,7 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
             const SizedBox(width: 4),
             Text(
               widget.commentsCount.toString(),
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              style: AppTextStyles.normaltext,
             ),
           ],
         ),
@@ -207,7 +203,7 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
               color: AppColors.success,
             ),
             const SizedBox(width: 4),
-            const Text('48', style: AppTextStyles.numberstat),
+            const Text('48', style: AppTextStyles.normaltext),
             const SizedBox(width: 12),
             GestureDetector(
               onTap: widget.onOpenTogether,
@@ -218,7 +214,7 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
               ),
             ),
             const SizedBox(width: 4),
-            const Text('3', style: AppTextStyles.numberstat),
+            const Text('3', style: AppTextStyles.normaltext),
           ],
         ),
       ],

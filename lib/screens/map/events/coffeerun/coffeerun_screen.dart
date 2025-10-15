@@ -97,11 +97,7 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
                           const Text(
                             '"Субботний коферан"',
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: AppTextStyles.h1,
                           ),
                           const SizedBox(height: 10),
 

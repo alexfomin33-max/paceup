@@ -72,14 +72,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
-          title: const Text(
-            'Уведомления',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          title: const Text('Уведомления', style: AppTextStyles.h1),
           actions: [
             IconButton(
               padding: const EdgeInsets.only(right: 12),
@@ -106,8 +99,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           itemCount: _items.length,
-          separatorBuilder: (_, _) =>
-              const Divider(height: 1, thickness: 0.5, color: AppColors.border),
+          separatorBuilder: (_, _) => const Divider(
+            height: 1,
+            thickness: 0.5,
+            color: AppColors.border,
+            indent: 57,
+            endIndent: 8,
+          ),
           itemBuilder: (context, i) {
             final n = _items[i];
             return Padding(
@@ -138,24 +136,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             const Spacer(),
                             Text(
                               _formatWhen(n.when),
-                              style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
+                              style: AppTextStyles.smallsofttext,
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         // Вторая строка — текст
                         Text(
                           n.text,
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-
-                            height: 1.25,
-                          ),
+                          style: const TextStyle(fontSize: 13, height: 1.25),
                         ),
                       ],
                     ),
@@ -187,14 +176,14 @@ List<_Notif> _demo() {
     _Notif(
       avatar: 'assets/avatar_1.png',
       icon: Icons.directions_bike,
-      color: Colors.blue,
+      color: AppColors.brandPrimary,
       text: 'Алексей Лукашин закончил заезд 54,2 км.',
       when: onDay(now, 14, 32, shiftDays: -1),
     ),
     _Notif(
       avatar: 'assets/avatar_9.png',
       icon: CupertinoIcons.heart,
-      color: Colors.pink,
+      color: AppColors.error,
       text: 'Анастасия Бутузова оценила вашу тренировку',
       when: onDay(now, 10, 48, shiftDays: -1),
     ),
@@ -207,8 +196,8 @@ List<_Notif> _demo() {
     ),
     _Notif(
       avatar: 'assets/coffeerun.png',
-      icon: Icons.directions_walk,
-      color: AppColors.brandPrimary,
+      icon: CupertinoIcons.calendar_badge_plus,
+      color: AppColors.accentIndigo,
       text: 'Клуб "Coffeerun" разместил новое событие',
       when: DateTime(now.year, 3, 21),
     ),
@@ -222,14 +211,14 @@ List<_Notif> _demo() {
     _Notif(
       avatar: 'assets/avatar_6.png',
       icon: Icons.pool,
-      color: Colors.lightBlue,
+      color: AppColors.brandPrimary,
       text: 'Александр Палаткин закончил заплыв 3,8 км.',
       when: DateTime(now.year, 3, 18),
     ),
     _Notif(
       avatar: 'assets/avatar_1.png',
       icon: Icons.emoji_events_outlined,
-      color: Colors.purple,
+      color: AppColors.accentPurple,
       text:
           'Алексей Лукашин зарегистрировался на забег "Ночь. Стрелка. Ярославль", 19 июля 2025. 42,2 км',
       when: DateTime(now.year, 3, 16),

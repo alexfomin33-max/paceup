@@ -1,6 +1,6 @@
 // lib/screens/lenta/widgets/stats/stats_widgets.dart
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+
 import '../../../../../theme/app_theme.dart';
 import '../../../../../utils/activity_format.dart';
 
@@ -47,7 +47,7 @@ class StatsRow extends StatelessWidget {
   final num? durationSec;
   final double? elevationGainM;
   final double? avgPaceMinPerKm;
-  final double? avgHeartRate; // можно null → выведем «—»
+  final double? avgHeartRate;
 
   const StatsRow({
     super.key,

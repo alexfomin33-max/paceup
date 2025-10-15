@@ -75,14 +75,7 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
               child: const Column(
                 children: [
-                  Text(
-                    'Суздаль',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  Text('Суздаль', style: AppTextStyles.h1),
                   SizedBox(height: 6),
                   Text(
                     'Это маленький, но очень уютный городок. '

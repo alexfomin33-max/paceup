@@ -39,7 +39,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
       child: Container(
         height: 56,
         decoration: BoxDecoration(
-          color: AppColors.surfaceMuted,
+          color: AppColors.background,
           borderRadius: BorderRadius.circular(AppRadius.xxl),
         ),
         child: Stack(
@@ -51,18 +51,8 @@ class _EquipmentChipState extends State<EquipmentChip> {
               bottom: 3,
               child: ClipOval(
                 child: img.isNotEmpty
-                    ? Image.network(
-                        img,
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.fill,
-                      )
-                    : Image.asset(
-                        'assets/Asics.png',
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.fill,
-                      ),
+                    ? Image.network(img, width: 50, height: 50)
+                    : Image.asset('assets/Asics.png', width: 50, height: 50),
               ),
             ),
             // текст
@@ -78,34 +68,17 @@ class _EquipmentChipState extends State<EquipmentChip> {
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-
-                        height: 1.69, // как в исходнике
+                        height: 1.8,
                       ),
                     ),
                     const TextSpan(
                       text: "Пробег: ",
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
-                        height: 1.64,
-                      ),
+                      style: AppTextStyles.smallsecondtext,
                     ),
-                    TextSpan(
-                      text: "$mileage",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-
-                        height: 1.64,
-                      ),
-                    ),
+                    TextSpan(text: "$mileage", style: AppTextStyles.primestat),
                     const TextSpan(
                       text: " км",
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
-                        height: 1.64,
-                      ),
+                      style: AppTextStyles.smallsecondtext,
                     ),
                   ],
                 ),

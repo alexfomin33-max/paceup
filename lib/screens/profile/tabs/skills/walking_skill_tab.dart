@@ -103,14 +103,7 @@ class _FixedHeader extends StatelessWidget {
             // Заголовок
             const Padding(
               padding: EdgeInsets.only(top: 4),
-              child: Text(
-                'Пешеход',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              child: Text('Пешеход', style: AppTextStyles.h1),
             ),
             const SizedBox(height: 10),
 

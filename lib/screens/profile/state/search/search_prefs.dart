@@ -43,14 +43,7 @@ class _SearchPrefsPageState extends State<SearchPrefsPage> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Поиск',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        title: const Text('Поиск', style: AppTextStyles.h1),
         leading: IconButton(
           splashRadius: 22,
           icon: const Icon(

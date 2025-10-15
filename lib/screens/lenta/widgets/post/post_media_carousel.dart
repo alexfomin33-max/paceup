@@ -121,11 +121,7 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
         Positioned.fill(
           child: Material(
             color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                // TODO: открыть видеоплеер
-              },
-            ),
+            child: InkWell(onTap: () {}),
           ),
         ),
       ],

@@ -381,13 +381,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                 ),
               ),
               const SizedBox(width: 6),
-              Text(
-                '· $humanDate',
-                style: AppTextStyles.commenttext.copyWith(
-                  color: Colors.grey,
-                  fontSize: 12,
-                ),
-              ),
+              Text('· $humanDate', style: AppTextStyles.softdate),
             ],
           ),
           subtitle: Text(c.text, style: AppTextStyles.commenttext),
@@ -525,7 +519,7 @@ class _ComposerBar extends StatelessWidget {
               keyboardType: TextInputType.multiline,
               decoration: InputDecoration(
                 hintText: "Написать комментарий...",
-                hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                hintStyle: AppTextStyles.placeholder,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,
@@ -598,12 +592,12 @@ class _EmptyState extends StatelessWidget {
           const Icon(
             CupertinoIcons.chat_bubble_text,
             size: 28,
-            color: Colors.grey,
+            color: AppColors.iconTertiary,
           ),
           const SizedBox(height: 8),
           const Text(
             'Пока нет комментариев',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: AppColors.textTertiary),
           ),
           const SizedBox(height: 12),
           FilledButton.tonal(
@@ -638,7 +632,7 @@ class _ErrorState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(color: AppColors.textTertiary),
             ),
             const SizedBox(height: 12),
             FilledButton.tonal(

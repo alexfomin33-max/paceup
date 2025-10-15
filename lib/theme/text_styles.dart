@@ -6,6 +6,19 @@ class AppTextStyles {
     fontSize: 17,
     fontWeight: FontWeight.w600,
   );
+  // style: AppTextStyles.h1
+
+  static const TextStyle name = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w500,
+  );
+  // style: AppTextStyles.name
+
+  static const TextStyle numberstat = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+  );
+  // style: AppTextStyles.numberstat
 
   static const TextStyle normaltext = TextStyle(
     fontSize: 14,
@@ -20,11 +33,36 @@ class AppTextStyles {
   );
   // style: AppTextStyles.softtext
 
-  static const TextStyle name = TextStyle(
-    fontSize: 15,
+  static const TextStyle placeholder = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textPlaceholder,
+  );
+  // style: AppTextStyles.placeholder
+
+  static const TextStyle chatname = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
+  );
+  // style: AppTextStyles.chatname
+
+  static const TextStyle commenttext = TextStyle(
+    fontSize: 13,
     fontWeight: FontWeight.w500,
   );
-  // style: AppTextStyles.name
+  // style: AppTextStyles.commenttext
+
+  static const TextStyle primestat = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+  );
+  // style: AppTextStyles.primestat
+
+  static const TextStyle tablestat = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+  );
+  // style: AppTextStyles.tablestat
 
   static const TextStyle date = TextStyle(
     fontSize: 12,
@@ -33,17 +71,19 @@ class AppTextStyles {
   );
   // style: AppTextStyles.date
 
-  static const TextStyle tablestat = TextStyle(
+  static const TextStyle softdate = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w400,
+    color: AppColors.textTertiary,
   );
-  // style: AppTextStyles.tablestat
+  // style: AppTextStyles.softdate
 
-  static const TextStyle numberstat = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
+  static const TextStyle smallsecondtext = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textSecondary,
   );
-  // style: AppTextStyles.numberstat
+  // style: AppTextStyles.smallsecondtext
 
   static const TextStyle smallsofttext = TextStyle(
     fontSize: 11,
@@ -51,10 +91,4 @@ class AppTextStyles {
     color: AppColors.textTertiary,
   );
   // style: AppTextStyles.smallsofttext
-
-  static const TextStyle commenttext = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w500,
-  );
-  // style: AppTextStyles.commenttext
 }

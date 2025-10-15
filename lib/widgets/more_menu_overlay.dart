@@ -183,7 +183,7 @@ class MoreMenuOverlay {
       if (i != items.length - 1) {
         children.add(
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Divider(height: 8, thickness: 0.5, color: dividerColor),
           ),
         );

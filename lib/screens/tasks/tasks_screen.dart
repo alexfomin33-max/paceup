@@ -24,14 +24,7 @@ class _TasksScreenState extends State<TasksScreen> {
         backgroundColor: AppColors.surface,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Задачи',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-          ),
-        ),
+        title: const Text('Задачи', style: AppTextStyles.h1),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
           child: Divider(height: 1, thickness: 1, color: AppColors.border),

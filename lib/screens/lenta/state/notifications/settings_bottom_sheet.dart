@@ -1,6 +1,4 @@
-// lib/screens/lenta/notifications/settings_sheet.dart
 import 'package:flutter/material.dart';
-// для WidgetState/WidgetStateProperty
 import '../../../../../theme/app_theme.dart';
 
 class SettingsSheet extends StatefulWidget {
@@ -32,7 +30,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
             width: double.infinity, // на всю ширину
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppRadius.lg), // только верхние углы
+                top: Radius.circular(AppRadius.xl), // только верхние углы
               ),
               child: Material(
                 color: AppColors.surface,
@@ -149,21 +147,21 @@ class _ToggleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 56, // ← желаемая высота строки (можно 48/52/60)
+      height: 52, // ← желаемая высота строки (можно 48/52/60)
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+              style: const TextStyle(fontSize: 13),
               maxLines: 2, // если подпись длинная
               overflow: TextOverflow.ellipsis,
             ),
           ),
           // ↓ масштабируем сам переключатель
           Transform.scale(
-            scale: 0.90, // 90% от стандартного размера. Поиграйся: 0.85–1.15
+            scale: 0.85, // 90% от стандартного размера. Поиграйся: 0.85–1.15
             child: Switch(
               value: value,
               onChanged: onChanged,
@@ -176,7 +174,7 @@ class _ToggleRow extends StatelessWidget {
                 if (states.contains(WidgetState.selected)) {
                   return AppColors.brandPrimary;
                 }
-                return AppColors.surfaceMuted;
+                return AppColors.scrim20;
               }),
               trackOutlineColor: WidgetStateProperty.all<Color>(
                 Colors.transparent,

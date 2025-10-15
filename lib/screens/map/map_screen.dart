@@ -29,10 +29,10 @@ class _MapScreenState extends State<MapScreen> {
 
   /// Цвета маркеров по вкладкам
   final markerColors = const {
-    0: Colors.blue, // события
+    0: AppColors.accentBlue, // события
     1: AppColors.error, // клубы
     2: AppColors.warning, // слоты
-    3: Colors.purple, // попутчики
+    3: AppColors.accentPurple, // попутчики
   };
 
   List<Map<String, dynamic>> _markersForTab(BuildContext context) {

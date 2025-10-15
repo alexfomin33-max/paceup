@@ -1,6 +1,5 @@
 // lib/screens/lenta/widgets/activity/header/activity_header.dart
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import '../../../../../widgets/user_header.dart';
 import '../../../../profile/profile_screen.dart';
 import '../../../../../utils/feed_date.dart';

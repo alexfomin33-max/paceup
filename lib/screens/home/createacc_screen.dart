@@ -43,7 +43,7 @@ class AddAccScreen extends StatelessWidget {
                   hintText: "+7 (999) 123-45-67",
                   labelText: "Телефон",
                   floatingLabelBehavior: FloatingLabelBehavior.always,
-                  hintStyle: const TextStyle(color: Colors.grey),
+                  hintStyle: const TextStyle(color: AppColors.textPlaceholder),
                   labelStyle: const TextStyle(
                     color: AppColors.surface,
                     fontSize: 16,
@@ -104,10 +104,7 @@ class AddAccScreen extends StatelessWidget {
               width: 250,
               child: Text(
                 "Регистрируясь, вы принимаете Условия предоставления услуг и Политику конфиденциальности",
-                style: TextStyle(
-                  color: Color.fromARGB(255, 192, 192, 192),
-                  fontSize: 12,
-                ),
+                style: AppTextStyles.softdate,
                 textAlign: TextAlign.center,
               ),
             ),

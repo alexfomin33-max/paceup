@@ -136,7 +136,11 @@ class _NewPostScreenState extends State<NewPostScreen> {
           border: Border.all(color: AppColors.border),
         ),
         child: const Center(
-          child: Icon(CupertinoIcons.photo, size: 28, color: Colors.grey),
+          child: Icon(
+            CupertinoIcons.photo,
+            size: 28,
+            color: AppColors.iconTertiary,
+          ),
         ),
       ),
     );
@@ -221,7 +225,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
         minLines: null,
         decoration: const InputDecoration.collapsed(
           hintText: 'Добавьте описание...',
-          hintStyle: TextStyle(color: AppColors.textPlaceholder),
+          hintStyle: AppTextStyles.placeholder,
         ),
       ),
     );
@@ -235,7 +239,9 @@ class _NewPostScreenState extends State<NewPostScreen> {
       child: ElevatedButton(
         onPressed: (_canPublish && !_loading) ? _submitPost : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: _canPublish ? AppColors.brandPrimary : Colors.grey,
+          backgroundColor: _canPublish
+              ? AppColors.brandPrimary
+              : AppColors.disabledBg,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),

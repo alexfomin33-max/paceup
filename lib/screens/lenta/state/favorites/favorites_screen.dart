@@ -40,14 +40,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           tooltip: 'Назад',
         ),
         centerTitle: true,
-        title: const Text(
-          'Избранное',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        title: const Text('Избранное', style: AppTextStyles.h1),
       ),
       body: Column(
         children: [

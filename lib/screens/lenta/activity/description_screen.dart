@@ -49,15 +49,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
-        title: const Text(
-          'Тренировка',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: AppColors.iconPrimary,
-          ),
-        ),
+        title: const Text('Тренировка', style: AppTextStyles.h1),
         leading: IconButton(
           splashRadius: 22,
           icon: const Icon(
@@ -159,10 +151,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                                     children: [
                                       const Text(
                                         "Темп",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey,
-                                        ),
+                                        style: AppTextStyles.softdate,
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
@@ -177,10 +166,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                                       const SizedBox(height: 10),
                                       const Text(
                                         "Средний пульс",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey,
-                                        ),
+                                        style: AppTextStyles.softdate,
                                       ),
                                       const SizedBox(height: 2),
                                       Row(

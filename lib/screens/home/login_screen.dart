@@ -43,7 +43,7 @@ class EnterAccScreen extends StatelessWidget {
                   hintText: "+7 (999) 123-45-67",
                   labelText: "Телефон",
                   floatingLabelBehavior: FloatingLabelBehavior.always,
-                  hintStyle: const TextStyle(color: Colors.grey),
+                  hintStyle: const TextStyle(color: AppColors.textPlaceholder),
                   labelStyle: const TextStyle(
                     color: AppColors.surface,
                     fontSize: 16,

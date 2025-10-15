@@ -347,7 +347,6 @@ class _LentaScreenState extends State<LentaScreen>
     }
 
     if (ok == true) {
-      // TODO: тут вызов API удаления. После успеха — обновляем список.
       setState(() {
         _items.removeWhere((e) => e.id == post.id);
       });
@@ -365,13 +364,12 @@ class _LentaScreenState extends State<LentaScreen>
     super.build(context); // важно для keep-alive
 
     return Scaffold(
-      backgroundColor: AppColors.surfaceMuted,
+      backgroundColor: AppColors.background,
       extendBodyBehindAppBar: true,
 
       // ——— Верхняя панель ———
       appBar: AppBar(
         toolbarHeight: kToolbarH,
-        // Если у вас старая версия Flutter — замените на .withOpacity(0.5)
         backgroundColor: AppColors.surface.withValues(alpha: 0.50),
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -380,7 +378,7 @@ class _LentaScreenState extends State<LentaScreen>
         automaticallyImplyLeading: false,
         leadingWidth: 96,
         shape: const Border(
-          bottom: BorderSide(color: AppColors.scrim20, width: 0.6),
+          bottom: BorderSide(color: AppColors.border, width: 0.6),
         ),
         // стеклянное размытие
         flexibleSpace: ClipRect(

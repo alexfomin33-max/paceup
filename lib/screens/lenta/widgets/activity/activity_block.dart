@@ -1,6 +1,6 @@
 // lib/screens/lenta/widgets/activity/activity_block.dart
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+
 import 'package:latlong2/latlong.dart';
 
 // Токены/модели
@@ -20,7 +20,7 @@ import '../../activity/together/together_screen.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 /// Главный виджет «тренировка».
-/// Задача: сохранить визуал 1-в-1 с дорефакторинговым activity_block.dart.
+
 class ActivityBlock extends StatelessWidget {
   final Activity activity;
   final int currentUserId;
@@ -33,8 +33,6 @@ class ActivityBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Достаём статистику. Даже если её нет — рисуем блок (он покажет «—»),
-    // чтобы сохранить стабильную вертикальную ритмику и высоту карточки.
     final stats = activity.stats;
 
     return Container(
@@ -60,8 +58,7 @@ class ActivityBlock extends StatelessWidget {
               dateStart: activity.dateStart,
 
               // ⬇️ если в модели Activity есть готовая строка, как в Посте — используем её
-              dateTextOverride: activity
-                  .postDateText, // <-- ПОДСТАВЬ СВОЁ НАЗВАНИЕ ПОЛЯ, если оно другое
+              dateTextOverride: activity.postDateText,
               // Нижний слот — метрики
               bottom: StatsRow(
                 distanceMeters: stats?.distance,
@@ -70,15 +67,11 @@ class ActivityBlock extends StatelessWidget {
                 avgPaceMinPerKm: stats?.avgPace,
                 avgHeartRate: stats?.avgHeartRate,
               ),
-              bottomGap: 18.0,
+              bottomGap: 12.0,
             ),
           ),
 
-          // Тонкий промежуток после шапки+метрик (было const SizedBox(height: 2))
-          const SizedBox(height: 2),
-
           // ───────────────── ЭКИПИРОВКА ─────────────────
-          // Как в исходнике: снаружи паддинг 6, внутри сам чип имеет собственный горизонтальный паддинг 10 (мы добавили его в EquipmentChip).
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: EquipmentChip(items: activity.equipments),

@@ -59,14 +59,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
-          title: const Text(
-            'Чаты',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          title: const Text('Чаты', style: AppTextStyles.h1),
           actions: const [
             Padding(
               padding: EdgeInsets.only(right: 12),
@@ -91,8 +84,13 @@ class _ChatScreenState extends State<ChatScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           itemCount: _items.length,
-          separatorBuilder: (_, _) =>
-              const Divider(height: 1, thickness: 0.5, color: AppColors.border),
+          separatorBuilder: (_, _) => const Divider(
+            height: 1,
+            thickness: 0.5,
+            color: AppColors.border,
+            indent: 57,
+            endIndent: 8,
+          ),
           itemBuilder: (context, i) {
             final c = _items[i];
             return Padding(
@@ -124,21 +122,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                 c.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: AppTextStyles.chatname,
                               ),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               _formatWhen(c.when),
-                              style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
+                              style: AppTextStyles.smallsofttext,
                             ),
                           ],
                         ),
@@ -152,10 +142,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 c.preview,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 13,
-                                ),
+                                style: AppTextStyles.date,
                               ),
                             ),
                             if (c.unread)

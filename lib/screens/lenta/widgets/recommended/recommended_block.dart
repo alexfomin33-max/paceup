@@ -13,10 +13,7 @@ class RecommendedBlock extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            'Рекомендации для вас',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
+          child: Text('Рекомендации для вас', style: AppTextStyles.numberstat),
         ),
         SizedBox(height: 12),
         _RecommendedList(),
@@ -32,7 +29,7 @@ class _RecommendedList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 282,
+      height: 283,
       child: ListView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(
@@ -89,6 +86,7 @@ class _FriendCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -104,21 +102,21 @@ class _FriendCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             name,
-            style: const TextStyle(fontWeight: FontWeight.w500),
+            style: AppTextStyles.numberstat,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 4),
           Text(
             desc,
-            style: const TextStyle(fontSize: 12),
+            style: AppTextStyles.date,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 4),
           Text(
             mutual,
-            style: const TextStyle(fontSize: 12),
+            style: AppTextStyles.date,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),

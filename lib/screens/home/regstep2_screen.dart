@@ -35,7 +35,7 @@ class Regstep2ScreenState extends State<Regstep2Screen> {
                 const Text(
                   'Параметры спортсмена',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                  style: AppTextStyles.h1,
                 ),
                 const SizedBox(height: 15),
                 Align(

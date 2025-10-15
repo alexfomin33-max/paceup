@@ -681,7 +681,7 @@ class CreateButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: isEnabled
             ? AppColors.brandPrimary
-            : Colors.grey.shade400,
+            : AppColors.disabledBg,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
@@ -765,7 +765,11 @@ class _MediaTile extends StatelessWidget {
             border: Border.all(color: AppColors.border), // ← рамка только здесь
           ),
           child: const Center(
-            child: Icon(CupertinoIcons.photo, size: 28, color: Colors.grey),
+            child: Icon(
+              CupertinoIcons.photo,
+              size: 28,
+              color: AppColors.iconTertiary,
+            ),
           ),
         ),
       );

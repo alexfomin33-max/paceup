@@ -695,7 +695,7 @@ class _PrimaryButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: enabled
               ? AppColors.brandPrimary
-              : Colors.grey.shade400,
+              : AppColors.disabledBg,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),

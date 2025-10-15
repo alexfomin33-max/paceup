@@ -111,12 +111,7 @@ class Regstep1ScreenState extends State<Regstep1Screen> {
                 const Text(
                   'Данные спортсмена',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: AppTextStyles.h1,
                 ),
                 const SizedBox(height: 30),
 
@@ -396,7 +391,7 @@ class ContinueButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: isEnabled
             ? AppColors.brandPrimary
-            : Colors.grey.shade400,
+            : AppColors.disabledBg,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),

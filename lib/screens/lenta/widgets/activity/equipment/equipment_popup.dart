@@ -171,7 +171,13 @@ class _PopupContent extends StatelessWidget {
           name: 'Hoka One One Bondi 8',
           mileageKm: 836,
         ),
-        Divider(height: 1, thickness: 1, color: AppColors.divider),
+        Divider(
+          height: 1,
+          thickness: 0.5,
+          color: AppColors.divider,
+          indent: 8,
+          endIndent: 8,
+        ),
         _ShoeRow(
           imageAsset: 'assets/Anta.png',
           name: 'Anta M C202',
@@ -219,38 +225,24 @@ class _ShoeRow extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(
-                      text: '$name\n',
+                      text: "$name\n",
                       style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        height: 1.67,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 1.7,
                       ),
                     ),
                     const TextSpan(
-                      text: 'Пробег: ',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
-                        height: 2,
-                      ),
+                      text: "Пробег: ",
+                      style: AppTextStyles.smallsecondtext,
                     ),
                     TextSpan(
-                      text: '$mileageKm',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        height: 2,
-                      ),
+                      text: "$mileageKm",
+                      style: AppTextStyles.primestat,
                     ),
                     const TextSpan(
-                      text: ' км',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
-                        height: 1.64,
-                      ),
+                      text: " км",
+                      style: AppTextStyles.smallsecondtext,
                     ),
                   ],
                 ),

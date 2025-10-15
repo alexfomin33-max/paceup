@@ -222,8 +222,8 @@ class _BuyButtonText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = enabled ? AppColors.brandPrimary : Colors.grey.shade300;
-    final fg = enabled ? AppColors.surface : Colors.grey.shade700;
+    final bg = enabled ? AppColors.brandPrimary : AppColors.disabledBg;
+    final fg = enabled ? AppColors.surface : AppColors.disabledText;
     final icon = text == 'Бронь' ? CupertinoIcons.lock : CupertinoIcons.cart;
 
     return ConstrainedBox(
