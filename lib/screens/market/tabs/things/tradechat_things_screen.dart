@@ -1,34 +1,20 @@
-// lib/screens/tradechat_slots_screen.dart
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../theme/app_theme.dart';
-import '../../models/market_models.dart';
-import 'widgets/pills.dart'; // GenderPill, PricePill
+import '../../../../theme/app_theme.dart';
 
-class TradeChatSlotsScreen extends StatefulWidget {
+class TradeChatScreen extends StatefulWidget {
   final String itemTitle;
-  final String? itemThumb; // превью слота (ассет)
-  final String distance; // например "21,1 км"
-  final Gender gender; // male/female
-  final int price; // в рублях
-  final String statusText; // например "Бронь"
+  final String? itemThumb; // ассет превью вещи
 
-  const TradeChatSlotsScreen({
-    super.key,
-    required this.itemTitle,
-    this.itemThumb,
-    required this.distance,
-    required this.gender,
-    required this.price,
-    this.statusText = 'Бронь',
-  });
+  const TradeChatScreen({super.key, required this.itemTitle, this.itemThumb});
 
   @override
-  State<TradeChatSlotsScreen> createState() => _TradeChatSlotsScreenState();
+  State<TradeChatScreen> createState() => _TradeChatScreenState();
 }
 
+/// Модель сообщений
 enum _MsgSide { left, right }
 
 enum _MsgKind { text, image }
@@ -38,7 +24,7 @@ class _ChatMsg {
   final _MsgKind kind;
   final String time;
   final String? text;
-  final File? imageFile;
+  final File? imageFile; // для выбранных из галереи
 
   const _ChatMsg.text({
     required this.side,
@@ -55,20 +41,28 @@ class _ChatMsg {
        text = null;
 }
 
-class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
+class _TradeChatScreenState extends State<TradeChatScreen> {
   final _ctrl = TextEditingController();
   final _picker = ImagePicker();
+
+  String _today() {
+    final now = DateTime.now();
+    final dd = now.day.toString().padLeft(2, '0');
+    final mm = now.month.toString().padLeft(2, '0');
+    final yyyy = now.year.toString();
+    return '$dd.$mm.$yyyy';
+  }
 
   final List<_ChatMsg> _messages = const [
     _ChatMsg.text(
       side: _MsgSide.right,
       text:
-          'Добрый день, Ирина. Хотела бы приобрести данный слот. Куда перевести деньги?',
+          'Добрый день, Ирина. Хотела бы посмотреть эти кроссовки. Где и когда можно будет увидеться?',
       time: '9:34',
     ),
     _ChatMsg.text(
       side: _MsgSide.left,
-      text: 'Добрый день! Можно на карту Сбера по номеру +7-905-123-45-67',
+      text: 'Добрый день! Давайте я чуть позже отпишусь и всё обсудим',
       time: '9:35',
     ),
   ].toList();
@@ -79,21 +73,6 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
     super.dispose();
   }
 
-  String _today() {
-    final now = DateTime.now();
-    final dd = now.day.toString().padLeft(2, '0');
-    final mm = now.month.toString().padLeft(2, '0');
-    final yyyy = now.year.toString();
-    return '$dd.$mm.$yyyy';
-  }
-
-  String _now() {
-    final dt = TimeOfDay.now();
-    final hh = dt.hour.toString().padLeft(2, '0');
-    final mm = dt.minute.toString().padLeft(2, '0');
-    return '$hh:$mm';
-  }
-
   void _sendText() {
     final t = _ctrl.text.trim();
     if (t.isEmpty) return;
@@ -102,6 +81,13 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
       _ctrl.clear();
     });
     FocusScope.of(context).unfocus();
+  }
+
+  String _now() {
+    final dt = TimeOfDay.now();
+    final hh = dt.hour.toString().padLeft(2, '0');
+    final mm = dt.minute.toString().padLeft(2, '0');
+    return '$hh:$mm';
   }
 
   Future<void> _pickImage() async {
@@ -120,16 +106,17 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 0 дата, 1..4 инфо-строки, 5..6 участники, 7 кнопки, 8 divider+отступ
-    const headerCount = 9;
+    // ─────────────────────────────────────────────────────────────
+    // ВАЖНО: теперь в списке есть «хедеры», которые тоже скроллятся.
+    // headerCount = 5 элементов (дата, 2 участника, Divider, SizedBox)
+    // ─────────────────────────────────────────────────────────────
+    const int headerCount = 5;
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
-      // ⛔️ никаких bottomNavigationBar — экран отдельный
+      backgroundColor: AppColors.surface, // фон чата — белый
       appBar: AppBar(
         backgroundColor: AppColors.surface,
-        elevation: 1, // как в market_screen.dart
-        shadowColor: AppColors.shadowStrong, // та же маленькая тень
+        elevation: 0.5,
         leadingWidth: 40,
         leading: Transform.translate(
           offset: const Offset(-4, 0),
@@ -141,7 +128,7 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
             splashRadius: 18,
           ),
         ),
-        titleSpacing: -8,
+        titleSpacing: -8, // «чуть левее»
         title: Row(
           children: [
             if (widget.itemThumb != null) ...[
@@ -164,7 +151,7 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Чат продажи слота',
+                    'Чат продажи вещи',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
@@ -185,99 +172,45 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
       ),
       body: Column(
         children: [
+          // ─────────────────────────────────────────────────────────
+          // Прокручиваемая область: headers + сообщения в одном ListView
+          // ─────────────────────────────────────────────────────────
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+              // bottom padding побольше, чтобы последний элемент не прятался за Composer
               itemCount: headerCount + _messages.length,
               itemBuilder: (_, index) {
-                // 0 — дата
+                // 0..headerCount-1 — это наши «шапки», которые раньше были над списком.
                 if (index == 0) {
                   return _DateSeparator(
                     text: '${_today()}, автоматическое создание чата',
                   );
                 }
-
-                // 1..4 — инфо-строки (значение сразу после подписи)
                 if (index == 1) {
-                  return const _KVLine(
-                    k: 'Слот переведён в статус',
-                    v: _ChipNeutral(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            CupertinoIcons.lock,
-                            size: 14,
-                            color: AppColors.iconSecondary,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Бронь',
-                            style: TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-                if (index == 2) {
-                  return _KVLine(
-                    k: 'Дистанция',
-                    v: _ChipNeutral(child: Text(widget.distance)),
-                  );
-                }
-                if (index == 3) {
-                  return _KVLine(
-                    k: 'Пол',
-                    v: widget.gender == Gender.male
-                        ? const GenderPill.male()
-                        : const GenderPill.female(),
-                  );
-                }
-                if (index == 4) {
-                  return _KVLine(
-                    k: 'Стоимость',
-                    v: PricePill(text: _formatPrice(widget.price)),
-                  );
-                }
-
-                // 5..6 — участники
-                if (index == 5) {
                   return const _ParticipantRow(
                     avatarAsset: 'assets/avatar_4.png',
                     nameAndRole: 'Ирина Курагина - продавец',
                   );
                 }
-                if (index == 6) {
+                if (index == 2) {
                   return const _ParticipantRow(
                     avatarAsset: 'assets/avatar_9.png',
                     nameAndRole: 'Анастасия Бутузова - покупатель',
                   );
                 }
-
-                // 7 — Кнопки действий (ширина по контенту)
-                if (index == 7) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    child: _ActionsWrap(),
-                  );
-                }
-
-                // 8 — Divider ПОД кнопками + небольшой отступ
-                if (index == 8) {
+                if (index == 3) {
                   return const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: Column(
-                      children: [
-                        Divider(
-                          height: 16,
-                          thickness: 1,
-                          color: AppColors.border,
-                        ),
-                        SizedBox(height: 6),
-                      ],
+                    child: Divider(
+                      height: 16,
+                      thickness: 1,
+                      color: AppColors.border,
                     ),
                   );
+                }
+                if (index == 4) {
+                  return const SizedBox(height: 8);
                 }
 
                 // дальше — сообщения
@@ -295,238 +228,13 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
             ),
           ),
 
-          // Composer (фиксирован внизу)
+          // ─────────────────────────────────────────────────────────
+          // Неподвижная нижняя панель ввода (Composer)
+          // ─────────────────────────────────────────────────────────
           _Composer(
             controller: _ctrl,
             onSend: _sendText,
-            onPickImage: _pickImage,
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatPrice(int price) {
-    final s = price.toString();
-    final b = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      final pos = s.length - i;
-      b.write(s[i]);
-      if (pos > 1 && pos % 3 == 1) b.write(' ');
-    }
-    return '${b.toString()} ₽';
-  }
-}
-
-/// ─── Инфо-строка: ключ слева, значение сразу справа ───
-class _KVLine extends StatelessWidget {
-  final String k;
-  final Widget v;
-  const _KVLine({required this.k, required this.v});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Flexible(
-            fit: FlexFit.loose,
-            child: Text(
-              k,
-              style: const TextStyle(fontSize: 13),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: 10),
-          // ⛔️ НЕТ Spacer — значение идёт сразу после подписи
-          v,
-        ],
-      ),
-    );
-  }
-}
-
-/// Нейтральная «пилюля» без рамки (для статуса и дистанции)
-class _ChipNeutral extends StatelessWidget {
-  final Widget child;
-  const _ChipNeutral({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceMuted, // без рамки
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-      ),
-      child: DefaultTextStyle(
-        style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-        child: child,
-      ),
-    );
-  }
-}
-
-/// Кнопки действий:
-/// - старт: две кнопки в одной линии, одинаковой ширины, по центру
-/// - после нажатия: остаётся одна «пилюля» по центру
-class _ActionsWrap extends StatefulWidget {
-  const _ActionsWrap();
-
-  @override
-  State<_ActionsWrap> createState() => _ActionsWrapState();
-}
-
-enum _DealStatus { initial, bought, cancelled }
-
-class _ActionsWrapState extends State<_ActionsWrap> {
-  _DealStatus _status = _DealStatus.initial;
-
-  @override
-  Widget build(BuildContext context) {
-    switch (_status) {
-      case _DealStatus.initial:
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                child: _PillButton(
-                  text: 'Слот куплен',
-                  bg: AppColors.bgmale,
-                  border: AppColors.borderaccept,
-                  fg: AppColors.accept,
-                  onTap: () {
-                    setState(() => _status = _DealStatus.bought);
-                    // ⛔ Убрали SnackBar
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _PillButton(
-                  text: 'Отменить сделку',
-                  bg: AppColors.bgfemale,
-                  border: AppColors.bordercancel,
-                  fg: AppColors.cancel,
-                  onTap: () {
-                    setState(() => _status = _DealStatus.cancelled);
-                    // ⛔ Убрали SnackBar
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-
-      case _DealStatus.bought:
-        return const Center(
-          child: _PillFinal(
-            icon: CupertinoIcons.check_mark_circled,
-            text: 'Слот куплен',
-            bg: AppColors.bgmale,
-            border: AppColors.borderaccept,
-            fg: AppColors.accept,
-          ),
-        );
-
-      case _DealStatus.cancelled:
-        return const Center(
-          child: _PillFinal(
-            icon: CupertinoIcons.clear_circled,
-            text: 'Сделка отменена',
-            bg: AppColors.bgfemale,
-            border: AppColors.bordercancel,
-            fg: AppColors.cancel,
-          ),
-        );
-    }
-  }
-}
-
-/// Пилюля без иконки (для стартового состояния)
-class _PillButton extends StatelessWidget {
-  final String text;
-  final Color bg;
-  final Color border;
-  final Color fg;
-  final VoidCallback onTap;
-
-  const _PillButton({
-    required this.text,
-    required this.bg,
-    required this.border,
-    required this.fg,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.xl),
-      onTap: onTap,
-      child: Container(
-        height: 36,
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: border),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          text,
-          style: TextStyle(
-            color: fg,
-            fontWeight: FontWeight.w500,
-            fontSize: 13,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Пилюля с иконкой (финальное состояние)
-class _PillFinal extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final Color bg;
-  final Color border;
-  final Color fg;
-
-  const _PillFinal({
-    required this.icon,
-    required this.text,
-    required this.bg,
-    required this.border,
-    required this.fg,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: fg),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: TextStyle(
-              color: fg,
-              fontWeight: FontWeight.w500,
-              fontSize: 13,
-            ),
+            onPickImage: _pickImage, // плюсик — выбор фото из галереи
           ),
         ],
       ),
@@ -534,46 +242,57 @@ class _PillFinal extends StatelessWidget {
   }
 }
 
-/// ─── Дальше — чат-компоненты ───
+/// ─── helpers ───
 
 class _DateSeparator extends StatelessWidget {
   final String text;
   const _DateSeparator({required this.text});
+
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    alignment: Alignment.center,
-    child: Text(
-      text,
-      style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
-    ),
-  );
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+      ),
+    );
+  }
 }
 
 class _ParticipantRow extends StatelessWidget {
   final String avatarAsset;
   final String nameAndRole;
+
   const _ParticipantRow({required this.avatarAsset, required this.nameAndRole});
+
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-    child: Row(
-      children: [
-        CircleAvatar(radius: 14, backgroundImage: AssetImage(avatarAsset)),
-        const SizedBox(width: 8),
-        Text(nameAndRole, style: const TextStyle(fontSize: 13)),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Row(
+        children: [
+          CircleAvatar(radius: 14, backgroundImage: AssetImage(avatarAsset)),
+          const SizedBox(width: 8),
+          Text(nameAndRole, style: const TextStyle(fontSize: 13)),
+        ],
+      ),
+    );
+  }
 }
 
+/// Левый «текстовый» пузырь продавца — с иконкой справа (как в макете)
 class _BubbleLeft extends StatelessWidget {
   final String text;
   final String time;
   const _BubbleLeft({required this.text, required this.time});
+
   @override
   Widget build(BuildContext context) {
-    final max = MediaQuery.of(context).size.width * 0.72;
+    final screenW = MediaQuery.of(context).size.width;
+    final max = screenW * 0.72; // оставим место под правую иконку
+
     return Padding(
       padding: const EdgeInsets.only(right: 12, left: 0, bottom: 12),
       child: Row(
@@ -620,6 +339,7 @@ class _BubbleLeft extends StatelessWidget {
               ),
             ),
           ),
+
           const SizedBox(width: 6),
           const Icon(
             CupertinoIcons.arrowshape_turn_up_left,
@@ -632,13 +352,16 @@ class _BubbleLeft extends StatelessWidget {
   }
 }
 
+/// Правый «текстовый» пузырь покупателя — без аватарки
 class _BubbleRight extends StatelessWidget {
   final String text;
   final String time;
   const _BubbleRight({required this.text, required this.time});
+
   @override
   Widget build(BuildContext context) {
     final max = MediaQuery.of(context).size.width * 0.75;
+
     return Padding(
       padding: const EdgeInsets.only(left: 12, right: 0, bottom: 8),
       child: Row(
@@ -650,7 +373,7 @@ class _BubbleRight extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: AppColors.backgroundGreen,
+                color: AppColors.backgroundGreen, // мягкий зелёный
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 border: Border.all(color: AppColors.border),
               ),
@@ -687,10 +410,12 @@ class _BubbleRight extends StatelessWidget {
   }
 }
 
+/// Пузырь с изображением — слева
 class _BubbleImageLeft extends StatelessWidget {
   final File file;
   final String time;
   const _BubbleImageLeft({required this.file, required this.time});
+
   @override
   Widget build(BuildContext context) {
     final max = MediaQuery.of(context).size.width * 0.6;
@@ -714,7 +439,23 @@ class _BubbleImageLeft extends StatelessWidget {
                   Positioned(
                     right: 6,
                     bottom: 6,
-                    child: _TimeBadge(time: time),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.textSecondary,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Text(
+                        time,
+                        style: const TextStyle(
+                          color: AppColors.surface,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -726,10 +467,12 @@ class _BubbleImageLeft extends StatelessWidget {
   }
 }
 
+/// Пузырь с изображением — справа
 class _BubbleImageRight extends StatelessWidget {
   final File file;
   final String time;
   const _BubbleImageRight({required this.file, required this.time});
+
   @override
   Widget build(BuildContext context) {
     final max = MediaQuery.of(context).size.width * 0.6;
@@ -749,7 +492,23 @@ class _BubbleImageRight extends StatelessWidget {
                   Positioned(
                     right: 6,
                     bottom: 6,
-                    child: _TimeBadge(time: time),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.textSecondary,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Text(
+                        time,
+                        style: const TextStyle(
+                          color: AppColors.surface,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -761,32 +520,18 @@ class _BubbleImageRight extends StatelessWidget {
   }
 }
 
-class _TimeBadge extends StatelessWidget {
-  final String time;
-  const _TimeBadge({required this.time});
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-    decoration: BoxDecoration(
-      color: AppColors.textSecondary,
-      borderRadius: BorderRadius.circular(AppRadius.sm),
-    ),
-    child: Text(
-      time,
-      style: const TextStyle(color: AppColors.surface, fontSize: 11),
-    ),
-  );
-}
-
+/// Компонент ввода: радиус 20, серый плейсхолдер, плюс — выбор фото
 class _Composer extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
   final VoidCallback onPickImage;
+
   const _Composer({
     required this.controller,
     required this.onSend,
     required this.onPickImage,
   });
+
   @override
   State<_Composer> createState() => _ComposerState();
 }
@@ -805,9 +550,11 @@ class _ComposerState extends State<_Composer> {
   }
 
   void _onChanged() => setState(() {});
+
   @override
   Widget build(BuildContext context) {
     final enabled = widget.controller.text.trim().isNotEmpty;
+
     return SafeArea(
       top: false,
       child: Container(
@@ -827,7 +574,7 @@ class _ComposerState extends State<_Composer> {
           children: [
             IconButton(
               icon: const Icon(CupertinoIcons.plus_circle),
-              onPressed: widget.onPickImage,
+              onPressed: widget.onPickImage, // открыть галерею
               color: AppColors.iconSecondary,
             ),
             Expanded(

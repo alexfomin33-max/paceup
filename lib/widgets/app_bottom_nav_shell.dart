@@ -43,7 +43,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
   @override
   Widget build(BuildContext context) {
     return PersistentTabView(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.surface,
       onTabChanged: _onTabChanged, // <— важное место
 
       tabs: [

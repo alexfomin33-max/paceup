@@ -79,7 +79,7 @@ class _RaceBlock extends StatelessWidget {
                   maxLines: 1,
                   softWrap: false,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.name,
+                  style: AppTextStyles.h15w5,
                 ),
               ),
               const SizedBox(width: 8),

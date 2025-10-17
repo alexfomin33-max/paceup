@@ -66,7 +66,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
       child: Scaffold(
         backgroundColor: AppColors.surface,
         appBar: AppBar(
-          title: const Text('Новый пост', style: AppTextStyles.h1),
+          title: const Text('Новый пост', style: AppTextStyles.h17w6),
           centerTitle: true,
           backgroundColor: AppColors.surface,
           elevation: 0,
@@ -225,7 +225,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
         minLines: null,
         decoration: const InputDecoration.collapsed(
           hintText: 'Добавьте описание...',
-          hintStyle: AppTextStyles.placeholder,
+          hintStyle: AppTextStyles.h14w4Place,
         ),
       ),
     );

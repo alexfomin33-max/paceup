@@ -111,7 +111,7 @@ class Regstep1ScreenState extends State<Regstep1Screen> {
                 const Text(
                   'Данные спортсмена',
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.h1,
+                  style: AppTextStyles.h17w6,
                 ),
                 const SizedBox(height: 30),
 

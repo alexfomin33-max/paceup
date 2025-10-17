@@ -376,15 +376,15 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
               Flexible(
                 child: Text(
                   c.userName,
-                  style: AppTextStyles.normaltext,
+                  style: AppTextStyles.h14w4,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 6),
-              Text('· $humanDate', style: AppTextStyles.softdate),
+              Text('· $humanDate', style: AppTextStyles.h12w4Ter),
             ],
           ),
-          subtitle: Text(c.text, style: AppTextStyles.commenttext),
+          subtitle: Text(c.text, style: AppTextStyles.h13w5),
         );
       },
     );
@@ -519,7 +519,7 @@ class _ComposerBar extends StatelessWidget {
               keyboardType: TextInputType.multiline,
               decoration: InputDecoration(
                 hintText: "Написать комментарий...",
-                hintStyle: AppTextStyles.placeholder,
+                hintStyle: AppTextStyles.h14w4Place,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,

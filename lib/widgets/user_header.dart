@@ -65,14 +65,14 @@ class UserHeader extends StatelessWidget {
                   children: [
                     Text(
                       userName,
-                      style: AppTextStyles.name,
+                      style: AppTextStyles.h15w5,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
                       dateText,
-                      style: AppTextStyles.date,
+                      style: AppTextStyles.h12w4Sec,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

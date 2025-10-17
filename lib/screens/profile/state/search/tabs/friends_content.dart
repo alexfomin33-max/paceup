@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../../theme/app_theme.dart';
 
 /// Контент вкладки «Друзья»
 /// Переключатели уже в родительском экране. Здесь — секция и «табличный» блок.
@@ -113,7 +113,10 @@ class SearchFriendsContent extends StatelessWidget {
                     ),
                     shape: const StadiumBorder(),
                   ),
-                  child: const Text('Пригласить', style: AppTextStyles.name),
+                  child: const Text(
+                    'Пригласить',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
                 ),
               ),
             ),
@@ -133,19 +136,19 @@ class _FriendRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         children: [
           // Аватар
           ClipOval(
             child: Image.asset(
               friend.avatar,
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => Container(
-                width: 44,
-                height: 44,
+                width: 40,
+                height: 40,
                 color: AppColors.skeletonBase,
                 alignment: Alignment.center,
                 child: const Icon(
@@ -167,14 +170,14 @@ class _FriendRow extends StatelessWidget {
                   friend.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.numberstat,
+                  style: AppTextStyles.h14w5,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${friend.age} лет, ${friend.city}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.date,
+                  style: AppTextStyles.h12w4Sec,
                 ),
               ],
             ),
@@ -217,7 +220,7 @@ class _SectionTitle extends StatelessWidget {
         style: const TextStyle(
           fontFamily: 'Inter',
           fontSize: 14,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

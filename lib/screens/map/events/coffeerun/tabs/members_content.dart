@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../../theme/app_theme.dart';
 
 class MembersContent extends StatelessWidget {
   const MembersContent({super.key});
@@ -26,7 +26,7 @@ class MembersContent extends StatelessWidget {
     ),
     _Member('Алексей Лукашин', null, 'assets/avatar_1.png'),
     _Member('Екатерина Виноградова', null, 'assets/avatar_4.png'),
-    _Member('Игорь Балеев', null, 'assets/avatar_10.png'), // заменили 7 -> 10
+    _Member('Игорь Балеев', null, 'assets/avatar_10.png'),
   ];
   static int get demoCount => demo.length;
 
@@ -55,14 +55,14 @@ class _MemberRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         children: [
           ClipOval(
             child: Image.asset(
               member.avatar,
-              width: 42,
-              height: 42,
+              width: 40,
+              height: 40,
               fit: BoxFit.cover,
             ),
           ),
@@ -79,7 +79,7 @@ class _MemberRow extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
                 if (member.role != null) ...[
@@ -98,12 +98,15 @@ class _MemberRow extends StatelessWidget {
           ),
 
           IconButton(
-            onPressed: () {},
+            onPressed: (member.roleIcon != null) ? null : () {},
             splashRadius: 22,
             icon: Icon(
               member.roleIcon ?? CupertinoIcons.person_crop_circle_badge_plus,
               size: 24,
-              color: AppColors.brandPrimary,
+            ),
+            style: IconButton.styleFrom(
+              foregroundColor: AppColors.brandPrimary,
+              disabledForegroundColor: AppColors.disabledText,
             ),
           ),
         ],

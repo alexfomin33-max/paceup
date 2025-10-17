@@ -48,7 +48,7 @@ class SlotsBottomSheet extends StatelessWidget {
               // заголовок
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Center(child: Text(title, style: AppTextStyles.h1)),
+                child: Center(child: Text(title, style: AppTextStyles.h17w6)),
               ),
               const SizedBox(height: 12),
               Container(height: 1, color: AppColors.border),

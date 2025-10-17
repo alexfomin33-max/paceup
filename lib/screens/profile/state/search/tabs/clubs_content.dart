@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../../theme/app_theme.dart';
 
 /// Контент вкладки «Клубы»
 /// Табличный список «в одну коробку» (как на карте/в маршрутных списках).
@@ -85,7 +85,10 @@ class SearchClubsContent extends StatelessWidget {
                     ),
                     shape: const StadiumBorder(),
                   ),
-                  child: const Text('Создать клуб', style: AppTextStyles.name),
+                  child: const Text(
+                    'Создать клуб',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
                 ),
               ),
             ),
@@ -113,12 +116,12 @@ class _ClubRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.xs),
             child: Image.asset(
               c.asset,
-              width: 90,
-              height: 60,
+              width: 80,
+              height: 55,
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => Container(
-                width: 90,
-                height: 60,
+                width: 80,
+                height: 55,
                 color: AppColors.skeletonBase,
                 alignment: Alignment.center,
                 child: const Icon(
@@ -140,18 +143,14 @@ class _ClubRow extends StatelessWidget {
                   c.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.h14w6,
                 ),
                 const SizedBox(height: 6),
                 Text(
                   '${c.city}  ·  Участников: ${_fmt(c.members)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+                  style: AppTextStyles.h13w4,
                 ),
               ],
             ),

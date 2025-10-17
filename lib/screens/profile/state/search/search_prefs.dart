@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
-import 'friends_content.dart';
-import 'clubs_content.dart';
+import 'tabs/friends_content.dart';
+import 'tabs/clubs_content.dart';
 
 /// Главная страница «Поиск»: переключатель + поле поиска + контент
 class SearchPrefsPage extends StatefulWidget {
@@ -43,7 +43,7 @@ class _SearchPrefsPageState extends State<SearchPrefsPage> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: const Text('Поиск', style: AppTextStyles.h1),
+        title: const Text('Поиск', style: AppTextStyles.h17w6),
         leading: IconButton(
           splashRadius: 22,
           icon: const Icon(
@@ -167,7 +167,7 @@ class _SegmentedPill extends StatelessWidget {
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
               color: selected ? AppColors.surface : AppColors.textPrimary,
             ),
           ),
@@ -199,7 +199,7 @@ class _SearchField extends StatelessWidget {
         focusNode: focusNode,
         onChanged: onChanged,
         cursorColor: AppColors.brandPrimary,
-        style: const TextStyle(fontFamily: 'Inter', fontSize: 16),
+        style: const TextStyle(fontFamily: 'Inter', fontSize: 15),
         decoration: InputDecoration(
           prefixIcon: const Icon(
             CupertinoIcons.search,
@@ -213,23 +213,20 @@ class _SearchField extends StatelessWidget {
           hintStyle: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 15,
-            color: AppColors.textSecondary,
+            color: AppColors.textPlaceholder,
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.outline, width: 1),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: const BorderSide(color: AppColors.border, width: 1),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
           enabledBorder: OutlineInputBorder(
             borderSide: const BorderSide(color: AppColors.outline, width: 1),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              color: AppColors.brandPrimary,
-              width: 1.2,
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: const BorderSide(color: AppColors.outline, width: 1.2),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
         ),
       ),

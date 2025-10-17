@@ -12,7 +12,7 @@ class EventsBottomSheet extends StatelessWidget {
     super.key,
     required this.title,
     required this.child,
-    this.maxHeightFraction = 0.5, // не выше 50% экрана
+    this.maxHeightFraction = 0.4, // не выше 50% экрана
   });
 
   @override
@@ -39,7 +39,7 @@ class EventsBottomSheet extends StatelessWidget {
               Container(
                 width: 40,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: 10, top: 6),
+                margin: const EdgeInsets.only(bottom: 10, top: 4),
                 decoration: BoxDecoration(
                   color: AppColors.border,
                   borderRadius: BorderRadius.circular(AppRadius.xs),
@@ -49,7 +49,7 @@ class EventsBottomSheet extends StatelessWidget {
               // заголовок
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Center(child: Text(title, style: AppTextStyles.h1)),
+                child: Center(child: Text(title, style: AppTextStyles.h17w6)),
               ),
               const SizedBox(height: 12),
               Container(height: 1, color: AppColors.border),
@@ -115,23 +115,25 @@ class EventsListVladimir extends StatelessWidget {
       VoidCallback? onTap,
     }) {
       final row = Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset(asset, width: 90, height: 60, fit: BoxFit.cover),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+            child: Image.asset(asset, width: 80, height: 55, fit: BoxFit.cover),
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.h14w6,
                 ),
-                const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(fontSize: 13)),
+                const SizedBox(height: 6),
+                Text(subtitle, style: AppTextStyles.h13w4),
               ],
             ),
           ),

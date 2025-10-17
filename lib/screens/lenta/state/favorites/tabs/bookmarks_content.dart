@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import '../../../../../theme/app_theme.dart';
 
 /// Вкладка «Закладки» — карточный список с промежутками (как в Маршрутах)
@@ -80,12 +79,12 @@ class _BookmarkRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.xs),
             child: Image.asset(
               e.asset,
-              width: 90,
-              height: 60,
+              width: 80,
+              height: 55,
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => Container(
-                width: 90,
-                height: 60,
+                width: 80,
+                height: 55,
                 color: AppColors.skeletonBase,
                 alignment: Alignment.center,
                 child: const Icon(
@@ -111,11 +110,7 @@ class _BookmarkRow extends StatelessWidget {
                         e.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppTextStyles.h14w6,
                       ),
                     ),
                     CupertinoButton(
@@ -130,13 +125,13 @@ class _BookmarkRow extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 // Вторая строка: дата + участники
                 Text(
                   '${e.dateText}  ·  Участников: ${_fmt(e.members)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
+                  style: AppTextStyles.h13w4,
                 ),
               ],
             ),

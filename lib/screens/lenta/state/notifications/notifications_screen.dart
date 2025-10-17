@@ -72,7 +72,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
-          title: const Text('Уведомления', style: AppTextStyles.h1),
+          title: const Text('Уведомления', style: AppTextStyles.h17w6),
           actions: [
             IconButton(
               padding: const EdgeInsets.only(right: 12),
@@ -136,7 +136,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             const Spacer(),
                             Text(
                               _formatWhen(n.when),
-                              style: AppTextStyles.smallsofttext,
+                              style: AppTextStyles.h11w4Ter,
                             ),
                           ],
                         ),

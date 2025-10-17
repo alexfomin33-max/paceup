@@ -1,9 +1,4 @@
-// =============== widgets/gear_section_sliver.dart ===============
-// Sliver-секция "Снаряжение": заголовок + отступ + список карточек.
-// Вставляется НАПРЯМУЮ в CustomScrollView.slivers (никаких SliverToBoxAdapter вокруг).
-
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import '../../../../../theme/app_theme.dart';
 import '../models/main_tab_data.dart';
 
@@ -70,14 +65,7 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        child: Text(text, style: AppTextStyles.h15w6),
       ),
     );
   }
@@ -138,11 +126,7 @@ class _GearCard extends StatelessWidget {
                           title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTextStyles.h14w5,
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -191,7 +175,10 @@ class _InlineStat extends StatelessWidget {
           ),
           TextSpan(
             text: value,
-            style: const TextStyle(fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
           ),
         ],
       ),

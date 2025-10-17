@@ -91,7 +91,7 @@ class SwimTripScreen extends StatelessWidget {
                   Text(
                     'Плавательное путешествие',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.h1,
+                    style: AppTextStyles.h17w6,
                   ),
                   SizedBox(height: 8),
                   Text(

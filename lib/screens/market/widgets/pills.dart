@@ -14,7 +14,7 @@ class DistancePill extends StatelessWidget {
       width: 70,
       height: 28,
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       alignment: Alignment.center,
@@ -22,7 +22,7 @@ class DistancePill extends StatelessWidget {
         text,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+        style: AppTextStyles.h13w4,
       ),
     );
   }
@@ -96,10 +96,10 @@ class CityPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 30,
+      height: 28,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       alignment: Alignment.center,

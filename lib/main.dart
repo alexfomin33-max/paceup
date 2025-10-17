@@ -1,33 +1,23 @@
-// lib/main.dart
-//
-// ┌───────────────────────────────────────────────────────────────────────────┐
-// │                         ВХОД В ПРИЛОЖЕНИЕ (main)                          │
-// │  • Глобальная обработка ошибок                                            │
-// │  • Тема из токенов AppColors.* (iOS-лайк)                                 │
-// │  • Дефолтный цвет текста = AppColors.textPrimary                          │
-// │  • Локализация ru/en                                                      │
-// │  • Централизованный роутинг через routes.dart                             │
-// └───────────────────────────────────────────────────────────────────────────┘
-
-import 'dart:ui' as ui; // для ui.PlatformDispatcher.instance.onError
+// ========================= main.dart (патч) ===============================
+import 'dart:ui' as ui;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'theme/app_theme.dart'; // оставляем, если где-то экспортируешь баррель
-import 'theme/colors.dart'; // токены AppColors.*
-import 'routes.dart'; // onGenerateRoute + '/splash'
+import 'theme/colors.dart';
+import 'routes.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  FlutterError.onError = (FlutterErrorDetails details) {
+  // Логи ошибок: в дебаге — консоль; в релизе — не падаем.
+  FlutterError.onError = (details) {
     FlutterError.dumpErrorToConsole(details);
   };
-
   ui.PlatformDispatcher.instance.onError = (error, stack) {
     debugPrint('Uncaught error: $error');
     debugPrint('Stack: $stack');
-    return true; // «обработано», не валим приложение
+    return true; // помечаем как обработанное
   };
 
   runApp(const PaceUpApp());
@@ -38,81 +28,77 @@ class PaceUpApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ──────────────────────────────────────────────────────────────────────
-    //       ТЕМА ПРИЛОЖЕНИЯ ЧЕРЕЗ ТОКЕНЫ AppColors.* (iOS-лайк)
-    // ----------------------------------------------------------------------
-    // ВАЖНО: здесь мы задаём ДЕФОЛТНЫЙ цвет текста для всего проекта:
-    // textTheme.apply(bodyColor: AppColors.textPrimary, displayColor: AppColors.textPrimary)
-    // ──────────────────────────────────────────────────────────────────────
+    // Базовая тема (Material 3 + Inter + iOS-лайк цвета)
     final ThemeData base = ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light, // системная тёмная тема не фиксируется
       scaffoldBackgroundColor: AppColors.background,
       fontFamily: 'Inter',
-      // Инпуты/меню — тоже Inter
-      inputDecorationTheme: const InputDecorationTheme(
-        hintStyle: TextStyle(fontFamily: 'Inter'),
-        labelStyle: TextStyle(fontFamily: 'Inter'),
-      ),
-      dropdownMenuTheme: const DropdownMenuThemeData(
-        textStyle: TextStyle(fontFamily: 'Inter'),
-      ),
-
-      // Разделители по умолчанию (например для ListTile.divideTiles и т.п.)
       dividerColor: AppColors.divider,
-    );
-
-    // Применяем единый ДЕФОЛТНЫЙ цвет текста ко всем стилям
-    final TextTheme textThemed = base.textTheme.apply(
-      bodyColor: AppColors.textPrimary,
-      displayColor: AppColors.textPrimary,
-    );
-
-    final ThemeData theme = base.copyWith(
-      textTheme: textThemed,
-      primaryTextTheme: textThemed,
-      // Страховка для некоторых старых Material-частей, читающих typography:
-      // ignore: deprecated_member_use
-      typography: base.typography.copyWith(
-        black: base.typography.black.apply(
-          bodyColor: AppColors.textPrimary,
-          displayColor: AppColors.textPrimary,
-        ),
-        white: base.typography.white.apply(
-          bodyColor: AppColors.textPrimary,
-          displayColor: AppColors.textPrimary,
-        ),
-      ),
-      // Цвета-акценты, бордеры и т.п. через токены (минимальный набор)
-      colorScheme: base.colorScheme.copyWith(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.brandPrimary,
         primary: AppColors.brandPrimary,
         secondary: AppColors.brandSecondary,
         surface: AppColors.surface,
         error: AppColors.error,
-        outline: AppColors.border,
-        onSurface: AppColors.textPrimary, // чтобы виджеты не темнели
+        onSurface: AppColors.textPrimary,
+        brightness: Brightness.light,
+      ),
+      appBarTheme: const AppBarTheme(
+        elevation: 0,
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.textPrimary,
+        scrolledUnderElevation: 0,
+      ),
+      dividerTheme: const DividerThemeData(
+        thickness: 0.5,
+        color: AppColors.divider,
+        space: 0,
+      ),
+      iconTheme: const IconThemeData(color: AppColors.iconPrimary),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        // без тени-дрожа
+      ),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.android:
+              CupertinoPageTransitionsBuilder(), // свайп-назад
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        },
       ),
     );
 
     return MaterialApp(
       title: 'PaceUp',
       debugShowCheckedModeBanner: false,
+      theme: base,
 
-      // Тема из токенов
-      theme: theme,
-      // themeMode НЕ фиксируем → система сама выберет (светлая/тёмная)
-
-      // Роутинг
       initialRoute: '/splash',
       onGenerateRoute: onGenerateRoute,
 
-      // Локализация
-      supportedLocales: const <Locale>[Locale('ru'), Locale('en')],
-      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+      supportedLocales: const [Locale('ru'), Locale('en')],
+      localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+
+      // Глобально «светлые» Cupertino-контролы + Inter
+      builder: (context, child) => CupertinoTheme(
+        data: const CupertinoThemeData(
+          brightness: Brightness.light, // ← ключ к чёрному тексту в пикере
+          primaryColor: AppColors.brandPrimary,
+          textTheme: CupertinoTextThemeData(
+            textStyle: TextStyle(fontFamily: 'Inter'),
+            // опционально: можно ещё явно задать стиль колеса
+            // pickerTextStyle: TextStyle(fontFamily: 'Inter', fontSize: 22),
+          ),
+        ),
+        child: child!,
+      ),
     );
   }
 }
+// ========================================================================== 

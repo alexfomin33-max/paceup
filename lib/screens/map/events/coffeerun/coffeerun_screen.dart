@@ -2,8 +2,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
-import 'description_content.dart';
-import 'members_content.dart';
+import 'tabs/description_content.dart';
+import 'tabs/members_content.dart';
 
 class CoffeerunScreen extends StatefulWidget {
   const CoffeerunScreen({super.key});
@@ -97,7 +97,7 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
                           const Text(
                             '"Субботний коферан"',
                             textAlign: TextAlign.center,
-                            style: AppTextStyles.h1,
+                            style: AppTextStyles.h17w6,
                           ),
                           const SizedBox(height: 10),
 
@@ -164,7 +164,7 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
                                     style: TextStyle(
                                       fontFamily: 'Inter',
                                       fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ),
@@ -191,7 +191,7 @@ class _CoffeerunScreenState extends State<CoffeerunScreen> {
                                     style: TextStyle(
                                       fontFamily: 'Inter',
                                       fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ),

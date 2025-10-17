@@ -13,7 +13,7 @@ class RecommendedBlock extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Text('Рекомендации для вас', style: AppTextStyles.numberstat),
+          child: Text('Рекомендации для вас', style: AppTextStyles.h15w5),
         ),
         SizedBox(height: 12),
         _RecommendedList(),
@@ -102,21 +102,21 @@ class _FriendCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             name,
-            style: AppTextStyles.numberstat,
+            style: AppTextStyles.h14w5,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 4),
           Text(
             desc,
-            style: AppTextStyles.date,
+            style: AppTextStyles.h12w4Sec,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 4),
           Text(
             mutual,
-            style: AppTextStyles.date,
+            style: AppTextStyles.h12w4Sec,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),

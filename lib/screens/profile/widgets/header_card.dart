@@ -1,10 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../edit_profile_screen.dart';
 import '../state/subscribe/communication_prefs.dart';
 import '../../../models/user_profile_header.dart';
-import '../../../widgets/optimized_avatar.dart';
 
 class HeaderCard extends StatelessWidget {
   final UserProfileHeader? profile;
@@ -58,14 +56,7 @@ class HeaderCard extends StatelessWidget {
                       color: AppColors.chipBg,
                       borderRadius: BorderRadius.circular(AppRadius.xs),
                     ),
-                    child: const Text(
-                      'Pro',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: const Text('Pro', style: AppTextStyles.h11w6),
                   ),
                 ),
               ),
@@ -91,11 +82,7 @@ class HeaderCard extends StatelessWidget {
                         })(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppTextStyles.h16w6,
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -114,10 +101,7 @@ class HeaderCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  _subtitleFrom(profile) ?? '',
-                  style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
-                ),
+                Text(_subtitleFrom(profile) ?? '', style: AppTextStyles.h13w4),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -224,7 +208,11 @@ class _FollowStat extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: RichText(
           text: TextSpan(
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 13,
+              color: AppColors.textPrimary,
+            ),
             children: [
               TextSpan(text: '$label: '),
               const TextSpan(

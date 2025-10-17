@@ -59,7 +59,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
-          title: const Text('Чаты', style: AppTextStyles.h1),
+          title: const Text('Чаты', style: AppTextStyles.h17w6),
           actions: const [
             Padding(
               padding: EdgeInsets.only(right: 12),
@@ -122,13 +122,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                 c.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: AppTextStyles.chatname,
+                                style: AppTextStyles.h13w6,
                               ),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               _formatWhen(c.when),
-                              style: AppTextStyles.smallsofttext,
+                              style: AppTextStyles.h11w4Ter,
                             ),
                           ],
                         ),
@@ -142,7 +142,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 c.preview,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: AppTextStyles.date,
+                                style: AppTextStyles.h12w4Sec,
                               ),
                             ),
                             if (c.unread)

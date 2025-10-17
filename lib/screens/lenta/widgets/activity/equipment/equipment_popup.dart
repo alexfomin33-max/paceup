@@ -234,16 +234,10 @@ class _ShoeRow extends StatelessWidget {
                     ),
                     const TextSpan(
                       text: "Пробег: ",
-                      style: AppTextStyles.smallsecondtext,
+                      style: AppTextStyles.h11w4Sec,
                     ),
-                    TextSpan(
-                      text: "$mileageKm",
-                      style: AppTextStyles.primestat,
-                    ),
-                    const TextSpan(
-                      text: " км",
-                      style: AppTextStyles.smallsecondtext,
-                    ),
+                    TextSpan(text: "$mileageKm", style: AppTextStyles.h12w5),
+                    const TextSpan(text: " км", style: AppTextStyles.h11w4Sec),
                   ],
                 ),
                 maxLines: 2,

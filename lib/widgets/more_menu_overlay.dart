@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -164,7 +163,7 @@ class MoreMenuOverlay {
                 Expanded(
                   child: Text(
                     it.text,
-                    style: it.textStyle ?? AppTextStyles.normaltext,
+                    style: it.textStyle ?? AppTextStyles.h14w4,
                   ),
                 ),
                 const SizedBox(width: 12),

@@ -38,7 +38,7 @@ class TravelersBottomSheet extends StatelessWidget {
               Container(
                 width: 40,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: 10, top: 6),
+                margin: const EdgeInsets.only(bottom: 10, top: 4),
                 decoration: BoxDecoration(
                   color: AppColors.border,
                   borderRadius: BorderRadius.circular(AppRadius.xs),
@@ -48,7 +48,7 @@ class TravelersBottomSheet extends StatelessWidget {
               // заголовок
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Center(child: Text(title, style: AppTextStyles.h1)),
+                child: Center(child: Text(title, style: AppTextStyles.h17w6)),
               ),
               const SizedBox(height: 12),
               Container(height: 1, color: AppColors.border),

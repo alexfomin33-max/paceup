@@ -80,7 +80,7 @@ class _Run200kScreenState extends State<Run200kScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 16 + 36, 16, 16),
                   child: const Column(
                     children: [
-                      Text('200 км бега', style: AppTextStyles.h1),
+                      Text('200 км бега', style: AppTextStyles.h17w6),
                       SizedBox(height: 6),
                       Text(
                         'Пробегите за месяц суммарно 200 километров.',

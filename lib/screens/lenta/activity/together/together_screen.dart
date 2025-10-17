@@ -31,7 +31,7 @@ class _TogetherScreenState extends State<TogetherScreen> {
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
-        title: const Text('Совместная тренировка', style: AppTextStyles.h1),
+        title: const Text('Совместная тренировка', style: AppTextStyles.h17w6),
         leading: IconButton(
           splashRadius: 22,
           icon: const Icon(

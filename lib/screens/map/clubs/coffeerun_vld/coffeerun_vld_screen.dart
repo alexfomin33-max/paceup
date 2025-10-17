@@ -115,7 +115,10 @@ class _CoffeeRunVldScreenState extends State<CoffeeRunVldScreen> {
                         ),
                         const SizedBox(width: 12),
                         const Expanded(
-                          child: Text('CoffeeRun_vld', style: AppTextStyles.h1),
+                          child: Text(
+                            'CoffeeRun_vld',
+                            style: AppTextStyles.h17w6,
+                          ),
                         ),
                       ],
                     ),

@@ -115,12 +115,12 @@ class _RouteRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.xs),
             child: Image.asset(
               e.asset,
-              width: 90,
-              height: 60,
+              width: 80,
+              height: 55,
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => Container(
-                width: 90,
-                height: 60,
+                width: 80,
+                height: 55,
                 color: AppColors.skeletonBase,
                 alignment: Alignment.center,
                 child: const Icon(
@@ -144,11 +144,7 @@ class _RouteRow extends StatelessWidget {
                         e.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppTextStyles.h14w5,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -209,12 +205,7 @@ class _RouteRow extends StatelessWidget {
       ),
       child: Text(
         t,
-        style: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 11,
-          fontWeight: FontWeight.w400,
-          color: c,
-        ),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: c),
       ),
     );
   }
@@ -240,7 +231,7 @@ class _Metric extends StatelessWidget {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
+            style: AppTextStyles.h13w4,
           ),
         ),
       ],

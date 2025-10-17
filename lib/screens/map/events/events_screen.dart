@@ -114,13 +114,7 @@ class _SolidPillButton extends StatelessWidget {
             children: [
               Icon(icon, size: 20, color: AppColors.iconPrimary),
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
+              Text(label, style: AppTextStyles.h14w4),
             ],
           ),
         ),

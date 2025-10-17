@@ -27,7 +27,7 @@ class SettingsScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).maybePop(),
           splashRadius: 18,
         ),
-        title: const Text('Настройки', style: AppTextStyles.h1),
+        title: const Text('Настройки', style: AppTextStyles.h17w6),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(0.5),
           child: SizedBox(
@@ -211,7 +211,7 @@ class _SubscriptionCard extends StatelessWidget {
             const Expanded(
               child: Text(
                 'Управление подпиской PacePro',
-                style: AppTextStyles.numberstat,
+                style: AppTextStyles.h14w5,
               ),
             ),
             const Icon(
@@ -281,7 +281,7 @@ class _SettingsTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(child: Text(title, style: AppTextStyles.normaltext)),
+            Expanded(child: Text(title, style: AppTextStyles.h14w4)),
             if (trailingText != null) ...[
               Text(
                 trailingText!,

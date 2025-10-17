@@ -62,7 +62,7 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: const Text('Связи', style: AppTextStyles.h1),
+        title: const Text('Связи', style: AppTextStyles.h17w6),
         leading: IconButton(
           splashRadius: 22,
           icon: const Icon(

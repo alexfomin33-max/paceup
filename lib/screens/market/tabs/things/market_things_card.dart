@@ -2,11 +2,11 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
-import '../../../models/market_models.dart';
-import '../tradechat_goods_screen.dart';
-import 'image_gallery.dart';
-import 'pills.dart';
+import '../../../../theme/app_theme.dart';
+import '../../../../models/market_models.dart';
+import 'tradechat_things_screen.dart';
+import '../../widgets/image_gallery.dart';
+import '../../widgets/pills.dart';
 
 /// Отдельный виджет карточки ТОВАРА.
 class GoodsCard extends StatelessWidget {

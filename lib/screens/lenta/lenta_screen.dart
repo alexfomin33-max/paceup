@@ -403,7 +403,7 @@ class _LentaScreenState extends State<LentaScreen>
           ),
         ),
 
-        title: const Text('Лента', style: AppTextStyles.h1),
+        title: const Text('Лента', style: AppTextStyles.h17w6),
 
         // Правая группа: чат + колокол с бейджем
         actions: [

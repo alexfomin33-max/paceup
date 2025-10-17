@@ -14,7 +14,7 @@ class CombiningScreen extends StatelessWidget {
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
-        title: const Text('Объединение тренировки', style: AppTextStyles.h1),
+        title: const Text('Объединение тренировки', style: AppTextStyles.h17w6),
         leading: IconButton(
           splashRadius: 22,
           onPressed: () => Navigator.of(context).maybePop(),

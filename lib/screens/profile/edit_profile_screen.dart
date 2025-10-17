@@ -696,7 +696,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           splashRadius: 22,
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text('Профиль', style: AppTextStyles.h1),
+        title: const Text('Профиль', style: AppTextStyles.h17w6),
         actions: [
           TextButton(
             onPressed: (_saving || _loadingProfile)

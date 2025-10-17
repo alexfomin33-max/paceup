@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
 import '../../models/market_models.dart';
-import 'widgets/market_slot_card.dart';
-import 'widgets/market_goods_card.dart';
-import 'sale_screen.dart';
+import 'tabs/slots/market_slot_card.dart';
+import 'tabs/things/market_things_card.dart';
+import 'state/sale_screen.dart';
 
 class MarketScreen extends StatefulWidget {
   const MarketScreen({super.key});
@@ -76,8 +76,8 @@ class _MarketScreenState extends State<MarketScreen> {
 
                     child: const Icon(
                       CupertinoIcons.money_rubl_circle,
-                      size: 28,
-                      color: AppColors.brandPrimary,
+                      size: 22,
+                      color: AppColors.iconPrimary,
                     ),
                   ),
                 ),

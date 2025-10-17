@@ -104,7 +104,7 @@ class AddAccScreen extends StatelessWidget {
               width: 250,
               child: Text(
                 "Регистрируясь, вы принимаете Условия предоставления услуг и Политику конфиденциальности",
-                style: AppTextStyles.softdate,
+                style: AppTextStyles.h12w4Ter,
                 textAlign: TextAlign.center,
               ),
             ),

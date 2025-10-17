@@ -49,7 +49,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
-        title: const Text('Тренировка', style: AppTextStyles.h1),
+        title: const Text('Тренировка', style: AppTextStyles.h17w6),
         leading: IconButton(
           splashRadius: 22,
           icon: const Icon(
@@ -113,11 +113,11 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(a.userName, style: AppTextStyles.name),
+                              Text(a.userName, style: AppTextStyles.h15w5),
                               const SizedBox(height: 2),
                               Text(
                                 _fmtDate(a.dateStart),
-                                style: AppTextStyles.date,
+                                style: AppTextStyles.h12w4Sec,
                               ),
                               const SizedBox(height: 18),
 
@@ -151,7 +151,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                                     children: [
                                       const Text(
                                         "Темп",
-                                        style: AppTextStyles.softdate,
+                                        style: AppTextStyles.h12w4Ter,
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
@@ -166,7 +166,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                                       const SizedBox(height: 10),
                                       const Text(
                                         "Средний пульс",
-                                        style: AppTextStyles.softdate,
+                                        style: AppTextStyles.h12w4Ter,
                                       ),
                                       const SizedBox(height: 2),
                                       Row(
@@ -320,15 +320,8 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: EdgeInsets.fromLTRB(12, 6, 12, 6),
-                  child: Text(
-                    'Отрезки',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  padding: EdgeInsets.fromLTRB(12, 8, 12, 8),
+                  child: Text('Отрезки', style: AppTextStyles.h15w5),
                 ),
                 _SplitsTableFull(),
               ],
@@ -453,7 +446,7 @@ class _WatchPill extends StatelessWidget {
     return Container(
       height: 56,
       decoration: ShapeDecoration(
-        color: const Color.fromARGB(255, 14, 14, 230),
+        color: AppColors.background,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xxl),
         ),
@@ -480,7 +473,6 @@ class _WatchPill extends StatelessWidget {
           ),
           Positioned(
             left: 60,
-            right: 16,
             top: 0,
             bottom: 0,
             child: Align(
@@ -489,11 +481,7 @@ class _WatchPill extends StatelessWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: AppTextStyles.h13w5,
               ),
             ),
           ),
@@ -572,17 +560,11 @@ class _SplitsTableFull extends StatelessWidget {
               children: [
                 SizedBox(
                   width: 28,
-                  child: Text(
-                    'Км',
-                    style: TextStyle(fontFamily: 'Inter', fontSize: 12),
-                  ),
+                  child: Text('Км', style: AppTextStyles.h12w4),
                 ),
                 SizedBox(
                   width: 52,
-                  child: Text(
-                    'Темп',
-                    style: TextStyle(fontFamily: 'Inter', fontSize: 12),
-                  ),
+                  child: Text('Темп', style: AppTextStyles.h12w4),
                 ),
                 Expanded(child: SizedBox()),
                 SizedBox(
@@ -590,12 +572,7 @@ class _SplitsTableFull extends StatelessWidget {
                   child: Text(
                     'Пульс',
                     textAlign: TextAlign.right,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: AppTextStyles.h12w4,
                   ),
                 ),
               ],
@@ -614,22 +591,13 @@ class _SplitsTableFull extends StatelessWidget {
                     children: [
                       SizedBox(
                         width: 28,
-                        child: Text(
-                          '${i + 1}',
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-                          ),
-                        ),
+                        child: Text('${i + 1}', style: AppTextStyles.h12w4),
                       ),
                       SizedBox(
-                        width: 52,
+                        width: 40,
                         child: Text(
                           fmtPaceSec(pace[i]),
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-                          ),
+                          style: AppTextStyles.h12w4,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -666,10 +634,7 @@ class _SplitsTableFull extends StatelessWidget {
                         child: Text(
                           '${hr[i]}',
                           textAlign: TextAlign.right,
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-                          ),
+                          style: AppTextStyles.h12w4,
                         ),
                       ),
                     ],
@@ -743,9 +708,7 @@ class _SegmentedPill extends StatelessWidget {
           child: Text(
             text,
             style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
               color: selected ? AppColors.surface : AppColors.textPrimary,
             ),
           ),
@@ -977,7 +940,7 @@ class _PaceSummary extends StatelessWidget {
               style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 13,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],

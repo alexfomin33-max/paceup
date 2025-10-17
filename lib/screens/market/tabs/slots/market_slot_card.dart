@@ -2,10 +2,10 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
-import '../../../models/market_models.dart';
-import '../tradechat_slots_screen.dart';
-import 'pills.dart';
+import '../../../../theme/app_theme.dart';
+import '../../../../models/market_models.dart';
+import 'tradechat_slots_screen.dart';
+import '../../widgets/pills.dart';
 
 /// Отдельный виджет карточки СЛОТА.
 /// Миниатюра НЕ кликабельна.
@@ -58,7 +58,7 @@ class MarketSlotCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       // Заголовок + стрелка (если есть детали)
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,11 +68,7 @@ class MarketSlotCard extends StatelessWidget {
                               item.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                              ),
+                              style: AppTextStyles.h14w4,
                             ),
                           ),
                           if (_hasDetails) ...[
@@ -80,19 +76,17 @@ class MarketSlotCard extends StatelessWidget {
                             AnimatedRotation(
                               duration: const Duration(milliseconds: 150),
                               turns: expanded ? 0.5 : 0.0,
-                              child: Icon(
+                              child: const Icon(
                                 CupertinoIcons.chevron_down,
                                 size: 14,
-                                color: AppColors.iconPrimary.withValues(
-                                  alpha: 0.6,
-                                ),
+                                color: AppColors.iconSecondary,
                               ),
                             ),
                             const SizedBox(width: 4),
                           ],
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
 
                       // Одна строка: дистанция • пол • цена • кнопка справа
                       Row(
@@ -139,10 +133,10 @@ class MarketSlotCard extends StatelessWidget {
               AnimatedCrossFade(
                 firstChild: const SizedBox.shrink(),
                 secondChild: Padding(
-                  padding: const EdgeInsets.only(top: 10),
+                  padding: const EdgeInsets.only(top: 8),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceMuted,
                       border: Border.all(color: AppColors.border),
@@ -197,7 +191,6 @@ class _Thumb extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.xs),
           color: AppColors.background,
-
           image: DecorationImage(
             image: AssetImage(imageAsset),
             fit: BoxFit.cover,
@@ -239,7 +232,7 @@ class _BuyButtonText extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8),
             minimumSize: Size.zero,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.xs),
             ),
           ),
           icon: Icon(icon, size: 14),

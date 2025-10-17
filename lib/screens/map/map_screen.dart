@@ -52,7 +52,7 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final markers = _markersForTab(context);
-    final markerColor = markerColors[_selectedIndex] ?? Colors.blue;
+    final markerColor = markerColors[_selectedIndex] ?? AppColors.brandPrimary;
 
     return Scaffold(
       body: Stack(
@@ -206,7 +206,6 @@ class _MapScreenState extends State<MapScreen> {
                         child: Text(
                           tabs[index],
                           style: TextStyle(
-                            fontSize: 14,
                             fontWeight: isSelected
                                 ? FontWeight.w500
                                 : FontWeight.w400,

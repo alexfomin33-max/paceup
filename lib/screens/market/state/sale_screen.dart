@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
-import '../../models/market_models.dart' show Gender;
+import '../../../theme/app_theme.dart';
+import '../../../models/market_models.dart' show Gender;
 
 /// Единый экран продажи: сверху переключатель, в теле — нужная форма.
 class SaleScreen extends StatefulWidget {
@@ -575,15 +575,15 @@ class _DropdownField extends StatelessWidget {
               vertical: 10,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.xs),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.xs),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.xs),
               borderSide: const BorderSide(color: AppColors.border),
             ),
           ),
@@ -697,7 +697,7 @@ class _PrimaryButton extends StatelessWidget {
               ? AppColors.brandPrimary
               : AppColors.disabledBg,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            borderRadius: BorderRadius.circular(AppRadius.xxl),
           ),
           padding: const EdgeInsets.symmetric(
             horizontal: 40, // 🔹 горизонтальный паддинг
@@ -708,8 +708,8 @@ class _PrimaryButton extends StatelessWidget {
           text,
           style: const TextStyle(
             color: AppColors.surface,
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
             fontFamily: 'Inter',
           ),
         ),
@@ -737,17 +737,17 @@ Widget _labelWithStar(String label) {
         fontWeight: FontWeight.w400,
         fontFamily: 'Inter', // 4) Inter
       ),
-      children: [
-        if (label.contains('*'))
-          const TextSpan(
-            text: '*',
-            style: TextStyle(
-              color: AppColors.error,
-              fontSize: 15,
-              fontFamily: 'Inter',
-            ),
-          ),
-      ],
+      // children: [
+      //   if (label.contains('*'))
+      //     const TextSpan(
+      //       text: '*',
+      //       style: TextStyle(
+      //         color: AppColors.error,
+      //         fontSize: 15,
+      //         fontFamily: 'Inter',
+      //       ),
+      //     ),
+      // ],
     ),
   );
 }

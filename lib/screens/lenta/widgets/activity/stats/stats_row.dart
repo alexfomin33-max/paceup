@@ -26,13 +26,13 @@ class MetricVertical extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(mainTitle, style: AppTextStyles.smallsofttext),
+        Text(mainTitle, style: AppTextStyles.h11w4Ter),
         const SizedBox(height: 1),
-        Text(mainValue, style: AppTextStyles.numberstat),
+        Text(mainValue, style: AppTextStyles.h14w5),
         const SizedBox(height: 10),
-        Text(subTitle, style: AppTextStyles.smallsofttext),
+        Text(subTitle, style: AppTextStyles.h11w4Ter),
         const SizedBox(height: 1),
-        Text(subValue, style: AppTextStyles.numberstat),
+        Text(subValue, style: AppTextStyles.h14w5),
       ],
     );
   }
@@ -97,16 +97,16 @@ class StatsRow extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Темп', style: AppTextStyles.smallsofttext),
+            const Text('Темп', style: AppTextStyles.h11w4Ter),
             const SizedBox(height: 1),
-            Text(paceText, style: AppTextStyles.numberstat),
+            Text(paceText, style: AppTextStyles.h14w5),
             const SizedBox(height: 10),
-            const Text('Ср. пульс', style: AppTextStyles.smallsofttext),
+            const Text('Ср. пульс', style: AppTextStyles.h11w4Ter),
             const SizedBox(height: 1),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(hrText, style: AppTextStyles.numberstat),
+                Text(hrText, style: AppTextStyles.h14w5),
                 const SizedBox(width: 2),
                 const Icon(
                   CupertinoIcons.heart_fill,

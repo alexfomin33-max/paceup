@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import '../../../../../theme/app_theme.dart';
 
 /// Вкладка «Мои события» — карточный список с зазором 2 px
@@ -14,7 +13,7 @@ class _MyEventsContentState extends State<MyEventsContent> {
   // Текущий месяц (по умолчанию июнь 2025 — как в макете)
   DateTime month = DateTime(2025, 6, 1);
   int? selectedDay; // выделенный день
-  static const marked = {10, 24}; // кружки-метки, как на скрине
+  static const marked = {10, 17, 24}; // кружки-метки, как на скрине
 
   static const _items = <_FavEvent>[
     _FavEvent(
@@ -77,14 +76,7 @@ class _MyEventsContentState extends State<MyEventsContent> {
                 ),
                 Expanded(
                   child: Center(
-                    child: Text(
-                      _monthTitle(month),
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: Text(_monthTitle(month), style: AppTextStyles.h15w5),
                   ),
                 ),
                 _MonthButton(
@@ -179,12 +171,12 @@ class _EventRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.xs),
             child: Image.asset(
               e.asset,
-              width: 90,
-              height: 60,
+              width: 80,
+              height: 55,
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => Container(
-                width: 90,
-                height: 60,
+                width: 80,
+                height: 55,
                 color: AppColors.skeletonBase,
                 alignment: Alignment.center,
                 child: const Icon(
@@ -204,18 +196,14 @@ class _EventRow extends StatelessWidget {
                   e.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.h14w6,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   '${e.dateText}  ·  Участников: ${_fmt(e.members)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
+                  style: AppTextStyles.h13w4,
                 ),
               ],
             ),
@@ -263,11 +251,11 @@ class _InlineCalendar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+        padding: const EdgeInsets.fromLTRB(12, 16, 12, 10),
         child: Column(
           children: [
             // Заголовки дней недели
@@ -306,7 +294,7 @@ class _InlineCalendar extends StatelessWidget {
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.brandPrimary.withValues(alpha: 0.11)
+                              ? AppColors.brandPrimary.withValues(alpha: 0.4)
                               : null,
                           shape: BoxShape.circle,
                           border: marked
@@ -319,11 +307,9 @@ class _InlineCalendar extends StatelessWidget {
                         child: Text(
                           '$d',
                           style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
                             fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
+                                ? FontWeight.w400
+                                : FontWeight.w400,
                             color: (c >= 5)
                                 ? AppColors.error
                                 : AppColors.textPrimary,
@@ -355,9 +341,8 @@ class _D extends StatelessWidget {
         child: Text(
           t,
           style: TextStyle(
-            fontFamily: 'Inter',
             fontSize: 12,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
             color: weekend ? AppColors.error : AppColors.textSecondary,
           ),
         ),

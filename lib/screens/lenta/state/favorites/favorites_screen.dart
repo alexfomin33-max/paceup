@@ -40,7 +40,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           tooltip: 'Назад',
         ),
         centerTitle: true,
-        title: const Text('Избранное', style: AppTextStyles.h1),
+        title: const Text('Избранное', style: AppTextStyles.h17w6),
       ),
       body: Column(
         children: [
@@ -53,7 +53,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
               labelColor: AppColors.brandPrimary,
               unselectedLabelColor: AppColors.textPrimary,
               indicatorColor: AppColors.brandPrimary,
-              indicatorWeight: 2,
+              indicatorWeight: 1,
               labelPadding: const EdgeInsets.symmetric(horizontal: 8),
               tabs: const [
                 Tab(
@@ -104,15 +104,7 @@ class _TabLabel extends StatelessWidget {
       children: [
         Icon(icon, size: 16),
         const SizedBox(width: 6),
-        Text(
-          text,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        Text(text, overflow: TextOverflow.ellipsis),
       ],
     );
   }

@@ -147,10 +147,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 const SizedBox(height: 8),
                 // маленькая серая полоска сверху (grabber)
                 Container(
-                  width: 36,
+                  width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.backgroundBlue,
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(AppRadius.xs),
                   ),
                 ),
@@ -232,7 +232,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
       child: Scaffold(
         backgroundColor: AppColors.surface,
         appBar: AppBar(
-          title: const Text('Добавление события', style: AppTextStyles.h1),
+          title: const Text('Добавление события', style: AppTextStyles.h17w6),
           centerTitle: true,
           backgroundColor: AppColors.surface,
           elevation: 0,
@@ -471,7 +471,7 @@ class EventTextField extends StatelessWidget {
       controller: controller,
       maxLines: maxLines,
       enabled: enabled,
-      style: TextStyle(color: textColor, fontFamily: 'Inter'),
+      style: TextStyle(color: textColor, fontFamily: 'Inter', fontSize: 14),
       decoration: InputDecoration(
         // если label пустой — не показываем подпись
         label: label.isEmpty ? null : _labelWithStar(label),
@@ -540,7 +540,11 @@ class EventDateField extends StatelessWidget {
       child: AbsorbPointer(
         child: TextFormField(
           controller: TextEditingController(text: valueText),
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            color: AppColors.textPrimary,
+          ),
           decoration: InputDecoration(
             label: _labelWithStar(label),
             floatingLabelBehavior: FloatingLabelBehavior.always,
@@ -692,7 +696,7 @@ class CreateButton extends StatelessWidget {
         style: const TextStyle(
           color: AppColors.surface,
           fontSize: 14,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -709,7 +713,14 @@ class _SmallLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: const TextStyle(fontSize: 14, height: 1.4));
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 14,
+        height: 1.4,
+        color: AppColors.textPrimary,
+      ),
+    );
   }
 }
 
@@ -831,13 +842,13 @@ Widget _labelWithStar(String label) {
         fontSize: 16,
         fontWeight: FontWeight.w500,
       ),
-      children: [
-        if (label.contains('*'))
-          const TextSpan(
-            text: '*',
-            style: TextStyle(color: AppColors.error, fontSize: 16),
-          ),
-      ],
+      // children: [
+      //   if (label.contains('*'))
+      //     const TextSpan(
+      //       text: '*',
+      //       style: TextStyle(color: AppColors.error, fontSize: 16),
+      //     ),
+      // ],
     ),
   );
 }
