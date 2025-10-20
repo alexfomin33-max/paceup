@@ -1,8 +1,11 @@
+// lib/screens/.../communication_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
-import 'subscriptions_content.dart';
-import 'subscribers_content.dart';
+import '../../../../widgets/segmented_pill.dart'; // ← глобальная пилюля
+import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
+import 'tabs/subscriptions/subscriptions_content.dart';
+import 'tabs/subscribers/subscribers_content.dart';
 
 /// Главная страница «Связи»: сегмент + поиск + контент (с пагинацией свайпами)
 class CommunicationPrefsPage extends StatefulWidget {
@@ -15,6 +18,10 @@ class CommunicationPrefsPage extends StatefulWidget {
 }
 
 class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
+  // motion-токены (как в остальных экранах)
+  static const Duration _kTabAnim = Duration(milliseconds: 300);
+  static const Curve _kTabCurve = Curves.easeOutCubic;
+
   late int _index;
   late final PageController _page;
 
@@ -40,11 +47,8 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
     if (_index == i) return;
     _controller.clear();
     _focus.unfocus();
-    _page.animateToPage(
-      i,
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-    );
+    setState(() => _index = i);
+    _page.animateToPage(i, duration: _kTabAnim, curve: _kTabCurve);
   }
 
   void _onPageChanged(int i) {
@@ -57,38 +61,27 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text('Связи', style: AppTextStyles.h17w6),
-        leading: IconButton(
-          splashRadius: 22,
-          icon: const Icon(
-            CupertinoIcons.back,
-            size: 22,
-            color: AppColors.iconPrimary,
-          ),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, thickness: 1, color: AppColors.border),
-        ),
+      appBar: const PaceAppBar(
+        title: 'Связи',
+        // дефолтная «назад», центрированный титул, нижний разделитель — уже настроены
       ),
       body: Column(
         children: [
           const SizedBox(height: 14),
 
-          // Переключатели (как в stats_tab / 200k_run_screen) — синхронизированы с PageView
+          // Пилюля — глобальный виджет с синхронизацией с PageView
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Center(
-              child: _SegmentedPill(
+              child: SegmentedPill(
                 left: 'Подписки',
                 right: 'Подписчики',
                 value: _index,
+                width: 280,
+                height: 40,
+                duration: _kTabAnim,
+                curve: _kTabCurve,
+                haptics: true,
                 onChanged: _switchTo,
               ),
             ),
@@ -103,7 +96,7 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
               controller: _controller,
               focusNode: _focus,
               hintText: 'Поиск',
-              onChanged: (_) => setState(() {}),
+              onChanged: (_) => setState(() {}), // обновим query
             ),
           ),
 
@@ -114,22 +107,23 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
             child: PageView(
               controller: _page,
               physics: const BouncingScrollPhysics(),
+              allowImplicitScrolling: true,
               onPageChanged: _onPageChanged,
-              children: const [
-                // ключи сохранят позицию скролла у каждой вкладки
+              children: [
+                // ключи сохраняют вертикальный скролл внутри вкладок
                 _PageKeepAlive(
                   child: SubscriptionsContent(
-                    key: ValueKey('subscriptions'),
-                    query: '',
+                    key: const ValueKey('subscriptions'),
+                    query: query,
                   ),
                 ),
                 _PageKeepAlive(
                   child: SubscribersContent(
-                    key: ValueKey('subscribers'),
-                    query: '',
+                    key: const ValueKey('subscribers'),
+                    query: query,
                   ),
                 ),
-              ].map((w) => w).toList(),
+              ],
             ),
           ),
         ],
@@ -139,7 +133,6 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
 }
 
 /// Обёртка для сохранения состояния дочерних списков внутри PageView.
-/// Мы прокинем актуальный query через Inherited/Builder ниже.
 class _PageKeepAlive extends StatefulWidget {
   final Widget child;
   const _PageKeepAlive({required this.child});
@@ -160,67 +153,7 @@ class _PageKeepAliveState extends State<_PageKeepAlive>
   }
 }
 
-/// ===== локальные виджеты (стиль «пилюли» и поиск)
-
-class _SegmentedPill extends StatelessWidget {
-  final String left;
-  final String right;
-  final int value;
-  final ValueChanged<int> onChanged;
-  const _SegmentedPill({
-    required this.left,
-    required this.right,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 280,
-      child: Container(
-        padding: const EdgeInsets.all(2),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: AppColors.border, width: 1),
-        ),
-        child: Row(
-          children: [
-            Expanded(child: _seg(0, left)),
-            Expanded(child: _seg(1, right)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _seg(int idx, String text) {
-    final selected = value == idx;
-    return GestureDetector(
-      onTap: () => onChanged(idx),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.textPrimary : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-        child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              color: selected ? AppColors.surface : AppColors.textPrimary,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+/// ===== локальные виджеты (поиск остаётся здесь)
 
 class _SearchField extends StatelessWidget {
   final TextEditingController controller;

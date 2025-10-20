@@ -2,7 +2,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
-import '../state/search/search_prefs.dart';
+import '../state/search/search_screen.dart';
 import '../../map/clubs/coffeerun_vld/coffeerun_vld_screen.dart';
 
 class ClubsTab extends StatefulWidget {

@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/app_bar.dart'; // ← наш глобальный AppBar
 
 // ⬇️ наш полноэкранный шит с настройками уведомлений
 import 'settings_bottom_sheet.dart';
@@ -44,9 +45,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void _openSettingsSheet() {
     showModalBottomSheet(
       context: context,
-      useRootNavigator: true, // поверх нижней навигации
-      isScrollControlled: true, // высота по контенту
-      backgroundColor: Colors.transparent, // радиусы рисуем сами
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (_) => const SettingsSheet(),
     );
   }
@@ -57,49 +58,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       onHorizontalDragEnd: _onHorizontalDrag,
       child: Scaffold(
         backgroundColor: AppColors.surface,
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: AppColors.surface,
-          surfaceTintColor: Colors.transparent,
-          centerTitle: true,
-          leadingWidth: 60,
-          leading: IconButton(
-            splashRadius: 22,
-            icon: const Icon(
-              CupertinoIcons.back,
-              size: 22,
-              color: AppColors.iconPrimary,
-            ),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          title: const Text('Уведомления', style: AppTextStyles.h17w6),
+
+        // ─── используем глобальную шапку ───
+        appBar: PaceAppBar(
+          title: 'Уведомления',
           actions: [
             IconButton(
               padding: const EdgeInsets.only(right: 12),
+              splashRadius: 22,
               icon: const Icon(
                 CupertinoIcons.slider_horizontal_3,
                 size: 20,
                 color: AppColors.iconPrimary,
               ),
               onPressed: _openSettingsSheet,
-              splashRadius: 22,
             ),
           ],
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(0.5),
-            child: Divider(
-              height: 0.5,
-              thickness: 0.5,
-              color: AppColors.border,
-            ),
-          ),
         ),
+
         body: ListView.separated(
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
           ),
           itemCount: _items.length,
-          separatorBuilder: (_, _) => const Divider(
+          separatorBuilder: (_, __) => const Divider(
             height: 1,
             thickness: 0.5,
             color: AppColors.border,
@@ -113,7 +95,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Аватар
                   ClipOval(
                     child: Image.asset(
                       n.avatar,
@@ -124,12 +105,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ),
                   const SizedBox(width: 10),
 
-                  // Контент: 1-я строка (иконка + дата), 2-я строка (текст)
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Первая строка — иконка и время на одной линии
                         Row(
                           children: [
                             Icon(n.icon, size: 16, color: n.color),
@@ -141,7 +120,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           ],
                         ),
                         const SizedBox(height: 6),
-                        // Вторая строка — текст
                         Text(
                           n.text,
                           style: const TextStyle(fontSize: 13, height: 1.25),
@@ -159,7 +137,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 }
 
-/// Демо-данные под макет (иконки — безопасные Material/ Cupertino аналоги)
+/// Демо-данные под макет
 List<_Notif> _demo() {
   final now = DateTime.now();
   DateTime onDay(DateTime base, int hour, int min, {int shiftDays = 0}) =>
@@ -226,7 +204,6 @@ List<_Notif> _demo() {
   ];
 }
 
-/// Локальная модель
 class _Notif {
   final String avatar;
   final IconData icon;

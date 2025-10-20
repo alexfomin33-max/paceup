@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
 import 'tabs/my_events_content.dart';
 import 'tabs/bookmarks_content.dart';
 import 'tabs/routes_content.dart';
@@ -26,25 +27,13 @@ class _FavoritesScreenState extends State<FavoritesScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(
-            CupertinoIcons.back,
-            size: 22,
-            color: AppColors.iconPrimary,
-          ),
-          onPressed: () => Navigator.maybePop(context),
-          tooltip: 'Назад',
-        ),
-        centerTitle: true,
-        title: const Text('Избранное', style: AppTextStyles.h17w6),
-      ),
+
+      // ── Глобальная шапка без нижнего бордера
+      appBar: const PaceAppBar(title: 'Избранное', showBottomDivider: false),
+
       body: Column(
         children: [
-          // ── Вкладки: иконка + текст в одну строку
+          // ── Вкладки: иконка + текст (наш дефолтный паттерн TabBar + TabBarView)
           Container(
             color: AppColors.surface,
             child: TabBar(

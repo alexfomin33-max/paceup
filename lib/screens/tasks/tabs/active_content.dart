@@ -1,90 +1,101 @@
+// lib/screens/tabs/active_content.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
-import '../run_200k_screen.dart';
-import '../suzdal_screen.dart';
+import '../description/run_200k_screen.dart';
+import '../description/suzdal_screen.dart';
 
 class ActiveContent extends StatelessWidget {
   const ActiveContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _MonthLabel('Июнь 2025'),
-        const SizedBox(height: 8),
+    // Вертикальный скролл + горизонтальные поля внутри контента
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _MonthLabel('Июнь 2025'),
+            const SizedBox(height: 8),
 
-        const TaskCard(
-          colorTint: AppColors.backgroundGreen,
-          icon: CupertinoIcons.star,
-          badgeText: '10 дней',
-          title: '10 дней активности',
-          progressText: '6 из 10 дней',
-          percent: 0.60,
+            const TaskCard(
+              colorTint: AppColors.backgroundGreen,
+              icon: CupertinoIcons.star,
+              badgeText: '10 дней',
+              title: '10 дней активности',
+              progressText: '6 из 10 дней',
+              percent: 0.60,
+            ),
+            const SizedBox(height: 12),
+
+            TaskCard(
+              colorTint: AppColors.backgroundYellow,
+              icon: Icons.directions_run,
+              badgeText: '200 км',
+              title: '200 км бега',
+              progressText: '145,8 из 200 км',
+              percent: 0.729,
+              onTap: () {
+                Navigator.of(context, rootNavigator: true).push(
+                  MaterialPageRoute(builder: (_) => const Run200kScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+
+            const TaskCard(
+              colorTint: AppColors.backgroundBlue,
+              icon: CupertinoIcons.arrow_up,
+              badgeText: '1000 м',
+              title: '1000 метров набора высоты',
+              progressText: '537 из 1000 м',
+              percent: 0.537,
+            ),
+            const SizedBox(height: 12),
+
+            const TaskCard(
+              colorTint: AppColors.backgroundPurple,
+              icon: CupertinoIcons.stopwatch,
+              badgeText: '1000 мин',
+              title: '1000 минут активности',
+              progressText: '618 из 1000 мин',
+              percent: 0.618,
+            ),
+            const SizedBox(height: 20),
+
+            const _SectionLabel('Экспедиции'),
+            const SizedBox(height: 8),
+
+            ExpeditionCard(
+              title: 'Суздаль',
+              progressText: '21 784 из 110 033 шагов',
+              percent: 0.198,
+              image: const _RoundImage(
+                provider: AssetImage('assets/Suzdal.png'),
+              ),
+              onTap: () {
+                Navigator.of(
+                  context,
+                  rootNavigator: true,
+                ).push(MaterialPageRoute(builder: (_) => const SuzdalScreen()));
+              },
+            ),
+            const SizedBox(height: 12),
+
+            const ExpeditionCard(
+              title: 'Монблан',
+              progressText: '3 521 из 4 810 метров',
+              percent: 0.732,
+              image: _RoundImage(provider: AssetImage('assets/Monblan.png')),
+            ),
+
+            const SizedBox(height: 16),
+          ],
         ),
-        const SizedBox(height: 12),
-
-        TaskCard(
-          colorTint: AppColors.backgroundYellow,
-          icon: Icons.directions_run,
-          badgeText: '200 км',
-          title: '200 км бега',
-          progressText: '145,8 из 200 км',
-          percent: 0.729,
-          onTap: () {
-            Navigator.of(
-              context,
-              rootNavigator: true,
-            ).push(MaterialPageRoute(builder: (_) => const Run200kScreen()));
-          },
-        ),
-        const SizedBox(height: 12),
-
-        const TaskCard(
-          colorTint: AppColors.backgroundBlue,
-          icon: CupertinoIcons.arrow_up,
-          badgeText: '1000 м',
-          title: '1000 метров набора высоты',
-          progressText: '537 из 1000 м',
-          percent: 0.537,
-        ),
-        const SizedBox(height: 12),
-
-        const TaskCard(
-          colorTint: AppColors.backgroundPurple,
-          icon: CupertinoIcons.stopwatch,
-          badgeText: '1000 мин',
-          title: '1000 минут активности',
-          progressText: '618 из 1000 мин',
-          percent: 0.618,
-        ),
-        const SizedBox(height: 20),
-
-        const _SectionLabel('Экспедиции'),
-        const SizedBox(height: 8),
-
-        ExpeditionCard(
-          title: 'Суздаль',
-          progressText: '21 784 из 110 033 шагов',
-          percent: 0.198,
-          image: const _RoundImage(provider: AssetImage('assets/Suzdal.png')),
-          onTap: () {
-            Navigator.of(
-              context,
-              rootNavigator: true,
-            ).push(MaterialPageRoute(builder: (_) => const SuzdalScreen()));
-          },
-        ),
-        const SizedBox(height: 12),
-
-        const ExpeditionCard(
-          title: 'Монблан',
-          progressText: '3 521 из 4 810 метров',
-          percent: 0.732,
-          image: _RoundImage(provider: AssetImage('assets/Monblan.png')),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -152,8 +163,8 @@ class TaskCard extends StatelessWidget {
         color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          const BoxShadow(
+        boxShadow: const [
+          BoxShadow(
             color: AppColors.shadowSoft,
             blurRadius: 1,
             offset: Offset(0, 1),
@@ -246,8 +257,8 @@ class ExpeditionCard extends StatelessWidget {
         color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          const BoxShadow(
+        boxShadow: const [
+          BoxShadow(
             color: AppColors.shadowSoft,
             blurRadius: 1,
             offset: Offset(0, 1),
@@ -382,8 +393,8 @@ class _IconBadge extends StatelessWidget {
                 color: AppColors.surface,
                 border: Border.all(color: AppColors.border),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                boxShadow: [
-                  const BoxShadow(
+                boxShadow: const [
+                  BoxShadow(
                     color: AppColors.shadowSoft,
                     blurRadius: 1,
                     offset: Offset(0, 1),
@@ -405,7 +416,6 @@ class _IconBadge extends StatelessWidget {
 class _RoundImage extends StatelessWidget {
   final ImageProvider? provider;
   const _RoundImage({this.provider});
-
   const _RoundImage.placeholder() : provider = null;
 
   @override

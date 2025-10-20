@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../theme/app_theme.dart';
+import '../../../widgets/app_bar.dart';
 
 class AddEventScreen extends StatefulWidget {
   const AddEventScreen({super.key});
@@ -231,20 +232,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.surface,
-        appBar: AppBar(
-          title: const Text('Добавление события', style: AppTextStyles.h17w6),
-          centerTitle: true,
-          backgroundColor: AppColors.surface,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(CupertinoIcons.back),
-            onPressed: () => Navigator.pop(context),
-          ),
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
-            child: Divider(height: 1, thickness: 1, color: AppColors.border),
-          ),
-        ),
+        appBar: const PaceAppBar(title: 'Добавление события'),
+
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../../theme/app_theme.dart';
+import '../../../../../../../widgets/app_bar.dart'; // ← глобальный AppBar
 import 'my_results/my_results_screen.dart';
 import 'all_results/all_results_screen.dart';
 import 'members_route/members_route_screen.dart';
@@ -37,28 +38,9 @@ class RouteDescriptionScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(
-            CupertinoIcons.back,
-            size: 22,
-            color: AppColors.iconPrimary,
-          ),
-          onPressed: () => Navigator.maybePop(context),
-          tooltip: 'Назад',
-        ),
-        centerTitle: true,
-        title: const Text(
-          'Маршрут',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+      appBar: PaceAppBar(
+        title: 'Маршрут',
+        showBottomDivider: false, // ← без нижней линии
         actions: [
           IconButton(
             onPressed: () {},
@@ -143,7 +125,7 @@ class RouteDescriptionScreen extends StatelessWidget {
               height: 200,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
+              errorBuilder: (_, __, ___) => Container(
                 height: 200,
                 color: AppColors.skeletonBase,
                 alignment: Alignment.center,

@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'viewing_sneakers_content.dart'
+import '../sneakers/viewing_sneakers_content.dart'
     show GearViewCard; // теперь публичный класс
 
 class ViewingBikeContent extends StatelessWidget {

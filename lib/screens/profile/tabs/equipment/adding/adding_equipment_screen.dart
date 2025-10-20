@@ -1,8 +1,10 @@
+// lib/screens/.../adding_equipment_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../theme/app_theme.dart';
-import 'adding_bike_content.dart';
-import 'adding_sneakers_content.dart';
+import '../../../../../widgets/segmented_pill.dart'; // глобальная пилюля
+import 'tabs/adding_bike_content.dart';
+import 'tabs/adding_sneakers_content.dart';
 
 /// Экран «Добавить снаряжение»
 class AddingEquipmentScreen extends StatefulWidget {
@@ -13,7 +15,26 @@ class AddingEquipmentScreen extends StatefulWidget {
 }
 
 class _AddingEquipmentScreenState extends State<AddingEquipmentScreen> {
-  int _segment = 0; // 0 = Кроссовки, 1 = Велосипед
+  // motion-токены для табов (локально, чтобы не ловить undefined)
+  static const Duration _kTabAnim = Duration(milliseconds: 300);
+  static const Curve _kTabCurve = Curves.easeOutCubic;
+
+  /// 0 = Кроссовки, 1 = Велосипед
+  int _index = 0;
+
+  late final PageController _page;
+
+  @override
+  void initState() {
+    super.initState();
+    _page = PageController(initialPage: _index);
+  }
+
+  @override
+  void dispose() {
+    _page.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,32 +62,59 @@ class _AddingEquipmentScreenState extends State<AddingEquipmentScreen> {
             color: AppColors.iconPrimary,
           ),
         ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, thickness: 1, color: AppColors.border),
+        ),
       ),
       body: SafeArea(
-        bottom: false,
-        child: ListView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: Column(
           children: [
-            // ── Переключатель как в stats_tab.dart
-            Center(
-              child: _SegmentedPill2(
-                items: const ['Кроссовки', 'Велосипед'],
-                value: _segment,
-                onChanged: (v) => setState(() => _segment = v),
-                width: 280,
+            const SizedBox(height: 12),
+
+            // ── Пилюля как в segmented_pill.dart
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: SegmentedPill(
+                  left: 'Кроссовки',
+                  right: 'Велосипед',
+                  value: _index,
+                  width: 280,
+                  height: 40,
+                  duration: _kTabAnim,
+                  curve: _kTabCurve,
+                  haptics: true,
+                  onChanged: (v) {
+                    if (_index == v) return;
+                    setState(() => _index = v);
+                    _page.animateToPage(
+                      v,
+                      duration: _kTabAnim,
+                      curve: _kTabCurve,
+                    );
+                  },
+                ),
               ),
             ),
+
             const SizedBox(height: 16),
 
-            // ── Контент
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              child: _segment == 0
-                  ? const AddingSneakersContent(key: ValueKey('sneakers'))
-                  : const AddingBikeContent(key: ValueKey('bike')),
+            // ── Горизонтальный свайп между вкладками
+            Expanded(
+              child: PageView(
+                controller: _page,
+                physics: const BouncingScrollPhysics(),
+                allowImplicitScrolling: true,
+                onPageChanged: (i) {
+                  if (_index != i) setState(() => _index = i);
+                },
+                children: const [
+                  // Внутри каждого таба — вертикальный скролл и горизонтальные отступы
+                  _TabScroller(child: AddingSneakersContent()),
+                  _TabScroller(child: AddingBikeContent()),
+                ],
+              ),
             ),
           ],
         ),
@@ -75,61 +123,18 @@ class _AddingEquipmentScreenState extends State<AddingEquipmentScreen> {
   }
 }
 
-/// Пилюльный переключатель на 2 пункта — копия из stats_tab.dart
-class _SegmentedPill2 extends StatelessWidget {
-  final List<String> items;
-  final int value;
-  final double? width;
-  final ValueChanged<int> onChanged;
-  const _SegmentedPill2({
-    required this.items,
-    required this.value,
-    required this.onChanged,
-    this.width,
-  }) : assert(items.length == 2);
+/// Обёртка таба: вертикальный скролл + единые поля (16 слева/справа, 24 снизу)
+class _TabScroller extends StatelessWidget {
+  final Widget child;
+  const _TabScroller({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    final content = Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
-      child: Row(
-        children: [
-          Expanded(child: _seg(0, items[0])),
-          Expanded(child: _seg(1, items[1])),
-        ],
-      ),
-    );
-
-    if (width == null) return content;
-    return SizedBox(width: width, child: content);
-  }
-
-  Widget _seg(int idx, String text) {
-    final selected = value == idx;
-    return GestureDetector(
-      onTap: () => onChanged(idx),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.brandPrimary : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          text,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? AppColors.surface : AppColors.textPrimary,
-          ),
-        ),
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        child: child,
       ),
     );
   }

@@ -67,7 +67,10 @@ class PostCard extends StatelessWidget {
               // trailing — наша кнопка "…"
               trailing: IconButton(
                 key: menuKey,
-                icon: const Icon(CupertinoIcons.ellipsis),
+                icon: const Icon(
+                  CupertinoIcons.ellipsis,
+                  color: AppColors.iconPrimary,
+                ),
                 onPressed: () {
                   final items = <MoreMenuItem>[
                     MoreMenuItem(

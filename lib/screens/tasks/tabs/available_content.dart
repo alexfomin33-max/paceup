@@ -1,65 +1,75 @@
+// lib/screens/tabs/available_content.dart
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
-import '../swim_trip_screen.dart';
+import '../description/swim_trip_screen.dart';
 
 class AvailableContent extends StatelessWidget {
   const AvailableContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _MonthLabel('Июнь 2025'),
-        const SizedBox(height: 8),
-
-        const _AvailableGrid(
+    // Скролл + внутренние горизонтальные отступы
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AvailableTaskCard(
-              icon: Icons.pedal_bike,
-              badge: '200 км',
-              title: '200 км на велосипеде за июнь',
-              buttonText: 'Начать',
+            const _MonthLabel('Июнь 2025'),
+            const SizedBox(height: 8),
+
+            const _AvailableGrid(
+              children: [
+                AvailableTaskCard(
+                  icon: Icons.pedal_bike,
+                  badge: '200 км',
+                  title: '200 км на велосипеде за июнь',
+                  buttonText: 'Начать',
+                ),
+                AvailableTaskCard(
+                  icon: Icons.pool,
+                  badge: '10 км',
+                  title: 'Проплыть в июне 10 км',
+                  buttonText: 'Начать',
+                ),
+                AvailableTaskCard(
+                  icon: Icons.directions_walk,
+                  badge: '250 000',
+                  title: 'Сделать 250 000 шагов за июнь',
+                  buttonText: 'Начать',
+                ),
+              ],
             ),
-            AvailableTaskCard(
-              icon: Icons.pool,
-              badge: '10 км',
-              title: 'Проплыть в июне 10 км',
-              buttonText: 'Начать',
+            const SizedBox(height: 20),
+
+            const _SectionLabel('Экспедиции'),
+            const SizedBox(height: 8),
+
+            _AvailableGrid(
+              children: [
+                const AvailableExpeditionCard(
+                  imageProvider: AssetImage('assets/Travel_velo.png'),
+                  title: 'Путешествия на велосипеде',
+                  buttonText: 'Смотреть',
+                ),
+                AvailableExpeditionCard(
+                  imageProvider: const AssetImage('assets/Travel_swim.png'),
+                  title: 'Плавательное приключение',
+                  buttonText: 'Смотреть',
+                  onPressed: () {
+                    Navigator.of(context, rootNavigator: true).push(
+                      MaterialPageRoute(builder: (_) => const SwimTripScreen()),
+                    );
+                  },
+                ),
+              ],
             ),
-            AvailableTaskCard(
-              icon: Icons.directions_walk,
-              badge: '250 000',
-              title: 'Сделать 250 000 шагов за июнь',
-              buttonText: 'Начать',
-            ),
+
+            const SizedBox(height: 16),
           ],
         ),
-        const SizedBox(height: 20),
-
-        const _SectionLabel('Экспедиции'),
-        const SizedBox(height: 8),
-
-        _AvailableGrid(
-          children: [
-            const AvailableExpeditionCard(
-              imageProvider: AssetImage('assets/Travel_velo.png'),
-              title: 'Путешествия на велосипеде',
-              buttonText: 'Смотреть',
-            ),
-            AvailableExpeditionCard(
-              imageProvider: const AssetImage('assets/Travel_swim.png'),
-              title: 'Плавательное приключение',
-              buttonText: 'Смотреть',
-              onPressed: () {
-                Navigator.of(context, rootNavigator: true).push(
-                  MaterialPageRoute(builder: (_) => const SwimTripScreen()),
-                );
-              },
-            ),
-          ],
-        ),
-      ],
+      ),
     );
   }
 }
@@ -111,7 +121,7 @@ class _AvailableGrid extends StatelessWidget {
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
       childAspectRatio: 0.92,
-      physics: const NeverScrollableScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(), // скроллит общий SCSV
       shrinkWrap: true,
       children: children,
     );
@@ -141,8 +151,8 @@ class AvailableTaskCard extends StatelessWidget {
         color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          const BoxShadow(
+        boxShadow: const [
+          BoxShadow(
             color: AppColors.shadowSoft,
             blurRadius: 1,
             offset: Offset(0, 1),
@@ -196,8 +206,8 @@ class AvailableExpeditionCard extends StatelessWidget {
         color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          const BoxShadow(
+        boxShadow: const [
+          BoxShadow(
             color: AppColors.shadowSoft,
             blurRadius: 1,
             offset: Offset(0, 1),
@@ -264,8 +274,8 @@ class _SmallCircleBadgeIcon extends StatelessWidget {
               color: AppColors.surface,
               border: Border.all(color: AppColors.border),
               borderRadius: BorderRadius.circular(AppRadius.md),
-              boxShadow: [
-                const BoxShadow(
+              boxShadow: const [
+                BoxShadow(
                   color: AppColors.shadowSoft,
                   blurRadius: 1,
                   offset: Offset(0, 1),

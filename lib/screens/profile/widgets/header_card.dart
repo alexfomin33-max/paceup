@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import '../../../theme/app_theme.dart';
 import '../edit_profile_screen.dart';
-import '../state/subscribe/communication_prefs.dart';
+import '../state/subscribe/communication_screen.dart';
 import '../../../models/user_profile_header.dart';
 
 class HeaderCard extends StatelessWidget {

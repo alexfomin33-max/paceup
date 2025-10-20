@@ -1,9 +1,20 @@
+// lib/screens/profile/tabs/equipment/equipment_tab.dart
+// ─────────────────────────────────────────────────────────────────────────────
+//                                Вкладка «Снаряжение»
+//  Изменения:
+//  • Заменена локальная кнопка ElevatedButton.icon на глобальный виджет
+//    PrimaryButton (lib/widgets/primary_button.dart) с тем же визуалом.
+//  • Остальной код без функциональных изменений.
+// ─────────────────────────────────────────────────────────────────────────────
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
-import '../../state/gear_prefs.dart';
+import '../../state/gear_screen.dart';
 import 'adding/adding_equipment_screen.dart';
 import 'viewing/viewing_equipment_screen.dart';
+// ↓ Глобальная бренд-кнопка
+import '../../../../widgets/primary_button.dart';
 
 class GearTab extends StatefulWidget {
   const GearTab({super.key});
@@ -15,6 +26,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
+  // ────────────────────────── Демо-данные
   static const _shoes = <_GearItem>[
     _GearItem(
       title: "Asics Jolt 3 Wide",
@@ -101,14 +113,17 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
             child: const _GearListCard(items: _bikes),
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 16)),
+        const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-        // ─── Кнопка "Добавить снаряжение"
+        // ─── Кнопка "Добавить снаряжение" (теперь глобальный PrimaryButton)
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Center(
-              child: ElevatedButton.icon(
+              child: PrimaryButton(
+                text: 'Добавить снаряжение',
+                // Иконку даём через leading (цвет возьмётся от кнопки, задавать не надо)
+                leading: const Icon(CupertinoIcons.plus_circle, size: 18),
                 onPressed: () {
                   Navigator.of(context).push(
                     CupertinoPageRoute(
@@ -116,25 +131,8 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
                     ),
                   );
                 },
-                icon: const Icon(CupertinoIcons.plus_circle, size: 18),
-                label: const Text(
-                  'Добавить снаряжение',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.brandPrimary,
-                  foregroundColor: AppColors.surface,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  shape: const StadiumBorder(),
-                ),
+                // width: 260, // ← если нужна фиксированная ширина, раскомментируй
+                // expanded: true, // ← или растянуть на всю ширину
               ),
             ),
           ),
@@ -163,6 +161,7 @@ class _SectionHeaderWithToggle extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
+          const SizedBox(width: 2),
           Expanded(
             child: Text(
               title,
@@ -262,6 +261,7 @@ class _GearListCard extends StatelessWidget {
   }
 }
 
+// ───────────────────── Модель элемента снаряжения
 class _GearItem {
   final String title;
   final String asset;

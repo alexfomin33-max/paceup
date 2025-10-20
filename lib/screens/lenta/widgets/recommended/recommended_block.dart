@@ -40,7 +40,7 @@ class _RecommendedList extends StatelessWidget {
         children: const [
           _FriendCard(
             name: 'Екатерина Виноградова',
-            desc: '36 лет, Санкт-Петербург',
+            desc: '27 лет, Санкт-Петербург',
             mutual: '6 общих друзей',
             avatarAsset: 'assets/recommended_1.png',
           ),
@@ -54,7 +54,7 @@ class _RecommendedList extends StatelessWidget {
           SizedBox(width: 12),
           _FriendCard(
             name: 'Евгения Миронова',
-            desc: '29 лет, Иваново',
+            desc: '25 лет, Иваново',
             mutual: '3 общих друга',
             avatarAsset: 'assets/recommended_3.png',
           ),
@@ -127,13 +127,15 @@ class _FriendCard extends StatelessWidget {
               onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.brandPrimary,
+                foregroundColor: AppColors.surface,
+                elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
               ),
               child: const Text(
                 'Подписаться',
-                style: TextStyle(color: AppColors.surface),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
             ),
           ),

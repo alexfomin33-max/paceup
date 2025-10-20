@@ -14,6 +14,7 @@ import '../widgets/activity/route/route_card.dart' as ab show RouteCard;
 // Модель — через алиас, чтобы не конфликтовало имя Equipment
 import '../../../models/activity_lenta.dart' as al;
 import 'combining_screen.dart';
+import '../../../widgets/app_bar.dart';
 
 /// Страница с подробным описанием тренировки.
 /// Верхний блок (аватар, дата, метрики) полностью повторяет ActivityBlock.
@@ -44,21 +45,10 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-        centerTitle: true,
-        title: const Text('Тренировка', style: AppTextStyles.h17w6),
-        leading: IconButton(
-          splashRadius: 22,
-          icon: const Icon(
-            CupertinoIcons.back,
-            size: 22,
-            color: AppColors.iconPrimary,
-          ),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
+      appBar: PaceAppBar(
+        title: 'Тренировка',
+        showBottomDivider:
+            false, // чтобы не было двойной линии со следующим блоком
         actions: [
           IconButton(
             splashRadius: 22,
@@ -84,6 +74,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
           ),
         ],
       ),
+
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [

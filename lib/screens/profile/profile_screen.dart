@@ -18,8 +18,8 @@ import 'tabs/awards/awards_tab.dart';
 import 'tabs/skills/skills_tab.dart';
 
 // общий стейт видимости снаряжения
-import 'state/gear_prefs.dart';
-import 'state/search/search_prefs.dart';
+import 'state/gear_screen.dart';
+import 'state/search/search_screen.dart';
 
 // 👉 экран настроек
 import 'settings_screen.dart';

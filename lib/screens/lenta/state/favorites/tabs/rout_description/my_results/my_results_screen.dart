@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../../../theme/app_theme.dart';
+import '../../../../../../../../widgets/app_bar.dart';
 
 /// Экран: Мои результаты для выбранного маршрута
 /// Шапка — как в rout_description_screen.dart (без кнопки "три точки").
@@ -22,30 +23,13 @@ class MyResultsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(
-            CupertinoIcons.back,
-            size: 22,
-            color: AppColors.iconPrimary,
-          ),
-          onPressed: () => Navigator.maybePop(context),
-          tooltip: 'Назад',
-        ),
-        centerTitle: true,
-        title: const Text(
-          'Мои результаты',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        // actions: [] — убрано по требованию
+
+      // ─── глобальная шапка без нижнего бордера ───
+      appBar: const PaceAppBar(
+        title: 'Мои результаты',
+        showBottomDivider: false,
       ),
+
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -83,7 +67,7 @@ class MyResultsScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4),
             sliver: SliverList.separated(
               itemCount: _items.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 2),
+              separatorBuilder: (_, __) => const SizedBox(height: 2),
               itemBuilder: (context, i) => _ResultCard(e: _items[i]),
             ),
           ),
@@ -167,7 +151,7 @@ class _ResultRow extends StatelessWidget {
               width: 90,
               height: 60,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
+              errorBuilder: (_, __, ___) => Container(
                 width: 90,
                 height: 60,
                 color: AppColors.skeletonBase,

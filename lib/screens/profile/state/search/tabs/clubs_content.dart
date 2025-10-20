@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../theme/app_theme.dart';
+import '../../../../../widgets/primary_button.dart'; // ← подключаем глобальную кнопку
 
 /// Контент вкладки «Клубы»
 /// Табличный список «в одну коробку» (как на карте/в маршрутных списках).
@@ -64,32 +65,20 @@ class SearchClubsContent extends StatelessWidget {
           ),
         ),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 16)),
+        const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-        // ───── «Создать клуб»
+        // ───── «Создать клуб» — глобальная кнопка PrimaryButton
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Center(
-              child: SizedBox(
+              child: PrimaryButton(
+                text: 'Создать клуб',
+                onPressed: () {
+                  // TODO: экшен создания клуба
+                },
                 width: 220, // как у «Пригласить»
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.brandPrimary,
-                    foregroundColor: AppColors.surface,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 26,
-                      vertical: 12,
-                    ),
-                    shape: const StadiumBorder(),
-                  ),
-                  child: const Text(
-                    'Создать клуб',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                  ),
-                ),
+                // expanded: true, // ← если когда-нибудь понадобится на всю ширину
               ),
             ),
           ),
@@ -119,7 +108,7 @@ class _ClubRow extends StatelessWidget {
               width: 80,
               height: 55,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
+              errorBuilder: (_, __, ___) => Container(
                 width: 80,
                 height: 55,
                 color: AppColors.skeletonBase,

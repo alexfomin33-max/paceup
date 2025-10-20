@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../../../../../../theme/app_theme.dart';
 
 class ViewingSneakersContent extends StatelessWidget {
   const ViewingSneakersContent({super.key});
@@ -104,6 +104,7 @@ class GearViewCard extends StatelessWidget {
                             fontFamily: 'Inter',
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         TextSpan(
@@ -112,6 +113,7 @@ class GearViewCard extends StatelessWidget {
                             fontFamily: 'Inter',
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ],
@@ -176,12 +178,19 @@ class GearViewCard extends StatelessWidget {
             child: Center(
               child: RichText(
                 text: TextSpan(
-                  style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
                   children: [
                     const TextSpan(text: 'Пробег '),
                     TextSpan(
                       text: '$km',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     const TextSpan(text: ' км'),
                   ],

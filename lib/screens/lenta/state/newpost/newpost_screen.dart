@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
 
 /// 👉 ЗАМЕНИ на свой URL эндпоинта создания поста
 const String kCreatePostUrl = 'http://api.paceup.ru/create_post.php';
@@ -65,16 +66,10 @@ class _NewPostScreenState extends State<NewPostScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.surface,
-        appBar: AppBar(
-          title: const Text('Новый пост', style: AppTextStyles.h17w6),
-          centerTitle: true,
-          backgroundColor: AppColors.surface,
-          elevation: 0,
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
-            child: Divider(height: 1, thickness: 1, color: AppColors.border),
-          ),
-        ),
+
+        // ───── глобальная шапка
+        appBar: const PaceAppBar(title: 'Новый пост'),
+
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(

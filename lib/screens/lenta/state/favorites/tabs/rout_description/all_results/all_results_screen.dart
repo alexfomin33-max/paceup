@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../../../theme/app_theme.dart';
+import '../../../../../../../../widgets/app_bar.dart';
 
 class AllResultsScreen extends StatefulWidget {
   final int routeId;
@@ -32,29 +33,11 @@ class _AllResultsScreenState extends State<AllResultsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(
-            CupertinoIcons.back,
-            size: 22,
-            color: AppColors.iconPrimary,
-          ),
-          onPressed: () => Navigator.maybePop(context),
-          tooltip: 'Назад',
-        ),
-        centerTitle: true,
-        title: const Text(
-          'Общие результаты',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+      appBar: const PaceAppBar(
+        title: 'Общие результаты',
+        showBottomDivider: false, // ← без нижней линии
       ),
+
       body: Column(
         children: [
           // ── подшапка в стиле my_results_screen.dart

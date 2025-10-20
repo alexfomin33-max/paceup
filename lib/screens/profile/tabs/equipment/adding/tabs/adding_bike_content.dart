@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../../../../../theme/app_theme.dart';
+import '../../../../../../widgets/primary_button.dart'; // ← глобальная бренд-кнопка
 
 /// Контент для сегмента «Велосипед»
 class AddingBikeContent extends StatefulWidget {
@@ -197,28 +198,12 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
 
         const SizedBox(height: 20),
 
+        // ─────────────── Кнопка «Сохранить» — глобальный PrimaryButton ───────────────
         Center(
-          child: ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Сохранено (пока без API)')),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.brandPrimary,
-              foregroundColor: AppColors.surface,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 70, vertical: 14),
-              shape: const StadiumBorder(),
-            ),
-            child: const Text(
-              'Сохранить',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          child: PrimaryButton(
+            text: 'Сохранить',
+            onPressed: () {},
+            width: 220, // унифицированная ширина, как и в кроссовках
           ),
         ),
       ],

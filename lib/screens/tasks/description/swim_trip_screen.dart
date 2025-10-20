@@ -1,7 +1,7 @@
 // lib/screens/swim_trip_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
+import '../../../theme/app_theme.dart';
 
 class SwimTripScreen extends StatelessWidget {
   const SwimTripScreen({super.key});

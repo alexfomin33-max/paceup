@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../../../../../theme/app_theme.dart';
+import '../../../../../../widgets/primary_button.dart'; // ← глобальная бренд-кнопка
 
 /// Контент для сегмента «Кроссовки»
 class AddingSneakersContent extends StatefulWidget {
@@ -11,6 +12,9 @@ class AddingSneakersContent extends StatefulWidget {
 }
 
 class _AddingSneakersContentState extends State<AddingSneakersContent> {
+  // ─────────────────────────────────────────────────────────────────────
+  //                             КОНТРОЛЛЕРЫ
+  // ─────────────────────────────────────────────────────────────────────
   final _brandCtrl = TextEditingController(text: 'Nike');
   final _modelCtrl = TextEditingController(text: 'Air Zoom');
   final _kmCtrl = TextEditingController(text: '250');
@@ -24,6 +28,9 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
     super.dispose();
   }
 
+  // ─────────────────────────────────────────────────────────────────────
+  //                           ВЫБОР ДАТЫ (iOS)
+  // ─────────────────────────────────────────────────────────────────────
   Future<void> _pickDate() async {
     await showCupertinoModalPopup(
       context: context,
@@ -62,6 +69,7 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
                 endIndent: 12,
               ),
 
+              // Сам пикер
               Expanded(
                 child: CupertinoDatePicker(
                   mode: CupertinoDatePickerMode.date,
@@ -78,6 +86,9 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
     setState(() {});
   }
 
+  // ─────────────────────────────────────────────────────────────────────
+  //                           ФОРМАТТЕРЫ
+  // ─────────────────────────────────────────────────────────────────────
   String get _dateLabel {
     final d = _inUseFrom;
     final dd = d.day.toString().padLeft(2, '0');
@@ -86,11 +97,14 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
     return '$dd.$mm.$yy';
   }
 
+  // ─────────────────────────────────────────────────────────────────────
+  //                                 UI
+  // ─────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // ── Карточка
+        // ───────────────────────── Карточка ─────────────────────────
         Container(
           decoration: BoxDecoration(
             color: AppColors.surface,
@@ -200,29 +214,12 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
 
         const SizedBox(height: 20),
 
-        // ── Кнопка «Сохранить» по контенту
+        // ─────────────────── Кнопка «Сохранить» (унифицированная) ───────────────────
         Center(
-          child: ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Сохранено (пока без API)')),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.brandPrimary,
-              foregroundColor: AppColors.surface,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 70, vertical: 14),
-              shape: const StadiumBorder(),
-            ),
-            child: const Text(
-              'Сохранить',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          child: PrimaryButton(
+            text: 'Сохранить',
+            onPressed: () {},
+            width: 220, // ← единая ширина, как у «Пригласить»
           ),
         ),
       ],
@@ -230,7 +227,7 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
   }
 }
 
-/// Левая метка + правый виджет
+/// ───────────────────── Левая метка + правый виджет ─────────────────────
 class _FieldRow extends StatelessWidget {
   final String title;
   final Widget child;
@@ -273,7 +270,7 @@ class _FieldRow extends StatelessWidget {
   }
 }
 
-/// Правый «плоский» TextField без рамки
+/// ───────────────────── Правый «плоский» TextField без рамки ─────────────────────
 class _RightTextField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;

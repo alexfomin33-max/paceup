@@ -1,33 +1,24 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../../../theme/app_theme.dart';
 
-/// Вкладка «Подписчики»
-class SubscribersContent extends StatelessWidget {
+/// Вкладка «Подписки» — список в том же «табличном» стиле, что friends_content.dart
+class SubscriptionsContent extends StatelessWidget {
   final String query;
-  const SubscribersContent({super.key, required this.query});
+  const SubscriptionsContent({super.key, required this.query});
 
-  // followBack = я уже подписан в ответ (иконка красная X для «отписаться»),
-  // иначе — синяя «плюс» (подписаться в ответ).
-  static const _people = <_Follower>[
-    _Follower('Алексей Лукашин', 35, 'Владимир', 'assets/avatar_1.png', true),
-    _Follower('Татьяна Свиридова', 39, 'Владимир', 'assets/avatar_3.png', true),
-    _Follower('Борис Жарких', 40, 'Владимир', 'assets/avatar_2.png', true),
-    _Follower(
-      'Александр Палаткин',
-      38,
-      'Воронеж',
-      'assets/avatar_6.png',
-      false,
-    ),
-    _Follower(
+  static const _people = <_Person>[
+    _Person('Алексей Лукашин', 35, 'Владимир', 'assets/avatar_1.png'),
+    _Person('Татьяна Свиридова', 39, 'Владимир', 'assets/avatar_3.png'),
+    _Person('Борис Жарких', 40, 'Владимир', 'assets/avatar_2.png'),
+    _Person('Юрий Селиванов', 37, 'Москва', 'assets/avatar_5.png'),
+    _Person(
       'Екатерина Виноградова',
       30,
       'Санкт-Петербург',
       'assets/avatar_4.png',
-      true,
     ),
-    _Follower('Светлана Никитина', 35, 'Ростов', 'assets/avatar_8.png', false),
+    _Person('Анастасия Бутузова', 35, 'Ярославль', 'assets/avatar_9.png'),
   ];
 
   @override
@@ -48,6 +39,7 @@ class SubscribersContent extends StatelessWidget {
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
+        // Табличный блок
         SliverToBoxAdapter(
           child: Container(
             decoration: const BoxDecoration(
@@ -60,8 +52,11 @@ class SubscribersContent extends StatelessWidget {
             child: Column(
               children: List.generate(items.length, (i) {
                 final p = items[i];
-                final trailing = p.followBack
-                    ? IconButton(
+                return Column(
+                  children: [
+                    _RowTile(
+                      person: p,
+                      trailing: IconButton(
                         onPressed: () {},
                         splashRadius: 24,
                         icon: const Icon(
@@ -69,20 +64,8 @@ class SubscribersContent extends StatelessWidget {
                           size: 26,
                           color: AppColors.error,
                         ),
-                      )
-                    : IconButton(
-                        onPressed: () {},
-                        splashRadius: 24,
-                        icon: const Icon(
-                          CupertinoIcons.person_crop_circle_badge_plus,
-                          size: 26,
-                          color: AppColors.brandPrimary,
-                        ),
-                      );
-
-                return Column(
-                  children: [
-                    _RowTile(person: p, trailing: trailing),
+                      ),
+                    ),
                     if (i != items.length - 1)
                       const Divider(
                         height: 1,
@@ -103,7 +86,7 @@ class SubscribersContent extends StatelessWidget {
 }
 
 class _RowTile extends StatelessWidget {
-  final _Follower person;
+  final _Person person;
   final Widget trailing;
   const _RowTile({required this.person, required this.trailing});
 
@@ -168,11 +151,10 @@ class _RowTile extends StatelessWidget {
   }
 }
 
-class _Follower {
+class _Person {
   final String name;
   final int age;
   final String city;
   final String avatar;
-  final bool followBack; // я подписан на него в ответ
-  const _Follower(this.name, this.age, this.city, this.avatar, this.followBack);
+  const _Person(this.name, this.age, this.city, this.avatar);
 }

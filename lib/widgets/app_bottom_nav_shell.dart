@@ -21,14 +21,16 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
   static const TextStyle tabTextStyle = TextStyle(fontSize: 10);
   static const double navIconSize = 22.0;
 
+  // Цвета для активного/неактивного состояний
+  static const Color _active = AppColors.brandPrimary;
+  static const Color _inactive = AppColors.textSecondary;
+
   // отдельные стеки навигации для каждой вкладки
   final _navKeys = List.generate(5, (_) => GlobalKey<NavigatorState>());
 
   void _onTabChanged(int index) {
     // ВСЕГДА возвращаем выбранную вкладку на корень
     _navKeys[index].currentState?.popUntil((r) => r.isFirst);
-    // setState тут не обязателен (PersistentTabView сам управляет индексом),
-    // но не мешает, если используешь локальный индекс где-то ещё.
     setState(() {});
   }
 
@@ -44,7 +46,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
   Widget build(BuildContext context) {
     return PersistentTabView(
       backgroundColor: AppColors.surface,
-      onTabChanged: _onTabChanged, // <— важное место
+      onTabChanged: _onTabChanged,
 
       tabs: [
         PersistentTabConfig(
@@ -53,6 +55,8 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
             icon: const Icon(CupertinoIcons.news, size: navIconSize),
             title: "Лента",
             textStyle: tabTextStyle,
+            activeForegroundColor: _active,
+            inactiveForegroundColor: _inactive,
           ),
         ),
         PersistentTabConfig(
@@ -61,6 +65,8 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
             icon: const Icon(CupertinoIcons.placemark, size: navIconSize),
             title: "Карта",
             textStyle: tabTextStyle,
+            activeForegroundColor: _active,
+            inactiveForegroundColor: _inactive,
           ),
         ),
         PersistentTabConfig(
@@ -69,6 +75,8 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
             icon: const Icon(CupertinoIcons.shopping_cart, size: navIconSize),
             title: "Маркет",
             textStyle: tabTextStyle,
+            activeForegroundColor: _active,
+            inactiveForegroundColor: _inactive,
           ),
         ),
         PersistentTabConfig(
@@ -77,6 +85,8 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
             icon: const Icon(CupertinoIcons.scope, size: navIconSize),
             title: "Задачи",
             textStyle: tabTextStyle,
+            activeForegroundColor: _active,
+            inactiveForegroundColor: _inactive,
           ),
         ),
         PersistentTabConfig(
@@ -85,6 +95,8 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
             icon: const Icon(CupertinoIcons.person, size: navIconSize),
             title: "Профиль",
             textStyle: tabTextStyle,
+            activeForegroundColor: _active,
+            inactiveForegroundColor: _inactive,
           ),
         ),
       ],

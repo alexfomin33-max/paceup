@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../theme/app_theme.dart';
+import '../../../../../widgets/primary_button.dart'; // ← подключаем глобальную кнопку
 
 /// Контент вкладки «Друзья»
 /// Переключатели уже в родительском экране. Здесь — секция и «табличный» блок.
@@ -43,7 +44,7 @@ class SearchFriendsContent extends StatelessWidget {
           child: _SectionTitle('Рекомендованные друзья'),
         ),
 
-        // ───── Табличный блок как в 200k_run_screen: белый фон, тонкие линии сверху/снизу и разделители между строками
+        // ───── Табличный блок: белый фон, тонкие линии сверху/снизу и разделители
         SliverToBoxAdapter(
           child: Container(
             decoration: const BoxDecoration(
@@ -94,30 +95,16 @@ class SearchFriendsContent extends StatelessWidget {
 
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-        // ───── Широкая кнопка «Пригласить»
+        // ───── Широкая кнопка «Пригласить» (глобальный виджет)
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Center(
-              child: SizedBox(
-                width: 220, // одинаковая ширина с кнопкой «Создать клуб»
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.brandPrimary,
-                    foregroundColor: AppColors.surface,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 28,
-                      vertical: 12,
-                    ),
-                    shape: const StadiumBorder(),
-                  ),
-                  child: const Text(
-                    'Пригласить',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                  ),
-                ),
+              child: PrimaryButton(
+                text: 'Пригласить',
+                onPressed: () {},
+                width: 220, // одинаковая ширина с «Создать клуб»
+                // expanded: true, // если вдруг нужно на всю ширину
               ),
             ),
           ),
@@ -146,7 +133,7 @@ class _FriendRow extends StatelessWidget {
               width: 40,
               height: 40,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
+              errorBuilder: (_, __, ___) => Container(
                 width: 40,
                 height: 40,
                 color: AppColors.skeletonBase,
@@ -189,7 +176,7 @@ class _FriendRow extends StatelessWidget {
             splashRadius: 24,
             icon: const Icon(
               CupertinoIcons.person_crop_circle_badge_plus,
-              size: 26, // можно 28, если хочется ещё крупнее
+              size: 26,
               color: AppColors.brandPrimary,
             ),
           ),

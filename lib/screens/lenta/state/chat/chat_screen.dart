@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -44,23 +45,11 @@ class _ChatScreenState extends State<ChatScreen> {
       onHorizontalDragEnd: _onHorizontalDrag,
       child: Scaffold(
         backgroundColor: AppColors.surface,
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: AppColors.surface,
-          surfaceTintColor: Colors.transparent,
-          centerTitle: true,
-          leadingWidth: 60,
-          leading: IconButton(
-            splashRadius: 22,
-            icon: const Icon(
-              CupertinoIcons.back,
-              size: 22,
-              color: AppColors.iconPrimary,
-            ),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          title: const Text('Чаты', style: AppTextStyles.h17w6),
-          actions: const [
+
+        // ─── Глобальный AppBar ───
+        appBar: const PaceAppBar(
+          title: 'Чаты',
+          actions: [
             Padding(
               padding: EdgeInsets.only(right: 12),
               child: Icon(
@@ -70,21 +59,14 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ],
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(0.5),
-            child: Divider(
-              height: 0.5,
-              thickness: 0.5,
-              color: AppColors.border,
-            ),
-          ),
         ),
+
         body: ListView.separated(
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
           ),
           itemCount: _items.length,
-          separatorBuilder: (_, _) => const Divider(
+          separatorBuilder: (_, __) => const Divider(
             height: 1,
             thickness: 0.5,
             color: AppColors.border,
@@ -151,8 +133,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 height: 8,
                                 margin: const EdgeInsets.only(left: 8),
                                 decoration: const BoxDecoration(
-                                  color:
-                                      AppColors.brandPrimary, // синий индикатор
+                                  color: AppColors.brandPrimary,
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -222,7 +203,7 @@ List<_Chat> _demo() {
     ),
     _Chat(
       name: 'Женский забег "Медный Всадник"',
-      avatar: 'assets/slot_7.png', // заменитель баннера события
+      avatar: 'assets/slot_7.png',
       preview: 'Никто не знает, когда выложат программу забега?',
       when: DateTime(now.year, 3, 20),
       unread: false,
