@@ -51,10 +51,6 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
     _page.animateToPage(i, duration: _kTabAnim, curve: _kTabCurve);
   }
 
-  void _onPageChanged(int i) {
-    if (_index != i) setState(() => _index = i);
-  }
-
   @override
   Widget build(BuildContext context) {
     final query = _controller.text.trim();
@@ -108,7 +104,10 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
               controller: _page,
               physics: const BouncingScrollPhysics(),
               allowImplicitScrolling: true,
-              onPageChanged: _onPageChanged,
+              onPageChanged: (i) {
+                if (_index == i) return; // гард от лишнего setState
+                setState(() => _index = i);
+              },
               children: [
                 // ключи сохраняют вертикальный скролл внутри вкладок
                 _PageKeepAlive(
@@ -176,8 +175,8 @@ class _SearchField extends StatelessWidget {
         controller: controller,
         focusNode: focusNode,
         onChanged: onChanged,
-        cursorColor: AppColors.brandPrimary,
-        style: const TextStyle(fontFamily: 'Inter', fontSize: 16),
+        cursorColor: AppColors.textSecondary,
+        style: const TextStyle(fontFamily: 'Inter', fontSize: 15),
         decoration: InputDecoration(
           prefixIcon: const Icon(
             CupertinoIcons.search,
@@ -195,18 +194,15 @@ class _SearchField extends StatelessWidget {
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.outline, width: 1),
+            borderSide: const BorderSide(color: AppColors.border),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.outline, width: 1),
+            borderSide: const BorderSide(color: AppColors.border),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              color: AppColors.brandPrimary,
-              width: 1.2,
-            ),
+            borderSide: const BorderSide(color: AppColors.outline),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
         ),

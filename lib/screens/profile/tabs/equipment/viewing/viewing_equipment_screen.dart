@@ -72,7 +72,7 @@ class _ViewingEquipmentScreenState extends State<ViewingEquipmentScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
             // ── Пилюля как segmented_pill.dart
             Padding(

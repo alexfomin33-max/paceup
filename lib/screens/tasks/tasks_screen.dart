@@ -43,13 +43,12 @@ class _TasksScreenState extends State<TasksScreen> {
       appBar: const PaceAppBar(
         title: 'Задачи',
         showBack: false, // на этом экране «назад» не нужен
-        // showBottomDivider: true, // по умолчанию включён
       ),
 
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
             // Пилюля как глобальный виджет
             Padding(
@@ -86,7 +85,8 @@ class _TasksScreenState extends State<TasksScreen> {
                 physics: const BouncingScrollPhysics(),
                 allowImplicitScrolling: true,
                 onPageChanged: (i) {
-                  if (_index != i) setState(() => _index = i);
+                  if (_index == i) return; // гард от лишних setState
+                  setState(() => _index = i);
                 },
                 children: const [
                   ActiveContent(key: PageStorageKey('tasks_active')),

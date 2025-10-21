@@ -112,12 +112,13 @@ class _SearchPrefsPageState extends State<SearchPrefsPage> {
             child: PageView(
               controller: _page,
               physics: const BouncingScrollPhysics(),
+              allowImplicitScrolling: true, // советую включить и здесь
               onPageChanged: (i) {
-                // Свайп страницы → обновляем пилюлю и чистим строку
+                if (_index == i) return; // гард от лишнего перерендера
                 setState(() {
                   _index = i;
-                  _controller.clear();
-                  _focus.unfocus();
+                  _controller.clear(); // очищаем строку поиска
+                  _focus.unfocus(); // убираем клавиатуру/фокус
                 });
               },
               children: [

@@ -19,7 +19,7 @@ class HeaderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.surface,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -100,7 +100,7 @@ class HeaderCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 0),
                 Text(_subtitleFrom(profile) ?? '', style: AppTextStyles.h13w4),
                 const SizedBox(height: 8),
                 Row(
@@ -118,7 +118,7 @@ class HeaderCard extends StatelessWidget {
                         );
                       },
                     ),
-                    const SizedBox(width: 18),
+                    const SizedBox(width: 24),
                     _FollowStat(
                       label: 'Подписчики',
                       value: (profile?.followers ?? '').toString(),
