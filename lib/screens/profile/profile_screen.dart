@@ -1,6 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import '../../theme/app_theme.dart';
+import '../../widgets/app_bar.dart'; // ← наш глобальный AppBar
 
 // общие виджеты
 import 'widgets/header_card.dart';
@@ -21,11 +25,9 @@ import 'tabs/skills/skills_tab.dart';
 import 'state/gear_screen.dart';
 import 'state/search/search_screen.dart';
 
-// 👉 экран настроек
+// экран настроек
 import 'settings_screen.dart';
 
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../../models/user_profile_header.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -54,6 +56,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   UserProfileHeader? _profileHeader;
 
+  int _tab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileHeader();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _gearPrefs.dispose();
+    super.dispose();
+  }
+
   Map<String, dynamic> _safeDecodeJsonAsMap(List<int> bodyBytes) {
     final raw = utf8.decode(bodyBytes);
     final cleaned = raw.replaceFirst(RegExp(r'^\uFEFF'), '').trim();
@@ -64,12 +81,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadProfileHeader() async {
     try {
-      final uri = Uri.parse(
-        'http://api.paceup.ru/user_profile_header.php',
-      ); // свой путь
-      final payload = {
-        'user_id': widget.userId, // ← отправляем userId в JSON
-      };
+      final uri = Uri.parse('http://api.paceup.ru/user_profile_header.php');
+      final payload = {'user_id': widget.userId};
 
       final res = await http
           .post(
@@ -77,7 +90,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             headers: const {
               'Content-Type': 'application/json; charset=utf-8',
               'Accept': 'application/json',
-              // 'Authorization': 'Bearer <token>', // если нужно
             },
             body: jsonEncode(payload),
           )
@@ -88,13 +100,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       final map = _safeDecodeJsonAsMap(res.bodyBytes);
-
-      // Поддержим разные обертки ответа:
-      // { ...поля профиля... }   ИЛИ   { "data": { ... } }   ИЛИ   { "profile": { ... } }
       final dynamic raw = map['profile'] ?? map['data'] ?? map;
-      if (raw is! Map) {
+      if (raw is! Map)
         throw const FormatException('Bad payload: not a JSON object');
-      }
 
       setState(() {
         _profileHeader = UserProfileHeader.fromJson(
@@ -103,17 +111,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     } catch (e, st) {
       debugPrint('Profile load error: $e\n$st');
-      // Не рушим верстку: оставим заглушки из HeaderCard как есть
     }
   }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProfileHeader();
-  }
-
-  int _tab = 0;
 
   void _onTabTap(int i) {
     if (_tab == i) return;
@@ -128,129 +127,114 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _onPageChanged(int i) => setState(() => _tab = i);
 
   @override
-  void dispose() {
-    _pageController.dispose();
-    _gearPrefs.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // Вариант без «прилипания» TabsBar: он скроллится вместе со страницей
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          // Закреплённый AppBar
-          SliverAppBar(
-            backgroundColor: AppColors.surface,
-            pinned: true,
-            elevation: 0,
-            centerTitle: false,
-            titleSpacing: 8,
-            title: const Row(
-              children: [
-                Icon(
-                  CupertinoIcons.sparkles,
-                  size: 18,
-                  color: AppColors.iconPrimary,
-                ),
-                SizedBox(width: 8),
-                Text(
-                  'AI тренер',
-                  style: TextStyle(fontFamily: 'Inter', fontSize: 16),
-                ),
-                SizedBox(width: 6),
-              ],
+
+      // ─────────── Верхняя шапка: обычный, плоский PaceAppBar ───────────
+      appBar: PaceAppBar(
+        // Тот же заголовок с иконкой «AI тренер», но без стекла/прозрачности
+        titleWidget: const Row(
+          children: [
+            Icon(
+              CupertinoIcons.sparkles,
+              size: 18,
+              color: AppColors.iconPrimary,
             ),
-            // actions теперь НЕ const, чтобы передать колбэк
-            actions: [
-              const _AppIcon(CupertinoIcons.square_arrow_up),
-              _AppIcon(
-                CupertinoIcons.person_badge_plus,
-                onPressed: () {
-                  Navigator.of(context).push(
-                    CupertinoPageRoute(
-                      builder: (_) =>
-                          const SearchPrefsPage(startIndex: 0), // «Друзья»
-                    ),
-                  );
-                },
-              ),
-              _AppIcon(
-                CupertinoIcons.gear,
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                  );
-                },
-              ),
-              const SizedBox(width: 6),
-            ],
-            bottom: const PreferredSize(
-              preferredSize: Size.fromHeight(0.5),
-              child: SizedBox(
-                height: 0.5,
-                child: ColoredBox(color: AppColors.divider),
-              ),
+            SizedBox(width: 8),
+            Text(
+              'AI тренер',
+              style: TextStyle(fontFamily: 'Inter', fontSize: 16),
+            ),
+            SizedBox(width: 6),
+          ],
+        ),
+        showBack: false, // это корневой экран профиля — кнопка назад не нужна
+        actions: [
+          const _AppIcon(CupertinoIcons.square_arrow_up),
+          _AppIcon(
+            CupertinoIcons.person_badge_plus,
+            onPressed: () {
+              Navigator.of(context).push(
+                CupertinoPageRoute(
+                  builder: (_) => const SearchPrefsPage(startIndex: 0),
+                ),
+              );
+            },
+          ),
+          _AppIcon(
+            CupertinoIcons.gear,
+            onPressed: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+            },
+          ),
+          const SizedBox(width: 6),
+        ],
+        showBottomDivider: true,
+      ),
+
+      // ─────────── Статика сверху (HeaderCard + TabsBar) + вкладки ниже ───────────
+      body: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          // Хедер профиля — статичный
+          RepaintBoundary(
+            child: HeaderCard(
+              profile: _profileHeader,
+              userId: widget.userId,
+              onReload: _loadProfileHeader,
             ),
           ),
 
-          // Хедер профиля
-          SliverToBoxAdapter(
-            child: RepaintBoundary(
-              child: HeaderCard(
-                profile: _profileHeader,
-                userId: widget.userId,
-                onReload: _loadProfileHeader,
-              ),
-            ),
-          ),
-
-          // TabsBar — обычным сливером (не pinned)
-          SliverToBoxAdapter(
-            child: RepaintBoundary(
-              // 👈 добавили
+          // TabsBar — тоже статичный
+          RepaintBoundary(
+            child: SizedBox(
+              height: 40.5,
               child: AnimatedBuilder(
                 animation: _pageController,
-                builder: (_, _) {
+                builder: (_, __) {
                   final page = _pageController.hasClients
                       ? (_pageController.page ?? _tab.toDouble())
                       : _tab.toDouble();
-                  return SizedBox(
-                    height: 40.5,
-                    child: TabsBar(
-                      value: _tab,
-                      page: page,
-                      items: _tabTitles,
-                      onChanged: _onTabTap,
-                    ),
+                  return TabsBar(
+                    value: _tab,
+                    page: page,
+                    items: _tabTitles,
+                    onChanged: _onTabTap,
                   );
                 },
+              ),
+            ),
+          ),
+
+          // Разделитель под табами
+          const Divider(height: 0.5, thickness: 0.5, color: AppColors.divider),
+
+          // Контент вкладок — скроллится внутри, шапка/табы остаются на месте
+          Expanded(
+            child: GearPrefsScope(
+              notifier: _gearPrefs,
+              child: PageView(
+                controller: _pageController,
+                physics: const BouncingScrollPhysics(),
+                onPageChanged: _onPageChanged,
+                children: [
+                  MainTab(userId: widget.userId),
+                  const PhotosTab(),
+                  const StatsTab(),
+                  const TrainingTab(),
+                  const RacesTab(),
+                  const GearTab(),
+                  const ClubsTab(),
+                  const AwardsTab(),
+                  const SkillsTab(),
+                ],
               ),
             ),
           ),
         ],
-        // Тело — свайповый PageView, обёрнут в GearPrefsScope
-        body: GearPrefsScope(
-          notifier: _gearPrefs,
-          child: PageView(
-            controller: _pageController,
-            physics: const BouncingScrollPhysics(),
-            onPageChanged: _onPageChanged,
-            children: [
-              MainTab(userId: widget.userId),
-              const PhotosTab(),
-              const StatsTab(),
-              const TrainingTab(),
-              const RacesTab(),
-              const GearTab(),
-              const ClubsTab(),
-              const AwardsTab(),
-              const SkillsTab(),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -258,7 +242,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 class _AppIcon extends StatelessWidget {
   final IconData icon;
-  final VoidCallback? onPressed; // 👈 добавили колбэк
+  final VoidCallback? onPressed;
   const _AppIcon(this.icon, {this.onPressed});
 
   @override

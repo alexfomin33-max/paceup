@@ -150,7 +150,7 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
                 height: 36,
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
                   image: DecorationImage(
                     image: AssetImage(widget.itemThumb!),
                     fit: BoxFit.cover,
@@ -271,8 +271,8 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
                       children: [
                         Divider(
                           height: 16,
-                          thickness: 1,
-                          color: AppColors.border,
+                          thickness: 0.5,
+                          color: AppColors.divider,
                         ),
                         SizedBox(height: 6),
                       ],
@@ -358,7 +358,7 @@ class _ChipNeutral extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted, // без рамки
+        color: AppColors.background, // без рамки
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: DefaultTextStyle(
@@ -396,9 +396,9 @@ class _ActionsWrapState extends State<_ActionsWrap> {
               Expanded(
                 child: _PillButton(
                   text: 'Слот куплен',
-                  bg: AppColors.bgmale,
+                  bg: AppColors.backgroundGreen,
                   border: AppColors.borderaccept,
-                  fg: AppColors.accept,
+                  fg: AppColors.success,
                   onTap: () {
                     setState(() => _status = _DealStatus.bought);
                     // ⛔ Убрали SnackBar
@@ -411,7 +411,7 @@ class _ActionsWrapState extends State<_ActionsWrap> {
                   text: 'Отменить сделку',
                   bg: AppColors.bgfemale,
                   border: AppColors.bordercancel,
-                  fg: AppColors.cancel,
+                  fg: AppColors.error,
                   onTap: () {
                     setState(() => _status = _DealStatus.cancelled);
                     // ⛔ Убрали SnackBar
@@ -427,9 +427,9 @@ class _ActionsWrapState extends State<_ActionsWrap> {
           child: _PillFinal(
             icon: CupertinoIcons.check_mark_circled,
             text: 'Слот куплен',
-            bg: AppColors.bgmale,
+            bg: AppColors.backgroundGreen,
             border: AppColors.borderaccept,
-            fg: AppColors.accept,
+            fg: AppColors.success,
           ),
         );
 
@@ -440,7 +440,7 @@ class _ActionsWrapState extends State<_ActionsWrap> {
             text: 'Сделка отменена',
             bg: AppColors.bgfemale,
             border: AppColors.bordercancel,
-            fg: AppColors.cancel,
+            fg: AppColors.error,
           ),
         );
     }
@@ -589,7 +589,7 @@ class _BubbleLeft extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: AppColors.surfaceMuted,
+                color: AppColors.background,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 border: Border.all(color: AppColors.border),
               ),
@@ -652,7 +652,7 @@ class _BubbleRight extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.backgroundGreen,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.borderaccept),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

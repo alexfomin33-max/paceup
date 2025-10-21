@@ -327,7 +327,7 @@ class _LentaScreenState extends State<LentaScreen>
 
       // новый глобальный AppBar без стекла/прозрачности
       appBar: PaceAppBar(
-        title: 'Лента',
+        title: 'PaceUp',
         showBottomDivider: true,
         leadingWidth: 96, // две иконки слева
         // слева — избранное и «создать пост»

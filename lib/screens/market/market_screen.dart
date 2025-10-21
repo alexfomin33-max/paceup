@@ -1,4 +1,10 @@
-// Экран "Маркет": две вкладки — «Слоты» и «Вещи».
+// lib/screens/market/market_screen.dart
+// ─────────────────────────────────────────────────────────────────────────────
+//  Экран "Маркет": две вкладки — «Слоты» и «Вещи».
+//  В ЭТОЙ ВЕРСИИ: полностью убраны кнопки пола («Мужской»/«Женский»)
+//  и любая фильтрация по gender. Сохранены существующие токены и стиль.
+// ─────────────────────────────────────────────────────────────────────────────
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -15,15 +21,12 @@ class MarketScreen extends StatefulWidget {
 }
 
 class _MarketScreenState extends State<MarketScreen> {
-  /// 0 — «Слоты», 1 — «Вещи»
+  // 0 — «Слоты», 1 — «Вещи»
   int _segment = 0;
 
   // Поиск (только для «Слоты»)
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
-
-  // Быстрые кнопки пола (общие для обеих вкладок)
-  final Set<Gender> _filterGender = {Gender.female, Gender.male};
 
   // Категории для «Вещей»
   final List<String> _goodsCategories = const ['Все', 'Обувь', 'Часы'];
@@ -41,6 +44,11 @@ class _MarketScreenState extends State<MarketScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ──────────────────────────────────────────────────────────────────────
+    //  Подготовка данных с применением ОСТАВШИХСЯ фильтров
+    //  (поиск по названию — для слотов; категория — для вещей).
+    //  Фильтрации по gender БОЛЬШЕ НЕТ.
+    // ──────────────────────────────────────────────────────────────────────
     final slotItems = _applySlotFilters(_demoItems);
     final goodsItems = _applyGoodsFilters(_demoGoods);
 
@@ -73,7 +81,6 @@ class _MarketScreenState extends State<MarketScreen> {
                         CupertinoPageRoute(builder: (_) => const SaleScreen()),
                       );
                     },
-
                     child: const Icon(
                       CupertinoIcons.money_rubl_circle,
                       size: 22,
@@ -95,16 +102,21 @@ class _MarketScreenState extends State<MarketScreen> {
     );
   }
 
-  // ───────────── СЛОТЫ ─────────────
+  // ╔══════════════════════════════════════════════════════════════════════╗
+  // ║                         СЕКЦИЯ «СЛОТЫ»                               ║
+  // ╚══════════════════════════════════════════════════════════════════════╝
 
   Widget _buildSlotsList(List<MarketItem> items) {
-    const int headerCount = 2; // 0 — поиск, 1 — кнопки пола
+    // Было 2 (поиск + кнопки пола). Теперь только 1 (поиск).
+    const int headerCount = 1;
+
     return ListView.separated(
       key: const ValueKey('slots'),
       padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
       itemCount: items.length + headerCount,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (_, index) {
+        // index 0 — строка поиска
         if (index == 0) {
           return _SearchField(
             controller: _searchCtrl,
@@ -117,27 +129,11 @@ class _MarketScreenState extends State<MarketScreen> {
             },
           );
         }
-        if (index == 1) {
-          return _GenderQuickRow(
-            maleSelected: _filterGender.contains(Gender.male),
-            femaleSelected: _filterGender.contains(Gender.female),
-            onMaleTap: () {
-              setState(() {
-                _filterGender.toggle(Gender.male);
-                if (_filterGender.isEmpty) _filterGender.add(Gender.male);
-              });
-            },
-            onFemaleTap: () {
-              setState(() {
-                _filterGender.toggle(Gender.female);
-                if (_filterGender.isEmpty) _filterGender.add(Gender.female);
-              });
-            },
-          );
-        }
 
+        // Контентные элементы начинаются после headerCount
         final i = index - headerCount;
         final isOpen = _expandedSlots.contains(i);
+
         return MarketSlotCard(
           item: items[i],
           expanded: isOpen,
@@ -147,16 +143,21 @@ class _MarketScreenState extends State<MarketScreen> {
     );
   }
 
-  // ───────────── ВЕЩИ ─────────────
+  // ╔══════════════════════════════════════════════════════════════════════╗
+  // ║                          СЕКЦИЯ «ВЕЩИ»                               ║
+  // ╚══════════════════════════════════════════════════════════════════════╝
 
   Widget _buildGoodsList(List<GoodsItem> items) {
-    const int headerCount = 2; // 0 — категория, 1 — кнопки пола
+    // Было 2 (категория + кнопки пола). Теперь только 1 (категория).
+    const int headerCount = 1;
+
     return ListView.separated(
       key: const ValueKey('goods'),
       padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
       itemCount: items.length + headerCount,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (_, index) {
+        // index 0 — выбор категории
         if (index == 0) {
           return _CategoryDropdown(
             value: _selectedGoodsCategory,
@@ -166,27 +167,11 @@ class _MarketScreenState extends State<MarketScreen> {
             }),
           );
         }
-        if (index == 1) {
-          return _GenderQuickRow(
-            maleSelected: _filterGender.contains(Gender.male),
-            femaleSelected: _filterGender.contains(Gender.female),
-            onMaleTap: () {
-              setState(() {
-                _filterGender.toggle(Gender.male);
-                if (_filterGender.isEmpty) _filterGender.add(Gender.male);
-              });
-            },
-            onFemaleTap: () {
-              setState(() {
-                _filterGender.toggle(Gender.female);
-                if (_filterGender.isEmpty) _filterGender.add(Gender.female);
-              });
-            },
-          );
-        }
 
+        // Контентные элементы начинаются после headerCount
         final i = index - headerCount;
         final isOpen = _expandedGoods.contains(i);
+
         return GoodsCard(
           item: items[i],
           expanded: isOpen,
@@ -196,35 +181,50 @@ class _MarketScreenState extends State<MarketScreen> {
     );
   }
 
-  // ───────────── Фильтрация ─────────────
+  // ╔══════════════════════════════════════════════════════════════════════╗
+  // ║                            ФИЛЬТРАЦИЯ                                ║
+  // ╚══════════════════════════════════════════════════════════════════════╝
+  //  ВАЖНО: из фильтров убран gender. Оставлены:
+  //   • СЛОТЫ: поиск по названию;
+  //   • ВЕЩИ: фильтр по категории.
 
   List<MarketItem> _applySlotFilters(List<MarketItem> source) {
     final q = _searchQuery;
     return source.where((e) {
-      final okGender = _filterGender.contains(e.gender);
       final okSearch = q.isEmpty || e.title.toLowerCase().contains(q);
-      return okGender && okSearch;
+      return okSearch;
     }).toList();
   }
 
   List<GoodsItem> _applyGoodsFilters(List<GoodsItem> source) {
     return source.where((e) {
-      final okGender = _filterGender.contains(e.gender);
       final okCat = _selectedGoodsCategory == 'Все'
           ? true
           : _categoryOf(e) == _selectedGoodsCategory;
-      return okGender && okCat;
+      return okCat;
     }).toList();
   }
 
   String _categoryOf(GoodsItem item) {
+    // Простая категоризация по названию (демо-логика).
     final t = item.title.toLowerCase();
     if (t.contains('часы')) return 'Часы';
     return 'Обувь';
   }
 }
 
-// ───────────── UI Подкомпоненты ─────────────
+// ╔════════════════════════════════════════════════════════════════════════╗
+// ║                         UI ПОДКОМПОНЕНТЫ                               ║
+/* ────────────────────────────────────────────────────────────────────────
+   Оставили:
+     • _TopTabs — iOS-пилюля для табов;
+     • _SearchField — поиск;
+     • _CategoryDropdown — выбор категории.
+
+   Удалили:
+     • _GenderQuickRow и _OvalToggle (кнопки пола) — БОЛЬШЕ НЕ ИСПОЛЬЗУЕМ.
+   ─────────────────────────────────────────────────────────────────────── */
+// ╚════════════════════════════════════════════════════════════════════════╝
 
 class _TopTabs extends StatelessWidget {
   final int value;
@@ -244,14 +244,8 @@ class _TopTabs extends StatelessWidget {
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(AppRadius.xl),
       border: const Border(
-        top: BorderSide(
-          color: AppColors.border, // тонкая линия сверху
-          width: 0.5,
-        ),
-        bottom: BorderSide(
-          color: AppColors.border, // тонкая линия снизу
-          width: 0.5,
-        ),
+        top: BorderSide(color: AppColors.border, width: 0.5),
+        bottom: BorderSide(color: AppColors.border, width: 0.5),
         left: BorderSide(color: AppColors.border, width: 0.5),
         right: BorderSide(color: AppColors.border, width: 0.5),
       ),
@@ -399,82 +393,19 @@ class _CategoryDropdown extends StatelessWidget {
   }
 }
 
-class _GenderQuickRow extends StatelessWidget {
-  final bool maleSelected;
-  final bool femaleSelected;
-  final VoidCallback onMaleTap;
-  final VoidCallback onFemaleTap;
-
-  const _GenderQuickRow({
-    required this.maleSelected,
-    required this.femaleSelected,
-    required this.onMaleTap,
-    required this.onFemaleTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _OvalToggle(label: 'Мужской', selected: maleSelected, onTap: onMaleTap),
-        const SizedBox(width: 8),
-        _OvalToggle(
-          label: 'Женский',
-          selected: femaleSelected,
-          onTap: onFemaleTap,
-        ),
-      ],
-    );
-  }
-}
-
-class _OvalToggle extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _OvalToggle({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = selected ? AppColors.brandPrimary : AppColors.surface;
-    final fg = selected ? AppColors.surface : AppColors.textPrimary;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: selected ? AppColors.brandPrimary : AppColors.border,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: fg,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Удобное расширение: toggle() — если элемент есть, удалить; если нет — добавить.
+// ─────────────────────────────────────────────────────────────────────────
+//  Утилита: Set.toggle() — если элемент есть, удалить; если нет — добавить.
+//  Используется для _expandedSlots и _expandedGoods.
+// ─────────────────────────────────────────────────────────────────────────
 extension<T> on Set<T> {
   void toggle(T v) => contains(v) ? remove(v) : add(v);
 }
 
-// ───────────── ДЕМО-ДАННЫЕ ─────────────
+// ╔════════════════════════════════════════════════════════════════════════╗
+/*                              ДЕМО-ДАННЫЕ
+   Gender в моделях оставлен (совместимость), но НЕ используется в фильтрах.
+   Эти данные можно не трогать — они не влияют на текущую логику. */
+// ╚════════════════════════════════════════════════════════════════════════╝
 
 final _demoItems = <MarketItem>[
   const MarketItem(

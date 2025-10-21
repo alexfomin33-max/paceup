@@ -41,7 +41,7 @@ class PaceAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.leading,
     this.showBack = true,
     this.onBack,
-    this.leadingWidth = 60,
+    this.leadingWidth = 56,
     this.actions,
     this.showBottomDivider = true,
     this.backgroundColor,

@@ -214,9 +214,9 @@ class _ActivityScroller extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         itemBuilder: (_, i) => _ActivityCard(items[i]),
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemCount: items.length,
       ),
     );
@@ -306,7 +306,7 @@ class _PRRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border, width: 0.5),
         ),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: items
@@ -330,7 +330,7 @@ class _PRBadge extends StatelessWidget {
       children: [
         Image.asset(asset, width: 72, height: 72, fit: BoxFit.contain),
         const SizedBox(height: 6),
-        Text(time, style: const TextStyle(fontFamily: 'Inter', fontSize: 12)),
+        Text(time, style: const TextStyle(fontFamily: 'Inter', fontSize: 13)),
       ],
     );
   }
@@ -402,6 +402,8 @@ class _MetricsCard extends StatelessWidget {
                     height: 1,
                     thickness: 0.5,
                     color: AppColors.divider,
+                    indent: 40,
+                    endIndent: 10,
                   ),
               ],
             );
