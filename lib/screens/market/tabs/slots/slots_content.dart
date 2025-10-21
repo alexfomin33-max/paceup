@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../theme/app_theme.dart';
 import '../../../../models/market_models.dart';
-import 'market_slot_card.dart';
+import 'widgets/market_slot_card.dart';
 
 class SlotsContent extends StatefulWidget {
   const SlotsContent({super.key});

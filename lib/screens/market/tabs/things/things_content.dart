@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../theme/app_theme.dart';
 import '../../../../models/market_models.dart';
-import 'market_things_card.dart';
+import 'widgets/market_things_card.dart';
 
 class ThingsContent extends StatefulWidget {
   const ThingsContent({super.key});

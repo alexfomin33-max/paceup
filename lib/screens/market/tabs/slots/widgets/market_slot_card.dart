@@ -2,10 +2,10 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
-import '../../../../models/market_models.dart';
-import 'tradechat_slots_screen.dart';
-import '../../widgets/pills.dart';
+import '../../../../../theme/app_theme.dart';
+import '../../../../../models/market_models.dart';
+import '../tradechat_slots_screen.dart';
+import '../../../widgets/pills.dart';
 
 /// Отдельный виджет карточки СЛОТА.
 /// Миниатюра НЕ кликабельна.
