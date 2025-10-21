@@ -22,6 +22,7 @@ import 'state/favorites/favorites_screen.dart';
 import 'activity/description_screen.dart';
 import '../../widgets/more_menu_hub.dart';
 import '../../widgets/app_bar.dart'; // ← глобальный AppBar
+import '../../widgets/transparent_route.dart';
 
 /// Единые размеры для AppBar в iOS-стиле
 const double kAppBarIconSize = 22.0; // сама иконка ~20–22pt
@@ -187,55 +188,58 @@ class _LentaScreenState extends State<LentaScreen>
 
   // ———————————— Навигация / Колбэки ————————————
 
-  void _openChat() {
+  Future<void> _openChat() async {
     MoreMenuHub.hide();
-    Navigator.push(
+    await Navigator.of(
       context,
-      CupertinoPageRoute(builder: (_) => const ChatScreen()),
-    );
+    ).push(TransparentPageRoute(builder: (_) => const ChatScreen()));
   }
 
   Future<void> _openNotifications() async {
     MoreMenuHub.hide();
-    await Navigator.push(
+    await Navigator.of(
       context,
-      MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-    );
+    ).push(TransparentPageRoute(builder: (_) => const NotificationsScreen()));
     if (!mounted) return;
     setState(() => _unreadCount = 0);
   }
 
   Future<void> _createPost() async {
     MoreMenuHub.hide();
-    final created = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(builder: (_) => NewPostScreen(userId: widget.userId)),
-    );
-    if (!mounted) return;
-    if (created == true) {
-      setState(() {
-        _future = _loadActivities(page: 1, limit: _limit).then((list) {
-          _items = list;
-          _page = 1;
-          _hasMore = list.length == _limit;
-          _isLoadingMore = false;
-          _seenIds
-            ..clear()
-            ..addAll(list.map(_getId));
-          WidgetsBinding.instance.addPostFrameCallback(
-            (_) => _maybeAutoLoadMore(),
-          );
-          return list;
-        });
-      });
 
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          0,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
-      }
+    final created = await Navigator.of(context).push<bool>(
+      TransparentPageRoute(
+        builder: (_) => NewPostScreen(userId: widget.userId),
+      ),
+    );
+
+    if (!mounted || created != true) return;
+
+    // Перезагружаем «самые свежие»
+    final fresh = await _loadActivities(page: 1, limit: _limit);
+    if (!mounted) return;
+
+    setState(() {
+      _items = fresh;
+      _page = 1;
+      _hasMore = fresh.length == _limit;
+      _isLoadingMore = false;
+      _seenIds
+        ..clear()
+        ..addAll(fresh.map(_getId));
+      _future = Future.value(fresh);
+    });
+
+    // Если контента мало — сразу дольём ещё
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoLoadMore());
+
+    // Прокрутка к началу
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
     }
   }
 

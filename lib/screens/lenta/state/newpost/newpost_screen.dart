@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'dart:async';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
+import '../../../../widgets/interactive_back_swipe.dart';
 
 /// 👉 ЗАМЕНИ на свой URL эндпоинта создания поста
 const String kCreatePostUrl = 'http://api.paceup.ru/create_post.php';
@@ -58,12 +59,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onHorizontalDragEnd: (details) {
-        if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
-          Navigator.pop(context); // свайп вправо закрывает экран
-        }
-      },
+    return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.surface,
 

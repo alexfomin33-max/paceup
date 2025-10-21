@@ -15,7 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../theme/app_theme.dart';
-import '../../state/gear_screen.dart';
+import '../../widgets/gear_screen.dart';
 
 // 🔹 Модели и парсинг данных
 import 'models/main_tab_data.dart';

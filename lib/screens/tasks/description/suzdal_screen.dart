@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../../../widgets/interactive_back_swipe.dart';
 
 class SuzdalScreen extends StatefulWidget {
   const SuzdalScreen({super.key});
@@ -14,143 +15,164 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
   Widget build(BuildContext context) {
     const double percent = 21784 / 110033; // ≈ 0.198
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          // ─────────── Верхнее фото + кнопка "назад"
-          SliverAppBar(
-            pinned: false,
-            floating: false,
-            expandedHeight: 160,
-            elevation: 0,
-            backgroundColor: AppColors.surface,
-            leadingWidth: 60,
-            leading: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 10, top: 6, bottom: 6),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      color: AppColors.scrim40,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        CupertinoIcons.back,
-                        color: AppColors.surface,
-                        size: 20,
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: CustomScrollView(
+          slivers: [
+            // ─────────── Верхнее фото + кнопка "назад"
+            SliverAppBar(
+              pinned: false,
+              floating: false,
+              expandedHeight: 160,
+              elevation: 0,
+              backgroundColor: AppColors.surface,
+              leadingWidth: 60,
+              leading: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10, top: 6, bottom: 6),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                        color: AppColors.scrim40,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          CupertinoIcons.back,
+                          color: AppColors.surface,
+                          size: 22,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            flexibleSpace: const FlexibleSpaceBar(
-              background: Image(
-                image: AssetImage('assets/suzdal_panorama.png'),
-                fit: BoxFit.cover,
+              flexibleSpace: const FlexibleSpaceBar(
+                background: Image(
+                  image: AssetImage('assets/suzdal_panorama.png'),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
-          ),
 
-          // ─────────── Белый блок: заголовок + описание + прогресс
-          SliverToBoxAdapter(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
-                boxShadow: [
-                  // тонкая тень вниз ~1px
-                  BoxShadow(
-                    color: AppColors.shadowSoft,
-                    offset: Offset(0, 1),
-                    blurRadius: 0,
-                  ),
-                ],
+            // ─────────── Белый блок: заголовок + описание + прогресс
+            SliverToBoxAdapter(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  boxShadow: [
+                    // тонкая тень вниз ~1px
+                    BoxShadow(
+                      color: AppColors.shadowSoft,
+                      offset: Offset(0, 1),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+                child: const Column(
+                  children: [
+                    Text('Суздаль', style: AppTextStyles.h17w6),
+                    SizedBox(height: 6),
+                    Text(
+                      'Это маленький, но очень уютный городок. '
+                      'Музей деревянного зодчества погружает в эпоху XIX века. '
+                      'Здесь можно увидеть быт крестьян ушедшего времени.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                        height: 1.3,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+
+                    // Узкий прогресс-бар по центру
+                    Center(
+                      child: SizedBox(
+                        width: 240,
+                        child: _MiniProgress(percent: percent),
+                      ),
+                    ),
+                    SizedBox(height: 6),
+                    Text.rich(
+                      TextSpan(
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: '21 784',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          TextSpan(text: ' из '),
+                          TextSpan(
+                            text: '110 033',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          TextSpan(text: ' шагов'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-              child: const Column(
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 25)),
+
+            // ─────────── Секция "Прогресс друзей"
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Суздаль', style: AppTextStyles.h17w6),
-                  SizedBox(height: 6),
-                  Text(
-                    'Это маленький, но очень уютный городок. '
-                    'Музей деревянного зодчества погружает в эпоху XIX века. '
-                    'Здесь можно увидеть быт крестьян ушедшего времени.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                      height: 1.25,
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, 10),
+                    child: _SectionTitle('Прогресс друзей'),
+                  ),
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.surface,
+                      border: Border(
+                        top: BorderSide(color: AppColors.border, width: 0.5),
+                        bottom: BorderSide(color: AppColors.border, width: 0.5),
+                      ),
+                    ),
+                    child: Column(
+                      children: List.generate(_rows.length, (i) {
+                        final r = _rows[i];
+                        final highlight = r.rank == 6; // зелёным шестой
+                        return _FriendRow(
+                          rank: r.rank,
+                          name: r.name,
+                          value: r.steps,
+                          avatar: r.avatar,
+                          highlight: highlight,
+                          isLast: i == _rows.length - 1,
+                        );
+                      }),
                     ),
                   ),
-                  SizedBox(height: 16),
-
-                  // Узкий прогресс-бар по центру
-                  Center(
-                    child: SizedBox(
-                      width: 240,
-                      child: _MiniProgress(percent: percent),
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    '21 784 из 110 033 шагов',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 25)),
-
-          // ─────────── Секция "Прогресс друзей"
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 10),
-                  child: _SectionTitle('Прогресс друзей'),
-                ),
-                Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border(
-                      top: BorderSide(color: AppColors.border, width: 0.5),
-                      bottom: BorderSide(color: AppColors.border, width: 0.5),
-                    ),
-                  ),
-                  child: Column(
-                    children: List.generate(_rows.length, (i) {
-                      final r = _rows[i];
-                      final highlight = r.rank == 6; // зелёным шестой
-                      return _FriendRow(
-                        rank: r.rank,
-                        name: r.name,
-                        value: r.steps,
-                        avatar: r.avatar,
-                        highlight: highlight,
-                        isLast: i == _rows.length - 1,
-                      );
-                    }),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -171,9 +193,9 @@ class _MiniProgress extends StatelessWidget {
           children: [
             Container(
               width: w,
-              height: 4,
+              height: 6,
               decoration: const BoxDecoration(
-                color: AppColors.accentMint,
+                color: AppColors.success,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(AppRadius.xs),
                   bottomLeft: Radius.circular(AppRadius.xs),
@@ -182,9 +204,9 @@ class _MiniProgress extends StatelessWidget {
             ),
             Expanded(
               child: Container(
-                height: 4,
+                height: 6,
                 decoration: const BoxDecoration(
-                  color: AppColors.border,
+                  color: AppColors.background,
                   borderRadius: BorderRadius.only(
                     topRight: Radius.circular(AppRadius.xs),
                     bottomRight: Radius.circular(AppRadius.xs),
@@ -236,7 +258,7 @@ class _FriendRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final row = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
         children: [
           SizedBox(
@@ -247,8 +269,8 @@ class _FriendRow extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: highlight ? AppColors.accentMint : AppColors.textPrimary,
+                fontWeight: FontWeight.w400,
+                color: highlight ? AppColors.success : AppColors.textPrimary,
               ),
             ),
           ),
@@ -256,8 +278,8 @@ class _FriendRow extends StatelessWidget {
           ClipOval(
             child: Image(
               image: avatar,
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               fit: BoxFit.cover,
             ),
           ),
@@ -275,8 +297,8 @@ class _FriendRow extends StatelessWidget {
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: highlight ? AppColors.accentMint : AppColors.textPrimary,
+              fontWeight: FontWeight.w400,
+              color: highlight ? AppColors.success : AppColors.textPrimary,
             ),
           ),
         ],
@@ -287,7 +309,13 @@ class _FriendRow extends StatelessWidget {
       children: [
         row,
         if (!isLast)
-          const Divider(height: 1, thickness: 0.5, color: AppColors.divider),
+          const Divider(
+            height: 1,
+            thickness: 0.5,
+            color: AppColors.divider,
+            indent: 80,
+            endIndent: 10,
+          ),
       ],
     );
   }

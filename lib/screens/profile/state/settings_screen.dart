@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
+import '../../../theme/app_theme.dart';
+import '../../../widgets/app_bar.dart';
 import 'settings_placeholder_screen.dart'; // 👈 экран-заглушка
 
 class SettingsScreen extends StatelessWidget {
@@ -18,24 +19,10 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: AppColors.iconPrimary),
-          onPressed: () => Navigator.of(context).maybePop(),
-          splashRadius: 18,
-        ),
-        title: const Text('Настройки', style: AppTextStyles.h17w6),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(0.5),
-          child: SizedBox(
-            height: 0.5,
-            child: ColoredBox(color: AppColors.divider),
-          ),
-        ),
-      ),
+
+      // ── глобальный PaceAppBar (покажет системную «назад», если есть куда вернуться)
+      appBar: const PaceAppBar(title: 'Настройки'),
+
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [

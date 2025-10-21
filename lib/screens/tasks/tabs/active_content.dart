@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../description/run_200k_screen.dart';
 import '../description/suzdal_screen.dart';
+import '../../../widgets/transparent_route.dart';
 
 class ActiveContent extends StatelessWidget {
   const ActiveContent({super.key});
@@ -40,7 +41,7 @@ class ActiveContent extends StatelessWidget {
               percent: 0.729,
               onTap: () {
                 Navigator.of(context, rootNavigator: true).push(
-                  MaterialPageRoute(builder: (_) => const Run200kScreen()),
+                  TransparentPageRoute(builder: (_) => const Run200kScreen()),
                 );
               },
             ),
@@ -77,10 +78,9 @@ class ActiveContent extends StatelessWidget {
                 provider: AssetImage('assets/Suzdal.png'),
               ),
               onTap: () {
-                Navigator.of(
-                  context,
-                  rootNavigator: true,
-                ).push(MaterialPageRoute(builder: (_) => const SuzdalScreen()));
+                Navigator.of(context, rootNavigator: true).push(
+                  TransparentPageRoute(builder: (_) => const SuzdalScreen()),
+                );
               },
             ),
             const SizedBox(height: 12),
@@ -208,7 +208,7 @@ class TaskCard extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: AppColors.success,
                       ),
                     ),
                   ],
@@ -301,7 +301,8 @@ class ExpeditionCard extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.success,
                       ),
                     ),
                   ],
@@ -343,7 +344,7 @@ class _ProgressBar extends StatelessWidget {
               width: currentWidth,
               height: 6,
               decoration: const BoxDecoration(
-                color: AppColors.accentMint,
+                color: AppColors.success,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(AppRadius.xs),
                   bottomLeft: Radius.circular(AppRadius.xs),
@@ -354,7 +355,7 @@ class _ProgressBar extends StatelessWidget {
               child: Container(
                 height: 6,
                 decoration: const BoxDecoration(
-                  color: AppColors.border,
+                  color: AppColors.background,
                   borderRadius: BorderRadius.only(
                     topRight: Radius.circular(AppRadius.xs),
                     bottomRight: Radius.circular(AppRadius.xs),
@@ -420,8 +421,7 @@ class _RoundImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.md),
+    return ClipOval(
       child: Container(
         width: 64,
         height: 64,
@@ -435,7 +435,7 @@ class _RoundImage extends StatelessWidget {
             ? const Icon(
                 CupertinoIcons.photo,
                 size: 22,
-                color: AppColors.surface,
+                color: AppColors.iconSecondary,
               )
             : null,
       ),

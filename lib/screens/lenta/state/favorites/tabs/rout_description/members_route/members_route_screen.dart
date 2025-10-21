@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../../../theme/app_theme.dart';
 import '../../../../../../../../widgets/app_bar.dart';
+import '../../../../../../../widgets/interactive_back_swipe.dart';
 
 class MembersRouteScreen extends StatefulWidget {
   final int routeId;
@@ -57,79 +58,87 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const PaceAppBar(
-        title: 'Участники маршрута',
-        showBottomDivider: false, // ← без нижней линии
-      ),
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: const PaceAppBar(
+          title: 'Участники маршрута',
+          showBottomDivider: false, // ← без нижней линии
+        ),
 
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Подшапка: название + чип сложности + поле даты
-          SliverToBoxAdapter(
-            child: Container(
-              color: AppColors.surface,
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Text(
-                      widget.routeTitle,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Подшапка: название + чип сложности + поле даты
+            SliverToBoxAdapter(
+              child: Container(
+                color: AppColors.surface,
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Text(
+                        widget.routeTitle,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                  ),
-                  if ((widget.difficultyText ?? '').isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Center(
-                      child: _DifficultyChip(text: widget.difficultyText!),
+                    if ((widget.difficultyText ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Center(
+                        child: _DifficultyChip(text: widget.difficultyText!),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    _LabeledDateField(
+                      label: 'Дата',
+                      text: _date == null ? '24.06.2025' : _fmtDate(_date!),
+                      onTap: _pickDate,
                     ),
                   ],
-                  const SizedBox(height: 16),
-                  _LabeledDateField(
-                    label: 'Дата',
-                    text: _date == null ? '24.06.2025' : _fmtDate(_date!),
-                    onTap: _pickDate,
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-          // ── Секция "Сегодня"
-          const SliverToBoxAdapter(child: _SectionHeader('Сегодня')),
-          const SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            sliver: SliverToBoxAdapter(child: _MembersTable(rows: _todayRows)),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            // ── Секция "Сегодня"
+            const SliverToBoxAdapter(child: _SectionHeader('Сегодня')),
+            const SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              sliver: SliverToBoxAdapter(
+                child: _MembersTable(rows: _todayRows),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-          // ── Секция "22.07.2025"
-          const SliverToBoxAdapter(child: _SectionHeader('22.07.2025')),
-          const SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            sliver: SliverToBoxAdapter(child: _MembersTable(rows: _july22Rows)),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            // ── Секция "22.07.2025"
+            const SliverToBoxAdapter(child: _SectionHeader('22.07.2025')),
+            const SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              sliver: SliverToBoxAdapter(
+                child: _MembersTable(rows: _july22Rows),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-          // ── Секция "16.07.2025"
-          const SliverToBoxAdapter(child: _SectionHeader('16.07.2025')),
-          const SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            sliver: SliverToBoxAdapter(child: _MembersTable(rows: _july16Rows)),
-          ),
+            // ── Секция "16.07.2025"
+            const SliverToBoxAdapter(child: _SectionHeader('16.07.2025')),
+            const SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              sliver: SliverToBoxAdapter(
+                child: _MembersTable(rows: _july16Rows),
+              ),
+            ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+        ),
       ),
     );
   }
@@ -449,7 +458,7 @@ class _DifficultyChip extends StatelessWidget {
         style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 12,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w400,
           color: c,
         ),
       ),

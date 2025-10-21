@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart'; // ← наш глобальный AppBar
+import '../../../../widgets/interactive_back_swipe.dart';
 
 // ⬇️ наш полноэкранный шит с настройками уведомлений
 import 'settings_bottom_sheet.dart';
@@ -36,12 +37,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return DateFormat('dd.MM.yyyy').format(d);
   }
 
-  void _onHorizontalDrag(DragEndDetails details) {
-    if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
-      Navigator.of(context).maybePop();
-    }
-  }
-
   void _openSettingsSheet() {
     showModalBottomSheet(
       context: context,
@@ -54,8 +49,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onHorizontalDragEnd: _onHorizontalDrag,
+    return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.surface,
 

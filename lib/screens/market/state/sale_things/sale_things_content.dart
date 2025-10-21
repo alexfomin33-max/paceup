@@ -121,7 +121,7 @@ class _SaleThingsContentState extends State<SaleThingsContent> {
             controller: descCtrl,
             maxLines: 5,
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
 
           Center(
             child: PrimaryButton(

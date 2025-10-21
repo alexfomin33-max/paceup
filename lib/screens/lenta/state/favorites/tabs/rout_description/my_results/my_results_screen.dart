@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../../../theme/app_theme.dart';
 import '../../../../../../../../widgets/app_bar.dart';
+import '../../../../../../../widgets/interactive_back_swipe.dart';
 
 /// Экран: Мои результаты для выбранного маршрута
 /// Шапка — как в rout_description_screen.dart (без кнопки "три точки").
@@ -21,59 +22,61 @@ class MyResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.background,
 
-      // ─── глобальная шапка без нижнего бордера ───
-      appBar: const PaceAppBar(
-        title: 'Мои результаты',
-        showBottomDivider: false,
-      ),
+        // ─── глобальная шапка без нижнего бордера ───
+        appBar: const PaceAppBar(
+          title: 'Мои результаты',
+          showBottomDivider: false,
+        ),
 
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // — подшапка как в rout_description_screen.dart
-          SliverToBoxAdapter(
-            child: Container(
-              color: AppColors.surface,
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Text(
-                      routeTitle,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // — подшапка как в rout_description_screen.dart
+            SliverToBoxAdapter(
+              child: Container(
+                color: AppColors.surface,
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Text(
+                        routeTitle,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  if ((difficultyText ?? '').isNotEmpty)
-                    Center(child: _DifficultyChip(text: difficultyText!)),
-                ],
+                    const SizedBox(height: 8),
+                    if ((difficultyText ?? '').isNotEmpty)
+                      Center(child: _DifficultyChip(text: difficultyText!)),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 10)),
+            const SliverToBoxAdapter(child: SizedBox(height: 10)),
 
-          // — список карточек в стиле routes_content.dart (без чипа сложности)
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            sliver: SliverList.separated(
-              itemCount: _items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 2),
-              itemBuilder: (context, i) => _ResultCard(e: _items[i]),
+            // — список карточек в стиле routes_content.dart (без чипа сложности)
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              sliver: SliverList.separated(
+                itemCount: _items.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 2),
+                itemBuilder: (context, i) => _ResultCard(e: _items[i]),
+              ),
             ),
-          ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+        ),
       ),
     );
   }
@@ -106,7 +109,7 @@ class _DifficultyChip extends StatelessWidget {
         style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 12,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w400,
           color: c,
         ),
       ),

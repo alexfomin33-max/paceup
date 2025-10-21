@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../../../theme/app_theme.dart';
 import '../../../../../../../../widgets/app_bar.dart';
+import '../../../../../../../widgets/interactive_back_swipe.dart';
 
 class AllResultsScreen extends StatefulWidget {
   final int routeId;
@@ -31,71 +32,75 @@ class _AllResultsScreenState extends State<AllResultsScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const PaceAppBar(
-        title: 'Общие результаты',
-        showBottomDivider: false, // ← без нижней линии
-      ),
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: const PaceAppBar(
+          title: 'Общие результаты',
+          showBottomDivider: false, // ← без нижней линии
+        ),
 
-      body: Column(
-        children: [
-          // ── подшапка в стиле my_results_screen.dart
-          Container(
-            color: AppColors.surface,
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Text(
-                    widget.routeTitle,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
+        body: Column(
+          children: [
+            // ── подшапка в стиле my_results_screen.dart
+            Container(
+              color: AppColors.surface,
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Text(
+                      widget.routeTitle,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                ),
-                if ((widget.difficultyText ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Center(child: _DifficultyChip(text: widget.difficultyText!)),
+                  if ((widget.difficultyText ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Center(
+                      child: _DifficultyChip(text: widget.difficultyText!),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
 
-          // ── слайдер «Все / Друзья» как в favorites_screen.dart
-          Container(
-            color: AppColors.surface,
-            child: TabBar(
-              controller: _tab,
-              isScrollable: false,
-              labelColor: AppColors.brandPrimary,
-              unselectedLabelColor: AppColors.textPrimary,
-              indicatorColor: AppColors.brandPrimary,
-              indicatorWeight: 1,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-              tabs: const [
-                Tab(child: _TabLabel(text: 'Все')),
-                Tab(child: _TabLabel(text: 'Друзья')),
-              ],
+            // ── слайдер «Все / Друзья» как в favorites_screen.dart
+            Container(
+              color: AppColors.surface,
+              child: TabBar(
+                controller: _tab,
+                isScrollable: false,
+                labelColor: AppColors.brandPrimary,
+                unselectedLabelColor: AppColors.textPrimary,
+                indicatorColor: AppColors.brandPrimary,
+                indicatorWeight: 1,
+                labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                tabs: const [
+                  Tab(child: _TabLabel(text: 'Все')),
+                  Tab(child: _TabLabel(text: 'Друзья')),
+                ],
+              ),
             ),
-          ),
 
-          // ── содержимое вкладок
-          Expanded(
-            child: TabBarView(
-              controller: _tab,
-              physics: const BouncingScrollPhysics(),
-              children: const [
-                _ResultsList(data: _demoAll, highlightMyRank: 1),
-                _ResultsList(data: _demoFriends, highlightMyRank: 3),
-              ],
+            // ── содержимое вкладок
+            Expanded(
+              child: TabBarView(
+                controller: _tab,
+                physics: const BouncingScrollPhysics(),
+                children: const [
+                  _ResultsList(data: _demoAll, highlightMyRank: 1),
+                  _ResultsList(data: _demoFriends, highlightMyRank: 3),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -465,7 +470,7 @@ class _DifficultyChip extends StatelessWidget {
         style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 12,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w400,
           color: c,
         ),
       ),

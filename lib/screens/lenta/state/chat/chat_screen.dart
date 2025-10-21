@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
+import '../../../../widgets/interactive_back_swipe.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -33,16 +34,9 @@ class _ChatScreenState extends State<ChatScreen> {
     return DateFormat('dd.MM.yyyy').format(d);
   }
 
-  void _onHorizontalDrag(DragEndDetails details) {
-    if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
-      Navigator.of(context).maybePop();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onHorizontalDragEnd: _onHorizontalDrag,
+    return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.surface,
 

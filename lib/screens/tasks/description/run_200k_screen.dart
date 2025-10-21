@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../../../widgets/interactive_back_swipe.dart';
 
 class Run200kScreen extends StatefulWidget {
   const Run200kScreen({super.key});
@@ -14,197 +15,199 @@ class _Run200kScreenState extends State<Run200kScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          // ─────────── Верхнее фото + кнопка "назад"
-          SliverAppBar(
-            pinned: false,
-            floating: false,
-            expandedHeight: 140,
-            elevation: 0,
-            backgroundColor: AppColors.surface,
-            leadingWidth: 60,
-            leading: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 10, top: 6, bottom: 6),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      color: AppColors.scrim40,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        CupertinoIcons.back,
-                        color: AppColors.surface,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            flexibleSpace: const FlexibleSpaceBar(
-              background: Image(
-                image: AssetImage('assets/200k_run.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-
-          // ─────────── Круглая иконка наполовину на фото, наполовину на белом блоке
-          SliverToBoxAdapter(
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Белый блок с заголовком, подписью и узким прогресс-баром
-                Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.surface,
-                    boxShadow: [
-                      // тонкая тень вниз ~1px
-                      BoxShadow(
-                        color: AppColors.shadowSoft,
-                        offset: Offset(0, 1),
-                        blurRadius: 0,
-                      ),
-                    ],
-                  ),
-                  // добавили +36 сверху, чтобы нижняя половина круга не перекрывала текст
-                  padding: const EdgeInsets.fromLTRB(16, 16 + 36, 16, 16),
-                  child: const Column(
-                    children: [
-                      Text('200 км бега', style: AppTextStyles.h17w6),
-                      SizedBox(height: 6),
-                      Text(
-                        'Пробегите за месяц суммарно 200 километров.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                          height: 1.25,
-                        ),
-                      ),
-                      SizedBox(height: 12),
-
-                      // узкий прогресс-бар по центру
-                      Center(
-                        child: SizedBox(
-                          width: 240,
-                          child: _MiniProgress(percent: 145.8 / 200.0),
-                        ),
-                      ),
-                      SizedBox(height: 6),
-                      Text(
-                        '145,8 из 200 км',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Сам круг: центр ровно на границе фото/белого блока
-                Positioned(
-                  top:
-                      -36, // 72/2 со знаком минус — половина на фото, половина на белом фоне
-                  left: 0,
-                  right: 0,
-                  child: Center(
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: CustomScrollView(
+          slivers: [
+            // ─────────── Верхнее фото + кнопка "назад"
+            SliverAppBar(
+              pinned: false,
+              floating: false,
+              expandedHeight: 140,
+              elevation: 0,
+              backgroundColor: AppColors.surface,
+              leadingWidth: 60,
+              leading: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10, top: 6, bottom: 6),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                    onTap: () => Navigator.of(context).pop(),
                     child: Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        color: AppColors.gold,
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                        color: AppColors.scrim40,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.surface,
-                          width: 2,
-                        ), // белая рамка 2px
-                        boxShadow: [
-                          const BoxShadow(
-                            color: AppColors.shadowSoft,
-                            blurRadius: 10,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
                       ),
                       child: const Center(
                         child: Icon(
-                          Icons.directions_run,
-                          size: 34,
+                          CupertinoIcons.back,
                           color: AppColors.surface,
+                          size: 20,
                         ),
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-
-          // ─────────── Сегменты на сером фоне (вынесены из белого блока)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-              child: Center(
-                child: _SegmentedPill(
-                  left: 'Все',
-                  right: 'Друзья',
-                  value: _segment,
-                  onChanged: (v) => setState(() => _segment = v),
+              ),
+              flexibleSpace: const FlexibleSpaceBar(
+                background: Image(
+                  image: AssetImage('assets/200k_run.png'),
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
-          ),
 
-          // ─────────── Контент
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 10, 16, 10),
-                  child: _SectionTitle('Прогресс друзей'),
-                ),
+            // ─────────── Круглая иконка наполовину на фото, наполовину на белом блоке
+            SliverToBoxAdapter(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Белый блок с заголовком, подписью и узким прогресс-баром
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.surface,
+                      boxShadow: [
+                        // тонкая тень вниз ~1px
+                        BoxShadow(
+                          color: AppColors.shadowSoft,
+                          offset: Offset(0, 1),
+                          blurRadius: 0,
+                        ),
+                      ],
+                    ),
+                    // добавили +36 сверху, чтобы нижняя половина круга не перекрывала текст
+                    padding: const EdgeInsets.fromLTRB(16, 16 + 36, 16, 16),
+                    child: const Column(
+                      children: [
+                        Text('200 км бега', style: AppTextStyles.h17w6),
+                        SizedBox(height: 6),
+                        Text(
+                          'Пробегите за месяц суммарно 200 километров.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                            height: 1.25,
+                          ),
+                        ),
+                        SizedBox(height: 12),
 
-                Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border(
-                      top: BorderSide(color: AppColors.border, width: 0.5),
-                      bottom: BorderSide(color: AppColors.border, width: 0.5),
+                        // узкий прогресс-бар по центру
+                        Center(
+                          child: SizedBox(
+                            width: 240,
+                            child: _MiniProgress(percent: 145.8 / 200.0),
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          '145,8 из 200 км',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    children: List.generate(_rows.length, (i) {
-                      final r = _rows[i];
-                      final isMe = r.rank == 4;
-                      return _FriendRow(
-                        rank: r.rank,
-                        name: r.name,
-                        value: r.kmText,
-                        avatar: r.avatar,
-                        highlight: isMe,
-                        isLast: i == _rows.length - 1,
-                      );
-                    }),
+
+                  // Сам круг: центр ровно на границе фото/белого блока
+                  Positioned(
+                    top:
+                        -36, // 72/2 со знаком минус — половина на фото, половина на белом фоне
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: AppColors.gold,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.surface,
+                            width: 2,
+                          ), // белая рамка 2px
+                          boxShadow: [
+                            const BoxShadow(
+                              color: AppColors.shadowSoft,
+                              blurRadius: 10,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.directions_run,
+                            size: 34,
+                            color: AppColors.surface,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ─────────── Сегменты на сером фоне (вынесены из белого блока)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                child: Center(
+                  child: _SegmentedPill(
+                    left: 'Все',
+                    right: 'Друзья',
+                    value: _segment,
+                    onChanged: (v) => setState(() => _segment = v),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+
+            // ─────────── Контент
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 10, 16, 10),
+                    child: _SectionTitle('Прогресс друзей'),
+                  ),
+
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.surface,
+                      border: Border(
+                        top: BorderSide(color: AppColors.border, width: 0.5),
+                        bottom: BorderSide(color: AppColors.border, width: 0.5),
+                      ),
+                    ),
+                    child: Column(
+                      children: List.generate(_rows.length, (i) {
+                        final r = _rows[i];
+                        final isMe = r.rank == 4;
+                        return _FriendRow(
+                          rank: r.rank,
+                          name: r.name,
+                          value: r.kmText,
+                          avatar: r.avatar,
+                          highlight: isMe,
+                          isLast: i == _rows.length - 1,
+                        );
+                      }),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

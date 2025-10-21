@@ -22,11 +22,11 @@ import 'tabs/awards/awards_tab.dart';
 import 'tabs/skills/skills_tab.dart';
 
 // общий стейт видимости снаряжения
-import 'state/gear_screen.dart';
+import 'widgets/gear_screen.dart';
 import 'state/search/search_screen.dart';
 
 // экран настроек
-import 'settings_screen.dart';
+import 'state/settings_screen.dart';
 
 import '../../models/user_profile_header.dart';
 
@@ -138,7 +138,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Icon(
               CupertinoIcons.sparkles,
-              size: 18,
+              size: 20,
               color: AppColors.iconPrimary,
             ),
             SizedBox(width: 8),
@@ -250,7 +250,7 @@ class _AppIcon extends StatelessWidget {
     return IconButton(
       icon: Icon(icon, color: AppColors.iconPrimary, size: 20),
       onPressed: onPressed ?? () {},
-      splashRadius: 18,
+      splashRadius: 22,
     );
   }
 }

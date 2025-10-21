@@ -10,7 +10,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
-import '../../state/gear_screen.dart';
+import '../../widgets/gear_screen.dart';
 import 'adding/adding_equipment_screen.dart';
 import 'viewing/viewing_equipment_screen.dart';
 // ↓ Глобальная бренд-кнопка

@@ -31,7 +31,7 @@ class _MapScreenState extends State<MapScreen> {
   final markerColors = const {
     0: AppColors.accentBlue, // события
     1: AppColors.error, // клубы
-    2: AppColors.warning, // слоты
+    2: AppColors.success, // слоты
     3: AppColors.accentPurple, // попутчики
   };
 

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../theme/app_theme.dart';
 import 'rout_description/rout_description_screen.dart';
+import '../../../../../widgets/transparent_route.dart';
 
 /// Вкладка «Маршруты» — таблица с чипом сложности
 class RoutesContent extends StatelessWidget {
@@ -56,7 +57,7 @@ class RoutesContent extends StatelessWidget {
                   if (e.title == 'Ладога - Лунёво - Ладога') {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
+                      TransparentPageRoute(
                         builder: (_) => RouteDescriptionScreen(
                           title: e.title,
                           mapAsset: e.asset,
