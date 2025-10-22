@@ -12,7 +12,7 @@ import 'widgets/activity/activity_block.dart'; // карточка тренир�
 import 'widgets/recommended/recommended_block.dart'; // блок «Рекомендации»
 import 'widgets/post/post_card.dart'; // карточка поста (с попапом «…» внутри)
 
-import 'state/newpost/newpost_screen.dart';
+import 'state/newpost/new_post_screen.dart';
 import 'widgets/comments_bottom_sheet.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 

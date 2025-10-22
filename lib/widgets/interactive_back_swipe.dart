@@ -1,22 +1,15 @@
 import 'package:flutter/material.dart';
 
-/// Интерактивный full-screen свайп-назад.
-/// Перетаскивает child вправо пальцем. На отпускании:
-///  • если прошли порог/скорость — докатывает до края и делает pop();
-///  • иначе — возвращает назад.
-///
-/// Замечания:
-///  • Работает поверх обычных Material/Cupertino роутов.
-///  • Может конфликтовать с горизонтальными скроллами внутри экрана.
-///    Если на экране много горизонтального свайпа — ставьте enabled: false.
+/// Интерактивный full-screen свайп-назад:
+/// тянем child вправо; на отпускании либо докатываем и pop(), либо возвращаем.
 class InteractiveBackSwipe extends StatefulWidget {
   const InteractiveBackSwipe({
     super.key,
     required this.child,
     this.enabled = true,
-    this.completeFraction = 0.33, // порог ~1/3 экрана
-    this.completeVelocity = 900.0, // пикс/сек: «быстрый» свайп
-    this.onlyWhenCanPop = true, // не активен на корневом экране
+    this.completeFraction = 0.33, // порог ~1/3 ширины
+    this.completeVelocity = 900.0, // пикс/сек — «быстрый» свайп
+    this.onlyWhenCanPop = true, // выключен на корневом экране
   });
 
   final Widget child;
@@ -34,8 +27,8 @@ class _InteractiveBackSwipeState extends State<InteractiveBackSwipe>
   double _drag = 0.0;
 
   late final AnimationController _settle;
-  NavigatorState? _navigator;        // кэш предка
-  VoidCallback? _tickListener;       // чтобы не накапливать слушатели
+  Animation<double>? _anim; // актуальная анимация от begin к target
+  VoidCallback? _animListener; // чтобы корректно отписываться
 
   @override
   void initState() {
@@ -47,17 +40,11 @@ class _InteractiveBackSwipeState extends State<InteractiveBackSwipe>
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // сохраняем ссылку, чтобы потом не лезть в .of(context) после деактивации
-    _navigator = Navigator.maybeOf(context);
-  }
-
-  @override
   void dispose() {
-    if (_tickListener != null) {
-      _settle.removeListener(_tickListener!);
-      _tickListener = null;
+    // аккуратно снимаем слушателя и гасим контроллер
+    if (_animListener != null && _anim != null) {
+      _anim!.removeListener(_animListener!);
+      _animListener = null;
     }
     _settle.dispose();
     super.dispose();
@@ -65,34 +52,38 @@ class _InteractiveBackSwipeState extends State<InteractiveBackSwipe>
 
   void _animateTo(double target, double width) {
     final begin = _drag.clamp(0.0, width);
-    final distance = (target - begin);
+    final distance = target - begin;
+
+    // Снять предыдущего слушателя (если был)
+    if (_animListener != null && _anim != null) {
+      _anim!.removeListener(_animListener!);
+      _animListener = null;
+    }
 
     _settle
       ..stop()
       ..value = 0.0;
 
-    // скидываем прежний слушатель, если был
-    if (_tickListener != null) {
-      _settle.removeListener(_tickListener!);
-      _tickListener = null;
-    }
+    _anim = Tween<double>(
+      begin: begin,
+      end: target,
+    ).animate(CurvedAnimation(parent: _settle, curve: Curves.easeOut));
 
-    final anim = CurvedAnimation(parent: _settle, curve: Curves.easeOut);
-    _tickListener = () {
-      if (!mounted) return;
-      setState(() => _drag = begin + distance * anim.value);
-    };
-    _settle.addListener(_tickListener!);
+    _animListener = () => setState(() {
+      // анимируем саму величину сдвига
+      _drag = begin + distance * _settle.value;
+    });
+    _anim!.addListener(_animListener!);
 
-    _settle.forward().whenCompleteOrCancel(() {
-      // почистим слушатель
-      if (_tickListener != null) {
-        _settle.removeListener(_tickListener!);
-        _tickListener = null;
+    _settle.forward().whenComplete(() {
+      // Чистим слушателя по завершении
+      if (_animListener != null && _anim != null) {
+        _anim!.removeListener(_animListener!);
+        _animListener = null;
       }
-      // докатились до края — закрываем экран без .of(context)
-      if (target >= width * 0.999) {
-        _navigator?.maybePop();
+      // Полностью уехали к правому краю — закрываем экран
+      if (target >= width * 0.999 && mounted) {
+        Navigator.of(context).maybePop();
       }
     });
   }
@@ -110,12 +101,13 @@ class _InteractiveBackSwipeState extends State<InteractiveBackSwipe>
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onHorizontalDragStart: (_) => _settle.stop(),
-      onHorizontalDragUpdate: (d) {
-        final next = (_drag + d.delta.dx).clamp(0.0, width);
-        setState(() => _drag = next);
+      onHorizontalDragUpdate: (details) {
+        final next = (_drag + details.delta.dx).clamp(0.0, width);
+        if (next != _drag) setState(() => _drag = next);
       },
-      onHorizontalDragEnd: (d) {
-        final fastEnough = (d.primaryVelocity ?? 0) > widget.completeVelocity;
+      onHorizontalDragEnd: (details) {
+        final v = details.primaryVelocity ?? 0.0;
+        final fastEnough = v > widget.completeVelocity;
         final farEnough = _drag > width * widget.completeFraction;
         if (fastEnough || farEnough) {
           _animateTo(width, width);
@@ -125,13 +117,17 @@ class _InteractiveBackSwipeState extends State<InteractiveBackSwipe>
       },
       child: Stack(
         children: [
+          // Сдвигаем текущий экран вправо
           Transform.translate(
             offset: Offset(_drag, 0),
             child: DecoratedBox(
+              // легкая тень слева — приятнее глазу
               decoration: BoxDecoration(
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08 * (1.0 - progress)),
+                    color: Colors.black.withValues(
+                      alpha: 0.08 * (1.0 - progress),
+                    ),
                     blurRadius: 12,
                     spreadRadius: 1,
                   ),

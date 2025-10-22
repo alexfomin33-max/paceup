@@ -319,7 +319,7 @@ class _MembersTable extends StatelessWidget {
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         ),
@@ -343,7 +343,7 @@ class _MembersTable extends StatelessWidget {
                                   style: const TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 12,
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w400,
                                   ),
                                 ),
                               ),
@@ -376,7 +376,7 @@ class _MembersTable extends StatelessWidget {
                                   style: const TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 12,
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w400,
                                   ),
                                 ),
                               ),
@@ -393,6 +393,7 @@ class _MembersTable extends StatelessWidget {
                 const Divider(
                   height: 1,
                   thickness: 0.5,
+                  indent: 52,
                   color: AppColors.divider,
                 ),
             ],
