@@ -21,7 +21,7 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
         body: CustomScrollView(
           slivers: [
             // ─────────── Верхнее фото + кнопка "назад"
-            SliverAppBar(
+            SliverAppBar( 
               pinned: false,
               floating: false,
               expandedHeight: 160,

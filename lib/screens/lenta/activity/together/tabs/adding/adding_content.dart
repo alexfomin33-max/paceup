@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../../../theme/app_theme.dart';
 
 class AddingContent extends StatelessWidget {
   const AddingContent({super.key});
@@ -48,7 +48,7 @@ class AddingContent extends StatelessWidget {
                             child: Icon(
                               CupertinoIcons.hourglass,
                               size: 22,
-                              color: AppColors.textSecondary,
+                              color: AppColors.textTertiary,
                             ),
                           )
                         : SizedBox(
@@ -115,15 +115,15 @@ class _SearchField extends StatelessWidget {
         fillColor: AppColors.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1.2),
+          borderSide: const BorderSide(color: AppColors.outline),
         ),
       ),
     );

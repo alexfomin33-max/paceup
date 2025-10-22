@@ -80,7 +80,7 @@ class _SegmentedPill3 extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.brandPrimary : Colors.transparent,
+          color: selected ? AppColors.textPrimary : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Text(
@@ -88,7 +88,7 @@ class _SegmentedPill3 extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
             color: selected ? AppColors.surface : AppColors.textPrimary,
           ),
         ),

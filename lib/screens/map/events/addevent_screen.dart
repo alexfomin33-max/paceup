@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_bar.dart';
+import '../../../widgets/interactive_back_swipe.dart';
 
 class AddEventScreen extends StatefulWidget {
   const AddEventScreen({super.key});
@@ -219,17 +220,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onHorizontalDragStart: (d) => _dragStartX = d.globalPosition.dx,
-      onHorizontalDragEnd: (d) {
-        if (_isPickerOpen) return; // если открыт попап — не свайпаем назад
-        if ((_dragStartX ?? 1000) > 24) {
-          return; // свайп только от самого левого края
-        }
-        if ((d.primaryVelocity ?? 0) > 300) {
-          Navigator.pop(context);
-        }
-      },
+    return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.surface,
         appBar: const PaceAppBar(title: 'Добавление события'),

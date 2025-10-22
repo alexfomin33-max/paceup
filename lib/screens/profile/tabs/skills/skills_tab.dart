@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
 import 'walking_skill_tab.dart';
+import '../../../../widgets/transparent_route.dart';
 
 class SkillsTab extends StatefulWidget {
   const SkillsTab({super.key});
@@ -55,7 +56,7 @@ class _SkillsTabState extends State<SkillsTab>
                 max: 10,
                 onTap: () {
                   Navigator.of(context, rootNavigator: true).push(
-                    MaterialPageRoute(
+                    TransparentPageRoute(
                       builder: (_) => const WalkingSkillScreen(),
                     ),
                   );
@@ -184,7 +185,7 @@ class SkillCard extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.textSecondary,
+                        color: AppColors.success,
                       ),
                     ),
                   ],
@@ -240,10 +241,10 @@ class _SkillProgressBar extends StatelessWidget {
               width: cur,
               height: 6,
               decoration: const BoxDecoration(
-                color: AppColors.accentMint,
+                color: AppColors.success,
                 borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(AppRadius.xs),
-                  bottomRight: Radius.circular(AppRadius.xs),
+                  topLeft: Radius.circular(AppRadius.xs),
+                  bottomLeft: Radius.circular(AppRadius.xs),
                 ),
               ),
             ),
@@ -251,11 +252,8 @@ class _SkillProgressBar extends StatelessWidget {
               child: Container(
                 height: 6,
                 decoration: const BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(AppRadius.xs),
-                    bottomRight: Radius.circular(AppRadius.xs),
-                  ),
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.all(Radius.circular(AppRadius.xs)),
                 ),
               ),
             ),

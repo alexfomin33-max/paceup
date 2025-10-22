@@ -7,6 +7,7 @@ import '../../../../../models/market_models.dart';
 import '../tradechat_things_screen.dart';
 import '../../../widgets/image_gallery.dart';
 import '../../../widgets/pills.dart';
+import '../../../../../widgets/transparent_route.dart';
 
 /// Отдельный виджет карточки ТОВАРА.
 class GoodsCard extends StatelessWidget {
@@ -173,7 +174,7 @@ class GoodsCard extends StatelessWidget {
                             onPressed: () {
                               // Переход в чат с продавцом (экран уже у вас есть)
                               Navigator.of(context, rootNavigator: true).push(
-                                MaterialPageRoute(
+                                TransparentPageRoute(
                                   builder: (_) => TradeChatScreen(
                                     itemTitle: item.title,
                                     itemThumb: item.images.isNotEmpty

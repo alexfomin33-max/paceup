@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_bar.dart';
 import 'settings_placeholder_screen.dart'; // 👈 экран-заглушка
+import '../../../widgets/interactive_back_swipe.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -17,154 +18,156 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.background,
 
-      // ── глобальный PaceAppBar (покажет системную «назад», если есть куда вернуться)
-      appBar: const PaceAppBar(title: 'Настройки'),
+        // ── глобальный PaceAppBar (покажет системную «назад», если есть куда вернуться)
+        appBar: const PaceAppBar(title: 'Настройки'),
 
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          // Карточка подписки PacePro
-          _SubscriptionCard(
-            onTap: () => _open(context, 'Управление подпиской PacePro'),
-          ),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: [
+            // Карточка подписки PacePro
+            _SubscriptionCard(
+              onTap: () => _open(context, 'Управление подпиской PacePro'),
+            ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-          // Подключения
-          _SettingsGroup(
-            children: [
-              _SettingsTile(
-                icon: CupertinoIcons.slider_horizontal_3,
-                iconColor: AppColors.brandPrimary,
-                title: 'Подключенные трекеры',
-                onTap: () => _open(context, 'Подключенные трекеры'),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // Аккаунт
-          _SettingsGroup(
-            children: [
-              _SettingsTile(
-                icon: CupertinoIcons.phone,
-                iconColor: AppColors.brandPrimary,
-                title: 'Телефон',
-                trailingText: '+7 (9**) ***–25–38',
-                onTap: () => _open(context, 'Телефон'),
-              ),
-              const _Divider(),
-              _SettingsTile(
-                icon: CupertinoIcons.envelope,
-                iconColor: AppColors.brandPrimary,
-                title: 'E-mail',
-                trailingText: 'pa*****@ya.ru',
-                onTap: () => _open(context, 'E-mail'),
-              ),
-              const _Divider(),
-              _SettingsTile(
-                icon: CupertinoIcons.lock,
-                iconColor: AppColors.brandPrimary,
-                title: 'Пароль',
-                trailingText: '********',
-                onTap: () => _open(context, 'Пароль'),
-              ),
-              const _Divider(),
-              _SettingsTile(
-                icon: CupertinoIcons.rectangle_on_rectangle_angled,
-                iconColor: AppColors.brandPrimary,
-                title: 'Код-пароль и Face ID',
-                trailingText: 'Откл.',
-                onTap: () => _open(context, 'Код-пароль и Face ID'),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // Приложение и данные
-          _SettingsGroup(
-            children: [
-              _SettingsTile(
-                icon: CupertinoIcons.bell,
-                iconColor: AppColors.brandPrimary,
-                title: 'Push-уведомления',
-                onTap: () => _open(context, 'Push-уведомления'),
-              ),
-              const _Divider(),
-              _SettingsTile(
-                icon: CupertinoIcons.arrow_2_circlepath,
-                iconColor: AppColors.brandPrimary,
-                title: 'Доступ к данным',
-                onTap: () => _open(context, 'Доступ к данным'),
-              ),
-              const _Divider(),
-              _SettingsTile(
-                icon: CupertinoIcons.person_2,
-                iconColor: AppColors.brandPrimary,
-                title: 'Контакты',
-                onTap: () => _open(context, 'Контакты'),
-              ),
-              const _Divider(),
-              _SettingsTile(
-                icon: CupertinoIcons.question_circle,
-                iconColor: AppColors.brandPrimary,
-                title: 'Справочная информация',
-                onTap: () => _open(context, 'Справочная информация'),
-              ),
-              const _Divider(),
-              _SettingsTile(
-                icon: CupertinoIcons.bubble_left,
-                iconColor: AppColors.brandPrimary,
-                title: 'Предложения по улучшению',
-                onTap: () => _open(context, 'Предложения по улучшению'),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // Поддержать
-          _SettingsGroup(
-            children: [
-              _SettingsTile(
-                icon: CupertinoIcons.heart,
-                iconColor: AppColors.error,
-                title: 'На кофе разработчикам',
-                trailingText: '99 ₽',
-                trailingTextColor: AppColors.error,
-                trailingIconColor: AppColors.error, // 🔹 красная стрелка
-                onTap: () => _open(
-                  context,
-                  'На кофе разработчикам',
-                  note: 'Здесь будет окно оплаты доната.',
+            // Подключения
+            _SettingsGroup(
+              children: [
+                _SettingsTile(
+                  icon: CupertinoIcons.slider_horizontal_3,
+                  iconColor: AppColors.brandPrimary,
+                  title: 'Подключенные трекеры',
+                  onTap: () => _open(context, 'Подключенные трекеры'),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-          // Выход
-          _SettingsGroup(
-            children: [
-              _SettingsTile(
-                icon: CupertinoIcons.square_arrow_right,
-                iconColor: AppColors.brandPrimary,
-                title: 'Выйти',
-                onTap: () => _open(
-                  context,
-                  'Выйти',
-                  note: 'Тут появится подтверждение и выход из аккаунта.',
+            // Аккаунт
+            _SettingsGroup(
+              children: [
+                _SettingsTile(
+                  icon: CupertinoIcons.phone,
+                  iconColor: AppColors.brandPrimary,
+                  title: 'Телефон',
+                  trailingText: '+7 (9**) ***–25–38',
+                  onTap: () => _open(context, 'Телефон'),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const _Divider(),
+                _SettingsTile(
+                  icon: CupertinoIcons.envelope,
+                  iconColor: AppColors.brandPrimary,
+                  title: 'E-mail',
+                  trailingText: 'pa*****@ya.ru',
+                  onTap: () => _open(context, 'E-mail'),
+                ),
+                const _Divider(),
+                _SettingsTile(
+                  icon: CupertinoIcons.lock,
+                  iconColor: AppColors.brandPrimary,
+                  title: 'Пароль',
+                  trailingText: '********',
+                  onTap: () => _open(context, 'Пароль'),
+                ),
+                const _Divider(),
+                _SettingsTile(
+                  icon: CupertinoIcons.rectangle_on_rectangle_angled,
+                  iconColor: AppColors.brandPrimary,
+                  title: 'Код-пароль и Face ID',
+                  trailingText: 'Откл.',
+                  onTap: () => _open(context, 'Код-пароль и Face ID'),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Приложение и данные
+            _SettingsGroup(
+              children: [
+                _SettingsTile(
+                  icon: CupertinoIcons.bell,
+                  iconColor: AppColors.brandPrimary,
+                  title: 'Push-уведомления',
+                  onTap: () => _open(context, 'Push-уведомления'),
+                ),
+                const _Divider(),
+                _SettingsTile(
+                  icon: CupertinoIcons.arrow_2_circlepath,
+                  iconColor: AppColors.brandPrimary,
+                  title: 'Доступ к данным',
+                  onTap: () => _open(context, 'Доступ к данным'),
+                ),
+                const _Divider(),
+                _SettingsTile(
+                  icon: CupertinoIcons.person_2,
+                  iconColor: AppColors.brandPrimary,
+                  title: 'Контакты',
+                  onTap: () => _open(context, 'Контакты'),
+                ),
+                const _Divider(),
+                _SettingsTile(
+                  icon: CupertinoIcons.question_circle,
+                  iconColor: AppColors.brandPrimary,
+                  title: 'Справочная информация',
+                  onTap: () => _open(context, 'Справочная информация'),
+                ),
+                const _Divider(),
+                _SettingsTile(
+                  icon: CupertinoIcons.bubble_left,
+                  iconColor: AppColors.brandPrimary,
+                  title: 'Предложения по улучшению',
+                  onTap: () => _open(context, 'Предложения по улучшению'),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Поддержать
+            _SettingsGroup(
+              children: [
+                _SettingsTile(
+                  icon: CupertinoIcons.heart,
+                  iconColor: AppColors.error,
+                  title: 'На кофе разработчикам',
+                  trailingText: '99 ₽',
+                  trailingTextColor: AppColors.error,
+                  trailingIconColor: AppColors.error, // 🔹 красная стрелка
+                  onTap: () => _open(
+                    context,
+                    'На кофе разработчикам',
+                    note: 'Здесь будет окно оплаты доната.',
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Выход
+            _SettingsGroup(
+              children: [
+                _SettingsTile(
+                  icon: CupertinoIcons.square_arrow_right,
+                  iconColor: AppColors.brandPrimary,
+                  title: 'Выйти',
+                  onTap: () => _open(
+                    context,
+                    'Выйти',
+                    note: 'Тут появится подтверждение и выход из аккаунта.',
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

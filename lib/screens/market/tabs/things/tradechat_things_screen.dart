@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/interactive_back_swipe.dart';
 
 class TradeChatScreen extends StatefulWidget {
   final String itemTitle;
@@ -57,7 +58,7 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
     _ChatMsg.text(
       side: _MsgSide.right,
       text:
-          'Добрый день, Ирина. Хотела бы посмотреть эти кроссовки. Где и когда можно будет увидеться?',
+          'Добрый день, Екатерина. Хотела бы посмотреть эти кроссовки. Где и когда можно будет увидеться?',
       time: '9:34',
     ),
     _ChatMsg.text(
@@ -112,131 +113,136 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
     // ─────────────────────────────────────────────────────────────
     const int headerCount = 5;
 
-    return Scaffold(
-      backgroundColor: AppColors.surface, // фон чата — белый
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        elevation: 0.5,
-        leadingWidth: 40,
-        leading: Transform.translate(
-          offset: const Offset(-4, 0),
-          child: IconButton(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            icon: const Icon(CupertinoIcons.back),
-            onPressed: () => Navigator.pop(context),
-            splashRadius: 18,
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.surface, // фон чата — белый
+        appBar: AppBar(
+          backgroundColor: AppColors.surface,
+          elevation: 0.5,
+          leadingWidth: 40,
+          leading: Transform.translate(
+            offset: const Offset(-4, 0),
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              icon: const Icon(CupertinoIcons.back),
+              onPressed: () => Navigator.pop(context),
+              splashRadius: 18,
+            ),
           ),
-        ),
-        titleSpacing: -8, // «чуть левее»
-        title: Row(
-          children: [
-            if (widget.itemThumb != null) ...[
-              Container(
-                width: 36,
-                height: 36,
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  image: DecorationImage(
-                    image: AssetImage(widget.itemThumb!),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Чат продажи вещи',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    widget.itemTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+          titleSpacing: -8, // «чуть левее»
+          title: Row(
+            children: [
+              if (widget.itemThumb != null) ...[
+                Container(
+                  width: 36,
+                  height: 36,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    image: DecorationImage(
+                      image: AssetImage(widget.itemThumb!),
+                      fit: BoxFit.cover,
                     ),
                   ),
-                ],
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Чат продажи вещи',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.itemTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ],
+          ),
+        ),
+        body: Column(
+          children: [
+            // ─────────────────────────────────────────────────────────
+            // Прокручиваемая область: headers + сообщения в одном ListView
+            // ─────────────────────────────────────────────────────────
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+                // bottom padding побольше, чтобы последний элемент не прятался за Composer
+                itemCount: headerCount + _messages.length,
+                itemBuilder: (_, index) {
+                  // 0..headerCount-1 — это наши «шапки», которые раньше были над списком.
+                  if (index == 0) {
+                    return _DateSeparator(
+                      text: '${_today()}, автоматическое создание чата',
+                    );
+                  }
+                  if (index == 1) {
+                    return const _ParticipantRow(
+                      avatarAsset: 'assets/avatar_4.png',
+                      nameAndRole: 'Екатерина Виноградова - продавец',
+                    );
+                  }
+                  if (index == 2) {
+                    return const _ParticipantRow(
+                      avatarAsset: 'assets/avatar_9.png',
+                      nameAndRole: 'Анастасия Бутузова - покупатель',
+                    );
+                  }
+                  if (index == 3) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Divider(
+                        height: 16,
+                        thickness: 1,
+                        color: AppColors.border,
+                      ),
+                    );
+                  }
+                  if (index == 4) {
+                    return const SizedBox(height: 8);
+                  }
+
+                  // дальше — сообщения
+                  final m = _messages[index - headerCount];
+                  if (m.kind == _MsgKind.image) {
+                    return m.side == _MsgSide.right
+                        ? _BubbleImageRight(file: m.imageFile!, time: m.time)
+                        : _BubbleImageLeft(file: m.imageFile!, time: m.time);
+                  } else {
+                    return m.side == _MsgSide.right
+                        ? _BubbleRight(text: m.text!, time: m.time)
+                        : _BubbleLeft(text: m.text!, time: m.time);
+                  }
+                },
+              ),
+            ),
+
+            // ─────────────────────────────────────────────────────────
+            // Неподвижная нижняя панель ввода (Composer)
+            // ─────────────────────────────────────────────────────────
+            _Composer(
+              controller: _ctrl,
+              onSend: _sendText,
+              onPickImage: _pickImage, // плюсик — выбор фото из галереи
             ),
           ],
         ),
-      ),
-      body: Column(
-        children: [
-          // ─────────────────────────────────────────────────────────
-          // Прокручиваемая область: headers + сообщения в одном ListView
-          // ─────────────────────────────────────────────────────────
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
-              // bottom padding побольше, чтобы последний элемент не прятался за Composer
-              itemCount: headerCount + _messages.length,
-              itemBuilder: (_, index) {
-                // 0..headerCount-1 — это наши «шапки», которые раньше были над списком.
-                if (index == 0) {
-                  return _DateSeparator(
-                    text: '${_today()}, автоматическое создание чата',
-                  );
-                }
-                if (index == 1) {
-                  return const _ParticipantRow(
-                    avatarAsset: 'assets/avatar_4.png',
-                    nameAndRole: 'Ирина Курагина - продавец',
-                  );
-                }
-                if (index == 2) {
-                  return const _ParticipantRow(
-                    avatarAsset: 'assets/avatar_9.png',
-                    nameAndRole: 'Анастасия Бутузова - покупатель',
-                  );
-                }
-                if (index == 3) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: Divider(
-                      height: 16,
-                      thickness: 1,
-                      color: AppColors.border,
-                    ),
-                  );
-                }
-                if (index == 4) {
-                  return const SizedBox(height: 8);
-                }
-
-                // дальше — сообщения
-                final m = _messages[index - headerCount];
-                if (m.kind == _MsgKind.image) {
-                  return m.side == _MsgSide.right
-                      ? _BubbleImageRight(file: m.imageFile!, time: m.time)
-                      : _BubbleImageLeft(file: m.imageFile!, time: m.time);
-                } else {
-                  return m.side == _MsgSide.right
-                      ? _BubbleRight(text: m.text!, time: m.time)
-                      : _BubbleLeft(text: m.text!, time: m.time);
-                }
-              },
-            ),
-          ),
-
-          // ─────────────────────────────────────────────────────────
-          // Неподвижная нижняя панель ввода (Composer)
-          // ─────────────────────────────────────────────────────────
-          _Composer(
-            controller: _ctrl,
-            onSend: _sendText,
-            onPickImage: _pickImage, // плюсик — выбор фото из галереи
-          ),
-        ],
       ),
     );
   }

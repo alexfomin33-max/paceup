@@ -3,6 +3,7 @@ import 'package:latlong2/latlong.dart';
 import 'addevent_screen.dart';
 import 'events_bottom_sheet.dart';
 import '../../../../../theme/app_theme.dart';
+import '../../../widgets/transparent_route.dart';
 
 /// Возвращает маркеры для вкладки «События».
 List<Map<String, dynamic>> eventsMarkers(BuildContext context) {
@@ -66,7 +67,7 @@ class EventsFloatingButtons extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const AddEventScreen()),
+                TransparentPageRoute(builder: (_) => const AddEventScreen()),
               );
             },
           ),

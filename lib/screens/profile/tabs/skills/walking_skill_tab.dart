@@ -2,58 +2,61 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/interactive_back_swipe.dart';
 
 class WalkingSkillScreen extends StatelessWidget {
   const WalkingSkillScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          // ─────────── Неподвижный верхний блок
-          _FixedHeader(onBack: () => Navigator.of(context).pop()),
-          // ─────────── Контент скроллится отдельно
-          Expanded(
-            child: ListView(
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.zero,
-              children: [
-                const SizedBox(height: 25), // требуемые 20px
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: _SectionTitle('Навык друзей'),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border(
-                      top: BorderSide(color: AppColors.border, width: 0.5),
-                      bottom: BorderSide(color: AppColors.border, width: 0.5),
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.surface,
+        body: Column(
+          children: [
+            // ─────────── Неподвижный верхний блок
+            _FixedHeader(onBack: () => Navigator.of(context).pop()),
+            // ─────────── Контент скроллится отдельно
+            Expanded(
+              child: ListView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.zero,
+                children: [
+                  const SizedBox(height: 25), // требуемые 20px
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: _SectionTitle('Навык друзей'),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.surface,
+                      border: Border(
+                        top: BorderSide(color: AppColors.border, width: 0.5),
+                        bottom: BorderSide(color: AppColors.border, width: 0.5),
+                      ),
+                    ),
+                    child: Column(
+                      children: List.generate(_rows.length, (i) {
+                        final r = _rows[i];
+                        final isMe = r.rank == 3; // подсветка как в макете
+                        return _FriendRow(
+                          rank: r.rank,
+                          name: r.name,
+                          value: r.value,
+                          avatar: r.avatar,
+                          highlight: isMe,
+                          isLast: i == _rows.length - 1,
+                        );
+                      }),
                     ),
                   ),
-                  child: Column(
-                    children: List.generate(_rows.length, (i) {
-                      final r = _rows[i];
-                      final isMe = r.rank == 3; // подсветка как в макете
-                      return _FriendRow(
-                        rank: r.rank,
-                        name: r.name,
-                        value: r.value,
-                        avatar: r.avatar,
-                        highlight: isMe,
-                        isLast: i == _rows.length - 1,
-                      );
-                    }),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -172,7 +175,7 @@ class _FixedHeader extends StatelessWidget {
             ),
 
             const SizedBox(height: 10),
-            const Divider(height: 1, thickness: 0.5, color: AppColors.border),
+            const Divider(height: 1, thickness: 0.5, color: AppColors.divider),
           ],
         ),
       ),
@@ -195,9 +198,9 @@ class _MiniProgress extends StatelessWidget {
           children: [
             Container(
               width: w,
-              height: 4,
+              height: 6,
               decoration: const BoxDecoration(
-                color: AppColors.accentMint,
+                color: AppColors.success,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(AppRadius.xs),
                   bottomLeft: Radius.circular(AppRadius.xs),
@@ -206,13 +209,10 @@ class _MiniProgress extends StatelessWidget {
             ),
             Expanded(
               child: Container(
-                height: 4,
+                height: 6,
                 decoration: const BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(AppRadius.xs),
-                    bottomRight: Radius.circular(AppRadius.xs),
-                  ),
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.all(Radius.circular(AppRadius.xs)),
                 ),
               ),
             ),
@@ -271,8 +271,8 @@ class _FriendRow extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: highlight ? AppColors.accentMint : AppColors.textPrimary,
+                fontWeight: FontWeight.w400,
+                color: highlight ? AppColors.success : AppColors.textPrimary,
               ),
             ),
           ),
@@ -299,8 +299,8 @@ class _FriendRow extends StatelessWidget {
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: highlight ? AppColors.accentMint : AppColors.textPrimary,
+              fontWeight: FontWeight.w400,
+              color: highlight ? AppColors.success : AppColors.textPrimary,
             ),
           ),
         ],
@@ -311,7 +311,13 @@ class _FriendRow extends StatelessWidget {
       children: [
         row,
         if (!isLast)
-          const Divider(height: 1, thickness: 0.5, color: AppColors.border),
+          const Divider(
+            height: 1,
+            thickness: 0.5,
+            indent: 80,
+            endIndent: 10,
+            color: AppColors.divider,
+          ),
       ],
     );
   }

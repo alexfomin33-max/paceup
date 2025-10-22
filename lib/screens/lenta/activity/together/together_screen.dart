@@ -2,8 +2,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
-import 'member_content.dart';
-import 'adding_content.dart';
+
+// 🔹 глобальные виджеты
+import '../../../../widgets/app_bar.dart';
+import '../../../../widgets/segmented_pill.dart';
+
+// вкладки
+import 'tabs/members/member_content.dart';
+import 'tabs/adding/adding_content.dart';
 
 class TogetherScreen extends StatefulWidget {
   const TogetherScreen({super.key});
@@ -13,8 +19,12 @@ class TogetherScreen extends StatefulWidget {
 }
 
 class _TogetherScreenState extends State<TogetherScreen> {
-  int _segment = 0; // 0 — Участники, 1 — Добавить
-  late final PageController _page = PageController(initialPage: _segment);
+  int _index = 0; // 0 — Участники, 1 — Добавить
+  late final PageController _page = PageController(initialPage: _index);
+
+  // такие же значения анимации, как на других экранах
+  static const _kTabAnim = Duration(milliseconds: 300);
+  static const Curve _kTabCurve = Curves.easeOutCubic;
 
   @override
   void dispose() {
@@ -26,56 +36,47 @@ class _TogetherScreenState extends State<TogetherScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-        centerTitle: true,
-        title: const Text('Совместная тренировка', style: AppTextStyles.h17w6),
-        leading: IconButton(
-          splashRadius: 22,
-          icon: const Icon(
-            CupertinoIcons.back,
-            size: 22,
-            color: AppColors.iconPrimary,
-          ),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        // bottom: const PreferredSize(
-        //   preferredSize: Size.fromHeight(1),
-        //   child: Divider(height: 1, thickness: 1, color: AppColors.border),
-        // ),
+
+      appBar: const PaceAppBar(
+        title: 'Совместная тренировка',
+        showBottomDivider: false,
       ),
 
-      // ——— верх: сегменты; низ: PageView с горизонтальными свайпами
+      // верх: пилюля; низ: PageView со свайпами
       body: Column(
         children: [
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Center(
-              child: _SegmentedPill2(
-                items: const ['Участники', 'Добавить'],
-                value: _segment,
+              child: SegmentedPill(
+                left: 'Участники',
+                right: 'Добавить',
+                value: _index,
+                width: 280,
+                height: 40,
+                duration: _kTabAnim,
+                curve: _kTabCurve,
+                haptics: true,
                 onChanged: (v) {
+                  if (_index == v) return;
+                  setState(() => _index = v);
                   _page.animateToPage(
                     v,
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutCubic,
+                    duration: _kTabAnim,
+                    curve: _kTabCurve,
                   );
                 },
-                width: 280,
               ),
             ),
           ),
           const SizedBox(height: 14),
 
-          // ——— свайпы влево/вправо между вкладками
           Expanded(
             child: PageView(
               controller: _page,
               physics: const BouncingScrollPhysics(),
-              onPageChanged: (i) => setState(() => _segment = i),
+              onPageChanged: (i) => setState(() => _index = i),
               children: const [
                 _PageWrapper(
                   key: PageStorageKey('together_members'),
@@ -104,94 +105,9 @@ class _PageWrapper extends StatelessWidget {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        SliverToBoxAdapter(child: child),
+        SliverToBoxAdapter(child: child), // ← вот его и не хватало
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ],
-    );
-  }
-}
-
-/// Более дёшевый вариант: один «ползунок» + статичные тексты.
-/// Просто замени твой _SegmentedPill2 этим классом.
-class _SegmentedPill2 extends StatelessWidget {
-  final List<String> items;
-  final int value;
-  final double? width;
-  final ValueChanged<int> onChanged;
-  const _SegmentedPill2({
-    required this.items,
-    required this.value,
-    required this.onChanged,
-    this.width,
-  }) : assert(items.length == 2);
-
-  @override
-  Widget build(BuildContext context) {
-    final pill = Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
-      child: SizedBox(
-        height: 36,
-        child: Stack(
-          children: [
-            // Скользящий фон — двигаем только его
-            AnimatedAlign(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutCubic,
-              alignment: value == 0
-                  ? Alignment.centerLeft
-                  : Alignment.centerRight,
-              child: FractionallySizedBox(
-                widthFactor: 0.5,
-                child: RepaintBoundary(
-                  child: Container(
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppColors.brandPrimary,
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Статичные кликабельные области + текст (не перерисовываются при движении фона)
-            Row(
-              children: [
-                _seg(0, items[0], selected: value == 0),
-                _seg(1, items[1], selected: value == 1),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (width == null) return pill;
-    return SizedBox(width: width, child: pill);
-  }
-
-  Widget _seg(int idx, String text, {required bool selected}) {
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => onChanged(idx),
-        child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              color: selected ? AppColors.surface : AppColors.textPrimary,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

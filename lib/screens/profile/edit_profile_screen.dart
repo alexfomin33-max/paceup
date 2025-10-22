@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bar.dart'; // наш глобальный AppBar
+import '../../../widgets/interactive_back_swipe.dart';
 
 const double kAvatarSize = 88.0;
 const double kQrBtnSize = 44.0;
@@ -32,12 +33,10 @@ class _LoadingPane extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(
-        parent: AlwaysScrollableScrollPhysics(),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      child: const Align(
+    return const SingleChildScrollView(
+      physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: Align(
         alignment: Alignment.topCenter,
         child: CupertinoActivityIndicator(),
       ),
@@ -680,71 +679,73 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   /// ── UI ──
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // единый фон экрана
-      backgroundColor: AppColors.background,
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        // единый фон экрана
+        backgroundColor: AppColors.background,
 
-      // глобальная шапка
-      appBar: PaceAppBar(
-        title: 'Профиль',
-        actions: [
-          TextButton(
-            onPressed: (_saving || _loadingProfile) ? null : _onSave,
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.brandPrimary,
-              minimumSize: const Size(44, 44),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-            ),
-            child: _saving
-                ? const CupertinoActivityIndicator(radius: 8)
-                : const Text('Сохранить'),
-          ),
-        ],
-      ),
-
-      // важное: единая компоновка для всех состояний + «прижатие» к верху
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeIn,
-        layoutBuilder: (currentChild, previousChildren) {
-          return Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              ...previousChildren,
-              if (currentChild != null) currentChild,
-            ],
-          );
-        },
-        child: _loadingProfile
-            ? const _LoadingPane(key: ValueKey('loading'))
-            : (_loadError != null)
-            ? _ErrorPane(
-                key: const ValueKey('error'),
-                message: _loadError!,
-                onRetry: _loadProfile,
-              )
-            : _FormPane(
-                key: const ValueKey('form'),
-                avatarUrl: _avatarUrl,
-                avatarBytes: _avatarBytes,
-                onPickAvatar: _pickAvatar,
-                firstName: _firstName,
-                lastName: _lastName,
-                nickname: _nickname,
-                city: _city,
-                height: _height,
-                weight: _weight,
-                hrMax: _hrMax,
-                birthDate: _birthDate,
-                gender: _gender,
-                mainSport: _mainSport,
-                setBirthDate: (d) => setState(() => _birthDate = d),
-                setGender: (g) => setState(() => _gender = g),
-                setSport: (s) => setState(() => _mainSport = s),
-                pickBirthDate: _pickBirthDate,
-                pickFromList: _pickFromList,
+        // глобальная шапка
+        appBar: PaceAppBar(
+          title: 'Профиль',
+          actions: [
+            TextButton(
+              onPressed: (_saving || _loadingProfile) ? null : _onSave,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.brandPrimary,
+                minimumSize: const Size(44, 44),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
+              child: _saving
+                  ? const CupertinoActivityIndicator(radius: 8)
+                  : const Text('Сохранить'),
+            ),
+          ],
+        ),
+
+        // важное: единая компоновка для всех состояний + «прижатие» к верху
+        body: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          layoutBuilder: (currentChild, previousChildren) {
+            return Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                ...previousChildren,
+                if (currentChild != null) currentChild,
+              ],
+            );
+          },
+          child: _loadingProfile
+              ? const _LoadingPane(key: ValueKey('loading'))
+              : (_loadError != null)
+              ? _ErrorPane(
+                  key: const ValueKey('error'),
+                  message: _loadError!,
+                  onRetry: _loadProfile,
+                )
+              : _FormPane(
+                  key: const ValueKey('form'),
+                  avatarUrl: _avatarUrl,
+                  avatarBytes: _avatarBytes,
+                  onPickAvatar: _pickAvatar,
+                  firstName: _firstName,
+                  lastName: _lastName,
+                  nickname: _nickname,
+                  city: _city,
+                  height: _height,
+                  weight: _weight,
+                  hrMax: _hrMax,
+                  birthDate: _birthDate,
+                  gender: _gender,
+                  mainSport: _mainSport,
+                  setBirthDate: (d) => setState(() => _birthDate = d),
+                  setGender: (g) => setState(() => _gender = g),
+                  setSport: (s) => setState(() => _mainSport = s),
+                  pickBirthDate: _pickBirthDate,
+                  pickFromList: _pickFromList,
+                ),
+        ),
       ),
     );
   }

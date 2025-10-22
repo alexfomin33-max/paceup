@@ -6,6 +6,7 @@ import '../../../../../theme/app_theme.dart';
 import '../../../../../models/market_models.dart';
 import '../tradechat_slots_screen.dart';
 import '../../../widgets/pills.dart';
+import '../../../../../widgets/transparent_route.dart';
 
 /// Отдельный виджет карточки СЛОТА.
 /// Миниатюра НЕ кликабельна.
@@ -105,7 +106,7 @@ class MarketSlotCard extends StatelessWidget {
                             enabled: item.buttonEnabled,
                             onPressed: () {
                               Navigator.of(context, rootNavigator: true).push(
-                                MaterialPageRoute(
+                                TransparentPageRoute(
                                   builder: (_) => TradeChatSlotsScreen(
                                     itemTitle: item.title,
                                     itemThumb: item.imageUrl,

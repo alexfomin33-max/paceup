@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bar.dart'; // ← наш глобальный AppBar
+import '../../../widgets/transparent_route.dart';
 
 // общие виджеты
 import 'widgets/header_card.dart';
@@ -167,7 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () {
               Navigator.of(
                 context,
-              ).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+              ).push(TransparentPageRoute(builder: (_) => const SettingsScreen()));
             },
           ),
           const SizedBox(width: 6),

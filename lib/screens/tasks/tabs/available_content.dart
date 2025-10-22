@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../description/swim_trip_screen.dart';
+import '../../../widgets/transparent_route.dart';
 
 class AvailableContent extends StatelessWidget {
   const AvailableContent({super.key});
@@ -59,7 +60,9 @@ class AvailableContent extends StatelessWidget {
                   buttonText: 'Смотреть',
                   onPressed: () {
                     Navigator.of(context, rootNavigator: true).push(
-                      MaterialPageRoute(builder: (_) => const SwimTripScreen()),
+                      TransparentPageRoute(
+                        builder: (_) => const SwimTripScreen(),
+                      ),
                     );
                   },
                 ),

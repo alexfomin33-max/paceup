@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../models/market_models.dart';
 import '../../widgets/pills.dart'; // GenderPill, PricePill
+import '../../../../widgets/interactive_back_swipe.dart';
 
 class TradeChatSlotsScreen extends StatefulWidget {
   final String itemTitle;
@@ -63,7 +64,7 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
     _ChatMsg.text(
       side: _MsgSide.right,
       text:
-          'Добрый день, Ирина. Хотела бы приобрести данный слот. Куда перевести деньги?',
+          'Добрый день, Екатерина. Хотела бы приобрести данный слот. Куда перевести деньги?',
       time: '9:34',
     ),
     _ChatMsg.text(
@@ -123,185 +124,193 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
     // 0 дата, 1..4 инфо-строки, 5..6 участники, 7 кнопки, 8 divider+отступ
     const headerCount = 9;
 
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      // ⛔️ никаких bottomNavigationBar — экран отдельный
-      appBar: AppBar(
+    return InteractiveBackSwipe(
+      child: Scaffold(
         backgroundColor: AppColors.surface,
-        elevation: 1, // как в market_screen.dart
-        shadowColor: AppColors.shadowStrong, // та же маленькая тень
-        leadingWidth: 40,
-        leading: Transform.translate(
-          offset: const Offset(-4, 0),
-          child: IconButton(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            icon: const Icon(CupertinoIcons.back),
-            onPressed: () => Navigator.pop(context),
-            splashRadius: 18,
+        // ⛔️ никаких bottomNavigationBar — экран отдельный
+        appBar: AppBar(
+          backgroundColor: AppColors.surface,
+          elevation: 1, // как в market_screen.dart
+          shadowColor: AppColors.shadowStrong, // та же маленькая тень
+          leadingWidth: 40,
+          leading: Transform.translate(
+            offset: const Offset(-4, 0),
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              icon: const Icon(CupertinoIcons.back),
+              onPressed: () => Navigator.pop(context),
+              splashRadius: 18,
+            ),
           ),
-        ),
-        titleSpacing: -8,
-        title: Row(
-          children: [
-            if (widget.itemThumb != null) ...[
-              Container(
-                width: 36,
-                height: 36,
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.xs),
-                  image: DecorationImage(
-                    image: AssetImage(widget.itemThumb!),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Чат продажи слота',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    widget.itemTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+          titleSpacing: -8,
+          title: Row(
+            children: [
+              if (widget.itemThumb != null) ...[
+                Container(
+                  width: 36,
+                  height: 36,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                    image: DecorationImage(
+                      image: AssetImage(widget.itemThumb!),
+                      fit: BoxFit.cover,
                     ),
                   ),
-                ],
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Чат продажи слота',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.itemTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ],
+          ),
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+                itemCount: headerCount + _messages.length,
+                itemBuilder: (_, index) {
+                  // 0 — дата
+                  if (index == 0) {
+                    return _DateSeparator(
+                      text: '${_today()}, автоматическое создание чата',
+                    );
+                  }
+
+                  // 1..4 — инфо-строки (значение сразу после подписи)
+                  if (index == 1) {
+                    return const _KVLine(
+                      k: 'Слот переведён в статус',
+                      v: _ChipNeutral(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              CupertinoIcons.lock,
+                              size: 14,
+                              color: AppColors.iconSecondary,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Бронь',
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  if (index == 2) {
+                    return _KVLine(
+                      k: 'Дистанция',
+                      v: _ChipNeutral(child: Text(widget.distance)),
+                    );
+                  }
+                  if (index == 3) {
+                    return _KVLine(
+                      k: 'Пол',
+                      v: widget.gender == Gender.male
+                          ? const GenderPill.male()
+                          : const GenderPill.female(),
+                    );
+                  }
+                  if (index == 4) {
+                    return _KVLine(
+                      k: 'Стоимость',
+                      v: PricePill(text: _formatPrice(widget.price)),
+                    );
+                  }
+
+                  // 5..6 — участники
+                  if (index == 5) {
+                    return const _ParticipantRow(
+                      avatarAsset: 'assets/avatar_4.png',
+                      nameAndRole: 'Екатерина Виноградова - продавец',
+                    );
+                  }
+                  if (index == 6) {
+                    return const _ParticipantRow(
+                      avatarAsset: 'assets/avatar_9.png',
+                      nameAndRole: 'Анастасия Бутузова - покупатель',
+                    );
+                  }
+
+                  // 7 — Кнопки действий (ширина по контенту)
+                  if (index == 7) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      child: _ActionsWrap(),
+                    );
+                  }
+
+                  // 8 — Divider ПОД кнопками + небольшой отступ
+                  if (index == 8) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Column(
+                        children: [
+                          Divider(
+                            height: 16,
+                            thickness: 0.5,
+                            color: AppColors.divider,
+                          ),
+                          SizedBox(height: 6),
+                        ],
+                      ),
+                    );
+                  }
+
+                  // дальше — сообщения
+                  final m = _messages[index - headerCount];
+                  if (m.kind == _MsgKind.image) {
+                    return m.side == _MsgSide.right
+                        ? _BubbleImageRight(file: m.imageFile!, time: m.time)
+                        : _BubbleImageLeft(file: m.imageFile!, time: m.time);
+                  } else {
+                    return m.side == _MsgSide.right
+                        ? _BubbleRight(text: m.text!, time: m.time)
+                        : _BubbleLeft(text: m.text!, time: m.time);
+                  }
+                },
+              ),
+            ),
+
+            // Composer (фиксирован внизу)
+            _Composer(
+              controller: _ctrl,
+              onSend: _sendText,
+              onPickImage: _pickImage,
             ),
           ],
         ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
-              itemCount: headerCount + _messages.length,
-              itemBuilder: (_, index) {
-                // 0 — дата
-                if (index == 0) {
-                  return _DateSeparator(
-                    text: '${_today()}, автоматическое создание чата',
-                  );
-                }
-
-                // 1..4 — инфо-строки (значение сразу после подписи)
-                if (index == 1) {
-                  return const _KVLine(
-                    k: 'Слот переведён в статус',
-                    v: _ChipNeutral(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            CupertinoIcons.lock,
-                            size: 14,
-                            color: AppColors.iconSecondary,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Бронь',
-                            style: TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-                if (index == 2) {
-                  return _KVLine(
-                    k: 'Дистанция',
-                    v: _ChipNeutral(child: Text(widget.distance)),
-                  );
-                }
-                if (index == 3) {
-                  return _KVLine(
-                    k: 'Пол',
-                    v: widget.gender == Gender.male
-                        ? const GenderPill.male()
-                        : const GenderPill.female(),
-                  );
-                }
-                if (index == 4) {
-                  return _KVLine(
-                    k: 'Стоимость',
-                    v: PricePill(text: _formatPrice(widget.price)),
-                  );
-                }
-
-                // 5..6 — участники
-                if (index == 5) {
-                  return const _ParticipantRow(
-                    avatarAsset: 'assets/avatar_4.png',
-                    nameAndRole: 'Ирина Курагина - продавец',
-                  );
-                }
-                if (index == 6) {
-                  return const _ParticipantRow(
-                    avatarAsset: 'assets/avatar_9.png',
-                    nameAndRole: 'Анастасия Бутузова - покупатель',
-                  );
-                }
-
-                // 7 — Кнопки действий (ширина по контенту)
-                if (index == 7) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    child: _ActionsWrap(),
-                  );
-                }
-
-                // 8 — Divider ПОД кнопками + небольшой отступ
-                if (index == 8) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: Column(
-                      children: [
-                        Divider(
-                          height: 16,
-                          thickness: 0.5,
-                          color: AppColors.divider,
-                        ),
-                        SizedBox(height: 6),
-                      ],
-                    ),
-                  );
-                }
-
-                // дальше — сообщения
-                final m = _messages[index - headerCount];
-                if (m.kind == _MsgKind.image) {
-                  return m.side == _MsgSide.right
-                      ? _BubbleImageRight(file: m.imageFile!, time: m.time)
-                      : _BubbleImageLeft(file: m.imageFile!, time: m.time);
-                } else {
-                  return m.side == _MsgSide.right
-                      ? _BubbleRight(text: m.text!, time: m.time)
-                      : _BubbleLeft(text: m.text!, time: m.time);
-                }
-              },
-            ),
-          ),
-
-          // Composer (фиксирован внизу)
-          _Composer(
-            controller: _ctrl,
-            onSend: _sendText,
-            onPickImage: _pickImage,
-          ),
-        ],
       ),
     );
   }

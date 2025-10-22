@@ -3,6 +3,7 @@ import '../../../theme/app_theme.dart';
 import '../edit_profile_screen.dart';
 import '../state/subscribe/communication_screen.dart';
 import '../../../models/user_profile_header.dart';
+import '../../../widgets/transparent_route.dart';
 
 class HeaderCard extends StatelessWidget {
   final UserProfileHeader? profile;
@@ -90,7 +91,7 @@ class HeaderCard extends StatelessWidget {
                       icon: CupertinoIcons.pencil,
                       onPressed: () async {
                         final changed = await Navigator.of(context).push<bool>(
-                          CupertinoPageRoute(
+                          TransparentPageRoute(
                             builder: (_) => EditProfileScreen(userId: userId),
                           ),
                         );
