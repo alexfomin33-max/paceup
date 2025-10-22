@@ -13,6 +13,7 @@ import 'widgets/recommended/recommended_block.dart'; // блок «Рекоме�
 import 'widgets/post/post_card.dart'; // карточка поста (с попапом «…» внутри)
 
 import 'state/newpost/new_post_screen.dart';
+import 'state/newpost/edit_post_screen.dart';
 import 'widgets/comments_bottom_sheet.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
@@ -273,8 +274,41 @@ class _LentaScreenState extends State<LentaScreen>
     );
   }
 
-  void _editPost(Activity post) {
-    debugPrint('Редактировать пост id=${post.id}');
+  Future<void> _editPost(Activity post) async {
+    MoreMenuHub.hide();
+
+    final updated = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditPostScreen(
+          userId: widget.userId,
+          postId: post.id,
+          initialText: post.postContent, // текст поста
+          initialImageUrls: post.mediaImages, // список URL изображений
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
+    // Если вернулись с флагом «обновлено» — перезагрузим «свежие»
+    if (updated == true) {
+      setState(() {
+        _future = _loadActivities(page: 1, limit: _limit).then((list) {
+          _items = list;
+          _page = 1;
+          _hasMore = list.length == _limit;
+          _isLoadingMore = false;
+          _seenIds
+            ..clear()
+            ..addAll(list.map(_getId));
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _maybeAutoLoadMore(),
+          );
+          return list;
+        });
+      });
+    }
   }
 
   bool _deleteInProgress = false;
