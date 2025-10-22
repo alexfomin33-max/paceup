@@ -32,13 +32,33 @@ class InteractiveBackSwipe extends StatefulWidget {
 class _InteractiveBackSwipeState extends State<InteractiveBackSwipe>
     with SingleTickerProviderStateMixin {
   double _drag = 0.0;
-  late final AnimationController _settle = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 220),
-  );
+
+  late final AnimationController _settle;
+  NavigatorState? _navigator;        // кэш предка
+  VoidCallback? _tickListener;       // чтобы не накапливать слушатели
+
+  @override
+  void initState() {
+    super.initState();
+    _settle = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // сохраняем ссылку, чтобы потом не лезть в .of(context) после деактивации
+    _navigator = Navigator.maybeOf(context);
+  }
 
   @override
   void dispose() {
+    if (_tickListener != null) {
+      _settle.removeListener(_tickListener!);
+      _tickListener = null;
+    }
     _settle.dispose();
     super.dispose();
   }
@@ -46,17 +66,33 @@ class _InteractiveBackSwipeState extends State<InteractiveBackSwipe>
   void _animateTo(double target, double width) {
     final begin = _drag.clamp(0.0, width);
     final distance = (target - begin);
+
     _settle
       ..stop()
       ..value = 0.0;
+
+    // скидываем прежний слушатель, если был
+    if (_tickListener != null) {
+      _settle.removeListener(_tickListener!);
+      _tickListener = null;
+    }
+
     final anim = CurvedAnimation(parent: _settle, curve: Curves.easeOut);
-    _settle.addListener(() {
+    _tickListener = () {
+      if (!mounted) return;
       setState(() => _drag = begin + distance * anim.value);
-    });
-    _settle.forward().whenComplete(() {
+    };
+    _settle.addListener(_tickListener!);
+
+    _settle.forward().whenCompleteOrCancel(() {
+      // почистим слушатель
+      if (_tickListener != null) {
+        _settle.removeListener(_tickListener!);
+        _tickListener = null;
+      }
+      // докатились до края — закрываем экран без .of(context)
       if (target >= width * 0.999) {
-        // Полностью уехали — закрываем экран
-        if (mounted) Navigator.of(context).maybePop();
+        _navigator?.maybePop();
       }
     });
   }
@@ -64,7 +100,7 @@ class _InteractiveBackSwipeState extends State<InteractiveBackSwipe>
   @override
   Widget build(BuildContext context) {
     if (!widget.enabled) return widget.child;
-    if (widget.onlyWhenCanPop && !Navigator.of(context).canPop()) {
+    if (widget.onlyWhenCanPop && !Navigator.canPop(context)) {
       return widget.child;
     }
 
@@ -75,7 +111,6 @@ class _InteractiveBackSwipeState extends State<InteractiveBackSwipe>
       behavior: HitTestBehavior.translucent,
       onHorizontalDragStart: (_) => _settle.stop(),
       onHorizontalDragUpdate: (d) {
-        // Разрешаем таскать только вправо (dx > 0), влево — ослабляем
         final next = (_drag + d.delta.dx).clamp(0.0, width);
         setState(() => _drag = next);
       },
@@ -83,18 +118,16 @@ class _InteractiveBackSwipeState extends State<InteractiveBackSwipe>
         final fastEnough = (d.primaryVelocity ?? 0) > widget.completeVelocity;
         final farEnough = _drag > width * widget.completeFraction;
         if (fastEnough || farEnough) {
-          _animateTo(width, width); // докатить до края и pop()
+          _animateTo(width, width);
         } else {
-          _animateTo(0, width); // вернуть на место
+          _animateTo(0, width);
         }
       },
       child: Stack(
         children: [
-          // Сам экран, который сдвигаем вправо
           Transform.translate(
             offset: Offset(_drag, 0),
             child: DecoratedBox(
-              // Небольшая тень по левой кромке — визуально приятнее
               decoration: BoxDecoration(
                 boxShadow: [
                   BoxShadow(

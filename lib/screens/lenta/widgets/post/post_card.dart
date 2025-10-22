@@ -13,18 +13,22 @@ import '../../../../widgets/user_header.dart';
 // ✅ универсальное всплывающее меню (уже вынесено в lib/widgets)
 import '../../../../widgets/more_menu_overlay.dart';
 
-/// Карточка поста (публичный виджет).
-/// Вся навигация — через колбэки, чтобы виджет оставался переиспользуемым.
-class PostCard extends StatelessWidget {
+/// ─────────────────────────────────────────────────────────────────────────────
+///   КАРТОЧКА ПОСТА
+///   Требование: при клике "Удалить пост" — отправить JSON на эндпоинт
+///   { userId, postId } и при успешном ответе скрыть карточку без рефреша.
+///   Визуальные стили/верстку/анимации — не меняем.
+/// ─────────────────────────────────────────────────────────────────────────────
+class PostCard extends StatefulWidget {
   /// Модель поста (id, автор, даты, медиа, текст, лайки, комменты)
   final Activity post;
 
-  /// Текущий пользователь (для лайка/комментирования)
+  /// Текущий пользователь (для лайка/комментирования/удаления)
   final int currentUserId;
 
-  // Колбэки поведения — экран решает, что делать:
+  // Колбэки поведения — оставить для совместимости (не меняем сигнатуры).
   final VoidCallback? onEdit; // Нажали "Редактировать пост"
-  final VoidCallback? onDelete; // Нажали "Удалить пост"
+  final VoidCallback? onDelete; // Успешно удалили пост (опционально внеш. реакция)
   final VoidCallback? onOpenComments; // Нажали на "комментарии"
 
   const PostCard({
@@ -37,10 +41,112 @@ class PostCard extends StatelessWidget {
   });
 
   @override
+  State<PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<PostCard> {
+  /// Эндпоинт удаления поста (передаем JSON: userId, postId).
+  /// Поменяйте на свой путь, если отличается.
+  static const String _deleteEndpoint = 'http://api.paceup.ru/post_delete.php';
+
+  /// Локально скрываем карточку после успешного ответа сервера.
+  bool _visible = true;
+
+  /// Защита от дабл-тапов на "Удалить".
+  bool _deleting = false;
+
+  /// Отправка JSON-запроса на удаление поста.
+  Future<bool> _sendDeleteRequest({
+    required int userId,
+    required int postId,
+  }) async {
+    final uri = Uri.parse(_deleteEndpoint);
+
+    try {
+      final res = await http
+          .post(
+            uri,
+            headers: const {
+              'Content-Type': 'application/json; charset=utf-8',
+            },
+            body: jsonEncode({
+              'userId': '$userId',
+              'postId': '$postId',
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (res.statusCode != 200) return false;
+
+      // Пытаемся распарсить разные варианты успешного ответа
+      final raw = utf8.decode(res.bodyBytes).trim();
+      dynamic data;
+      try {
+        data = json.decode(raw);
+      } catch (_) {
+        data = null;
+      }
+
+      bool ok = false;
+
+      if (data is Map<String, dynamic>) {
+        ok = data['ok'] == true ||
+            data['status'] == 'ok' ||
+            data['success'] == true ||
+            data['result'] == 'ok';
+      } else if (data is List &&
+          data.isNotEmpty &&
+          data.first is Map<String, dynamic>) {
+        final m = data.first as Map<String, dynamic>;
+        ok = m['ok'] == true ||
+            m['status'] == 'ok' ||
+            m['success'] == true ||
+            m['result'] == 'ok';
+      } else {
+        final t = raw.toLowerCase();
+        ok = (t == 'ok' || t == '1' || t == 'true');
+      }
+
+      return ok;
+    } on TimeoutException {
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Хендлер пункта меню "Удалить пост": отправляем JSON и по успеху скрываем.
+  Future<void> _handleDelete() async {
+    if (_deleting) return;
+    setState(() => _deleting = true);
+
+    final ok = await _sendDeleteRequest(
+      userId: widget.currentUserId,
+      postId: widget.post.id,
+    );
+
+    if (!mounted) return;
+
+    if (ok) {
+      // 1) Скрываем карточку локально (без обновления всей ленты)
+      setState(() => _visible = false);
+
+      // 2) Сообщим наружу (если кто-то подписан на onDelete)
+      widget.onDelete?.call();
+    }
+
+    // Возвращаем флаг — кнопка снова доступна (если карточка не скрыта)
+    if (mounted) setState(() => _deleting = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_visible) return const SizedBox.shrink();
+
     // Ключ нам нужен, чтобы вычислить положение кнопки "…"
     // и привязать к ней универсальное всплывающее меню.
     final menuKey = GlobalKey();
+    final post = widget.post;
 
     return Container(
       width: double.infinity,
@@ -76,14 +182,15 @@ class PostCard extends StatelessWidget {
                     MoreMenuItem(
                       text: 'Редактировать пост',
                       icon: CupertinoIcons.pencil,
-                      onTap: onEdit ?? () {},
+                      onTap: widget.onEdit ?? () {},
                     ),
                     MoreMenuItem(
-                      text: 'Удалить пост',
+                      text: _deleting ? 'Удаление…' : 'Удалить пост',
                       icon: CupertinoIcons.minus_circle,
                       iconColor: AppColors.error,
                       textStyle: const TextStyle(color: AppColors.error),
-                      onTap: onDelete ?? () {},
+                      // Ничего визуально не меняем — просто игнорим повторный тап
+                      onTap: _deleting ? () {} : _handleDelete,
                     ),
                   ];
                   MoreMenuOverlay(
@@ -124,12 +231,12 @@ class PostCard extends StatelessWidget {
             child: Row(
               children: [
                 // Лайк-бар: локальная анимация + API
-                _PostLikeBar(post: post, currentUserId: currentUserId),
+                _PostLikeBar(post: post, currentUserId: widget.currentUserId),
                 const SizedBox(width: 16),
 
                 // Кнопка «комментарии» — экран ленты откроет bottom sheet
                 GestureDetector(
-                  onTap: onOpenComments,
+                  onTap: widget.onOpenComments,
                   behavior: HitTestBehavior.opaque,
                   child: Row(
                     children: [
