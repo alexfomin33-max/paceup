@@ -164,7 +164,7 @@ class _PostCardState extends State<PostCard> {
       setState(() => _visible = false);
 
       // 2) Сообщим наружу (если кто-то подписан на onDelete)
-      widget.onDelete?.call();
+      //widget.onDelete?.call();
     }
 
     // Возвращаем флаг — кнопка снова доступна (если карточка не скрыта)
