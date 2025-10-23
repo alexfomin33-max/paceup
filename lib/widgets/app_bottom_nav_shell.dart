@@ -101,7 +101,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
         ),
       ],
 
-      // нижняя панель — белая с тонким разделителем
+      // ⬇️ наш кастомный навбар с перехватом повтора тапа
       navBarBuilder: (navBarConfig) => Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
@@ -109,9 +109,57 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
         ),
         child: SafeArea(
           top: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            child: Style1BottomNavBar(navBarConfig: navBarConfig),
+          child: SizedBox(
+            height: 56,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(navBarConfig.items.length, (i) {
+                final item = navBarConfig.items[i];
+                final selected = i == navBarConfig.selectedIndex;
+
+                return Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      // если тапнули по уже активной вкладке — чистим её стек
+                      if (selected) {
+                        _navKeys[i].currentState?.popUntil((r) => r.isFirst);
+                      }
+                      // обязательно вызвать стандартный переключатель
+                      navBarConfig.onItemSelected(i);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // раскрашиваем иконку через IconTheme, чтобы сработали active/inactive цвета
+                          IconTheme(
+                            data: IconThemeData(
+                              color: selected
+                                  ? item.activeForegroundColor
+                                  : item.inactiveForegroundColor,
+                              size: 22, // такой же размер, как у тебя
+                            ),
+                            child: item.icon,
+                          ),
+                          if (item.title != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              item.title!,
+                              style: item.textStyle.copyWith(
+                                color: selected
+                                    ? item.activeForegroundColor
+                                    : item.inactiveForegroundColor,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
           ),
         ),
       ),

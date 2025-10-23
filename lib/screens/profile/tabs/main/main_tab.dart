@@ -15,7 +15,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../theme/app_theme.dart';
-import '../../widgets/gear_screen.dart';
+import 'widgets/gear_screen.dart';
+import '../equipment/viewing/viewing_equipment_screen.dart';
 
 // 🔹 Модели и парсинг данных
 import 'models/main_tab_data.dart';
@@ -36,6 +37,24 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
 
   // Храним будущий результат загрузки, чтобы не перезагружать при каждом build
   Future<MainTabData>? _future;
+
+  void _openShoesView() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ViewingEquipmentScreen(initialSegment: 0),
+      ),
+    );
+  }
+
+  void _openBikesView() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ViewingEquipmentScreen(initialSegment: 1),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -147,6 +166,7 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
                 title: 'Кроссовки',
                 items: data.shoes,
                 isBike: false,
+                onItemTap: _openShoesView,
               ),
 
             if (prefs.showBikes && data.bikes.isNotEmpty)
@@ -154,6 +174,7 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
                 title: 'Велосипед',
                 items: data.bikes,
                 isBike: true,
+                onItemTap: _openBikesView,
               ),
 
             // ───────────────── Личные рекорды ─────────────────
