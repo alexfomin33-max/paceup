@@ -5,7 +5,6 @@ import '../../../../widgets/app_bar.dart';
 import 'settings_placeholder_screen.dart'; // 👈 экран-заглушка
 import '../../../../widgets/interactive_back_swipe.dart';
 import 'connected_trackers/connected_trackers_screen.dart';
-import '../../../../widgets/transparent_route.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -46,7 +45,7 @@ class SettingsScreen extends StatelessWidget {
                   title: 'Подключенные трекеры',
                   onTap: () {
                     Navigator.of(context).push(
-                      TransparentPageRoute(
+                      MaterialPageRoute(
                         builder: (_) => const ConnectedTrackersScreen(),
                       ),
                     );
