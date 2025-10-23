@@ -27,7 +27,7 @@ import 'tabs/main/widgets/gear_screen.dart';
 import 'state/search/search_screen.dart';
 
 // экран настроек
-import 'state/settings_screen.dart';
+import 'state/settings/settings_screen.dart';
 
 import '../../models/user_profile_header.dart';
 

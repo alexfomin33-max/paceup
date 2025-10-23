@@ -396,7 +396,7 @@ class _MetricsCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(r.$1, size: 18, color: AppColors.brandPrimary),
+                      Icon(r.$1, size: 16, color: AppColors.brandPrimary),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(

@@ -191,7 +191,7 @@ class _RaceBlock extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: AppColors.brandPrimary),
+        Icon(icon, size: 15, color: AppColors.brandPrimary),
         const SizedBox(width: 6),
         Flexible(
           child: Text(
@@ -199,7 +199,7 @@ class _RaceBlock extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontFamily: 'Inter',
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: FontWeight.w400, // мягче, как в «Друзьях»
             ),
           ),

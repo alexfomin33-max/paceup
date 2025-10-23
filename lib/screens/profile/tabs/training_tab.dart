@@ -562,7 +562,7 @@ class _WorkoutRow extends StatelessWidget {
   Widget _metric(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppColors.iconSecondary),
+        Icon(icon, size: 15, color: AppColors.brandPrimary),
         const SizedBox(width: 6),
         Text(text, style: const TextStyle(fontFamily: 'Inter', fontSize: 13)),
       ],
