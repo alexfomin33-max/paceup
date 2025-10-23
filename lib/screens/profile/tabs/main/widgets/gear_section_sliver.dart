@@ -6,12 +6,14 @@ class GearSectionSliver extends StatelessWidget {
   final String title; // Заголовок секции ("Кроссовки"/"Велосипед")
   final List<GearItem> items; // Список элементов снаряжения
   final bool isBike; // Управляет подписью второй метрики: "Скорость" или "Темп"
+  final VoidCallback? onItemTap; // 👈 колбэк на тап по карточке
 
   const GearSectionSliver({
     super.key,
     required this.title,
     required this.items,
     required this.isBike,
+    this.onItemTap,
   });
 
   @override
@@ -30,7 +32,7 @@ class GearSectionSliver extends StatelessWidget {
           return const SizedBox(height: 8);
         }
 
-        // Остальные индексы — это карточки снаряжения
+        // Остальные индексы — карточки
         final i = index - 2;
         if (i < 0 || i >= items.length) return const SizedBox.shrink();
 
@@ -38,15 +40,19 @@ class GearSectionSliver extends StatelessWidget {
         final isLast = i == items.length - 1;
 
         return Padding(
-          // Нижний отступ секции: у велосипедов он чуть больше, как было у тебя
+          // Нижний отступ секции: у велосипедов он чуть больше, как у тебя было
           padding: EdgeInsets.only(bottom: isLast ? (isBike ? 16 : 12) : 12),
-          child: _GearCard(
-            title: g.title,
-            imageAsset: g.imageAsset,
-            stat1Label: 'Пробег:',
-            stat1Value: g.mileage,
-            stat2Label: isBike ? 'Скорость:' : 'Темп:',
-            stat2Value: g.paceOrSpeed,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onItemTap, // 👈 дергаем внешний колбэк
+            child: _GearCard(
+              title: g.title,
+              imageAsset: g.imageAsset,
+              stat1Label: 'Пробег:',
+              stat1Value: g.mileage,
+              stat2Label: isBike ? 'Скорость:' : 'Темп:',
+              stat2Value: g.paceOrSpeed,
+            ),
           ),
         );
       }, childCount: childCount),
@@ -54,7 +60,7 @@ class GearSectionSliver extends StatelessWidget {
   }
 }
 
-/// Локальный заголовок секции (копия по стилю с экрана)
+/// Локальный заголовок секции
 class _SectionTitle extends StatelessWidget {
   final String text;
   const _SectionTitle(this.text);
@@ -102,7 +108,7 @@ class _GearCard extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
         child: Row(
           children: [
-            // Превью изображения (лого/фото)
+            // Превью изображения
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.sm),
               child: Image.asset(
@@ -118,7 +124,7 @@ class _GearCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Заголовок карточки + маленькая иконка "карандаш" справа
+                  // Заголовок карточки + "карандаш" справа
                   Row(
                     children: [
                       Expanded(

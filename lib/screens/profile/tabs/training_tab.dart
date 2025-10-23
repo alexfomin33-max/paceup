@@ -226,13 +226,13 @@ class _SportIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
         width: 28,
         height: 28,
         decoration: BoxDecoration(
           color: selected ? AppColors.brandPrimary : AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(color: AppColors.border, width: 1),
         ),
         child: Icon(
@@ -562,7 +562,7 @@ class _WorkoutRow extends StatelessWidget {
   Widget _metric(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppColors.iconSecondary),
+        Icon(icon, size: 15, color: AppColors.brandPrimary),
         const SizedBox(width: 6),
         Text(text, style: const TextStyle(fontFamily: 'Inter', fontSize: 13)),
       ],

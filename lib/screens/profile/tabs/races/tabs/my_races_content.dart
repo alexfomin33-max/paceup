@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../../theme/app_theme.dart';
 
 /// «Мои» — заголовок/дата снаружи + табличная карточка во всю ширину:
 /// [превью] │ [дистанция] │ [время] │ [темп]
@@ -79,7 +79,7 @@ class _RaceBlock extends StatelessWidget {
                   maxLines: 1,
                   softWrap: false,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h15w5,
+                  style: AppTextStyles.h14w5,
                 ),
               ),
               const SizedBox(width: 8),
@@ -191,7 +191,7 @@ class _RaceBlock extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: AppColors.iconSecondary),
+        Icon(icon, size: 15, color: AppColors.brandPrimary),
         const SizedBox(width: 6),
         Flexible(
           child: Text(
@@ -199,7 +199,7 @@ class _RaceBlock extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontFamily: 'Inter',
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: FontWeight.w400, // мягче, как в «Друзьях»
             ),
           ),

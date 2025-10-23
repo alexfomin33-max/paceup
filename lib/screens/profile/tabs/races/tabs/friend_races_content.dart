@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../../theme/app_theme.dart';
 
 /// «Друзей» — заголовок/дата снаружи + таблица со строками друзей и вертикальными разделителями.
 List<Widget> buildFriendRacesSlivers() {
@@ -105,7 +105,7 @@ class _RaceFriendsBlock extends StatelessWidget {
                   group.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h15w5,
+                  style: AppTextStyles.h14w5,
                 ),
               ),
               const SizedBox(width: 8),
@@ -166,7 +166,7 @@ class _RaceFriendsBlock extends StatelessWidget {
                                     r.name,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.h14w4,
+                                    style: AppTextStyles.h13w4,
                                   ),
                                 ),
                               ],
@@ -246,6 +246,8 @@ class _RaceFriendsBlock extends StatelessWidget {
                     const Divider(
                       height: 1,
                       thickness: 0.5,
+                      indent: 52,
+                      endIndent: 14,
                       color: AppColors.divider,
                     ),
                 ],

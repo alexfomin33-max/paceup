@@ -10,7 +10,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
-import '../../widgets/gear_screen.dart';
+import '../main/widgets/gear_screen.dart';
 import 'adding/adding_equipment_screen.dart';
 import 'viewing/viewing_equipment_screen.dart';
 // ↓ Глобальная бренд-кнопка
@@ -168,7 +168,7 @@ class _SectionHeaderWithToggle extends StatelessWidget {
               style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 15,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),

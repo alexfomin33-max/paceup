@@ -113,18 +113,22 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           '${(301 * s).toStringAsFixed(0)} ч ${(16 * s).toStringAsFixed(0)} мин',
         ),
         _MetricRowData(
-          Icons.place,
+          Icons.place_outlined,
           'Расстояние',
           '${(2976 * s).toStringAsFixed(0)} км',
         ),
         const _MetricRowData(
-          Icons.favorite,
+          Icons.favorite_border,
           'Средний пульс',
           '152',
           color: AppColors.error, // красный для пульса
         ),
         const _MetricRowData(Icons.speed, 'Средний темп', '5:15 /км'),
-        const _MetricRowData(Icons.directions_walk, 'Средний каденс', '173'),
+        const _MetricRowData(
+          Icons.directions_walk_outlined,
+          'Средний каденс',
+          '173',
+        ),
         const _MetricRowData(Icons.insights, 'Относительное усилие', '50'),
         _MetricRowData(
           Icons.terrain,
@@ -152,7 +156,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         ),
         const _MetricRowData(Icons.speed, 'Средняя скорость', '28,4 км/ч'),
         _MetricRowData(
-          Icons.terrain,
+          Icons.terrain_outlined,
           'Набор высоты',
           '${(41000 * s).toStringAsFixed(0)} м',
         ),
@@ -318,7 +322,7 @@ class _SportIcon extends StatelessWidget {
         height: 28,
         decoration: BoxDecoration(
           color: selected ? AppColors.brandPrimary : AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(color: AppColors.border, width: 1),
         ),
         child: Icon(
@@ -473,6 +477,8 @@ class _MetricsList extends StatelessWidget {
             return const Divider(
               height: 1,
               thickness: 0.5,
+              indent: 38,
+              endIndent: 11,
               color: AppColors.divider,
             );
           }
@@ -483,8 +489,8 @@ class _MetricsList extends StatelessWidget {
               children: [
                 Icon(
                   r.icon,
-                  size: 18,
-                  color: r.color ?? AppColors.iconSecondary,
+                  size: 16,
+                  color: r.color ?? AppColors.brandPrimary,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -499,7 +505,7 @@ class _MetricsList extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],

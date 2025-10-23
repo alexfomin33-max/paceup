@@ -28,7 +28,7 @@ class _StatsTabState extends State<StatsTab>
         SliverToBoxAdapter(
           child: Center(
             child: _SegmentedPill2(
-              items: const ['Общая', 'По видам'],
+              items: const ['По видам', 'Общая'],
               value: _segment,
               onChanged: (v) => setState(() => _segment = v),
               width: 280,
@@ -38,9 +38,9 @@ class _StatsTabState extends State<StatsTab>
         const SliverToBoxAdapter(child: SizedBox(height: 14)),
 
         if (_segment == 0)
-          ...buildGeneralStatsSlivers()
+          ...buildByTypeStatsSlivers()
         else
-          ...buildByTypeStatsSlivers(),
+          ...buildGeneralStatsSlivers(),
 
         const SliverToBoxAdapter(child: SizedBox(height: 18)),
       ],

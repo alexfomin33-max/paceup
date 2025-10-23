@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
-import 'my_races_content.dart';
-import 'friend_races_content.dart';
+import 'tabs/my_races_content.dart';
+import 'tabs/friend_races_content.dart';
 
 class RacesTab extends StatefulWidget {
   const RacesTab({super.key});
