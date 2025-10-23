@@ -115,6 +115,38 @@ class _PostCardState extends State<PostCard> {
     }
   }
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  //  Показываем системный диалог подтверждения до удаления
+  // ─────────────────────────────────────────────────────────────────────────────
+  Future<bool> _confirmDelete() async {
+    // Используем CupertinoAlertDialog, чтобы не менять стили в карточке.
+    final result = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Удалить пост?'),
+        content: const Text('Это действие нельзя отменить.'),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+
+    // Нажатия закрывают диалог, но мы не привязываем колбэки к кнопкам,
+    // поэтому трактуем choice по порядку в onPressed ниже.
+    // Чтобы различать кнопки, используем Navigator.pop(context, bool).
+    // Для этого меняем реализацию — см. ниже обновление builder.
+    return result ?? false;
+  }
+
   /// Хендлер пункта меню "Удалить пост": отправляем JSON и по успеху скрываем.
   Future<void> _handleDelete() async {
     if (_deleting) return;
@@ -190,7 +222,19 @@ class _PostCardState extends State<PostCard> {
                       iconColor: AppColors.error,
                       textStyle: const TextStyle(color: AppColors.error),
                       // Ничего визуально не меняем — просто игнорим повторный тап
-                      onTap: _deleting ? () {} : _handleDelete,
+                      onTap: _deleting
+                        ? () {}
+                        : () async {
+                            // Дадим оверлею закрыться, чтобы диалог не накладывался визуально.
+                            await Future<void>.delayed(const Duration(milliseconds: 10));
+
+                            // 1) Спрашиваем подтверждение ДО удаления
+                            final confirmed = await _confirmDelete();
+                            if (!confirmed) return;
+
+                            // 2) Только теперь запускаем удаление
+                            await _handleDelete();
+                          },
                     ),
                   ];
                   MoreMenuOverlay(
