@@ -1,15 +1,12 @@
 // lib/screens/profile/settings/connected_trackers_screen.dart
 // ─────────────────────────────────────────────────────────────────────────────
 //  Экран «Подключенные трекеры» (лёгкий iOS-стиль)
-//  • Оставлены показатели:
-//      WORKOUT, STEPS, DISTANCE_DELTA, ACTIVE_ENERGY_BURNED, HEART_RATE
-//  • «Богатый» статус: ключевые метрики + секции
-//      – шаги по дням,
-//      – тренировки по видам,
-//      – что нашли по типам.
+//  • Метрики: WORKOUT, STEPS, DISTANCE_DELTA, ACTIVE_ENERGY_BURNED, HEART_RATE
+//  • «Богатый» статус: ключевые метрики + секции («Шаги по дням», «Тренировки по видам», «Что нашли»).
 //  • Разный tint для метрик/секций, без тяжёлых теней/графиков.
 //  • Прозрачности — только Color.withValues(...).
-//  • Убраны «Пульс мин/макс» полностью (логика и UI).
+//  • ВАЖНО: убраны дженерики у секций — теперь они принимают List<String> готовых лейблов,
+//           что устраняет _TypeError при map() с разными MapEntry<K,V>.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:io';
@@ -34,9 +31,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
   // Плагин Health (Health Connect/HealthKit)
   final Health _health = Health();
 
-  // ────────────────────────────────────────────────────────────────────────
-  //  РОВНО ТЕ ТИПЫ, КОТОРЫЕ НУЖНЫ
-  // ────────────────────────────────────────────────────────────────────────
+  // Только нужные типы
   static const List<HealthDataType> _types = <HealthDataType>[
     // Активность / тренировки
     HealthDataType.WORKOUT,
@@ -54,9 +49,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
   // Краткий статус
   String _status = '';
 
-  // ────────────────────────────────────────────────────────────────────────
-  //  АГРЕГАТЫ ЗА 7 ДНЕЙ (ТОЛЬКО ДЛЯ ОСТАВЛЕННЫХ ТИПОВ)
-  // ────────────────────────────────────────────────────────────────────────
+  // Агрегаты за 7 дней
   Map<HealthDataType, List<HealthDataPoint>> _byType = {};
 
   // Шаги
@@ -66,7 +59,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
   // Пульс (только средний)
   double? _hrAvg;
 
-  // Дистанция/ккал
+  // Дистанция/активные ккал
   double _sumDistanceMeters = 0;
   double _sumActiveKcal = 0;
 
@@ -86,9 +79,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
     _ensureConfigured();
   }
 
-  // ────────────────────────────────────────────────────────────────────────
-  //  УТИЛИТЫ
-  // ────────────────────────────────────────────────────────────────────────
+  // ───────── Утилиты ─────────
   void _showSnackBar(String message) {
     if (!mounted) return;
     setState(() => _snackBarMessage = message);
@@ -140,9 +131,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
     return steps.toString();
   }
 
-  // ────────────────────────────────────────────────────────────────────────
-  //  КОНФИГУРАЦИЯ + НАЛИЧИЕ HEALTH CONNECT
-  // ────────────────────────────────────────────────────────────────────────
+  // ───────── Конфигурация ─────────
   Future<void> _ensureConfigured() async {
     try {
       await _health.configure();
@@ -172,9 +161,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
     }
   }
 
-  // ────────────────────────────────────────────────────────────────────────
-  //  ПРАВА ДОСТУПА
-  // ────────────────────────────────────────────────────────────────────────
+  // ───────── Разрешения ─────────
   Future<bool> _requestPermissions() async {
     if (!_configured) {
       await _ensureConfigured();
@@ -234,9 +221,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
     return ok2;
   }
 
-  // ────────────────────────────────────────────────────────────────────────
-  //  СИНХРОНИЗАЦИЯ ЗА 7 ДНЕЙ + АГРЕГАТЫ (ТОЛЬКО ОСТАВЛЕННЫЕ ТИПЫ)
-  // ────────────────────────────────────────────────────────────────────────
+  // ───────── Синк за 7 дней ─────────
   Future<void> _fetchLast7Days() async {
     if (_busy) return;
 
@@ -244,7 +229,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
       _busy = true;
       _status = 'Запрашиваю доступ…';
 
-      // Сброс прежних агрегатов
+      // Сброс агрегатов
       _byType = {};
       _stepsTotal = 0;
       _stepsByDay = {};
@@ -304,7 +289,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
         }
       }
 
-      // Пульс — только средний
+      // Пульс — средний
       final hrVals = <double>[];
       for (final p
           in byType[HealthDataType.HEART_RATE] ?? const <HealthDataPoint>[]) {
@@ -376,12 +361,6 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
 
         _status = 'Готово: синх за 7 дней выполнен.';
       });
-
-      _showSnackBar(
-        'Синк: тренировки $_workouts, шаги $_stepsTotal, '
-        '≈${_sumDistanceMeters.toStringAsFixed(0)} м, '
-        'активные ${_sumActiveKcal.toStringAsFixed(0)} ккал',
-      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _status = 'Ошибка: $e');
@@ -391,9 +370,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
     }
   }
 
-  // ────────────────────────────────────────────────────────────────────────
-  //  UI
-  // ────────────────────────────────────────────────────────────────────────
+  // ───────── UI ─────────
   @override
   Widget build(BuildContext context) {
     // Ленивая демонстрация SnackBar
@@ -469,7 +446,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
 
           const SizedBox(height: 16),
 
-          // «Богатый» статус — только нужные метрики/секции
+          // «Богатый» статус
           if (_status.isNotEmpty)
             _StatusRichCard(
               title: 'Статус',
@@ -512,35 +489,41 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
                 ),
               ],
 
-              // Динамические секции-пилюли (тоже с разными тинтами)
+              // Динамические секции-пилюли (сформируем ЛЕЙБЛЫ заранее — без дженериков)
               sections: [
                 if (_stepsByDay.isNotEmpty)
-                  _StatusSection<DateTime, int>(
+                  _StatusSection(
                     icon: CupertinoIcons.chart_bar_alt_fill,
                     title: 'Шаги по дням',
                     tint: cSteps,
-                    chips: (_stepsByDay.entries.toList()
-                      ..sort((a, b) => a.key.compareTo(b.key))),
-                    chipLabelBuilder: (e) =>
-                        '${_weekDayShort(e.key)}, ${_shortD(e.key)} — ${_formatSteps(e.value)}',
+                    labels: (() {
+                      final entries = _stepsByDay.entries.toList()
+                        ..sort((a, b) => a.key.compareTo(b.key));
+                      return entries
+                          .map(
+                            (e) =>
+                                '${_weekDayShort(e.key)}, ${_shortD(e.key)} — ${_formatSteps(e.value)}',
+                          )
+                          .toList();
+                    })(),
                   ),
                 if (_workoutsByActivity.isNotEmpty)
-                  _StatusSection<String, int>(
+                  _StatusSection(
                     icon: CupertinoIcons.sportscourt_fill,
                     title: 'Тренировки по видам',
                     tint: cWorkouts,
-                    chips: _workoutsByActivity.entries.toList(),
-                    chipLabelBuilder: (e) => '${e.key} — ${e.value}',
+                    labels: _workoutsByActivity.entries
+                        .map((e) => '${e.key} — ${e.value}')
+                        .toList(),
                   ),
                 if (_byType.isNotEmpty)
-                  _StatusSection<String, int>(
+                  _StatusSection(
                     icon: CupertinoIcons.info_circle_fill,
                     title: 'Что нашли (по типам)',
                     tint: cInfo,
-                    chips: _byType.entries
-                        .map((e) => MapEntry(_typeName(e.key), e.value.length))
+                    labels: _byType.entries
+                        .map((e) => '${_typeName(e.key)} — ${e.value.length}')
                         .toList(),
-                    chipLabelBuilder: (e) => '${e.key} — ${e.value}',
                   ),
               ],
             ),
@@ -573,20 +556,18 @@ class _Metric {
   });
 }
 
-/// Секция с иконкой/заголовком и списком «пилюль» (generic по ключу/значению)
-class _StatusSection<K, T> {
+/// Секция без дженериков: принимает готовые строковые лейблы.
+class _StatusSection {
   final IconData icon;
   final String title;
-  final List<MapEntry<K, T>> chips;
-  final String Function(MapEntry<K, T>) chipLabelBuilder;
-  final Color tint; // акцент для бордера/фона
+  final List<String> labels;
+  final Color tint;
 
   const _StatusSection({
     required this.icon,
     required this.title,
-    required this.chips,
-    required this.chipLabelBuilder,
     required this.tint,
+    required this.labels,
   });
 }
 
@@ -597,14 +578,14 @@ class _StatusRichCard extends StatelessWidget {
     required this.message,
     required this.topMetrics,
     this.subtitle,
-    this.sections = const <_StatusSection<dynamic, dynamic>>[],
+    this.sections = const <_StatusSection>[],
   });
 
   final String title;
   final String? subtitle;
   final String message;
   final List<_Metric> topMetrics;
-  final List<_StatusSection<dynamic, dynamic>> sections;
+  final List<_StatusSection> sections;
 
   @override
   Widget build(BuildContext context) {
@@ -644,11 +625,8 @@ class _StatusRichCard extends StatelessWidget {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: s.chips
-                  .map(
-                    (e) =>
-                        _ChipPill(label: s.chipLabelBuilder(e), tint: s.tint),
-                  )
+              children: s.labels
+                  .map((label) => _ChipPill(label: label, tint: s.tint))
                   .toList(),
             ),
           ],
