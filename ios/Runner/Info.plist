@@ -45,9 +45,5 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>NSHealthShareUsageDescription</key>
-		<string>Нужен доступ к вашим данным здоровья, чтобы импортировать тренировки и шаги в PaceUp.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-		<string>Нужен доступ для записи прогресса в Apple Здоровье.</string>
 </dict>
 </plist>

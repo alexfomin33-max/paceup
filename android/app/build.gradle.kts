@@ -21,8 +21,8 @@ android {
 
     defaultConfig {
         applicationId = "com.example.paceip"
-        minSdk = 26
-        targetSdk = 34
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
