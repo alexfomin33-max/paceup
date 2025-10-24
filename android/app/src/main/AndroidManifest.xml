@@ -1,37 +1,37 @@
+<!-- android/app/src/main/AndroidManifest.xml -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Интернет как был -->
-    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <!-- ────────────────────────────────────────────────────────────────────
+         БАЗОВЫЕ РАЗРЕШЕНИЯ
+         ─ Интернет уже был. Оставляем как есть.
+       ──────────────────────────────────────────────────────────────────── -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
-<!-- Health Connect permissions (Android 14 / HC) -->
-<uses-permission android:name="android.permission.health.READ_STEPS" />
-<uses-permission android:name="android.permission.health.READ_HEART_RATE" />
-<uses-permission android:name="android.permission.health.READ_DISTANCE" />
-<uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
-<uses-permission android:name="android.permission.health.READ_EXERCISE" />
-
-    <!-- Если понадобятся записи — добавляй соответствующие WRITE_* разрешения
-    <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
-    ... -->
-
-    <!-- 🔹 Объединённый queries: и Process Text, и Health Connect -->
-    <queries>
-        <!-- Для ProcessText плагина Flutter (оставлено как было) -->
-        <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT" />
-            <data android:mimeType="text/plain" />
-        </intent>
-
-        <!-- Видимость приложения Health Connect в системе -->
-        <package android:name="com.google.android.apps.healthdata" />
-    </queries>
+    <!-- ────────────────────────────────────────────────────────────────────
+         HEALTH CONNECT (ЧТЕНИЕ ДАННЫХ)
+         Эти разрешения требуются для запросов:
+         WORKOUT, STEPS, HEART_RATE, DISTANCE_DELTA, ACTIVE_ENERGY_BURNED.
+         Без них системный экран прав может не открываться/сразу отдавать отказ.
+       ──────────────────────────────────────────────────────────────────── -->
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_DISTANCE" />
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES" />
+    <uses-permission android:name="android.permission.health.READ_EXERCISE" />
+    <!-- (опционально, если понадобится бэкграунд-синх): 
+         <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" /> -->
 
     <application
-        android:name="${applicationName}"
         android:label="PaceUp"
-        android:icon="@mipmap/paceup"
-        android:enableOnBackInvokedCallback="true">
+        android:name="${applicationName}"
+        android:icon="@mipmap/paceup">
 
+        <!-- ────────────────────────────────────────────────────────────────
+             ГЛАВНАЯ АКТИВИТИ ПРИЛОЖЕНИЯ
+             ВНИМАНИЕ: Класс MainActivity на Android 13/14 должен
+             наследоваться от FlutterFragmentActivity (см. MainActivity.kt),
+             чтобы корректно показывать системные диалоги Health Connect.
+           ──────────────────────────────────────────────────────────────── -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -41,18 +41,62 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
+
+            <!-- Тема до инициализации Flutter -->
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
+
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
-        <!-- Не трогаем — нужно Flutter -->
+        <!-- Не удалять: нужно Flutter-tool для генерации регистранта -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- ────────────────────────────────────────────────────────────────
+             (НЕОБЯЗАТЕЛЬНО) АЛИАС ДЛЯ ССЫЛКИ "Просмотр использования прав"
+             Требуется некоторым версиям Health Connect для deep-link
+             "VIEW_PERMISSION_USAGE" (служебная страница системы).
+             Можно оставить — не мешает.
+           ──────────────────────────────────────────────────────────────── -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity=".MainActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
+
     </application>
+
+    <!-- ────────────────────────────────────────────────────────────────────
+         QUERIES (ДОЛЖЕН БЫТЬ ЕДИНСТВЕННЫЙ БЛОК <queries> В МАНИФЕСТЕ!)
+         Объединяем:
+         • уже существующий интент PROCESS_TEXT (нужен Flutter)
+         • пакет Health Connect и интент пояснения прав
+       ──────────────────────────────────────────────────────────────────── -->
+    <queries>
+        <!-- Было: для Process Text -->
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+
+        <!-- Health Connect package (проверка наличия) -->
+        <package android:name="com.google.android.apps.healthdata" />
+
+        <!-- Health Connect: экран объяснения прав (где поддерживается) -->
+        <intent>
+            <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+        </intent>
+    </queries>
+
 </manifest>
