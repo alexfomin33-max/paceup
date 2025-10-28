@@ -1,18 +1,6 @@
-// lib/screens/profile/settings/connected_trackers_screen.dart
-// ─────────────────────────────────────────────────────────────────────────────
-// Экран «Подключенные трекеры»
-//  • После «Синк…» — автоматически ищем и показываем ВСЕ доступные маршруты
-//    по окнам WORKOUT (окно расширяем на ±5 минут).
-//  • Таблица «Активность по дням»:
-//      День / Дистанция(км, 2 знака) / Время(из DISTANCE_DELTA, HH:MM:SS) / Ср. темп(M:SS) / Пульс.
-//  • В «Статусе» карточка «Шаги» возвращена.
-//  • Под каждой картой — подпись вида: "<Вид> • DD.MM HH:MM–HH:MM".
-// ─────────────────────────────────────────────────────────────────────────────
-
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart'; // debugPrint
 import 'package:flutter/material.dart';
 import 'package:health/health.dart';
 import 'package:latlong2/latlong.dart';
@@ -21,10 +9,20 @@ import '../../../../../theme/app_theme.dart';
 import '../../../../../widgets/app_bar.dart'; // PaceAppBar
 import '../../../../../widgets/primary_button.dart';
 
-// Карта маршрута (неинтерактивная карта на один трек)
-import '../../../../../widgets/multi_route_card.dart';
+// ─────────────────────────────────────────────────────────────────────────────
+//  ЭКРАН «ПОДКЛЮЧЕННЫЕ ТРЕКЕРЫ»
+//  Изменения по задаче:
+//   • Удалена секция «Тренировки по видам».
+//   • Удалён вывод карт маршрутов внутри этого экрана.
+//   • Добавлена ОДНА кнопка «Детали тренировок» (PrimaryButton), которая
+//     открывает экран с тремя вкладками 24.10 / 25.10 / 26.10.
+//   • Вся остальная логика синка/метрик/таблицы по дням — без изменений.
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Мост к нативу (Android Health Connect route)
+import 'trackers/training_day_screen.dart'; // новый экран с вкладками
+
+// Мост к нативу (Android Health Connect route) — пока остаётся, но на этом
+// экране маршруты больше не показываем.
 import '../../../../../models/route_bridge.dart';
 
 class ConnectedTrackersScreen extends StatefulWidget {
@@ -44,8 +42,9 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
     HealthDataType.WORKOUT,
     HealthDataType.STEPS,
     HealthDataType.DISTANCE_DELTA,
-    HealthDataType.ACTIVE_ENERGY_BURNED,
     HealthDataType.HEART_RATE,
+    HealthDataType.ACTIVE_ENERGY_BURNED,
+    HealthDataType.TOTAL_CALORIES_BURNED,
   ];
 
   bool _configured = false;
@@ -71,11 +70,10 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
       {}; // длительность из DISTANCE_DELTA по дню
   final Map<DateTime, double> _hrAvgByDay = {}; // ср. пульс на дату
 
-  // Тренировки
+  // Тренировки (счётчик)
   int _workouts = 0;
-  Map<String, int> _workoutsByActivity = {};
 
-  // Для загрузки маршрутов — окна тренировок и мета
+  // Для потенциальной будущей загрузки маршрутов — окна тренировок и мета
   final List<DateTimeRange> _workoutWindows = [];
   final List<_WorkoutInfo> _workoutInfos = [];
 
@@ -84,10 +82,6 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
 
   // Для SnackBar
   String? _snackBarMessage;
-
-  // Все найденные маршруты (каждый — отдельный трек) + подписи
-  List<List<LatLng>> _allRoutes = const [];
-  List<String> _routeCaptions = const [];
 
   @override
   void initState() {
@@ -119,9 +113,9 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
     final h = d.inHours;
     final m = d.inMinutes % 60;
     final s = d.inSeconds % 60;
-    return '${h.toString().padLeft(2, '0')}:'
-        '${m.toString().padLeft(2, '0')}:'
-        '${s.toString().padLeft(2, '0')}';
+    return '${h.toString().padLeft(2, '0')}:' // часы
+        '${m.toString().padLeft(2, '0')}:' // минуты
+        '${s.toString().padLeft(2, '0')}'; // секунды
   }
 
   // Ср. темп: M:SS (без "/км")
@@ -195,7 +189,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
         content: Text(
           Platform.isIOS
               ? 'Разрешите доступ в системном диалоге, чтобы импортировать тренировки, пульс и ккал.'
-              : 'Откроется Health Connect — включите разрешения на чтение (тренировки, дистанция, пульс, активные калории — если доступны источником).',
+              : 'Откроется Health Connect — включите разрешения на чтение (тренировки, дистанция, пульс и активные калории — если доступны источником).',
         ),
         actions: [
           TextButton(
@@ -247,14 +241,11 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
       _hrAvgByDay.clear();
 
       _workouts = 0;
-      _workoutsByActivity = {};
+
       _workoutWindows.clear();
       _workoutInfos.clear();
 
       _periodStart = _periodEnd = null;
-
-      _allRoutes = const [];
-      _routeCaptions = const [];
     });
 
     try {
@@ -355,10 +346,9 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
         if (v is NumericHealthValue) activeKcal += v.numericValue.toDouble();
       }
 
-      // Тренировки (по видам) + окна для маршрутов + мета для подписей
+      // Тренировки — только считаем и сохраняем окна (карты уже не показываем)
       final workouts =
           byType[HealthDataType.WORKOUT] ?? const <HealthDataPoint>[];
-      final byActivity = <String, int>{};
       _workoutWindows.clear();
       _workoutInfos.clear();
       for (final p in workouts) {
@@ -378,9 +368,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
             kind = 'Плавание';
           }
         }
-        byActivity.update(kind, (old) => old + 1, ifAbsent: () => 1);
 
-        // окно тренировки (+/- 5 минут для попадания в нативный интервал)
         final origStart = p.dateFrom;
         final origEnd = p.dateTo;
         final start = origStart.subtract(const Duration(minutes: 5));
@@ -400,15 +388,9 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
         _hrAvg = hrAvg;
 
         _workouts = workouts.length;
-        _workoutsByActivity = byActivity;
 
         _status = 'Готово: синх за 7 дней выполнен.';
       });
-
-      // Автоматически загружаем ВСЕ маршруты (Android)
-      if (Platform.isAndroid) {
-        await _loadAllRoutesAfterSync();
-      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _status = 'Ошибка: $e');
@@ -416,84 +398,6 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-  }
-
-  // ───────── Загрузка ВСЕХ доступных маршрутов после синка ─────────
-  Future<void> _loadAllRoutesAfterSync() async {
-    final routes = <List<LatLng>>[];
-    final captions = <String>[];
-
-    debugPrint('[routes] windows: ${_workoutWindows.length}');
-
-    // 1) По каждому окну тренировки (расширенному на ±5 минут)
-    for (var i = 0; i < _workoutWindows.length; i++) {
-      final win = _workoutWindows[i];
-      try {
-        final pts = await RouteBridge.instance.getRoutePoints(
-          start: win.start,
-          end: win.end,
-        );
-        debugPrint(
-          '[routes] #$i window ${win.start.toIso8601String()} — '
-          '${win.end.toIso8601String()} -> pts: ${pts.length}',
-        );
-        if (pts.length >= 2) {
-          routes.add(pts);
-          final meta = _workoutInfos[i];
-          captions.add(
-            '${meta.kind} • ${_dmy(meta.start)} '
-            '${_hm(meta.start)}–${_hm(meta.end)}',
-          );
-        }
-      } catch (e) {
-        debugPrint('[routes] #$i error: $e');
-      }
-    }
-
-    // 2) Бэкап — "последний маршрут за 30 дней" (добавляем, если новый)
-    try {
-      final latest = await RouteBridge.instance.getLatestRoutePoints(days: 30);
-      final added = (latest.length >= 2)
-          ? !_containsSamePolyline(routes, latest)
-          : false;
-      if (added) {
-        routes.add(latest);
-        captions.add('Маршрут (последние 30 дн.)');
-      }
-      debugPrint(
-        '[routes] backup(latest30d): pts=${latest.length}, added=$added',
-      );
-    } catch (e) {
-      debugPrint('[routes] backup(latest30d) error: $e');
-    }
-
-    debugPrint('[routes] total polylines: ${routes.length}');
-
-    if (!mounted) return;
-    setState(() {
-      _allRoutes = routes;
-      _routeCaptions = captions;
-      if (routes.isEmpty) {
-        _showSnackBar(
-          'Маршруты не найдены: либо нет тренировок с треком за период, '
-          'либо источник не пишет маршрут в Health Connect.',
-        );
-      }
-    });
-  }
-
-  bool _containsSamePolyline(List<List<LatLng>> list, List<LatLng> poly) {
-    for (final r in list) {
-      if (r.length == poly.length &&
-          r.isNotEmpty &&
-          r.first.latitude == poly.first.latitude &&
-          r.first.longitude == poly.first.longitude &&
-          r.last.latitude == poly.last.latitude &&
-          r.last.longitude == poly.last.longitude) {
-        return true;
-      }
-    }
-    return false;
   }
 
   // ───────── UI ─────────
@@ -624,44 +528,28 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
                     tint: cInfo,
                     maxRows: 7,
                   ),
-
-                if (_workoutsByActivity.isNotEmpty)
-                  _StatusSection(
-                    icon: CupertinoIcons.sportscourt_fill,
-                    title: 'Тренировки по видам',
-                    tint: cWorkouts,
-                    labels: _workoutsByActivity.entries
-                        .map((e) => '${e.key} — ${e.value}')
-                        .toList(),
-                  ),
               ],
             ),
 
-          // Маршруты: отдельная карта на каждый трек (неинтерактивная) + подпись
-          if (Platform.isAndroid && _allRoutes.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            ..._allRoutes.asMap().entries.map(
-              (e) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    MultiRouteCard(
-                      polylines: [e.value], // одна полилиния на карту
-                      height: 220,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      (_routeCaptions.length > e.key)
-                          ? _routeCaptions[e.key]
-                          : 'Маршрут',
-                      style: AppTextStyles.h12w4Ter,
-                    ),
-                  ],
-                ),
-              ),
+          // ───────────────────────────────────────────────────────────────
+          //  ОДНА PRIMARY-КНОПКА «ДЕТАЛИ ТРЕНИРОВОК»
+          //  Открывает экран со вкладками 24.10 / 25.10 / 26.10
+          // ───────────────────────────────────────────────────────────────
+          const SizedBox(height: 20),
+          Center(
+            child: PrimaryButton(
+              text: 'Детали тренировок',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const TrainingDayTabsScreen(),
+                  ),
+                );
+              },
+              width: 260,
+              height: 44,
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -686,7 +574,6 @@ class _Metric {
 }
 
 /// Таблица «Активность по дням»
-/// Порядок колонок: День / Дистанция / Время / Ср. темп / Пульс
 class _ActivityTable extends StatelessWidget {
   const _ActivityTable({
     required this.distanceByDayMeters,
@@ -900,7 +787,7 @@ class _ActivityTable extends StatelessWidget {
                   Expanded(
                     flex: 3,
                     child: Text(
-                      dur != null ? _fmtHMS(dur) : '—', // << HH:MM:SS
+                      dur != null ? _fmtHMS(dur) : '—',
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
@@ -913,9 +800,7 @@ class _ActivityTable extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      (dur != null && dist != null)
-                          ? _fmtPace(dur, dist) // << без "/км"
-                          : '—',
+                      (dur != null && dist != null) ? _fmtPace(dur, dist) : '—',
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
@@ -957,87 +842,6 @@ class _WorkoutInfo {
     required this.end,
     required this.kind,
   });
-}
-
-/// Секция «бэйджи»
-class _StatusSection extends StatelessWidget {
-  const _StatusSection({
-    required this.icon,
-    required this.title,
-    required this.tint,
-    required this.labels,
-  });
-
-  final IconData icon;
-  final String title;
-  final List<String> labels;
-  final Color tint;
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = tint.withValues(alpha: 0.06);
-    final br = tint.withValues(alpha: 0.22);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: br, width: 1),
-      ),
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 18, color: tint),
-              const SizedBox(width: 6),
-              Text(title, style: AppTextStyles.h13w6),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: labels
-                .map((label) => _ChipPill(label: label, tint: tint))
-                .toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// «Пилюля»-чип
-class _ChipPill extends StatelessWidget {
-  const _ChipPill({required this.label, required this.tint});
-  final String label;
-  final Color tint;
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = tint.withValues(alpha: 0.08);
-    final br = tint.withValues(alpha: 0.24);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: br, width: 1),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: AppColors.textPrimary,
-        ),
-      ),
-    );
-  }
 }
 
 /// Карточка «Статус»

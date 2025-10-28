@@ -34,7 +34,7 @@ class _MultiRouteCardState extends State<MultiRouteCard> {
   LatLngBounds? _lastBounds;
 
   // Toggle to quickly switch to OSM if MapTiler key/quota misbehaves.
-  static const bool kUseMapTiler = false;
+  static const bool kUseMapTiler = true;
 
   @override
   void didUpdateWidget(covariant MultiRouteCard oldWidget) {

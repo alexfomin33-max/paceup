@@ -107,6 +107,32 @@ abstract class AppColors {
   static const Color accentMint = Color(0xFF00C7BE);
   static const Color accentYellow = Color(0xFFFFCC00);
 
+  static const Color gray = Color(0xFF8E8E93);
+  static const Color indigo = Color(0xFF5856D6);
+  static const Color purple = Color(0xFFAF52DE);
+  static const Color blue = Color(0xFF007AFF);
+  static const Color teal = Color(0xFF5AC8FA);
+  static const Color mint = Color(0xFF00C7BE);
+  static const Color green = Color(0xFF34C759);
+  static const Color orange = Color(0xFFFF9500);
+  static const Color yellow = Color(0xFFFFCC00);
+  static const Color red = Color(0xFFFF3B30);
+  static const Color pink = Color(0xFFFF2D55);
+
+  static Color indigoBg = indigo.withValues(alpha: 0.06);
+  static Color purpleBg = purple.withValues(alpha: 0.06);
+  static Color blueBg = blue.withValues(alpha: 0.06);
+  static Color orangeBg = orange.withValues(alpha: 0.06);
+  static Color greenBg = green.withValues(alpha: 0.06);
+  static Color redBg = red.withValues(alpha: 0.06);
+
+  static Color indigoBr = indigo.withValues(alpha: 0.22);
+  static Color purpleBr = purple.withValues(alpha: 0.22);
+  static Color blueBr = blue.withValues(alpha: 0.22);
+  static Color orangeBr = orange.withValues(alpha: 0.22);
+  static Color greenBr = green.withValues(alpha: 0.22);
+  static Color redBr = red.withValues(alpha: 0.22);
+
   // ┌───────────────────────────────────────────────────────────────────────┐
   // │ СПЕЦИАЛЬНЫЕ (под ваш проект)                                          │
   // └───────────────────────────────────────────────────────────────────────┘
