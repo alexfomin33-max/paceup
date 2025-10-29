@@ -1,5 +1,3 @@
-import 'package:flutter/cupertino.dart';
-
 /// Фиксированные ассеты для активности (тип → локальный asset)
 const Map<String, String> kActivityAssetByType = {
   'walking': 'assets/walking.png',

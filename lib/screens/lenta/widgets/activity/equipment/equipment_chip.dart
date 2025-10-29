@@ -1,6 +1,5 @@
 // lib/screens/lenta/widgets/activity/equipment/equipment_chip.dart
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import '../../../../../models/activity_lenta.dart' as al;
 import 'equipment_popup.dart';
 import '../../../../../theme/app_theme.dart';

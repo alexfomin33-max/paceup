@@ -52,7 +52,7 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'phone': widget.phone}),
       );
-      print(response.body);
+      debugPrint(response.body);
     } catch (e) {
       // 🔹 Логируем ошибки в консоль
       debugPrint("fetchApiData error: $e");
@@ -67,7 +67,7 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'phone': widget.phone}),
       );
-      print(response.body);
+      debugPrint(response.body);
     } catch (e) {
       debugPrint("resendCode error: $e");
     }

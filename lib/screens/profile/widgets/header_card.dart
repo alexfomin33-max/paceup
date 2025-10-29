@@ -95,8 +95,9 @@ class HeaderCard extends StatelessWidget {
                             builder: (_) => EditProfileScreen(userId: userId),
                           ),
                         );
-                        if (changed == true)
+                        if (changed == true) {
                           onReload(); // ← одна строка на авто-рефреш
+                        }
                       },
                     ),
                   ],

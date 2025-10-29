@@ -1,6 +1,5 @@
 // lib/screens/profile/edit_profile_screen.dart
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -562,7 +561,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Map<String, dynamic> _buildSavePayload() {
-    String _formatDateIsoOut(DateTime? d) {
+    String formatDateIsoOut(DateTime? d) {
       if (d == null) return '';
       final y = d.year.toString().padLeft(4, '0');
       final m = d.month.toString().padLeft(2, '0');
@@ -570,7 +569,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return '$y-$m-$dd';
     }
 
-    String _canonGenderOut(String g) {
+    String canonGenderOut(String g) {
       final s = g.trim().toLowerCase();
       if (s.contains('жен')) return 'Женский';
       if (s.contains('муж')) return 'Мужской';
@@ -579,7 +578,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return 'Другое';
     }
 
-    String _canonSportOut(String s) {
+    String canonSportOut(String s) {
       final v = s.trim().toLowerCase();
       if (v.contains('вел')) return 'Велоспорт';
       if (v.contains('плав') || v.contains('swim')) return 'Плавание';
@@ -594,9 +593,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'surname': _lastName.text.trim(),
       'username': _nickname.text.trim(),
       'city': _city.text.trim(),
-      'dateage': _formatDateIsoOut(_birthDate),
-      'gender': _canonGenderOut(_gender),
-      'sport': _canonSportOut(_mainSport),
+      'dateage': formatDateIsoOut(_birthDate),
+      'gender': canonGenderOut(_gender),
+      'sport': canonSportOut(_mainSport),
       'height': _toInt(_height.text),
       'weight': _toInt(_weight.text),
       'pulse': _toInt(_hrMax.text),
@@ -813,7 +812,7 @@ class _AvatarEditable extends StatelessWidget {
           height: size,
           fit: BoxFit.cover,
           cacheWidth: cacheWidth,
-          errorBuilder: (_, __, ___) => Image.asset(
+          errorBuilder: (_, _, _) => Image.asset(
             'assets/avatar_0.png',
             width: size,
             height: size,
@@ -839,7 +838,7 @@ class _AvatarEditable extends StatelessWidget {
         height: size,
         fit: BoxFit.cover,
         cacheWidth: cacheWidth,
-        errorBuilder: (_, __, ___) => Image.asset(
+        errorBuilder: (_, _, _) => Image.asset(
           'assets/avatar_0.png',
           width: size,
           height: size,

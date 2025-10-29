@@ -106,7 +106,7 @@ class OptimizedAvatar extends StatelessWidget {
         height: size,
         fit: fit,
         gaplessPlayback: gaplessPlayback,
-        errorBuilder: (_, __, ___) => Image.asset(
+        errorBuilder: (_, _, _) => Image.asset(
           fallbackAsset,
           width: size,
           height: size,

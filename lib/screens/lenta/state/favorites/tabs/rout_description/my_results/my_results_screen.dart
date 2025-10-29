@@ -69,7 +69,7 @@ class MyResultsScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               sliver: SliverList.separated(
                 itemCount: _items.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 2),
+                separatorBuilder: (_, _) => const SizedBox(height: 2),
                 itemBuilder: (context, i) => _ResultCard(e: _items[i]),
               ),
             ),
@@ -154,7 +154,7 @@ class _ResultRow extends StatelessWidget {
               width: 90,
               height: 60,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 width: 90,
                 height: 60,
                 color: AppColors.skeletonBase,

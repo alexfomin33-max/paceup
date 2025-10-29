@@ -115,7 +115,7 @@ class _BookmarkRow extends StatelessWidget {
                     ),
                     CupertinoButton(
                       padding: EdgeInsets.zero,
-                      minSize: 28,
+                      minimumSize: const Size(28, 28),
                       onPressed: () {},
                       child: const Icon(
                         CupertinoIcons.ellipsis_vertical,

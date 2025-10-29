@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 class TransparentPageRoute<T> extends PageRoute<T> {
   TransparentPageRoute({
     required this.builder,
-    RouteSettings? settings,
+    super.settings, // ← передаём в родительский конструктор
     this.transitionDurationMs = 0, // без анимации — управляем жестом сами
-  }) : super(settings: settings);
+  });
 
   final WidgetBuilder builder;
   final int transitionDurationMs;

@@ -40,7 +40,7 @@ class _SlotsContentState extends State<SlotsContent> {
       padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
       physics: const BouncingScrollPhysics(),
       itemCount: items.length + headerCount,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (_, index) {
         if (index == 0) {
           return _SearchField(

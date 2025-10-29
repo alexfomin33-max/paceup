@@ -46,9 +46,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
       (date != null) &&
       (time != null);
 
-  bool _isPickerOpen = false; // ← флаг открыт ли сейчас попап
-  double? _dragStartX; // ← для свайпа назад
-
   @override
   void initState() {
     super.initState();
@@ -79,9 +76,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
   }
 
   Future<void> _pickDateCupertino() async {
-    _isPickerOpen = true;
-    setState(() {});
-
     final today = DateUtils.dateOnly(DateTime.now());
     DateTime temp = DateUtils.dateOnly(date ?? today);
 
@@ -95,15 +89,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
     if (ok) setState(() => date = temp);
-
-    _isPickerOpen = false;
-    setState(() {});
   }
 
   Future<void> _pickTimeCupertino() async {
-    _isPickerOpen = true;
-    setState(() {});
-
     DateTime temp = DateTime(
       DateTime.now().year,
       DateTime.now().month,
@@ -123,9 +111,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
     if (ok) {
       setState(() => time = TimeOfDay(hour: temp.hour, minute: temp.minute));
     }
-
-    _isPickerOpen = false;
-    setState(() {});
   }
 
   Future<T?> _showCupertinoSheet<T>({required Widget child}) {

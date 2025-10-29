@@ -1,5 +1,4 @@
 // lib/screens/lenta/widgets/activity/equipment/equipment_popup.dart
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../../theme/app_theme.dart';
 
@@ -16,7 +15,6 @@ class EquipmentPopup {
     required GlobalKey anchorKey,
   }) {
     final overlay = Overlay.of(context, rootOverlay: true);
-    if (overlay == null) return;
     final anchorContext = anchorKey.currentContext;
     if (anchorContext == null) return;
 

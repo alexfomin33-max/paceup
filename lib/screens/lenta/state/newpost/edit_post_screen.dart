@@ -28,6 +28,7 @@ Map<String, dynamic> safeDecodeJsonAsMap(List<int> bodyBytes) {
 class _ExistingImage {
   final String url;
   bool keep;
+  // ignore: unused_element_parameter
   _ExistingImage(this.url, {this.keep = true});
 }
 

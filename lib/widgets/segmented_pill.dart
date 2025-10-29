@@ -76,11 +76,11 @@ class SegmentedPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // ── Значения по умолчанию из ваших дизайн-токенов
-    final Color _track = trackColor ?? AppColors.surface;
-    final Color _border = borderColor ?? AppColors.border;
-    final Color _thumb = thumbColor ?? AppColors.textPrimary;
-    final Color _textActive = activeTextColor ?? AppColors.surface;
-    final Color _textInactive = inactiveTextColor ?? AppColors.textPrimary;
+    final Color track = trackColor ?? AppColors.surface;
+    final Color border = borderColor ?? AppColors.border;
+    final Color thumb = thumbColor ?? AppColors.textPrimary;
+    final Color textActive = activeTextColor ?? AppColors.surface;
+    final Color textInactive = inactiveTextColor ?? AppColors.textPrimary;
 
     // ── Корпус виджета
     final pill = SizedBox(
@@ -91,9 +91,9 @@ class SegmentedPill extends StatelessWidget {
           // ── Фон и рамка «пилюли»
           Container(
             decoration: BoxDecoration(
-              color: _track,
+              color: track,
               borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(color: _border, width: 1),
+              border: Border.all(color: border, width: 1),
             ),
           ),
 
@@ -109,7 +109,7 @@ class SegmentedPill extends StatelessWidget {
               heightFactor: 1,
               child: Container(
                 decoration: BoxDecoration(
-                  color: _thumb,
+                  color: thumb,
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
               ),
@@ -123,8 +123,8 @@ class SegmentedPill extends StatelessWidget {
                 child: _SegButton(
                   text: left,
                   selected: value == 0,
-                  activeTextColor: _textActive,
-                  inactiveTextColor: _textInactive,
+                  activeTextColor: textActive,
+                  inactiveTextColor: textInactive,
                   onTap: () {
                     if (value != 0) {
                       if (haptics) HapticFeedback.lightImpact();
@@ -137,8 +137,8 @@ class SegmentedPill extends StatelessWidget {
                 child: _SegButton(
                   text: right,
                   selected: value == 1,
-                  activeTextColor: _textActive,
-                  inactiveTextColor: _textInactive,
+                  activeTextColor: textActive,
+                  inactiveTextColor: textInactive,
                   onTap: () {
                     if (value != 1) {
                       if (haptics) HapticFeedback.lightImpact();

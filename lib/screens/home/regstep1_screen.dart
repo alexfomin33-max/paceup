@@ -60,11 +60,11 @@ class Regstep1ScreenState extends State<Regstep1Screen> {
 
       // Проверяем успешность ответа
       if (response.statusCode != 200) {
-        print('Ошибка при сохранении данных: ${response.body}');
+        debugPrint('Ошибка при сохранении данных: ${response.body}');
       }
     } catch (e) {
       // Логируем ошибки при отправке запроса
-      print('Ошибка при отправке данных: $e');
+      debugPrint('Ошибка при отправке данных: $e');
     }
   }
 

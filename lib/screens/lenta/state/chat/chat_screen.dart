@@ -60,7 +60,7 @@ class _ChatScreenState extends State<ChatScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           itemCount: _items.length,
-          separatorBuilder: (_, __) => const Divider(
+          separatorBuilder: (_, _) => const Divider(
             height: 1,
             thickness: 0.5,
             color: AppColors.border,

@@ -390,12 +390,12 @@ class _TrainingTabContentState extends State<_TrainingTabContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Маршрут', style: AppTextStyles.h14w6),
+                const Text('Маршрут', style: AppTextStyles.h14w6),
                 const SizedBox(height: 8),
                 if (_route.length >= 2)
                   MultiRouteCard(polylines: [_route], height: 220)
                 else
-                  Text(
+                  const Text(
                     'Маршрут не найден. Возможно, у источника нет трека, требуется разовый доступ в Health Connect, или данные ещё не пришли.',
                     style: AppTextStyles.h12w4Ter,
                   ),
@@ -410,7 +410,7 @@ class _TrainingTabContentState extends State<_TrainingTabContent> {
               border: Border.all(color: AppColors.border, width: 1),
             ),
             padding: const EdgeInsets.all(12),
-            child: Text(
+            child: const Text(
               'Карта маршрута доступна на Android (Health Connect). На iOS экран без карты.',
               style: AppTextStyles.h12w4Ter,
             ),

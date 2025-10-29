@@ -133,7 +133,7 @@ class _FriendRow extends StatelessWidget {
               width: 40,
               height: 40,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 width: 40,
                 height: 40,
                 color: AppColors.skeletonBase,

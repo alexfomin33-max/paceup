@@ -277,20 +277,14 @@ class _LeaderCard extends StatelessWidget {
 
 class _MetricCenter extends StatelessWidget {
   final IconData? icon; // можно просто icon: ...
-  final IconData? cupertinoIcon; // или cupertinoIcon: ...
   final IconData? materialIcon; // или materialIcon: ...
   final String text;
 
-  const _MetricCenter({
-    this.icon,
-    this.cupertinoIcon,
-    this.materialIcon,
-    required this.text,
-  });
+  const _MetricCenter({this.icon, this.materialIcon, required this.text});
 
   @override
   Widget build(BuildContext context) {
-    final IconData? resolved = icon ?? materialIcon ?? cupertinoIcon;
+    final IconData? resolved = icon ?? materialIcon;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

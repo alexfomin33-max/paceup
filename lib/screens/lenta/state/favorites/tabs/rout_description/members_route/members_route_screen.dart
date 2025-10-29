@@ -285,19 +285,6 @@ class _MembersTable extends StatelessWidget {
                                       fontSize: 13,
                                     ),
                                   ),
-                                  if (r.subtitle != null) ...[
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      r.subtitle!,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 12,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
                                 ],
                               ),
                             ),
@@ -475,7 +462,6 @@ class _MemberRow {
   final double km;
   final String time;
   final int hr;
-  final String? subtitle; // например, «18 июня 2025»
 
   const _MemberRow({
     required this.name,
@@ -483,7 +469,6 @@ class _MemberRow {
     required this.km,
     required this.time,
     required this.hr,
-    this.subtitle,
   });
 }
 

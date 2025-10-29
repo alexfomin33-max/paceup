@@ -54,7 +54,7 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'phone': widget.phone}),
       );
-      print(response.body);
+      debugPrint('fetchApiData response: ${response.body}');
     } catch (e) {
       // 🔹 Ошибки игнорируются, можно добавить логирование или уведомление
       // debugPrint('fetchApiData error: $e');
@@ -69,7 +69,7 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'phone': widget.phone}),
       );
-      print(response.body);
+      debugPrint('resendCode response: ${response.body}');
     } catch (e) {
       // 🔹 Лог ошибок при повторной отправке
       // debugPrint('resendCode error: $e');

@@ -102,8 +102,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final map = _safeDecodeJsonAsMap(res.bodyBytes);
       final dynamic raw = map['profile'] ?? map['data'] ?? map;
-      if (raw is! Map)
+      if (raw is! Map) {
         throw const FormatException('Bad payload: not a JSON object');
+      }
 
       setState(() {
         _profileHeader = UserProfileHeader.fromJson(
@@ -166,9 +167,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _AppIcon(
             CupertinoIcons.gear,
             onPressed: () {
-              Navigator.of(
-                context,
-              ).push(TransparentPageRoute(builder: (_) => const SettingsScreen()));
+              Navigator.of(context).push(
+                TransparentPageRoute(builder: (_) => const SettingsScreen()),
+              );
             },
           ),
           const SizedBox(width: 6),
@@ -195,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               height: 40.5,
               child: AnimatedBuilder(
                 animation: _pageController,
-                builder: (_, __) {
+                builder: (_, _) {
                   final page = _pageController.hasClients
                       ? (_pageController.page ?? _tab.toDouble())
                       : _tab.toDouble();

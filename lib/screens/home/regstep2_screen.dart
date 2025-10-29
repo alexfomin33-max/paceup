@@ -187,10 +187,13 @@ Future<void> saveForm(
       }),
     );
     //print(response.body);
-  } catch (e) {}
+  } catch (e) {
+    // 🔹 Игнорируем ошибку сохранения (регистрация необязательна, есть кнопка "Пропустить")
+    // Пользователь может продолжить работу в приложении даже при сбое сохранения
+  }
 }
 
-class ContinueButton extends StatelessWidget {
+class ContinueButton extends StatefulWidget {
   final int userId; // передаем userId для следующего экрана
   final TextEditingController height;
   final TextEditingController weight;
@@ -205,15 +208,27 @@ class ContinueButton extends StatelessWidget {
   });
 
   @override
+  State<ContinueButton> createState() => _ContinueButtonState();
+}
+
+class _ContinueButtonState extends State<ContinueButton> {
+  @override
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
-        await saveForm(userId, height, weight, pulse);
+        await saveForm(
+          widget.userId,
+          widget.height,
+          widget.weight,
+          widget.pulse,
+        );
+        // 🔹 Проверяем, что контекст все еще смонтирован перед навигацией (после async-операции)
+        if (!context.mounted) return;
         // 🔹 Переход на экран ленты
         Navigator.pushReplacementNamed(
           context,
           '/lenta',
-          arguments: {'userId': userId},
+          arguments: {'userId': widget.userId},
         );
       },
       style: ElevatedButton.styleFrom(

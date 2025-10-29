@@ -73,7 +73,7 @@ class MoreMenuOverlay {
 
     final anchorCtx = anchorKey.currentContext;
     final overlay = Overlay.of(context, rootOverlay: true);
-    if (anchorCtx == null || overlay == null) return;
+    if (anchorCtx == null) return;
 
     // Прямоугольник кнопки "…" в системе координат overlay.
     final anchorBox = anchorCtx.findRenderObject() as RenderBox;

@@ -45,7 +45,7 @@ class ActiveContent extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 12), 
+            const SizedBox(height: 12),
 
             const TaskCard(
               colorTint: AppColors.backgroundBlue,
@@ -417,7 +417,6 @@ class _IconBadge extends StatelessWidget {
 class _RoundImage extends StatelessWidget {
   final ImageProvider? provider;
   const _RoundImage({this.provider});
-  const _RoundImage.placeholder() : provider = null;
 
   @override
   Widget build(BuildContext context) {

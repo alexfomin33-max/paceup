@@ -67,7 +67,7 @@ class _MultiRouteCardState extends State<MultiRouteCard> {
           urlTemplate:
               'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={apiKey}',
           additionalOptions: const {
-            // TODO: move to secrets/config in production.
+            // Внимание: данный ключ указан только для разработки; в продакшене переносим в конфиг/секреты
             'apiKey': '5Ssg96Nz79IHOCKB0MLL',
           },
           keepBuffer: 1,

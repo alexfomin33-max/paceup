@@ -341,6 +341,9 @@ class _NewPostScreenState extends State<NewPostScreen> {
           Navigator.pop(context, true);
         }
       } else {
+        if (!mounted) {
+          return; // 🔹 Проверка mounted перед использованием context
+        }
         final msg = (data['message'] ?? 'Ошибка сервера').toString();
         ScaffoldMessenger.of(
           context,
@@ -348,6 +351,10 @@ class _NewPostScreenState extends State<NewPostScreen> {
       }
     } catch (e) {
       // Один catch без «мертвых» веток: разбираем типы внутри
+      if (!mounted) {
+        return; // 🔹 Проверка mounted перед использованием context
+      }
+
       if (e is TimeoutException) {
         ScaffoldMessenger.of(
           context,

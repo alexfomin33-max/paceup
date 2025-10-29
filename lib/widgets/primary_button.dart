@@ -56,13 +56,13 @@ class PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // ── итоговая ширина
-    final double? _w = width ?? (expanded ? double.infinity : null);
+    final double? finalWidth = width ?? (expanded ? double.infinity : null);
 
     // ── если идёт загрузка — блокируем нажатие
-    final bool _enabled = onPressed != null && !isLoading;
+    final bool isEnabled = onPressed != null && !isLoading;
 
     // ── единый контент кнопки: ведущая иконка + текст + хвостовая иконка
-    final Widget _content = Row(
+    final Widget content = Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -95,8 +95,8 @@ class PrimaryButton extends StatelessWidget {
     );
 
     // ── сама кнопка
-    final Widget _btn = ElevatedButton(
-      onPressed: _enabled ? onPressed : null,
+    final Widget button = ElevatedButton(
+      onPressed: isEnabled ? onPressed : null,
       style: ElevatedButton.styleFrom(
         // цвета: активный/неактивный/текст
         backgroundColor: AppColors.brandPrimary,
@@ -108,10 +108,10 @@ class PrimaryButton extends StatelessWidget {
         shape: const StadiumBorder(), // «капсула» как у вас в дизайне
         minimumSize: Size(0, height), // фиксируем высоту
       ),
-      child: _content,
+      child: content,
     );
 
     // ── задаём ширину контейнером-обёрткой
-    return SizedBox(width: _w, height: height, child: _btn);
+    return SizedBox(width: finalWidth, height: height, child: button);
   }
 }

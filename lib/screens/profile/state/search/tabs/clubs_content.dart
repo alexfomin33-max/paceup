@@ -75,7 +75,11 @@ class SearchClubsContent extends StatelessWidget {
               child: PrimaryButton(
                 text: 'Создать клуб',
                 onPressed: () {
-                  // TODO: экшен создания клуба
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Экран создания клуба — скоро'),
+                    ),
+                  );
                 },
                 width: 220, // как у «Пригласить»
                 // expanded: true, // ← если когда-нибудь понадобится на всю ширину
@@ -108,7 +112,7 @@ class _ClubRow extends StatelessWidget {
               width: 80,
               height: 55,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 width: 80,
                 height: 55,
                 color: AppColors.skeletonBase,

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:health/health.dart';
-import 'package:latlong2/latlong.dart';
 
 import '../../../../../theme/app_theme.dart';
 import '../../../../../widgets/app_bar.dart'; // PaceAppBar
@@ -20,10 +19,6 @@ import '../../../../../widgets/primary_button.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'trackers/training_day_screen.dart'; // новый экран с вкладками
-
-// Мост к нативу (Android Health Connect route) — пока остаётся, но на этом
-// экране маршруты больше не показываем.
-import '../../../../../models/route_bridge.dart';
 
 class ConnectedTrackersScreen extends StatefulWidget {
   const ConnectedTrackersScreen({super.key});
@@ -52,9 +47,6 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
 
   // Краткий статус
   String _status = '';
-
-  // Агрегаты за 7 дней
-  Map<HealthDataType, List<HealthDataPoint>> _byType = {};
 
   // Суммы за период
   int _stepsTotal = 0; // << вернули шаги
@@ -105,29 +97,6 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
 
   static String _dmy(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}';
-  static String _hm(DateTime d) =>
-      '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
-
-  // HH:MM:SS (всегда)
-  static String _fmtHMS(Duration d) {
-    final h = d.inHours;
-    final m = d.inMinutes % 60;
-    final s = d.inSeconds % 60;
-    return '${h.toString().padLeft(2, '0')}:' // часы
-        '${m.toString().padLeft(2, '0')}:' // минуты
-        '${s.toString().padLeft(2, '0')}'; // секунды
-  }
-
-  // Ср. темп: M:SS (без "/км")
-  static String _fmtPace(Duration dur, double meters) {
-    if (dur <= Duration.zero || meters <= 0) return '—';
-    final sec = dur.inSeconds.toDouble();
-    final secPerKm = sec / (meters / 1000.0);
-    final total = secPerKm.round();
-    final m = total ~/ 60;
-    final s = total % 60;
-    return '$m:${s.toString().padLeft(2, '0')}';
-  }
 
   // ───────── Конфигурация Health / Health Connect ─────────
 
@@ -230,7 +199,6 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
       _busy = true;
       _status = 'Запрашиваю доступ…';
 
-      _byType = {};
       _stepsTotal = 0;
       _sumDistanceMeters = 0;
       _sumActiveKcal = 0;
@@ -295,7 +263,9 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
       double? hrAvg;
       if (hrVals.isNotEmpty) {
         double sum = 0;
-        for (final d in hrVals) sum += d;
+        for (final d in hrVals) {
+          sum += d;
+        }
         hrAvg = sum / hrVals.length;
       }
       hrSumByDay.forEach((k, sum) {
@@ -355,7 +325,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
         final v = p.value;
         String kind = 'Тренировка';
         if (v is WorkoutHealthValue) {
-          kind = v.workoutActivityType?.name ?? 'Тренировка';
+          kind = v.workoutActivityType.name;
         } else {
           final raw = v.toString().toLowerCase();
           if (raw.contains('running')) {
@@ -380,8 +350,6 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
       }
 
       setState(() {
-        _byType = byType;
-
         _stepsTotal = stepsTotal; // << вернули шаги
         _sumDistanceMeters = distanceMeters;
         _sumActiveKcal = activeKcal;

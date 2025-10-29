@@ -237,7 +237,7 @@ class _ActivityScroller extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         itemBuilder: (_, i) => _ActivityCard(items[i]),
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemCount: items.length,
       ),
     );

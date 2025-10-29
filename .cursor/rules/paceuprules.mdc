@@ -1,3 +1,56 @@
 ---
 alwaysApply: true
 ---
+
+## ── Technology & Structure
+- App: Flutter (package id: com.example.paceip), Android + iOS.
+- Main packages: flutter_map, persistent_bottom_nav_bar_v2, image_picker, http.
+- Backend: PHP/MySQL with clean UTF-8 JSON API (no BOM, no stray spaces).
+- Android: MethodChannel 'paceup/route' (getLatestRoute, getExerciseRoute).  
+
+## ── Design System (DO NOT CHANGE without explicit approval)
+- Font: Inter (400 / 500 / 600) already connected in pubspec.yaml.  
+- USE ONLY tokens from AppTheme, AppColors, AppTextStyles, AppRadius.  
+- NEVER introduce custom padding, radius, or color values.  
+- Follow iOS-style UX: swipe-back navigation, segmented controls, compact AppBar, BouncingScrollPhysics.  
+- Ensure proper SafeArea and adaptive layouts for all screens.  
+
+## ── Code Style & Comments
+- ALWAYS add `const` where possible.  
+- WRITE detailed Russian comments explaining every block.  
+- Large sections must be visually framed with divider comments (e.g. “────────────”).  
+- Maintain architectural cleanliness, testability, and clear structure.  
+- Indicate potential performance risks and improvements after each patch.  
+
+## ── Performance & UX
+- AVOID jank, heavy rebuilds, or unnecessary animations.  
+- ALWAYS suggest 1–2 cheap performance fixes in patches.  
+- USE smooth transitions and light animations.  
+- Prefetch heavy images and minimize redundant HTTP requests.  
+- Keep feed smooth and responsive.  
+
+## ── Feed & Pagination
+- Feed uses cursor-based pagination.  
+- Deduplicate by id via `_seenIds`.  
+- Soft refresh: update items without full rebuild or scroll jump.  
+- Prefetch media when possible.  
+
+## ── API Contracts & Data
+- Field names and types are **STABLE**.  
+  DO NOT rename or change types without explicit approval.  
+- Backend returns clean UTF-8 JSON (no BOM).  
+- Any DB changes must include a separate SQL migration script. 
+
+## ── Map & Routes
+- Widget `multi_route_card`: static OSM map.  
+- Fit bounds after `onReady`.  
+- Polyline color = AppColors.brandPrimary, strokeWidth = 3. 
+
+## ── Refactoring & Edits
+- NEVER modify visuals unless the task explicitly requires it.  
+- For performance changes: briefly describe the expected effect.  
+- For API-related changes: separate them clearly and flag for review.  
+
+## ── Output & Deliverables
+- New widgets or utilities must follow existing architecture.  
+- Suggest small, high-impact performance optimizations (e.g. const constructors, memoization, proper keys, avoiding setState in build).  

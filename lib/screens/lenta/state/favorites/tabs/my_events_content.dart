@@ -148,7 +148,7 @@ class _MonthButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return CupertinoButton(
       padding: const EdgeInsets.all(6),
-      minSize: 28,
+      minimumSize: const Size(28, 28),
       onPressed: onTap,
       child: Icon(icon, size: 18, color: AppColors.iconPrimary),
     );

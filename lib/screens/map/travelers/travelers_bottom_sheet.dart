@@ -145,13 +145,11 @@ class _TravelerRow extends StatelessWidget {
   final String asset;
   final String title;
   final String subtitle;
-  final VoidCallback? onTap;
 
   const _TravelerRow({
     required this.asset,
     required this.title,
     required this.subtitle,
-    this.onTap,
   });
 
   @override
@@ -189,15 +187,6 @@ class _TravelerRow extends StatelessWidget {
       ],
     );
 
-    if (onTap == null) return row;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        onTap: onTap,
-        child: row,
-      ),
-    );
+    return row;
   }
 }
