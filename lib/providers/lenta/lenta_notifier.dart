@@ -39,6 +39,8 @@ class LentaNotifier extends StateNotifier<LentaState> {
   // ────────────────────────── ПРИВАТНЫЕ МЕТОДЫ ──────────────────────────
 
   /// Загрузка активностей через API
+  /// 
+  /// Возвращает список, отсортированный по дате (старые сверху)
   Future<List<Activity>> _loadActivities({
     required int page,
     required int limit,
@@ -50,10 +52,25 @@ class LentaNotifier extends StateNotifier<LentaState> {
     );
 
     final List rawList = data['data'] as List? ?? const [];
-    return rawList
+    final activities = rawList
         .whereType<Map<String, dynamic>>()
         .map(Activity.fromApi)
         .toList();
+    
+    // Сортируем по дате: старые сверху (возрастание)
+    activities.sort((a, b) {
+      final dateA = a.dateStart;
+      final dateB = b.dateStart;
+      
+      // Если даты отсутствуют, помещаем в конец
+      if (dateA == null && dateB == null) return 0;
+      if (dateA == null) return 1;
+      if (dateB == null) return -1;
+      
+      return dateA.compareTo(dateB);
+    });
+    
+    return activities;
   }
 
   // ────────────────────────── ЗАГРУЗКА ──────────────────────────

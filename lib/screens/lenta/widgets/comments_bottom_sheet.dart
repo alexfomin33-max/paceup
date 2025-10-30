@@ -304,7 +304,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     }
 
     if (_comments.isEmpty) {
-      return _EmptyState(onRefresh: () => _loadComments(refresh: true));
+      return const _EmptyState();
     }
 
     // Стилизуем под твой пример: ListTile со шрифтами из AppTextStyles.
@@ -547,29 +547,23 @@ class _ComposerBar extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  final Future<void> Function() onRefresh;
-  const _EmptyState({required this.onRefresh});
+  const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             CupertinoIcons.chat_bubble_text,
             size: 28,
             color: AppColors.iconTertiary,
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'Пока нет комментариев',
             style: TextStyle(color: AppColors.textTertiary),
-          ),
-          const SizedBox(height: 12),
-          FilledButton.tonal(
-            onPressed: onRefresh,
-            child: const Text('Обновить'),
           ),
         ],
       ),

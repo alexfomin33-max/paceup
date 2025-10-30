@@ -95,7 +95,7 @@ class CacheService {
   /// • userId — ID пользователя
   /// • limit — максимальное количество активностей (по умолчанию 20)
   ///
-  /// Возвращает список активностей, отсортированных по дате (новые сверху)
+  /// Возвращает список активностей, отсортированных по дате (старые сверху)
   Future<List<Activity>> getCachedActivities({
     required int userId,
     int limit = 20,
@@ -103,7 +103,7 @@ class CacheService {
     final query = _db.select(_db.cachedActivities)
       ..where((tbl) => tbl.cacheOwner.equals(userId))
       ..orderBy([
-        (t) => OrderingTerm(expression: t.dateStart, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.dateStart, mode: OrderingMode.asc),
       ])
       ..limit(limit);
 

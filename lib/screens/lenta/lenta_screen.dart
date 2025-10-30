@@ -488,14 +488,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
                 final activity = items[i];
 
-                // Первый элемент с RecommendedBlock — всегда оборачиваем
+                // Второй элемент с RecommendedBlock — всегда оборачиваем
                 // в RepaintBoundary (сложный виджет с каруселью)
-                if (i == 0) {
-                  final first = _buildFeedItem(items[0]);
+                if (i == 1) {
+                  final second = _buildFeedItem(items[1]);
                   return RepaintBoundary(
                     child: Column(
                       children: [
-                        first,
+                        second,
                         const SizedBox(height: 16),
                         const RecommendedBlock(),
                         const SizedBox(height: 16),
