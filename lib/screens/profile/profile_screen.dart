@@ -135,6 +135,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: HeaderCard(
               profile: profileState.profile,
               userId: widget.userId,
+              lastUpdateTimestamp: profileState.lastUpdateTimestamp,
               onReload: () {
                 ref.read(profileHeaderProvider(widget.userId).notifier).reload();
               },

@@ -1,10 +1,15 @@
 // lib/widgets/optimized_avatar.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../providers/avatar_version_provider.dart';
 
 /// Универсальный аватар с fallback, gaplessPlayback и опциональным fade-in.
 /// Поддерживает сеть (url) и ассет (asset).
 /// Скругление делайте снаружи (ClipRRect/ClipOval).
-class OptimizedAvatar extends StatelessWidget {
+///
+/// Автоматически добавляет версию к URL для cache-busting при обновлении аватарки.
+class OptimizedAvatar extends ConsumerWidget {
   /// URL картинки (если null — используется [asset])
   final String? url;
 
@@ -50,9 +55,12 @@ class OptimizedAvatar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Получаем текущую версию аватарки для cache-busting
+    final avatarVersion = ref.watch(avatarVersionProvider);
+
     // Определяем «эффективный» источник — нужен стабильный ключ для AnimatedSwitcher.
-    final String effectiveSource = _effectiveSource();
+    final String effectiveSource = _effectiveSource(avatarVersion);
 
     final Widget image = _buildImage(effectiveSource);
 
@@ -86,10 +94,16 @@ class OptimizedAvatar extends StatelessWidget {
     );
   }
 
-  String _effectiveSource() {
+  String _effectiveSource(int version) {
     // Берём строку, по которой однозначно понять «сменился ли кадр»
     if (url != null && url!.trim().isNotEmpty) {
-      return 'net:${url!.trim()}';
+      final baseUrl = url!.trim();
+      // Добавляем версию для cache-busting
+      if (version > 0) {
+        final separator = baseUrl.contains('?') ? '&' : '?';
+        return 'net:$baseUrl${separator}v=$version';
+      }
+      return 'net:$baseUrl';
     }
     final p = (asset != null && asset!.trim().isNotEmpty)
         ? asset!.trim()
@@ -99,20 +113,22 @@ class OptimizedAvatar extends StatelessWidget {
 
   Widget _buildImage(String effectiveSource) {
     if (effectiveSource.startsWith('net:')) {
-      // Сетевой кейс
-      return Image.network(
-        effectiveSource.substring(4),
+      // Сетевой кейс — используем CachedNetworkImage для единого кэша с профилем
+      // ✅ ВАЖНО: теперь лента и профиль используют один кэш (memory + disk)
+      // Это гарантирует, что аватарка будет одинаковой во всех местах приложения
+      final url = effectiveSource.substring(4);
+
+      return CachedNetworkImage(
+        imageUrl: url,
         width: size,
         height: size,
         fit: fit,
-        gaplessPlayback: gaplessPlayback,
-        errorBuilder: (_, _, _) => Image.asset(
-          fallbackAsset,
-          width: size,
-          height: size,
-          fit: fit,
-          gaplessPlayback: gaplessPlayback,
-        ),
+        // Плавный placeholder (прозрачный для gaplessPlayback эффекта)
+        placeholder: (context, url) => const SizedBox.shrink(),
+        // Fallback на дефолтную аватарку при ошибке
+        errorWidget: (context, url, error) =>
+            Image.asset(fallbackAsset, width: size, height: size, fit: fit),
+        // НЕ используем memCacheWidth/memCacheHeight - они искажают изображение!
       );
     }
 

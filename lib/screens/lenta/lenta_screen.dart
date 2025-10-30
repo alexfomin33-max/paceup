@@ -348,20 +348,42 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
         final items = lentaState.items;
 
-        // Если нет данных и идёт загрузка - показываем индикатор
+        // ────────────────────────────────────────────────────────────────
+        // 📦 НАЧАЛЬНАЯ ЗАГРУЗКА: показываем skeleton loader
+        // ────────────────────────────────────────────────────────────────
+        // Если нет данных и идёт загрузка - показываем skeleton loader вместо индикатора
+        // Это предотвращает визуальный микролаг после splash screen
         if (items.isEmpty && lentaState.isRefreshing) {
-          return const Center(child: CircularProgressIndicator());
+          return ListView(
+            padding: const EdgeInsets.only(top: 4, bottom: 12),
+            physics: const NeverScrollableScrollPhysics(),
+            children: const [
+              _SkeletonPostCard(),
+              SizedBox(height: 16),
+              _SkeletonPostCard(),
+              SizedBox(height: 16),
+              _SkeletonPostCard(),
+            ],
+          );
         }
 
+        // ────────────────────────────────────────────────────────────────
+        // 📭 ПУСТАЯ ЛЕНТА: показываем заглушку с pull-to-refresh
+        // ────────────────────────────────────────────────────────────────
         if (items.isEmpty) {
           return RefreshIndicator.adaptive(
             onRefresh: _onRefresh,
             child: ListView(
               controller: _scrollController,
               padding: const EdgeInsets.only(top: 4, bottom: 12),
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
               children: const [
                 SizedBox(height: 120),
-                Center(child: Text('Пока в ленте пусто')),
+                Center(
+                  child: Text('Пока в ленте пусто', style: AppTextStyles.h14w4),
+                ),
                 SizedBox(height: 120),
               ],
             ),
@@ -383,6 +405,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.only(top: 4, bottom: 12),
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
               itemCount: items.length + (lentaState.isLoadingMore ? 1 : 0),
               addAutomaticKeepAlives: false,
               addRepaintBoundaries: true,
@@ -495,6 +520,129 @@ class _Badge extends StatelessWidget {
           color: AppColors.surface,
           fontWeight: FontWeight.w700,
         ),
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+//                 Skeleton Loader для начальной загрузки ленты
+// ────────────────────────────────────────────────────────────────
+
+/// Skeleton loader, имитирующий карточку поста
+/// Показывается при первой загрузке ленты, предотвращая визуальный микролаг
+class _SkeletonPostCard extends StatelessWidget {
+  const _SkeletonPostCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ─── Хедер: аватарка + имя ───
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: AppColors.skeletonBase,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 14,
+                      width: double.infinity,
+                      constraints: const BoxConstraints(maxWidth: 140),
+                      decoration: BoxDecoration(
+                        color: AppColors.skeletonBase,
+                        borderRadius: BorderRadius.circular(AppRadius.xs),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 12,
+                      width: double.infinity,
+                      constraints: const BoxConstraints(maxWidth: 100),
+                      decoration: BoxDecoration(
+                        color: AppColors.skeletonBase,
+                        borderRadius: BorderRadius.circular(AppRadius.xs),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // ─── Текст поста ───
+          Container(
+            height: 14,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.skeletonBase,
+              borderRadius: BorderRadius.circular(AppRadius.xs),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            height: 14,
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 260),
+            decoration: BoxDecoration(
+              color: AppColors.skeletonBase,
+              borderRadius: BorderRadius.circular(AppRadius.xs),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ─── Изображение ───
+          Container(
+            height: 200,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.skeletonBase,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ─── Футер: лайки и комментарии ───
+          Row(
+            children: [
+              Container(
+                height: 12,
+                width: 60,
+                decoration: BoxDecoration(
+                  color: AppColors.skeletonBase,
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                ),
+              ),
+              const SizedBox(width: 24),
+              Container(
+                height: 12,
+                width: 60,
+                decoration: BoxDecoration(
+                  color: AppColors.skeletonBase,
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

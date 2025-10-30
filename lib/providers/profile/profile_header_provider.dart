@@ -30,6 +30,7 @@ final profileHeaderProvider = StateNotifierProvider.family<
     api: api,
     cache: cache,
     userId: userId,
+    ref: ref,
   );
   
   // Автоматическая загрузка при создании провайдера

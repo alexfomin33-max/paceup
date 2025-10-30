@@ -1,12 +1,16 @@
 // lib/screens/profile/edit_profile_screen.dart
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/app_theme.dart';
+import '../../providers/avatar_version_provider.dart';
 import '../../widgets/app_bar.dart'; // наш глобальный AppBar
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../service/api_service.dart';
@@ -458,6 +462,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final XFile? file = await _picker.pickImage(
       source: ImageSource.gallery,
       maxWidth: 2048,
+      maxHeight:
+          2048, // ВАЖНО: задаём одинаковые ограничения для сохранения пропорций
       imageQuality: 98,
     );
     if (file == null) return;
@@ -698,7 +704,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
 /// ───────────────────────────── UI атомы ─────────────────────────────
 
-class _AvatarEditable extends StatelessWidget {
+class _AvatarEditable extends ConsumerWidget {
   const _AvatarEditable({
     required this.bytes,
     required this.avatarUrl,
@@ -712,9 +718,12 @@ class _AvatarEditable extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final dpr = MediaQuery.of(context).devicePixelRatio;
     final cacheW = (size * dpr).round();
+
+    // Получаем текущую версию аватарки для cache-busting
+    final avatarVersion = ref.watch(avatarVersionProvider);
 
     return GestureDetector(
       onTap: onTap,
@@ -722,7 +731,11 @@ class _AvatarEditable extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           ClipOval(
-            child: _buildAvatarImage(size: size, cacheWidth: cacheW),
+            child: _buildAvatarImage(
+              size: size,
+              cacheWidth: cacheW,
+              avatarVersion: avatarVersion,
+            ),
           ),
           Positioned(
             right: -2,
@@ -748,8 +761,12 @@ class _AvatarEditable extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatarImage({required double size, required int cacheWidth}) {
-    // 1) Выбранные байты
+  Widget _buildAvatarImage({
+    required double size,
+    required int cacheWidth,
+    required int avatarVersion,
+  }) {
+    // 1) Выбранные байты (превью выбранного изображения)
     if (bytes != null && bytes!.isNotEmpty) {
       try {
         return Image.memory(
@@ -757,7 +774,9 @@ class _AvatarEditable extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.cover,
-          cacheWidth: cacheWidth,
+          // НЕ используем cacheWidth/cacheHeight для Image.memory!
+          // Они искажают пропорции, если оригинальное изображение не квадратное.
+          // BoxFit.cover сам корректно обрежет изображение в квадрат 88×88.
           errorBuilder: (_, _, _) => Image.asset(
             'assets/avatar_0.png',
             width: size,
@@ -775,21 +794,29 @@ class _AvatarEditable extends StatelessWidget {
       }
     }
 
-    // 2) URL
+    // 2) URL - используем CachedNetworkImage для синхронизации с профилем и лентой
     final url = avatarUrl?.trim();
     if (url != null && url.isNotEmpty) {
-      return Image.network(
-        url,
+      // Добавляем версию для cache-busting
+      final separator = url.contains('?') ? '&' : '?';
+      final versionedUrl = avatarVersion > 0
+          ? '$url${separator}v=$avatarVersion'
+          : url;
+
+      return CachedNetworkImage(
+        imageUrl: versionedUrl,
         width: size,
         height: size,
         fit: BoxFit.cover,
-        cacheWidth: cacheWidth,
-        errorBuilder: (_, _, _) => Image.asset(
+        placeholder: (context, url) =>
+            Container(width: size, height: size, color: AppColors.skeletonBase),
+        errorWidget: (context, url, error) => Image.asset(
           'assets/avatar_0.png',
           width: size,
           height: size,
           fit: BoxFit.cover,
         ),
+        // НЕ используем memCacheWidth/memCacheHeight - они искажают!
       );
     }
 

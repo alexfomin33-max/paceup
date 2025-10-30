@@ -46,12 +46,15 @@ class LentaState {
   });
 
   /// Начальное состояние
+  ///
+  /// ⚡ ОПТИМИЗАЦИЯ: начинаем с isRefreshing: true
+  /// чтобы не мигал пустой экран при первой загрузке
   factory LentaState.initial() => const LentaState(
     items: [],
     currentPage: 1,
     hasMore: true,
     isLoadingMore: false,
-    isRefreshing: false,
+    isRefreshing: true, // ← начинаем с loading state
     seenIds: {},
     unreadCount: 3, // по умолчанию 3 непрочитанных
   );

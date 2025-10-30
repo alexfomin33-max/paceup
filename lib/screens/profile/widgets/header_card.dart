@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../edit_profile_screen.dart';
 import '../state/subscribe/communication_screen.dart';
@@ -9,15 +10,114 @@ class HeaderCard extends StatelessWidget {
   final UserProfileHeader? profile;
   final int userId;
   final VoidCallback onReload;
+  final int
+  lastUpdateTimestamp; // для сброса кэша аватарки после редактирования
+
   const HeaderCard({
     super.key,
     this.profile,
     required this.userId,
     required this.onReload,
+    this.lastUpdateTimestamp = 0,
   });
+
+  /// Строит URL аватарки с cache-busting параметром
+  ///
+  /// Добавляет ?v=timestamp к URL для принудительного обновления после редактирования.
+  /// Timestamp передаётся через ProfileHeaderState и обновляется при reload()
+  String _buildAvatarUrl(String baseUrl, int timestamp) {
+    if (timestamp == 0) return baseUrl;
+
+    // Добавляем timestamp как query parameter для cache-busting
+    final separator = baseUrl.contains('?') ? '&' : '?';
+    return '$baseUrl${separator}v=$timestamp';
+  }
 
   @override
   Widget build(BuildContext context) {
+    // ────────────────────────────────────────────────────────────────
+    // 🎨 SKELETON LOADER: показываем заглушку пока profile == null
+    // ────────────────────────────────────────────────────────────────
+    if (profile == null) {
+      return Container(
+        color: AppColors.surface,
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Скелетон аватарки
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppColors.skeletonBase,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Скелетон имени
+                  Container(
+                    height: 20,
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxWidth: 180),
+                    decoration: BoxDecoration(
+                      color: AppColors.skeletonBase,
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  // Скелетон подзаголовка
+                  Container(
+                    height: 14,
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxWidth: 120),
+                    decoration: BoxDecoration(
+                      color: AppColors.skeletonBase,
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Скелетон подписок
+                  Row(
+                    children: [
+                      Container(
+                        height: 14,
+                        width: 80,
+                        decoration: BoxDecoration(
+                          color: AppColors.skeletonBase,
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Container(
+                        height: 14,
+                        width: 80,
+                        decoration: BoxDecoration(
+                          color: AppColors.skeletonBase,
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // 📝 ОСНОВНОЙ РЕНДЕР: показываем реальные данные профиля
+    // ────────────────────────────────────────────────────────────────
+
+    // Локальная переменная для null-safety (уже прошли проверку выше)
+    final p = profile!;
+
     return Container(
       color: AppColors.surface,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -27,20 +127,40 @@ class HeaderCard extends StatelessWidget {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              ClipOval(
-                child: (profile?.avatar != null && profile!.avatar!.isNotEmpty)
-                    ? Image.network(
-                        profile!.avatar!,
-                        width: 56,
-                        height: 56,
-                        fit: BoxFit.cover,
-                      )
-                    : Image.asset(
-                        'assets/avatar_0.png',
-                        width: 56,
-                        height: 56,
-                        fit: BoxFit.cover,
-                      ),
+              // ─── Аватарка с фиксированными размерами ───
+              // SizedBox + ClipOval гарантирует идеальный круг 56×56
+              // BoxFit.cover сохраняет пропорции и заполняет всю область
+              SizedBox(
+                key: ValueKey('avatar_${p.avatar}_$lastUpdateTimestamp'),
+                width: 56,
+                height: 56,
+                child: ClipOval(
+                  child: (p.avatar != null && p.avatar!.isNotEmpty)
+                      ? CachedNetworkImage(
+                          key: ValueKey(
+                            'cached_${p.avatar}_$lastUpdateTimestamp',
+                          ),
+                          // Добавляем timestamp к URL для сброса кэша после редактирования
+                          imageUrl: _buildAvatarUrl(
+                            p.avatar!,
+                            lastUpdateTimestamp,
+                          ),
+                          fit: BoxFit.cover,
+                          // Плавная загрузка с placeholder
+                          placeholder: (context, url) =>
+                              Container(color: AppColors.skeletonBase),
+                          // Fallback на дефолтную аватарку при ошибке
+                          errorWidget: (context, url, error) => Image.asset(
+                            'assets/avatar_0.png',
+                            fit: BoxFit.cover,
+                          ),
+                          // НЕ используем memCacheWidth/memCacheHeight!
+                          // Они заставляют CachedNetworkImage масштабировать изображение,
+                          // что искажает пропорции, если оригинал не квадратный.
+                          // ClipOval + BoxFit.cover сами правильно обрежут изображение.
+                        )
+                      : Image.asset('assets/avatar_0.png', fit: BoxFit.cover),
+                ),
               ),
 
               Positioned(
@@ -73,13 +193,13 @@ class HeaderCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         (() {
-                          final fn = (profile?.firstName ?? '').trim();
-                          final ln = (profile?.lastName ?? '').trim();
+                          final fn = (p.firstName).trim();
+                          final ln = (p.lastName).trim();
                           final full = [
                             fn,
                             ln,
                           ].where((s) => s.isNotEmpty).join(' ').trim();
-                          return full.isNotEmpty ? full : '';
+                          return full.isNotEmpty ? full : 'Пользователь';
                         })(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -103,13 +223,13 @@ class HeaderCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 0),
-                Text(_subtitleFrom(profile) ?? '', style: AppTextStyles.h13w4),
+                Text(_subtitleFrom(p) ?? '', style: AppTextStyles.h13w4),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     _FollowStat(
                       label: 'Подписки',
-                      value: (profile?.following ?? 0).toString(),
+                      value: (p.following).toString(),
                       onTap: () {
                         Navigator.of(context).push(
                           CupertinoPageRoute(
@@ -123,7 +243,7 @@ class HeaderCard extends StatelessWidget {
                     const SizedBox(width: 24),
                     _FollowStat(
                       label: 'Подписчики',
-                      value: (profile?.followers ?? 0).toString(),
+                      value: (p.followers).toString(),
                       onTap: () {
                         Navigator.of(context).push(
                           CupertinoPageRoute(
