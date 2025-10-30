@@ -98,6 +98,7 @@ flutter:
  
   assets:
      - assets/background.webp
+     - assets/logo.png
      - assets/logo_icon.png
      - assets/avatar_0.png
      - assets/avatar_1.png
