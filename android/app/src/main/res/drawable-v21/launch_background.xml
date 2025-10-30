@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modify this file to customize your launch splash screen -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="?android:colorBackground" />
+    <!-- ─────────── Android 12+ (v21+) принудительно белый фон ─────────── -->
+    <!-- Ранее использовался ?android:colorBackground, который в тёмной теме давал
+         чёрный фон. Явно задаём белый цвет, чтобы стартовый экран всегда был белым. -->
+    <item android:drawable="@android:color/white" />
 
     <!-- You can insert your own image assets here -->
     <!-- <item>
