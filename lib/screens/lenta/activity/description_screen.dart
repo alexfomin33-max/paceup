@@ -1,6 +1,7 @@
 // lib/screens/lenta/widgets/activity_description_block.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:ui' as ui; // для ui.Path
 import 'package:latlong2/latlong.dart' as ll;
 
@@ -416,7 +417,23 @@ class _Avatar extends StatelessWidget {
     final isNet =
         urlOrAsset.startsWith('http://') || urlOrAsset.startsWith('https://');
     return isNet
-        ? Image.network(urlOrAsset, width: 50, height: 50, fit: BoxFit.cover)
+        ? CachedNetworkImage(
+            imageUrl: urlOrAsset,
+            width: 50,
+            height: 50,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              width: 50,
+              height: 50,
+              color: AppColors.background,
+            ),
+            errorWidget: (context, url, error) => Image.asset(
+              'assets/avatar_2.png',
+              width: 50,
+              height: 50,
+              fit: BoxFit.cover,
+            ),
+          )
         : Image.asset(
             urlOrAsset.isNotEmpty ? urlOrAsset : 'assets/avatar_2.png',
             width: 50,

@@ -9,6 +9,7 @@
 //  • Очистка кэша аватарки при обновлении
 // ────────────────────────────────────────────────────────────────────────────
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../service/api_service.dart';
@@ -117,17 +118,16 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
 
   /// Обновление данных профиля (после редактирования)
   /// 
-  /// Стратегия двойного cache-busting:
-  /// 1. Профиль использует URL с timestamp → показывает новую версию через новый ключ кэша
-  /// 2. Лента/редактирование используют базовый URL → очищаем их кэш принудительно
+  /// Унифицированная стратегия cache-busting:
+  /// Все экраны (профиль, лента, редактирование) используют avatarVersionProvider
+  /// для синхронизированного обновления аватарки
   Future<void> reload() async {
-    // Сохраняем старый URL и timestamp
+    // Сохраняем старый URL для очистки кэша
     final oldAvatar = state.profile?.avatar;
-    final oldTimestamp = state.lastUpdateTimestamp;
     
-    // ШАГ 1: Генерируем новый timestamp для профиля (cache-busting)
-    final newTimestamp = DateTime.now().millisecondsSinceEpoch;
-    state = state.copyWith(lastUpdateTimestamp: newTimestamp);
+    // ШАГ 1: Обновляем глобальную версию аватарки
+    // Это обновит аватарку везде: в профиле, ленте и редактировании
+    _ref.read(avatarVersionProvider.notifier).bump();
     
     // ШАГ 2: Загружаем свежие данные с сервера
     await load();
@@ -135,56 +135,30 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
     final newAvatar = state.profile?.avatar;
     if (newAvatar == null || newAvatar.isEmpty) return;
     
-    // ШАГ 3: Очистка всех вариантов кэша для синхронизации с лентой и редактированием
+    // ШАГ 3: Очистка кэша для принудительной перезагрузки
     try {
-      // Собираем все возможные варианты URL для очистки
-      final urlsToEvict = <String>{};
-      
-      // Базовый URL (используется в ленте и редактировании)
-      urlsToEvict.add(newAvatar);
-      
-      // Старый URL с timestamp (если был)
-      if (oldAvatar != null && oldAvatar.isNotEmpty) {
-        urlsToEvict.add(oldAvatar);
-        if (oldTimestamp > 0) {
-          final separator = oldAvatar.contains('?') ? '&' : '?';
-          urlsToEvict.add('$oldAvatar${separator}v=$oldTimestamp');
-        }
-      }
-      
-      // Новый URL с timestamp (используется в профиле)
-      final separator = newAvatar.contains('?') ? '&' : '?';
-      urlsToEvict.add('$newAvatar${separator}v=$newTimestamp');
-      
-      // Очищаем все варианты
-      for (final url in urlsToEvict) {
-        await CachedNetworkImage.evictFromCache(url);
-        
-        // Также очищаем через ImageProvider
-        try {
-          final provider = CachedNetworkImageProvider(url);
-          await provider.evict();
-        } catch (_) {
-          // Игнорируем ошибки
-        }
-      }
-      
-      // Небольшая задержка для синхронизации
-      await Future.delayed(const Duration(milliseconds: 100));
-      
-      // Повторная очистка базового URL для ленты и редактирования
+      // Очищаем базовый URL
       await CachedNetworkImage.evictFromCache(newAvatar);
       
-      // ШАГ 4: Полная очистка кэша для гарантии
-      // Убираем все старые сплюснутые/искажённые версии
-      await clearImageCacheForUrl(newAvatar);
+      // Очищаем старый URL (если был другой)
+      if (oldAvatar != null && oldAvatar != newAvatar) {
+        await CachedNetworkImage.evictFromCache(oldAvatar);
+      }
       
-      // ШАГ 5: Обновляем глобальную версию аватарки
-      // Это заставит ленту и редактирование обновить изображение
-      _ref.read(avatarVersionProvider.notifier).bump();
+      // Полная очистка через ImageProvider
+      try {
+        final provider = CachedNetworkImageProvider(newAvatar);
+        await provider.evict();
+      } catch (_) {
+        // Игнорируем ошибки
+      }
+      
+      // Очистка всех вариантов с cache-busting параметрами
+      await clearImageCacheForUrl(newAvatar);
       
     } catch (e) {
       // Игнорируем ошибки очистки кэша
+      debugPrint('⚠️ Ошибка очистки кэша аватарки: $e');
     }
   }
 }

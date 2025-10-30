@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart';
@@ -211,7 +212,17 @@ class _EditPostScreenState extends State<EditPostScreen> {
                     color: AppColors.background,
                   ),
                   clipBehavior: Clip.hardEdge,
-                  child: Image.network(ex.url, fit: BoxFit.cover),
+                  child: CachedNetworkImage(
+                    imageUrl: ex.url,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: AppColors.background,
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: AppColors.background,
+                      child: const Icon(Icons.error),
+                    ),
+                  ),
                 ),
               ),
             ),

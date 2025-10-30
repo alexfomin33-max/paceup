@@ -1,37 +1,22 @@
 import 'package:flutter/cupertino.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../edit_profile_screen.dart';
 import '../state/subscribe/communication_screen.dart';
 import '../../../models/user_profile_header.dart';
 import '../../../widgets/transparent_route.dart';
+import '../../../widgets/avatar.dart';
 
 class HeaderCard extends StatelessWidget {
   final UserProfileHeader? profile;
   final int userId;
   final VoidCallback onReload;
-  final int
-  lastUpdateTimestamp; // для сброса кэша аватарки после редактирования
 
   const HeaderCard({
     super.key,
     this.profile,
     required this.userId,
     required this.onReload,
-    this.lastUpdateTimestamp = 0,
   });
-
-  /// Строит URL аватарки с cache-busting параметром
-  ///
-  /// Добавляет ?v=timestamp к URL для принудительного обновления после редактирования.
-  /// Timestamp передаётся через ProfileHeaderState и обновляется при reload()
-  String _buildAvatarUrl(String baseUrl, int timestamp) {
-    if (timestamp == 0) return baseUrl;
-
-    // Добавляем timestamp как query parameter для cache-busting
-    final separator = baseUrl.contains('?') ? '&' : '?';
-    return '$baseUrl${separator}v=$timestamp';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +34,7 @@ class HeaderCard extends StatelessWidget {
             Container(
               width: 56,
               height: 56,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.skeletonBase,
                 shape: BoxShape.circle,
               ),
@@ -127,40 +112,17 @@ class HeaderCard extends StatelessWidget {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              // ─── Аватарка с фиксированными размерами ───
-              // SizedBox + ClipOval гарантирует идеальный круг 56×56
-              // BoxFit.cover сохраняет пропорции и заполняет всю область
-              SizedBox(
-                key: ValueKey('avatar_${p.avatar}_$lastUpdateTimestamp'),
-                width: 56,
-                height: 56,
-                child: ClipOval(
-                  child: (p.avatar != null && p.avatar!.isNotEmpty)
-                      ? CachedNetworkImage(
-                          key: ValueKey(
-                            'cached_${p.avatar}_$lastUpdateTimestamp',
-                          ),
-                          // Добавляем timestamp к URL для сброса кэша после редактирования
-                          imageUrl: _buildAvatarUrl(
-                            p.avatar!,
-                            lastUpdateTimestamp,
-                          ),
-                          fit: BoxFit.cover,
-                          // Плавная загрузка с placeholder
-                          placeholder: (context, url) =>
-                              Container(color: AppColors.skeletonBase),
-                          // Fallback на дефолтную аватарку при ошибке
-                          errorWidget: (context, url, error) => Image.asset(
-                            'assets/avatar_0.png',
-                            fit: BoxFit.cover,
-                          ),
-                          // НЕ используем memCacheWidth/memCacheHeight!
-                          // Они заставляют CachedNetworkImage масштабировать изображение,
-                          // что искажает пропорции, если оригинал не квадратный.
-                          // ClipOval + BoxFit.cover сами правильно обрежут изображение.
-                        )
-                      : Image.asset('assets/avatar_0.png', fit: BoxFit.cover),
-                ),
+              // ─── Аватарка с unified Avatar виджетом ───
+              // ✅ Автоматически использует avatarVersionProvider для cache-busting
+              // ✅ Синхронизирована с лентой и редактированием профиля
+              // ✅ Оптимизация памяти через memCacheWidth
+              Avatar(
+                image: (p.avatar != null && p.avatar!.isNotEmpty)
+                    ? p.avatar!
+                    : 'assets/avatar_0.png',
+                size: 56,
+                fadeIn: true,
+                gapless: true,
               ),
 
               Positioned(

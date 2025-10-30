@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../theme/app_theme.dart';
 import '../../models/activity_lenta.dart';
 import '../../providers/lenta/lenta_provider.dart';
+import '../../utils/image_cache_manager.dart';
 
 import 'widgets/activity/activity_block.dart'; // карточка тренировки
 import 'widgets/recommended/recommended_block.dart'; // блок «Рекомендации»
@@ -206,13 +206,20 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
   /// Предзагружает первые изображения из следующих N постов.
   ///
-  /// Использует CachedNetworkImageProvider для двухуровневого кеширования:
+  /// ✅ UNIFIED IMAGE CACHE:
+  /// Использует ImageCacheManager для единого двухуровневого кэша:
   /// - Memory cache (ImageCache) — быстрый доступ к недавним изображениям
-  /// - Disk cache (file-based) — offline поддержка и экономия трафика
+  /// - Disk cache (flutter_cache_manager) — offline поддержка и экономия трафика
   ///
-  /// Оптимизирует размер изображений на диске (maxWidth/maxHeight = 800px)
-  /// для экономии памяти и места. Отслеживает уже предзагруженные индексы,
-  /// чтобы не загружать дважды.
+  /// Преимущества unified cache:
+  /// - Одно изображение загружается только 1 раз для всех виджетов
+  /// - CachedNetworkImage и precacheImage используют ОДНУ копию в памяти
+  /// - Автоматическая очистка старых файлов (7 дней)
+  /// - Deduplicated загрузка (нет дублирующих HTTP запросов)
+  ///
+  /// Загружает оригинальные изображения в disk cache для быстрого доступа.
+  /// Ресайз происходит при отображении через memCacheWidth в PostMediaCarousel.
+  /// Отслеживает уже предзагруженные индексы, чтобы не загружать дважды.
   ///
   /// Параметры:
   /// - [currentIndex] - текущий индекс поста в ленте
@@ -234,33 +241,24 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       if (activity.type == 'post' && activity.mediaImages.isNotEmpty) {
         final firstImageUrl = activity.mediaImages.first;
 
-        try {
-          // Предзагружаем через CachedNetworkImageProvider с оптимизацией:
-          // - maxWidth/maxHeight = 800 — сжимает изображение перед сохранением на диск
-          // - Disk cache — изображения доступны после перезапуска и offline
-          // - Memory cache — быстрый доступ к недавно загруженным изображениям
-          final provider = CachedNetworkImageProvider(
-            firstImageUrl,
-            maxWidth: 800, // оптимизация для disk cache
-            maxHeight: 800, // сохраняет сжатую версию на диске
-          );
-
-          // Используем precacheImage для загрузки в кеш
-          precacheImage(provider, context)
-              .then((_) {
-                // Помечаем как предзагруженное
-                if (mounted) {
-                  _prefetchedIndices.add(i);
-                }
-              })
-              .catchError((error) {
-                // Игнорируем ошибки prefetch (не критично)
-                debugPrint('⚠️ Prefetch failed for index $i: $error');
-              });
-        } catch (e) {
-          // Игнорируем ошибки (не критично для UX)
-          debugPrint('⚠️ Prefetch error for index $i: $e');
-        }
+        // ✅ Используем unified ImageCacheManager для согласованности
+        // с CachedNetworkImage во всём приложении
+        ImageCacheManager.precache(
+              context: context,
+              url: firstImageUrl,
+              // ✅ Загружаем оригинал в disk cache
+              // Ресайз происходит при отображении через memCacheWidth в PostMediaCarousel
+            )
+            .then((_) {
+              // Помечаем как предзагруженное
+              if (mounted) {
+                _prefetchedIndices.add(i);
+              }
+            })
+            .catchError((error) {
+              // Игнорируем ошибки prefetch (не критично)
+              debugPrint('⚠️ Prefetch failed for index $i: $error');
+            });
       }
     }
   }

@@ -10,9 +10,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Notifier для управления версией аватарки текущего пользователя
 /// 
 /// Используется для cache-busting: при изменении версии все виджеты
-/// с аватаркой обновляются и загружают новое изображение
+/// с аватаркой обновляются и загружают новое изображение.
+/// 
+/// ⚠️ Версия = 0 при старте для offline режима (кэш без ?v=timestamp)
+/// Версия меняется ТОЛЬКО при явном обновлении аватарки через bump()
 class AvatarVersionNotifier extends StateNotifier<int> {
-  AvatarVersionNotifier() : super(DateTime.now().millisecondsSinceEpoch);
+  AvatarVersionNotifier() : super(0); // ✅ Старт с 0 для offline режима
 
   /// Обновить версию аватарки (вызывается после загрузки новой аватарки)
   void bump() {

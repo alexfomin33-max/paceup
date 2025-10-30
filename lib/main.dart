@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/colors.dart';
 import 'routes.dart';
 import 'providers/services/cache_provider.dart';
+import 'utils/image_cache_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +50,15 @@ void main() async {
   runApp(
     UncontrolledProviderScope(container: container, child: const PaceUpApp()),
   );
+
+  // ────────────────────────── Image Cache ──────────────────────────
+  // Настраиваем unified image cache после первого билда
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final context = WidgetsBinding.instance.rootElement;
+    if (context != null) {
+      ImageCacheManager.configure(context);
+    }
+  });
 }
 
 class PaceUpApp extends StatelessWidget {

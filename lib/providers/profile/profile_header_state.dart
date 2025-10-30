@@ -19,14 +19,10 @@ class ProfileHeaderState {
   /// Ошибка загрузки (если есть)
   final String? error;
 
-  /// Timestamp последнего обновления (для сброса кэша аватарки)
-  final int lastUpdateTimestamp;
-
   const ProfileHeaderState({
     this.profile,
     this.isLoading = false,
     this.error,
-    this.lastUpdateTimestamp = 0,
   });
 
   /// Начальное состояние (загрузка)
@@ -38,13 +34,11 @@ class ProfileHeaderState {
     UserProfileHeader? profile,
     bool? isLoading,
     String? error,
-    int? lastUpdateTimestamp,
   }) {
     return ProfileHeaderState(
       profile: profile ?? this.profile,
       isLoading: isLoading ?? this.isLoading,
       error: error,
-      lastUpdateTimestamp: lastUpdateTimestamp ?? this.lastUpdateTimestamp,
     );
   }
 
@@ -55,10 +49,9 @@ class ProfileHeaderState {
           runtimeType == other.runtimeType &&
           profile == other.profile &&
           isLoading == other.isLoading &&
-          error == other.error &&
-          lastUpdateTimestamp == other.lastUpdateTimestamp;
+          error == other.error;
 
   @override
   int get hashCode =>
-      Object.hash(profile, isLoading, error, lastUpdateTimestamp);
+      Object.hash(profile, isLoading, error);
 }

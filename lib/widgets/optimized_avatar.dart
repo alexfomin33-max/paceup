@@ -113,13 +113,20 @@ class OptimizedAvatar extends ConsumerWidget {
 
   Widget _buildImage(String effectiveSource) {
     if (effectiveSource.startsWith('net:')) {
-      // Сетевой кейс — используем CachedNetworkImage для единого кэша с профилем
-      // ✅ ВАЖНО: теперь лента и профиль используют один кэш (memory + disk)
-      // Это гарантирует, что аватарка будет одинаковой во всех местах приложения
+      // Сетевой кейс — используем CachedNetworkImage с unified кэш-менеджером
+      // ✅ UNIFIED IMAGE CACHE:
+      // Теперь ВСЁ приложение (лента, профиль, аватарки, посты) использует:
+      // - ОДИН disk cache (flutter_cache_manager)
+      // - ОДИН memory cache (ImageCache)
+      // Это гарантирует:
+      // - Одно изображение = один HTTP запрос для всего приложения
+      // - Аватарка в ленте и профиле — одна и та же копия в памяти
+      // - Автоматическая очистка старых файлов (7 дней)
       final url = effectiveSource.substring(4);
 
       return CachedNetworkImage(
         imageUrl: url,
+        // НЕ передаем cacheManager - используется DefaultCacheManager с offline support
         width: size,
         height: size,
         fit: fit,
@@ -128,7 +135,6 @@ class OptimizedAvatar extends ConsumerWidget {
         // Fallback на дефолтную аватарку при ошибке
         errorWidget: (context, url, error) =>
             Image.asset(fallbackAsset, width: size, height: size, fit: fit),
-        // НЕ используем memCacheWidth/memCacheHeight - они искажают изображение!
       );
     }
 

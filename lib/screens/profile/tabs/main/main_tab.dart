@@ -9,8 +9,10 @@
 // Важно: вся логика данных (парсинг JSON и модели) вынесена в main_tab_data.dart,
 // а секция снаряжения — в gear_section_sliver.dart. Это упрощает поддержку и тестирование.
 
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../theme/app_theme.dart';
 import 'widgets/gear_screen.dart';
@@ -68,21 +70,43 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
     }
   }
 
-  // Запрос к API: отправляем userId, получаем JSON, парсим в MainTabData
+  // Запрос к API с offline-first кэшированием
   Future<MainTabData> _load() async {
-    final api = ApiService();
-    final jsonMap = await api.post(
-      '/user_profile_maintab.php',
-      body: {'userId': '${widget.userId}'}, // 🔹 PHP ожидает строки
-    );
+    final cacheKey = 'main_tab_${widget.userId}';
+    
+    try {
+      // Попытка загрузить с сервера
+      final api = ApiService();
+      final jsonMap = await api.post(
+        '/user_profile_maintab.php',
+        body: {'userId': '${widget.userId}'},
+      );
 
-    // Универсальная обработка ошибок API
-    if (jsonMap['ok'] == false) {
-      throw Exception(jsonMap['error'] ?? 'API error');
+      if (jsonMap['ok'] == false) {
+        throw Exception(jsonMap['error'] ?? 'API error');
+      }
+
+      // Сохраняем в кэш для offline режима
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(cacheKey, jsonEncode(jsonMap));
+
+      return MainTabData.fromJson(jsonMap);
+    } catch (e) {
+      // Если ошибка (нет интернета) - пробуем загрузить из кэша
+      debugPrint('⚠️ Ошибка загрузки main tab: $e, пробуем кэш...');
+      
+      final prefs = await SharedPreferences.getInstance();
+      final cachedJson = prefs.getString(cacheKey);
+      
+      if (cachedJson != null) {
+        debugPrint('✅ Загружены данные из кэша');
+        final jsonMap = jsonDecode(cachedJson) as Map<String, dynamic>;
+        return MainTabData.fromJson(jsonMap);
+      }
+      
+      // Если кэша нет - пробрасываем ошибку
+      rethrow;
     }
-
-    // Превращаем сырые данные в типизированные модели для UI
-    return MainTabData.fromJson(jsonMap);
   }
 
   // Вкладка должна сохранять своё состояние (скролл, позиции и т.д.), когда мы перелистываем PageView

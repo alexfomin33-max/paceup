@@ -47,9 +47,6 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final dpr = MediaQuery.of(context).devicePixelRatio;
-        (constraints.maxWidth * dpr).round();
-
         return Stack(
           fit: StackFit.expand,
           children: [
@@ -69,20 +66,14 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
                 final isImage = i < widget.imageUrls.length;
                 if (isImage) {
                   final url = widget.imageUrls[i];
-                  final dpr = MediaQuery.of(context).devicePixelRatio;
-                  final cacheWidth = (MediaQuery.sizeOf(context).width * dpr)
-                      .round();
 
-                  // Используем CachedNetworkImage для двухуровневого кеширования:
-                  // - Memory cache (ImageCache) — быстрый доступ
-                  // - Disk cache (file-based) — offline поддержка
+                  // ✅ Используем дефолтный CacheManager для offline поддержки
                   return CachedNetworkImage(
                     imageUrl: url,
+                    // НЕ передаем cacheManager - используется DefaultCacheManager с offline support
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: double.infinity,
-                    maxWidthDiskCache: cacheWidth, // сжатие на диске
-                    memCacheWidth: cacheWidth, // оптимизация памяти
                     filterQuality: FilterQuality.low,
                     placeholder: (context, url) => Container(
                       color: AppColors.disabled,
@@ -138,7 +129,7 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Используем CachedNetworkImage и для заглушки видео
+        // ✅ Дефолтный cache для video placeholder
         CachedNetworkImage(
           imageUrl: _videoPlaceholder,
           fit: BoxFit.cover,

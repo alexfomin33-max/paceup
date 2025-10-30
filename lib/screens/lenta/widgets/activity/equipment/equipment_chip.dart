@@ -1,5 +1,6 @@
 // lib/screens/lenta/widgets/activity/equipment/equipment_chip.dart
 import 'package:flutter/cupertino.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../models/activity_lenta.dart' as al;
 import 'equipment_popup.dart';
 import '../../../../../theme/app_theme.dart';
@@ -50,7 +51,22 @@ class _EquipmentChipState extends State<EquipmentChip> {
               bottom: 3,
               child: ClipOval(
                 child: img.isNotEmpty
-                    ? Image.network(img, width: 50, height: 50)
+                    ? CachedNetworkImage(
+                        imageUrl: img,
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          width: 50,
+                          height: 50,
+                          color: AppColors.background,
+                        ),
+                        errorWidget: (context, url, error) => Image.asset(
+                          'assets/Asics.png',
+                          width: 50,
+                          height: 50,
+                        ),
+                      )
                     : Image.asset('assets/Asics.png', width: 50, height: 50),
               ),
             ),

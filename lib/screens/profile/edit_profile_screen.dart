@@ -612,9 +612,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Профиль сохранён')));
       Navigator.of(context).maybePop(true);
     } catch (e, st) {
       debugPrint('❌ [EditProfile] SAVE error: $e\n$st');
@@ -805,6 +802,7 @@ class _AvatarEditable extends ConsumerWidget {
 
       return CachedNetworkImage(
         imageUrl: versionedUrl,
+        // НЕ передаем cacheManager - используется DefaultCacheManager с offline support
         width: size,
         height: size,
         fit: BoxFit.cover,
@@ -816,7 +814,6 @@ class _AvatarEditable extends ConsumerWidget {
           height: size,
           fit: BoxFit.cover,
         ),
-        // НЕ используем memCacheWidth/memCacheHeight - они искажают!
       );
     }
 
