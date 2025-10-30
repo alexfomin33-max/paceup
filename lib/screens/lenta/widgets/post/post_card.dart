@@ -8,6 +8,7 @@ import '../../../../models/activity_lenta.dart';
 import 'post_media_carousel.dart';
 import '../../../../widgets/user_header.dart';
 import '../../../../service/api_service.dart';
+import '../../../../utils/feed_date.dart';
 
 // ✅ универсальное всплывающее меню (уже вынесено в lib/widgets)
 import '../../../../widgets/more_menu_overlay.dart';
@@ -172,7 +173,10 @@ class _PostCardState extends State<PostCard> {
             child: UserHeader(
               userName: post.userName,
               userAvatar: post.userAvatar,
-              dateText: post.postDateText,
+              dateText: formatFeedDateText(
+                serverText: post.postDateText,
+                date: post.dateStart,
+              ),
 
               // trailing — наша кнопка "…"
               trailing: IconButton(
