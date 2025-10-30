@@ -68,17 +68,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     super.initState();
 
     // Начальная загрузка через Riverpod provider
-    // 🚀 ОПТИМИЗАЦИЯ: проверяем, не загружены ли уже данные на splash screen
     Future.microtask(() {
-      final currentState = ref.read(lentaProvider(widget.userId));
-      
-      // Загружаем только если данных еще нет (не были предзагружены)
-      if (currentState.items.isEmpty && !currentState.isRefreshing) {
-        debugPrint('📥 Данные не предзагружены, загружаем в LentaScreen');
-        ref.read(lentaProvider(widget.userId).notifier).loadInitial();
-      } else {
-        debugPrint('✅ Данные уже предзагружены на splash screen (${currentState.items.length} элементов)');
-      }
+      ref.read(lentaProvider(widget.userId).notifier).loadInitial();
     });
 
     // Автоматическая подгрузка при скролле

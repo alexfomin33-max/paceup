@@ -76,9 +76,23 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       userId = args['userId'] as int;
     }
 
-    return MaterialPageRoute(
-      builder: (_) => AppBottomNavShell(userId: userId),
+    // 🔹 Используем fade-in анимацию для плавного перехода
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          AppBottomNavShell(userId: userId),
       settings: settings,
+      transitionDuration: const Duration(milliseconds: 400),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        // 🔹 Плавное появление с fade-in эффектом
+        return FadeTransition(
+          opacity: CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeIn,
+          ),
+          child: child,
+        );
+      },
     );
   } else {
     return MaterialPageRoute(builder: (_) => screen, settings: settings);
