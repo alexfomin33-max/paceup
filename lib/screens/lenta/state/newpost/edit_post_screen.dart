@@ -1,28 +1,17 @@
+// ignore_for_file: avoid_print
+
 // lib/screens/lenta/state/newpost/edit_post_screen.dart
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
 
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
-
-/// 👉 ЗАМЕНИ на свой URL эндпоинта редактирования поста
-const String kUpdatePostUrl = 'http://api.paceup.ru/update_post.php';
-
-/// Безопасный JSON-декодер: чистит BOM и гарантирует Map
-Map<String, dynamic> safeDecodeJsonAsMap(List<int> bodyBytes) {
-  final raw = utf8.decode(bodyBytes);
-  final cleaned = raw.replaceFirst(RegExp(r'^\uFEFF'), '').trim();
-  final v = json.decode(cleaned);
-  if (v is Map<String, dynamic>) return v;
-  throw const FormatException('JSON is not an object');
-}
+import '../../../../service/api_service.dart';
 
 /// Модель «существующего» изображения, пришедшего с бэка
 class _ExistingImage {
@@ -386,104 +375,72 @@ class _EditPostScreenState extends State<EditPostScreen> {
     final hasNewFiles = _newImages.isNotEmpty;
 
     setState(() => _loading = true);
-    final uri = Uri.parse(kUpdatePostUrl);
+    final api = ApiService();
 
     try {
       Map<String, dynamic> data;
 
       if (!hasNewFiles) {
         // —— JSON: только текст/состав существующих картинок
-        final payload = {
-          'post_id': widget.postId,
-          'user_id': widget.userId,
-          'text': text,
-          'privacy': 'public',
-          // серверу передаём, какие старые картинки оставить
-          'keep_images': keepUrls,
-        };
-
-        final res = await http
-            .post(
-              uri,
-              headers: {'Content-Type': 'application/json'},
-              body: jsonEncode(payload),
-            )
-            .timeout(const Duration(seconds: 30));
-
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          debugPrint(
-            'POST ${res.request?.url} -> ${res.statusCode}\n${res.body}',
-          );
-          throw Exception('HTTP ${res.statusCode}');
-        }
-
-        data = safeDecodeJsonAsMap(res.bodyBytes);
+        data = await api.post(
+          '/update_post.php',
+          body: {
+            'post_id': '${widget.postId}', // 🔹 PHP ожидает строки
+            'user_id': '${widget.userId}', // 🔹 PHP ожидает строки
+            'text': text,
+            'privacy': 'public',
+            'keep_images': keepUrls,
+          },
+        );
       } else {
         // —— Multipart: добавились новые файлы
-        final req = http.MultipartRequest('POST', uri);
-        req.fields['post_id'] = widget.postId.toString();
-        req.fields['user_id'] = widget.userId.toString();
-        req.fields['text'] = text;
-        req.fields['privacy'] = 'public';
-        // keep_images как JSON-строка
-        req.fields['keep_images'] = jsonEncode(keepUrls);
-
-        for (final file in _newImages) {
-          req.files.add(
-            await http.MultipartFile.fromPath('images[]', file.path),
-          );
+        final files = <String, File>{};
+        for (int i = 0; i < _newImages.length; i++) {
+          files['images[$i]'] = _newImages[i];
         }
 
-        final streamed = await req.send().timeout(const Duration(seconds: 60));
-        final res = await http.Response.fromStream(streamed);
-
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          debugPrint(
-            'POST(multipart) ${res.request?.url} -> ${res.statusCode}\n${res.body}',
-          );
-          throw Exception('HTTP ${res.statusCode}');
-        }
-
-        data = safeDecodeJsonAsMap(res.bodyBytes);
+        data = await api.postMultipart(
+          '/update_post.php',
+          files: files,
+          fields: {
+            'post_id': widget.postId.toString(),
+            'user_id': widget.userId.toString(),
+            'text': text,
+            'privacy': 'public',
+            'keep_images': keepUrls.toString(),
+          },
+          timeout: const Duration(seconds: 60),
+        );
       }
 
-      if (data['success'] == true) {
+      // 🔍 Дебаг: проверяем формат ответа
+      print('🔍 [EDIT POST] Response: $data');
+
+      // 🔹 Сервер может возвращать массив внутри 'data'
+      final actualData =
+          data['data'] is List && (data['data'] as List).isNotEmpty
+          ? (data['data'] as List)[0] as Map<String, dynamic>
+          : data;
+
+      if (actualData['success'] == true) {
         if (!mounted) return;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Изменения сохранены')));
         Navigator.pop(context, true); // вернёмся с флагом «обновлено»
       } else {
-        final msg = (data['message'] ?? 'Ошибка сервера').toString();
+        final msg = (actualData['message'] ?? 'Ошибка сервера').toString();
         if (mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(msg)));
         }
       }
-    } catch (e) {
+    } on ApiException catch (e) {
       if (!mounted) return;
-      if (e is TimeoutException) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Таймаут запроса')));
-      } else if (e is SocketException) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Сеть недоступна: ${e.message}')),
-        );
-      } else if (e is http.ClientException) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка HTTP-клиента: ${e.message}')),
-        );
-      } else if (e is FormatException) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Невалидный JSON от сервера')),
-        );
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Ошибка запроса: $e')));
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
     } finally {
       if (mounted) setState(() => _loading = false);
       _updateSaveState();

@@ -5,11 +5,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
 
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bar.dart'; // наш глобальный AppBar
 import '../../../widgets/interactive_back_swipe.dart';
+import '../../service/api_service.dart';
 
 const double kAvatarSize = 88.0;
 const double kQrBtnSize = 44.0;
@@ -315,14 +315,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   // ── JSON/утилиты
-  Map<String, dynamic> _safeDecodeJsonAsMap(List<int> bodyBytes) {
-    final raw = utf8.decode(bodyBytes, allowMalformed: true);
-    final cleaned = raw.replaceFirst(RegExp(r'^\uFEFF'), '').trim();
-    final v = json.decode(cleaned);
-    if (v is Map<String, dynamic>) return v;
-    throw const FormatException('JSON is not an object');
-  }
-
   String? _s(dynamic v) {
     if (v == null) return null;
     final s = v.toString().trim();
@@ -406,35 +398,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
 
     try {
-      final uri = Uri.parse('http://api.paceup.ru/user_profile_edit.php');
-      final payload = {'user_id': widget.userId, 'load': true, 'edit': false};
-
-      debugPrint('➡️ [EditProfile] POST $uri\npayload=${jsonEncode(payload)}');
-
-      final res = await http
-          .post(
-            uri,
-            headers: const {
-              'Content-Type': 'application/json; charset=utf-8',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode(payload),
-          )
-          .timeout(const Duration(seconds: 12));
-
-      debugPrint('⬅️ [EditProfile] status=${res.statusCode}');
-      final bodyStr = utf8.decode(res.bodyBytes, allowMalformed: true);
-      final bodyPreview = bodyStr.substring(
-        0,
-        bodyStr.length < 600 ? bodyStr.length : 600,
+      final api = ApiService();
+      final map = await api.post(
+        '/user_profile_edit.php',
+        body: {
+          'user_id': '${widget.userId}',
+          'load': true,
+          'edit': false,
+        }, // 🔹 PHP ожидает строки
+        timeout: const Duration(seconds: 12),
       );
-      debugPrint('[EditProfile] bodyPreview: $bodyPreview');
 
-      if (res.statusCode != 200) {
-        throw Exception('HTTP ${res.statusCode}');
-      }
-
-      final map = _safeDecodeJsonAsMap(res.bodyBytes);
       final dynamic raw = map['profile'] ?? map['data'] ?? map;
       if (raw is! Map) {
         throw const FormatException('Bad payload: not a JSON object');
@@ -613,49 +587,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_saving) return;
     FocusScope.of(context).unfocus();
 
-    final uri = Uri.parse('http://api.paceup.ru/user_profile_edit.php');
     final payload = _buildSavePayload();
 
     setState(() => _saving = true);
     try {
-      debugPrint(
-        '➡️ [EditProfile] SAVE POST $uri\npayload=${jsonEncode(payload)}',
+      final api = ApiService();
+      final map = await api.post(
+        '/user_profile_edit.php',
+        body: payload,
+        timeout: const Duration(seconds: 15),
       );
-
-      final res = await http
-          .post(
-            uri,
-            headers: const {
-              'Content-Type': 'application/json; charset=utf-8',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode(payload),
-          )
-          .timeout(const Duration(seconds: 15));
-
-      debugPrint('⬅️ [EditProfile] SAVE status=${res.statusCode}');
-      final bodyStr = utf8.decode(res.bodyBytes, allowMalformed: true);
-      debugPrint(
-        '[EditProfile] SAVE bodyPreview: ${bodyStr.length > 600 ? bodyStr.substring(0, 600) : bodyStr}',
-      );
-
-      if (res.statusCode != 200) {
-        throw Exception('HTTP ${res.statusCode}');
-      }
-
-      Map<String, dynamic>? map;
-      try {
-        map = _safeDecodeJsonAsMap(res.bodyBytes);
-      } catch (_) {}
 
       final ok =
-          (map != null &&
-              (map['ok'] == true ||
-                  map['status'] == 'ok' ||
-                  map['success'] == true)) ||
-          (map != null && map['error'] == null);
+          map['ok'] == true || map['status'] == 'ok' || map['success'] == true;
 
-      if (!ok && map != null && map.containsKey('error')) {
+      if (!ok && map.containsKey('error')) {
         throw Exception(map['error'].toString());
       }
 

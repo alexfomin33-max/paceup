@@ -5,11 +5,7 @@
 // - Parses points from ["LatLng(lat, lng)"] strings
 // - Network helper with utf8 decode, timeout, error handling
 
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:http/http.dart' as http;
+import '../service/api_service.dart';
 
 // ======== MODELS ========
 
@@ -100,6 +96,60 @@ class Activity {
       islike: _asBool(
         j['islike'] ?? j['isLiked'] ?? j['is_like'] ?? j['liked'],
       ),
+      mediaImages: mediaImages,
+      mediaVideos: mediaVideos,
+    );
+  }
+
+  // ────────────────────────── Copy With ──────────────────────────
+
+  /// Создаёт копию с обновлённым счётчиком лайков
+  Activity copyWithLikes(int newLikes) {
+    return Activity(
+      id: id,
+      type: type,
+      dateStart: dateStart,
+      dateEnd: dateEnd,
+      lentaId: lentaId,
+      userId: userId,
+      userName: userName,
+      userAvatar: userAvatar,
+      likes: newLikes,
+      comments: comments,
+      userGroup: userGroup,
+      equipments: equipments,
+      stats: stats,
+      points: points,
+      postDateText: postDateText,
+      postMediaUrl: postMediaUrl,
+      postContent: postContent,
+      islike: islike,
+      mediaImages: mediaImages,
+      mediaVideos: mediaVideos,
+    );
+  }
+
+  /// Создаёт копию с обновлённым счётчиком комментариев
+  Activity copyWithComments(int newComments) {
+    return Activity(
+      id: id,
+      type: type,
+      dateStart: dateStart,
+      dateEnd: dateEnd,
+      lentaId: lentaId,
+      userId: userId,
+      userName: userName,
+      userAvatar: userAvatar,
+      likes: likes,
+      comments: newComments,
+      userGroup: userGroup,
+      equipments: equipments,
+      stats: stats,
+      points: points,
+      postDateText: postDateText,
+      postMediaUrl: postMediaUrl,
+      postContent: postContent,
+      islike: islike,
       mediaImages: mediaImages,
       mediaVideos: mediaVideos,
     );
@@ -229,38 +279,27 @@ Future<List<Activity>> loadActivities({
   Uri? endpoint,
   Duration timeout = const Duration(seconds: 15),
 }) async {
-  final uri =
-      endpoint ?? Uri.parse('https://api.paceup.ru/activities_lenta.php');
+  final api = ApiService();
 
   try {
-    final res = await http
-        .post(
-          uri,
-          headers: const {'Content-Type': 'application/json'},
-          body: json.encode({'userId': userId, 'limit': limit, 'page': page}),
-        )
-        .timeout(timeout);
+    final data = await api.post(
+      '/activities_lenta.php',
+      body: {
+        'userId': '$userId', // 🔹 PHP ожидает строки
+        'limit': '$limit', // 🔹 PHP ожидает строки
+        'page': '$page', // 🔹 PHP ожидает строки
+      },
+      timeout: timeout,
+    );
 
-    if (res.statusCode != 200) {
-      throw HttpException('HTTP ${res.statusCode}: ${res.body}', uri: uri);
-    }
-
-    final dynamic decoded = json.decode(utf8.decode(res.bodyBytes));
-
-    final List rawList = decoded is Map<String, dynamic>
-        ? (decoded['data'] as List? ?? const [])
-        : (decoded as List);
+    final List rawList = data['data'] as List? ?? const [];
 
     return rawList
         .whereType<Map<String, dynamic>>()
         .map(Activity.fromApi)
         .toList();
-  } on TimeoutException {
-    rethrow; // let the caller decide; or wrap: throw Exception('Request timeout');
-  } on SocketException catch (e) {
-    throw Exception('Network error: ${e.message}');
-  } on FormatException catch (e) {
-    throw Exception('Bad JSON: ${e.message}');
+  } on ApiException {
+    rethrow;
   }
 }
 

@@ -9,14 +9,13 @@
 // Важно: вся логика данных (парсинг JSON и модели) вынесена в main_tab_data.dart,
 // а секция снаряжения — в gear_section_sliver.dart. Это упрощает поддержку и тестирование.
 
-import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 import '../../../../theme/app_theme.dart';
 import 'widgets/gear_screen.dart';
 import '../equipment/viewing/viewing_equipment_screen.dart';
+import '../../../../service/api_service.dart';
 
 // 🔹 Модели и парсинг данных
 import 'models/main_tab_data.dart';
@@ -32,9 +31,6 @@ class MainTab extends StatefulWidget {
 }
 
 class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
-  // URL API — подставь свой реальный путь
-  static const _apiEndpoint = 'http://api.paceup.ru/user_profile_maintab.php';
-
   // Храним будущий результат загрузки, чтобы не перезагружать при каждом build
   Future<MainTabData>? _future;
 
@@ -74,27 +70,11 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
 
   // Запрос к API: отправляем userId, получаем JSON, парсим в MainTabData
   Future<MainTabData> _load() async {
-    final uri = Uri.parse(_apiEndpoint);
-
-    final res = await http.post(
-      uri,
-      headers: const {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json; charset=utf-8',
-      },
-      body: json.encode({'userId': widget.userId}),
+    final api = ApiService();
+    final jsonMap = await api.post(
+      '/user_profile_maintab.php',
+      body: {'userId': '${widget.userId}'}, // 🔹 PHP ожидает строки
     );
-
-    if (res.statusCode != 200) {
-      throw Exception('HTTP ${res.statusCode}');
-    }
-
-    // Убираем возможный BOM и лишние пробелы в начале/конце
-    final raw = utf8
-        .decode(res.bodyBytes)
-        .replaceFirst(RegExp(r'^\uFEFF'), '')
-        .trim();
-    final jsonMap = json.decode(raw) as Map<String, dynamic>;
 
     // Универсальная обработка ошибок API
     if (jsonMap['ok'] == false) {

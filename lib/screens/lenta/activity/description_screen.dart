@@ -10,7 +10,7 @@ import '../widgets/activity/stats/stats_row.dart' as ab show MetricVertical;
 import '../widgets/activity/equipment/equipment_chip.dart'
     as ab
     show EquipmentChip;
-import '../widgets/activity/route/route_card.dart' as ab show RouteCard;
+import '../../../widgets/route_card.dart' as ab show RouteCard;
 // Модель — через алиас, чтобы не конфликтовало имя Equipment
 import '../../../models/activity_lenta.dart' as al;
 import 'combining_screen.dart';

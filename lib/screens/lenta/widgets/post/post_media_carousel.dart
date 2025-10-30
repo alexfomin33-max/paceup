@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../theme/app_theme.dart';
 
 class PostMediaCarousel extends StatefulWidget {
@@ -72,14 +73,42 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
                   final cacheWidth = (MediaQuery.sizeOf(context).width * dpr)
                       .round();
 
-                  return Image.network(
-                    url,
+                  // Используем CachedNetworkImage для двухуровневого кеширования:
+                  // - Memory cache (ImageCache) — быстрый доступ
+                  // - Disk cache (file-based) — offline поддержка
+                  return CachedNetworkImage(
+                    imageUrl: url,
                     fit: BoxFit.cover,
-                    filterQuality: FilterQuality.low,
-                    cacheWidth: cacheWidth,
-                    gaplessPlayback: true,
                     width: double.infinity,
                     height: double.infinity,
+                    maxWidthDiskCache: cacheWidth, // сжатие на диске
+                    memCacheWidth: cacheWidth, // оптимизация памяти
+                    filterQuality: FilterQuality.low,
+                    placeholder: (context, url) => Container(
+                      color: AppColors.disabled,
+                      child: const Center(child: CupertinoActivityIndicator()),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: AppColors.disabled,
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.image_outlined,
+                            size: 48,
+                            color: AppColors.textTertiary,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Изображение недоступно',
+                            style: TextStyle(
+                              color: AppColors.textTertiary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 } else {
                   final vIndex = i - widget.imageUrls.length;
@@ -101,15 +130,27 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
   }
 
   void _evictNetworkImage(String url) {
-    final provider = NetworkImage(url);
-    imageCache.evict(provider);
+    // Удаляем изображение из обоих кешей (memory и disk)
+    CachedNetworkImage.evictFromCache(url);
   }
 
   Widget _buildVideoPreview(String url) {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.network(_videoPlaceholder, fit: BoxFit.cover),
+        // Используем CachedNetworkImage и для заглушки видео
+        CachedNetworkImage(
+          imageUrl: _videoPlaceholder,
+          fit: BoxFit.cover,
+          errorWidget: (context, url, error) => Container(
+            color: AppColors.disabled,
+            child: const Icon(
+              CupertinoIcons.video_camera,
+              size: 48,
+              color: AppColors.textTertiary,
+            ),
+          ),
+        ),
         Container(color: AppColors.scrim20),
         const Center(
           child: Icon(

@@ -1,11 +1,11 @@
-import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bar.dart'; // ← наш глобальный AppBar
 import '../../../widgets/transparent_route.dart';
+import '../../providers/profile/profile_header_provider.dart';
 
 // общие виджеты
 import 'widgets/header_card.dart';
@@ -29,17 +29,15 @@ import 'state/search/search_screen.dart';
 // экран настроек
 import 'state/settings/settings_screen.dart';
 
-import '../../models/user_profile_header.dart';
-
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   final int userId;
   const ProfileScreen({super.key, required this.userId});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   static const _tabTitles = [
     'Основное',
     'Фото',
@@ -55,65 +53,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final PageController _pageController = PageController();
   final GearPrefs _gearPrefs = GearPrefs();
 
-  UserProfileHeader? _profileHeader;
-
   int _tab = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProfileHeader();
-  }
 
   @override
   void dispose() {
     _pageController.dispose();
     _gearPrefs.dispose();
     super.dispose();
-  }
-
-  Map<String, dynamic> _safeDecodeJsonAsMap(List<int> bodyBytes) {
-    final raw = utf8.decode(bodyBytes);
-    final cleaned = raw.replaceFirst(RegExp(r'^\uFEFF'), '').trim();
-    final v = json.decode(cleaned);
-    if (v is Map<String, dynamic>) return v;
-    throw const FormatException('JSON is not an object');
-  }
-
-  Future<void> _loadProfileHeader() async {
-    try {
-      final uri = Uri.parse('http://api.paceup.ru/user_profile_header.php');
-      final payload = {'user_id': widget.userId};
-
-      final res = await http
-          .post(
-            uri,
-            headers: const {
-              'Content-Type': 'application/json; charset=utf-8',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode(payload),
-          )
-          .timeout(const Duration(seconds: 12));
-
-      if (res.statusCode != 200) {
-        throw Exception('HTTP ${res.statusCode}');
-      }
-
-      final map = _safeDecodeJsonAsMap(res.bodyBytes);
-      final dynamic raw = map['profile'] ?? map['data'] ?? map;
-      if (raw is! Map) {
-        throw const FormatException('Bad payload: not a JSON object');
-      }
-
-      setState(() {
-        _profileHeader = UserProfileHeader.fromJson(
-          Map<String, dynamic>.from(raw),
-        );
-      });
-    } catch (e, st) {
-      debugPrint('Profile load error: $e\n$st');
-    }
   }
 
   void _onTabTap(int i) {
@@ -130,6 +76,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Читаем состояние профиля из Riverpod provider
+    final profileState = ref.watch(profileHeaderProvider(widget.userId));
+
     return Scaffold(
       backgroundColor: AppColors.background,
 
@@ -184,9 +133,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Хедер профиля — статичный
           RepaintBoundary(
             child: HeaderCard(
-              profile: _profileHeader,
+              profile: profileState.profile,
               userId: widget.userId,
-              onReload: _loadProfileHeader,
+              onReload: () {
+                ref.read(profileHeaderProvider(widget.userId).notifier).reload();
+              },
             ),
           ),
 

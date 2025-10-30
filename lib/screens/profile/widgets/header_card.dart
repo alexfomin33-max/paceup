@@ -109,7 +109,7 @@ class HeaderCard extends StatelessWidget {
                   children: [
                     _FollowStat(
                       label: 'Подписки',
-                      value: (profile?.following ?? '').toString(),
+                      value: (profile?.following ?? 0).toString(),
                       onTap: () {
                         Navigator.of(context).push(
                           CupertinoPageRoute(
@@ -123,7 +123,7 @@ class HeaderCard extends StatelessWidget {
                     const SizedBox(width: 24),
                     _FollowStat(
                       label: 'Подписчики',
-                      value: (profile?.followers ?? '').toString(),
+                      value: (profile?.followers ?? 0).toString(),
                       onTap: () {
                         Navigator.of(context).push(
                           CupertinoPageRoute(

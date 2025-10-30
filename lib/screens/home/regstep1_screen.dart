@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../theme/app_theme.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../../providers/services/api_provider.dart';
+import '../../service/api_service.dart' show ApiException;
 
 /// 🔹 Первый экран регистрации — ввод базовых данных спортсмена
-class Regstep1Screen extends StatefulWidget {
+class Regstep1Screen extends ConsumerStatefulWidget {
   final int userId; // ID пользователя, передается с предыдущего экрана
 
   const Regstep1Screen({super.key, required this.userId});
 
   @override
-  Regstep1ScreenState createState() => Regstep1ScreenState();
+  ConsumerState<Regstep1Screen> createState() => Regstep1ScreenState();
 }
 
 /// 🔹 Класс состояния экрана регистрации
-class Regstep1ScreenState extends State<Regstep1Screen> {
+class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
   // 🔹 Контроллеры для текстовых полей
   final TextEditingController nameController = TextEditingController();
   final TextEditingController surnameController = TextEditingController();
@@ -43,27 +44,20 @@ class Regstep1ScreenState extends State<Regstep1Screen> {
   /// 🔹 Метод сохранения введённых данных на сервере
   Future<void> saveForm() async {
     try {
-      // Отправляем POST-запрос с данными формы
-      final response = await http.post(
-        Uri.parse('http://api.paceup.ru/save_reg_form1.php'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'user_id': widget.userId,
+      final api = ref.read(apiServiceProvider);
+      await api.post(
+        '/save_reg_form1.php',
+        body: {
+          'user_id': '${widget.userId}', // 🔹 PHP ожидает строки
           'name': nameController.text,
           'surname': surnameController.text,
           'dateage': dobController.text,
           'city': cityController.text,
           'gender': selectedGender!,
           'sport': selectedSport!,
-        }),
+        },
       );
-
-      // Проверяем успешность ответа
-      if (response.statusCode != 200) {
-        debugPrint('Ошибка при сохранении данных: ${response.body}');
-      }
-    } catch (e) {
-      // Логируем ошибки при отправке запроса
+    } on ApiException catch (e) {
       debugPrint('Ошибка при отправке данных: $e');
     }
   }

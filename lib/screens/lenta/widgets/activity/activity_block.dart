@@ -10,7 +10,7 @@ import '../../../../models/activity_lenta.dart';
 // Подвиджеты
 import 'header/activity_header.dart';
 import 'stats/stats_row.dart';
-import 'route/route_card.dart';
+import '../../../../../widgets/route_card.dart';
 import 'equipment/equipment_chip.dart';
 import 'actions/activity_actions_row.dart';
 

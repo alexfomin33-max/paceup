@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_shell.dart';
 import '../../../theme/app_theme.dart';
+import '../../providers/services/api_provider.dart';
+import '../../service/api_service.dart' show ApiException;
 
 //import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// 🔹 Экран для ввода кода из SMS для подтверждения номера телефона
-class LoginSmsScreen extends StatefulWidget {
+class LoginSmsScreen extends ConsumerStatefulWidget {
   final String phone; // Номер телефона, на который отправлен код
 
   const LoginSmsScreen({super.key, required this.phone});
 
   @override
-  State<LoginSmsScreen> createState() => LoginSmsScreenState();
+  ConsumerState<LoginSmsScreen> createState() => LoginSmsScreenState();
 }
 
-class LoginSmsScreenState extends State<LoginSmsScreen> {
+class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
   /// 🔹 Контроллеры для 6 полей ввода кода
   final controllers = List.generate(6, (_) => TextEditingController());
 
@@ -47,14 +48,13 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
   /// 🔹 Метод для первоначальной отправки запроса регистрации пользователя
   Future<void> fetchApiData() async {
     try {
-      final response = await http.post(
-        Uri.parse('http://api.paceup.ru/login_user.php'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'phone': widget.phone}),
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/login_user.php',
+        body: {'phone': widget.phone},
       );
-      debugPrint(response.body);
-    } catch (e) {
-      // 🔹 Логируем ошибки в консоль
+      debugPrint(data.toString());
+    } on ApiException catch (e) {
       debugPrint("fetchApiData error: $e");
     }
   }
@@ -62,13 +62,13 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
   /// 🔹 Метод для повторной отправки кода на номер
   Future<void> resendCode() async {
     try {
-      final response = await http.post(
-        Uri.parse('http://api.paceup.ru/resendlgn_code.php'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'phone': widget.phone}),
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/resendlgn_code.php',
+        body: {'phone': widget.phone},
       );
-      debugPrint(response.body);
-    } catch (e) {
+      debugPrint(data.toString());
+    } on ApiException catch (e) {
       debugPrint("resendCode error: $e");
     }
   }
@@ -76,32 +76,29 @@ class LoginSmsScreenState extends State<LoginSmsScreen> {
   /// 🔹 Метод для проверки введенного кода
   Future<void> enterCode(String userCode) async {
     try {
-      final response = await http.post(
-        Uri.parse('http://api.paceup.ru/enterlgn_code.php'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'code': userCode, 'phone': widget.phone}),
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/enterlgn_code.php',
+        body: {'code': userCode, 'phone': widget.phone},
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // 🔹 Преобразуем код в int, если не получилось — 0
-        final codeValue = int.tryParse(data['code'].toString()) ?? 0;
+      // ApiService уже распарсил JSON
+      final codeValue = int.tryParse(data['code'].toString()) ?? 0;
 
-        /// 🔹 Если код валиден и виджет всё ещё в дереве
-        if (codeValue > 0 && mounted) {
-          //await storage.write(key: "access_token", value: data["access_token"]);
-          //await storage.write(key: "refresh_token", value: data["refresh_token"]);
-          //await storage.write(key: "user_id", value: data['code']);
-          Navigator.pushReplacementNamed(
-            context,
-            '/lenta',
-            arguments: {
-              'userId': codeValue,
-            }, // передаем userId на следующий экран
-          );
-        }
+      /// 🔹 Если код валиден и виджет всё ещё в дереве
+      if (codeValue > 0 && mounted) {
+        //await storage.write(key: "access_token", value: data["access_token"]);
+        //await storage.write(key: "refresh_token", value: data["refresh_token"]);
+        //await storage.write(key: "user_id", value: data['code']);
+        Navigator.pushReplacementNamed(
+          context,
+          '/lenta',
+          arguments: {
+            'userId': codeValue,
+          }, // передаем userId на следующий экран
+        );
       }
-    } catch (e) {
+    } on ApiException catch (e) {
       debugPrint("enterCode error: $e");
     }
   }

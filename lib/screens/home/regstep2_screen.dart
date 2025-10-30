@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../../providers/services/api_provider.dart';
+import '../../service/api_service.dart' show ApiService, ApiException;
 
 /// 🔹 Экран регистрации — шаг 2
 /// Принимает [userId] для продолжения регистрации
-class Regstep2Screen extends StatefulWidget {
+class Regstep2Screen extends ConsumerStatefulWidget {
   final int userId;
 
   const Regstep2Screen({super.key, required this.userId});
 
   @override
-  Regstep2ScreenState createState() => Regstep2ScreenState();
+  ConsumerState<Regstep2Screen> createState() => Regstep2ScreenState();
 }
 
 /// 🔹 Публичный класс состояния для Regstep2Screen
-class Regstep2ScreenState extends State<Regstep2Screen> {
+class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
   final TextEditingController heightController = TextEditingController();
   final TextEditingController weightController = TextEditingController();
   final TextEditingController maxPulseController = TextEditingController();
@@ -170,30 +171,29 @@ class CustomTextField extends StatelessWidget {
 
 /// 🔹 Метод для сохранения в базе введенных данных (перед переходом на следующую странцу)
 Future<void> saveForm(
+  ApiService api,
   int userId,
   dynamic height,
   dynamic weight,
   dynamic pulse,
 ) async {
   try {
-    await http.post(
-      Uri.parse('http://api.paceup.ru/save_reg_form2.php'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'user_id': userId,
+    await api.post(
+      '/save_reg_form2.php',
+      body: {
+        'user_id': '$userId', // 🔹 PHP ожидает строки
         'height': height.text,
         'weight': weight.text,
         'pulse': pulse.text,
-      }),
+      },
     );
-    //print(response.body);
-  } catch (e) {
+  } on ApiException {
     // 🔹 Игнорируем ошибку сохранения (регистрация необязательна, есть кнопка "Пропустить")
     // Пользователь может продолжить работу в приложении даже при сбое сохранения
   }
 }
 
-class ContinueButton extends StatefulWidget {
+class ContinueButton extends ConsumerStatefulWidget {
   final int userId; // передаем userId для следующего экрана
   final TextEditingController height;
   final TextEditingController weight;
@@ -208,15 +208,17 @@ class ContinueButton extends StatefulWidget {
   });
 
   @override
-  State<ContinueButton> createState() => _ContinueButtonState();
+  ConsumerState<ContinueButton> createState() => _ContinueButtonState();
 }
 
-class _ContinueButtonState extends State<ContinueButton> {
+class _ContinueButtonState extends ConsumerState<ContinueButton> {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
+        final api = ref.read(apiServiceProvider);
         await saveForm(
+          api,
           widget.userId,
           widget.height,
           widget.weight,

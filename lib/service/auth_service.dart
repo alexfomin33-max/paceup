@@ -1,6 +1,5 @@
-import 'dart:convert';
 //import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
+import 'api_service.dart';
 
 class AuthService {
   //final storage = const FlutterSecureStorage();
@@ -43,18 +42,14 @@ class AuthService {
     final userID = await getUserId();
     if (userID == null) return false;
 
-    final response = await http.post(
-      Uri.parse("$baseUrl/check_token.php"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-        "UserID": "$userID",
-      },
-    );
+    try {
+      // ApiService автоматически добавит заголовки с токеном
+      final api = ApiService();
+      final data = await api.post('/check_token.php');
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
       if (data["valid"] == true) return true;
+    } on ApiException {
+      // Токен невалиден или ошибка сети
     }
 
     // Если access_token просрочен, пробуем обновить
@@ -69,22 +64,23 @@ class AuthService {
     final userID = await getUserId();
     if (userID == null) return false;
 
-    final response = await http.post(
-      Uri.parse("$baseUrl/refresh.php"),
-      headers: {"Content-Type": "application/json"},
-      body: json.encode({"refresh_token": refresh, "userID": userID}),
-    );
+    try {
+      final api = ApiService();
+      final data = await api.post(
+        '/refresh.php',
+        body: {"refresh_token": refresh, "userID": userID},
+      );
 
-    //print(response.body);
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
       if (data["success"] == true) {
         //временный костыль
         // await storage.write(key: "access_token", value: data["access_token"]);
         return true;
       }
+    } on ApiException {
+      // Ошибка обновления токена
+      return false;
     }
+
     return false;
   }
 }

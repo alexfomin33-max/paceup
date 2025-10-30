@@ -1,30 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:http/http.dart' as http;
 import '../../../theme/app_theme.dart';
-
-// ——— Безопасный JSON-декодер: чистит BOM/мусор и вырезает { ... } ———
-Map<String, dynamic> safeDecodeJsonAsMap(List<int> bodyBytes) {
-  final raw = utf8.decode(bodyBytes);
-  // уберём BOM и лишние пробелы
-  final cleaned = raw.replaceFirst(RegExp(r'^\uFEFF'), '').trim();
-  try {
-    final v = json.decode(cleaned);
-    if (v is Map<String, dynamic>) return v;
-    throw const FormatException('JSON is not an object');
-  } catch (_) {
-    // пробуем вырезать первый '{' и последний '}'
-    final start = cleaned.indexOf('{');
-    final end = cleaned.lastIndexOf('}');
-    if (start != -1 && end != -1 && end > start) {
-      final sub = cleaned.substring(start, end + 1);
-      final v2 = json.decode(sub);
-      if (v2 is Map<String, dynamic>) return v2;
-    }
-    throw FormatException('Invalid JSON: $cleaned');
-  }
-}
+import '../../../service/api_service.dart';
 
 // ——— Аккуратный показ SnackBar (чтобы не падать без ScaffoldMessenger) ———
 void showSnack(BuildContext context, String message) {
@@ -163,24 +140,18 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     setState(() => _pageLoading = true);
 
     try {
-      // Для PHP-скрипта используем x-www-form-urlencoded (Map)
-      final resp = await http.post(
-        Uri.parse(ApiConfig.commentsList),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: jsonEncode({
+      final api = ApiService();
+      final data = await api.post(
+        '/comments_list.php',
+        body: {
           'type': widget.itemType,
-          'item_id': widget.itemId.toString(),
-          'page': _page.toString(),
-          'limit': ApiConfig.pageSize.toString(),
-          'userId': widget.currentUserId.toString(),
-        }),
+          'item_id': '${widget.itemId}', // 🔹 PHP ожидает строки
+          'page': '$_page', // 🔹 PHP ожидает строки
+          'limit': '${ApiConfig.pageSize}', // 🔹 PHP ожидает строки
+          'userId': '${widget.currentUserId}', // 🔹 PHP ожидает строки
+        },
       );
 
-      if (resp.statusCode != 200) {
-        throw Exception('HTTP ${resp.statusCode}');
-      }
-
-      final data = safeDecodeJsonAsMap(resp.bodyBytes);
       if (!(isTruthy(data['success']) || isTruthy(data['status']))) {
         throw Exception((data['error']) ?? 'Ошибка формата данных');
       }
@@ -218,21 +189,17 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     setState(() => _sending = true);
 
     try {
-      final payload = {
-        'type': widget.itemType,
-        'item_id': widget.itemId.toString(),
-        'text': text,
-        'userId': widget.currentUserId.toString(), // лучше snake_case
-      };
-
-      final resp = await http.post(
-        Uri.parse(ApiConfig.commentsAdd),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: jsonEncode(payload), // НЕ jsonEncode
+      final api = ApiService();
+      final data = await api.post(
+        '/comments_add.php',
+        body: {
+          'type': widget.itemType,
+          'item_id': '${widget.itemId}', // 🔹 PHP ожидает строки
+          'text': text,
+          'userId': '${widget.currentUserId}', // 🔹 PHP ожидает строки
+        },
       );
 
-      if (resp.statusCode != 200) throw Exception('HTTP ${resp.statusCode}');
-      final data = safeDecodeJsonAsMap(resp.bodyBytes);
       final ok = isTruthy(data['success']) || isTruthy(data['status']);
       if (!ok) {
         throw Exception(

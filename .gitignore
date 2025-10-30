@@ -33,6 +33,9 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Configuration files with sensitive data
+lib/config/app_config.dart
+
 # Symbolication related
 app.*.symbols
 

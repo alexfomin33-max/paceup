@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../theme/app_theme.dart';
+import '../../config/app_config.dart';
 
 // контент вкладок
 import 'events/events_screen.dart' as ev;
@@ -65,11 +66,8 @@ class _MapScreenState extends State<MapScreen> {
             ),
             children: [
               TileLayer(
-                // без поддоменов, корректный User-Agent
-                //urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                urlTemplate:
-                    'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={apiKey}',
-                additionalOptions: {'apiKey': '5Ssg96Nz79IHOCKB0MLL'},
+                urlTemplate: AppConfig.mapTilesUrl,
+                additionalOptions: {'apiKey': AppConfig.mapTilerApiKey},
                 userAgentPackageName: 'paceup.ru',
                 maxZoom: 19,
                 minZoom: 3,

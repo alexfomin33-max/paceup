@@ -2,24 +2,11 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:async';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
 import '../../../../widgets/interactive_back_swipe.dart';
-
-/// 👉 ЗАМЕНИ на свой URL эндпоинта создания поста
-const String kCreatePostUrl = 'http://api.paceup.ru/create_post.php';
-
-/// Безопасный JSON-декодер: чистит BOM и гарантирует Map
-Map<String, dynamic> safeDecodeJsonAsMap(List<int> bodyBytes) {
-  final raw = utf8.decode(bodyBytes);
-  final cleaned = raw.replaceFirst(RegExp(r'^\uFEFF'), '').trim();
-  final v = json.decode(cleaned);
-  if (v is Map<String, dynamic>) return v;
-  throw const FormatException('JSON is not an object');
-}
+import '../../../../service/api_service.dart';
 
 /// 🔹 Экран создания нового поста
 class NewPostScreen extends StatefulWidget {
@@ -266,70 +253,50 @@ class _NewPostScreenState extends State<NewPostScreen> {
     }
 
     setState(() => _loading = true);
-    final uri = Uri.parse(kCreatePostUrl);
+    final api = ApiService();
 
     try {
       Map<String, dynamic> data;
 
       if (_images.isEmpty) {
         // JSON-запрос (без файлов)
-        final res = await http
-            .post(
-              uri,
-              headers: {'Content-Type': 'application/json'},
-              body: jsonEncode({
-                'user_id': widget.userId,
-                'text': text,
-                'privacy': 'public',
-              }),
-            )
-            .timeout(const Duration(seconds: 30));
-
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          debugPrint(
-            'POST ${res.request?.url} -> ${res.statusCode}\n${res.body}',
-          );
-          throw Exception('HTTP ${res.statusCode}');
-        }
-
-        try {
-          data = safeDecodeJsonAsMap(res.bodyBytes);
-        } catch (_) {
-          debugPrint('Bad JSON from server: ${res.body}');
-          throw const FormatException('Невалидный JSON от сервера');
-        }
+        data = await api.post(
+          '/create_post.php',
+          body: {
+            'user_id': '${widget.userId}',
+            'text': text,
+            'privacy': 'public',
+          }, // 🔹 PHP ожидает строки
+        );
       } else {
         // Multipart-запрос (с файлами)
-        final req = http.MultipartRequest('POST', uri);
-        req.fields['user_id'] = widget.userId.toString();
-        req.fields['text'] = text;
-        req.fields['privacy'] = 'public';
-
-        for (final file in _images) {
-          req.files.add(
-            await http.MultipartFile.fromPath('images[]', file.path),
-          );
+        final files = <String, File>{};
+        for (int i = 0; i < _images.length; i++) {
+          files['images[$i]'] = _images[i];
         }
 
-        final streamed = await req.send().timeout(const Duration(seconds: 60));
-        final res = await http.Response.fromStream(streamed);
-
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          debugPrint(
-            'POST(multipart) ${res.request?.url} -> ${res.statusCode}\n${res.body}',
-          );
-          throw Exception('HTTP ${res.statusCode}');
-        }
-
-        try {
-          data = safeDecodeJsonAsMap(res.bodyBytes);
-        } catch (_) {
-          debugPrint('Bad JSON from server: ${res.body}');
-          throw const FormatException('Невалидный JSON от сервера');
-        }
+        data = await api.postMultipart(
+          '/create_post.php',
+          files: files,
+          fields: {
+            'user_id': widget.userId.toString(),
+            'text': text,
+            'privacy': 'public',
+          },
+          timeout: const Duration(seconds: 60),
+        );
       }
 
-      if (data['success'] == true) {
+      // 🔍 Дебаг: проверяем формат ответа
+      print('🔍 [CREATE POST] Response: $data');
+
+      // 🔹 Сервер может возвращать массив внутри 'data'
+      final actualData =
+          data['data'] is List && (data['data'] as List).isNotEmpty
+          ? (data['data'] as List)[0] as Map<String, dynamic>
+          : data;
+
+      if (actualData['success'] == true) {
         _descController.clear();
         setState(() {
           _images.clear();
@@ -344,38 +311,16 @@ class _NewPostScreenState extends State<NewPostScreen> {
         if (!mounted) {
           return; // 🔹 Проверка mounted перед использованием context
         }
-        final msg = (data['message'] ?? 'Ошибка сервера').toString();
+        final msg = (actualData['message'] ?? 'Ошибка сервера').toString();
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(msg)));
       }
-    } catch (e) {
-      // Один catch без «мертвых» веток: разбираем типы внутри
-      if (!mounted) {
-        return; // 🔹 Проверка mounted перед использованием context
-      }
-
-      if (e is TimeoutException) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Таймаут запроса')));
-      } else if (e is SocketException) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Сеть недоступна: ${e.message}')),
-        );
-      } else if (e is http.ClientException) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка HTTP-клиента: ${e.message}')),
-        );
-      } else if (e is FormatException) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Невалидный JSON от сервера')),
-        );
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Ошибка запроса: $e')));
-      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_shell.dart';
 import '../../../theme/app_theme.dart';
+import '../../providers/services/api_provider.dart';
+import '../../service/api_service.dart' show ApiException;
 
 //import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// 🔹 Экран ввода кода из SMS для подтверждения номера телефона
 /// Используется после регистрации телефона для подтверждения кода.
-class AddAccSmsScreen extends StatefulWidget {
+class AddAccSmsScreen extends ConsumerStatefulWidget {
   /// 🔹 Номер телефона, на который отправлен код
   final String phone;
 
   const AddAccSmsScreen({super.key, required this.phone});
 
   @override
-  State<AddAccSmsScreen> createState() => AddAccSmsScreenState();
+  ConsumerState<AddAccSmsScreen> createState() => AddAccSmsScreenState();
 }
 
-class AddAccSmsScreenState extends State<AddAccSmsScreen> {
+class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
   // 🔹 Контроллеры для каждого из 6 полей ввода кода
   final controllers = List.generate(6, (_) => TextEditingController());
 
@@ -49,30 +50,30 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
   /// Отправляет номер телефона на сервер для генерации SMS-кода
   Future<void> fetchApiData() async {
     try {
-      final response = await http.post(
-        Uri.parse('http://api.paceup.ru/registry_user.php'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'phone': widget.phone}),
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/registry_user.php',
+        body: {'phone': widget.phone},
       );
-      debugPrint('fetchApiData response: ${response.body}');
-    } catch (e) {
+      debugPrint('fetchApiData response: $data');
+    } on ApiException catch (e) {
       // 🔹 Ошибки игнорируются, можно добавить логирование или уведомление
-      // debugPrint('fetchApiData error: $e');
+      debugPrint('fetchApiData error: $e');
     }
   }
 
   /// 🔹 Метод для повторной отправки кода на номер
   Future<void> resendCode() async {
     try {
-      final response = await http.post(
-        Uri.parse('http://api.paceup.ru/resend_code.php'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'phone': widget.phone}),
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/resend_code.php',
+        body: {'phone': widget.phone},
       );
-      debugPrint('resendCode response: ${response.body}');
-    } catch (e) {
+      debugPrint('resendCode response: $data');
+    } on ApiException catch (e) {
       // 🔹 Лог ошибок при повторной отправке
-      // debugPrint('resendCode error: $e');
+      debugPrint('resendCode error: $e');
     }
   }
 
@@ -80,32 +81,29 @@ class AddAccSmsScreenState extends State<AddAccSmsScreen> {
   /// Если сервер вернул корректный код, происходит переход на следующий экран регистрации
   Future<void> enterCode(String userCode) async {
     try {
-      final response = await http.post(
-        Uri.parse('http://api.paceup.ru/enter_code.php'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'code': userCode, 'phone': widget.phone}),
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/enter_code.php',
+        body: {'code': userCode, 'phone': widget.phone},
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // 🔹 Преобразуем код из ответа сервера в int, если не удалось — 0
-        final codeValue = int.tryParse(data['code'].toString()) ?? 0;
+      // ApiService уже распарсил JSON
+      final codeValue = int.tryParse(data['code'].toString()) ?? 0;
 
-        // 🔹 Если код валиден и экран всё ещё "смонтирован", переходим к следующему шагу
-        if (codeValue > 0 && mounted) {
-          //await storage.write(key: "access_token", value: data["access_token"]);
-          //await storage.write(key: "refresh_token", value: data["refresh_token"]);
-          //await storage.write(key: "user_id", value: data['code']);
-          Navigator.pushReplacementNamed(
-            context,
-            '/regstep1', // экран следующего шага регистрации
-            arguments: {'userId': codeValue}, // передаем userId
-          );
-        }
+      // 🔹 Если код валиден и экран всё ещё "смонтирован", переходим к следующему шагу
+      if (codeValue > 0 && mounted) {
+        //await storage.write(key: "access_token", value: data["access_token"]);
+        //await storage.write(key: "refresh_token", value: data["refresh_token"]);
+        //await storage.write(key: "user_id", value: data['code']);
+        Navigator.pushReplacementNamed(
+          context,
+          '/regstep1', // экран следующего шага регистрации
+          arguments: {'userId': codeValue}, // передаем userId
+        );
       }
-    } catch (e) {
+    } on ApiException catch (e) {
       // 🔹 Лог ошибок при проверке кода
-      // debugPrint('enterCode error: $e');
+      debugPrint('enterCode error: $e');
     }
   }
 

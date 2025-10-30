@@ -33,7 +33,7 @@ dependencies:
   http: ^1.5.0
   pin_code_fields: ^8.0.1
   mask_input_formatter: ^0.0.3
-  font_awesome_flutter: ^10.10.0
+  font_awesome_flutter: ^10.12.0
   image_picker: ^1.2.0
   modal_bottom_sheet: ^3.0.0
   intl: ^0.20.2
@@ -42,7 +42,18 @@ dependencies:
   flutter_chat_core: ^2.8.0
   flutter_chat_ui: ^2.9.0
   flutter_chat_types: ^3.6.2
-  flutter_local_notifications: ^19.4.2
+  flutter_local_notifications: ^19.5.0
+  
+  # ────────────────────────── State Management ──────────────────────────
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # ────────────────────────── Offline-First Cache (Drift) ──────────────────────────
+  drift: ^2.20.3
+  drift_flutter: ^0.2.0
+  sqlite3_flutter_libs: ^0.5.24
+  path_provider: ^2.1.2
+  path: ^1.9.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -50,8 +61,11 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
-  persistent_bottom_nav_bar_v2: ^6.1.0
+  persistent_bottom_nav_bar_v2: ^6.2.0
   health: ^13.2.1
+  
+  # ────────────────────────── Image Caching ──────────────────────────
+  cached_network_image: ^3.3.1
 
 dev_dependencies:
   flutter_test:
@@ -63,6 +77,11 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  
+  # ────────────────────────── Code Generation ──────────────────────────
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.6.2
+  drift_dev: ^2.20.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

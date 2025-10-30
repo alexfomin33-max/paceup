@@ -29,8 +29,9 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
   final _navKeys = List.generate(5, (_) => GlobalKey<NavigatorState>());
 
   void _onTabChanged(int index) {
-    // ВСЕГДА возвращаем выбранную вкладку на корень
-    _navKeys[index].currentState?.popUntil((r) => r.isFirst);
+    // Просто обновляем состояние при переключении вкладок.
+    // Очистка стека происходит ТОЛЬКО при повторном тапе на активную вкладку
+    // (см. логику в navBarBuilder, строки 124-125)
     setState(() {});
   }
 

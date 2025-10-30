@@ -3,11 +3,13 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'theme/colors.dart';
 import 'routes.dart';
+import 'providers/services/cache_provider.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Логи ошибок: в дебаге — консоль; в релизе — не падаем.
@@ -20,7 +22,33 @@ void main() {
     return true; // помечаем как обработанное
   };
 
-  runApp(const PaceUpApp());
+  // ────────────────────────── Drift Offline-First Cache ──────────────────────────
+  // Инициализируем базу данных перед запуском приложения
+  // Это гарантирует, что кэш готов к использованию с первого кадра
+  debugPrint(
+    '🔷 Инициализация Drift Database для offline-first кэширования...',
+  );
+
+  // ProviderScope создаётся один раз
+  final container = ProviderContainer();
+
+  // Инициализируем базу данных через провайдер
+  try {
+    final db = container.read(appDatabaseProvider);
+    debugPrint('✅ Drift Database инициализирована: ${db.runtimeType}');
+
+    // Проверяем подключение
+    final count = await db.select(db.cachedActivities).get();
+    debugPrint('📊 Закэшированных активностей: ${count.length}');
+  } catch (e) {
+    debugPrint('❌ Ошибка инициализации Drift Database: $e');
+  }
+
+  // ────────────────────────── Riverpod ──────────────────────────
+  // ProviderScope обеспечивает доступ к провайдерам во всём приложении
+  runApp(
+    UncontrolledProviderScope(container: container, child: const PaceUpApp()),
+  );
 }
 
 class PaceUpApp extends StatelessWidget {

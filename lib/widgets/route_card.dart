@@ -1,8 +1,9 @@
-// lib/screens/lenta/widgets/route/route_card.dart
+// lib/widgets/route_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../../../theme/app_theme.dart';
+import '../theme/app_theme.dart';
+import '../config/app_config.dart';
 
 /// Карточка маршрута.
 /// - Рендерит статичную карту с треком (без интерактива).
@@ -33,7 +34,7 @@ class _RouteCardState extends State<RouteCard> {
 
   @override
   void dispose() {
-    // MapController не держит тяжёлых ресурсов, но оставим для симметрии жизненного цикла
+    _mapController.dispose();
     super.dispose();
   }
 
@@ -81,14 +82,10 @@ class _RouteCardState extends State<RouteCard> {
 
           // Слои карты (тайлы + трек)
           children: [
-            // Тайл-слой MapTiler Streets (как у тебя)
+            // Тайл-слой MapTiler Streets
             TileLayer(
-              urlTemplate:
-                  'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={apiKey}',
-              additionalOptions: {
-                // !!! Вынеси ключ в конфиг/секреты, это просто демонстрация
-                'apiKey': '5Ssg96Nz79IHOCKB0MLL',
-              },
+              urlTemplate: AppConfig.mapTilesUrl,
+              additionalOptions: {'apiKey': AppConfig.mapTilerApiKey},
               keepBuffer: 1,
               retinaMode: true,
               maxZoom: 18,

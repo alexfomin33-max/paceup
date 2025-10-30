@@ -7,7 +7,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../../../../theme/app_theme.dart';
 import '../../../../../../widgets/app_bar.dart';
-import '../../../../../../widgets/multi_route_card.dart';
+import '../../../../../../widgets/route_card.dart';
 import '../../../../../../models/route_bridge.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
@@ -127,8 +127,12 @@ class _TrainingTabContent extends StatefulWidget {
   State<_TrainingTabContent> createState() => _TrainingTabContentState();
 }
 
-class _TrainingTabContentState extends State<_TrainingTabContent> {
+class _TrainingTabContentState extends State<_TrainingTabContent>
+    with AutomaticKeepAliveClientMixin {
   final Health _health = Health();
+
+  @override
+  bool get wantKeepAlive => true; // Сохраняем загруженные данные при смене вкладок
 
   bool _busy = false;
   String _status = 'Загружаю данные тренировки…';
@@ -308,6 +312,8 @@ class _TrainingTabContentState extends State<_TrainingTabContent> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Обязательно для AutomaticKeepAliveClientMixin
+
     final dateText = _dmy(widget.date);
 
     // Подготовим карточки с РАЗНЫМИ тинтами (как в connected_trackers_screen)
@@ -393,7 +399,7 @@ class _TrainingTabContentState extends State<_TrainingTabContent> {
                 const Text('Маршрут', style: AppTextStyles.h14w6),
                 const SizedBox(height: 8),
                 if (_route.length >= 2)
-                  MultiRouteCard(polylines: [_route], height: 220)
+                  RouteCard(points: _route, height: 220)
                 else
                   const Text(
                     'Маршрут не найден. Возможно, у источника нет трека, требуется разовый доступ в Health Connect, или данные ещё не пришли.',

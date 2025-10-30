@@ -1,14 +1,13 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 import '../../../../theme/app_theme.dart';
 import '../../../../models/activity_lenta.dart';
 import 'post_media_carousel.dart';
 import '../../../../widgets/user_header.dart';
+import '../../../../service/api_service.dart';
 
 // ✅ универсальное всплывающее меню (уже вынесено в lib/widgets)
 import '../../../../widgets/more_menu_overlay.dart';
@@ -28,7 +27,8 @@ class PostCard extends StatefulWidget {
 
   // Колбэки поведения — оставить для совместимости (не меняем сигнатуры).
   final VoidCallback? onEdit; // Нажали "Редактировать пост"
-  final VoidCallback? onDelete; // Успешно удалили пост (опционально внеш. реакция)
+  final VoidCallback?
+  onDelete; // Успешно удалили пост (опционально внеш. реакция)
   final VoidCallback? onOpenComments; // Нажали на "комментарии"
 
   const PostCard({
@@ -45,10 +45,6 @@ class PostCard extends StatefulWidget {
 }
 
 class _PostCardState extends State<PostCard> {
-  /// Эндпоинт удаления поста (передаем JSON: userId, postId).
-  /// Поменяйте на свой путь, если отличается.
-  static const String _deleteEndpoint = 'http://api.paceup.ru/post_delete.php';
-
   /// Локально скрываем карточку после успешного ответа сервера.
   bool _visible = true;
 
@@ -60,57 +56,33 @@ class _PostCardState extends State<PostCard> {
     required int userId,
     required int postId,
   }) async {
-    final uri = Uri.parse(_deleteEndpoint);
-
     try {
-      final res = await http
-          .post(
-            uri,
-            headers: const {
-              'Content-Type': 'application/json; charset=utf-8',
-            },
-            body: jsonEncode({
-              'userId': '$userId',
-              'postId': '$postId',
-            }),
-          )
-          .timeout(const Duration(seconds: 10));
+      final api = ApiService();
+      final data = await api.post(
+        '/post_delete.php',
+        body: {
+          'userId': '$userId',
+          'postId': '$postId',
+        }, // 🔹 PHP ожидает строки
+        timeout: const Duration(seconds: 10),
+      );
 
-      if (res.statusCode != 200) return false;
+      // 🔹 Сервер может возвращать массив внутри 'data', достаём первый элемент
+      final actualData =
+          data['data'] is List && (data['data'] as List).isNotEmpty
+          ? (data['data'] as List)[0] as Map<String, dynamic>
+          : data;
 
-      // Пытаемся распарсить разные варианты успешного ответа
-      final raw = utf8.decode(res.bodyBytes).trim();
-      dynamic data;
-      try {
-        data = json.decode(raw);
-      } catch (_) {
-        data = null;
-      }
-
-      bool ok = false;
-
-      if (data is Map<String, dynamic>) {
-        ok = data['ok'] == true ||
-            data['status'] == 'ok' ||
-            data['success'] == true ||
-            data['result'] == 'ok';
-      } else if (data is List &&
-          data.isNotEmpty &&
-          data.first is Map<String, dynamic>) {
-        final m = data.first as Map<String, dynamic>;
-        ok = m['ok'] == true ||
-            m['status'] == 'ok' ||
-            m['success'] == true ||
-            m['result'] == 'ok';
-      } else {
-        final t = raw.toLowerCase();
-        ok = (t == 'ok' || t == '1' || t == 'true');
-      }
+      final ok =
+          actualData['ok'] == true ||
+          actualData['status'] == 'ok' ||
+          actualData['success'] == true ||
+          actualData['result'] == 'ok';
 
       return ok;
-    } on TimeoutException {
+    } on ApiException {
       return false;
-    } catch (_) {
+    } catch (e) {
       return false;
     }
   }
@@ -164,7 +136,7 @@ class _PostCardState extends State<PostCard> {
       setState(() => _visible = false);
 
       // 2) Сообщим наружу (если кто-то подписан на onDelete)
-      //widget.onDelete?.call();
+      widget.onDelete?.call(); // ✅ Раскомментировал!
     }
 
     // Возвращаем флаг — кнопка снова доступна (если карточка не скрыта)
@@ -223,18 +195,20 @@ class _PostCardState extends State<PostCard> {
                       textStyle: const TextStyle(color: AppColors.error),
                       // Ничего визуально не меняем — просто игнорим повторный тап
                       onTap: _deleting
-                        ? () {}
-                        : () async {
-                            // Дадим оверлею закрыться, чтобы диалог не накладывался визуально.
-                            await Future<void>.delayed(const Duration(milliseconds: 10));
+                          ? () {}
+                          : () async {
+                              // Дадим оверлею закрыться, чтобы диалог не накладывался визуально.
+                              await Future<void>.delayed(
+                                const Duration(milliseconds: 10),
+                              );
 
-                            // 1) Спрашиваем подтверждение ДО удаления
-                            final confirmed = await _confirmDelete();
-                            if (!confirmed) return;
+                              // 1) Спрашиваем подтверждение ДО удаления
+                              final confirmed = await _confirmDelete();
+                              if (!confirmed) return;
 
-                            // 2) Только теперь запускаем удаление
-                            await _handleDelete();
-                          },
+                              // 2) Только теперь запускаем удаление
+                              await _handleDelete();
+                            },
                     ),
                   ];
                   MoreMenuOverlay(
@@ -325,10 +299,6 @@ class _PostLikeBarState extends State<_PostLikeBar>
   late AnimationController _likeController;
   late Animation<double> _likeAnimation;
 
-  // Тот же эндпойнт, что и для активностей (у тебя уже есть на бэке)
-  static const String _likeEndpoint =
-      'http://api.paceup.ru/activity_likes_toggle.php';
-
   @override
   void initState() {
     super.initState();
@@ -389,57 +359,36 @@ class _PostLikeBarState extends State<_PostLikeBar>
     required bool isLikedNow,
     required String type, // 'post'
   }) async {
-    final uri = Uri.parse(_likeEndpoint);
-
     try {
-      final res = await http
-          .post(
-            uri,
-            // У тебя сервер принимает JSON — так и оставим
-            body: jsonEncode({
-              'userId': '$userId',
-              'activityId': '$activityId',
-              'type': type,
-              'action': isLikedNow ? 'like' : 'dislike',
-            }),
-          )
-          .timeout(const Duration(seconds: 10));
+      final api = ApiService();
+      final data = await api.post(
+        '/activity_likes_toggle.php',
+        body: {
+          'userId': '$userId', // 🔹 PHP ожидает строки
+          'activityId': '$activityId', // 🔹 PHP ожидает строки
+          'type': type,
+          'action': isLikedNow ? 'like' : 'dislike',
+        },
+        timeout: const Duration(seconds: 10),
+      );
 
-      if (res.statusCode != 200) return false;
+      // 🔹 Сервер возвращает массив внутри 'data', достаём первый элемент
+      final actualData =
+          data['data'] is List && (data['data'] as List).isNotEmpty
+          ? (data['data'] as List)[0] as Map<String, dynamic>
+          : data;
 
-      final raw = utf8.decode(res.bodyBytes);
-      dynamic data;
-      try {
-        data = json.decode(raw);
-      } catch (_) {
-        data = null;
-      }
-
-      bool ok = false;
-      int? serverLikes;
-
-      if (data is Map<String, dynamic>) {
-        ok = data['ok'] == true || data['status'] == 'ok';
-        serverLikes = int.tryParse('${data['likes']}');
-      } else if (data is List &&
-          data.isNotEmpty &&
-          data.first is Map<String, dynamic>) {
-        final m = data.first as Map<String, dynamic>;
-        ok = m['ok'] == true || m['status'] == 'ok';
-        serverLikes = int.tryParse('${m['likes']}');
-      } else {
-        final t = raw.trim().toLowerCase();
-        ok = (res.statusCode == 200) && (t == 'ok' || t == '1' || t == 'true');
-      }
+      final ok = actualData['ok'] == true || actualData['status'] == 'ok';
+      final serverLikes = int.tryParse('${actualData['likes']}');
 
       // Если сервер отдал точное число лайков — синхронизируем
       if (ok && serverLikes != null && mounted) {
-        setState(() => likesCount = serverLikes!);
+        setState(() => likesCount = serverLikes);
       }
       return ok;
-    } on TimeoutException {
+    } on ApiException {
       return false;
-    } catch (_) {
+    } catch (e) {
       return false;
     }
   }

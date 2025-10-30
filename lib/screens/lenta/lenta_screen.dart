@@ -1,12 +1,13 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../theme/app_theme.dart';
 import '../../models/activity_lenta.dart';
+import '../../providers/lenta/lenta_provider.dart';
 
 import 'widgets/activity/activity_block.dart'; // карточка тренировки
 import 'widgets/recommended/recommended_block.dart'; // блок «Рекомендации»
@@ -29,62 +30,50 @@ import '../../widgets/transparent_route.dart';
 const double kAppBarIconSize = 22.0; // сама иконка ~20–22pt
 const double kAppBarTapTarget = 42.0; // кликабельная область 42×42
 
-/// 🔹 Экран Ленты (Feed)
-class LentaScreen extends StatefulWidget {
+/// 🔹 Экран Ленты (Feed) с Riverpod State Management
+class LentaScreen extends ConsumerStatefulWidget {
   final int userId;
   final VoidCallback? onNewPostPressed;
 
   const LentaScreen({super.key, required this.userId, this.onNewPostPressed});
 
   @override
-  State<LentaScreen> createState() => _LentaScreenState();
+  ConsumerState<LentaScreen> createState() => _LentaScreenState();
 }
 
 /// ✅ Держим состояние живым при перелистывании вкладок
-class _LentaScreenState extends State<LentaScreen>
+class _LentaScreenState extends ConsumerState<LentaScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
-  // ——— Загрузка начального состояния ———
-  late Future<List<Activity>> _future;
-
-  // ——— Пагинация ———
-  final int _limit = 5;
-  int _page = 1;
-  bool _hasMore = true;
-  bool _isLoadingMore = false;
-
-  // ——— Данные ленты ———
-  List<Activity> _items = [];
-  final Set<int> _seenIds = {};
-  int _unreadCount = 3;
-
   // ——— Служебное ———
   final ScrollController _scrollController = ScrollController();
 
-  int _getId(Activity a) => a.lentaId;
+  // ────────────────────────────────────────────────────────────────
+  // 🖼️ PREFETCHING: отслеживаем предзагруженные индексы постов
+  // ────────────────────────────────────────────────────────────────
+  final Set<int> _prefetchedIndices = {};
+  static const int _prefetchCount = 3; // предзагружаем следующие 3 поста
 
   @override
   void initState() {
     super.initState();
 
-    _future = _loadActivities(page: 1, limit: _limit).then((list) {
-      _items = list;
-      _page = 1;
-      _hasMore = list.length == _limit;
-      _seenIds
-        ..clear()
-        ..addAll(list.map(_getId));
-
-      WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoLoadMore());
-      return list;
+    // Начальная загрузка через Riverpod provider
+    Future.microtask(() {
+      ref.read(lentaProvider(widget.userId).notifier).loadInitial();
     });
 
+    // Автоматическая подгрузка при скролле
     _scrollController.addListener(() {
+      final lentaState = ref.read(lentaProvider(widget.userId));
       final pos = _scrollController.position;
-      if (_hasMore && !_isLoadingMore && pos.extentAfter < 400) {
-        _loadNextPage();
+
+      if (lentaState.hasMore &&
+          !lentaState.isLoadingMore &&
+          pos.extentAfter < 400) {
+        ref.read(lentaProvider(widget.userId).notifier).loadMore();
       }
     });
   }
@@ -95,96 +84,13 @@ class _LentaScreenState extends State<LentaScreen>
     super.dispose();
   }
 
-  // ————————————————— API —————————————————
+  // ———————————— Refresh через Riverpod ————————————
 
-  Future<List<Activity>> _loadActivities({
-    required int page,
-    required int limit,
-  }) async {
-    final payload = {
-      'userId': widget.userId,
-      'limit': limit,
-      'page': page,
-      'offset': (page - 1) * limit,
-      'order': 'desc',
-    };
-
-    final res = await http.post(
-      Uri.parse('http://api.paceup.ru/activities_lenta.php'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(payload),
-    );
-
-    if (res.statusCode != 200) {
-      throw Exception('HTTP ${res.statusCode}: ${res.body}');
-    }
-
-    final decoded = json.decode(res.body);
-    final List list = decoded is Map<String, dynamic>
-        ? (decoded['data'] as List)
-        : (decoded as List);
-
-    return list
-        .map((e) => Activity.fromApi(e as Map<String, dynamic>))
-        .toList();
-  }
-
-  // ———————————— Пагинация/Refresh ————————————
-
-  Future<void> _loadNextPage() async {
-    if (!_hasMore || _isLoadingMore) return;
-
-    setState(() => _isLoadingMore = true);
-
-    final nextPage = _page + 1;
-    final newItems = await _loadActivities(page: nextPage, limit: _limit);
-
-    final unique = <Activity>[];
-    for (final a in newItems) {
-      final id = _getId(a);
-      if (_seenIds.add(id)) unique.add(a);
-    }
-
-    if (!mounted) return;
-    setState(() {
-      if (unique.isEmpty) {
-        _hasMore = false;
-      } else {
-        _items.addAll(unique);
-        _page = nextPage;
-        _hasMore = unique.length == _limit;
-      }
-      _isLoadingMore = false;
-    });
-  }
-
+  /// Pull-to-refresh обновление ленты
   Future<void> _onRefresh() async {
-    final fresh = await _loadActivities(page: 1, limit: _limit);
-    if (!mounted) return;
-
-    setState(() {
-      _items = fresh;
-      _page = 1;
-      _hasMore = fresh.length == _limit;
-      _isLoadingMore = false;
-      _seenIds
-        ..clear()
-        ..addAll(fresh.map(_getId));
-      _future = Future.value(fresh);
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoLoadMore());
-  }
-
-  void _maybeAutoLoadMore() {
-    if (!_hasMore || _isLoadingMore) return;
-    if (!_scrollController.hasClients) return;
-
-    final pos = _scrollController.position;
-    final isShortList = pos.maxScrollExtent <= 0;
-    final nearBottom = pos.extentAfter < 400;
-
-    if (isShortList || nearBottom) _loadNextPage();
+    // Очищаем кеш предзагруженных индексов при обновлении
+    _prefetchedIndices.clear();
+    await ref.read(lentaProvider(widget.userId).notifier).refresh();
   }
 
   // ———————————— Навигация / Колбэки ————————————
@@ -202,7 +108,8 @@ class _LentaScreenState extends State<LentaScreen>
       context,
     ).push(TransparentPageRoute(builder: (_) => const NotificationsScreen()));
     if (!mounted) return;
-    setState(() => _unreadCount = 0);
+    // Сбрасываем счётчик непрочитанных через Riverpod
+    ref.read(lentaProvider(widget.userId).notifier).setUnreadCount(0);
   }
 
   Future<void> _createPost() async {
@@ -216,23 +123,11 @@ class _LentaScreenState extends State<LentaScreen>
 
     if (!mounted || created != true) return;
 
-    // Перезагружаем «самые свежие»
-    final fresh = await _loadActivities(page: 1, limit: _limit);
-    if (!mounted) return;
+    // Очищаем кеш предзагруженных индексов
+    _prefetchedIndices.clear();
 
-    setState(() {
-      _items = fresh;
-      _page = 1;
-      _hasMore = fresh.length == _limit;
-      _isLoadingMore = false;
-      _seenIds
-        ..clear()
-        ..addAll(fresh.map(_getId));
-      _future = Future.value(fresh);
-    });
-
-    // Если контента мало — сразу дольём ещё
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoLoadMore());
+    // Обновляем ленту через Riverpod
+    await ref.read(lentaProvider(widget.userId).notifier).refresh();
 
     // Прокрутка к началу
     if (_scrollController.hasClients) {
@@ -283,75 +178,91 @@ class _LentaScreenState extends State<LentaScreen>
         builder: (_) => EditPostScreen(
           userId: widget.userId,
           postId: post.id,
-          initialText: post.postContent, // текст поста
-          initialImageUrls: post.mediaImages, // список URL изображений
+          initialText: post.postContent,
+          initialImageUrls: post.mediaImages,
         ),
       ),
     );
 
     if (!mounted) return;
 
-    // Если вернулись с флагом «обновлено» — перезагрузим «свежие»
+    // Если вернулись с флагом «обновлено» — обновляем ленту через Riverpod
     if (updated == true) {
-      setState(() {
-        _future = _loadActivities(page: 1, limit: _limit).then((list) {
-          _items = list;
-          _page = 1;
-          _hasMore = list.length == _limit;
-          _isLoadingMore = false;
-          _seenIds
-            ..clear()
-            ..addAll(list.map(_getId));
-          WidgetsBinding.instance.addPostFrameCallback(
-            (_) => _maybeAutoLoadMore(),
-          );
-          return list;
-        });
-      });
+      // Очищаем кеш предзагруженных индексов
+      _prefetchedIndices.clear();
+      ref.read(lentaProvider(widget.userId).notifier).refresh();
     }
   }
 
-  bool _deleteInProgress = false;
+  /// Удаляет пост из списка через Riverpod (без диалога — диалог уже показан в PostCard)
+  void _deletePost(Activity post) {
+    if (!mounted) return;
+    ref.read(lentaProvider(widget.userId).notifier).removeItem(post.lentaId);
+  }
 
-  Future<void> _deletePost(Activity post) async {
-    if (_deleteInProgress) return;
-    _deleteInProgress = true;
+  // ────────────────────────────────────────────────────────────────
+  // 🖼️ PREFETCHING: предзагрузка изображений следующих постов
+  // ────────────────────────────────────────────────────────────────
 
-    final NavigatorState rootNav = Navigator.of(context, rootNavigator: true);
-    final BuildContext dialogHost = rootNav.context;
+  /// Предзагружает первые изображения из следующих N постов.
+  ///
+  /// Использует CachedNetworkImageProvider для двухуровневого кеширования:
+  /// - Memory cache (ImageCache) — быстрый доступ к недавним изображениям
+  /// - Disk cache (file-based) — offline поддержка и экономия трафика
+  ///
+  /// Оптимизирует размер изображений на диске (maxWidth/maxHeight = 800px)
+  /// для экономии памяти и места. Отслеживает уже предзагруженные индексы,
+  /// чтобы не загружать дважды.
+  ///
+  /// Параметры:
+  /// - [currentIndex] - текущий индекс поста в ленте
+  /// - [items] - список всех постов в ленте
+  void _prefetchNextImages(int currentIndex, List<Activity> items) {
+    if (!mounted) return;
 
-    final bool? ok = await showCupertinoDialog<bool>(
-      context: dialogHost,
-      barrierDismissible: true,
-      builder: (_) => CupertinoAlertDialog(
-        title: const Text('Удалить пост?'),
-        content: const Text('Действие нельзя отменить.'),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => rootNav.pop(false),
-            child: const Text('Отмена'),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => rootNav.pop(true),
-            child: const Text('Удалить'),
-          ),
-        ],
-      ),
-    );
+    // Определяем диапазон для prefetch (следующие _prefetchCount постов)
+    final startIdx = currentIndex + 1;
+    final endIdx = (startIdx + _prefetchCount).clamp(0, items.length);
 
-    if (!mounted) {
-      _deleteInProgress = false;
-      return;
+    for (int i = startIdx; i < endIdx; i++) {
+      // Пропускаем уже предзагруженные
+      if (_prefetchedIndices.contains(i)) continue;
+
+      final activity = items[i];
+
+      // Только для постов с изображениями
+      if (activity.type == 'post' && activity.mediaImages.isNotEmpty) {
+        final firstImageUrl = activity.mediaImages.first;
+
+        try {
+          // Предзагружаем через CachedNetworkImageProvider с оптимизацией:
+          // - maxWidth/maxHeight = 800 — сжимает изображение перед сохранением на диск
+          // - Disk cache — изображения доступны после перезапуска и offline
+          // - Memory cache — быстрый доступ к недавно загруженным изображениям
+          final provider = CachedNetworkImageProvider(
+            firstImageUrl,
+            maxWidth: 800, // оптимизация для disk cache
+            maxHeight: 800, // сохраняет сжатую версию на диске
+          );
+
+          // Используем precacheImage для загрузки в кеш
+          precacheImage(provider, context)
+              .then((_) {
+                // Помечаем как предзагруженное
+                if (mounted) {
+                  _prefetchedIndices.add(i);
+                }
+              })
+              .catchError((error) {
+                // Игнорируем ошибки prefetch (не критично)
+                debugPrint('⚠️ Prefetch failed for index $i: $error');
+              });
+        } catch (e) {
+          // Игнорируем ошибки (не критично для UX)
+          debugPrint('⚠️ Prefetch error for index $i: $e');
+        }
+      }
     }
-
-    if (ok == true) {
-      setState(() {
-        _items.removeWhere((e) => e.id == post.id);
-      });
-    }
-
-    _deleteInProgress = false;
   }
 
   // ———————————— UI ————————————
@@ -359,6 +270,9 @@ class _LentaScreenState extends State<LentaScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    // Читаем состояние из Riverpod provider
+    final lentaState = ref.watch(lentaProvider(widget.userId));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -395,11 +309,11 @@ class _LentaScreenState extends State<LentaScreen>
                 icon: CupertinoIcons.bell,
                 onPressed: _openNotifications,
               ),
-              if (_unreadCount > 0)
+              if (lentaState.unreadCount > 0)
                 Positioned(
                   right: 4,
                   top: 4,
-                  child: _Badge(count: _unreadCount),
+                  child: _Badge(count: lentaState.unreadCount),
                 ),
             ],
           ),
@@ -407,115 +321,104 @@ class _LentaScreenState extends State<LentaScreen>
         ],
       ),
 
-      body: FutureBuilder<List<Activity>>(
-        future: _future,
-        builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Ошибка: ${snap.error}'),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: () {
-                        setState(() {
-                          _future = _loadActivities(page: 1, limit: _limit)
-                              .then((list) {
-                                _items = list;
-                                _page = 1;
-                                _hasMore = list.length == _limit;
-                                _isLoadingMore = false;
-                                _seenIds
-                                  ..clear()
-                                  ..addAll(list.map(_getId));
-                                WidgetsBinding.instance.addPostFrameCallback(
-                                  (_) => _maybeAutoLoadMore(),
-                                );
-                                return list;
-                              });
-                        });
-                      },
-                      child: const Text('Повторить'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          final items = _items.isNotEmpty
-              ? _items
-              : (snap.data ?? const <Activity>[]);
-
-          if (items.isEmpty) {
-            return RefreshIndicator.adaptive(
-              onRefresh: _onRefresh,
-              child: ListView(
-                controller: _scrollController,
-                padding: const EdgeInsets.only(top: 4, bottom: 12),
-                children: const [
-                  SizedBox(height: 120),
-                  Center(child: Text('Пока в ленте пусто')),
-                  SizedBox(height: 120),
+      body: () {
+        // Показываем ошибку, если есть
+        if (lentaState.error != null && lentaState.items.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Ошибка: ${lentaState.error}'),
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: () {
+                      ref
+                          .read(lentaProvider(widget.userId).notifier)
+                          .loadInitial();
+                    },
+                    child: const Text('Повторить'),
+                  ),
                 ],
-              ),
-            );
-          }
-
-          return RefreshIndicator.adaptive(
-            onRefresh: _onRefresh,
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (n) {
-                if (n is ScrollStartNotification ||
-                    n is ScrollUpdateNotification ||
-                    n is OverscrollNotification ||
-                    n is UserScrollNotification) {
-                  MoreMenuHub.hide();
-                }
-                return false;
-              },
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.only(top: 4, bottom: 12),
-                itemCount: items.length + (_isLoadingMore ? 1 : 0),
-                addAutomaticKeepAlives: false,
-                addRepaintBoundaries: true,
-                addSemanticIndexes: false,
-                itemBuilder: (context, i) {
-                  if (_isLoadingMore && i == items.length) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Center(child: CupertinoActivityIndicator()),
-                    );
-                  }
-
-                  if (i == 0) {
-                    final first = _buildFeedItem(items[0]);
-                    return Column(
-                      children: [
-                        first,
-                        const SizedBox(height: 16),
-                        const RecommendedBlock(),
-                        const SizedBox(height: 16),
-                      ],
-                    );
-                  }
-
-                  final card = _buildFeedItem(items[i]);
-                  return Column(children: [card, const SizedBox(height: 16)]);
-                },
               ),
             ),
           );
-        },
-      ),
+        }
+
+        final items = lentaState.items;
+
+        // Если нет данных и идёт загрузка - показываем индикатор
+        if (items.isEmpty && lentaState.isRefreshing) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (items.isEmpty) {
+          return RefreshIndicator.adaptive(
+            onRefresh: _onRefresh,
+            child: ListView(
+              controller: _scrollController,
+              padding: const EdgeInsets.only(top: 4, bottom: 12),
+              children: const [
+                SizedBox(height: 120),
+                Center(child: Text('Пока в ленте пусто')),
+                SizedBox(height: 120),
+              ],
+            ),
+          );
+        }
+
+        return RefreshIndicator.adaptive(
+          onRefresh: _onRefresh,
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (n) {
+              if (n is ScrollStartNotification ||
+                  n is ScrollUpdateNotification ||
+                  n is OverscrollNotification ||
+                  n is UserScrollNotification) {
+                MoreMenuHub.hide();
+              }
+              return false;
+            },
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.only(top: 4, bottom: 12),
+              itemCount: items.length + (lentaState.isLoadingMore ? 1 : 0),
+              addAutomaticKeepAlives: false,
+              addRepaintBoundaries: true,
+              addSemanticIndexes: false,
+              itemBuilder: (context, i) {
+                if (lentaState.isLoadingMore && i == items.length) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(child: CupertinoActivityIndicator()),
+                  );
+                }
+
+                // ────────────────────────────────────────────────────────
+                // 🖼️ PREFETCH: предзагружаем изображения следующих постов
+                // ────────────────────────────────────────────────────────
+                _prefetchNextImages(i, items);
+
+                if (i == 0) {
+                  final first = _buildFeedItem(items[0]);
+                  return Column(
+                    children: [
+                      first,
+                      const SizedBox(height: 16),
+                      const RecommendedBlock(),
+                      const SizedBox(height: 16),
+                    ],
+                  );
+                }
+
+                final card = _buildFeedItem(items[i]);
+                return Column(children: [card, const SizedBox(height: 16)]);
+              },
+            ),
+          ),
+        );
+      }(),
     );
   }
 

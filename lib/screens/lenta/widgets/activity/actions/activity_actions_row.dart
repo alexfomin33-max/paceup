@@ -1,9 +1,9 @@
 // lib/screens/lenta/widgets/activity/actions/activity_actions_row.dart
+
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/cupertino.dart';
-import 'package:http/http.dart' as http;
 import '../../../../../theme/app_theme.dart';
+import '../../../../../service/api_service.dart';
 
 /// Панель действий: лайк/комменты/совместно.
 /// Здесь локальная анимация лайка + вызов API лайка.
@@ -35,9 +35,6 @@ class ActivityActionsRow extends StatefulWidget {
 
 class _ActivityActionsRowState extends State<ActivityActionsRow>
     with SingleTickerProviderStateMixin {
-  static const String _likeEndpoint =
-      'http://api.paceup.ru/activity_likes_toggle.php';
-
   late bool isLiked;
   late int likesCount;
   bool _busy = false;
@@ -98,54 +95,35 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
     required int userId,
     required bool isLikedNow,
   }) async {
-    final uri = Uri.parse(_likeEndpoint);
     try {
-      final res = await http
-          .post(
-            uri,
-            body: jsonEncode({
-              'userId': '$userId',
-              'activityId': '$activityId',
-              'type': 'activity',
-              'action': isLikedNow ? 'like' : 'dislike',
-            }),
-          )
-          .timeout(const Duration(seconds: 10));
+      final api = ApiService();
+      final data = await api.post(
+        '/activity_likes_toggle.php',
+        body: {
+          'userId': '$userId', // 🔹 PHP ожидает строки
+          'activityId': '$activityId', // 🔹 PHP ожидает строки
+          'type': 'activity',
+          'action': isLikedNow ? 'like' : 'dislike',
+        },
+        timeout: const Duration(seconds: 10),
+      );
 
-      if (res.statusCode != 200) return false;
+      // 🔹 Сервер возвращает массив внутри 'data', достаём первый элемент
+      final actualData =
+          data['data'] is List && (data['data'] as List).isNotEmpty
+          ? (data['data'] as List)[0] as Map<String, dynamic>
+          : data;
 
-      final raw = utf8.decode(res.bodyBytes);
-      dynamic data;
-      try {
-        data = json.decode(raw);
-      } catch (_) {
-        data = null;
-      }
-
-      bool ok = false;
-      int? serverLikes;
-
-      if (data is Map<String, dynamic>) {
-        ok = data['ok'] == true || data['status'] == 'ok';
-        serverLikes = int.tryParse('${data['likes']}');
-      } else if (data is List &&
-          data.isNotEmpty &&
-          data.first is Map<String, dynamic>) {
-        final m = data.first as Map<String, dynamic>;
-        ok = m['ok'] == true || m['status'] == 'ok';
-        serverLikes = int.tryParse('${m['likes']}');
-      } else {
-        final t = raw.trim().toLowerCase();
-        ok = (res.statusCode == 200) && (t == 'ok' || t == '1' || t == 'true');
-      }
+      final ok = actualData['ok'] == true || actualData['status'] == 'ok';
+      final serverLikes = int.tryParse('${actualData['likes']}');
 
       if (ok && serverLikes != null && mounted) {
-        setState(() => likesCount = serverLikes!);
+        setState(() => likesCount = serverLikes);
       }
       return ok;
-    } on TimeoutException {
+    } on ApiException {
       return false;
-    } catch (_) {
+    } catch (e) {
       return false;
     }
   }

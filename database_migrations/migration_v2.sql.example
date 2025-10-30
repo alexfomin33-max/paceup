@@ -1,0 +1,85 @@
+-- ────────────────────────────────────────────────────────────────────────────
+--  DRIFT DATABASE MIGRATION: VERSION 1 → 2
+--
+--  ПРИМЕР миграции для будущих изменений схемы
+--  Скопируйте этот файл в migration_v2.sql и адаптируйте под ваши нужды
+-- ────────────────────────────────────────────────────────────────────────────
+
+-- ────────────────────────── ПРИМЕР 1: Добавление колонки ──────────────────────────
+
+-- ALTER TABLE cached_activities ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0;
+
+-- Dart код для миграции:
+-- if (from == 1 && to == 2) {
+--   await m.addColumn(cachedActivities, cachedActivities.isFavorite);
+-- }
+
+-- ────────────────────────── ПРИМЕР 2: Создание новой таблицы ──────────────────────────
+
+-- CREATE TABLE cached_comments (
+--   id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+--   activity_id INTEGER NOT NULL,
+--   user_id INTEGER NOT NULL,
+--   comment_text TEXT NOT NULL,
+--   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--   cached_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--   
+--   FOREIGN KEY (activity_id) REFERENCES cached_activities(activity_id)
+-- );
+
+-- CREATE INDEX idx_comments_activity_id ON cached_comments(activity_id);
+
+-- Dart код для миграции:
+-- if (from == 1 && to == 2) {
+--   await m.createTable(cachedComments);
+-- }
+
+-- ────────────────────────── ПРИМЕР 3: Изменение типа колонки ──────────────────────────
+
+-- Drift не поддерживает прямое изменение типа колонки в SQLite.
+-- Нужно использовать columnTransformer:
+
+-- Dart код для миграции:
+-- if (from == 1 && to == 2) {
+--   await m.alterTable(TableMigration(
+--     cachedActivities,
+--     columnTransformer: {
+--       // Конвертируем likes из INTEGER в TEXT
+--       cachedActivities.likes: cachedActivities.likes.cast<String>(),
+--     },
+--   ));
+-- }
+
+-- ────────────────────────── ПРИМЕР 4: Переименование колонки ──────────────────────────
+
+-- SQLite не поддерживает RENAME COLUMN напрямую (до версии 3.25.0).
+-- Используйте columnTransformer в Drift:
+
+-- Dart код для миграции:
+-- if (from == 1 && to == 2) {
+--   await m.alterTable(TableMigration(
+--     cachedActivities,
+--     columnTransformer: {
+--       cachedActivities.newColumnName: cachedActivities.oldColumnName,
+--     },
+--     newColumns: [cachedActivities.newColumnName],
+--   ));
+-- }
+
+-- ────────────────────────── ПРИМЕР 5: Удаление таблицы ──────────────────────────
+
+-- DROP TABLE IF EXISTS deprecated_table;
+
+-- Dart код для миграции:
+-- if (from == 1 && to == 2) {
+--   await m.deleteTable('deprecated_table');
+-- }
+
+-- ────────────────────────── ВАЖНЫЕ ПРИМЕЧАНИЯ ──────────────────────────
+
+-- 1. Всегда проверяйте миграции на тестовых данных
+-- 2. Используйте транзакции для сложных миграций
+-- 3. Сохраняйте резервные копии данных перед миграцией
+-- 4. Не изменяйте существующие миграции — только добавляйте новые
+-- 5. Документируйте причину каждого изменения схемы
+
