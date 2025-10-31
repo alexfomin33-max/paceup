@@ -610,6 +610,9 @@ class EventDropdownField extends StatelessWidget {
             Icons.arrow_drop_down,
             color: enabled ? AppColors.iconSecondary : AppColors.iconTertiary,
           ),
+          dropdownColor: AppColors.surface,
+          menuMaxHeight: 300,
+          borderRadius: BorderRadius.circular(AppRadius.md),
           style: TextStyle(color: textColor, fontFamily: 'Inter'),
           // показываем текущее значение в бледном виде, если disabled
           disabledHint: value == null
@@ -621,13 +624,19 @@ class EventDropdownField extends StatelessWidget {
           onChanged: enabled ? onChanged : null,
           items: items
               .map(
-                (item) => DropdownMenuItem(
-                  value: item,
-                  child: Text(
-                    item,
-                    style: TextStyle(color: textColor, fontFamily: 'Inter'),
-                  ),
-                ),
+                (item) {
+                  return DropdownMenuItem(
+                    value: item,
+                    child: Text(
+                      item,
+                      style: TextStyle(
+                        color: textColor,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  );
+                },
               )
               .toList(),
         ),

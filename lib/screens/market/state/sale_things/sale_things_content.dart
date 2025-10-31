@@ -243,6 +243,9 @@ class _DropdownField extends StatelessWidget {
           isExpanded: true,
           onChanged: onChanged,
           style: _fieldText,
+          dropdownColor: AppColors.surface,
+          menuMaxHeight: 300,
+          borderRadius: BorderRadius.circular(AppRadius.md),
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.surface,
@@ -263,14 +266,17 @@ class _DropdownField extends StatelessWidget {
               borderSide: const BorderSide(color: AppColors.outline),
             ),
           ),
-          items: items
-              .map(
-                (o) => DropdownMenuItem<String>(
-                  value: o,
-                  child: Text(o, style: _fieldText),
+          items: items.map((o) {
+            return DropdownMenuItem<String>(
+              value: o,
+              child: Text(
+                o,
+                style: _fieldText.copyWith(
+                  fontWeight: FontWeight.w400,
                 ),
-              )
-              .toList(),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );

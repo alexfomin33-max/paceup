@@ -209,47 +209,52 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
             children: [
-              InkWell(
-                onTap: () async {
-                  final picked = await showModalBottomSheet<String>(
-                    context: context,
-                    backgroundColor: AppColors.surface,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(AppRadius.lg),
-                      ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  border: Border.all(color: AppColors.border, width: 0.7),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _period,
+                    isDense: true,
+                    icon: const Icon(
+                      CupertinoIcons.chevron_down,
+                      size: 14,
+                      color: AppColors.iconPrimary,
                     ),
-                    builder: (_) =>
-                        _PeriodSheet(current: _period, periods: _periods),
-                  );
-                  if (picked != null && picked != _period) {
-                    setState(() => _period = picked);
-                  }
-                },
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    dropdownColor: AppColors.surface,
+                    menuMaxHeight: 300,
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: AppColors.border, width: 0.7),
-                  ),
-                  child: const Row(
-                    children: [
-                      Text(
-                        'За год',
-                        style: TextStyle(fontFamily: 'Inter', fontSize: 13),
-                      ),
-                      SizedBox(width: 4),
-                      Icon(
-                        CupertinoIcons.chevron_down,
-                        size: 14,
-                        color: AppColors.iconPrimary,
-                      ),
-                    ],
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      color: AppColors.textPrimary,
+                    ),
+                    onChanged: (String? newValue) {
+                      if (newValue != null && newValue != _period) {
+                        setState(() => _period = newValue);
+                      }
+                    },
+                    items: _periods.map((String period) {
+                      return DropdownMenuItem<String>(
+                        value: period,
+                        child: Text(
+                          period,
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
               ),
@@ -330,38 +335,6 @@ class _SportIcon extends StatelessWidget {
           size: 16,
           color: selected ? AppColors.surface : AppColors.iconPrimary,
         ),
-      ),
-    );
-  }
-}
-
-class _PeriodSheet extends StatelessWidget {
-  final String current;
-  final List<String> periods;
-  const _PeriodSheet({required this.current, required this.periods});
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: periods.map((p) {
-          final sel = p == current;
-          return ListTile(
-            title: Text(
-              p,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 15,
-                fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-            trailing: sel
-                ? const Icon(CupertinoIcons.check_mark, size: 18)
-                : null,
-            onTap: () => Navigator.of(context).pop(p),
-          );
-        }).toList(),
       ),
     );
   }

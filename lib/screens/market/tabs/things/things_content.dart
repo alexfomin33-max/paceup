@@ -88,6 +88,9 @@ class _CategoryDropdown extends StatelessWidget {
       initialValue: value,
       isExpanded: true,
       onChanged: onChanged,
+      dropdownColor: AppColors.surface,
+      menuMaxHeight: 300,
+      borderRadius: BorderRadius.circular(AppRadius.md),
       decoration: InputDecoration(
         isDense: true,
         filled: true,
@@ -109,14 +112,18 @@ class _CategoryDropdown extends StatelessWidget {
           borderSide: const BorderSide(color: AppColors.outline),
         ),
       ),
-      items: options
-          .map(
-            (o) => DropdownMenuItem<String>(
-              value: o,
-              child: Text(o, style: const TextStyle(fontFamily: 'Inter')),
+      items: options.map((o) {
+        return DropdownMenuItem<String>(
+          value: o,
+          child: Text(
+            o,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w400,
             ),
-          )
-          .toList(),
+          ),
+        );
+      }).toList(),
     );
   }
 }

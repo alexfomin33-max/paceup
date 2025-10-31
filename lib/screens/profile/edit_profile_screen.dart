@@ -107,7 +107,6 @@ class _FormPane extends StatelessWidget {
     required this.setGender,
     required this.setSport,
     required this.pickBirthDate,
-    required this.pickFromList,
   });
 
   final String? avatarUrl;
@@ -131,13 +130,6 @@ class _FormPane extends StatelessWidget {
   final void Function(String) setSport;
 
   final Future<void> Function() pickBirthDate;
-  final Future<void> Function({
-    required String title,
-    required List<String> options,
-    required String current,
-    required void Function(String) onPicked,
-  })
-  pickFromList;
 
   String _formatDate(DateTime? d) {
     if (d == null) return '';
@@ -199,26 +191,18 @@ class _FormPane extends StatelessWidget {
                 value: _formatDate(birthDate),
                 onTap: pickBirthDate,
               ),
-              _FieldRow.picker(
+              _FieldRow.dropdown(
                 label: 'Пол',
-                value: gender,
-                onTap: () => pickFromList(
-                  title: 'Пол',
-                  options: const ['Мужской', 'Женский'],
-                  current: gender,
-                  onPicked: setGender,
-                ),
+                value: gender.isEmpty ? null : gender,
+                items: const ['Мужской', 'Женский'],
+                onChanged: setGender,
               ),
               _FieldRow.input(label: 'Город', controller: city, hint: 'Город'),
-              _FieldRow.picker(
+              _FieldRow.dropdown(
                 label: 'Основной вид спорта',
-                value: mainSport,
-                onTap: () => pickFromList(
-                  title: 'Основной вид спорта',
-                  options: const ['Бег', 'Велоспорт', 'Плавание'],
-                  current: mainSport,
-                  onPicked: setSport,
-                ),
+                value: mainSport.isEmpty ? null : mainSport,
+                items: const ['Бег', 'Велоспорт', 'Плавание'],
+                onChanged: setSport,
               ),
             ],
           ),
@@ -494,44 +478,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Future<void> _pickFromList({
-    required String title,
-    required List<String> options,
-    required String current,
-    required void Function(String) onPicked,
-  }) async {
-    final picked = await showCupertinoModalPopup<String>(
-      context: context,
-      builder: (ctx) => CupertinoActionSheet(
-        title: Text(title),
-        actions: options
-            .map(
-              (o) => CupertinoActionSheetAction(
-                onPressed: () => Navigator.pop(ctx, o),
-                isDefaultAction: o == current,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(o),
-                    if (o == current) ...[
-                      const SizedBox(width: 6),
-                      const Icon(CupertinoIcons.checkmark_alt, size: 16),
-                    ],
-                  ],
-                ),
-              ),
-            )
-            .toList(),
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(ctx),
-          isDestructiveAction: true,
-          child: const Text('Отмена'),
-        ),
-      ),
-    );
-    if (picked != null) onPicked(picked);
-  }
-
   int? _toInt(String? s) {
     if (s == null) return null;
     final t = s.trim();
@@ -694,7 +640,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     setGender: (g) => setState(() => _gender = g),
                     setSport: (s) => setState(() => _mainSport = s),
                     pickBirthDate: _pickBirthDate,
-                    pickFromList: _pickFromList,
                   ),
           ),
         ),
@@ -937,7 +882,9 @@ class _FieldRow extends StatelessWidget {
     this.inputFormatters,
     this.value,
     this.onTap,
-    required this.isPicker,
+    this.dropdownItems,
+    this.onDropdownChanged,
+    required this.type,
   });
 
   factory _FieldRow.input({
@@ -952,14 +899,32 @@ class _FieldRow extends StatelessWidget {
     hint: hint,
     keyboardType: keyboardType,
     inputFormatters: inputFormatters,
-    isPicker: false,
+    type: _FieldRowType.input,
   );
 
   factory _FieldRow.picker({
     required String label,
     required String value,
     required VoidCallback onTap,
-  }) => _FieldRow._(label: label, value: value, onTap: onTap, isPicker: true);
+  }) => _FieldRow._(
+    label: label,
+    value: value,
+    onTap: onTap,
+    type: _FieldRowType.picker,
+  );
+
+  factory _FieldRow.dropdown({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required void Function(String) onChanged,
+  }) => _FieldRow._(
+    label: label,
+    value: value,
+    dropdownItems: items,
+    onDropdownChanged: onChanged,
+    type: _FieldRowType.dropdown,
+  );
 
   final String label;
 
@@ -973,7 +938,104 @@ class _FieldRow extends StatelessWidget {
   final String? value;
   final VoidCallback? onTap;
 
-  final bool isPicker;
+  // dropdown
+  final List<String>? dropdownItems;
+  final void Function(String)? onDropdownChanged;
+
+  final _FieldRowType type;
+
+  Widget _buildFieldContent() {
+    switch (type) {
+      case _FieldRowType.input:
+        return TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          decoration: InputDecoration(
+            isDense: true,
+            border: InputBorder.none,
+            hintText: hint,
+          ),
+          style: const TextStyle(fontSize: 14),
+        );
+
+      case _FieldRowType.picker:
+        return InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          onTap: onTap,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  (value ?? '').isEmpty ? 'Выбрать' : value!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: (value ?? '').isEmpty
+                        ? AppColors.textTertiary
+                        : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              const Icon(
+                CupertinoIcons.chevron_down,
+                size: 18,
+                color: AppColors.iconTertiary,
+              ),
+            ],
+          ),
+        );
+
+      case _FieldRowType.dropdown:
+        return DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: value,
+            isExpanded: true,
+            icon: const Icon(
+              Icons.arrow_drop_down,
+              color: AppColors.iconSecondary,
+            ),
+            dropdownColor: AppColors.surface,
+            menuMaxHeight: 300,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            style: TextStyle(
+              color: value == null || value!.isEmpty
+                  ? AppColors.textTertiary
+                  : AppColors.textPrimary,
+              fontFamily: 'Inter',
+              fontSize: 14,
+            ),
+            hint: const Text(
+              'Выбрать',
+              style: TextStyle(
+                color: AppColors.textTertiary,
+                fontFamily: 'Inter',
+                fontSize: 14,
+              ),
+            ),
+            onChanged: (String? newValue) {
+              if (newValue != null && onDropdownChanged != null) {
+                onDropdownChanged!(newValue);
+              }
+            },
+            items: dropdownItems?.map((String item) {
+              return DropdownMenuItem<String>(
+                value: item,
+                child: Text(
+                  item,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -992,51 +1054,14 @@ class _FieldRow extends StatelessWidget {
             child: Text(label, style: labelStyle),
           ),
           const SizedBox(width: 8),
-          Expanded(
-            child: isPicker
-                ? InkWell(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    onTap: onTap,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            (value ?? '').isEmpty ? 'Выбрать' : value!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: (value ?? '').isEmpty
-                                  ? AppColors.textTertiary
-                                  : AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        const Icon(
-                          CupertinoIcons.chevron_down,
-                          size: 18,
-                          color: AppColors.iconTertiary,
-                        ),
-                      ],
-                    ),
-                  )
-                : TextField(
-                    controller: controller,
-                    keyboardType: keyboardType,
-                    inputFormatters: inputFormatters,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      border: InputBorder.none,
-                      hintText: hint,
-                    ),
-                    style: const TextStyle(fontSize: 14),
-                  ),
-          ),
+          Expanded(child: _buildFieldContent()),
         ],
       ),
     );
   }
 }
+
+enum _FieldRowType { input, picker, dropdown }
 
 class _BareTextField extends StatelessWidget {
   const _BareTextField({required this.controller, this.hint});

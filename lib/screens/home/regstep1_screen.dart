@@ -360,10 +360,21 @@ class CustomDropdownField extends StatelessWidget {
           value: value,
           isExpanded: true,
           icon: const Icon(Icons.arrow_drop_down),
+          dropdownColor: AppColors.surface,
+          menuMaxHeight: 300,
+          borderRadius: BorderRadius.circular(AppRadius.md),
           onChanged: onChanged,
-          items: items
-              .map((item) => DropdownMenuItem(value: item, child: Text(item)))
-              .toList(),
+          items: items.map((item) {
+            return DropdownMenuItem(
+              value: item,
+              child: Text(
+                item,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ),
     );
