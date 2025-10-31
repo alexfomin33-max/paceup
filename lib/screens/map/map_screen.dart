@@ -167,7 +167,7 @@ class _MapScreenState extends State<MapScreen> {
 
           /// ───────── Верхняя панель вкладок (та же эстетика, что была)
           Positioned(
-            top: MediaQuery.of(context).padding.top + 10,
+            top: MediaQuery.of(context).padding.top + 16,
             left: 10,
             right: 10,
             child: Center(

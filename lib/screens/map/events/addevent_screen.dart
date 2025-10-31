@@ -2,10 +2,12 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
+import 'location_picker_screen.dart';
 
 class AddEventScreen extends StatefulWidget {
   const AddEventScreen({super.key});
@@ -39,6 +41,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
   final picker = ImagePicker();
   File? logoFile;
   final List<File?> photos = [null, null, null];
+
+  // координаты выбранного места
+  LatLng? selectedLocation;
 
   bool get isFormValid =>
       (nameCtrl.text.trim().isNotEmpty) &&
@@ -74,6 +79,25 @@ class _AddEventScreenState extends State<AddEventScreen> {
   Future<void> _pickPhoto(int i) async {
     final x = await picker.pickImage(source: ImageSource.gallery);
     if (x != null) setState(() => photos[i] = File(x.path));
+  }
+
+  /// Открыть экран выбора места на карте
+  Future<void> _pickLocation() async {
+    final result = await Navigator.of(context).push<LocationResult?>(
+      MaterialPageRoute(
+        builder: (_) => LocationPickerScreen(initialPosition: selectedLocation),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        selectedLocation = result.coordinates;
+        // ⚡️ Автозаполнение поля "Место проведения" адресом из геокодинга
+        if (result.address != null && result.address!.isNotEmpty) {
+          placeCtrl.text = result.address!;
+        }
+      });
+    }
   }
 
   Future<void> _pickDateCupertino() async {
@@ -286,7 +310,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         width: 40,
                         height: 40,
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: _pickLocation,
                           style: OutlinedButton.styleFrom(
                             shape: const CircleBorder(),
                             side: const BorderSide(color: AppColors.border),
