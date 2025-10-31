@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
+import '../../../widgets/primary_button.dart';
 
 class AddEventScreen extends StatefulWidget {
   const AddEventScreen({super.key});
@@ -216,190 +217,193 @@ class _AddEventScreenState extends State<AddEventScreen> {
           behavior: HitTestBehavior.translucent,
           child: SafeArea(
             child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ---------- Медиа: логотип + 3 фото (визуальный стиль как в newpost) ----------
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _MediaColumn(
-                      label: 'Логотип',
-                      file: logoFile,
-                      onPick: _pickLogo,
-                      onRemove: () => setState(() => logoFile = null),
-                    ),
-                    const SizedBox(width: 40),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const _SmallLabel('Фото события'),
-                          const SizedBox(height: 6),
-                          SizedBox(
-                            height: 70,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: 3,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(width: 12),
-                              itemBuilder: (_, i) => _MediaTile(
-                                file: photos[i],
-                                onPick: () => _pickPhoto(i),
-                                onRemove: () =>
-                                    setState(() => photos[i] = null),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ---------- Медиа: логотип + 3 фото (визуальный стиль как в newpost) ----------
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _MediaColumn(
+                        label: 'Логотип',
+                        file: logoFile,
+                        onPick: _pickLogo,
+                        onRemove: () => setState(() => logoFile = null),
+                      ),
+                      const SizedBox(width: 40),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const _SmallLabel('Фото события'),
+                            const SizedBox(height: 6),
+                            SizedBox(
+                              height: 70,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: 3,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(width: 12),
+                                itemBuilder: (_, i) => _MediaTile(
+                                  file: photos[i],
+                                  onPick: () => _pickPhoto(i),
+                                  onRemove: () =>
+                                      setState(() => photos[i] = null),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 30),
-
-                // ---------- Название ----------
-                EventTextField(
-                  controller: nameCtrl,
-                  label: 'Название события*',
-                ),
-                const SizedBox(height: 20),
-
-                // ---------- Вид активности ----------
-                EventDropdownField(
-                  label: 'Вид активности*',
-                  value: activity,
-                  items: const ['Бег', 'Велосипед', 'Плавание', 'Триатлон'],
-                  onChanged: (v) => setState(() => activity = v),
-                ),
-                const SizedBox(height: 20),
-
-                // ---------- Место + кнопка "Карта" ----------
-                EventTextField(
-                  controller: placeCtrl,
-                  label: 'Место проведения*',
-                  trailing: Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: OutlinedButton(
-                        onPressed: () {},
-                        style: OutlinedButton.styleFrom(
-                          shape: const CircleBorder(),
-                          side: const BorderSide(color: AppColors.border),
-                          foregroundColor: AppColors.textPrimary,
-                          backgroundColor: AppColors.surface,
-                          padding:
-                              EdgeInsets.zero, // чтобы иконка была по центру
+                          ],
                         ),
-                        child: const Icon(CupertinoIcons.placemark, size: 20),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+
+                  // ---------- Название ----------
+                  EventTextField(
+                    controller: nameCtrl,
+                    label: 'Название события*',
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ---------- Вид активности ----------
+                  EventDropdownField(
+                    label: 'Вид активности*',
+                    value: activity,
+                    items: const ['Бег', 'Велосипед', 'Плавание', 'Триатлон'],
+                    onChanged: (v) => setState(() => activity = v),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ---------- Место + кнопка "Карта" ----------
+                  EventTextField(
+                    controller: placeCtrl,
+                    label: 'Место проведения*',
+                    trailing: Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: OutlinedButton(
+                          onPressed: () {},
+                          style: OutlinedButton.styleFrom(
+                            shape: const CircleBorder(),
+                            side: const BorderSide(color: AppColors.border),
+                            foregroundColor: AppColors.textPrimary,
+                            backgroundColor: AppColors.surface,
+                            padding:
+                                EdgeInsets.zero, // чтобы иконка была по центру
+                          ),
+                          child: const Icon(CupertinoIcons.placemark, size: 20),
+                        ),
                       ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                // ---------- Дата / Время ----------
-                Row(
-                  children: [
-                    Expanded(
-                      child: EventDateField(
-                        label: 'Дата проведения*',
-                        valueText: _fmtDate(date),
-                        onTap: _pickDateCupertino,
+                  // ---------- Дата / Время ----------
+                  Row(
+                    children: [
+                      Expanded(
+                        child: EventDateField(
+                          label: 'Дата проведения*',
+                          valueText: _fmtDate(date),
+                          onTap: _pickDateCupertino,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: EventDateField(
-                        label: 'Время',
-                        valueText: _fmtTime(time),
-                        icon: CupertinoIcons.time,
-                        onTap: _pickTimeCupertino,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: EventDateField(
+                          label: 'Время',
+                          valueText: _fmtTime(time),
+                          icon: CupertinoIcons.time,
+                          onTap: _pickTimeCupertino,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
 
-                // ---------- Описание ----------
-                EventTextField(
-                  controller: descCtrl,
-                  label: 'Описание события',
-                  maxLines: 5,
-                ),
-                const SizedBox(height: 16),
+                  // ---------- Описание ----------
+                  EventTextField(
+                    controller: descCtrl,
+                    label: 'Описание события',
+                    maxLines: 5,
+                  ),
+                  const SizedBox(height: 16),
 
-                // ---------- Создать от имени клуба ----------
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: Checkbox(
-                        value: createFromClub,
-                        onChanged: (v) =>
-                            setState(() => createFromClub = v ?? false),
-                        side: const BorderSide(color: AppColors.border),
-                        activeColor: AppColors.brandPrimary,
+                  // ---------- Создать от имени клуба ----------
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          value: createFromClub,
+                          onChanged: (v) =>
+                              setState(() => createFromClub = v ?? false),
+                          side: const BorderSide(color: AppColors.border),
+                          activeColor: AppColors.brandPrimary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text('Создать от имени клуба'),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                EventDropdownField(
-                  label: '', // ← пустая строка: лейбл не рисуем
-                  value: selectedClub,
-                  items: clubs,
-                  enabled: createFromClub,
-                  onChanged: (v) => setState(() {
-                    selectedClub = v;
-                    clubCtrl.text = v ?? '';
-                  }),
-                ),
-                const SizedBox(height: 16),
+                      const SizedBox(width: 8),
+                      const Text('Создать от имени клуба'),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  EventDropdownField(
+                    label: '', // ← пустая строка: лейбл не рисуем
+                    value: selectedClub,
+                    items: clubs,
+                    enabled: createFromClub,
+                    onChanged: (v) => setState(() {
+                      selectedClub = v;
+                      clubCtrl.text = v ?? '';
+                    }),
+                  ),
+                  const SizedBox(height: 16),
 
-                // ---------- Сохранить шаблон ----------
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: Checkbox(
-                        value: saveTemplate,
-                        onChanged: (v) =>
-                            setState(() => saveTemplate = v ?? false),
-                        side: const BorderSide(color: AppColors.border),
-                        activeColor: AppColors.brandPrimary,
+                  // ---------- Сохранить шаблон ----------
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          value: saveTemplate,
+                          onChanged: (v) =>
+                              setState(() => saveTemplate = v ?? false),
+                          side: const BorderSide(color: AppColors.border),
+                          activeColor: AppColors.brandPrimary,
+                        ),
                       ),
+                      const SizedBox(width: 8),
+                      const Text('Сохранить шаблон'),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  EventTextField(
+                    controller: templateCtrl,
+                    label: '',
+                    enabled: saveTemplate,
+                    // ← ⚡️ вот это главное
+                  ),
+
+                  const SizedBox(height: 28),
+                  Align(
+                    alignment: Alignment.center,
+                    child: PrimaryButton(
+                      text: 'Создать мероприятие',
+                      onPressed: isFormValid ? _submit : null,
+                      expanded: false,
                     ),
-                    const SizedBox(width: 8),
-                    const Text('Сохранить шаблон'),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                EventTextField(
-                  controller: templateCtrl,
-                  label: '',
-                  enabled: saveTemplate,
-                  // ← ⚡️ вот это главное
-                ),
-
-                const SizedBox(height: 28),
-                CreateButton(
-                  text: 'Создать мероприятие',
-                  onPressed: _submit,
-                  isEnabled: isFormValid,
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
           ),
         ),
       ),
@@ -578,11 +582,12 @@ class EventDropdownField extends StatelessWidget {
 
     return InputDecorator(
       decoration: InputDecoration(
+        isDense: true,
         label: label.isEmpty ? null : _labelWithStar(label),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         filled: true,
         fillColor: fill,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: BorderSide(color: borderColor),
@@ -622,60 +627,19 @@ class EventDropdownField extends StatelessWidget {
                   style: TextStyle(color: textColor, fontFamily: 'Inter'),
                 ),
           onChanged: enabled ? onChanged : null,
-          items: items
-              .map(
-                (item) {
-                  return DropdownMenuItem(
-                    value: item,
-                    child: Text(
-                      item,
-                      style: TextStyle(
-                        color: textColor,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  );
-                },
-              )
-              .toList(),
-        ),
-      ),
-    );
-  }
-}
-
-class CreateButton extends StatelessWidget {
-  final String text;
-  final VoidCallback onPressed;
-  final bool isEnabled;
-
-  const CreateButton({
-    super.key,
-    required this.text,
-    required this.onPressed,
-    required this.isEnabled,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: isEnabled ? onPressed : null,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isEnabled
-            ? AppColors.brandPrimary
-            : AppColors.disabledBg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: AppColors.surface,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
+          items: items.map((item) {
+            return DropdownMenuItem(
+              value: item,
+              child: Text(
+                item,
+                style: TextStyle(
+                  color: textColor,
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ),
     );

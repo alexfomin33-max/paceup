@@ -65,6 +65,7 @@ class PrimaryButton extends StatelessWidget {
     final Widget content = Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (isLoading)
           const Padding(
@@ -94,6 +95,9 @@ class PrimaryButton extends StatelessWidget {
       ],
     );
 
+    // ── динамический padding: для маленьких кнопок уменьшаем вертикальный отступ
+    final double verticalPadding = height <= 40 ? 0 : 12;
+
     // ── сама кнопка
     final Widget button = ElevatedButton(
       onPressed: isEnabled ? onPressed : null,
@@ -104,9 +108,14 @@ class PrimaryButton extends StatelessWidget {
         disabledBackgroundColor: AppColors.disabledBg,
         disabledForegroundColor: AppColors.disabledText,
         elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+        padding: EdgeInsets.symmetric(
+          horizontal: 28,
+          vertical: verticalPadding,
+        ),
         shape: const StadiumBorder(), // «капсула» как у вас в дизайне
         minimumSize: Size(0, height), // фиксируем высоту
+        tapTargetSize:
+            MaterialTapTargetSize.shrinkWrap, // убираем лишний тап-таргет
       ),
       child: content,
     );

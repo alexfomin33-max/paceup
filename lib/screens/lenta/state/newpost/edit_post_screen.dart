@@ -12,6 +12,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
+import '../../../../widgets/primary_button.dart';
 import '../../../../service/api_service.dart';
 
 /// Модель «существующего» изображения, пришедшего с бэка
@@ -351,33 +352,12 @@ class _EditPostScreenState extends State<EditPostScreen> {
 
   // Кнопка «Сохранить»
   Widget _saveButton(BuildContext context) {
-    return SizedBox(
+    return PrimaryButton(
+      text: 'Сохранить',
+      onPressed: _canSave ? _submitEdit : null,
       width: 181,
       height: 40,
-      child: ElevatedButton(
-        onPressed: (_canSave && !_loading) ? _submitEdit : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _canSave
-              ? AppColors.brandPrimary
-              : AppColors.disabledBg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-          ),
-        ),
-        child: _loading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.surface,
-                ),
-              )
-            : const Text(
-                'Сохранить',
-                style: TextStyle(color: AppColors.surface),
-              ),
-      ),
+      isLoading: _loading,
     );
   }
 
