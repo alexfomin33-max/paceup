@@ -1,4 +1,4 @@
-package com.example.paceip
+package com.example.paceup
 
 import android.os.Bundle
 import io.flutter.embedding.android.FlutterFragmentActivity

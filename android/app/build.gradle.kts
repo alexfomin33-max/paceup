@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.paceip"
+    namespace = "com.example.paceup"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.paceip"
+        applicationId = "com.example.paceup"
         minSdk = 26 // Health Connect требует minSdk 26+
         targetSdk = 34
         versionCode = flutter.versionCode
