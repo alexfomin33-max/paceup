@@ -26,8 +26,12 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: GestureDetector(
+        // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: SafeArea(
+          child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
             child: Column(
@@ -104,6 +108,7 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),

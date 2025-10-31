@@ -25,7 +25,11 @@ class AddAccScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AuthShell(
+      body: GestureDetector(
+        // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: AuthShell(
         contentPadding: const EdgeInsets.only(bottom: 65, left: 40, right: 40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -130,6 +134,7 @@ class AddAccScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

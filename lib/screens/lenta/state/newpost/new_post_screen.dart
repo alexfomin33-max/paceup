@@ -53,9 +53,13 @@ class _NewPostScreenState extends State<NewPostScreen> {
         // ───── глобальная шапка
         appBar: const PaceAppBar(title: 'Новый пост'),
 
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
+        body: GestureDetector(
+          // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
+          onTap: () => FocusScope.of(context).unfocus(),
+          behavior: HitTestBehavior.translucent,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
             children: [
               const SizedBox(height: 2),
 
@@ -96,6 +100,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
               Center(child: _publishButton(context)),
             ],
           ),
+        ),
         ),
       ),
     );

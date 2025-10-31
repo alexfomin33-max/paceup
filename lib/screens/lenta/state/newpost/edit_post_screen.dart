@@ -106,50 +106,55 @@ class _EditPostScreenState extends State<EditPostScreen> {
 
         appBar: const PaceAppBar(title: 'Редактировать пост'),
 
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 2),
+        body: GestureDetector(
+          // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
+          onTap: () => FocusScope.of(context).unfocus(),
+          behavior: HitTestBehavior.translucent,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                const SizedBox(height: 2),
 
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Фото поста',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Фото поста',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-              // 🔹 Горизонтальный список фото: + кнопка добавления
-              SizedBox(
-                height: 76,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _addPhotoButton(),
-                    const SizedBox(width: 12),
-                    ..._buildExistingPreviews(),
-                    ..._newImages.map(
-                      (file) => Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: _newPhotoPreview(file),
+                // 🔹 Горизонтальный список фото: + кнопка добавления
+                SizedBox(
+                  height: 76,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _addPhotoButton(),
+                      const SizedBox(width: 12),
+                      ..._buildExistingPreviews(),
+                      ..._newImages.map(
+                        (file) => Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: _newPhotoPreview(file),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // 🔹 Описание
-              Expanded(child: _descriptionInput()),
+                // 🔹 Описание
+                Expanded(child: _descriptionInput()),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // 🔹 Кнопка «Сохранить»
-              Center(child: _saveButton(context)),
-            ],
+                // 🔹 Кнопка «Сохранить»
+                Center(child: _saveButton(context)),
+              ],
+            ),
           ),
         ),
       ),
@@ -215,9 +220,8 @@ class _EditPostScreenState extends State<EditPostScreen> {
                   child: CachedNetworkImage(
                     imageUrl: ex.url,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: AppColors.background,
-                    ),
+                    placeholder: (context, url) =>
+                        Container(color: AppColors.background),
                     errorWidget: (context, url, error) => Container(
                       color: AppColors.background,
                       child: const Icon(Icons.error),

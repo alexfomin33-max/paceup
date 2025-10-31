@@ -55,7 +55,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   // ────────────────────────────────────────────────────────────────
   final Set<int> _prefetchedIndices = {};
   static const int _prefetchCount = 3; // предзагружаем следующие 3 поста
-  
+
   // ────────────────────────────────────────────────────────────────
   // ⚡ DEBOUNCE: предотвращаем лишние запросы во время скролла
   // ────────────────────────────────────────────────────────────────
@@ -182,7 +182,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     final updated = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
+      TransparentPageRoute(
         builder: (_) => EditPostScreen(
           userId: widget.userId,
           postId: post.id,
@@ -444,13 +444,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               } else if (n is ScrollEndNotification) {
                 // Конец скролла — разрешаем prefetch
                 _isScrolling = false;
-                
+
                 // ✅ Триггерим prefetch для текущей видимой позиции
                 // после остановки скролла (с debounce)
                 final pos = _scrollController.position;
                 if (pos.hasContentDimensions) {
-                  final visibleIndex = 
-                      (pos.pixels / (pos.maxScrollExtent / items.length)).floor();
+                  final visibleIndex =
+                      (pos.pixels / (pos.maxScrollExtent / items.length))
+                          .floor();
                   _prefetchNextImages(visibleIndex, items);
                 }
               }

@@ -148,7 +148,11 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AuthShell(
+      body: GestureDetector(
+        // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: AuthShell(
         // как в исходнике: горизонтально 40, вертикально 100
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 40,
@@ -189,6 +193,7 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

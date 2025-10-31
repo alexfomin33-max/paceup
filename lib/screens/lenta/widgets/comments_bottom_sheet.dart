@@ -268,7 +268,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
               top: Radius.circular(AppRadius.xl),
             ),
           ),
-          child: Column(
+          child: GestureDetector(
+            // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
+            onTap: () => FocusScope.of(context).unfocus(),
+            behavior: HitTestBehavior.translucent,
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               // Список комментариев (Flexible как в образце)
@@ -285,6 +289,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                 onSend: _sendComment,
               ),
             ],
+            ),
           ),
         ),
       ),

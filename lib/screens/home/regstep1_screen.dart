@@ -93,8 +93,12 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: GestureDetector(
+        // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: SafeArea(
+          child: SingleChildScrollView(
           // 🔹 Скролл для маленьких экранов
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
@@ -146,6 +150,7 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),

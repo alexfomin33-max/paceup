@@ -650,48 +650,53 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
 
         // важное: единая компоновка для всех состояний + «прижатие» к верху
-        body: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
-          switchInCurve: Curves.easeOut,
-          switchOutCurve: Curves.easeIn,
-          layoutBuilder: (currentChild, previousChildren) {
-            return Stack(
-              alignment: Alignment.topCenter,
-              children: [
-                ...previousChildren,
-                if (currentChild != null) currentChild,
-              ],
-            );
-          },
-          child: _loadingProfile
-              ? const _LoadingPane(key: ValueKey('loading'))
-              : (_loadError != null)
-              ? _ErrorPane(
-                  key: const ValueKey('error'),
-                  message: _loadError!,
-                  onRetry: _loadProfile,
-                )
-              : _FormPane(
-                  key: const ValueKey('form'),
-                  avatarUrl: _avatarUrl,
-                  avatarBytes: _avatarBytes,
-                  onPickAvatar: _pickAvatar,
-                  firstName: _firstName,
-                  lastName: _lastName,
-                  nickname: _nickname,
-                  city: _city,
-                  height: _height,
-                  weight: _weight,
-                  hrMax: _hrMax,
-                  birthDate: _birthDate,
-                  gender: _gender,
-                  mainSport: _mainSport,
-                  setBirthDate: (d) => setState(() => _birthDate = d),
-                  setGender: (g) => setState(() => _gender = g),
-                  setSport: (s) => setState(() => _mainSport = s),
-                  pickBirthDate: _pickBirthDate,
-                  pickFromList: _pickFromList,
-                ),
+        body: GestureDetector(
+          // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
+          onTap: () => FocusScope.of(context).unfocus(),
+          behavior: HitTestBehavior.translucent,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            layoutBuilder: (currentChild, previousChildren) {
+              return Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  ...previousChildren,
+                  if (currentChild != null) currentChild,
+                ],
+              );
+            },
+            child: _loadingProfile
+                ? const _LoadingPane(key: ValueKey('loading'))
+                : (_loadError != null)
+                ? _ErrorPane(
+                    key: const ValueKey('error'),
+                    message: _loadError!,
+                    onRetry: _loadProfile,
+                  )
+                : _FormPane(
+                    key: const ValueKey('form'),
+                    avatarUrl: _avatarUrl,
+                    avatarBytes: _avatarBytes,
+                    onPickAvatar: _pickAvatar,
+                    firstName: _firstName,
+                    lastName: _lastName,
+                    nickname: _nickname,
+                    city: _city,
+                    height: _height,
+                    weight: _weight,
+                    hrMax: _hrMax,
+                    birthDate: _birthDate,
+                    gender: _gender,
+                    mainSport: _mainSport,
+                    setBirthDate: (d) => setState(() => _birthDate = d),
+                    setGender: (g) => setState(() => _gender = g),
+                    setSport: (s) => setState(() => _mainSport = s),
+                    pickBirthDate: _pickBirthDate,
+                    pickFromList: _pickFromList,
+                  ),
+          ),
         ),
       ),
     );

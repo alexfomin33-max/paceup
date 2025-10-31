@@ -210,8 +210,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
         backgroundColor: AppColors.surface,
         appBar: const PaceAppBar(title: 'Добавление события'),
 
-        body: SafeArea(
-          child: SingleChildScrollView(
+        body: GestureDetector(
+          // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
+          onTap: () => FocusScope.of(context).unfocus(),
+          behavior: HitTestBehavior.translucent,
+          child: SafeArea(
+            child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -395,6 +399,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),

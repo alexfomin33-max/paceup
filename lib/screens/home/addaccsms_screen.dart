@@ -154,7 +154,11 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AuthShell(
+      body: GestureDetector(
+        // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: AuthShell(
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 40,
           vertical: 100,
@@ -193,6 +197,7 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );
