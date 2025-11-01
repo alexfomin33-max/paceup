@@ -134,8 +134,13 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // Очищаем кеш предзагруженных индексов
     _prefetchedIndices.clear();
 
-    // Обновляем ленту через Riverpod
-    await ref.read(lentaProvider(widget.userId).notifier).refresh();
+    // 🔹 Задержка перед обновлением — даём серверу время обработать пост
+    // Это важно для гарантированного получения нового поста в ответе API
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Принудительное обновление с очисткой кэша
+    // Используем forceRefresh вместо refresh для полного обновления данных
+    await ref.read(lentaProvider(widget.userId).notifier).forceRefresh();
 
     // Прокрутка к началу
     if (_scrollController.hasClients) {
@@ -198,7 +203,12 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     if (updated == true) {
       // Очищаем кеш предзагруженных индексов
       _prefetchedIndices.clear();
-      ref.read(lentaProvider(widget.userId).notifier).refresh();
+
+      // 🔹 Задержка перед обновлением — даём серверу время обработать изменения
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Принудительное обновление с очисткой кэша
+      await ref.read(lentaProvider(widget.userId).notifier).forceRefresh();
     }
   }
 

@@ -167,6 +167,40 @@ class LentaNotifier extends StateNotifier<LentaState> {
     }
   }
 
+  /// Принудительное обновление после создания/редактирования поста
+  ///
+  /// Очищает кэш и полностью перезагружает первую страницу
+  /// Используется после создания нового поста для гарантированного
+  /// отображения обновленных данных
+  Future<void> forceRefresh() async {
+    try {
+      state = state.copyWith(isRefreshing: true, error: null);
+
+      // Очищаем кэш активностей перед обновлением
+      await _cache.clearActivitiesCache(userId: userId);
+
+      // Загружаем свежие данные с сервера
+      final freshItems = await _loadActivities(page: 1, limit: limit);
+
+      // Сохраняем в кэш
+      await _cache.cacheActivities(freshItems, userId: userId);
+
+      // Полностью заменяем список (новые посты должны быть в начале)
+      final newSeenIds = freshItems.map(_getId).toSet();
+
+      state = state.copyWith(
+        items: freshItems,
+        currentPage: 1,
+        seenIds: newSeenIds,
+        hasMore: freshItems.length == limit,
+        isRefreshing: false,
+        error: null,
+      );
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isRefreshing: false);
+    }
+  }
+
   /// Загрузка следующей страницы (пагинация)
   ///
   /// Загружает новые данные и сохраняет в кэш

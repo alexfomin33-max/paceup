@@ -294,14 +294,54 @@ class _NewPostScreenState extends State<NewPostScreen> {
 
       // 🔍 Дебаг: проверяем формат ответа
       print('🔍 [CREATE POST] Response: $data');
+      print('🔍 [CREATE POST] Response type: ${data.runtimeType}');
+      print('🔍 [CREATE POST] Response keys: ${data.keys.toList()}');
 
-      // 🔹 Сервер может возвращать массив внутри 'data'
-      final actualData =
-          data['data'] is List && (data['data'] as List).isNotEmpty
-          ? (data['data'] as List)[0] as Map<String, dynamic>
-          : data;
+      // 🔹 Проверяем разные форматы ответа API
+      bool success = false;
+      String? errorMessage;
 
-      if (actualData['success'] == true) {
+      // Формат 1: прямой success в корне
+      if (data['success'] == true) {
+        success = true;
+        print('✅ [CREATE POST] Success (direct): true');
+      }
+      // Формат 2: success в data массиве
+      else if (data['data'] is List && (data['data'] as List).isNotEmpty) {
+        final firstItem = (data['data'] as List)[0];
+        if (firstItem is Map<String, dynamic>) {
+          if (firstItem['success'] == true) {
+            success = true;
+            print('✅ [CREATE POST] Success (in data array): true');
+          } else {
+            errorMessage = firstItem['message']?.toString();
+            print('❌ [CREATE POST] Error (in data array): $errorMessage');
+          }
+        }
+      }
+      // Формат 3: success в data объекте
+      else if (data['data'] is Map<String, dynamic>) {
+        final dataObj = data['data'] as Map<String, dynamic>;
+        if (dataObj['success'] == true) {
+          success = true;
+          print('✅ [CREATE POST] Success (in data object): true');
+        } else {
+          errorMessage = dataObj['message']?.toString();
+          print('❌ [CREATE POST] Error (in data object): $errorMessage');
+        }
+      }
+      // Формат 4: error или message в корне
+      else if (data['error'] != null || data['message'] != null) {
+        errorMessage = (data['error'] ?? data['message']).toString();
+        print('❌ [CREATE POST] Error (direct): $errorMessage');
+      }
+      // Неизвестный формат
+      else {
+        errorMessage = 'Неизвестный формат ответа сервера';
+        print('❌ [CREATE POST] Unknown response format');
+      }
+
+      if (success) {
         _descController.clear();
         setState(() {
           _images.clear();
@@ -316,7 +356,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
         if (!mounted) {
           return; // 🔹 Проверка mounted перед использованием context
         }
-        final msg = (actualData['message'] ?? 'Ошибка сервера').toString();
+        final msg = errorMessage ?? 'Ошибка сервера';
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(msg)));
