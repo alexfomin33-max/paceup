@@ -435,7 +435,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
                   : (Platform.isIOS
                         ? 'Синк из Apple Здоровья'
                         : 'Синк из Health Connect'),
-              onPressed: _busy ? null : _fetchLast7Days,
+              onPressed: _busy ? () {} : () => _fetchLast7Days(),
               width: 260,
               height: 44,
               isLoading: _busy,

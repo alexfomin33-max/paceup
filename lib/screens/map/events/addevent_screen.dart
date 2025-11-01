@@ -45,6 +45,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
   // координаты выбранного места
   LatLng? selectedLocation;
 
+  // ── состояние ошибок валидации (какие поля должны быть подсвечены красным)
+  final Set<String> _errorFields = {};
+
   bool get isFormValid =>
       (nameCtrl.text.trim().isNotEmpty) &&
       (placeCtrl.text.trim().isNotEmpty) &&
@@ -55,8 +58,14 @@ class _AddEventScreenState extends State<AddEventScreen> {
   @override
   void initState() {
     super.initState();
-    nameCtrl.addListener(_refresh);
-    placeCtrl.addListener(_refresh);
+    nameCtrl.addListener(() {
+      _refresh();
+      _clearFieldError('name'); // ── очищаем ошибку при вводе
+    });
+    placeCtrl.addListener(() {
+      _refresh();
+      _clearFieldError('place'); // ── очищаем ошибку при вводе
+    });
   }
 
   @override
@@ -70,6 +79,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
   }
 
   void _refresh() => setState(() {});
+
+  // ── очистка ошибки для конкретного поля при взаимодействии
+  void _clearFieldError(String fieldName) {
+    if (_errorFields.contains(fieldName)) {
+      setState(() => _errorFields.remove(fieldName));
+    }
+  }
 
   Future<void> _pickLogo() async {
     final x = await picker.pickImage(source: ImageSource.gallery);
@@ -96,6 +112,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
         if (result.address != null && result.address!.isNotEmpty) {
           placeCtrl.text = result.address!;
         }
+        _clearFieldError('place'); // ── очищаем ошибку при выборе места
       });
     }
   }
@@ -113,7 +130,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
-    if (ok) setState(() => date = temp);
+    if (ok) {
+      setState(() {
+        date = temp;
+        _clearFieldError('date'); // ── очищаем ошибку при выборе даты
+      });
+    }
   }
 
   Future<void> _pickTimeCupertino() async {
@@ -134,7 +156,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
     if (ok) {
-      setState(() => time = TimeOfDay(hour: temp.hour, minute: temp.minute));
+      setState(() {
+        time = TimeOfDay(hour: temp.hour, minute: temp.minute);
+        _clearFieldError('time'); // ── очищаем ошибку при выборе времени
+      });
     }
   }
 
@@ -221,7 +246,36 @@ class _AddEventScreenState extends State<AddEventScreen> {
   }
 
   void _submit() {
-    if (!isFormValid) return;
+    // ── проверяем все обязательные поля и подсвечиваем незаполненные
+    final Set<String> newErrors = {};
+
+    if (nameCtrl.text.trim().isEmpty) {
+      newErrors.add('name');
+    }
+    if (placeCtrl.text.trim().isEmpty) {
+      newErrors.add('place');
+    }
+    if (activity == null) {
+      newErrors.add('activity');
+    }
+    if (date == null) {
+      newErrors.add('date');
+    }
+    if (time == null) {
+      newErrors.add('time');
+    }
+
+    setState(() {
+      _errorFields.clear();
+      _errorFields.addAll(newErrors);
+    });
+
+    // ── если есть ошибки — не отправляем форму
+    if (newErrors.isNotEmpty) {
+      return;
+    }
+
+    // ── форма валидна — отправляем
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Мероприятие создано (демо)')));
@@ -288,6 +342,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   EventTextField(
                     controller: nameCtrl,
                     label: 'Название события*',
+                    hasError: _errorFields.contains('name'),
                   ),
                   const SizedBox(height: 20),
 
@@ -296,7 +351,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     label: 'Вид активности*',
                     value: activity,
                     items: const ['Бег', 'Велосипед', 'Плавание', 'Триатлон'],
-                    onChanged: (v) => setState(() => activity = v),
+                    hasError: _errorFields.contains('activity'),
+                    onChanged: (v) => setState(() {
+                      activity = v;
+                      _clearFieldError(
+                        'activity',
+                      ); // ── очищаем ошибку при выборе
+                    }),
                   ),
                   const SizedBox(height: 20),
 
@@ -304,6 +365,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   EventTextField(
                     controller: placeCtrl,
                     label: 'Место проведения*',
+                    hasError: _errorFields.contains('place'),
                     trailing: Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: SizedBox(
@@ -335,6 +397,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           label: 'Дата проведения*',
                           valueText: _fmtDate(date),
                           onTap: _pickDateCupertino,
+                          hasError: _errorFields.contains('date'),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -344,6 +407,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           valueText: _fmtTime(time),
                           icon: CupertinoIcons.time,
                           onTap: _pickTimeCupertino,
+                          hasError: _errorFields.contains('time'),
                         ),
                       ),
                     ],
@@ -421,7 +485,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     alignment: Alignment.center,
                     child: PrimaryButton(
                       text: 'Создать мероприятие',
-                      onPressed: isFormValid ? _submit : null,
+                      onPressed: _submit,
                       expanded: false,
                     ),
                   ),
@@ -445,6 +509,7 @@ class EventTextField extends StatelessWidget {
   final int maxLines;
   final bool enabled;
   final Widget? trailing;
+  final bool hasError; // ── состояние ошибки валидации
 
   const EventTextField({
     super.key,
@@ -453,16 +518,18 @@ class EventTextField extends StatelessWidget {
     this.maxLines = 1,
     this.enabled = true,
     this.trailing,
+    this.hasError = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    // цвета/бордеры в зависимости от enabled
+    // цвета/бордеры в зависимости от enabled и hasError
     final textColor = enabled
         ? AppColors.textPrimary
         : AppColors.textPlaceholder; // «плейсхолдер/disabled»
     final fill = enabled ? AppColors.surface : AppColors.disabled;
-    final borderColor = AppColors.border;
+    // ── если есть ошибка — красный бордер, иначе обычный
+    final borderColor = hasError ? AppColors.error : AppColors.border;
     final disabledBorderColor = AppColors.border.withValues(alpha: 0.6);
 
     final field = TextFormField(
@@ -481,7 +548,7 @@ class EventTextField extends StatelessWidget {
           vertical: 14,
         ),
 
-        // обычные рамки
+        // обычные рамки (с учётом ошибки)
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: BorderSide(color: borderColor),
@@ -522,6 +589,7 @@ class EventDateField extends StatelessWidget {
   final String valueText;
   final IconData icon;
   final VoidCallback onTap;
+  final bool hasError; // ── состояние ошибки валидации
 
   const EventDateField({
     super.key,
@@ -529,10 +597,14 @@ class EventDateField extends StatelessWidget {
     required this.valueText,
     this.icon = CupertinoIcons.calendar,
     required this.onTap,
+    this.hasError = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // ── если есть ошибка — красный бордер, иначе обычный
+    final borderColor = hasError ? AppColors.error : AppColors.border;
+
     return GestureDetector(
       onTap: onTap,
       child: AbsorbPointer(
@@ -562,15 +634,15 @@ class EventDateField extends StatelessWidget {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: borderColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: borderColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: borderColor),
             ),
           ),
         ),
@@ -585,6 +657,7 @@ class EventDropdownField extends StatelessWidget {
   final List<String> items;
   final Function(String?) onChanged;
   final bool enabled;
+  final bool hasError; // ── состояние ошибки валидации
 
   const EventDropdownField({
     super.key,
@@ -593,6 +666,7 @@ class EventDropdownField extends StatelessWidget {
     required this.items,
     required this.onChanged,
     this.enabled = true,
+    this.hasError = false,
   });
 
   @override
@@ -601,7 +675,8 @@ class EventDropdownField extends StatelessWidget {
         ? AppColors.textPrimary
         : AppColors.textPlaceholder;
     final fill = enabled ? AppColors.surface : AppColors.disabled;
-    final borderColor = AppColors.border;
+    // ── если есть ошибка — красный бордер, иначе обычный
+    final borderColor = hasError ? AppColors.error : AppColors.border;
     final disabledBorderColor = AppColors.border.withValues(alpha: 0.6);
 
     return InputDecorator(

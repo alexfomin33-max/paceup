@@ -3,8 +3,8 @@
 //                   ГЛОБАЛЬНАЯ КНОПКА PRIMARY (брендовая)
 //  • Используется по всему приложению с единым стилем
 //  • Поддерживает фиксированную ширину или "растянуться" на всю строку
-//  • Есть состояние загрузки (isLoading)
-//  • Корректные цвета для enabled/disabled по дизайн-токенам
+//  • Есть состояние загрузки (isLoading) - блокирует нажатие во время загрузки
+//  • Кнопка всегда активна, валидация полей выполняется при нажатии
 //  • ВАЖНО: везде применяем ваши токены и Inter
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -16,8 +16,8 @@ class PrimaryButton extends StatelessWidget {
   /// Текст на кнопке
   final String text;
 
-  /// Обработчик нажатия. Если null — кнопка неактивна.
-  final VoidCallback? onPressed;
+  /// Обработчик нажатия (обязателен)
+  final VoidCallback onPressed;
 
   /// Растянуть кнопку на всю доступную ширину
   final bool expanded;
@@ -59,7 +59,7 @@ class PrimaryButton extends StatelessWidget {
     final double? finalWidth = width ?? (expanded ? double.infinity : null);
 
     // ── если идёт загрузка — блокируем нажатие
-    final bool isEnabled = onPressed != null && !isLoading;
+    final bool canPress = !isLoading;
 
     // ── единый контент кнопки: ведущая иконка + текст + хвостовая иконка
     final Widget content = Row(
@@ -86,7 +86,7 @@ class PrimaryButton extends StatelessWidget {
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.surface, // активный текст — белый
+                  color: AppColors.surface, // всегда белый текст
                 ),
           ),
         ),
@@ -98,15 +98,12 @@ class PrimaryButton extends StatelessWidget {
     // ── динамический padding: для маленьких кнопок уменьшаем вертикальный отступ
     final double verticalPadding = height <= 40 ? 0 : 12;
 
-    // ── сама кнопка
+    // ── сама кнопка (всегда активна, только isLoading может блокировать)
     final Widget button = ElevatedButton(
-      onPressed: isEnabled ? onPressed : null,
+      onPressed: canPress ? onPressed : null,
       style: ElevatedButton.styleFrom(
-        // цвета: активный/неактивный/текст
         backgroundColor: AppColors.brandPrimary,
         foregroundColor: AppColors.surface,
-        disabledBackgroundColor: AppColors.disabledBg,
-        disabledForegroundColor: AppColors.disabledText,
         elevation: 0,
         padding: EdgeInsets.symmetric(
           horizontal: 28,

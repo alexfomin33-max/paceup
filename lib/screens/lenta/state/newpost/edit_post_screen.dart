@@ -354,16 +354,16 @@ class _EditPostScreenState extends State<EditPostScreen> {
   Widget _saveButton(BuildContext context) {
     return PrimaryButton(
       text: 'Сохранить',
-      onPressed: _canSave ? _submitEdit : null,
+      onPressed: _submitEdit,
       width: 181,
-      height: 40,
+      height: 44,
       isLoading: _loading,
     );
   }
 
   // Отправка изменений на API
   Future<void> _submitEdit() async {
-    if (_loading) return;
+    if (_loading || !_canSave) return;
 
     final text = _descController.text.trim();
     final keepUrls = _existing.where((e) => e.keep).map((e) => e.url).toList();
