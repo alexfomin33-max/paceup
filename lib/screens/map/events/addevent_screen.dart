@@ -7,6 +7,8 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
+import '../../../service/api_service.dart';
+import '../../../service/auth_service.dart';
 import 'location_picker_screen.dart';
 
 class AddEventScreen extends StatefulWidget {
@@ -47,6 +49,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   // ── состояние ошибок валидации (какие поля должны быть подсвечены красным)
   final Set<String> _errorFields = {};
+  
+  // ── состояние загрузки
+  bool _loading = false;
 
   bool get isFormValid =>
       (nameCtrl.text.trim().isNotEmpty) &&
@@ -245,7 +250,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     return '$hh:$mm';
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     // ── проверяем все обязательные поля и подсвечиваем незаполненные
     final Set<String> newErrors = {};
 
@@ -264,6 +269,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
     if (time == null) {
       newErrors.add('time');
     }
+    if (selectedLocation == null) {
+      newErrors.add('place'); // Помечаем место, т.к. координаты не выбраны
+    }
 
     setState(() {
       _errorFields.clear();
@@ -275,11 +283,113 @@ class _AddEventScreenState extends State<AddEventScreen> {
       return;
     }
 
-    // ── форма валидна — отправляем
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Мероприятие создано (демо)')));
-    Navigator.pop(context);
+    // ── форма валидна — отправляем на сервер
+    setState(() => _loading = true);
+    
+    final api = ApiService();
+    final authService = AuthService();
+    
+    try {
+      // Формируем данные
+      final files = <String, File>{};
+      final fields = <String, String>{};
+      
+      // Добавляем логотип
+      if (logoFile != null) {
+        files['logo'] = logoFile!;
+      }
+      
+      // Добавляем фотографии
+      for (int i = 0; i < photos.length; i++) {
+        if (photos[i] != null) {
+          files['images[$i]'] = photos[i]!;
+        }
+      }
+      
+      // Добавляем поля формы
+      final userId = await authService.getUserId();
+      fields['user_id'] = userId?.toString() ?? '1';
+      fields['name'] = nameCtrl.text.trim();
+      fields['activity'] = activity!;
+      fields['place'] = placeCtrl.text.trim();
+      fields['latitude'] = selectedLocation!.latitude.toString();
+      fields['longitude'] = selectedLocation!.longitude.toString();
+      fields['event_date'] = _fmtDate(date!);
+      fields['event_time'] = _fmtTime(time!);
+      fields['description'] = descCtrl.text.trim();
+      if (createFromClub && selectedClub != null) {
+        fields['club_name'] = selectedClub!;
+      }
+      if (saveTemplate && templateCtrl.text.trim().isNotEmpty) {
+        fields['template_name'] = templateCtrl.text.trim();
+      }
+      
+      // Отправляем запрос
+      Map<String, dynamic> data;
+      if (files.isEmpty) {
+        // JSON запрос без файлов
+        data = await api.post(
+          '/create_event.php',
+          body: fields,
+        );
+      } else {
+        // Multipart запрос с файлами
+        data = await api.postMultipart(
+          '/create_event.php',
+          files: files,
+          fields: fields,
+          timeout: const Duration(seconds: 60),
+        );
+      }
+      
+      // Проверяем ответ
+      bool success = false;
+      String? errorMessage;
+      
+      if (data['success'] == true) {
+        success = true;
+      } else if (data['success'] == false) {
+        errorMessage = data['message'] ?? 'Ошибка при создании события';
+      } else {
+        errorMessage = 'Неожиданный формат ответа сервера';
+      }
+      
+      if (success) {
+        final eventId = data['event_id'];
+        final lat = data['latitude'] as double?;
+        final lng = data['longitude'] as double?;
+        
+        if (!mounted) return;
+        
+        // Показываем успешное сообщение
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Событие успешно создано')),
+        );
+        
+        // Редирект на карту с выделением события
+        Navigator.of(context).popUntil((route) => route.isFirst); // Возвращаемся на главный экран
+        // TODO: Навигация на карту с координатами события для выделения
+        // Navigator.pushNamed(context, '/map', arguments: {
+        //   'highlightEventId': eventId,
+        //   'highlightLatitude': lat,
+        //   'highlightLongitude': lng,
+        // });
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage ?? 'Ошибка при создании события')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка сети: ${e.toString()}')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
   }
 
   @override
@@ -485,8 +595,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     alignment: Alignment.center,
                     child: PrimaryButton(
                       text: 'Создать мероприятие',
-                      onPressed: _submit,
+                      onPressed: _loading ? null : _submit,
                       expanded: false,
+                      isLoading: _loading,
                     ),
                   ),
                 ],
