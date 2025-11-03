@@ -68,6 +68,30 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
+  /// Приводим адрес к формату «Город, остальной адрес» для читабельности
+  String _formatPlace(String place) {
+    if (place.isEmpty) return place;
+
+    final parts = place
+        .split(',')
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toList();
+
+    if (parts.length <= 1) {
+      return place;
+    }
+
+    final city = parts.removeLast();
+    final rest = parts.join(', ');
+
+    if (rest.isEmpty) {
+      return city;
+    }
+
+    return '$city, $rest';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -107,6 +131,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final dateFormatted = _eventData!['date_formatted_short'] as String? ?? '';
     final time = _eventData!['event_time'] as String? ?? '';
     final place = _eventData!['place'] as String? ?? '';
+    final placeFormatted = _formatPlace(place);
     final photos = _eventData!['photos'] as List<dynamic>? ?? [];
     final participants = _eventData!['participants'] as List<dynamic>? ?? [];
     final participantsCount = _eventData!['participants_count'] as int? ?? 0;
@@ -214,31 +239,39 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           const SizedBox(height: 6),
                           _InfoRow(
                             icon: CupertinoIcons.location_solid,
-                            text: place,
+                            text: placeFormatted,
                           ),
 
                           if (photos.isNotEmpty) ...[
                             const SizedBox(height: 12),
 
-                            // Фотографии: квадрат, радиус 4, кликабельные — галерея
+                            // Фотографии: всегда 3 ячейки для одинакового размера
                             Row(
-                              children: List.generate(
-                                photos.length > 3 ? 3 : photos.length,
-                                (index) {
-                                  final photoUrl = photos[index] as String;
-                                  return Expanded(
-                                    child: Padding(
-                                      padding: EdgeInsets.only(
-                                        right: index < 2 ? 10 : 0,
-                                      ),
-                                      child: _SquarePhoto(
-                                        photoUrl,
-                                        onTap: () => _openGallery(index),
-                                      ),
+                              children: () {
+                                final widgets = <Widget>[];
+                                for (var index = 0; index < 3; index++) {
+                                  final hasPhoto = index < photos.length;
+                                  final photoUrl = hasPhoto
+                                      ? photos[index] as String
+                                      : '';
+
+                                  widgets.add(
+                                    Expanded(
+                                      child: hasPhoto
+                                          ? _SquarePhoto(
+                                              photoUrl,
+                                              onTap: () => _openGallery(index),
+                                            )
+                                          : const SizedBox.shrink(),
                                     ),
                                   );
-                                },
-                              ),
+
+                                  if (index < 2) {
+                                    widgets.add(const SizedBox(width: 10));
+                                  }
+                                }
+                                return widgets;
+                              }(),
                             ),
                           ],
 
@@ -581,10 +614,16 @@ class EventDescriptionContent extends StatelessWidget {
     const style = TextStyle(fontFamily: 'Inter', fontSize: 14, height: 1.35);
 
     if (description.isEmpty) {
-      return const Text('Описание отсутствует', style: style);
+      return const Align(
+        alignment: Alignment.centerLeft,
+        child: Text('Описание отсутствует', style: style),
+      );
     }
 
-    return Text(description, style: style);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(description, style: style, textAlign: TextAlign.start),
+    );
   }
 }
 
