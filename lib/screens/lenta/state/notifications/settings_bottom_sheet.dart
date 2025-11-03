@@ -19,87 +19,102 @@ class _SettingsSheetState extends State<SettingsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.transparent,
-      child: SafeArea(
-        top: false,
-        bottom: true, // чтобы не заезжать под системную «бороду»
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: SizedBox(
-            width: double.infinity, // на всю ширину
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppRadius.xl), // только верхние углы
-              ),
-              child: Material(
-                color: AppColors.surface,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: 10),
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppColors.border,
-                        borderRadius: BorderRadius.circular(AppRadius.xs),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+    return Stack(
+      children: [
+        // ← барьер для закрытия при клике вне окна
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(color: Colors.transparent),
+          ),
+        ),
+        // ← сам контент sheet
+        SafeArea(
+          top: false,
+          bottom: true, // чтобы не заезжать под системную «бороду»
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: GestureDetector(
+              // ← останавливаем распространение кликов от контента sheet
+              onTap: () {},
+              behavior: HitTestBehavior.opaque,
+              child: SizedBox(
+                width: double.infinity, // на всю ширину
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(AppRadius.xl), // только верхние углы
+                  ),
+                  child: Material(
+                    color: AppColors.surface,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 10),
+                        Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppColors.border,
+                            borderRadius: BorderRadius.circular(AppRadius.xs),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
 
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 0, 4, 0),
-                      child: _ToggleList(
-                        children: [
-                          _ToggleRow(
-                            label: 'Уведомления о новых тренировках',
-                            value: tWorkouts,
-                            onChanged: (v) => setState(() => tWorkouts = v),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 4, 0),
+                          child: _ToggleList(
+                            children: [
+                              _ToggleRow(
+                                label: 'Уведомления о новых тренировках',
+                                value: tWorkouts,
+                                onChanged: (v) => setState(() => tWorkouts = v),
+                              ),
+                              _ToggleRow(
+                                label: 'Уведомления о новых лайках',
+                                value: tLikes,
+                                onChanged: (v) => setState(() => tLikes = v),
+                              ),
+                              _ToggleRow(
+                                label: 'Уведомления о новых комментариях',
+                                value: tComments,
+                                onChanged: (v) => setState(() => tComments = v),
+                              ),
+                              _ToggleRow(
+                                label: 'Уведомления о новых постах',
+                                value: tPosts,
+                                onChanged: (v) => setState(() => tPosts = v),
+                              ),
+                              _ToggleRow(
+                                label: 'Уведомления о новых событиях',
+                                value: tEvents,
+                                onChanged: (v) => setState(() => tEvents = v),
+                              ),
+                              _ToggleRow(
+                                label: 'Уведомления о регистрациях на события',
+                                value: tRegistrations,
+                                onChanged: (v) =>
+                                    setState(() => tRegistrations = v),
+                              ),
+                              _ToggleRow(
+                                label: 'Уведомления о новых подписчиках',
+                                value: tFollowers,
+                                onChanged: (v) =>
+                                    setState(() => tFollowers = v),
+                              ),
+                            ],
                           ),
-                          _ToggleRow(
-                            label: 'Уведомления о новых лайках',
-                            value: tLikes,
-                            onChanged: (v) => setState(() => tLikes = v),
-                          ),
-                          _ToggleRow(
-                            label: 'Уведомления о новых комментариях',
-                            value: tComments,
-                            onChanged: (v) => setState(() => tComments = v),
-                          ),
-                          _ToggleRow(
-                            label: 'Уведомления о новых постах',
-                            value: tPosts,
-                            onChanged: (v) => setState(() => tPosts = v),
-                          ),
-                          _ToggleRow(
-                            label: 'Уведомления о новых событиях',
-                            value: tEvents,
-                            onChanged: (v) => setState(() => tEvents = v),
-                          ),
-                          _ToggleRow(
-                            label: 'Уведомления о регистрациях на события',
-                            value: tRegistrations,
-                            onChanged: (v) =>
-                                setState(() => tRegistrations = v),
-                          ),
-                          _ToggleRow(
-                            label: 'Уведомления о новых подписчиках',
-                            value: tFollowers,
-                            onChanged: (v) => setState(() => tFollowers = v),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
 
-                    const SizedBox(height: 2),
-                  ],
+                        const SizedBox(height: 2),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

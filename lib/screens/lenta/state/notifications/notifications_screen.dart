@@ -42,6 +42,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
+      isDismissible: true, // ← позволяет закрывать при клике вне окна
+      enableDrag: true, // ← позволяет закрывать свайпом вниз
       backgroundColor: Colors.transparent,
       builder: (_) => const SettingsSheet(),
     );
