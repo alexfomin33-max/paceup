@@ -5,46 +5,52 @@ import 'events_bottom_sheet.dart';
 import '../../../../../theme/app_theme.dart';
 import '../../../widgets/transparent_route.dart';
 import '../../../service/api_service.dart';
+import 'dart:convert';
 
-/// Возвращает маркеры для вкладки «События» через API.
-/// Использует FutureBuilder для асинхронной загрузки данных.
-Future<List<Map<String, dynamic>>> eventsMarkersAsync() async {
+/// Возвращает маркеры для вкладки «События».
+/// Загружает данные через API и группирует события по локациям
+Future<List<Map<String, dynamic>>> eventsMarkers(BuildContext context) async {
   try {
     final api = ApiService();
-    final data = await api.get('/get_events.php');
     
-    if (data['success'] == true && data['groups'] != null) {
-      final groups = data['groups'] as List;
-      return groups.map<Map<String, dynamic>>((group) {
-        final lat = group['latitude'] as double;
-        final lng = group['longitude'] as double;
-        final count = group['count'] as int;
-        final cityName = group['city_name'] as String? ?? 'Не указано';
-        final events = group['events'] as List? ?? [];
-        
-        return {
-          'point': LatLng(lat, lng),
-          'title': 'События в $cityName',
-          'count': count,
-          'latitude': lat,
-          'longitude': lng,
-          'events': events, // Список событий для bottom sheet
-        };
-      }).toList();
+    // Загружаем маркеры с группировкой по локациям
+    final data = await api.get(
+      '/get_events.php',
+      queryParams: {'detail': 'false'},
+    );
+    
+    if (data['success'] != true) {
+      return [];
     }
     
-    return [];
+    final markers = data['markers'] as List<dynamic>? ?? [];
+    
+    return markers.map<Map<String, dynamic>>((marker) {
+      final lat = (marker['latitude'] as num).toDouble();
+      final lng = (marker['longitude'] as num).toDouble();
+      final count = marker['count'] as int? ?? 0;
+      final place = marker['place'] as String? ?? '';
+      final events = marker['events'] as List<dynamic>? ?? [];
+      
+      // Формируем заголовок для bottom sheet
+      String title = 'События';
+      if (place.isNotEmpty) {
+        title = 'События в $place';
+      }
+      
+      return {
+        'point': LatLng(lat, lng),
+        'title': title,
+        'count': count,
+        'events': events,
+        'latitude': lat,
+        'longitude': lng,
+      };
+    }).toList();
   } catch (e) {
     // В случае ошибки возвращаем пустой список
-    debugPrint('Ошибка загрузки событий: $e');
     return [];
   }
-}
-
-/// Синхронная функция-обертка для обратной совместимости.
-/// Возвращает пустой список (реальные данные загружаются асинхронно в map_screen.dart).
-List<Map<String, dynamic>> eventsMarkers(BuildContext context) {
-  return []; // Реальные данные загружаются через eventsMarkersAsync
 }
 
 /// ——— Кнопки снизу для вкладки «События» (оставляем как было) ———

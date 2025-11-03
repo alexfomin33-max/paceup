@@ -359,10 +359,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
           const SnackBar(content: Text('Событие успешно создано')),
         );
 
-        // Закрываем экран создания события
-        // После закрытия пользователь увидит карту (если она была открыта через bottom nav)
-        // Маркеры событий обновятся автоматически при переключении на вкладку событий
-        Navigator.of(context).pop(true); // Возвращаем true как признак успешного создания
+        // Закрываем экран создания события и возвращаемся на карту
+        // Экран создания события открывается с карты, поэтому просто закрываем его
+        Navigator.of(context).pop();
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
