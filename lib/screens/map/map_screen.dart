@@ -36,10 +36,44 @@ class _MapScreenState extends State<MapScreen> {
     3: AppColors.accentPurple, // попутчики
   };
 
+  // Состояние для маркеров событий (загружаются через API)
+  List<Map<String, dynamic>> _eventsMarkers = [];
+  bool _eventsLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Загружаем маркеры событий при инициализации
+    _loadEventsMarkers();
+  }
+
+  /// Загрузка маркеров событий через API
+  Future<void> _loadEventsMarkers() async {
+    if (_selectedIndex != 0) return; // Загружаем только для вкладки событий
+
+    setState(() => _eventsLoading = true);
+    try {
+      final markers = await ev.eventsMarkersAsync();
+      if (mounted) {
+        setState(() {
+          _eventsMarkers = markers;
+          _eventsLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _eventsMarkers = [];
+          _eventsLoading = false;
+        });
+      }
+    }
+  }
+
   List<Map<String, dynamic>> _markersForTab(BuildContext context) {
     switch (_selectedIndex) {
       case 0:
-        return ev.eventsMarkers(context);
+        return _eventsMarkers; // Используем загруженные через API маркеры
       case 1:
         return clb.clubsMarkers(context);
       case 2:
@@ -89,7 +123,6 @@ class _MapScreenState extends State<MapScreen> {
                   final LatLng point = m['point'] as LatLng;
                   final String title = m['title'] as String;
                   final int count = m['count'] as int;
-                  final Widget? content = m['content'] as Widget?;
 
                   return Marker(
                     point: point,
@@ -100,11 +133,13 @@ class _MapScreenState extends State<MapScreen> {
                         final Widget sheet = () {
                           switch (_selectedIndex) {
                             case 0:
+                              // Получаем список событий из маркера
+                              final events = m['events'] as List? ?? [];
                               return ebs.EventsBottomSheet(
                                 title: title,
-                                child:
-                                    content ??
-                                    const ebs.EventsSheetPlaceholder(),
+                                latitude: m['latitude'] as double?,
+                                longitude: m['longitude'] as double?,
+                                events: events,
                               );
                             case 1:
                               return cbs.ClubsBottomSheet(
@@ -189,7 +224,13 @@ class _MapScreenState extends State<MapScreen> {
                   children: List.generate(tabs.length, (index) {
                     final isSelected = _selectedIndex == index;
                     return GestureDetector(
-                      onTap: () => setState(() => _selectedIndex = index),
+                      onTap: () {
+                        setState(() => _selectedIndex = index);
+                        // Перезагружаем маркеры при переключении на вкладку событий
+                        if (index == 0) {
+                          _loadEventsMarkers();
+                        }
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
