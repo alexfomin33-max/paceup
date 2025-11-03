@@ -49,7 +49,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   // ── состояние ошибок валидации (какие поля должны быть подсвечены красным)
   final Set<String> _errorFields = {};
-  
+
   // ── состояние загрузки
   bool _loading = false;
 
@@ -285,27 +285,27 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
     // ── форма валидна — отправляем на сервер
     setState(() => _loading = true);
-    
+
     final api = ApiService();
     final authService = AuthService();
-    
+
     try {
       // Формируем данные
       final files = <String, File>{};
       final fields = <String, String>{};
-      
+
       // Добавляем логотип
       if (logoFile != null) {
         files['logo'] = logoFile!;
       }
-      
+
       // Добавляем фотографии
       for (int i = 0; i < photos.length; i++) {
         if (photos[i] != null) {
           files['images[$i]'] = photos[i]!;
         }
       }
-      
+
       // Добавляем поля формы
       final userId = await authService.getUserId();
       fields['user_id'] = userId?.toString() ?? '1';
@@ -323,15 +323,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
       if (saveTemplate && templateCtrl.text.trim().isNotEmpty) {
         fields['template_name'] = templateCtrl.text.trim();
       }
-      
+
       // Отправляем запрос
       Map<String, dynamic> data;
       if (files.isEmpty) {
         // JSON запрос без файлов
-        data = await api.post(
-          '/create_event.php',
-          body: fields,
-        );
+        data = await api.post('/create_event.php', body: fields);
       } else {
         // Multipart запрос с файлами
         data = await api.postMultipart(
@@ -341,11 +338,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
           timeout: const Duration(seconds: 60),
         );
       }
-      
+
       // Проверяем ответ
       bool success = false;
       String? errorMessage;
-      
+
       if (data['success'] == true) {
         success = true;
       } else if (data['success'] == false) {
@@ -353,22 +350,23 @@ class _AddEventScreenState extends State<AddEventScreen> {
       } else {
         errorMessage = 'Неожиданный формат ответа сервера';
       }
-      
+
       if (success) {
-        final eventId = data['event_id'];
-        final lat = data['latitude'] as double?;
-        final lng = data['longitude'] as double?;
-        
         if (!mounted) return;
-        
+
         // Показываем успешное сообщение
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Событие успешно создано')),
         );
-        
+
         // Редирект на карту с выделением события
-        Navigator.of(context).popUntil((route) => route.isFirst); // Возвращаемся на главный экран
+        Navigator.of(
+          context,
+        ).popUntil((route) => route.isFirst); // Возвращаемся на главный экран
         // TODO: Навигация на карту с координатами события для выделения
+        // final eventId = data['event_id'];
+        // final lat = data['latitude'] as double?;
+        // final lng = data['longitude'] as double?;
         // Navigator.pushNamed(context, '/map', arguments: {
         //   'highlightEventId': eventId,
         //   'highlightLatitude': lat,
@@ -377,14 +375,16 @@ class _AddEventScreenState extends State<AddEventScreen> {
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage ?? 'Ошибка при создании события')),
+          SnackBar(
+            content: Text(errorMessage ?? 'Ошибка при создании события'),
+          ),
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка сети: ${e.toString()}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Ошибка сети: ${e.toString()}')));
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -595,7 +595,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     alignment: Alignment.center,
                     child: PrimaryButton(
                       text: 'Создать мероприятие',
-                      onPressed: _loading ? null : _submit,
+                      onPressed: () {
+                        if (!_loading) _submit();
+                      },
                       expanded: false,
                       isLoading: _loading,
                     ),
