@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
 import '../../../../widgets/interactive_back_swipe.dart';
+import '../../../../widgets/transparent_route.dart';
+import 'personal_chat_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -69,7 +71,10 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           itemBuilder: (context, i) {
             final c = _items[i];
-            return Padding(
+            // ─── Обработчик клика для первого чата (Александр Палаткин) ───
+            final isFirstChat = i == 0 && c.name == 'Александр Палаткин';
+
+            Widget chatRow = Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,6 +144,27 @@ class _ChatScreenState extends State<ChatScreen> {
                 ],
               ),
             );
+
+            // ─── Оборачиваем первый чат в GestureDetector для навигации ───
+            if (isFirstChat) {
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  Navigator.of(context).push(
+                    TransparentPageRoute(
+                      builder: (_) => PersonalChatScreen(
+                        userName: c.name,
+                        userAvatar: c.avatar,
+                        lastSeen: 'Был 5 минут назад',
+                      ),
+                    ),
+                  );
+                },
+                child: chatRow,
+              );
+            }
+
+            return chatRow;
           },
         ),
       ),
