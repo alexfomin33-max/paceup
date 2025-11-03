@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../../theme/app_theme.dart';
+import '../../../../../../../widgets/more_menu_overlay.dart';
 
 class ViewingSneakersContent extends StatelessWidget {
   const ViewingSneakersContent({super.key});
@@ -37,7 +38,7 @@ class ViewingSneakersContent extends StatelessWidget {
 }
 
 /// Публичная карточка для «Просмотра снаряжения»
-class GearViewCard extends StatelessWidget {
+class GearViewCard extends StatefulWidget {
   final String brand;
   final String model;
   final String asset;
@@ -78,6 +79,48 @@ class GearViewCard extends StatelessWidget {
        thirdLabel = 'Скорость';
 
   @override
+  State<GearViewCard> createState() => _GearViewCardState();
+}
+
+class _GearViewCardState extends State<GearViewCard> {
+  /// Ключ для привязки всплывающего меню к кнопке "три точки"
+  final GlobalKey _menuKey = GlobalKey();
+
+  /// Показать всплывающее меню с действиями для карточки снаряжения
+  void _showMenu(BuildContext context) {
+    final items = <MoreMenuItem>[
+      MoreMenuItem(
+        text: 'Сделать основными',
+        icon: CupertinoIcons.star_fill,
+        onTap: () {
+          // TODO: Реализовать логику установки как основных
+        },
+      ),
+      MoreMenuItem(
+        text: 'Редактировать',
+        icon: CupertinoIcons.pencil,
+        onTap: () {
+          // TODO: Реализовать логику редактирования
+        },
+      ),
+      MoreMenuItem(
+        text: 'Удалить',
+        icon: CupertinoIcons.minus_circle,
+        iconColor: AppColors.error,
+        textStyle: const TextStyle(color: AppColors.error),
+        onTap: () {
+          // TODO: Реализовать логику удаления
+        },
+      ),
+    ];
+
+    MoreMenuOverlay(
+      anchorKey: _menuKey,
+      items: items,
+    ).show(context);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -99,7 +142,7 @@ class GearViewCard extends StatelessWidget {
                     text: TextSpan(
                       children: [
                         TextSpan(
-                          text: '$brand ',
+                          text: '${widget.brand} ',
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 15,
@@ -108,7 +151,7 @@ class GearViewCard extends StatelessWidget {
                           ),
                         ),
                         TextSpan(
-                          text: model,
+                          text: widget.model,
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 15,
@@ -121,7 +164,8 @@ class GearViewCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  onPressed: () {},
+                  key: _menuKey,
+                  onPressed: () => _showMenu(context),
                   tooltip: 'Меню',
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
@@ -139,7 +183,7 @@ class GearViewCard extends StatelessWidget {
           ),
 
           // ── Чип «Основные/Основной» сразу под названием
-          if (mainBadgeText != null)
+          if (widget.mainBadgeText != null)
             Padding(
               padding: const EdgeInsets.only(left: 12, bottom: 6),
               child: Container(
@@ -152,7 +196,7 @@ class GearViewCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.xl), // пилюля
                 ),
                 child: Text(
-                  mainBadgeText!,
+                  widget.mainBadgeText!,
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 11,
@@ -168,7 +212,7 @@ class GearViewCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: AspectRatio(
               aspectRatio: 16 / 7.8,
-              child: Image.asset(asset, fit: BoxFit.contain),
+              child: Image.asset(widget.asset, fit: BoxFit.contain),
             ),
           ),
 
@@ -186,7 +230,7 @@ class GearViewCard extends StatelessWidget {
                   children: [
                     const TextSpan(text: 'Пробег '),
                     TextSpan(
-                      text: '$km',
+                      text: '${widget.km}',
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
@@ -213,9 +257,9 @@ class GearViewCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             child: Row(
               children: [
-                _metric('Тренировок', '$workouts'),
-                _metric('Время', '$hours ч'),
-                _metric(thirdLabel, thirdValue),
+                _metric('Тренировок', '${widget.workouts}'),
+                _metric('Время', '${widget.hours} ч'),
+                _metric(widget.thirdLabel, widget.thirdValue),
               ],
             ),
           ),
@@ -224,7 +268,7 @@ class GearViewCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
             child: Text(
-              since,
+              widget.since,
               style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,

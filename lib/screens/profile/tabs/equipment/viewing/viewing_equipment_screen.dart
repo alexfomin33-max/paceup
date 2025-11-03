@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../theme/app_theme.dart';
 import '../../../../../widgets/segmented_pill.dart'; // ← глобальная пилюля
+import '../../../../../widgets/more_menu_hub.dart';
 import 'tabs/sneakers/viewing_sneakers_content.dart';
 import 'tabs/bike/viewing_bike_content.dart';
 
@@ -143,11 +144,23 @@ class _TabScroller extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        child: child,
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        // ────────── Скрываем меню при скролле ──────────
+        if (notification is ScrollStartNotification ||
+            notification is ScrollUpdateNotification ||
+            notification is OverscrollNotification ||
+            notification is UserScrollNotification) {
+          MoreMenuHub.hide();
+        }
+        return false;
+      },
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          child: child,
+        ),
       ),
     );
   }
