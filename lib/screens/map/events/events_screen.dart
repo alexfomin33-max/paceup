@@ -5,39 +5,47 @@ import 'events_bottom_sheet.dart';
 import 'events_filters_bottom_sheet.dart';
 import '../../../../../theme/app_theme.dart';
 import '../../../widgets/transparent_route.dart';
+import '../../../service/api_service.dart';
 
-/// Возвращает маркеры для вкладки «События».
+/// Возвращает маркеры для вкладки «События» через API.
+/// Использует FutureBuilder для асинхронной загрузки данных.
+Future<List<Map<String, dynamic>>> eventsMarkersAsync() async {
+  try {
+    final api = ApiService();
+    final data = await api.get('/get_events.php');
+    
+    if (data['success'] == true && data['groups'] != null) {
+      final groups = data['groups'] as List;
+      return groups.map<Map<String, dynamic>>((group) {
+        final lat = group['latitude'] as double;
+        final lng = group['longitude'] as double;
+        final count = group['count'] as int;
+        final cityName = group['city_name'] as String? ?? 'Не указано';
+        final events = group['events'] as List? ?? [];
+        
+        return {
+          'point': LatLng(lat, lng),
+          'title': 'События в $cityName',
+          'count': count,
+          'latitude': lat,
+          'longitude': lng,
+          'events': events, // Список событий для bottom sheet
+        };
+      }).toList();
+    }
+    
+    return [];
+  } catch (e) {
+    // В случае ошибки возвращаем пустой список
+    debugPrint('Ошибка загрузки событий: $e');
+    return [];
+  }
+}
+
+/// Синхронная функция-обертка для обратной совместимости.
+/// Возвращает пустой список (реальные данные загружаются асинхронно в map_screen.dart).
 List<Map<String, dynamic>> eventsMarkers(BuildContext context) {
-  return [
-    {
-      'point': const LatLng(56.129057, 40.406635),
-      'title': 'События во Владимире',
-      'count': 2,
-      'content': const EventsListVladimir(), // ← перенесённый виджет
-    },
-    {
-      'point': const LatLng(55.755864, 37.617698),
-      'title': 'События в Москве',
-      'count': 5,
-      'content': const EventsSheetText('Москва: подборка событий скоро здесь'),
-    },
-    {
-      'point': const LatLng(56.739194, 38.854382),
-      'title': 'События в Переславле-Залесском',
-      'count': 3,
-      'content': const EventsSheetText(
-        'Переславль-Залесский: подборка событий скоро здесь',
-      ),
-    },
-    {
-      'point': const LatLng(57.767918, 40.926894),
-      'title': 'События в Костроме',
-      'count': 1,
-      'content': const EventsSheetText(
-        'Кострома: подборка событий скоро здесь',
-      ),
-    },
-  ];
+  return []; // Реальные данные загружаются через eventsMarkersAsync
 }
 
 /// ——— Кнопки снизу для вкладки «События» (оставляем как было) ———

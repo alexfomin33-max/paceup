@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
-import 'coffeerun/coffeerun_screen.dart';
+import '../../../service/api_service.dart';
+import 'event_detail_screen.dart';
 
 /// Каркас bottom sheet для вкладки «События».
 class EventsBottomSheet extends StatelessWidget {
   final String title;
-  final Widget child;
+  final List<dynamic> events; // Список событий из API (краткая версия)
+  final double? latitude;
+  final double? longitude;
   final double maxHeightFraction;
 
   const EventsBottomSheet({
     super.key,
     required this.title,
-    required this.child,
-    this.maxHeightFraction = 0.4, // не выше 50% экрана
+    required this.events,
+    this.latitude,
+    this.longitude,
+    this.maxHeightFraction = 0.6, // увеличен до 60% для списка событий
   });
 
   @override
@@ -55,18 +60,24 @@ class EventsBottomSheet extends StatelessWidget {
               Container(height: 1, color: AppColors.border),
               const SizedBox(height: 6),
 
-              // контент
+              // контент: список событий
               Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 2,
-                      vertical: 2,
-                    ),
-                    child: child,
-                  ),
-                ),
+                child: events.isEmpty
+                    ? const EventsSheetPlaceholder()
+                    : SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 2,
+                            vertical: 2,
+                          ),
+                          child: EventsListFromApi(
+                            events: events,
+                            latitude: latitude,
+                            longitude: longitude,
+                          ),
+                        ),
+                      ),
               ),
 
               const SizedBox(height: 10),
@@ -101,84 +112,134 @@ class EventsSheetText extends StatelessWidget {
   }
 }
 
-/// Список событий для Владимира (замена _VladimirEvents)
-class EventsListVladimir extends StatelessWidget {
-  const EventsListVladimir({super.key});
+/// Список событий из API для отображения в bottom sheet
+class EventsListFromApi extends StatelessWidget {
+  final List<dynamic> events; // Краткая версия событий
+  final double? latitude;
+  final double? longitude;
+
+  const EventsListFromApi({
+    super.key,
+    required this.events,
+    this.latitude,
+    this.longitude,
+  });
+
+  /// Загрузка детальной информации о событии по ID
+  Future<Map<String, dynamic>?> _loadEventDetails(int eventId) async {
+    try {
+      final api = ApiService();
+      final data = await api.get('/get_events.php', queryParams: {
+        'event_id': eventId.toString(),
+      });
+      if (data['success'] == true && data['event'] != null) {
+        return data['event'] as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('Ошибка загрузки детальной информации о событии: $e');
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Универсальная строка карточки. Если есть onTap — делаем кликабельной.
-    Widget cardRow({
-      required String asset,
-      required String title,
-      required String subtitle,
-      VoidCallback? onTap,
-    }) {
-      final row = Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-            child: Image.asset(asset, width: 80, height: 55, fit: BoxFit.cover),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  title,
-                  style: AppTextStyles.h14w6,
-                ),
-                const SizedBox(height: 6),
-                Text(subtitle, style: AppTextStyles.h13w4),
-              ],
-            ),
-          ),
-        ],
-      );
-
-      if (onTap == null) return row;
-
-      return Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          onTap: onTap,
-          child: row,
-        ),
-      );
-    }
-
     return Padding(
-      // небольшой нижний отступ, чтобы не прилипало к краю шита
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
+      padding: const EdgeInsets.only(bottom: 40),
       child: Column(
         children: [
-          // Карточка 1 — кликабельная → открывает «Субботний коферан»
-          cardRow(
-            asset: 'assets/Vlad_event_1.png',
-            title: 'Субботний коферан',
-            subtitle: '14 июня 2025  ·  Участников: 32',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const CoffeerunScreen()),
-              );
-            },
-          ),
-
-          const _ClubsDivider(),
-
-          // Карточка 2
-          cardRow(
-            asset: 'assets/Vlad_event_2.png',
-            title: 'Владимирский полумарафон «Золотые ворота»',
-            subtitle: '31 августа 2025  ·  Участников: 1426',
-          ),
-          const _ClubsDivider(),
+          for (int i = 0; i < events.length; i++) ...[
+            if (i > 0) const _ClubsDivider(),
+            _EventCard(
+              eventId: events[i]['id'] as int,
+              name: events[i]['name'] as String? ?? 'Название события',
+              participantsCount: events[i]['participants_count'] as int? ?? 0,
+              onTap: () async {
+                // Загружаем детальную информацию и открываем экран
+                final details = await _loadEventDetails(events[i]['id'] as int);
+                if (context.mounted && details != null) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => EventDetailScreen(eventData: details),
+                    ),
+                  );
+                } else if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Не удалось загрузить информацию о событии'),
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+/// Карточка события в списке
+class _EventCard extends StatelessWidget {
+  final int eventId;
+  final String name;
+  final int participantsCount;
+  final VoidCallback onTap;
+
+  const _EventCard({
+    required this.eventId,
+    required this.name,
+    required this.participantsCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Плейсхолдер для изображения (80x55)
+              Container(
+                width: 80,
+                height: 55,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                ),
+                child: const Icon(
+                  Icons.event,
+                  color: AppColors.textSecondary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.h14w6,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Участников: $participantsCount',
+                      style: AppTextStyles.h13w4,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

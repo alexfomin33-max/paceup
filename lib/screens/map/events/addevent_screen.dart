@@ -359,19 +359,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
           const SnackBar(content: Text('Событие успешно создано')),
         );
 
-        // Редирект на карту с выделением события
-        Navigator.of(
-          context,
-        ).popUntil((route) => route.isFirst); // Возвращаемся на главный экран
-        // TODO: Навигация на карту с координатами события для выделения
-        // final eventId = data['event_id'];
-        // final lat = data['latitude'] as double?;
-        // final lng = data['longitude'] as double?;
-        // Navigator.pushNamed(context, '/map', arguments: {
-        //   'highlightEventId': eventId,
-        //   'highlightLatitude': lat,
-        //   'highlightLongitude': lng,
-        // });
+        // Закрываем экран создания события
+        // После закрытия пользователь увидит карту (если она была открыта через bottom nav)
+        // Маркеры событий обновятся автоматически при переключении на вкладку событий
+        Navigator.of(context).pop(true); // Возвращаем true как признак успешного создания
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
