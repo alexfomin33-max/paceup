@@ -345,8 +345,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
             const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-            // ───────── ЕДИНЫЙ нижний блок: вкладки + контент (без анимации)
-            SliverToBoxAdapter(
+            // ───────── ЕДИНЫЙ нижний блок: вкладки + контент (растягивается до низа)
+            SliverFillRemaining(
+              hasScrollBody: false,
               child: Container(
                 decoration: const BoxDecoration(
                   color: AppColors.surface,
@@ -356,6 +357,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                 ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Вкладки: каждая — в своей половине, центрирование текста, больше высота
                     SizedBox(
@@ -387,26 +389,25 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
                     const Divider(height: 1, color: AppColors.border),
 
-                    // Контент активной вкладки — без AnimatedSwitcher
-                    if (_tab == 0)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                        child: EventDescriptionContent(
-                          description:
-                              _eventData!['description'] as String? ?? '',
-                        ),
-                      )
-                    else
-                      Padding(
-                        padding: const EdgeInsets.only(top: 0, bottom: 0),
-                        child: EventMembersContent(participants: participants),
-                      ),
+                    // Контент активной вкладки — растягивается до низа
+                    Expanded(
+                      child: _tab == 0
+                          ? Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                              child: EventDescriptionContent(
+                                description:
+                                    _eventData!['description'] as String? ?? '',
+                              ),
+                            )
+                          : Padding(
+                              padding: const EdgeInsets.only(top: 0, bottom: 0),
+                              child: EventMembersContent(participants: participants),
+                            ),
+                    ),
                   ],
                 ),
               ),
             ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
         ),
       ),
@@ -615,13 +616,13 @@ class EventDescriptionContent extends StatelessWidget {
 
     if (description.isEmpty) {
       return const Align(
-        alignment: Alignment.centerLeft,
+        alignment: Alignment.topLeft,
         child: Text('Описание отсутствует', style: style),
       );
     }
 
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: Alignment.topLeft,
       child: Text(description, style: style, textAlign: TextAlign.start),
     );
   }

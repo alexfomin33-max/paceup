@@ -26,6 +26,9 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   int _selectedIndex = 0;
 
+  /// Контроллер карты для управления zoom и центром
+  final MapController _mapController = MapController();
+
   final tabs = const ["События", "Клубы", "Слоты", "Попутчики"];
 
   /// Цвета маркеров по вкладкам
@@ -48,10 +51,67 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  /// ──────────── Автоматическая подстройка zoom под маркеры ────────────
+  /// Вычисляет границы всех маркеров и подстраивает карту
+  void _fitBoundsToMarkers(List<Map<String, dynamic>> markers) {
+    if (markers.isEmpty) return;
+
+    // Извлекаем точки из маркеров
+    final points = markers
+        .map((m) => m['point'] as LatLng?)
+        .whereType<LatLng>()
+        .toList();
+
+    if (points.isEmpty) return;
+
+    // Если маркер один, устанавливаем центр и разумный zoom
+    if (points.length == 1) {
+      _mapController.move(
+        points.first,
+        12.0, // Zoom для одного маркера
+      );
+      return;
+    }
+
+    // Вычисляем границы для нескольких маркеров
+    double minLat = points.first.latitude;
+    double maxLat = points.first.latitude;
+    double minLng = points.first.longitude;
+    double maxLng = points.first.longitude;
+
+    for (final point in points) {
+      minLat = minLat < point.latitude ? minLat : point.latitude;
+      maxLat = maxLat > point.latitude ? maxLat : point.latitude;
+      minLng = minLng < point.longitude ? minLng : point.longitude;
+      maxLng = maxLng > point.longitude ? maxLng : point.longitude;
+    }
+
+    // Создаём bounds и подстраиваем карту с отступами
+    final bounds = LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng));
+
+    _mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: bounds,
+        padding: const EdgeInsets.only(
+          left: 30,
+          right: 30,
+          top: 160,
+          bottom: 130,
+        ), // Отступы: 50px по бокам, 150px сверху/снизу
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final markerColor = markerColors[_selectedIndex] ?? AppColors.brandPrimary;
-    
+
     // Для событий используем FutureBuilder, для остальных - синхронные данные
     if (_selectedIndex == 0) {
       return Scaffold(
@@ -63,6 +123,10 @@ class _MapScreenState extends State<MapScreen> {
               future: ev.eventsMarkers(context),
               builder: (context, snapshot) {
                 final markers = snapshot.data ?? [];
+                // Подстраиваем zoom после загрузки маркеров
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _fitBoundsToMarkers(markers);
+                });
                 return _buildMap(markers, markerColor);
               },
             ),
@@ -72,12 +136,19 @@ class _MapScreenState extends State<MapScreen> {
         ),
       );
     }
-    
+
     final markers = _markersForTabSync(context);
+    // Подстраиваем zoom при изменении вкладки
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fitBoundsToMarkers(markers);
+    });
     return _buildMapWithMarkers(markers, markerColor);
   }
-  
-  Widget _buildMapWithMarkers(List<Map<String, dynamic>> markers, Color markerColor) {
+
+  Widget _buildMapWithMarkers(
+    List<Map<String, dynamic>> markers,
+    Color markerColor,
+  ) {
     return Scaffold(
       body: Stack(
         children: [
@@ -93,9 +164,14 @@ class _MapScreenState extends State<MapScreen> {
 
   Widget _buildMap(List<Map<String, dynamic>> markers, Color markerColor) {
     return FlutterMap(
-      options: const MapOptions(
+      mapController: _mapController,
+      options: MapOptions(
         initialCenter: LatLng(56.129057, 40.406635),
         initialZoom: 6.0,
+        onMapReady: () {
+          // Подстраиваем zoom после инициализации карты
+          _fitBoundsToMarkers(markers);
+        },
       ),
       children: [
         TileLayer(
@@ -108,18 +184,15 @@ class _MapScreenState extends State<MapScreen> {
           retinaMode: false,
         ),
         const RichAttributionWidget(
-          attributions: [
-            TextSourceAttribution(
-              'MapTiler © OpenStreetMap',
-            ),
-          ],
+          attributions: [TextSourceAttribution('MapTiler © OpenStreetMap')],
         ),
         MarkerLayer(
           markers: markers.map((m) {
             final LatLng point = m['point'] as LatLng;
             final String title = m['title'] as String;
             final int count = m['count'] as int;
-            final dynamic events = m['events']; // Для событий храним список событий
+            final dynamic events =
+                m['events']; // Для событий храним список событий
             final Widget? content = m['content'] as Widget?;
 
             return Marker(
@@ -145,24 +218,19 @@ class _MapScreenState extends State<MapScreen> {
                       case 1:
                         return cbs.ClubsBottomSheet(
                           title: title,
-                          child:
-                              content ??
-                              const cbs.ClubsSheetPlaceholder(),
+                          child: content ?? const cbs.ClubsSheetPlaceholder(),
                         );
                       case 2:
                         return sbs.SlotsBottomSheet(
                           title: title,
-                          child:
-                              content ??
-                              const sbs.SlotsSheetPlaceholder(),
+                          child: content ?? const sbs.SlotsSheetPlaceholder(),
                         );
                       case 3:
                       default:
                         return tbs.TravelersBottomSheet(
                           title: title,
                           child:
-                              content ??
-                              const tbs.TravelersSheetPlaceholder(),
+                              content ?? const tbs.TravelersSheetPlaceholder(),
                         );
                     }
                   }();
@@ -201,7 +269,7 @@ class _MapScreenState extends State<MapScreen> {
       ],
     );
   }
-  
+
   Widget _buildTabs() {
     return Positioned(
       top: MediaQuery.of(context).padding.top + 16,
