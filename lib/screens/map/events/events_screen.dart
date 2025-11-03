@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'addevent_screen.dart';
-import 'events_bottom_sheet.dart';
 import 'events_filters_bottom_sheet.dart';
 import '../../../../../theme/app_theme.dart';
 import '../../../widgets/transparent_route.dart';
 import '../../../service/api_service.dart';
-import 'dart:convert';
 
 /// Возвращает маркеры для вкладки «События».
 /// Загружает данные через API и группирует события по локациям

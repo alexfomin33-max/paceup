@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
-import 'coffeerun/coffeerun_screen.dart';
 import 'event_detail_screen.dart';
 
 /// Каркас bottom sheet для вкладки «События».
@@ -102,89 +101,6 @@ class EventsSheetText extends StatelessWidget {
   }
 }
 
-/// Список событий для Владимира (замена _VladimirEvents)
-class EventsListVladimir extends StatelessWidget {
-  const EventsListVladimir({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Универсальная строка карточки. Если есть onTap — делаем кликабельной.
-    Widget cardRow({
-      required String asset,
-      required String title,
-      required String subtitle,
-      VoidCallback? onTap,
-    }) {
-      final row = Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-            child: Image.asset(asset, width: 80, height: 55, fit: BoxFit.cover),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  title,
-                  style: AppTextStyles.h14w6,
-                ),
-                const SizedBox(height: 6),
-                Text(subtitle, style: AppTextStyles.h13w4),
-              ],
-            ),
-          ),
-        ],
-      );
-
-      if (onTap == null) return row;
-
-      return Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          onTap: onTap,
-          child: row,
-        ),
-      );
-    }
-
-    return Padding(
-      // небольшой нижний отступ, чтобы не прилипало к краю шита
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
-      child: Column(
-        children: [
-          // Карточка 1 — кликабельная → открывает «Субботний коферан»
-          cardRow(
-            asset: 'assets/Vlad_event_1.png',
-            title: 'Субботний коферан',
-            subtitle: '14 июня 2025  ·  Участников: 32',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const CoffeerunScreen()),
-              );
-            },
-          ),
-
-          const _ClubsDivider(),
-
-          // Карточка 2
-          cardRow(
-            asset: 'assets/Vlad_event_2.png',
-            title: 'Владимирский полумарафон «Золотые ворота»',
-            subtitle: '31 августа 2025  ·  Участников: 1426',
-          ),
-          const _ClubsDivider(),
-        ],
-      ),
-    );
-  }
-}
-
 class _ClubsDivider extends StatelessWidget {
   const _ClubsDivider();
   @override
@@ -214,10 +130,7 @@ class EventsListFromApi extends StatelessWidget {
     if (events.isEmpty) {
       return const Padding(
         padding: EdgeInsets.only(bottom: 40),
-        child: Text(
-          'События не найдены',
-          style: TextStyle(fontSize: 14),
-        ),
+        child: Text('События не найдены', style: TextStyle(fontSize: 14)),
       );
     }
 

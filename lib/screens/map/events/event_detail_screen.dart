@@ -3,17 +3,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../../../service/api_service.dart';
-import 'tabs/description_content.dart';
-import 'tabs/members_content.dart';
 
 /// Детальная страница события (на основе coffeerun_screen.dart)
 class EventDetailScreen extends StatefulWidget {
   final int eventId;
 
-  const EventDetailScreen({
-    super.key,
-    required this.eventId,
-  });
+  const EventDetailScreen({super.key, required this.eventId});
 
   @override
   State<EventDetailScreen> createState() => _EventDetailScreenState();
@@ -68,10 +63,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     showDialog(
       context: context,
       barrierColor: AppColors.scrim40,
-      builder: (_) => _GalleryViewer(
-        images: photos.cast<String>(),
-        startIndex: startIndex,
-      ),
+      builder: (_) =>
+          _GalleryViewer(images: photos.cast<String>(), startIndex: startIndex),
     );
   }
 
@@ -80,9 +73,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     if (_loading) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -163,12 +154,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                             fit: BoxFit.cover,
                                             errorBuilder: (_, __, ___) =>
                                                 Container(
-                                              width: 92,
-                                              height: 92,
-                                              color: AppColors.border,
-                                              child: const Icon(Icons.image,
-                                                  size: 48),
-                                            ),
+                                                  width: 92,
+                                                  height: 92,
+                                                  color: AppColors.border,
+                                                  child: const Icon(
+                                                    Icons.image,
+                                                    size: 48,
+                                                  ),
+                                                ),
                                           ),
                                         )
                                       : Container(
@@ -178,8 +171,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                             color: AppColors.border,
                                             shape: BoxShape.circle,
                                           ),
-                                          child: const Icon(Icons.event,
-                                              size: 48),
+                                          child: const Icon(
+                                            Icons.event,
+                                            size: 48,
+                                          ),
                                         ),
                                 ),
                               ),
@@ -364,16 +359,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                         child: EventDescriptionContent(
-                          description: _eventData!['description'] as String? ??
-                              '',
+                          description:
+                              _eventData!['description'] as String? ?? '',
                         ),
                       )
                     else
                       Padding(
                         padding: const EdgeInsets.only(top: 0, bottom: 0),
-                        child: EventMembersContent(
-                          participants: participants,
-                        ),
+                        child: EventMembersContent(participants: participants),
                       ),
                   ],
                 ),
@@ -581,18 +574,11 @@ class _GalleryViewerState extends State<_GalleryViewer> {
 /// Контент описания события из API
 class EventDescriptionContent extends StatelessWidget {
   final String description;
-  const EventDescriptionContent({
-    super.key,
-    required this.description,
-  });
+  const EventDescriptionContent({super.key, required this.description});
 
   @override
   Widget build(BuildContext context) {
-    const style = TextStyle(
-      fontFamily: 'Inter',
-      fontSize: 14,
-      height: 1.35,
-    );
+    const style = TextStyle(fontFamily: 'Inter', fontSize: 14, height: 1.35);
 
     if (description.isEmpty) {
       return const Text('Описание отсутствует', style: style);
@@ -605,20 +591,14 @@ class EventDescriptionContent extends StatelessWidget {
 /// Контент участников события из API
 class EventMembersContent extends StatelessWidget {
   final List<dynamic> participants;
-  const EventMembersContent({
-    super.key,
-    required this.participants,
-  });
+  const EventMembersContent({super.key, required this.participants});
 
   @override
   Widget build(BuildContext context) {
     if (participants.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(16),
-        child: Text(
-          'Участники отсутствуют',
-          style: TextStyle(fontSize: 14),
-        ),
+        child: Text('Участники отсутствуют', style: TextStyle(fontSize: 14)),
       );
     }
 
@@ -642,11 +622,7 @@ class EventMembersContent extends StatelessWidget {
               ),
             ),
             if (i != participants.length - 1)
-              const Divider(
-                height: 1,
-                thickness: 0.5,
-                color: AppColors.border,
-              ),
+              const Divider(height: 1, thickness: 0.5, color: AppColors.border),
           ],
         );
       }),
@@ -744,4 +720,3 @@ class _Member {
   final IconData? roleIcon;
   const _Member(this.name, this.role, this.avatar, {this.roleIcon});
 }
-
