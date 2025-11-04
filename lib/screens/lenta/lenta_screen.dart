@@ -323,7 +323,25 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
       // новый глобальный AppBar без стекла/прозрачности
       appBar: PaceAppBar(
-        title: 'PaceUp',
+        titleWidget: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: 'PACE',
+                style: AppTextStyles.h17w6.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              TextSpan(
+                text: 'UP',
+                style: AppTextStyles.h17w6.copyWith(
+                  color: AppColors.greenUP,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
         showBottomDivider: true,
         leadingWidth: 96, // две иконки слева
         // слева — избранное и «создать пост»

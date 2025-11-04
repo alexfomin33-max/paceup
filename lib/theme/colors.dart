@@ -143,6 +143,8 @@ abstract class AppColors {
   static const Color nameFemale = Color(0xFFE02862);
   // Премиальные/«золото»
   static const Color gold = Color(0xFFECA517);
+  // Цвет букв "UP" в логотипе (яркий салатовый/лайм-зеленый)
+  static const Color greenUP = Color(0xFF9bec28);
 
   // ┌───────────────────────────────────────────────────────────────────────┐
   // │ АЛИАСЫ ДЛЯ СОВМЕСТИМОСТИ (СТАРЫЕ ИМЕНА → НОВЫЕ ТОКЕНЫ)                │
