@@ -381,8 +381,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 // ─── Оборачиваем в GestureDetector для навигации ───
                 return GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    Navigator.of(context).push(
+                  onTap: () async {
+                    final result = await Navigator.of(context).push(
                       TransparentPageRoute(
                         builder: (_) => PersonalChatScreen(
                           chatId: chat.id,
@@ -392,6 +392,11 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     );
+                    
+                    // Обновляем список чатов после возврата из чата
+                    if (result == true && mounted) {
+                      await _loadInitial();
+                    }
                   },
                   child: chatRow,
                 );

@@ -110,6 +110,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
     });
 
     await _loadInitial();
+    _markMessagesAsRead(); // Отмечаем сообщения как прочитанные при открытии
     _startPolling();
   }
 
@@ -292,6 +293,23 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
     }
   }
 
+  /// ─── Отметка сообщений как прочитанных ───
+  Future<void> _markMessagesAsRead() async {
+    if (_currentUserId == null) return;
+
+    try {
+      await _api.post(
+        '/mark_messages_read.php',
+        body: {
+          'chat_id': widget.chatId,
+          'user_id': _currentUserId,
+        },
+      );
+    } catch (e) {
+      // Игнорируем ошибки - не критично
+    }
+  }
+
   /// ─── Запуск polling для проверки новых сообщений ───
   void _startPolling() {
     _pollingTimer?.cancel();
@@ -325,6 +343,13 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
             _messages.addAll(newMessages);
             _lastMessageId = response['last_message_id'] as int? ?? _lastMessageId;
           });
+
+          // Отмечаем новые сообщения как прочитанные, если они от другого пользователя
+          // и пользователь находится в чате (экран открыт)
+          final hasIncomingMessages = newMessages.any((msg) => !msg.isMine);
+          if (hasIncomingMessages) {
+            _markMessagesAsRead();
+          }
 
           // Прокрутка вниз при получении новых сообщений
           if (_scrollController.hasClients) {
@@ -368,7 +393,13 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               icon: const Icon(CupertinoIcons.back),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () async {
+                // Отмечаем сообщения как прочитанные перед закрытием
+                await _markMessagesAsRead();
+                if (mounted) {
+                  Navigator.pop(context, true); // Возвращаем true для обновления списка
+                }
+              },
               splashRadius: 18,
             ),
           ),
