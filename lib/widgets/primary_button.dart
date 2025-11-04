@@ -66,6 +66,7 @@ class PrimaryButton extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
+      textBaseline: TextBaseline.alphabetic,
       children: [
         if (isLoading)
           const Padding(
@@ -79,6 +80,7 @@ class PrimaryButton extends StatelessWidget {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style:
                 textStyle ??
                 const TextStyle(
@@ -87,6 +89,7 @@ class PrimaryButton extends StatelessWidget {
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                   color: AppColors.surface, // всегда белый текст
+                  height: 1.0, // убираем лишнюю высоту строки
                 ),
           ),
         ),
@@ -95,9 +98,6 @@ class PrimaryButton extends StatelessWidget {
       ],
     );
 
-    // ── динамический padding: для маленьких кнопок уменьшаем вертикальный отступ
-    final double verticalPadding = height <= 40 ? 0 : 12;
-
     // ── сама кнопка (всегда активна, только isLoading может блокировать)
     final Widget button = ElevatedButton(
       onPressed: canPress ? onPressed : null,
@@ -105,14 +105,16 @@ class PrimaryButton extends StatelessWidget {
         backgroundColor: AppColors.brandPrimary,
         foregroundColor: AppColors.surface,
         elevation: 0,
-        padding: EdgeInsets.symmetric(
+        padding: const EdgeInsets.symmetric(
           horizontal: 28,
-          vertical: verticalPadding,
+          vertical:
+              0, // убираем вертикальный padding, используем только minimumSize
         ),
         shape: const StadiumBorder(), // «капсула» как у вас в дизайне
-        minimumSize: Size(0, height), // фиксируем высоту
+        minimumSize: Size(0, height), // фиксируем высоту через minimumSize
         tapTargetSize:
             MaterialTapTargetSize.shrinkWrap, // убираем лишний тап-таргет
+        alignment: Alignment.center, // выравнивание контента по центру
       ),
       child: content,
     );

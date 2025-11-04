@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../state/search/search_screen.dart';
 import '../../map/clubs/coffeerun_vld/coffeerun_vld_screen.dart';
+import '../../../widgets/primary_button.dart';
 
 class ClubsTab extends StatefulWidget {
   const ClubsTab({super.key});
@@ -69,12 +70,15 @@ class _ClubsTabState extends State<ClubsTab>
 
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-        // Кнопка "Найти клуб"
+        // Кнопка "Найти клуб" (теперь глобальный PrimaryButton)
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Center(
-              child: ElevatedButton.icon(
+              child: PrimaryButton(
+                text: 'Найти клуб',
+                leading: const Icon(CupertinoIcons.search, size: 18),
+                width: MediaQuery.of(context).size.width / 2,
                 onPressed: () {
                   Navigator.of(context).push(
                     CupertinoPageRoute(
@@ -83,25 +87,6 @@ class _ClubsTabState extends State<ClubsTab>
                     ),
                   );
                 },
-                icon: const Icon(CupertinoIcons.search, size: 18),
-                label: const Text(
-                  'Найти клуб',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.brandPrimary,
-                  foregroundColor: AppColors.surface,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30,
-                    vertical: 12,
-                  ),
-                  shape: const StadiumBorder(),
-                ),
               ),
             ),
           ),
@@ -125,9 +110,10 @@ class _ClubCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border, width: 1),
       ),
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 9),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Логотип
           SizedBox(
@@ -149,6 +135,7 @@ class _ClubCard extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w600,
+              height: 1.2,
             ),
           ),
           const SizedBox(height: 6),
@@ -161,7 +148,11 @@ class _ClubCard extends StatelessWidget {
               children: [
                 Text(
                   'Участников: ${_formatMembers(club.members)}',
-                  style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    height: 1.2,
+                  ),
                 ),
               ],
             ),

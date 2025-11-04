@@ -29,7 +29,7 @@ class _RecommendedList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 283,
+      height: 286,
       child: ListView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(
@@ -82,7 +82,7 @@ class _FriendCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 220,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),

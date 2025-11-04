@@ -24,7 +24,8 @@ class MainActivity : FlutterFragmentActivity(), CoroutineScope by MainScope() {
 
     private val CHANNEL = "paceup/route"
 
-    private lateinit var healthClient: HealthConnectClient
+    // HealthConnectClient может быть null, если Health Connect недоступен на устройстве
+    private var healthClient: HealthConnectClient? = null
     private lateinit var routeRequestLauncher: ActivityResultLauncher<String>
 
     // pending ответ в канал (когда ждём одноразовый консент на конкретную сессию)
@@ -33,7 +34,16 @@ class MainActivity : FlutterFragmentActivity(), CoroutineScope by MainScope() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        healthClient = HealthConnectClient.getOrCreate(this)
+        // ───────────────────────── Инициализация Health Connect ─────────────────────────
+        // Проверяем доступность Health Connect перед инициализацией
+        // Если сервис недоступен (не установлен или не активирован), healthClient останется null
+        try {
+            healthClient = HealthConnectClient.getOrCreate(this)
+        } catch (e: IllegalStateException) {
+            // Health Connect недоступен - приложение должно работать без него
+            // Методы через MethodChannel вернут соответствующую ошибку
+            healthClient = null
+        }
 
         routeRequestLauncher =
             registerForActivityResult(ExerciseRouteRequestContract()) { route: ExerciseRoute? ->
@@ -83,10 +93,12 @@ class MainActivity : FlutterFragmentActivity(), CoroutineScope by MainScope() {
     // ───────────────────────── core helpers ─────────────────────────
 
     private suspend fun ensureReadExercisePermission(): Boolean = withContext(Dispatchers.Main) {
+        val client = healthClient ?: return@withContext false
+        
         val needed: Set<String> = setOf(
             HealthPermission.getReadPermission(ExerciseSessionRecord::class)
         )
-        val granted: Set<String> = healthClient.permissionController.getGrantedPermissions()
+        val granted: Set<String> = client.permissionController.getGrantedPermissions()
         if (granted.containsAll(needed)) return@withContext true
 
         val launcher: ActivityResultLauncher<Set<String>> =
@@ -111,6 +123,12 @@ class MainActivity : FlutterFragmentActivity(), CoroutineScope by MainScope() {
     private fun getLatestRoute(days: Int, result: MethodChannel.Result) {
         launch(Dispatchers.Main) {
             try {
+                val client = healthClient
+                if (client == null) {
+                    result.error("health_connect_unavailable", "Health Connect недоступен на этом устройстве", null)
+                    return@launch
+                }
+
                 if (!ensureReadExercisePermission()) {
                     result.error("no_permission", "Нет разрешения на чтение тренировок", null)
                     return@launch
@@ -120,7 +138,7 @@ class MainActivity : FlutterFragmentActivity(), CoroutineScope by MainScope() {
                 val start = end.minus(Duration.ofDays(days.toLong()))
 
                 val sessions = withContext(Dispatchers.IO) {
-                    healthClient.readRecords(
+                    client.readRecords(
                         ReadRecordsRequest(
                             ExerciseSessionRecord::class,
                             timeRangeFilter = TimeRangeFilter.between(start, end)
@@ -139,7 +157,7 @@ class MainActivity : FlutterFragmentActivity(), CoroutineScope by MainScope() {
                 // пройдёмся по сессиям и вернём первую, где маршрут доступен
                 for (s in ordered) {
                     val full = withContext(Dispatchers.IO) {
-                        healthClient.readRecord(ExerciseSessionRecord::class, s.metadata.id).record
+                        client.readRecord(ExerciseSessionRecord::class, s.metadata.id).record
                     }
                     when (val rr = full.exerciseRouteResult) {
                         is ExerciseRouteResult.Data -> {
@@ -170,6 +188,12 @@ class MainActivity : FlutterFragmentActivity(), CoroutineScope by MainScope() {
     private fun getRouteForWindow(startMs: Long, endMs: Long, result: MethodChannel.Result) {
         launch(Dispatchers.Main) {
             try {
+                val client = healthClient
+                if (client == null) {
+                    result.error("health_connect_unavailable", "Health Connect недоступен на этом устройстве", null)
+                    return@launch
+                }
+
                 if (!ensureReadExercisePermission()) {
                     result.error("no_permission", "Нет разрешения на чтение тренировок", null)
                     return@launch
@@ -178,7 +202,7 @@ class MainActivity : FlutterFragmentActivity(), CoroutineScope by MainScope() {
                 val start = Instant.ofEpochMilli(startMs)
                 val end = Instant.ofEpochMilli(endMs)
                 val sessions = withContext(Dispatchers.IO) {
-                    healthClient.readRecords(
+                    client.readRecords(
                         ReadRecordsRequest(
                             ExerciseSessionRecord::class,
                             timeRangeFilter = TimeRangeFilter.between(start, end)
@@ -195,7 +219,7 @@ class MainActivity : FlutterFragmentActivity(), CoroutineScope by MainScope() {
                     result.success(emptyList<Any>()); return@launch
                 }
                 val full = withContext(Dispatchers.IO) {
-                    healthClient.readRecord(ExerciseSessionRecord::class, session.metadata.id).record
+                    client.readRecord(ExerciseSessionRecord::class, session.metadata.id).record
                 }
 
                 when (val rr = full.exerciseRouteResult) {
