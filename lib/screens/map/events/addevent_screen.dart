@@ -53,6 +53,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
   // ── состояние загрузки
   bool _loading = false;
 
+  // ── состояние блока загрузки шаблона
+  bool _showTemplateBlock = false;
+  List<String> _templates = [];
+  String? _selectedTemplate;
+  bool _loadingTemplates = false;
+
   bool get isFormValid =>
       (nameCtrl.text.trim().isNotEmpty) &&
       (placeCtrl.text.trim().isNotEmpty) &&
@@ -250,6 +256,143 @@ class _AddEventScreenState extends State<AddEventScreen> {
     return '$hh:$mm';
   }
 
+  // ── загрузка списка шаблонов
+  Future<void> _loadTemplates() async {
+    setState(() => _loadingTemplates = true);
+
+    try {
+      final api = ApiService();
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      final data = await api.get(
+        '/get_templates.php',
+        queryParams: {if (userId != null) 'user_id': userId.toString()},
+      );
+
+      if (data['success'] == true && data['templates'] != null) {
+        final templates = data['templates'] as List<dynamic>;
+        setState(() {
+          _templates = templates.map((t) => t.toString()).toList();
+        });
+      } else {
+        // Если API не реализовано, используем заглушку
+        setState(() {
+          _templates = ['Субботний коферан', 'Воскресный велопробег'];
+        });
+      }
+    } catch (e) {
+      // При ошибке используем заглушку
+      setState(() {
+        _templates = ['Субботний коферан', 'Воскресный велопробег'];
+      });
+    } finally {
+      setState(() => _loadingTemplates = false);
+    }
+  }
+
+  // ── загрузка данных выбранного шаблона
+  Future<void> _loadTemplateData(String templateName) async {
+    setState(() => _loading = true);
+
+    try {
+      final api = ApiService();
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      final data = await api.get(
+        '/get_template.php',
+        queryParams: {
+          'template_name': templateName,
+          if (userId != null) 'user_id': userId.toString(),
+        },
+      );
+
+      if (data['success'] == true && data['template'] != null) {
+        final template = data['template'] as Map<String, dynamic>;
+
+        // Заполняем форму данными из шаблона
+        setState(() {
+          nameCtrl.text = template['name'] as String? ?? '';
+          placeCtrl.text = template['place'] as String? ?? '';
+          descCtrl.text = template['description'] as String? ?? '';
+          activity = template['activity'] as String?;
+
+          // Парсим дату
+          final dateStr = template['event_date'] as String?;
+          if (dateStr != null && dateStr.isNotEmpty) {
+            try {
+              final parts = dateStr.split('.');
+              if (parts.length == 3) {
+                date = DateTime(
+                  int.parse(parts[2]),
+                  int.parse(parts[1]),
+                  int.parse(parts[0]),
+                );
+              }
+            } catch (e) {
+              // Игнорируем ошибку парсинга
+            }
+          }
+
+          // Парсим время
+          final timeStr = template['event_time'] as String?;
+          if (timeStr != null && timeStr.isNotEmpty) {
+            try {
+              final parts = timeStr.split(':');
+              if (parts.length == 2) {
+                time = TimeOfDay(
+                  hour: int.parse(parts[0]),
+                  minute: int.parse(parts[1]),
+                );
+              }
+            } catch (e) {
+              // Игнорируем ошибку парсинга
+            }
+          }
+
+          // Координаты
+          final lat = template['latitude'] as double?;
+          final lng = template['longitude'] as double?;
+          if (lat != null && lng != null) {
+            selectedLocation = LatLng(lat, lng);
+          }
+
+          // Клуб
+          final clubName = template['club_name'] as String?;
+          if (clubName != null && clubName.isNotEmpty) {
+            createFromClub = true;
+            selectedClub = clubName;
+            clubCtrl.text = clubName;
+          }
+
+          templateCtrl.text = templateName;
+        });
+
+        // Очищаем ошибки валидации
+        _errorFields.clear();
+      } else {
+        // Если API не реализовано, используем заглушку
+        _loadTemplatePlaceholder(templateName);
+      }
+    } catch (e) {
+      // При ошибке используем заглушку
+      _loadTemplatePlaceholder(templateName);
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
+
+  // ── заглушка для загрузки шаблона (если API не реализовано)
+  void _loadTemplatePlaceholder(String templateName) {
+    setState(() {
+      nameCtrl.text = templateName;
+      templateCtrl.text = templateName;
+      // Остальные поля остаются как есть
+    });
+    _errorFields.clear();
+  }
+
   Future<void> _submit() async {
     // ── проверяем все обязательные поля и подсвечиваем незаполненные
     final Set<String> newErrors = {};
@@ -387,7 +530,35 @@ class _AddEventScreenState extends State<AddEventScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.surface,
-        appBar: const PaceAppBar(title: 'Добавление события'),
+        appBar: PaceAppBar(
+          title: 'Добавление события',
+          actions: [
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _showTemplateBlock = !_showTemplateBlock;
+                  // Загружаем шаблоны при первом открытии
+                  if (_showTemplateBlock &&
+                      _templates.isEmpty &&
+                      !_loadingTemplates) {
+                    _loadTemplates();
+                  }
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Icon(
+                  CupertinoIcons.cloud_download,
+                  size: 22,
+                  color: _showTemplateBlock
+                      ? AppColors.brandPrimary
+                      : AppColors.iconPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+          ],
+        ),
 
         body: GestureDetector(
           // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
@@ -399,6 +570,23 @@ class _AddEventScreenState extends State<AddEventScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // ---------- Блок загрузки шаблона ----------
+                  if (_showTemplateBlock)
+                    _TemplateLoadBlock(
+                      templates: _templates,
+                      selectedTemplate: _selectedTemplate,
+                      loadingTemplates: _loadingTemplates,
+                      onTemplateSelected: (template) {
+                        setState(() => _selectedTemplate = template);
+                      },
+                      onLoad: () {
+                        if (_selectedTemplate != null) {
+                          _loadTemplateData(_selectedTemplate!);
+                        }
+                      },
+                    ),
+                  if (_showTemplateBlock) const SizedBox(height: 20),
+
                   // ---------- Медиа: логотип + 3 фото (визуальный стиль как в newpost) ----------
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -968,6 +1156,83 @@ class _MediaTile extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+//
+// --------------------------- БЛОК ЗАГРУЗКИ ШАБЛОНА ---------------------------
+//
+
+class _TemplateLoadBlock extends StatelessWidget {
+  final List<String> templates;
+  final String? selectedTemplate;
+  final bool loadingTemplates;
+  final Function(String?) onTemplateSelected;
+  final VoidCallback onLoad;
+
+  const _TemplateLoadBlock({
+    required this.templates,
+    required this.selectedTemplate,
+    required this.loadingTemplates,
+    required this.onTemplateSelected,
+    required this.onLoad,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── Dropdown с шаблонами и кнопка "Загрузить"
+        Row(
+          children: [
+            // Dropdown - используем EventDropdownField для единообразия
+            Expanded(
+              child: loadingTemplates
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        child: CupertinoActivityIndicator(radius: 9),
+                      ),
+                    )
+                  : EventDropdownField(
+                      label: 'Загрузить шаблон',
+                      value: selectedTemplate,
+                      items: templates,
+                      enabled: templates.isNotEmpty,
+                      onChanged: templates.isEmpty
+                          ? (_) {}
+                          : onTemplateSelected,
+                    ),
+            ),
+
+            const SizedBox(width: 12),
+
+            // Кнопка "Загрузить"
+            IntrinsicWidth(
+              child: selectedTemplate != null
+                  ? PrimaryButton(
+                      text: 'Загрузить',
+                      onPressed: onLoad,
+                      expanded: false,
+                      isLoading: false,
+                    )
+                  : IgnorePointer(
+                      child: Opacity(
+                        opacity: 0.5,
+                        child: PrimaryButton(
+                          text: 'Загрузить',
+                          onPressed: () {},
+                          expanded: false,
+                          isLoading: false,
+                        ),
+                      ),
+                    ),
+            ),
+          ],
         ),
       ],
     );
