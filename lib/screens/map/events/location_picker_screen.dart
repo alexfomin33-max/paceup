@@ -60,10 +60,20 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   /// Таймер для debounce геокодинга
   Timer? _geocodeTimer;
 
+  /// Контроллер для текстового поля адреса
+  late final TextEditingController _addressController;
+
+  /// Флаг ручного ввода адреса (чтобы не перезаписывать при движении карты)
+  bool _isManualInput = false;
+
+  /// Таймер для debounce прямого геокодинга (поиск координат по адресу)
+  Timer? _forwardGeocodeTimer;
+
   @override
   void initState() {
     super.initState();
     _mapController = MapController();
+    _addressController = TextEditingController();
 
     // Устанавливаем начальную позицию
     if (widget.initialPosition != null) {
@@ -91,11 +101,68 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   @override
   void dispose() {
     _geocodeTimer?.cancel();
+    _forwardGeocodeTimer?.cancel();
+    _addressController.dispose();
     _mapController.dispose();
     super.dispose();
   }
 
   // ────────────────────────── Геокодинг ──────────────────────────
+  /// Прямой геокодинг: поиск координат по адресу через OpenStreetMap Nominatim API
+  /// ⚡️ Используем HTTP API для надёжности
+  Future<LatLng?> _forwardGeocode(String address) async {
+    try {
+      if (address.trim().isEmpty) {
+        return null;
+      }
+
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?'
+        'format=json&'
+        'q=${Uri.encodeComponent(address)}&'
+        'limit=1&'
+        'addressdetails=1&'
+        'accept-language=ru',
+      );
+
+      final response = await http
+          .get(url, headers: {'User-Agent': 'PaceUp/1.0 (paceup.ru)'})
+          .timeout(const Duration(seconds: 5));
+
+      if (response.statusCode != 200) {
+        debugPrint(
+          '[LocationPicker] HTTP ошибка прямого геокодинга: ${response.statusCode}',
+        );
+        return null;
+      }
+
+      final data = json.decode(response.body) as List<dynamic>;
+      if (data.isEmpty) {
+        debugPrint('[LocationPicker] Адрес не найден: $address');
+        return null;
+      }
+
+      final firstResult = data[0] as Map<String, dynamic>;
+      final lat = double.tryParse(firstResult['lat']?.toString() ?? '');
+      final lon = double.tryParse(firstResult['lon']?.toString() ?? '');
+
+      if (lat == null || lon == null) {
+        debugPrint('[LocationPicker] Некорректные координаты в ответе');
+        return null;
+      }
+
+      final result = LatLng(lat, lon);
+      debugPrint(
+        '[LocationPicker] Прямой геокодинг успешен: $address -> $lat, $lon',
+      );
+      return result;
+    } catch (e, stackTrace) {
+      debugPrint('[LocationPicker] Ошибка прямого геокодинга: $e');
+      debugPrint('[LocationPicker] Stack trace: $stackTrace');
+      return null;
+    }
+  }
+
   /// Получение адреса по координатам через OpenStreetMap Nominatim API
   /// ⚡️ Используем HTTP API вместо плагина для надёжности
   Future<String?> _reverseGeocode(LatLng location) async {
@@ -182,7 +249,13 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   }
 
   /// Обновление адреса при изменении координат (с задержкой для оптимизации)
+  /// ⚠️ Не обновляет поле ввода, если пользователь вводит адрес вручную
   void _updateAddressDebounced(LatLng location) {
+    // Пропускаем обновление, если пользователь вводит адрес вручную
+    if (_isManualInput) {
+      return;
+    }
+
     // Отменяем предыдущий таймер, если он был
     _geocodeTimer?.cancel();
 
@@ -196,7 +269,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
     // ⚡️ Запускаем новый таймер для debounce
     _geocodeTimer = Timer(const Duration(milliseconds: 800), () async {
-      if (!mounted) return;
+      if (!mounted || _isManualInput) return;
 
       debugPrint(
         '[LocationPicker] Запуск геокодинга для: ${location.latitude}, ${location.longitude}',
@@ -204,28 +277,97 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
       final address = await _reverseGeocode(location);
 
-      if (!mounted) return;
+      if (!mounted || _isManualInput) return;
 
       setState(() {
         _currentAddress = address;
         _isGeocoding = false;
+        // Обновляем поле ввода только если пользователь не редактирует его
+        if (!_isManualInput && address != null) {
+          _addressController.text = address;
+        }
       });
+    });
+  }
+
+  /// Обработка ввода адреса в текстовое поле
+  /// Выполняет прямой геокодинг (поиск координат по адресу) с задержкой
+  void _onAddressChanged(String value) {
+    if (value.isEmpty) {
+      // Если поле пустое, сбрасываем флаг ручного ввода
+      setState(() {
+        _isManualInput = false;
+      });
+      return;
+    }
+
+    // Устанавливаем флаг ручного ввода
+    if (!_isManualInput) {
+      setState(() {
+        _isManualInput = true;
+      });
+    }
+
+    // Отменяем предыдущий таймер
+    _forwardGeocodeTimer?.cancel();
+
+    // Устанавливаем состояние загрузки
+    if (!_isGeocoding) {
+      setState(() {
+        _isGeocoding = true;
+      });
+    }
+
+    // ⚡️ Запускаем поиск координат с задержкой для оптимизации
+    _forwardGeocodeTimer = Timer(const Duration(milliseconds: 1000), () async {
+      if (!mounted) return;
+
+      debugPrint('[LocationPicker] Поиск координат для адреса: $value');
+
+      final coordinates = await _forwardGeocode(value);
+
+      if (!mounted) return;
+
+      if (coordinates != null) {
+        // Перемещаем карту к найденным координатам
+        _mapController.move(coordinates, _mapController.camera.zoom);
+        setState(() {
+          _selectedLocation = coordinates;
+          _currentAddress = value;
+          _isGeocoding = false;
+        });
+      } else {
+        // Адрес не найден, но оставляем введённый текст
+        setState(() {
+          _isGeocoding = false;
+          _currentAddress = value; // Сохраняем введённый адрес
+        });
+      }
     });
   }
 
   // ────────────────────────── Обработка выбора ──────────────────────────
   /// Подтверждение выбора места и возврат координат с адресом
   Future<void> _confirmSelection() async {
-    // Если адрес ещё не загружен, выполняем геокодинг перед возвратом
-    String? finalAddress = _currentAddress;
-    if (finalAddress == null && !_isGeocoding) {
-      finalAddress = await _reverseGeocode(_selectedLocation);
+    // Если пользователь ввёл адрес вручную, используем его
+    String? finalAddress = _addressController.text.trim().isNotEmpty
+        ? _addressController.text.trim()
+        : _currentAddress;
+
+    // Если адрес ещё не загружен и не введён вручную, выполняем геокодинг перед возвратом
+    if (finalAddress == null || finalAddress.isEmpty) {
+      if (!_isGeocoding) {
+        finalAddress = await _reverseGeocode(_selectedLocation);
+      }
     }
 
     if (!mounted) return;
 
     Navigator.of(context).pop(
-      LocationResult(coordinates: _selectedLocation, address: finalAddress),
+      LocationResult(
+        coordinates: _selectedLocation,
+        address: finalAddress?.isEmpty == true ? null : finalAddress,
+      ),
     );
   }
 
@@ -330,13 +472,13 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               ],
             ),
 
-            // ────────────────────────── Подсказка с адресом сверху ──────────────────────────
+            // ────────────────────────── Поле ввода адреса сверху ──────────────────────────
             Positioned(
               top: MediaQuery.of(context).padding.top + 16,
               left: 16,
               right: 16,
               child: Container(
-                height: 40,
+                constraints: const BoxConstraints(minHeight: 40),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 8,
@@ -355,50 +497,64 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: _currentAddress != null
-                            ? Text(
-                                _currentAddress!,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textPrimary,
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              )
-                            : _isGeocoding
-                            ? const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CupertinoActivityIndicator(
-                                      radius: 7,
-                                    ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Определение адреса...',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: AppColors.textSecondary,
-                                      fontFamily: 'Inter',
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : const Text(
-                                'Перемещайте карту, чтобы выбрать место',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textSecondary,
-                                  fontFamily: 'Inter',
-                                ),
-                              ),
+                      child: TextField(
+                        controller: _addressController,
+                        onChanged: _onAddressChanged,
+                        onTap: () {
+                          // При фокусе на поле устанавливаем флаг ручного ввода
+                          if (!_isManualInput) {
+                            setState(() {
+                              _isManualInput = true;
+                            });
+                          }
+                        },
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textPrimary,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: _isGeocoding
+                              ? 'Поиск адреса...'
+                              : 'Введите адрес или перемещайте карту',
+                          hintStyle: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                            fontFamily: 'Inter',
+                          ),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: (_) {
+                          // При нажатии Enter/Поиск завершаем редактирование
+                          setState(() {
+                            _isManualInput = false;
+                          });
+                          // Скрываем клавиатуру
+                          FocusScope.of(context).unfocus();
+                        },
+                        onEditingComplete: () {
+                          // При завершении редактирования сбрасываем флаг
+                          setState(() {
+                            _isManualInput = false;
+                          });
+                        },
                       ),
                     ),
+                    // Индикатор загрузки при геокодинге
+                    if (_isGeocoding)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 8),
+                        child: SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CupertinoActivityIndicator(radius: 7),
+                        ),
+                      ),
                   ],
                 ),
               ),
