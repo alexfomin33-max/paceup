@@ -179,48 +179,53 @@ class _PostCardState extends State<PostCard> {
               ),
 
               // trailing — наша кнопка "…"
-              trailing: IconButton(
-                key: menuKey,
-                icon: const Icon(
-                  CupertinoIcons.ellipsis,
-                  color: AppColors.iconPrimary,
-                ),
-                onPressed: () {
-                  final items = <MoreMenuItem>[
-                    MoreMenuItem(
-                      text: 'Редактировать пост',
-                      icon: CupertinoIcons.pencil,
-                      onTap: widget.onEdit ?? () {},
-                    ),
-                    MoreMenuItem(
-                      text: _deleting ? 'Удаление…' : 'Удалить пост',
-                      icon: CupertinoIcons.minus_circle,
-                      iconColor: AppColors.error,
-                      textStyle: const TextStyle(color: AppColors.error),
-                      // Ничего визуально не меняем — просто игнорим повторный тап
-                      onTap: _deleting
-                          ? () {}
-                          : () async {
-                              // Дадим оверлею закрыться, чтобы диалог не накладывался визуально.
-                              await Future<void>.delayed(
-                                const Duration(milliseconds: 10),
-                              );
+              // ──────────────────────────────────────────────────────────────
+              // ✅ ПРОВЕРКА ВЛАДЕЛЬЦА: показываем меню только автору поста
+              // ──────────────────────────────────────────────────────────────
+              trailing: post.userId == widget.currentUserId
+                  ? IconButton(
+                      key: menuKey,
+                      icon: const Icon(
+                        CupertinoIcons.ellipsis,
+                        color: AppColors.iconPrimary,
+                      ),
+                      onPressed: () {
+                        final items = <MoreMenuItem>[
+                          MoreMenuItem(
+                            text: 'Редактировать пост',
+                            icon: CupertinoIcons.pencil,
+                            onTap: widget.onEdit ?? () {},
+                          ),
+                          MoreMenuItem(
+                            text: _deleting ? 'Удаление…' : 'Удалить пост',
+                            icon: CupertinoIcons.minus_circle,
+                            iconColor: AppColors.error,
+                            textStyle: const TextStyle(color: AppColors.error),
+                            // Ничего визуально не меняем — просто игнорим повторный тап
+                            onTap: _deleting
+                                ? () {}
+                                : () async {
+                                    // Дадим оверлею закрыться, чтобы диалог не накладывался визуально.
+                                    await Future<void>.delayed(
+                                      const Duration(milliseconds: 10),
+                                    );
 
-                              // 1) Спрашиваем подтверждение ДО удаления
-                              final confirmed = await _confirmDelete();
-                              if (!confirmed) return;
+                                    // 1) Спрашиваем подтверждение ДО удаления
+                                    final confirmed = await _confirmDelete();
+                                    if (!confirmed) return;
 
-                              // 2) Только теперь запускаем удаление
-                              await _handleDelete();
-                            },
-                    ),
-                  ];
-                  MoreMenuOverlay(
-                    anchorKey: menuKey,
-                    items: items,
-                  ).show(context);
-                },
-              ),
+                                    // 2) Только теперь запускаем удаление
+                                    await _handleDelete();
+                                  },
+                          ),
+                        ];
+                        MoreMenuOverlay(
+                          anchorKey: menuKey,
+                          items: items,
+                        ).show(context);
+                      },
+                    )
+                  : null,
             ),
           ),
 
