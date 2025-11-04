@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../../../service/api_service.dart';
+import '../../../service/auth_service.dart';
+import 'edit_event_screen.dart';
 
 /// Детальная страница события (на основе coffeerun_screen.dart)
 class EventDetailScreen extends StatefulWidget {
@@ -18,6 +20,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   Map<String, dynamic>? _eventData;
   bool _loading = true;
   String? _error;
+  bool _canEdit = false; // Права на редактирование
 
   @override
   void initState() {
@@ -29,14 +32,24 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   Future<void> _loadEvent() async {
     try {
       final api = ApiService();
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
       final data = await api.get(
         '/get_events.php',
         queryParams: {'event_id': widget.eventId.toString()},
       );
 
       if (data['success'] == true && data['event'] != null) {
+        final event = data['event'] as Map<String, dynamic>;
+        
+        // Проверяем права на редактирование: только создатель может редактировать
+        final eventUserId = event['user_id'] as int?;
+        final canEdit = userId != null && eventUserId == userId;
+
         setState(() {
-          _eventData = data['event'] as Map<String, dynamic>;
+          _eventData = event;
+          _canEdit = canEdit;
           _loading = false;
         });
       } else {
@@ -50,6 +63,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         _error = 'Ошибка загрузки: ${e.toString()}';
         _loading = false;
       });
+    }
+  }
+
+  /// Открытие экрана редактирования
+  Future<void> _openEditScreen() async {
+    if (!_canEdit) return;
+
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => EditEventScreen(eventId: widget.eventId),
+      ),
+    );
+
+    // Если событие было обновлено, перезагружаем данные
+    if (result == true) {
+      await _loadEvent();
     }
   }
 
@@ -206,7 +235,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               _CircleIconBtn(
                                 icon: CupertinoIcons.pencil,
                                 semantic: 'Редактировать',
-                                onTap: () {},
+                                onTap: _canEdit ? _openEditScreen : null,
                               ),
                             ],
                           ),
@@ -421,15 +450,19 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 class _CircleIconBtn extends StatelessWidget {
   final IconData icon;
   final String? semantic;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   const _CircleIconBtn({
     required this.icon,
-    required this.onTap,
+    this.onTap,
     this.semantic,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (onTap == null) {
+      return const SizedBox.shrink();
+    }
+    
     return Semantics(
       label: semantic,
       button: true,

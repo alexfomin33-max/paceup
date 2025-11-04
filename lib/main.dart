@@ -68,15 +68,6 @@ void main() async {
   runApp(
     UncontrolledProviderScope(container: container, child: const PaceUpApp()),
   );
-
-  // ────────────────────────── Image Cache ──────────────────────────
-  // Настраиваем unified image cache после первого билда
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    final context = WidgetsBinding.instance.rootElement;
-    if (context != null) {
-      ImageCacheManager.configure(context);
-    }
-  });
 }
 
 class PaceUpApp extends StatelessWidget {
@@ -142,18 +133,25 @@ class PaceUpApp extends StatelessWidget {
       ],
 
       // Глобально «светлые» Cupertino-контролы + Inter
-      builder: (context, child) => CupertinoTheme(
-        data: const CupertinoThemeData(
-          brightness: Brightness.light, // ← ключ к чёрному тексту в пикере
-          primaryColor: AppColors.brandPrimary,
-          textTheme: CupertinoTextThemeData(
-            textStyle: TextStyle(fontFamily: 'Inter'),
-            // опционально: можно ещё явно задать стиль колеса
-            // pickerTextStyle: TextStyle(fontFamily: 'Inter', fontSize: 22),
+      builder: (context, child) {
+        // Настраиваем unified image cache после первого билда
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ImageCacheManager.configure(context);
+        });
+        
+        return CupertinoTheme(
+          data: const CupertinoThemeData(
+            brightness: Brightness.light, // ← ключ к чёрному тексту в пикере
+            primaryColor: AppColors.brandPrimary,
+            textTheme: CupertinoTextThemeData(
+              textStyle: TextStyle(fontFamily: 'Inter'),
+              // опционально: можно ещё явно задать стиль колеса
+              // pickerTextStyle: TextStyle(fontFamily: 'Inter', fontSize: 22),
+            ),
           ),
-        ),
-        child: child!,
-      ),
+          child: child!,
+        );
+      },
     );
   }
 }

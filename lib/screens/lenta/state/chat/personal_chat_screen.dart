@@ -1,20 +1,26 @@
-import 'dart:io';
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
+import '../../../../service/api_service.dart';
+import '../../../../service/auth_service.dart';
 
 /// ────────────────────────────────────────────────────────────────────────
 /// Экран персонального чата с конкретным пользователем
 /// ────────────────────────────────────────────────────────────────────────
 class PersonalChatScreen extends StatefulWidget {
+  final int chatId;
+  final int userId;
   final String userName;
   final String userAvatar;
-  final String? lastSeen; // "Был 5 минут назад" и т.д.
+  final String? lastSeen;
 
   const PersonalChatScreen({
     super.key,
+    required this.chatId,
+    required this.userId,
     required this.userName,
     required this.userAvatar,
     this.lastSeen,
@@ -25,32 +31,35 @@ class PersonalChatScreen extends StatefulWidget {
 }
 
 /// ────────────────────────────────────────────────────────────────────────
-/// Модели сообщений
+/// Модель сообщения из API
 /// ────────────────────────────────────────────────────────────────────────
-enum _MsgSide { left, right }
+class ChatMessage {
+  final int id;
+  final int senderId;
+  final String text;
+  final DateTime createdAt;
+  final bool isMine;
+  final bool isRead;
 
-enum _MsgKind { text, image }
-
-class _ChatMsg {
-  final _MsgSide side;
-  final _MsgKind kind;
-  final String time;
-  final String? text;
-  final File? imageFile;
-
-  const _ChatMsg.text({
-    required this.side,
+  const ChatMessage({
+    required this.id,
+    required this.senderId,
     required this.text,
-    required this.time,
-  }) : kind = _MsgKind.text,
-       imageFile = null;
+    required this.createdAt,
+    required this.isMine,
+    required this.isRead,
+  });
 
-  const _ChatMsg.image({
-    required this.side,
-    required this.imageFile,
-    required this.time,
-  }) : kind = _MsgKind.image,
-       text = null;
+  factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    return ChatMessage(
+      id: (json['id'] as num).toInt(),
+      senderId: (json['sender_id'] as num).toInt(),
+      text: json['text'] as String,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      isMine: json['is_mine'] as bool? ?? false,
+      isRead: json['is_read'] as bool? ?? false,
+    );
+  }
 }
 
 /// ────────────────────────────────────────────────────────────────────────
@@ -58,68 +67,315 @@ class _ChatMsg {
 /// ────────────────────────────────────────────────────────────────────────
 class _PersonalChatScreenState extends State<PersonalChatScreen> {
   final _ctrl = TextEditingController();
-  final _picker = ImagePicker();
+  final _scrollController = ScrollController();
+  final ApiService _api = ApiService();
+  final AuthService _auth = AuthService();
 
-  /// ─── Демо-сообщения (как на скриншоте) ───
-  final List<_ChatMsg> _messages = const [
-    _ChatMsg.text(
-      side: _MsgSide.left,
-      text:
-          'Hi, the restaurant is quite busy now so the delivery may be late 15 mins. Please wait for me.',
-      time: '8:48',
-    ),
-    _ChatMsg.text(side: _MsgSide.right, text: 'Sure! Thank you', time: '9:34'),
-    _ChatMsg.text(
-      side: _MsgSide.left,
-      text: 'Ты в субботу на коферан или может поедем на карьеры купаться?',
-      time: '9:35',
-    ),
-    _ChatMsg.text(
-      side: _MsgSide.right,
-      text:
-          'Could you please ask the restaurant to give me cutlery? I just need these items.',
-      time: '9:34',
-    ),
-  ].toList();
+  List<ChatMessage> _messages = [];
+  bool _isLoading = false;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  int _offset = 0;
+  int? _currentUserId;
+  int? _lastMessageId;
+  String? _error;
+  Timer? _pollingTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _initChat();
+  }
 
   @override
   void dispose() {
     _ctrl.dispose();
+    _scrollController.dispose();
+    _pollingTimer?.cancel();
     super.dispose();
   }
 
-  /// ─── Отправка текстового сообщения ───
-  void _sendText() {
-    final t = _ctrl.text.trim();
-    if (t.isEmpty) return;
+  /// ─── Инициализация чата ───
+  Future<void> _initChat() async {
+    final userId = await _auth.getUserId();
+    if (userId == null) {
+      setState(() {
+        _error = 'Пользователь не авторизован';
+      });
+      return;
+    }
+
     setState(() {
-      _messages.add(_ChatMsg.text(side: _MsgSide.right, text: t, time: _now()));
-      _ctrl.clear();
+      _currentUserId = userId;
     });
-    FocusScope.of(context).unfocus();
+
+    await _loadInitial();
+    _markMessagesAsRead(); // Отмечаем сообщения как прочитанные при открытии
+    _startPolling();
   }
 
-  /// ─── Форматирование текущего времени ───
-  String _now() {
-    final dt = TimeOfDay.now();
-    final hh = dt.hour.toString().padLeft(2, '0');
-    final mm = dt.minute.toString().padLeft(2, '0');
-    return '$hh:$mm';
-  }
+  /// ─── Загрузка начальных сообщений ───
+  Future<void> _loadInitial() async {
+    if (_isLoading || _currentUserId == null) return;
 
-  /// ─── Выбор изображения из галереи ───
-  Future<void> _pickImage() async {
-    final x = await _picker.pickImage(source: ImageSource.gallery);
-    if (x == null) return;
     setState(() {
-      _messages.add(
-        _ChatMsg.image(
-          side: _MsgSide.right,
-          imageFile: File(x.path),
-          time: _now(),
-        ),
+      _isLoading = true;
+      _error = null;
+      _offset = 0;
+    });
+
+    try {
+      final response = await _api.get(
+        '/get_messages.php',
+        queryParams: {
+          'chat_id': widget.chatId.toString(),
+          'user_id': _currentUserId.toString(),
+          'offset': '0',
+          'limit': '50',
+        },
       );
+
+      if (response['success'] == true) {
+        final List<dynamic> messagesJson = response['messages'] as List<dynamic>;
+        final messages = messagesJson
+            .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
+            .toList();
+
+        // Обновляем last_message_id
+        if (messages.isNotEmpty) {
+          _lastMessageId = messages.last.id;
+        }
+
+        setState(() {
+          _messages = messages;
+          _hasMore = response['has_more'] as bool? ?? false;
+          _offset = messages.length;
+          _isLoading = false;
+        });
+
+        // Прокрутка вниз после загрузки
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+          }
+        });
+      } else {
+        setState(() {
+          _error = response['message'] as String? ?? 'Ошибка загрузки сообщений';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// ─── Загрузка старых сообщений (при прокрутке вверх) ───
+  Future<void> _loadMore() async {
+    if (_isLoadingMore || !_hasMore || _currentUserId == null) return;
+
+    setState(() {
+      _isLoadingMore = true;
     });
+
+    try {
+      final response = await _api.get(
+        '/get_messages.php',
+        queryParams: {
+          'chat_id': widget.chatId.toString(),
+          'user_id': _currentUserId.toString(),
+          'offset': _offset.toString(),
+          'limit': '50',
+        },
+      );
+
+      if (response['success'] == true) {
+        final List<dynamic> messagesJson = response['messages'] as List<dynamic>;
+        final newMessages = messagesJson
+            .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
+            .toList();
+
+        setState(() {
+          _messages.insertAll(0, newMessages);
+          _hasMore = response['has_more'] as bool? ?? false;
+          _offset += newMessages.length;
+          _isLoadingMore = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingMore = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingMore = false;
+      });
+    }
+  }
+
+  /// ─── Отправка текстового сообщения ───
+  Future<void> _sendText() async {
+    final text = _ctrl.text.trim();
+    if (text.isEmpty || _currentUserId == null) return;
+
+    final messageText = text;
+    _ctrl.clear();
+    FocusScope.of(context).unfocus();
+
+    // Оптимистичное обновление UI
+    final tempMessage = ChatMessage(
+      id: -1, // Временный ID
+      senderId: _currentUserId!,
+      text: messageText,
+      createdAt: DateTime.now(),
+      isMine: true,
+      isRead: false,
+    );
+
+    setState(() {
+      _messages.add(tempMessage);
+    });
+
+    // Прокрутка вниз
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+
+    try {
+      final response = await _api.post(
+        '/send_message.php',
+        body: {
+          'chat_id': widget.chatId,
+          'user_id': _currentUserId,
+          'text': messageText,
+        },
+      );
+
+      if (response['success'] == true) {
+        final messageId = response['message_id'] as int;
+        final createdAt = DateTime.parse(response['created_at'] as String);
+
+        // Обновляем временное сообщение с реальными данными
+        setState(() {
+          final index = _messages.indexWhere((m) => m.id == -1);
+          if (index != -1) {
+            _messages[index] = ChatMessage(
+              id: messageId,
+              senderId: _currentUserId!,
+              text: messageText,
+              createdAt: createdAt,
+              isMine: true,
+              isRead: false,
+            );
+          }
+          _lastMessageId = messageId;
+        });
+      } else {
+        // Удаляем временное сообщение при ошибке
+        setState(() {
+          _messages.removeWhere((m) => m.id == -1);
+        });
+      }
+    } catch (e) {
+      // Удаляем временное сообщение при ошибке
+      setState(() {
+        _messages.removeWhere((m) => m.id == -1);
+      });
+    }
+  }
+
+  /// ─── Отметка сообщений как прочитанных ───
+  Future<void> _markMessagesAsRead() async {
+    if (_currentUserId == null) return;
+
+    try {
+      await _api.post(
+        '/mark_messages_read.php',
+        body: {
+          'chat_id': widget.chatId,
+          'user_id': _currentUserId,
+        },
+      );
+    } catch (e) {
+      // Игнорируем ошибки - не критично
+    }
+  }
+
+  /// ─── Запуск polling для проверки новых сообщений ───
+  void _startPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _checkNewMessages();
+    });
+  }
+
+  /// ─── Проверка новых сообщений ───
+  Future<void> _checkNewMessages() async {
+    if (_currentUserId == null || _lastMessageId == null) return;
+
+    try {
+      final response = await _api.get(
+        '/check_new_messages.php',
+        queryParams: {
+          'chat_id': widget.chatId.toString(),
+          'user_id': _currentUserId.toString(),
+          'last_message_id': _lastMessageId.toString(),
+        },
+      );
+
+      if (response['success'] == true && response['has_new'] == true) {
+        final List<dynamic> newMessagesJson = response['new_messages'] as List<dynamic>;
+        final newMessages = newMessagesJson
+            .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
+            .toList();
+
+        if (newMessages.isNotEmpty) {
+          setState(() {
+            _messages.addAll(newMessages);
+            _lastMessageId = response['last_message_id'] as int? ?? _lastMessageId;
+          });
+
+          // Отмечаем новые сообщения как прочитанные, если они от другого пользователя
+          // и пользователь находится в чате (экран открыт)
+          final hasIncomingMessages = newMessages.any((msg) => !msg.isMine);
+          if (hasIncomingMessages) {
+            _markMessagesAsRead();
+          }
+
+          // Прокрутка вниз при получении новых сообщений
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // Игнорируем ошибки polling
+    }
+  }
+
+  /// ─── Форматирование времени ───
+  String _formatTime(DateTime dt) {
+    return DateFormat('H:mm').format(dt);
+  }
+
+  /// ─── Получение URL аватара ───
+  String _getAvatarUrl(String avatar) {
+    if (avatar.isEmpty) return 'http://uploads.paceup.ru/defaults/1.webp';
+    if (avatar.startsWith('http')) return avatar;
+    return 'http://uploads.paceup.ru/avatars/$avatar';
   }
 
   @override
@@ -137,7 +393,13 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               icon: const Icon(CupertinoIcons.back),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () async {
+                // Отмечаем сообщения как прочитанные перед закрытием
+                await _markMessagesAsRead();
+                if (mounted) {
+                  Navigator.pop(context, true); // Возвращаем true для обновления списка
+                }
+              },
               splashRadius: 18,
             ),
           ),
@@ -146,11 +408,27 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
             children: [
               // Аватар пользователя
               ClipOval(
-                child: Image.asset(
-                  widget.userAvatar,
+                child: Image.network(
+                  _getAvatarUrl(widget.userAvatar),
                   width: 36,
                   height: 36,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      'assets/${widget.userAvatar}',
+                      width: 36,
+                      height: 36,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) {
+                        return Container(
+                          width: 36,
+                          height: 36,
+                          color: AppColors.surfaceMuted,
+                          child: const Icon(CupertinoIcons.person, size: 20),
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 8),
@@ -189,37 +467,83 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
           children: [
             // ─── Прокручиваемая область с сообщениями ───
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
-                itemCount: _messages.length,
-                itemBuilder: (_, index) {
-                  final m = _messages[index];
-                  if (m.kind == _MsgKind.image) {
-                    return m.side == _MsgSide.right
-                        ? _BubbleImageRight(file: m.imageFile!, time: m.time)
-                        : _BubbleImageLeft(
-                            file: m.imageFile!,
-                            time: m.time,
-                            avatarAsset: widget.userAvatar,
-                          );
-                  } else {
-                    return m.side == _MsgSide.right
-                        ? _BubbleRight(text: m.text!, time: m.time)
-                        : _BubbleLeft(
-                            text: m.text!,
-                            time: m.time,
-                            avatarAsset: widget.userAvatar,
-                          );
-                  }
-                },
-              ),
+              child: () {
+                if (_error != null && _messages.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Ошибка: $_error',
+                            style: const TextStyle(color: AppColors.error),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: _loadInitial,
+                            child: const Text('Повторить'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                if (_isLoading && _messages.isEmpty) {
+                  return const Center(
+                    child: CupertinoActivityIndicator(),
+                  );
+                }
+
+                return NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification is ScrollStartNotification) {
+                      if (_scrollController.position.pixels <= 100 && _hasMore && !_isLoadingMore) {
+                        _loadMore();
+                      }
+                    }
+                    return false;
+                  },
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+                    itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == 0 && _isLoadingMore) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(child: CupertinoActivityIndicator()),
+                        );
+                      }
+
+                      final messageIndex = _isLoadingMore ? index - 1 : index;
+                      final message = _messages[messageIndex];
+
+                      return message.isMine
+                          ? _BubbleRight(
+                              text: message.text,
+                              time: _formatTime(message.createdAt),
+                            )
+                          : _BubbleLeft(
+                              text: message.text,
+                              time: _formatTime(message.createdAt),
+                              avatarUrl: _getAvatarUrl(widget.userAvatar),
+                            );
+                    },
+                  ),
+                );
+              }(),
             ),
 
             // ─── Неподвижная нижняя панель ввода ───
             _Composer(
               controller: _ctrl,
               onSend: _sendText,
-              onPickImage: _pickImage,
+              onPickImage: () {
+                // TODO: Реализовать отправку изображений
+              },
             ),
           ],
         ),
@@ -232,16 +556,16 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
 /// Вспомогательные виджеты
 /// ────────────────────────────────────────────────────────────────────────
 
-/// Левый пузырь (сообщения собеседника) — с аватаром и иконкой reply
+/// Левый пузырь (сообщения собеседника) — с аватаром
 class _BubbleLeft extends StatelessWidget {
   final String text;
   final String time;
-  final String avatarAsset;
+  final String avatarUrl;
 
   const _BubbleLeft({
     required this.text,
     required this.time,
-    required this.avatarAsset,
+    required this.avatarUrl,
   });
 
   @override
@@ -254,7 +578,22 @@ class _BubbleLeft extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          CircleAvatar(radius: 14, backgroundImage: AssetImage(avatarAsset)),
+          ClipOval(
+            child: Image.network(
+              avatarUrl,
+              width: 28,
+              height: 28,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: 28,
+                  height: 28,
+                  color: AppColors.surfaceMuted,
+                  child: const Icon(CupertinoIcons.person, size: 16),
+                );
+              },
+            ),
+          ),
           const SizedBox(width: 8),
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: max),
@@ -363,120 +702,6 @@ class _BubbleRight extends StatelessWidget {
   }
 }
 
-/// Пузырь с изображением — слева (собеседник)
-class _BubbleImageLeft extends StatelessWidget {
-  final File file;
-  final String time;
-  final String avatarAsset;
-
-  const _BubbleImageLeft({
-    required this.file,
-    required this.time,
-    required this.avatarAsset,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final max = MediaQuery.of(context).size.width * 0.6;
-    return Padding(
-      padding: const EdgeInsets.only(right: 12, left: 8, bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          CircleAvatar(radius: 14, backgroundImage: AssetImage(avatarAsset)),
-          const SizedBox(width: 8),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: max),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Stack(
-                children: [
-                  Image.file(file, fit: BoxFit.cover),
-                  Positioned(
-                    right: 6,
-                    bottom: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.textSecondary,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Text(
-                        time,
-                        style: const TextStyle(
-                          color: AppColors.surface,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Пузырь с изображением — справа (мои)
-class _BubbleImageRight extends StatelessWidget {
-  final File file;
-  final String time;
-
-  const _BubbleImageRight({required this.file, required this.time});
-
-  @override
-  Widget build(BuildContext context) {
-    final max = MediaQuery.of(context).size.width * 0.6;
-    return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 12, bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: max),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Stack(
-                children: [
-                  Image.file(file, fit: BoxFit.cover),
-                  Positioned(
-                    right: 6,
-                    bottom: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.textSecondary,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Text(
-                        time,
-                        style: const TextStyle(
-                          color: AppColors.surface,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Компонент ввода сообщений
 class _Composer extends StatefulWidget {
   final TextEditingController controller;
@@ -550,6 +775,7 @@ class _ComposerState extends State<_Composer> {
                     hintStyle: TextStyle(color: AppColors.textPlaceholder),
                     border: InputBorder.none,
                   ),
+                  onSubmitted: (_) => widget.onSend(),
                 ),
               ),
             ),
