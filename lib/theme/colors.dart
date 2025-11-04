@@ -130,7 +130,7 @@ abstract class AppColors {
   static Color purpleBr = purple.withValues(alpha: 0.22);
   static Color blueBr = blue.withValues(alpha: 0.22);
   static Color orangeBr = orange.withValues(alpha: 0.22);
-  static Color greenBr = green.withValues(alpha: 0.22);
+  static Color greenBr = green.withValues(alpha: 0.10);
   static Color redBr = red.withValues(alpha: 0.22);
 
   // ┌───────────────────────────────────────────────────────────────────────┐

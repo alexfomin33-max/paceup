@@ -246,7 +246,7 @@ class _PostCardState extends State<PostCard> {
           // ──────────────────────────────────────────────────────────────
           if (post.postContent.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.only(left: 12, right: 12, top: 12),
               child: Text(post.postContent),
             ),
 
@@ -254,7 +254,7 @@ class _PostCardState extends State<PostCard> {
           // НИЖНЯЯ ПАНЕЛЬ: лайк и комментарии
           // ──────────────────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.all(12),
             child: Row(
               children: [
                 // Лайк-бар: локальная анимация + API
@@ -280,7 +280,6 @@ class _PostCardState extends State<PostCard> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
         ],
       ),
     );

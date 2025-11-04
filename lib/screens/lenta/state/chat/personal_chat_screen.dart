@@ -136,7 +136,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
       );
 
       if (response['success'] == true) {
-        final List<dynamic> messagesJson = response['messages'] as List<dynamic>;
+        final List<dynamic> messagesJson =
+            response['messages'] as List<dynamic>;
         final messages = messagesJson
             .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
             .toList();
@@ -156,12 +157,15 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
         // Прокрутка вниз после загрузки
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients) {
-            _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+            _scrollController.jumpTo(
+              _scrollController.position.maxScrollExtent,
+            );
           }
         });
       } else {
         setState(() {
-          _error = response['message'] as String? ?? 'Ошибка загрузки сообщений';
+          _error =
+              response['message'] as String? ?? 'Ошибка загрузки сообщений';
           _isLoading = false;
         });
       }
@@ -193,7 +197,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
       );
 
       if (response['success'] == true) {
-        final List<dynamic> messagesJson = response['messages'] as List<dynamic>;
+        final List<dynamic> messagesJson =
+            response['messages'] as List<dynamic>;
         final newMessages = messagesJson
             .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
             .toList();
@@ -300,10 +305,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
     try {
       await _api.post(
         '/mark_messages_read.php',
-        body: {
-          'chat_id': widget.chatId,
-          'user_id': _currentUserId,
-        },
+        body: {'chat_id': widget.chatId, 'user_id': _currentUserId},
       );
     } catch (e) {
       // Игнорируем ошибки - не критично
@@ -333,7 +335,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
       );
 
       if (response['success'] == true && response['has_new'] == true) {
-        final List<dynamic> newMessagesJson = response['new_messages'] as List<dynamic>;
+        final List<dynamic> newMessagesJson =
+            response['new_messages'] as List<dynamic>;
         final newMessages = newMessagesJson
             .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
             .toList();
@@ -341,7 +344,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
         if (newMessages.isNotEmpty) {
           setState(() {
             _messages.addAll(newMessages);
-            _lastMessageId = response['last_message_id'] as int? ?? _lastMessageId;
+            _lastMessageId =
+                response['last_message_id'] as int? ?? _lastMessageId;
           });
 
           // Отмечаем новые сообщения как прочитанные, если они от другого пользователя
@@ -397,7 +401,10 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
                 // Отмечаем сообщения как прочитанные перед закрытием
                 await _markMessagesAsRead();
                 if (mounted) {
-                  Navigator.pop(context, true); // Возвращаем true для обновления списка
+                  Navigator.pop(
+                    context,
+                    true,
+                  ); // Возвращаем true для обновления списка
                 }
               },
               splashRadius: 18,
@@ -492,15 +499,15 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
                 }
 
                 if (_isLoading && _messages.isEmpty) {
-                  return const Center(
-                    child: CupertinoActivityIndicator(),
-                  );
+                  return const Center(child: CupertinoActivityIndicator());
                 }
 
                 return NotificationListener<ScrollNotification>(
                   onNotification: (notification) {
                     if (notification is ScrollStartNotification) {
-                      if (_scrollController.position.pixels <= 100 && _hasMore && !_isLoadingMore) {
+                      if (_scrollController.position.pixels <= 100 &&
+                          _hasMore &&
+                          !_isLoadingMore) {
                         _loadMore();
                       }
                     }
@@ -631,12 +638,6 @@ class _BubbleLeft extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 6),
-          const Icon(
-            CupertinoIcons.arrowshape_turn_up_left,
-            size: 18,
-            color: AppColors.iconSecondary,
-          ),
         ],
       ),
     );
@@ -665,9 +666,9 @@ class _BubbleRight extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: AppColors.backgroundGreen,
+                color: AppColors.greenBg,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.greenBr),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

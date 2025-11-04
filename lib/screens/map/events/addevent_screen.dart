@@ -632,7 +632,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     label: 'Название события*',
                     hasError: _errorFields.contains('name'),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   // ---------- Вид активности ----------
                   EventDropdownField(
@@ -647,7 +647,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       ); // ── очищаем ошибку при выборе
                     }),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   // ---------- Место + кнопка "Карта" ----------
                   EventTextField(
@@ -675,7 +675,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   // ---------- Дата / Время ----------
                   Row(
@@ -688,7 +688,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           hasError: _errorFields.contains('date'),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 20),
                       Expanded(
                         child: EventDateField(
                           label: 'Время',
@@ -700,7 +700,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   // ---------- Описание ----------
                   EventTextField(
@@ -728,7 +728,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       const Text('Создать от имени клуба'),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   EventDropdownField(
                     label: '', // ← пустая строка: лейбл не рисуем
                     value: selectedClub,
@@ -759,7 +759,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       const Text('Сохранить шаблон'),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
 
                   EventTextField(
                     controller: templateCtrl,
@@ -768,7 +768,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     // ← ⚡️ вот это главное
                   ),
 
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 25),
                   Align(
                     alignment: Alignment.center,
                     child: PrimaryButton(
