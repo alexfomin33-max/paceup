@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
 import 'event_detail_screen.dart';
 
@@ -55,17 +56,15 @@ class EventsBottomSheet extends StatelessWidget {
               Container(height: 1, color: AppColors.border),
               const SizedBox(height: 6),
 
-              // контент
+              // контент — отдаем прокрутку на откуп дочернему виджету
+              // чтобы списки могли лениво строиться без двойного скролла
               Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 2,
-                      vertical: 2,
-                    ),
-                    child: child,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 2,
+                    vertical: 2,
                   ),
+                  child: child,
                 ),
               ),
 
@@ -134,47 +133,83 @@ class EventsListFromApi extends StatelessWidget {
       );
     }
 
-    // Универсальная строка карточки. Если есть onTap — делаем кликабельной.
+    // ───────────────────── Лёгкий префетч логотипов (топ-8) ─────────────────────
+    // Выполняется при первом построении: подогреваем кэш под целевые размеры
+    // для ускорения первого кадра и плавного скролла.
+    () {
+      final dpr = MediaQuery.of(context).devicePixelRatio;
+      final targetW = (80 * dpr).round();
+      final targetH = (55 * dpr).round();
+      final int limit = events.length < 8 ? events.length : 8;
+      for (var i = 0; i < limit; i++) {
+        final e = events[i] as Map<String, dynamic>;
+        final logoUrl = e['logo_url'] as String?;
+        if (logoUrl != null && logoUrl.isNotEmpty) {
+          // precacheImage не блокирует UI; повторные вызовы недороги благодаря кэшу
+          precacheImage(
+            CachedNetworkImageProvider(
+              logoUrl,
+              maxWidth: targetW,
+              maxHeight: targetH,
+            ),
+            context,
+          );
+        }
+      }
+    }();
+
+    // ───────────────────── Строка карточки события ─────────────────────
     Widget cardRow({
       required String? logoUrl,
       required String title,
       required String subtitle,
       VoidCallback? onTap,
     }) {
+      final dpr = MediaQuery.of(context).devicePixelRatio;
+      final targetW = (80 * dpr).round();
+      final targetH = (55 * dpr).round();
+
+      final imageWidget = ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+        child: logoUrl != null && logoUrl.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: logoUrl,
+                width: 80,
+                height: 55,
+                fit: BoxFit.cover,
+                fadeInDuration: const Duration(milliseconds: 120),
+                memCacheWidth: targetW,
+                memCacheHeight: targetH,
+                maxWidthDiskCache: targetW,
+                maxHeightDiskCache: targetH,
+                errorWidget: (_, __, ___) => Container(
+                  width: 80,
+                  height: 55,
+                  color: AppColors.border,
+                  child: const Icon(Icons.broken_image, size: 24),
+                ),
+              )
+            : Container(
+                width: 80,
+                height: 55,
+                color: AppColors.border,
+                child: const Icon(Icons.image, size: 24),
+              ),
+      );
+
       final row = Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-            child: logoUrl != null && logoUrl.isNotEmpty
-                ? Image.network(
-                    logoUrl,
-                    width: 80,
-                    height: 55,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 80,
-                      height: 55,
-                      color: AppColors.border,
-                      child: const Icon(Icons.image, size: 24),
-                    ),
-                  )
-                : Container(
-                    width: 80,
-                    height: 55,
-                    color: AppColors.border,
-                    child: const Icon(Icons.image, size: 24),
-                  ),
-          ),
+          imageWidget,
           const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
+                  title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  title,
                   style: AppTextStyles.h14w6,
                 ),
                 const SizedBox(height: 6),
@@ -197,40 +232,36 @@ class EventsListFromApi extends StatelessWidget {
       );
     }
 
-    return Padding(
+    // ─────────────────────────── Ленивый список ───────────────────────────
+    return ListView.separated(
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
-      child: Column(
-        children: List.generate(events.length, (index) {
-          final event = events[index] as Map<String, dynamic>;
-          final eventId = event['id'] as int?;
-          final name = event['name'] as String? ?? '';
-          final logoUrl = event['logo_url'] as String?;
-          final date = event['date'] as String? ?? '';
-          final participantsCount = event['participants_count'] as int? ?? 0;
-          final subtitle = '$date  ·  Участников: $participantsCount';
+      physics: const BouncingScrollPhysics(),
+      itemCount: events.length,
+      separatorBuilder: (_, __) => const _ClubsDivider(),
+      itemBuilder: (context, index) {
+        final event = events[index] as Map<String, dynamic>;
+        final eventId = event['id'] as int?;
+        final name = event['name'] as String? ?? '';
+        final logoUrl = event['logo_url'] as String?;
+        final date = event['date'] as String? ?? '';
+        final participantsCount = event['participants_count'] as int? ?? 0;
+        final subtitle = '$date  ·  Участников: $participantsCount';
 
-          return Column(
-            children: [
-              cardRow(
-                logoUrl: logoUrl,
-                title: name,
-                subtitle: subtitle,
-                onTap: eventId != null
-                    ? () {
-                        // Открываем детальную страницу события
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => EventDetailScreen(eventId: eventId),
-                          ),
-                        );
-                      }
-                    : null,
-              ),
-              if (index < events.length - 1) const _ClubsDivider(),
-            ],
-          );
-        }),
-      ),
+        return cardRow(
+          logoUrl: logoUrl,
+          title: name,
+          subtitle: subtitle,
+          onTap: eventId != null
+              ? () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => EventDetailScreen(eventId: eventId),
+                    ),
+                  );
+                }
+              : null,
+        );
+      },
     );
   }
 }

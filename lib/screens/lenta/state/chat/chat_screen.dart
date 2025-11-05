@@ -82,7 +82,7 @@ class _ChatScreenState extends State<ChatScreen> {
   /// ─── Загрузка начального списка чатов ───
   Future<void> _loadInitial() async {
     if (_isLoading) return;
-    
+
     setState(() {
       _isLoading = true;
       _error = null;
@@ -110,8 +110,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (response['success'] == true) {
         final List<dynamic> chatsJson = response['chats'] as List<dynamic>;
-        final chats = chatsJson.map((json) => ChatItem.fromJson(json as Map<String, dynamic>)).toList();
-        
+        final chats = chatsJson
+            .map((json) => ChatItem.fromJson(json as Map<String, dynamic>))
+            .toList();
+
         setState(() {
           _chats = chats;
           _hasMore = response['has_more'] as bool? ?? false;
@@ -155,8 +157,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (response['success'] == true) {
         final List<dynamic> chatsJson = response['chats'] as List<dynamic>;
-        final newChats = chatsJson.map((json) => ChatItem.fromJson(json as Map<String, dynamic>)).toList();
-        
+        final newChats = chatsJson
+            .map((json) => ChatItem.fromJson(json as Map<String, dynamic>))
+            .toList();
+
         setState(() {
           _chats.addAll(newChats);
           _hasMore = response['has_more'] as bool? ?? false;
@@ -177,7 +181,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   /// ─── Обработчик скролла для пагинации ───
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       _loadMore();
     }
   }
@@ -216,9 +221,7 @@ class _ChatScreenState extends State<ChatScreen> {
               behavior: HitTestBehavior.opaque,
               onTap: () async {
                 final result = await Navigator.of(context).push(
-                  TransparentPageRoute(
-                    builder: (_) => const StartChatScreen(),
-                  ),
+                  TransparentPageRoute(builder: (_) => const StartChatScreen()),
                 );
                 // Обновляем список чатов после создания нового чата
                 if (result == true && mounted) {
@@ -266,18 +269,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
             // ─── Загрузка ───
             if (_isLoading && _chats.isEmpty) {
-              return const Center(
-                child: CupertinoActivityIndicator(),
-              );
+              return const Center(child: CupertinoActivityIndicator());
             }
 
             // ─── Пустой список ───
             if (_chats.isEmpty) {
               return const Center(
-                child: Text(
-                  'Пока чатов нет',
-                  style: AppTextStyles.h14w4,
-                ),
+                child: Text('Пока чатов нет', style: AppTextStyles.h14w4),
               );
             }
 
@@ -307,7 +305,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 final chat = _chats[i];
 
                 Widget chatRow = Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -315,21 +316,24 @@ class _ChatScreenState extends State<ChatScreen> {
                       ClipOval(
                         child: Image.network(
                           _getAvatarUrl(chat.userAvatar),
-                          width: 40,
-                          height: 40,
+                          width: 44,
+                          height: 44,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return Image.asset(
                               'assets/${chat.userAvatar}',
-                              width: 40,
-                              height: 40,
+                              width: 44,
+                              height: 44,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) {
                                 return Container(
-                                  width: 40,
-                                  height: 40,
+                                  width: 44,
+                                  height: 44,
                                   color: AppColors.surfaceMuted,
-                                  child: const Icon(CupertinoIcons.person, size: 24),
+                                  child: const Icon(
+                                    CupertinoIcons.person,
+                                    size: 24,
+                                  ),
                                 );
                               },
                             );
@@ -351,7 +355,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     chat.userName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.h13w6,
+                                    style: AppTextStyles.h14w6,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -371,7 +375,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     chat.lastMessage,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.h12w4Sec,
+                                    style: AppTextStyles.h13w4Sec,
                                   ),
                                 ),
                                 if (chat.unread)
@@ -407,7 +411,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     );
-                    
+
                     // Обновляем список чатов после возврата из чата
                     if (result == true && mounted) {
                       await _loadInitial();

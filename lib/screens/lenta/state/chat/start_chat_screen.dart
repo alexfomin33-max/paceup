@@ -44,7 +44,7 @@ class _StartChatScreenState extends State<StartChatScreen> {
           children: [
             // ─── Поле поиска ───
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
               child: _SearchField(
                 controller: _searchController,
                 hintText: 'Поиск пользователей',
@@ -73,7 +73,7 @@ class _SearchField extends StatelessWidget {
       height: 44,
       child: TextField(
         controller: controller,
-        cursorColor: AppColors.brandPrimary,
+        cursorColor: AppColors.textPrimary,
         style: const TextStyle(fontFamily: 'Inter', fontSize: 16),
         decoration: InputDecoration(
           prefixIcon: const Icon(
@@ -93,18 +93,15 @@ class _SearchField extends StatelessWidget {
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
             borderSide: const BorderSide(color: AppColors.border, width: 1),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.outline, width: 1),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: const BorderSide(color: AppColors.border, width: 1),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              color: AppColors.brandPrimary,
-              width: 1.2,
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: const BorderSide(color: AppColors.outline, width: 1.2),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
         ),
       ),
@@ -216,7 +213,7 @@ class _RowTile extends StatelessWidget {
         }
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Row(
           children: [
             ClipOval(
