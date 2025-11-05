@@ -653,6 +653,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   EventTextField(
                     controller: placeCtrl,
                     label: 'Место проведения*',
+                    enabled: false,
+                    textColorOverride: AppColors.textSecondary,
                     hasError: _errorFields.contains('place'),
                     trailing: Padding(
                       padding: const EdgeInsets.only(left: 8),
@@ -801,6 +803,7 @@ class EventTextField extends StatelessWidget {
   final bool enabled;
   final Widget? trailing;
   final bool hasError; // ── состояние ошибки валидации
+  final Color? textColorOverride;
 
   const EventTextField({
     super.key,
@@ -810,14 +813,17 @@ class EventTextField extends StatelessWidget {
     this.enabled = true,
     this.trailing,
     this.hasError = false,
+    this.textColorOverride,
   });
 
   @override
   Widget build(BuildContext context) {
     // цвета/бордеры в зависимости от enabled и hasError
-    final textColor = enabled
-        ? AppColors.textPrimary
-        : AppColors.textPlaceholder; // «плейсхолдер/disabled»
+    final textColor =
+        textColorOverride ??
+        (enabled
+            ? AppColors.textPrimary
+            : AppColors.textPlaceholder); // «плейсхолдер/disabled»
     final fill = enabled ? AppColors.surface : AppColors.disabled;
     // ── если есть ошибка — красный бордер, иначе обычный
     final borderColor = hasError ? AppColors.error : AppColors.border;

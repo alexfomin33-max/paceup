@@ -201,8 +201,19 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         return null;
       }
 
-      // Формируем читаемый адрес из доступных частей
+      // Формируем читаемый адрес из доступных частей (город -> улица -> регион)
       final parts = <String>[];
+
+      // Населённый пункт (город, посёлок и т.д.) — ставим первым
+      final city =
+          address['city'] as String? ??
+          address['town'] as String? ??
+          address['village'] as String? ??
+          address['municipality'] as String?;
+
+      if (city != null && city.isNotEmpty) {
+        parts.add(city);
+      }
 
       // Улица и номер дома
       if (address['road'] != null && (address['road'] as String).isNotEmpty) {
@@ -215,18 +226,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         }
       }
 
-      // Населённый пункт (город, посёлок и т.д.)
-      final city =
-          address['city'] as String? ??
-          address['town'] as String? ??
-          address['village'] as String? ??
-          address['municipality'] as String?;
-
-      if (city != null && city.isNotEmpty) {
-        parts.add(city);
-      }
-
-      // Регион/область
+      // Регион/область (если ничего больше нет)
       if (parts.isEmpty) {
         final region =
             address['state'] as String? ??
