@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
@@ -415,23 +416,36 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
             children: [
               // Аватар пользователя
               ClipOval(
-                child: Image.network(
-                  _getAvatarUrl(widget.userAvatar),
-                  width: 36,
-                  height: 36,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Image.asset(
-                      'assets/${widget.userAvatar}',
+                child: Builder(
+                  builder: (context) {
+                    final dpr = MediaQuery.of(context).devicePixelRatio;
+                    final w = (36 * dpr).round();
+                    final h = (36 * dpr).round();
+                    final url = _getAvatarUrl(widget.userAvatar);
+                    return CachedNetworkImage(
+                      imageUrl: url,
                       width: 36,
                       height: 36,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) {
-                        return Container(
+                      fadeInDuration: const Duration(milliseconds: 120),
+                      memCacheWidth: w,
+                      memCacheHeight: h,
+                      maxWidthDiskCache: w,
+                      maxHeightDiskCache: h,
+                      errorWidget: (_, __, ___) {
+                        return Image.asset(
+                          'assets/${widget.userAvatar}',
                           width: 36,
                           height: 36,
-                          color: AppColors.surfaceMuted,
-                          child: const Icon(CupertinoIcons.person, size: 20),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) {
+                            return Container(
+                              width: 36,
+                              height: 36,
+                              color: AppColors.surfaceMuted,
+                              child: const Icon(CupertinoIcons.person, size: 20),
+                            );
+                          },
                         );
                       },
                     );
@@ -586,17 +600,27 @@ class _BubbleLeft extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           ClipOval(
-            child: Image.network(
-              avatarUrl,
-              width: 28,
-              height: 28,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
+            child: Builder(
+              builder: (context) {
+                final dpr = MediaQuery.of(context).devicePixelRatio;
+                final w = (28 * dpr).round();
+                final h = (28 * dpr).round();
+                return CachedNetworkImage(
+                  imageUrl: avatarUrl,
                   width: 28,
                   height: 28,
-                  color: AppColors.surfaceMuted,
-                  child: const Icon(CupertinoIcons.person, size: 16),
+                  fit: BoxFit.cover,
+                  fadeInDuration: const Duration(milliseconds: 120),
+                  memCacheWidth: w,
+                  memCacheHeight: h,
+                  maxWidthDiskCache: w,
+                  maxHeightDiskCache: h,
+                  errorWidget: (_, __, ___) => Container(
+                    width: 28,
+                    height: 28,
+                    color: AppColors.surfaceMuted,
+                    child: const Icon(CupertinoIcons.person, size: 16),
+                  ),
                 );
               },
             ),

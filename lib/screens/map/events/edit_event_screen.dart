@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../theme/app_theme.dart';
@@ -899,15 +900,26 @@ class _MediaTile extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: Image.network(
-                  url!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    width: 70,
-                    height: 70,
-                    color: AppColors.border,
-                    child: const Icon(Icons.image, size: 28),
-                  ),
+                child: Builder(
+                  builder: (context) {
+                    final dpr = MediaQuery.of(context).devicePixelRatio;
+                    final side = (70 * dpr).round();
+                    return CachedNetworkImage(
+                      imageUrl: url!,
+                      fit: BoxFit.cover,
+                      fadeInDuration: const Duration(milliseconds: 120),
+                      memCacheWidth: side,
+                      memCacheHeight: side,
+                      maxWidthDiskCache: side,
+                      maxHeightDiskCache: side,
+                      errorWidget: (_, __, ___) => Container(
+                        width: 70,
+                        height: 70,
+                        color: AppColors.border,
+                        child: const Icon(Icons.image, size: 28),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

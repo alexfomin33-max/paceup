@@ -1,6 +1,7 @@
 // lib/screens/map/events/event_detail_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../../../service/api_service.dart';
 import '../../../service/auth_service.dart';
@@ -42,7 +43,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
       if (data['success'] == true && data['event'] != null) {
         final event = data['event'] as Map<String, dynamic>;
-        
+
         // Проверяем права на редактирование: только создатель может редактировать
         final eventUserId = event['user_id'] as int?;
         final canEdit = userId != null && eventUserId == userId;
@@ -52,6 +53,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           _canEdit = canEdit;
           _loading = false;
         });
+
+        // ───── После успешной загрузки — лёгкий префетч логотипа и фото ─────
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _prefetchImages(context);
+          });
+        }
       } else {
         setState(() {
           _error = data['message'] as String? ?? 'Событие не найдено';
@@ -63,6 +71,40 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         _error = 'Ошибка загрузки: ${e.toString()}';
         _loading = false;
       });
+    }
+  }
+
+  /// ──────────────────────── Префетч изображений ────────────────────────
+  void _prefetchImages(BuildContext context) {
+    if (_eventData == null) return;
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+
+    // Логотип в шапке: 92×92
+    final logoUrl = _eventData!['logo_url'] as String?;
+    if (logoUrl != null && logoUrl.isNotEmpty) {
+      final w = (100 * dpr).round();
+      final h = (100 * dpr).round();
+      precacheImage(
+        CachedNetworkImageProvider(logoUrl, maxWidth: w, maxHeight: h),
+        context,
+      );
+    }
+
+    // Первые 6 фото для сетки превью (3 столбца с отступами 12/10)
+    final photos = _eventData!['photos'] as List<dynamic>? ?? [];
+    if (photos.isEmpty) return;
+    final screenW = MediaQuery.of(context).size.width;
+    final cell = ((screenW - 12 * 2 - 10 * 2) / 3).clamp(60.0, 400.0);
+    final cw = (cell * dpr).round();
+    final ch = cw; // квадрат
+    final limit = photos.length < 6 ? photos.length : 6;
+    for (var i = 0; i < limit; i++) {
+      final url = photos[i] as String?;
+      if (url == null || url.isEmpty) continue;
+      precacheImage(
+        CachedNetworkImageProvider(url, maxWidth: cw, maxHeight: ch),
+        context,
+      );
     }
   }
 
@@ -189,7 +231,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: SizedBox(
-                          height: 92,
+                          height: 100,
                           child: Row(
                             children: [
                               _CircleIconBtn(
@@ -201,26 +243,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                 child: Center(
                                   child: logoUrl.isNotEmpty
                                       ? ClipOval(
-                                          child: Image.network(
-                                            logoUrl,
-                                            width: 92,
-                                            height: 92,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) =>
-                                                Container(
-                                                  width: 92,
-                                                  height: 92,
-                                                  color: AppColors.border,
-                                                  child: const Icon(
-                                                    Icons.image,
-                                                    size: 48,
-                                                  ),
-                                                ),
-                                          ),
+                                          child: _HeaderLogo(url: logoUrl),
                                         )
                                       : Container(
-                                          width: 92,
-                                          height: 92,
+                                          width: 100,
+                                          height: 100,
                                           decoration: BoxDecoration(
                                             color: AppColors.border,
                                             shape: BoxShape.circle,
@@ -422,7 +449,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     Expanded(
                       child: _tab == 0
                           ? Padding(
-                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                              padding: const EdgeInsets.fromLTRB(
+                                12,
+                                12,
+                                12,
+                                12,
+                              ),
                               child: EventDescriptionContent(
                                 description:
                                     _eventData!['description'] as String? ?? '',
@@ -430,7 +462,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             )
                           : Padding(
                               padding: const EdgeInsets.only(top: 0, bottom: 0),
-                              child: EventMembersContent(participants: participants),
+                              child: EventMembersContent(
+                                participants: participants,
+                              ),
                             ),
                     ),
                   ],
@@ -451,18 +485,14 @@ class _CircleIconBtn extends StatelessWidget {
   final IconData icon;
   final String? semantic;
   final VoidCallback? onTap;
-  const _CircleIconBtn({
-    required this.icon,
-    this.onTap,
-    this.semantic,
-  });
+  const _CircleIconBtn({required this.icon, this.onTap, this.semantic});
 
   @override
   Widget build(BuildContext context) {
     if (onTap == null) {
       return const SizedBox.shrink();
     }
-    
+
     return Semantics(
       label: semantic,
       button: true,
@@ -505,6 +535,66 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
+/// Круглый логотип 92×92 с кэшем
+class _HeaderLogo extends StatelessWidget {
+  final String url;
+  const _HeaderLogo({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final w = (100 * dpr).round();
+    final h = (100 * dpr).round();
+    return CachedNetworkImage(
+      imageUrl: url,
+      width: 100,
+      height: 100,
+      fit: BoxFit.cover,
+      fadeInDuration: const Duration(milliseconds: 120),
+      memCacheWidth: w,
+      memCacheHeight: h,
+      maxWidthDiskCache: w,
+      maxHeightDiskCache: h,
+      errorWidget: (_, __, ___) => Container(
+        width: 100,
+        height: 100,
+        color: AppColors.border,
+        child: const Icon(Icons.image, size: 48),
+      ),
+    );
+  }
+}
+
+/// Аватар участника 40×40 с кэшем
+class _Avatar40 extends StatelessWidget {
+  final String url;
+  const _Avatar40({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final w = (40 * dpr).round();
+    final h = (40 * dpr).round();
+    return CachedNetworkImage(
+      imageUrl: url,
+      width: 40,
+      height: 40,
+      fit: BoxFit.cover,
+      fadeInDuration: const Duration(milliseconds: 120),
+      memCacheWidth: w,
+      memCacheHeight: h,
+      maxWidthDiskCache: w,
+      maxHeightDiskCache: h,
+      errorWidget: (_, __, ___) => Container(
+        width: 40,
+        height: 40,
+        color: AppColors.border,
+        child: const Icon(Icons.person, size: 24),
+      ),
+    );
+  }
+}
+
 class _SquarePhoto extends StatelessWidget {
   final String url;
   final VoidCallback? onTap;
@@ -512,19 +602,31 @@ class _SquarePhoto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dpr = MediaQuery.of(context).devicePixelRatio;
     return AspectRatio(
       aspectRatio: 1,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.xs),
         child: InkWell(
           onTap: onTap,
-          child: Image.network(
-            url,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              color: AppColors.border,
-              child: const Icon(Icons.image, size: 48),
-            ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final side = constraints.maxWidth;
+              final target = (side * dpr).round();
+              return CachedNetworkImage(
+                imageUrl: url,
+                fit: BoxFit.cover,
+                fadeInDuration: const Duration(milliseconds: 120),
+                memCacheWidth: target,
+                memCacheHeight: target,
+                maxWidthDiskCache: target,
+                maxHeightDiskCache: target,
+                errorWidget: (_, __, ___) => Container(
+                  color: AppColors.border,
+                  child: const Icon(Icons.image, size: 48),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -598,10 +700,11 @@ class _GalleryViewerState extends State<_GalleryViewer> {
                   child: InteractiveViewer(
                     maxScale: 4,
                     minScale: 1,
-                    child: Image.network(
-                      widget.images[i],
+                    child: CachedNetworkImage(
+                      imageUrl: widget.images[i],
                       fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => Container(
+                      fadeInDuration: const Duration(milliseconds: 120),
+                      errorWidget: (_, __, ___) => Container(
                         color: AppColors.border,
                         child: const Icon(Icons.image, size: 48),
                       ),
@@ -715,18 +818,7 @@ class _MemberRow extends StatelessWidget {
         children: [
           ClipOval(
             child: member.avatar.isNotEmpty
-                ? Image.network(
-                    member.avatar,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 40,
-                      height: 40,
-                      color: AppColors.border,
-                      child: const Icon(Icons.person, size: 24),
-                    ),
-                  )
+                ? _Avatar40(url: member.avatar)
                 : Container(
                     width: 40,
                     height: 40,

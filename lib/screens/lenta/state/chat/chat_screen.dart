@@ -2,6 +2,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
 import '../../../../widgets/interactive_back_swipe.dart';
@@ -231,7 +232,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: const Padding(
                 padding: EdgeInsets.only(right: 12),
                 child: Icon(
-                  CupertinoIcons.create,
+                  CupertinoIcons.add_circled,
                   size: 20,
                   color: AppColors.iconPrimary,
                 ),
@@ -314,26 +315,39 @@ class _ChatScreenState extends State<ChatScreen> {
                     children: [
                       // Аватар
                       ClipOval(
-                        child: Image.network(
-                          _getAvatarUrl(chat.userAvatar),
-                          width: 44,
-                          height: 44,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Image.asset(
-                              'assets/${chat.userAvatar}',
+                        child: Builder(
+                          builder: (context) {
+                            final dpr = MediaQuery.of(context).devicePixelRatio;
+                            final w = (44 * dpr).round();
+                            final h = (44 * dpr).round();
+                            final url = _getAvatarUrl(chat.userAvatar);
+                            return CachedNetworkImage(
+                              imageUrl: url,
                               width: 44,
                               height: 44,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) {
-                                return Container(
+                              fadeInDuration: const Duration(milliseconds: 120),
+                              memCacheWidth: w,
+                              memCacheHeight: h,
+                              maxWidthDiskCache: w,
+                              maxHeightDiskCache: h,
+                              errorWidget: (_, __, ___) {
+                                return Image.asset(
+                                  'assets/${chat.userAvatar}',
                                   width: 44,
                                   height: 44,
-                                  color: AppColors.surfaceMuted,
-                                  child: const Icon(
-                                    CupertinoIcons.person,
-                                    size: 24,
-                                  ),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) {
+                                    return Container(
+                                      width: 44,
+                                      height: 44,
+                                      color: AppColors.surfaceMuted,
+                                      child: const Icon(
+                                        CupertinoIcons.person,
+                                        size: 24,
+                                      ),
+                                    );
+                                  },
                                 );
                               },
                             );

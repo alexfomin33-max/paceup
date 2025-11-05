@@ -153,9 +153,13 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
             // Преобразуем модели активности в простые элементы для карточек
+            // ───────────────── Временное скрытие первой карточки ─────────────────
+            // Комментарий: на время задачи исключаем первый элемент через skip(1),
+            // чтобы отображались только следующие три карточки.
             SliverToBoxAdapter(
               child: _ActivityScroller(
                 items: data.activity
+                    .skip(1)
                     .map((a) => _ActItem(a.asset, a.value, a.label))
                     .toList(growable: false),
               ),
