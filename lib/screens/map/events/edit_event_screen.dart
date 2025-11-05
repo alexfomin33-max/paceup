@@ -11,7 +11,7 @@ import '../../../widgets/primary_button.dart';
 import '../../../service/api_service.dart';
 import '../../../service/auth_service.dart';
 import 'location_picker_screen.dart';
-import 'addevent_screen.dart';
+import 'add_event_screen.dart';
 
 /// Экран редактирования события
 class EditEventScreen extends StatefulWidget {

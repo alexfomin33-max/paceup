@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 // Контент шитов теперь здесь:
 import 'widgets/clubs_bottom_sheet.dart';
+import 'create_club_screen.dart';
 import '../../../theme/app_theme.dart';
+import '../../../widgets/transparent_route.dart';
 
 /// Возвращает маркеры для вкладки «Клубы».
 List<Map<String, dynamic>> clubsMarkers(BuildContext context) {
@@ -68,8 +70,9 @@ class ClubsFloatingButtons extends StatelessWidget {
             icon: Icons.group_add_outlined,
             label: 'Создать клуб',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Экран создания клуба — скоро')),
+              Navigator.push(
+                context,
+                TransparentPageRoute(builder: (_) => const CreateClubScreen()),
               );
             },
           ),

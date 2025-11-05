@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
-import 'addevent_screen.dart';
+import 'add_event_screen.dart';
 import 'events_filters_bottom_sheet.dart';
 import '../../../../../theme/app_theme.dart';
 import '../../../widgets/transparent_route.dart';
