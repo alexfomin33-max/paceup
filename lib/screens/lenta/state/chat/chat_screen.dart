@@ -9,6 +9,7 @@ import '../../../../widgets/transparent_route.dart';
 import '../../../../service/api_service.dart';
 import '../../../../service/auth_service.dart';
 import 'personal_chat_screen.dart';
+import 'start_chat_screen.dart';
 
 /// Модель чата из API
 class ChatItem {
@@ -208,15 +209,29 @@ class _ChatScreenState extends State<ChatScreen> {
         backgroundColor: AppColors.surface,
 
         // ─── Глобальный AppBar ───
-        appBar: const PaceAppBar(
+        appBar: PaceAppBar(
           title: 'Чаты',
           actions: [
-            Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Icon(
-                CupertinoIcons.create,
-                size: 20,
-                color: AppColors.iconPrimary,
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () async {
+                final result = await Navigator.of(context).push(
+                  TransparentPageRoute(
+                    builder: (_) => const StartChatScreen(),
+                  ),
+                );
+                // Обновляем список чатов после создания нового чата
+                if (result == true && mounted) {
+                  await _loadInitial();
+                }
+              },
+              child: const Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Icon(
+                  CupertinoIcons.create,
+                  size: 20,
+                  color: AppColors.iconPrimary,
+                ),
               ),
             ),
           ],
