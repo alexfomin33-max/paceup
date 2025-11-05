@@ -71,7 +71,13 @@ class CoffeeRunVldMembersContent extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: () {},
+                    // Для пользователей с ролью (админ/владелец) иконка неактивна
+                    // Для обычных пользователей — клик добавит в друзья (реализуем позже)
+                    onPressed: m.role != null
+                        ? null
+                        : () {
+                            // TODO: Реализовать добавление в друзья
+                          },
                     splashRadius: 22,
                     icon: Icon(
                       m.role != null
@@ -79,7 +85,9 @@ class CoffeeRunVldMembersContent extends StatelessWidget {
                                 .person_crop_circle_fill_badge_checkmark
                           : CupertinoIcons.person_crop_circle_badge_plus,
                       size: 24,
-                      color: AppColors.brandPrimary,
+                      color: m.role != null
+                          ? AppColors.iconTertiary
+                          : AppColors.brandPrimary,
                     ),
                   ),
                 ],
