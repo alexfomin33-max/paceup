@@ -638,7 +638,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   EventDropdownField(
                     label: 'Вид активности*',
                     value: activity,
-                    items: const ['Бег', 'Велосипед', 'Плавание', 'Триатлон'],
+                    items: const ['Бег', 'Велосипед', 'Плавание'],
                     hasError: _errorFields.contains('activity'),
                     onChanged: (v) => setState(() {
                       activity = v;

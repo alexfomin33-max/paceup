@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../../../service/api_service.dart';
 import '../../../service/auth_service.dart';
+import '../../../widgets/transparent_route.dart';
 import 'edit_event_screen.dart';
 
 /// Детальная страница события (на основе coffeerun_screen.dart)
@@ -113,7 +114,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     if (!_canEdit) return;
 
     final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
+      TransparentPageRoute(
         builder: (_) => EditEventScreen(eventId: widget.eventId),
       ),
     );

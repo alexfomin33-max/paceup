@@ -50,8 +50,16 @@ class _EditEventScreenState extends State<EditEventScreen> {
   String? logoUrl; // URL для отображения существующего логотипа
   String? logoFilename; // Имя файла существующего логотипа
   final List<File?> photos = [null, null, null];
-  final List<String> photoUrls = ['', '', '']; // URL для отображения существующих фото
-  final List<String> photoFilenames = ['', '', '']; // Имена файлов существующих фото
+  final List<String> photoUrls = [
+    '',
+    '',
+    '',
+  ]; // URL для отображения существующих фото
+  final List<String> photoFilenames = [
+    '',
+    '',
+    '',
+  ]; // Имена файлов существующих фото
 
   // координаты выбранного места
   LatLng? selectedLocation;
@@ -103,6 +111,35 @@ class _EditEventScreenState extends State<EditEventScreen> {
     }
   }
 
+  /// Форматирование адреса: город первым, затем остальное
+  /// Если адрес содержит запятые, переставляет последнюю часть в начало
+  String _formatAddress(String address) {
+    if (address.isEmpty) return address;
+
+    final parts = address
+        .split(',')
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toList();
+
+    // Если адрес не содержит запятых или только одна часть, возвращаем как есть
+    if (parts.length <= 1) {
+      return address;
+    }
+
+    // Берём последнюю часть как город (обычно город идёт последним в адресах)
+    final city = parts.removeLast();
+    final rest = parts.join(', ');
+
+    // Если остальное пусто, возвращаем только город
+    if (rest.isEmpty) {
+      return city;
+    }
+
+    // Формат: город, остальное
+    return '$city, $rest';
+  }
+
   /// Загрузка данных события для редактирования
   Future<void> _loadEventData() async {
     try {
@@ -112,9 +149,9 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
       if (userId == null) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ошибка авторизации')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Ошибка авторизации')));
           Navigator.of(context).pop();
         }
         return;
@@ -133,7 +170,8 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
         // Заполняем текстовые поля
         nameCtrl.text = event['name'] as String? ?? '';
-        placeCtrl.text = event['place'] as String? ?? '';
+        final placeText = event['place'] as String? ?? '';
+        placeCtrl.text = _formatAddress(placeText);
         descCtrl.text = event['description'] as String? ?? '';
         clubCtrl.text = event['club_name'] as String? ?? '';
         templateCtrl.text = event['template_name'] as String? ?? '';
@@ -141,13 +179,13 @@ class _EditEventScreenState extends State<EditEventScreen> {
         // Заполняем выборы
         final activityStr = event['activity'] as String?;
         // Проверяем, что значение активности входит в список допустимых
-        const allowedActivities = ['Бег', 'Велосипед', 'Плавание', 'Триатлон'];
+        const allowedActivities = ['Бег', 'Велосипед', 'Плавание'];
         if (activityStr != null && allowedActivities.contains(activityStr)) {
           activity = activityStr;
         } else {
           activity = null; // Если значение не валидно, оставляем null
         }
-        
+
         final clubNameStr = event['club_name'] as String? ?? '';
         createFromClub = clubNameStr.isNotEmpty;
         // Проверяем, что значение клуба входит в список допустимых
@@ -156,7 +194,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
         } else {
           selectedClub = null; // Если значение не валидно, оставляем null
         }
-        
+
         saveTemplate = (event['template_name'] as String? ?? '').isNotEmpty;
 
         // Заполняем дату и время
@@ -220,7 +258,8 @@ class _EditEventScreenState extends State<EditEventScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                data['message'] as String? ?? 'Не удалось загрузить данные события',
+                data['message'] as String? ??
+                    'Не удалось загрузить данные события',
               ),
             ),
           );
@@ -270,7 +309,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
       setState(() {
         selectedLocation = result.coordinates;
         if (result.address != null && result.address!.isNotEmpty) {
-          placeCtrl.text = result.address!;
+          placeCtrl.text = _formatAddress(result.address!);
         }
         _clearFieldError('place');
       });
@@ -465,12 +504,12 @@ class _EditEventScreenState extends State<EditEventScreen> {
       fields['event_date'] = _fmtDate(date!);
       fields['event_time'] = _fmtTime(time!);
       fields['description'] = descCtrl.text.trim();
-      
+
       // Флаги для сохранения существующих изображений
       if (logoUrl != null && logoFile == null && logoFilename != null) {
         fields['keep_logo'] = 'true';
       }
-      
+
       // Собираем имена файлов для сохранения (те, которые не были заменены)
       final keepImages = <String>[];
       for (int i = 0; i < photoFilenames.length; i++) {
@@ -533,9 +572,9 @@ class _EditEventScreenState extends State<EditEventScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка сети: ${e.toString()}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Ошибка сети: ${e.toString()}')));
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -620,25 +659,27 @@ class _EditEventScreenState extends State<EditEventScreen> {
                     label: 'Название события*',
                     hasError: _errorFields.contains('name'),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   // ---------- Вид активности ----------
                   EventDropdownField(
                     label: 'Вид активности*',
                     value: activity,
-                    items: const ['Бег', 'Велосипед', 'Плавание', 'Триатлон'],
+                    items: const ['Бег', 'Велосипед', 'Плавание'],
                     hasError: _errorFields.contains('activity'),
                     onChanged: (v) => setState(() {
                       activity = v;
                       _clearFieldError('activity');
                     }),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   // ---------- Место + кнопка "Карта" ----------
                   EventTextField(
                     controller: placeCtrl,
                     label: 'Место проведения*',
+                    enabled: false,
+                    textColorOverride: AppColors.textSecondary,
                     hasError: _errorFields.contains('place'),
                     trailing: Padding(
                       padding: const EdgeInsets.only(left: 8),
@@ -660,7 +701,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   // ---------- Дата / Время ----------
                   Row(
@@ -673,7 +714,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                           hasError: _errorFields.contains('date'),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 20),
                       Expanded(
                         child: EventDateField(
                           label: 'Время',
@@ -685,7 +726,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   // ---------- Описание ----------
                   EventTextField(
@@ -693,66 +734,8 @@ class _EditEventScreenState extends State<EditEventScreen> {
                     label: 'Описание события',
                     maxLines: 5,
                   ),
-                  const SizedBox(height: 16),
 
-                  // ---------- Создать от имени клуба ----------
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Checkbox(
-                          value: createFromClub,
-                          onChanged: (v) =>
-                              setState(() => createFromClub = v ?? false),
-                          side: const BorderSide(color: AppColors.border),
-                          activeColor: AppColors.brandPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text('Создать от имени клуба'),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  EventDropdownField(
-                    label: '',
-                    value: createFromClub ? selectedClub : null,
-                    items: clubs,
-                    enabled: createFromClub,
-                    onChanged: (v) => setState(() {
-                      selectedClub = v;
-                      clubCtrl.text = v ?? '';
-                    }),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ---------- Сохранить шаблон ----------
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Checkbox(
-                          value: saveTemplate,
-                          onChanged: (v) =>
-                              setState(() => saveTemplate = v ?? false),
-                          side: const BorderSide(color: AppColors.border),
-                          activeColor: AppColors.brandPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text('Сохранить шаблон'),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  EventTextField(
-                    controller: templateCtrl,
-                    label: '',
-                    enabled: saveTemplate,
-                  ),
-
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 25),
                   Align(
                     alignment: Alignment.center,
                     child: PrimaryButton(
@@ -815,12 +798,7 @@ class _MediaColumn extends StatelessWidget {
       children: [
         _SmallLabel(label),
         const SizedBox(height: 6),
-        _MediaTile(
-          file: file,
-          url: url,
-          onPick: onPick,
-          onRemove: onRemove,
-        ),
+        _MediaTile(file: file, url: url, onPick: onPick, onRemove: onRemove),
       ],
     );
   }
@@ -970,4 +948,3 @@ class _MediaTile extends StatelessWidget {
     );
   }
 }
-
