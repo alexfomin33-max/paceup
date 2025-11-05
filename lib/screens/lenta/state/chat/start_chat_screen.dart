@@ -92,15 +92,15 @@ class _SearchField extends StatelessWidget {
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.border, width: 1),
+            borderSide: const BorderSide(color: AppColors.border, width: 0.7),
             borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.border, width: 1),
+            borderSide: const BorderSide(color: AppColors.border, width: 0.7),
             borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.outline, width: 1.2),
+            borderSide: const BorderSide(color: AppColors.outline, width: 1),
             borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
         ),
@@ -268,9 +268,9 @@ class _RowTile extends StatelessWidget {
               tooltip: 'Написать',
               splashRadius: 22,
               icon: const Icon(
-                CupertinoIcons.pencil,
+                CupertinoIcons.chat_bubble_text,
                 size: 20,
-                color: AppColors.iconPrimary,
+                color: AppColors.brandPrimary,
               ),
               onPressed: () async {
                 final result = await Navigator.of(context).push(

@@ -247,7 +247,7 @@ class EventsListFromApi extends StatelessWidget {
         final participantsCount = event['participants_count'] as int? ?? 0;
         final subtitle = '$date  ·  Участников: $participantsCount';
 
-        return cardRow(
+        final row = cardRow(
           logoUrl: logoUrl,
           title: name,
           subtitle: subtitle,
@@ -261,6 +261,13 @@ class EventsListFromApi extends StatelessWidget {
                 }
               : null,
         );
+
+        // Нижняя граница под самой последней карточкой
+        if (index == events.length - 1) {
+          return Column(children: [row, const _ClubsDivider()]);
+        }
+
+        return row;
       },
     );
   }

@@ -290,7 +290,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 height: 1,
                 thickness: 0.5,
                 color: AppColors.border,
-                indent: 57,
+                indent: 8,
                 endIndent: 8,
               ),
               itemBuilder: (context, i) {
@@ -398,7 +398,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 );
 
                 // ─── Оборачиваем в GestureDetector для навигации ───
-                return GestureDetector(
+                final item = GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () async {
                     final result = await Navigator.of(context).push(
@@ -419,6 +419,24 @@ class _ChatScreenState extends State<ChatScreen> {
                   },
                   child: chatRow,
                 );
+
+                // Нижняя граница под самой последней карточкой
+                final isLastVisible = i == _chats.length - 1 && !_isLoadingMore;
+                if (isLastVisible) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      item,
+                      const Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        color: AppColors.border,
+                      ),
+                    ],
+                  );
+                }
+
+                return item;
               },
             );
           }(),
