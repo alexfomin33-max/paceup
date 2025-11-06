@@ -9,7 +9,18 @@ import '../../../widgets/primary_button.dart';
 /// Отображает фильтры: вид спорта, тип события, даты.
 /// Использует стиль iOS с BouncingScrollPhysics и AppTheme токенами.
 class EventsFiltersBottomSheet extends StatefulWidget {
-  const EventsFiltersBottomSheet({super.key});
+  /// Callback для применения фильтров
+  /// Передает параметры фильтра: виды спорта, типы событий, даты
+  final Function(EventsFilterParams)? onApplyFilters;
+
+  /// Начальные параметры фильтра (для восстановления состояния)
+  final EventsFilterParams? initialParams;
+
+  const EventsFiltersBottomSheet({
+    super.key,
+    this.onApplyFilters,
+    this.initialParams,
+  });
 
   @override
   State<EventsFiltersBottomSheet> createState() =>
@@ -20,17 +31,10 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
   // ──── Состояние фильтров ────
 
   /// Выбранные виды спорта (множественный выбор, минимум один)
-  final Set<SportType> _selectedSports = {
-    SportType.run,
-    SportType.bike,
-    SportType.swim,
-  };
+  late Set<SportType> _selectedSports;
 
   /// Выбранные типы событий (множественный выбор, минимум один)
-  final Set<EventType> _selectedEventTypes = {
-    EventType.official,
-    EventType.amateur,
-  };
+  late Set<EventType> _selectedEventTypes;
 
   /// Дата начала периода
   DateTime? _startDate;
@@ -38,19 +42,49 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
   /// Дата окончания периода
   DateTime? _endDate;
 
-  // ──── Инициализация дат по умолчанию ────
+  // ──── Инициализация фильтров ────
   @override
   void initState() {
     super.initState();
-    // Устанавливаем дефолтные даты: сегодня и сегодня + 1 год
-    final today = DateTime.now();
-    _startDate = DateTime(today.year, today.month, today.day);
-    _endDate = DateTime(today.year + 1, today.month, today.day);
+    
+    // Восстанавливаем параметры из initialParams, если они есть
+    if (widget.initialParams != null) {
+      _selectedSports = widget.initialParams!.sports.toSet();
+      _selectedEventTypes = widget.initialParams!.eventTypes.toSet();
+      _startDate = widget.initialParams!.startDate;
+      _endDate = widget.initialParams!.endDate;
+    } else {
+      // Устанавливаем дефолтные значения
+      _selectedSports = {
+        SportType.run,
+        SportType.bike,
+        SportType.swim,
+      };
+      _selectedEventTypes = {
+        EventType.official,
+        EventType.amateur,
+      };
+      // Устанавливаем дефолтные даты: сегодня и сегодня + 1 год
+      final today = DateTime.now();
+      _startDate = DateTime(today.year, today.month, today.day);
+      _endDate = DateTime(today.year + 1, today.month, today.day);
+    }
   }
 
   // ──── Применение фильтров ────
   void _applyFilters() {
-    // TODO: Здесь будет логика применения фильтров
+    // Формируем параметры фильтра
+    final params = EventsFilterParams(
+      sports: _selectedSports.toList(),
+      eventTypes: _selectedEventTypes.toList(),
+      startDate: _startDate,
+      endDate: _endDate,
+    );
+
+    // Вызываем callback с параметрами фильтра
+    widget.onApplyFilters?.call(params);
+
+    // Закрываем bottom sheet
     Navigator.of(context).pop();
   }
 
@@ -433,11 +467,55 @@ class _DatePickerButton extends StatelessWidget {
 
 // ──────────── Модели данных ────────────
 
+/// Параметры фильтра событий
+class EventsFilterParams {
+  /// Выбранные виды спорта
+  final List<SportType> sports;
+
+  /// Выбранные типы событий
+  final List<EventType> eventTypes;
+
+  /// Дата начала периода
+  final DateTime? startDate;
+
+  /// Дата окончания периода
+  final DateTime? endDate;
+
+  const EventsFilterParams({
+    required this.sports,
+    required this.eventTypes,
+    this.startDate,
+    this.endDate,
+  });
+
+  /// Проверяет, применены ли какие-либо фильтры (кроме дефолтных)
+  bool get hasFilters {
+    // Если выбраны не все виды спорта или не все типы событий - есть фильтры
+    if (sports.length < SportType.values.length) return true;
+    if (eventTypes.length < EventType.values.length) return true;
+    // Если даты установлены - есть фильтры
+    if (startDate != null || endDate != null) return true;
+    return false;
+  }
+}
+
 /// Виды спорта для фильтра
 enum SportType { run, bike, swim }
 
 extension SportTypeExtension on SportType {
   String get label {
+    switch (this) {
+      case SportType.run:
+        return 'Бег';
+      case SportType.bike:
+        return 'Велосипед';
+      case SportType.swim:
+        return 'Плавание';
+    }
+  }
+
+  /// Преобразует вид спорта в строку для API
+  String get apiValue {
     switch (this) {
       case SportType.run:
         return 'Бег';
@@ -470,6 +548,16 @@ extension EventTypeExtension on EventType {
         return 'Официальные';
       case EventType.amateur:
         return 'Любительские';
+    }
+  }
+
+  /// Преобразует тип события в строку для API
+  String get apiValue {
+    switch (this) {
+      case EventType.official:
+        return 'official';
+      case EventType.amateur:
+        return 'amateur';
     }
   }
 

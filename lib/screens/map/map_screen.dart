@@ -7,6 +7,7 @@ import '../../config/app_config.dart';
 
 // контент вкладок
 import 'events/events_screen.dart' as ev;
+import 'events/events_filters_bottom_sheet.dart';
 import 'clubs/clubs_screen.dart' as clb;
 import 'slots/slots_screen.dart' as slt;
 import 'travelers/travelers_screen.dart' as trv;
@@ -31,6 +32,12 @@ class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
 
   final tabs = const ["События", "Клубы", "Слоты", "Попутчики"];
+
+  /// Параметры фильтра событий (для обновления карты при применении фильтров)
+  EventsFilterParams? _eventsFilterParams;
+
+  /// Ключ для FutureBuilder событий (обновляется при изменении фильтров)
+  Key _eventsMarkersKey = const ValueKey('events_markers_default');
 
   /// Цвета маркеров по вкладкам
   final markerColors = const {
@@ -120,10 +127,13 @@ class _MapScreenState extends State<MapScreen> {
         body: Stack(
           children: [
             FutureBuilder<List<Map<String, dynamic>>>(
-              // Используем статический ключ для каждой вкладки, чтобы Future не пересоздавался
-              key: ValueKey(_selectedIndex == 0 ? 'events_markers' : 'clubs_markers'),
+              // Используем динамический ключ для событий (обновляется при применении фильтров)
+              // Для клубов используем статический ключ
+              key: _selectedIndex == 0
+                  ? _eventsMarkersKey
+                  : const ValueKey('clubs_markers'),
               future: _selectedIndex == 0
-                  ? ev.eventsMarkers(context)
+                  ? ev.eventsMarkers(context, filterParams: _eventsFilterParams)
                   : clb.clubsMarkers(context),
               builder: (context, snapshot) {
                 // Показываем карту даже во время загрузки (с пустыми маркерами)
@@ -152,7 +162,20 @@ class _MapScreenState extends State<MapScreen> {
               },
             ),
             _buildTabs(),
-            if (_selectedIndex == 0) const ev.EventsFloatingButtons(),
+            if (_selectedIndex == 0)
+              ev.EventsFloatingButtons(
+                currentFilterParams: _eventsFilterParams,
+                onApplyFilters: (params) {
+                  // Обновляем параметры фильтра
+                  setState(() {
+                    _eventsFilterParams = params;
+                    // Обновляем ключ FutureBuilder для перезагрузки данных
+                    _eventsMarkersKey = ValueKey(
+                      'events_markers_${DateTime.now().millisecondsSinceEpoch}',
+                    );
+                  });
+                },
+              ),
             if (_selectedIndex == 1) const clb.ClubsFloatingButtons(),
           ],
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:intl/intl.dart';
 import 'add_event_screen.dart';
 import 'events_filters_bottom_sheet.dart';
 import '../../../../../theme/app_theme.dart';
@@ -109,14 +110,58 @@ String _declineCityName(String cityName) {
 
 /// Возвращает маркеры для вкладки «События».
 /// Загружает данные через API и группирует события по локациям
-Future<List<Map<String, dynamic>>> eventsMarkers(BuildContext context) async {
+/// 
+/// [filterParams] - параметры фильтра (опционально)
+Future<List<Map<String, dynamic>>> eventsMarkers(
+  BuildContext context, {
+  EventsFilterParams? filterParams,
+}) async {
   try {
     final api = ApiService();
+
+    // Формируем параметры запроса
+    final queryParams = <String, String>{
+      'detail': 'false',
+    };
+
+    // Добавляем фильтры по видам спорта
+    if (filterParams != null && filterParams.sports.isNotEmpty) {
+      final sports = filterParams.sports.map((s) => s.apiValue).toList();
+      queryParams['activities'] = sports.join(',');
+    }
+
+    // Добавляем фильтры по типам событий
+    if (filterParams != null && filterParams.eventTypes.isNotEmpty) {
+      final eventTypes =
+          filterParams.eventTypes.map((t) => t.apiValue).toList();
+      queryParams['event_types'] = eventTypes.join(',');
+    }
+
+    // Добавляем фильтры по датам
+    // ⚡️ Передаем даты только если они явно установлены пользователем
+    // (не передаем дефолтные даты, которые устанавливаются автоматически)
+    if (filterParams != null) {
+      // Проверяем, что дата начала не является дефолтной (сегодня)
+      final today = DateTime.now();
+      final defaultStartDate = DateTime(today.year, today.month, today.day);
+      final defaultEndDate = DateTime(today.year + 1, today.month, today.day);
+      
+      if (filterParams.startDate != null &&
+          filterParams.startDate != defaultStartDate) {
+        queryParams['start_date'] =
+            DateFormat('yyyy-MM-dd').format(filterParams.startDate!);
+      }
+      if (filterParams.endDate != null &&
+          filterParams.endDate != defaultEndDate) {
+        queryParams['end_date'] =
+            DateFormat('yyyy-MM-dd').format(filterParams.endDate!);
+      }
+    }
 
     // Загружаем маркеры с группировкой по локациям
     final data = await api.get(
       '/get_events.php',
-      queryParams: {'detail': 'false'},
+      queryParams: queryParams,
     );
 
     if (data['success'] != true) {
@@ -157,9 +202,19 @@ Future<List<Map<String, dynamic>>> eventsMarkers(BuildContext context) async {
   }
 }
 
-/// ——— Кнопки снизу для вкладки «События» (оставляем как было) ———
+/// ——— Кнопки снизу для вкладки «События» ———
 class EventsFloatingButtons extends StatelessWidget {
-  const EventsFloatingButtons({super.key});
+  /// Callback для применения фильтров
+  final Function(EventsFilterParams)? onApplyFilters;
+
+  /// Текущие параметры фильтра (для восстановления состояния)
+  final EventsFilterParams? currentFilterParams;
+
+  const EventsFloatingButtons({
+    super.key,
+    this.onApplyFilters,
+    this.currentFilterParams,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -179,7 +234,10 @@ class EventsFloatingButtons extends StatelessWidget {
                 useRootNavigator: true,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
-                builder: (_) => const EventsFiltersBottomSheet(),
+                builder: (_) => EventsFiltersBottomSheet(
+                  onApplyFilters: onApplyFilters,
+                  initialParams: currentFilterParams,
+                ),
               );
             },
           ),
