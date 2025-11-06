@@ -268,6 +268,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
       fields['activity'] = activity!;
       fields['is_open'] = isOpenCommunity ? '1' : '0';
       fields['foundation_date'] = _fmtDate(foundationDate!);
+      // Координаты не обязательны - будут получены по городу на сервере
 
       // Отправляем запрос
       Map<String, dynamic> data;
@@ -304,7 +305,8 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text('Клуб успешно создан')));
 
-        // Закрываем экран создания клуба
+        // Закрываем экран создания клуба и возвращаемся на карту
+        // Экран создания клуба открывается с карты, поэтому просто закрываем его
         Navigator.of(context).pop();
       } else {
         if (!mounted) return;
