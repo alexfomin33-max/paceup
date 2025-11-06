@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 // Контент шитов теперь здесь:
-import 'widgets/clubs_bottom_sheet.dart';
+import 'clubs_bottom_sheet.dart';
 import 'create_club_screen.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/transparent_route.dart';

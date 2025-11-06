@@ -180,6 +180,7 @@ class GoodsCard extends StatelessWidget {
                                     itemThumb: item.images.isNotEmpty
                                         ? item.images.first
                                         : null,
+                                    price: item.price,
                                   ),
                                 ),
                               );

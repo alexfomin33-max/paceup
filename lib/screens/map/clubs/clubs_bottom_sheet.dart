@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
-import '../coffeerun_vld/coffeerun_vld_screen.dart';
+import '../../../theme/app_theme.dart';
+import 'coffeerun_vld/coffeerun_vld_screen.dart';
 
 /// Каркас bottom sheet для вкладки «Клубы» — 1:1 как в events_bottom_sheet.dart
 class ClubsBottomSheet extends StatelessWidget {

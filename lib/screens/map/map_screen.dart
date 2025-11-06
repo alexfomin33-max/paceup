@@ -12,7 +12,7 @@ import 'travelers/travelers_screen.dart' as trv;
 
 // нижние выезжающие окна
 import 'events/events_bottom_sheet.dart' as ebs;
-import 'clubs/widgets/clubs_bottom_sheet.dart' as cbs;
+import 'clubs/clubs_bottom_sheet.dart' as cbs;
 import 'slots/slots_bottom_sheet.dart' as sbs;
 import 'travelers/travelers_bottom_sheet.dart' as tbs;
 
