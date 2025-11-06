@@ -32,8 +32,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
   TimeOfDay? time = const TimeOfDay(hour: 12, minute: 00);
 
   // список клубов
-  final List<String> clubs = ['CoffeeRun_vld', 'RunTown', 'TriClub'];
-  String? selectedClub = 'CoffeeRun_vld';
+  List<String> clubs = [];
+  String? selectedClub;
 
   // чекбоксы
   bool createFromClub = false;
@@ -69,6 +69,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
   @override
   void initState() {
     super.initState();
+    _loadUserClubs(); // ── загружаем клубы пользователя при инициализации
     nameCtrl.addListener(() {
       _refresh();
       _clearFieldError('name'); // ── очищаем ошибку при вводе
@@ -256,6 +257,46 @@ class _AddEventScreenState extends State<AddEventScreen> {
     return '$hh:$mm';
   }
 
+  // ── загрузка списка клубов пользователя
+  Future<void> _loadUserClubs() async {
+    try {
+      final api = ApiService();
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        setState(() {
+          clubs = [];
+        });
+        return;
+      }
+
+      final data = await api.get(
+        '/get_user_clubs.php',
+        queryParams: {'user_id': userId.toString()},
+      );
+
+      if (data['success'] == true && data['clubs'] != null) {
+        final clubsList = data['clubs'] as List<dynamic>;
+        setState(() {
+          clubs = clubsList.map((c) => c.toString()).toList();
+          // Если список не пустой и selectedClub не установлен, выбираем первый
+          if (clubs.isNotEmpty && selectedClub == null) {
+            selectedClub = clubs.first;
+          }
+        });
+      } else {
+        setState(() {
+          clubs = [];
+        });
+      }
+    } catch (e) {
+      setState(() {
+        clubs = [];
+      });
+    }
+  }
+
   // ── загрузка списка шаблонов
   Future<void> _loadTemplates() async {
     setState(() => _loadingTemplates = true);
@@ -265,9 +306,17 @@ class _AddEventScreenState extends State<AddEventScreen> {
       final authService = AuthService();
       final userId = await authService.getUserId();
 
+      if (userId == null) {
+        setState(() {
+          _templates = [];
+          _loadingTemplates = false;
+        });
+        return;
+      }
+
       final data = await api.get(
         '/get_templates.php',
-        queryParams: {if (userId != null) 'user_id': userId.toString()},
+        queryParams: {'user_id': userId.toString()},
       );
 
       if (data['success'] == true && data['templates'] != null) {
@@ -276,15 +325,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
           _templates = templates.map((t) => t.toString()).toList();
         });
       } else {
-        // Если API не реализовано, используем заглушку
         setState(() {
-          _templates = ['Субботний коферан', 'Воскресный велопробег'];
+          _templates = [];
         });
       }
     } catch (e) {
-      // При ошибке используем заглушку
       setState(() {
-        _templates = ['Субботний коферан', 'Воскресный велопробег'];
+        _templates = [];
       });
     } finally {
       setState(() => _loadingTemplates = false);
@@ -300,11 +347,16 @@ class _AddEventScreenState extends State<AddEventScreen> {
       final authService = AuthService();
       final userId = await authService.getUserId();
 
+      if (userId == null) {
+        setState(() => _loading = false);
+        return;
+      }
+
       final data = await api.get(
         '/get_template.php',
         queryParams: {
           'template_name': templateName,
-          if (userId != null) 'user_id': userId.toString(),
+          'user_id': userId.toString(),
         },
       );
 
@@ -360,10 +412,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
           // Клуб
           final clubName = template['club_name'] as String?;
-          if (clubName != null && clubName.isNotEmpty) {
+          if (clubName != null && clubName.isNotEmpty && clubs.contains(clubName)) {
             createFromClub = true;
             selectedClub = clubName;
             clubCtrl.text = clubName;
+          } else {
+            createFromClub = false;
+            selectedClub = clubs.isNotEmpty ? clubs.first : null;
           }
 
           templateCtrl.text = templateName;
@@ -372,26 +427,24 @@ class _AddEventScreenState extends State<AddEventScreen> {
         // Очищаем ошибки валидации
         _errorFields.clear();
       } else {
-        // Если API не реализовано, используем заглушку
-        _loadTemplatePlaceholder(templateName);
+        // Если шаблон не найден, показываем сообщение
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Шаблон не найден')),
+          );
+        }
       }
     } catch (e) {
-      // При ошибке используем заглушку
-      _loadTemplatePlaceholder(templateName);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка загрузки шаблона: ${e.toString()}')),
+        );
+      }
     } finally {
       setState(() => _loading = false);
     }
   }
 
-  // ── заглушка для загрузки шаблона (если API не реализовано)
-  void _loadTemplatePlaceholder(String templateName) {
-    setState(() {
-      nameCtrl.text = templateName;
-      templateCtrl.text = templateName;
-      // Остальные поля остаются как есть
-    });
-    _errorFields.clear();
-  }
 
   Future<void> _submit() async {
     // ── проверяем все обязательные поля и подсвечиваем незаполненные
@@ -735,7 +788,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     label: '', // ← пустая строка: лейбл не рисуем
                     value: selectedClub,
                     items: clubs,
-                    enabled: createFromClub,
+                    enabled: createFromClub && clubs.isNotEmpty,
                     onChanged: (v) => setState(() {
                       selectedClub = v;
                       clubCtrl.text = v ?? '';
