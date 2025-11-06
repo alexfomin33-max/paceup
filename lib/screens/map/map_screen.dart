@@ -42,7 +42,8 @@ class _MapScreenState extends State<MapScreen> {
   List<Map<String, dynamic>> _markersForTabSync(BuildContext context) {
     switch (_selectedIndex) {
       case 1:
-        return clb.clubsMarkers(context);
+        // Клубы теперь асинхронные, не используется здесь
+        return [];
       case 2:
         return slt.slotsMarkers(context);
       case 3:
@@ -112,15 +113,17 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     final markerColor = markerColors[_selectedIndex] ?? AppColors.brandPrimary;
 
-    // Для событий используем FutureBuilder, для остальных - синхронные данные
-    if (_selectedIndex == 0) {
+    // Для событий и клубов используем FutureBuilder, для остальных - синхронные данные
+    if (_selectedIndex == 0 || _selectedIndex == 1) {
       return Scaffold(
         body: Stack(
           children: [
             FutureBuilder<List<Map<String, dynamic>>>(
               // Используем ключ для обновления при возврате на экран
-              key: ValueKey('events_markers'),
-              future: ev.eventsMarkers(context),
+              key: ValueKey('${_selectedIndex == 0 ? 'events' : 'clubs'}_markers'),
+              future: _selectedIndex == 0
+                  ? ev.eventsMarkers(context)
+                  : clb.clubsMarkers(context),
               builder: (context, snapshot) {
                 final markers = snapshot.data ?? [];
                 // Подстраиваем zoom после загрузки маркеров
@@ -132,6 +135,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
             _buildTabs(),
             if (_selectedIndex == 0) const ev.EventsFloatingButtons(),
+            if (_selectedIndex == 1) const clb.ClubsFloatingButtons(),
           ],
         ),
       );
@@ -216,9 +220,16 @@ class _MapScreenState extends State<MapScreen> {
                               : content ?? const ebs.EventsSheetPlaceholder(),
                         );
                       case 1:
+                        // Для клубов создаём виджет со списком клубов из API
                         return cbs.ClubsBottomSheet(
                           title: title,
-                          child: content ?? const cbs.ClubsSheetPlaceholder(),
+                          child: m['clubs'] != null && m['clubs'] is List
+                              ? cbs.ClubsListFromApi(
+                                  clubs: m['clubs'] as List<dynamic>,
+                                  latitude: m['latitude'] as double?,
+                                  longitude: m['longitude'] as double?,
+                                )
+                              : content ?? const cbs.ClubsSheetPlaceholder(),
                         );
                       case 2:
                         return sbs.SlotsBottomSheet(
