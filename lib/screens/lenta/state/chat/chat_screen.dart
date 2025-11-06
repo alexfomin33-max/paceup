@@ -202,10 +202,13 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   /// ─── Получение URL аватара ───
-  String _getAvatarUrl(String avatar) {
-    if (avatar.isEmpty) return 'http://uploads.paceup.ru/defaults/1.webp';
+  String _getAvatarUrl(String avatar, int userId) {
+    if (avatar.isEmpty) {
+      return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+    }
     if (avatar.startsWith('http')) return avatar;
-    return 'http://uploads.paceup.ru/avatars/$avatar';
+    // ⚡️ Используем правильный путь: /images/users/avatars/{user_id}/{avatar}
+    return 'http://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
   }
 
   @override
@@ -320,8 +323,9 @@ class _ChatScreenState extends State<ChatScreen> {
                             final dpr = MediaQuery.of(context).devicePixelRatio;
                             final w = (44 * dpr).round();
                             final h = (44 * dpr).round();
-                            final url = _getAvatarUrl(chat.userAvatar);
+                            final url = _getAvatarUrl(chat.userAvatar, chat.userId);
                             return CachedNetworkImage(
+                              key: ValueKey('avatar_${chat.id}_${chat.userId}_$url'),
                               imageUrl: url,
                               width: 44,
                               height: 44,
