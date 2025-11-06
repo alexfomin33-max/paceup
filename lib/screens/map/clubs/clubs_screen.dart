@@ -115,17 +115,9 @@ Future<List<Map<String, dynamic>>> clubsMarkers(BuildContext context) async {
     final api = ApiService();
 
     // Загружаем маркеры с группировкой по локациям
-    // Добавляем таймаут для предотвращения зависания
-    final data = await api
-        .get(
-          '/get_clubs.php',
-          queryParams: {'detail': 'false'},
-        )
-        .timeout(
-      const Duration(seconds: 10),
-      onTimeout: () {
-        throw TimeoutException('Превышено время ожидания загрузки клубов');
-      },
+    final data = await api.get(
+      '/get_clubs.php',
+      queryParams: {'detail': 'false'},
     );
 
     if (data['success'] != true) {
