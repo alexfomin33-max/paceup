@@ -4,12 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
+import '../../widgets/pills.dart'; // PricePill
 
 class TradeChatScreen extends StatefulWidget {
   final String itemTitle;
   final String? itemThumb; // ассет превью вещи
+  final int price; // в рублях
 
-  const TradeChatScreen({super.key, required this.itemTitle, this.itemThumb});
+  const TradeChatScreen({
+    super.key,
+    required this.itemTitle,
+    this.itemThumb,
+    required this.price,
+  });
 
   @override
   State<TradeChatScreen> createState() => _TradeChatScreenState();
@@ -105,13 +112,24 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
     });
   }
 
+  String _formatPrice(int price) {
+    final s = price.toString();
+    final b = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      final pos = s.length - i;
+      b.write(s[i]);
+      if (pos > 1 && pos % 3 == 1) b.write(' ');
+    }
+    return '${b.toString()} ₽';
+  }
+
   @override
   Widget build(BuildContext context) {
     // ─────────────────────────────────────────────────────────────
     // ВАЖНО: теперь в списке есть «хедеры», которые тоже скроллятся.
-    // headerCount = 5 элементов (дата, 2 участника, Divider, SizedBox)
+    // headerCount = 6 элементов (дата, 2 участника, Стоимость, Divider, SizedBox)
     // ─────────────────────────────────────────────────────────────
-    const int headerCount = 5;
+    const int headerCount = 6;
 
     return InteractiveBackSwipe(
       child: Scaffold(
@@ -205,6 +223,12 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
                     );
                   }
                   if (index == 3) {
+                    return _KVLine(
+                      k: 'Стоимость',
+                      v: PricePill(text: _formatPrice(widget.price)),
+                    );
+                  }
+                  if (index == 4) {
                     return const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
                       child: Divider(
@@ -214,7 +238,7 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
                       ),
                     );
                   }
-                  if (index == 4) {
+                  if (index == 5) {
                     return const SizedBox(height: 8);
                   }
 
@@ -249,6 +273,36 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
 }
 
 /// ─── helpers ───
+
+/// Инфо-строка: ключ слева, значение сразу справа
+class _KVLine extends StatelessWidget {
+  final String k;
+  final Widget v;
+  const _KVLine({required this.k, required this.v});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Flexible(
+            fit: FlexFit.loose,
+            child: Text(
+              k,
+              style: const TextStyle(fontSize: 13),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 10),
+          // ⛔️ НЕТ Spacer — значение идёт сразу после подписи
+          v,
+        ],
+      ),
+    );
+  }
+}
 
 class _DateSeparator extends StatelessWidget {
   final String text;

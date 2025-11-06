@@ -1,5 +1,10 @@
+import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../models/chat_user.dart';
+import '../../../../providers/chat/users_search_provider.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
@@ -7,35 +12,56 @@ import '../../../../widgets/transparent_route.dart';
 import 'personal_chat_screen.dart';
 
 /// Страница для начала нового чата с поиском пользователей
-class StartChatScreen extends StatefulWidget {
+class StartChatScreen extends ConsumerStatefulWidget {
   const StartChatScreen({super.key});
 
   @override
-  State<StartChatScreen> createState() => _StartChatScreenState();
+  ConsumerState<StartChatScreen> createState() => _StartChatScreenState();
 }
 
-class _StartChatScreenState extends State<StartChatScreen> {
+class _StartChatScreenState extends ConsumerState<StartChatScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _query = '';
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(() {
-      setState(() {
-        _query = _searchController.text;
-      });
+    // Загружаем подписчиков при открытии экрана
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(usersSearchProvider.notifier).loadSubscribedUsers();
     });
+
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
+  /// Обработка изменения текста в поле поиска с debounce
+  void _onSearchChanged() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      final query = _searchController.text.trim();
+      final notifier = ref.read(usersSearchProvider.notifier);
+      
+      if (query.isEmpty) {
+        // Если запрос пустой, загружаем подписчиков
+        notifier.loadSubscribedUsers();
+      } else {
+        // Иначе ищем пользователей
+        notifier.searchUsers(query);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final searchState = ref.watch(usersSearchProvider);
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.surface,
@@ -52,7 +78,24 @@ class _StartChatScreenState extends State<StartChatScreen> {
             ),
 
             // ─── Список людей ───
-            Expanded(child: _PeopleList(query: _query)),
+            Expanded(
+              child: _PeopleList(
+                users: searchState.users,
+                isLoading: searchState.isLoading,
+                hasMore: searchState.hasMore,
+                error: searchState.error,
+                onLoadMore: () {
+                  final query = _searchController.text.trim();
+                  final notifier = ref.read(usersSearchProvider.notifier);
+                  
+                  if (query.isEmpty) {
+                    notifier.loadMoreSubscribedUsers();
+                  } else {
+                    notifier.loadMoreSearchResults(query);
+                  }
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -111,38 +154,67 @@ class _SearchField extends StatelessWidget {
 
 /// ─── Список людей ───
 class _PeopleList extends StatelessWidget {
-  final String query;
+  final List<ChatUser> users;
+  final bool isLoading;
+  final bool hasMore;
+  final String? error;
+  final VoidCallback onLoadMore;
 
-  const _PeopleList({required this.query});
-
-  // Временный список людей (заменить на данные из API)
-  static const _people = <_Person>[
-    _Person(1, 'Алексей Лукашин', 35, 'Владимир', 'assets/avatar_1.png'),
-    _Person(2, 'Татьяна Свиридова', 39, 'Владимир', 'assets/avatar_3.png'),
-    _Person(3, 'Борис Жарких', 40, 'Владимир', 'assets/avatar_2.png'),
-    _Person(4, 'Юрий Селиванов', 37, 'Москва', 'assets/avatar_5.png'),
-    _Person(
-      5,
-      'Екатерина Виноградова',
-      30,
-      'Санкт-Петербург',
-      'assets/avatar_4.png',
-    ),
-    _Person(6, 'Анастасия Бутузова', 35, 'Ярославль', 'assets/avatar_9.png'),
-  ];
+  const _PeopleList({
+    required this.users,
+    required this.isLoading,
+    required this.hasMore,
+    this.error,
+    required this.onLoadMore,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final q = query.toLowerCase();
-    final items = q.isEmpty
-        ? _people
-        : _people
-              .where(
-                (e) =>
-                    e.name.toLowerCase().contains(q) ||
-                    e.city.toLowerCase().contains(q),
-              )
-              .toList();
+    // Показываем ошибку если есть
+    if (error != null && users.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SelectableText.rich(
+            TextSpan(
+              text: 'Ошибка загрузки: ',
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+              children: [
+                TextSpan(
+                  text: error,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Показываем пустое состояние если нет пользователей
+    if (!isLoading && users.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text(
+            'Пользователи не найдены',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      );
+    }
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -160,23 +232,53 @@ class _PeopleList extends StatelessWidget {
               ),
             ),
             child: Column(
-              children: List.generate(items.length, (i) {
-                final p = items[i];
+              children: List.generate(users.length, (i) {
+                final user = users[i];
                 return Column(
                   children: [
                     if (i.isEven)
                       ColoredBox(
                         color: AppColors.surfaceMuted,
-                        child: _RowTile(person: p),
+                        child: _RowTile(user: user),
                       )
                     else
-                      _RowTile(person: p),
+                      _RowTile(user: user),
                   ],
                 );
               }),
             ),
           ),
         ),
+
+        // Индикатор загрузки или кнопка "Загрузить ещё"
+        if (isLoading)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: CupertinoActivityIndicator(),
+              ),
+            ),
+          )
+        else if (hasMore && users.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Center(
+                child: GestureDetector(
+                  onTap: onLoadMore,
+                  child: const Text(
+                    'Загрузить ещё',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      color: AppColors.brandPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ],
@@ -186,12 +288,23 @@ class _PeopleList extends StatelessWidget {
 
 /// ─── Строка в списке людей ───
 class _RowTile extends StatelessWidget {
-  final _Person person;
+  final ChatUser user;
 
-  const _RowTile({required this.person});
+  const _RowTile({required this.user});
+
+  /// Формирование URL для аватара
+  String _getAvatarUrl(String avatar, int userId) {
+    if (avatar.isEmpty) {
+      return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+    }
+    if (avatar.startsWith('http')) return avatar;
+    return 'http://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final avatarUrl = _getAvatarUrl(user.avatar, user.id);
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () async {
@@ -200,9 +313,9 @@ class _RowTile extends StatelessWidget {
           TransparentPageRoute(
             builder: (_) => PersonalChatScreen(
               chatId: 0, // Новый чат, будет создан на сервере
-              userId: person.id,
-              userName: person.name,
-              userAvatar: person.avatar,
+              userId: user.id,
+              userName: user.fullName,
+              userAvatar: user.avatar,
             ),
           ),
         );
@@ -216,23 +329,38 @@ class _RowTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Row(
           children: [
+            // Аватар пользователя
             ClipOval(
-              child: Image.asset(
-                person.avatar,
-                width: 44,
-                height: 44,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, __) => Container(
-                  width: 44,
-                  height: 44,
-                  color: AppColors.skeletonBase,
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    CupertinoIcons.person,
-                    size: 20,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+              child: Builder(
+                builder: (context) {
+                  final dpr = MediaQuery.of(context).devicePixelRatio;
+                  final w = (44 * dpr).round();
+                  final h = (44 * dpr).round();
+                  return CachedNetworkImage(
+                    imageUrl: avatarUrl,
+                    width: 44,
+                    height: 44,
+                    fit: BoxFit.cover,
+                    fadeInDuration: const Duration(milliseconds: 120),
+                    memCacheWidth: w,
+                    memCacheHeight: h,
+                    maxWidthDiskCache: w,
+                    maxHeightDiskCache: h,
+                    errorWidget: (_, __, ___) {
+                      return Container(
+                        width: 44,
+                        height: 44,
+                        color: AppColors.skeletonBase,
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          CupertinoIcons.person,
+                          size: 20,
+                          color: AppColors.textSecondary,
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -241,7 +369,7 @@ class _RowTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    person.name,
+                    user.fullName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -252,7 +380,7 @@ class _RowTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${person.age} лет, ${person.city}',
+                    '${user.age} лет, ${user.city}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -277,9 +405,9 @@ class _RowTile extends StatelessWidget {
                   TransparentPageRoute(
                     builder: (_) => PersonalChatScreen(
                       chatId: 0,
-                      userId: person.id,
-                      userName: person.name,
-                      userAvatar: person.avatar,
+                      userId: user.id,
+                      userName: user.fullName,
+                      userAvatar: user.avatar,
                     ),
                   ),
                 );
@@ -293,15 +421,4 @@ class _RowTile extends StatelessWidget {
       ),
     );
   }
-}
-
-/// ─── Модель человека ───
-class _Person {
-  final int id;
-  final String name;
-  final int age;
-  final String city;
-  final String avatar;
-
-  const _Person(this.id, this.name, this.age, this.city, this.avatar);
 }

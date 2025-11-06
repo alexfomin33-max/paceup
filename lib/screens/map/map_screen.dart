@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -6,13 +7,14 @@ import '../../config/app_config.dart';
 
 // контент вкладок
 import 'events/events_screen.dart' as ev;
+import 'events/events_filters_bottom_sheet.dart';
 import 'clubs/clubs_screen.dart' as clb;
 import 'slots/slots_screen.dart' as slt;
 import 'travelers/travelers_screen.dart' as trv;
 
 // нижние выезжающие окна
 import 'events/events_bottom_sheet.dart' as ebs;
-import 'clubs/widgets/clubs_bottom_sheet.dart' as cbs;
+import 'clubs/clubs_bottom_sheet.dart' as cbs;
 import 'slots/slots_bottom_sheet.dart' as sbs;
 import 'travelers/travelers_bottom_sheet.dart' as tbs;
 
@@ -31,6 +33,12 @@ class _MapScreenState extends State<MapScreen> {
 
   final tabs = const ["События", "Клубы", "Слоты", "Попутчики"];
 
+  /// Параметры фильтра событий (для обновления карты при применении фильтров)
+  EventsFilterParams? _eventsFilterParams;
+
+  /// Ключ для FutureBuilder событий (обновляется при изменении фильтров)
+  Key _eventsMarkersKey = const ValueKey('events_markers_default');
+
   /// Цвета маркеров по вкладкам
   final markerColors = const {
     0: AppColors.accentBlue, // события
@@ -42,7 +50,8 @@ class _MapScreenState extends State<MapScreen> {
   List<Map<String, dynamic>> _markersForTabSync(BuildContext context) {
     switch (_selectedIndex) {
       case 1:
-        return clb.clubsMarkers(context);
+        // Клубы теперь асинхронные, не используется здесь
+        return [];
       case 2:
         return slt.slotsMarkers(context);
       case 3:
@@ -112,26 +121,74 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     final markerColor = markerColors[_selectedIndex] ?? AppColors.brandPrimary;
 
-    // Для событий используем FutureBuilder, для остальных - синхронные данные
-    if (_selectedIndex == 0) {
+    // Для событий и клубов используем FutureBuilder, для остальных - синхронные данные
+    if (_selectedIndex == 0 || _selectedIndex == 1) {
       return Scaffold(
         body: Stack(
           children: [
             FutureBuilder<List<Map<String, dynamic>>>(
-              // Используем ключ для обновления при возврате на экран
-              key: ValueKey('events_markers'),
-              future: ev.eventsMarkers(context),
+              // Используем динамический ключ для событий (обновляется при применении фильтров)
+              // Для клубов используем статический ключ
+              key: _selectedIndex == 0
+                  ? _eventsMarkersKey
+                  : const ValueKey('clubs_markers'),
+              future: _selectedIndex == 0
+                  ? ev.eventsMarkers(context, filterParams: _eventsFilterParams)
+                  : clb.clubsMarkers(context),
               builder: (context, snapshot) {
+                // Показываем карту даже во время загрузки (с пустыми маркерами)
+                // ⚠️ ВАЖНО: Откладываем создание FlutterMap до следующего кадра,
+                // чтобы не блокировать UI поток во время выполнения запроса
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  // Откладываем создание карты через Future.microtask,
+                  // чтобы не блокировать UI поток во время выполнения запроса
+                  return FutureBuilder<void>(
+                    future: Future.microtask(() {}),
+                    builder: (context, microtaskSnapshot) {
+                      return microtaskSnapshot.connectionState ==
+                              ConnectionState.done
+                          ? _buildMap([], markerColor)
+                          : Container(color: AppColors.surface);
+                    },
+                  );
+                }
+                
+                // Обрабатываем ошибки
+                if (snapshot.hasError) {
+                  debugPrint('Ошибка загрузки маркеров: ${snapshot.error}');
+                  return _buildMap([], markerColor);
+                }
+                
                 final markers = snapshot.data ?? [];
-                // Подстраиваем zoom после загрузки маркеров
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _fitBoundsToMarkers(markers);
-                });
+                
+                // Подстраиваем zoom после загрузки маркеров (только один раз)
+                if (markers.isNotEmpty) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      _fitBoundsToMarkers(markers);
+                    }
+                  });
+                }
+                
                 return _buildMap(markers, markerColor);
               },
             ),
             _buildTabs(),
-            if (_selectedIndex == 0) const ev.EventsFloatingButtons(),
+            if (_selectedIndex == 0)
+              ev.EventsFloatingButtons(
+                currentFilterParams: _eventsFilterParams,
+                onApplyFilters: (params) {
+                  // Обновляем параметры фильтра
+                  setState(() {
+                    _eventsFilterParams = params;
+                    // Обновляем ключ FutureBuilder для перезагрузки данных
+                    _eventsMarkersKey = ValueKey(
+                      'events_markers_${DateTime.now().millisecondsSinceEpoch}',
+                    );
+                  });
+                },
+              ),
+            if (_selectedIndex == 1) const clb.ClubsFloatingButtons(),
           ],
         ),
       );
@@ -188,82 +245,99 @@ class _MapScreenState extends State<MapScreen> {
         ),
         MarkerLayer(
           markers: markers.map((m) {
-            final LatLng point = m['point'] as LatLng;
-            final String title = m['title'] as String;
-            final int count = m['count'] as int;
-            final dynamic events =
-                m['events']; // Для событий храним список событий
-            final Widget? content = m['content'] as Widget?;
+            try {
+              final LatLng point = m['point'] as LatLng;
+              final String title = m['title'] as String;
+              final int count = m['count'] as int;
+              final dynamic events =
+                  m['events']; // Для событий храним список событий
+              final Widget? content = m['content'] as Widget?;
 
-            return Marker(
-              point: point,
-              width: 28,
-              height: 28,
-              child: GestureDetector(
-                onTap: () {
-                  final Widget sheet = () {
-                    switch (_selectedIndex) {
-                      case 0:
-                        // Для событий создаём виджет со списком событий из API
-                        return ebs.EventsBottomSheet(
-                          title: title,
-                          child: events != null && events is List
-                              ? ebs.EventsListFromApi(
-                                  events: events,
-                                  latitude: m['latitude'] as double?,
-                                  longitude: m['longitude'] as double?,
-                                )
-                              : content ?? const ebs.EventsSheetPlaceholder(),
-                        );
-                      case 1:
-                        return cbs.ClubsBottomSheet(
-                          title: title,
-                          child: content ?? const cbs.ClubsSheetPlaceholder(),
-                        );
-                      case 2:
-                        return sbs.SlotsBottomSheet(
-                          title: title,
-                          child: content ?? const sbs.SlotsSheetPlaceholder(),
-                        );
-                      case 3:
-                      default:
-                        return tbs.TravelersBottomSheet(
-                          title: title,
-                          child:
-                              content ?? const tbs.TravelersSheetPlaceholder(),
-                        );
-                    }
-                  }();
+              return Marker(
+                point: point,
+                width: 28,
+                height: 28,
+                child: GestureDetector(
+                  onTap: () {
+                    final Widget sheet = () {
+                      switch (_selectedIndex) {
+                        case 0:
+                          // Для событий создаём виджет со списком событий из API
+                          return ebs.EventsBottomSheet(
+                            title: title,
+                            child: events != null && events is List
+                                ? ebs.EventsListFromApi(
+                                    events: events,
+                                    latitude: m['latitude'] as double?,
+                                    longitude: m['longitude'] as double?,
+                                  )
+                                : content ?? const ebs.EventsSheetPlaceholder(),
+                          );
+                        case 1:
+                          // Для клубов создаём виджет со списком клубов из API
+                          return cbs.ClubsBottomSheet(
+                            title: title,
+                            child: m['clubs'] != null && m['clubs'] is List
+                                ? cbs.ClubsListFromApi(
+                                    clubs: m['clubs'] as List<dynamic>,
+                                    latitude: m['latitude'] as double?,
+                                    longitude: m['longitude'] as double?,
+                                  )
+                                : content ?? const cbs.ClubsSheetPlaceholder(),
+                          );
+                        case 2:
+                          return sbs.SlotsBottomSheet(
+                            title: title,
+                            child: content ?? const sbs.SlotsSheetPlaceholder(),
+                          );
+                        case 3:
+                        default:
+                          return tbs.TravelersBottomSheet(
+                            title: title,
+                            child:
+                                content ?? const tbs.TravelersSheetPlaceholder(),
+                          );
+                      }
+                    }();
 
-                  showModalBottomSheet(
-                    context: context,
-                    useRootNavigator: true,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (_) => sheet,
-                  );
-                },
+                    showModalBottomSheet(
+                      context: context,
+                      useRootNavigator: true,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => sheet,
+                    );
+                  },
 
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: markerColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.border, width: 1),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '$count',
-                    style: const TextStyle(
-                      color: AppColors.surface,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: markerColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.border, width: 1),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$count',
+                      style: const TextStyle(
+                        color: AppColors.surface,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
+              );
+            } catch (e) {
+              // Возвращаем пустой маркер, чтобы не сломать отрисовку
+              return Marker(
+                point: LatLng(0, 0),
+                width: 0,
+                height: 0,
+                child: const SizedBox.shrink(),
+              );
+            }
           }).toList(),
         ),
       ],

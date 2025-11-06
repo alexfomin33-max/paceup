@@ -81,6 +81,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
   int? _lastMessageId;
   String? _error;
   Timer? _pollingTimer;
+  int? _actualChatId; // Реальный chatId (создается если widget.chatId = 0)
 
   @override
   void initState() {
@@ -110,14 +111,67 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
       _currentUserId = userId;
     });
 
-    await _loadInitial();
-    _markMessagesAsRead(); // Отмечаем сообщения как прочитанные при открытии
-    _startPolling();
+    // Если chatId = 0, создаем новый чат
+    if (widget.chatId == 0) {
+      await _createChat();
+    } else {
+      _actualChatId = widget.chatId;
+      await _loadInitial();
+      _markMessagesAsRead(); // Отмечаем сообщения как прочитанные при открытии
+      _startPolling();
+    }
+  }
+
+  /// ─── Создание нового чата ───
+  Future<void> _createChat() async {
+    if (_currentUserId == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final response = await _api.post(
+        '/create_chat.php',
+        body: {
+          'user2_id': widget.userId,
+        },
+      );
+
+      if (response['success'] == true) {
+        final chatId = response['chat_id'] as int;
+        
+        setState(() {
+          _actualChatId = chatId;
+          _isLoading = false;
+        });
+
+        // После создания чата загружаем сообщения
+        await _loadInitial();
+        _markMessagesAsRead();
+        _startPolling();
+      } else {
+        setState(() {
+          _error = response['message'] as String? ?? 'Ошибка создания чата';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   /// ─── Загрузка начальных сообщений ───
   Future<void> _loadInitial() async {
     if (_isLoading || _currentUserId == null) return;
+    
+    // Если чат еще не создан, не загружаем сообщения
+    final chatId = _actualChatId ?? widget.chatId;
+    if (chatId == 0) return;
 
     setState(() {
       _isLoading = true;
@@ -129,7 +183,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
       final response = await _api.get(
         '/get_messages.php',
         queryParams: {
-          'chat_id': widget.chatId.toString(),
+          'chat_id': chatId.toString(),
           'user_id': _currentUserId.toString(),
           'offset': '0',
           'limit': '50',
@@ -181,6 +235,9 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
   /// ─── Загрузка старых сообщений (при прокрутке вверх) ───
   Future<void> _loadMore() async {
     if (_isLoadingMore || !_hasMore || _currentUserId == null) return;
+    
+    final chatId = _actualChatId ?? widget.chatId;
+    if (chatId == 0) return;
 
     setState(() {
       _isLoadingMore = true;
@@ -190,7 +247,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
       final response = await _api.get(
         '/get_messages.php',
         queryParams: {
-          'chat_id': widget.chatId.toString(),
+          'chat_id': chatId.toString(),
           'user_id': _currentUserId.toString(),
           'offset': _offset.toString(),
           'limit': '50',
@@ -256,11 +313,43 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
       }
     });
 
+    // Если чат еще не создан, создаем его перед отправкой сообщения
+    int chatId = _actualChatId ?? widget.chatId;
+    if (chatId == 0 && _currentUserId != null) {
+      try {
+        final createResponse = await _api.post(
+          '/create_chat.php',
+          body: {
+            'user2_id': widget.userId,
+          },
+        );
+        
+        if (createResponse['success'] == true) {
+          chatId = createResponse['chat_id'] as int;
+          setState(() {
+            _actualChatId = chatId;
+          });
+        } else {
+          // Удаляем временное сообщение при ошибке
+          setState(() {
+            _messages.removeWhere((m) => m.id == -1);
+          });
+          return;
+        }
+      } catch (e) {
+        // Удаляем временное сообщение при ошибке
+        setState(() {
+          _messages.removeWhere((m) => m.id == -1);
+        });
+        return;
+      }
+    }
+
     try {
       final response = await _api.post(
         '/send_message.php',
         body: {
-          'chat_id': widget.chatId,
+          'chat_id': chatId,
           'user_id': _currentUserId,
           'text': messageText,
         },
@@ -302,11 +391,14 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
   /// ─── Отметка сообщений как прочитанных ───
   Future<void> _markMessagesAsRead() async {
     if (_currentUserId == null) return;
+    
+    final chatId = _actualChatId ?? widget.chatId;
+    if (chatId == 0) return;
 
     try {
       await _api.post(
         '/mark_messages_read.php',
-        body: {'chat_id': widget.chatId, 'user_id': _currentUserId},
+        body: {'chat_id': chatId, 'user_id': _currentUserId},
       );
     } catch (e) {
       // Игнорируем ошибки - не критично
@@ -324,12 +416,15 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
   /// ─── Проверка новых сообщений ───
   Future<void> _checkNewMessages() async {
     if (_currentUserId == null || _lastMessageId == null) return;
+    
+    final chatId = _actualChatId ?? widget.chatId;
+    if (chatId == 0) return;
 
     try {
       final response = await _api.get(
         '/check_new_messages.php',
         queryParams: {
-          'chat_id': widget.chatId.toString(),
+          'chat_id': chatId.toString(),
           'user_id': _currentUserId.toString(),
           'last_message_id': _lastMessageId.toString(),
         },
@@ -378,9 +473,12 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
 
   /// ─── Получение URL аватара ───
   String _getAvatarUrl(String avatar) {
-    if (avatar.isEmpty) return 'http://uploads.paceup.ru/defaults/1.webp';
+    if (avatar.isEmpty) {
+      return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+    }
     if (avatar.startsWith('http')) return avatar;
-    return 'http://uploads.paceup.ru/avatars/$avatar';
+    // ⚡️ Используем правильный путь: /images/users/avatars/{user_id}/{avatar}
+    return 'http://uploads.paceup.ru/images/users/avatars/${widget.userId}/$avatar';
   }
 
   @override

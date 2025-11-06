@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/transparent_route.dart';
-import 'event_detail_screen.dart';
+import 'club_detail_screen.dart';
 
-/// Каркас bottom sheet для вкладки «События».
-class EventsBottomSheet extends StatelessWidget {
+/// Каркас bottom sheet для вкладки «Клубы» — 1:1 как в events_bottom_sheet.dart
+class ClubsBottomSheet extends StatelessWidget {
   final String title;
   final Widget child;
   final double maxHeightFraction;
 
-  const EventsBottomSheet({
+  const ClubsBottomSheet({
     super.key,
     required this.title,
     required this.child,
-    this.maxHeightFraction = 0.4, // не выше 50% экрана
+    this.maxHeightFraction = 0.5, // не выше 50% экрана
   });
 
   @override
@@ -79,8 +79,8 @@ class EventsBottomSheet extends StatelessWidget {
 }
 
 /// Заглушка (если контента нет)
-class EventsSheetPlaceholder extends StatelessWidget {
-  const EventsSheetPlaceholder({super.key});
+class ClubsSheetPlaceholder extends StatelessWidget {
+  const ClubsSheetPlaceholder({super.key});
   @override
   Widget build(BuildContext context) {
     return const Padding(
@@ -90,10 +90,10 @@ class EventsSheetPlaceholder extends StatelessWidget {
   }
 }
 
-/// Простой текст для шита «События» (замена _SimpleText)
-class EventsSheetText extends StatelessWidget {
+/// Простой текст в шите «Клубы» (аналог EventsSheetText)
+class ClubsSheetText extends StatelessWidget {
   final String text;
-  const EventsSheetText(this.text, {super.key});
+  const ClubsSheetText(this.text, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -101,36 +101,25 @@ class EventsSheetText extends StatelessWidget {
   }
 }
 
-class _ClubsDivider extends StatelessWidget {
-  const _ClubsDivider();
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
-      child: Divider(height: 1, thickness: 0.5, color: AppColors.border),
-    );
-  }
-}
-
-/// Список событий из API (для отображения в bottom sheet)
-class EventsListFromApi extends StatelessWidget {
-  final List<dynamic> events;
+/// Список клубов из API (для отображения в bottom sheet)
+class ClubsListFromApi extends StatelessWidget {
+  final List<dynamic> clubs;
   final double? latitude;
   final double? longitude;
 
-  const EventsListFromApi({
+  const ClubsListFromApi({
     super.key,
-    required this.events,
+    required this.clubs,
     this.latitude,
     this.longitude,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (events.isEmpty) {
+    if (clubs.isEmpty) {
       return const Padding(
         padding: EdgeInsets.only(bottom: 40),
-        child: Text('События не найдены', style: TextStyle(fontSize: 14)),
+        child: Text('Клубы не найдены', style: TextStyle(fontSize: 14)),
       );
     }
 
@@ -139,12 +128,12 @@ class EventsListFromApi extends StatelessWidget {
     // для ускорения первого кадра и плавного скролла.
     () {
       final dpr = MediaQuery.of(context).devicePixelRatio;
-      final targetW = (80 * dpr).round();
-      final targetH = (55 * dpr).round();
-      final int limit = events.length < 8 ? events.length : 8;
+      final targetW = (90 * dpr).round();
+      final targetH = (60 * dpr).round();
+      final int limit = clubs.length < 8 ? clubs.length : 8;
       for (var i = 0; i < limit; i++) {
-        final e = events[i] as Map<String, dynamic>;
-        final logoUrl = e['logo_url'] as String?;
+        final c = clubs[i] as Map<String, dynamic>;
+        final logoUrl = c['logo_url'] as String?;
         if (logoUrl != null && logoUrl.isNotEmpty) {
           // precacheImage не блокирует UI; повторные вызовы недороги благодаря кэшу
           precacheImage(
@@ -159,7 +148,7 @@ class EventsListFromApi extends StatelessWidget {
       }
     }();
 
-    // ───────────────────── Строка карточки события ─────────────────────
+    // ───────────────────── Строка карточки клуба ─────────────────────
     Widget cardRow({
       required String? logoUrl,
       required String title,
@@ -167,39 +156,36 @@ class EventsListFromApi extends StatelessWidget {
       VoidCallback? onTap,
     }) {
       final dpr = MediaQuery.of(context).devicePixelRatio;
-      final targetW = (80 * dpr).round();
-      final targetH = (55 * dpr).round();
+      final targetW = (90 * dpr).round();
+      final targetH = (60 * dpr).round();
 
-      final imageWidget = ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.xs),
-        child: logoUrl != null && logoUrl.isNotEmpty
-            ? CachedNetworkImage(
-                imageUrl: logoUrl,
-                width: 80,
-                height: 55,
-                fit: BoxFit.cover,
-                fadeInDuration: const Duration(milliseconds: 120),
-                memCacheWidth: targetW,
-                memCacheHeight: targetH,
-                maxWidthDiskCache: targetW,
-                maxHeightDiskCache: targetH,
-                errorWidget: (_, __, ___) => Container(
-                  width: 80,
-                  height: 55,
-                  color: AppColors.border,
-                  child: const Icon(Icons.broken_image, size: 24),
-                ),
-              )
-            : Container(
-                width: 80,
-                height: 55,
+      final imageWidget = logoUrl != null && logoUrl.isNotEmpty
+          ? CachedNetworkImage(
+              imageUrl: logoUrl,
+              width: 90,
+              height: 60,
+              fit: BoxFit.cover,
+              fadeInDuration: const Duration(milliseconds: 120),
+              memCacheWidth: targetW,
+              memCacheHeight: targetH,
+              maxWidthDiskCache: targetW,
+              maxHeightDiskCache: targetH,
+              errorWidget: (_, __, ___) => Container(
+                width: 90,
+                height: 60,
                 color: AppColors.border,
-                child: const Icon(Icons.image, size: 24),
+                child: const Icon(Icons.broken_image, size: 24),
               ),
-      );
+            )
+          : Container(
+              width: 90,
+              height: 60,
+              color: AppColors.border,
+              child: const Icon(Icons.image, size: 24),
+            );
 
       final row = Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           imageWidget,
           const SizedBox(width: 8),
@@ -211,10 +197,13 @@ class EventsListFromApi extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h14w6,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                const SizedBox(height: 6),
-                Text(subtitle, style: AppTextStyles.h13w4),
+                const SizedBox(height: 4),
+                Text(subtitle, style: const TextStyle(fontSize: 13)),
               ],
             ),
           ),
@@ -237,26 +226,26 @@ class EventsListFromApi extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
       physics: const BouncingScrollPhysics(),
-      itemCount: events.length,
+      itemCount: clubs.length,
       separatorBuilder: (_, __) => const _ClubsDivider(),
       itemBuilder: (context, index) {
-        final event = events[index] as Map<String, dynamic>;
-        final eventId = event['id'] as int?;
-        final name = event['name'] as String? ?? '';
-        final logoUrl = event['logo_url'] as String?;
-        final date = event['date'] as String? ?? '';
-        final participantsCount = event['participants_count'] as int? ?? 0;
-        final subtitle = '$date  ·  Участников: $participantsCount';
+        final club = clubs[index] as Map<String, dynamic>;
+        final clubId = club['id'] as int?;
+        final name = club['name'] as String? ?? '';
+        final logoUrl = club['logo_url'] as String?;
+        final city = club['city'] as String? ?? '';
+        final membersCount = club['members_count'] as int? ?? 0;
+        final subtitle = '$city · Участников: $membersCount';
 
         final row = cardRow(
           logoUrl: logoUrl,
           title: name,
           subtitle: subtitle,
-          onTap: eventId != null
+          onTap: clubId != null
               ? () {
                   Navigator.of(context).push(
                     TransparentPageRoute(
-                      builder: (_) => EventDetailScreen(eventId: eventId),
+                      builder: (_) => ClubDetailScreen(clubId: clubId),
                     ),
                   );
                 }
@@ -264,12 +253,23 @@ class EventsListFromApi extends StatelessWidget {
         );
 
         // Нижняя граница под самой последней карточкой
-        if (index == events.length - 1) {
+        if (index == clubs.length - 1) {
           return Column(children: [row, const _ClubsDivider()]);
         }
 
         return row;
       },
+    );
+  }
+}
+
+class _ClubsDivider extends StatelessWidget {
+  const _ClubsDivider();
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Divider(height: 1, thickness: 0.5, color: AppColors.border),
     );
   }
 }
