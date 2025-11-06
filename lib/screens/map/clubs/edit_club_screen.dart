@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_bar.dart';
@@ -10,24 +11,26 @@ import '../../../widgets/primary_button.dart';
 import '../../../service/api_service.dart';
 import '../../../service/auth_service.dart';
 
-class CreateClubScreen extends StatefulWidget {
-  const CreateClubScreen({super.key});
+/// Экран редактирования клуба
+class EditClubScreen extends StatefulWidget {
+  final int clubId;
+
+  const EditClubScreen({super.key, required this.clubId});
 
   @override
-  State<CreateClubScreen> createState() => _CreateClubScreenState();
+  State<EditClubScreen> createState() => _EditClubScreenState();
 }
 
-class _CreateClubScreenState extends State<CreateClubScreen> {
+class _EditClubScreenState extends State<EditClubScreen> {
   // ── контроллеры
   final nameCtrl = TextEditingController();
   final cityCtrl = TextEditingController();
   final descCtrl = TextEditingController();
 
   // ── выборы
-  String? activity = 'Бег';
-  DateTime? foundationDate = DateTime.now();
-  bool isOpenCommunity =
-      true; // true = открытое сообщество (по умолчанию выбрано)
+  String? activity;
+  DateTime? foundationDate;
+  bool isOpenCommunity = true;
 
   // ── список городов для автокомплита (загружается из БД)
   List<String> _cities = [];
@@ -35,13 +38,19 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
   // ── медиа
   final picker = ImagePicker();
   File? logoFile;
+  String? logoUrl; // URL для отображения существующего логотипа
+  String? logoFilename; // Имя файла существующего логотипа
   File? backgroundFile;
+  String? backgroundUrl; // URL для отображения существующей фоновой картинки
+  String? backgroundFilename; // Имя файла существующей фоновой картинки
 
   // ── состояние ошибок валидации
   final Set<String> _errorFields = {};
 
   // ── состояние загрузки
   bool _loading = false;
+  bool _loadingData = true;
+  bool _deleting = false; // ── состояние удаления
 
   bool get isFormValid =>
       nameCtrl.text.trim().isNotEmpty &&
@@ -62,6 +71,8 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
     });
     // Загружаем список городов из БД
     _loadCities();
+    // Загружаем данные клуба для редактирования
+    _loadClubData();
   }
 
   /// Загрузка списка городов из БД через API
@@ -88,6 +99,106 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
     }
   }
 
+  /// Загрузка данных клуба для редактирования
+  Future<void> _loadClubData() async {
+    try {
+      final api = ApiService();
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Ошибка авторизации')));
+          Navigator.of(context).pop();
+        }
+        return;
+      }
+
+      final data = await api.get(
+        '/get_clubs.php',
+        queryParams: {'club_id': widget.clubId.toString()},
+      );
+
+      if (data['success'] == true && data['club'] != null) {
+        final club = data['club'] as Map<String, dynamic>;
+
+        // Заполняем текстовые поля
+        nameCtrl.text = club['name'] as String? ?? '';
+        cityCtrl.text = club['city'] as String? ?? '';
+        descCtrl.text = club['description'] as String? ?? '';
+
+        // Заполняем выборы
+        final activityStr = club['activity'] as String?;
+        // Проверяем, что значение активности входит в список допустимых
+        const allowedActivities = ['Бег', 'Велосипед', 'Плавание'];
+        if (activityStr != null && allowedActivities.contains(activityStr)) {
+          activity = activityStr;
+        } else {
+          activity = null;
+        }
+
+        // Заполняем статус открытости
+        final isOpen = club['is_open'];
+        if (isOpen is bool) {
+          isOpenCommunity = isOpen;
+        } else if (isOpen is int) {
+          isOpenCommunity = isOpen == 1;
+        } else if (isOpen is String) {
+          isOpenCommunity = isOpen == '1' || isOpen.toLowerCase() == 'true';
+        }
+
+        // Заполняем дату основания
+        final dateFormatted = club['date_formatted'] as String? ?? '';
+        if (dateFormatted.isNotEmpty) {
+          try {
+            // Парсим дату в формате "dd.mm.yyyy"
+            final parts = dateFormatted.split('.');
+            if (parts.length == 3) {
+              foundationDate = DateTime(
+                int.parse(parts[2]),
+                int.parse(parts[1]),
+                int.parse(parts[0]),
+              );
+            }
+          } catch (e) {
+            // Игнорируем ошибку парсинга
+          }
+        }
+
+        // Заполняем медиа
+        logoUrl = club['logo_url'] as String?;
+        logoFilename = club['logo_filename'] as String?;
+        backgroundUrl = club['background_url'] as String?;
+        backgroundFilename = club['background_filename'] as String?;
+
+        setState(() {
+          _loadingData = false;
+        });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                data['message'] as String? ??
+                    'Не удалось загрузить данные клуба',
+              ),
+            ),
+          );
+          Navigator.of(context).pop();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка загрузки: ${e.toString()}')),
+        );
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
   @override
   void dispose() {
     nameCtrl.dispose();
@@ -107,12 +218,22 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
 
   Future<void> _pickLogo() async {
     final x = await picker.pickImage(source: ImageSource.gallery);
-    if (x != null) setState(() => logoFile = File(x.path));
+    if (x != null) {
+      setState(() {
+        logoFile = File(x.path);
+        logoUrl = null; // Сбрасываем URL, так как выбран новый файл
+      });
+    }
   }
 
   Future<void> _pickBackground() async {
     final x = await picker.pickImage(source: ImageSource.gallery);
-    if (x != null) setState(() => backgroundFile = File(x.path));
+    if (x != null) {
+      setState(() {
+        backgroundFile = File(x.path);
+        backgroundUrl = null; // Сбрасываем URL, так как выбран новый файл
+      });
+    }
   }
 
   Future<void> _pickDateCupertino() async {
@@ -210,6 +331,104 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
     return '$dd.$mm.$yy';
   }
 
+  /// Показываем диалог подтверждения удаления
+  Future<bool> _confirmDelete() async {
+    final result = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Удалить сообщество?'),
+        content: const Text('Это действие нельзя отменить.'),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  /// Удаление клуба
+  Future<void> _deleteClub() async {
+    // ── показываем диалог подтверждения
+    final confirmed = await _confirmDelete();
+    if (!confirmed) return;
+
+    // ── защита от повторных нажатий
+    if (_deleting) return;
+    setState(() => _deleting = true);
+
+    final api = ApiService();
+    final authService = AuthService();
+
+    try {
+      final userId = await authService.getUserId();
+      if (userId == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ошибка авторизации')),
+        );
+        return;
+      }
+
+      // Отправляем запрос на удаление
+      final data = await api.post(
+        '/delete_club.php',
+        body: {
+          'club_id': widget.clubId.toString(),
+          'user_id': userId.toString(),
+        },
+      );
+
+      // Проверяем ответ
+      bool success = false;
+      String? errorMessage;
+
+      if (data['success'] == true) {
+        success = true;
+      } else if (data['success'] == false) {
+        errorMessage = data['message'] ?? 'Ошибка при удалении клуба';
+      } else {
+        errorMessage = 'Неожиданный формат ответа сервера';
+      }
+
+      if (success) {
+        if (!mounted) return;
+
+        // Показываем успешное сообщение
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Сообщество успешно удалено')),
+        );
+
+        // Возвращаемся на предыдущий экран с результатом удаления
+        Navigator.of(context).pop('deleted');
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage ?? 'Ошибка при удалении клуба'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка сети: ${e.toString()}')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _deleting = false);
+      }
+    }
+  }
+
   Future<void> _submit() async {
     // ── проверяем все обязательные поля и подсвечиваем незаполненные
     final Set<String> newErrors = {};
@@ -248,18 +467,19 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
       final files = <String, File>{};
       final fields = <String, String>{};
 
-      // Добавляем логотип
+      // Добавляем логотип (если выбран новый)
       if (logoFile != null) {
         files['logo'] = logoFile!;
       }
 
-      // Добавляем фоновую картинку
+      // Добавляем фоновую картинку (если выбрана новая)
       if (backgroundFile != null) {
         files['background'] = backgroundFile!;
       }
 
       // Добавляем поля формы
       final userId = await authService.getUserId();
+      fields['club_id'] = widget.clubId.toString();
       fields['user_id'] = userId?.toString() ?? '1';
       fields['name'] = nameCtrl.text.trim();
       fields['city'] = cityCtrl.text.trim();
@@ -269,15 +489,25 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
       fields['foundation_date'] = _fmtDate(foundationDate!);
       // Координаты не обязательны - будут получены по городу на сервере
 
+      // Флаги для сохранения существующих изображений
+      if (logoUrl != null && logoFile == null && logoFilename != null) {
+        fields['keep_logo'] = 'true';
+      }
+      if (backgroundUrl != null &&
+          backgroundFile == null &&
+          backgroundFilename != null) {
+        fields['keep_background'] = 'true';
+      }
+
       // Отправляем запрос
       Map<String, dynamic> data;
       if (files.isEmpty) {
         // JSON запрос без файлов
-        data = await api.post('/create_club.php', body: fields);
+        data = await api.post('/edit_club.php', body: fields);
       } else {
         // Multipart запрос с файлами
         data = await api.postMultipart(
-          '/create_club.php',
+          '/edit_club.php',
           files: files,
           fields: fields,
           timeout: const Duration(seconds: 60),
@@ -291,7 +521,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
       if (data['success'] == true) {
         success = true;
       } else if (data['success'] == false) {
-        errorMessage = data['message'] ?? 'Ошибка при создании клуба';
+        errorMessage = data['message'] ?? 'Ошибка при обновлении клуба';
       } else {
         errorMessage = 'Неожиданный формат ответа сервера';
       }
@@ -302,15 +532,16 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
         // Показываем успешное сообщение
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Клуб успешно создан')));
+        ).showSnackBar(const SnackBar(content: Text('Клуб успешно обновлён')));
 
-        // Закрываем экран создания клуба и возвращаемся на карту
-        // Экран создания клуба открывается с карты, поэтому просто закрываем его
-        Navigator.of(context).pop();
+        // Возвращаемся на экран детализации с обновленными данными
+        Navigator.of(context).pop(true);
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage ?? 'Ошибка при создании клуба')),
+          SnackBar(
+            content: Text(errorMessage ?? 'Ошибка при обновлении клуба'),
+          ),
         );
       }
     } catch (e) {
@@ -327,10 +558,18 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loadingData) {
+      return Scaffold(
+        backgroundColor: AppColors.surface,
+        appBar: const PaceAppBar(title: 'Редактирование клуба'),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.surface,
-        appBar: PaceAppBar(title: 'Создание клуба'),
+        appBar: const PaceAppBar(title: 'Редактирование клуба'),
         body: GestureDetector(
           // ── скрываем клавиатуру при нажатии на пустую область экрана
           onTap: () => FocusScope.of(context).unfocus(),
@@ -349,8 +588,13 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                         child: _MediaColumn(
                           label: 'Логотип клуба',
                           file: logoFile,
+                          url: logoUrl,
                           onPick: _pickLogo,
-                          onRemove: () => setState(() => logoFile = null),
+                          onRemove: () => setState(() {
+                            logoFile = null;
+                            logoUrl = null;
+                            logoFilename = null;
+                          }),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -358,8 +602,13 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                         child: _MediaColumn(
                           label: 'Фоновая картинка',
                           file: backgroundFile,
+                          url: backgroundUrl,
                           onPick: _pickBackground,
-                          onRemove: () => setState(() => backgroundFile = null),
+                          onRemove: () => setState(() {
+                            backgroundFile = null;
+                            backgroundUrl = null;
+                            backgroundFilename = null;
+                          }),
                           width: 140,
                         ),
                       ),
@@ -464,16 +713,36 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                     // maxLines не указываем, чтобы поле могло расти динамически
                   ),
                   const SizedBox(height: 25),
-                  Align(
-                    alignment: Alignment.center,
-                    child: PrimaryButton(
-                      text: 'Создать сообщество',
-                      onPressed: () {
-                        if (!_loading) _submit();
-                      },
-                      expanded: false,
-                      isLoading: _loading,
-                    ),
+                  // ── Кнопки: Сохранить и Удалить сообщество
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: PrimaryButton(
+                          text: 'Сохранить',
+                          onPressed: () {
+                            if (!_loading && !_deleting) _submit();
+                          },
+                          expanded: true,
+                          isLoading: _loading,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      TextButton(
+                        onPressed: _deleting || _loading
+                            ? null
+                            : _deleteClub,
+                        child: const Text(
+                          'Удалить сообщество',
+                          style: TextStyle(
+                            color: AppColors.error,
+                            fontFamily: 'Inter',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -486,7 +755,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
 }
 
 //
-// ── ЛОКАЛЬНЫЕ ВИДЖЕТЫ (переиспользуем из add_event_screen.dart)
+// ── ЛОКАЛЬНЫЕ ВИДЖЕТЫ (переиспользуем из create_club_screen.dart)
 //
 
 class EventTextField extends StatelessWidget {
@@ -526,7 +795,9 @@ class EventTextField extends StatelessWidget {
     final field = TextFormField(
       controller: controller,
       minLines: minLines, // ── минимальное количество строк
-      maxLines: minLines != null ? null : maxLines, // ── если есть minLines, убираем ограничение maxLines для динамического роста
+      maxLines: minLines != null
+          ? null
+          : maxLines, // ── если есть minLines, убираем ограничение maxLines для динамического роста
       enabled: enabled,
       style: TextStyle(color: textColor, fontFamily: 'Inter', fontSize: 14),
       decoration: InputDecoration(
@@ -610,105 +881,103 @@ class EventAutocompleteField extends StatelessWidget {
         });
       },
       onSelected: onSelected,
-      fieldViewBuilder:
-          (
-            BuildContext context,
-            TextEditingController textEditingController,
-            FocusNode focusNode,
-            VoidCallback onFieldSubmitted,
-          ) {
-            // Инициализируем текст из внешнего контроллера
-            if (textEditingController.text.isEmpty &&
-                controller.text.isNotEmpty) {
-              textEditingController.text = controller.text;
-            }
+      fieldViewBuilder: (
+        BuildContext context,
+        TextEditingController textEditingController,
+        FocusNode focusNode,
+        VoidCallback onFieldSubmitted,
+      ) {
+        // Инициализируем текст из внешнего контроллера
+        if (textEditingController.text.isEmpty &&
+            controller.text.isNotEmpty) {
+          textEditingController.text = controller.text;
+        }
 
-            // Синхронизируем изменения в Autocomplete контроллере с внешним
-            textEditingController.addListener(() {
-              if (textEditingController.text != controller.text) {
-                controller.text = textEditingController.text;
-              }
-            });
+        // Синхронизируем изменения в Autocomplete контроллере с внешним
+        textEditingController.addListener(() {
+          if (textEditingController.text != controller.text) {
+            controller.text = textEditingController.text;
+          }
+        });
 
-            return TextFormField(
-              controller: textEditingController,
-              focusNode: focusNode,
-              onFieldSubmitted: (String value) {
-                onFieldSubmitted();
-              },
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontFamily: 'Inter',
-                fontSize: 14,
-              ),
-              decoration: InputDecoration(
-                label: _labelWithStar(label),
-                floatingLabelBehavior: FloatingLabelBehavior.always,
-                filled: true,
-                fillColor: AppColors.surface,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 14,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: borderColor),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: borderColor),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: borderColor),
-                ),
-              ),
-            );
+        return TextFormField(
+          controller: textEditingController,
+          focusNode: focusNode,
+          onFieldSubmitted: (String value) {
+            onFieldSubmitted();
           },
-      optionsViewBuilder:
-          (
-            BuildContext context,
-            AutocompleteOnSelected<String> onSelected,
-            Iterable<String> options,
-          ) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 200),
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final String option = options.elementAt(index);
-                      return InkWell(
-                        onTap: () {
-                          onSelected(option);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 14,
-                          ),
-                          child: Text(
-                            option,
-                            style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 14,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      );
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontFamily: 'Inter',
+            fontSize: 14,
+          ),
+          decoration: InputDecoration(
+            label: _labelWithStar(label),
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+            filled: true,
+            fillColor: AppColors.surface,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(color: borderColor),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(color: borderColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(color: borderColor),
+            ),
+          ),
+        );
+      },
+      optionsViewBuilder: (
+        BuildContext context,
+        AutocompleteOnSelected<String> onSelected,
+        Iterable<String> options,
+      ) {
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 4.0,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (BuildContext context, int index) {
+                  final String option = options.elementAt(index);
+                  return InkWell(
+                    onTap: () {
+                      onSelected(option);
                     },
-                  ),
-                ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
+                      child: Text(
+                        option,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -799,9 +1068,8 @@ class EventDropdownField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = enabled
-        ? AppColors.textPrimary
-        : AppColors.textPlaceholder;
+    final textColor =
+        enabled ? AppColors.textPrimary : AppColors.textPlaceholder;
     final fill = enabled ? AppColors.surface : AppColors.disabled;
     final borderColor = hasError ? AppColors.error : AppColors.border;
     final disabledBorderColor = AppColors.border.withValues(alpha: 0.6);
@@ -893,6 +1161,7 @@ class _SmallLabel extends StatelessWidget {
 class _MediaColumn extends StatelessWidget {
   final String label;
   final File? file;
+  final String? url;
   final VoidCallback onPick;
   final VoidCallback onRemove;
   final double width;
@@ -900,6 +1169,7 @@ class _MediaColumn extends StatelessWidget {
   const _MediaColumn({
     required this.label,
     required this.file,
+    this.url,
     required this.onPick,
     required this.onRemove,
     this.width = 70,
@@ -914,6 +1184,7 @@ class _MediaColumn extends StatelessWidget {
         const SizedBox(height: 6),
         _MediaTile(
           file: file,
+          url: url,
           onPick: onPick,
           onRemove: onRemove,
           width: width,
@@ -925,12 +1196,14 @@ class _MediaColumn extends StatelessWidget {
 
 class _MediaTile extends StatelessWidget {
   final File? file;
+  final String? url;
   final VoidCallback onPick;
   final VoidCallback onRemove;
   final double width;
 
   const _MediaTile({
     required this.file,
+    this.url,
     required this.onPick,
     required this.onRemove,
     this.width = 70,
@@ -938,68 +1211,131 @@ class _MediaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ── если фото ещё нет — плитка с иконкой и рамкой
-    if (file == null) {
-      return GestureDetector(
-        onTap: onPick,
-        child: Container(
-          width: width,
-          height: 70,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            color: AppColors.background,
-            border: Border.all(color: AppColors.border), // ← рамка только здесь
-          ),
-          child: const Center(
-            child: Icon(
-              CupertinoIcons.photo,
-              size: 28,
-              color: AppColors.iconTertiary,
+    // ── если есть новый файл — показываем его
+    if (file != null) {
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          GestureDetector(
+            onTap: onPick, // тап по фото — заменить
+            child: Container(
+              width: width,
+              height: 70,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                image: DecorationImage(
+                  image: FileImage(file!),
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
           ),
-        ),
+          Positioned(
+            top: -6,
+            right: -6,
+            child: GestureDetector(
+              onTap: onRemove,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.error,
+                ),
+                child: const Icon(
+                  Icons.close,
+                  size: 16,
+                  color: AppColors.surface,
+                ),
+              ),
+            ),
+          ),
+        ],
       );
     }
 
-    // ── если фото выбрано — превью без рамки
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        GestureDetector(
-          onTap: onPick, // тап по фото — заменить
-          child: Container(
-            width: width,
-            height: 70,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              image: DecorationImage(
-                image: FileImage(file!),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: -6,
-          right: -6,
-          child: GestureDetector(
-            onTap: onRemove,
+    // ── если есть URL существующего изображения — показываем его
+    if (url != null && url!.isNotEmpty) {
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          GestureDetector(
+            onTap: onPick,
             child: Container(
-              width: 22,
-              height: 22,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.error,
+              width: width,
+              height: 70,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: const Icon(
-                Icons.close,
-                size: 16,
-                color: AppColors.surface,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Builder(
+                  builder: (context) {
+                    final dpr = MediaQuery.of(context).devicePixelRatio;
+                    final side = (70 * dpr).round();
+                    return CachedNetworkImage(
+                      imageUrl: url!,
+                      fit: BoxFit.cover,
+                      fadeInDuration: const Duration(milliseconds: 120),
+                      memCacheWidth: side,
+                      memCacheHeight: side,
+                      maxWidthDiskCache: side,
+                      maxHeightDiskCache: side,
+                      errorWidget: (_, __, ___) => Container(
+                        width: width,
+                        height: 70,
+                        color: AppColors.border,
+                        child: const Icon(Icons.image, size: 28),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ),
+          Positioned(
+            top: -6,
+            right: -6,
+            child: GestureDetector(
+              onTap: onRemove,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.error,
+                ),
+                child: const Icon(
+                  Icons.close,
+                  size: 16,
+                  color: AppColors.surface,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // ── если фото ещё нет — плитка с иконкой и рамкой
+    return GestureDetector(
+      onTap: onPick,
+      child: Container(
+        width: width,
+        height: 70,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          color: AppColors.background,
+          border: Border.all(color: AppColors.border), // ← рамка только здесь
         ),
-      ],
+        child: const Center(
+          child: Icon(
+            CupertinoIcons.photo,
+            size: 28,
+            color: AppColors.iconTertiary,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1020,3 +1356,4 @@ Widget _labelWithStar(String label) {
     ),
   );
 }
+
