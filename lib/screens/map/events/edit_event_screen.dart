@@ -37,7 +37,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
   TimeOfDay? time;
 
   // список клубов
-  final List<String> clubs = ['CoffeeRun_vld', 'RunTown', 'TriClub'];
+  List<String> clubs = [];
   String? selectedClub;
 
   // чекбоксы
@@ -81,6 +81,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
   @override
   void initState() {
     super.initState();
+    _loadUserClubs(); // ── загружаем клубы пользователя при инициализации
     _loadEventData();
     nameCtrl.addListener(() {
       _refresh();
@@ -108,6 +109,42 @@ class _EditEventScreenState extends State<EditEventScreen> {
   void _clearFieldError(String fieldName) {
     if (_errorFields.contains(fieldName)) {
       setState(() => _errorFields.remove(fieldName));
+    }
+  }
+
+  // ── загрузка списка клубов пользователя
+  Future<void> _loadUserClubs() async {
+    try {
+      final api = ApiService();
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        setState(() {
+          clubs = [];
+        });
+        return;
+      }
+
+      final data = await api.get(
+        '/get_user_clubs.php',
+        queryParams: {'user_id': userId.toString()},
+      );
+
+      if (data['success'] == true && data['clubs'] != null) {
+        final clubsList = data['clubs'] as List<dynamic>;
+        setState(() {
+          clubs = clubsList.map((c) => c.toString()).toList();
+        });
+      } else {
+        setState(() {
+          clubs = [];
+        });
+      }
+    } catch (e) {
+      setState(() {
+        clubs = [];
+      });
     }
   }
 
@@ -189,10 +226,17 @@ class _EditEventScreenState extends State<EditEventScreen> {
         final clubNameStr = event['club_name'] as String? ?? '';
         createFromClub = clubNameStr.isNotEmpty;
         // Проверяем, что значение клуба входит в список допустимых
-        if (createFromClub && clubs.contains(clubNameStr)) {
-          selectedClub = clubNameStr;
-        } else {
-          selectedClub = null; // Если значение не валидно, оставляем null
+        // Если клубы ещё не загружены, сохраняем название и проверим позже
+        if (createFromClub) {
+          if (clubs.contains(clubNameStr)) {
+            selectedClub = clubNameStr;
+          } else if (clubs.isEmpty) {
+            // Если клубы ещё не загружены, сохраняем название
+            // Оно будет проверено после загрузки клубов
+            selectedClub = clubNameStr;
+          } else {
+            selectedClub = null; // Если значение не валидно, оставляем null
+          }
         }
 
         saveTemplate = (event['template_name'] as String? ?? '').isNotEmpty;
