@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -119,17 +120,34 @@ class _MapScreenState extends State<MapScreen> {
         body: Stack(
           children: [
             FutureBuilder<List<Map<String, dynamic>>>(
-              // Используем ключ для обновления при возврате на экран
-              key: ValueKey('${_selectedIndex == 0 ? 'events' : 'clubs'}_markers'),
+              // Используем статический ключ для каждой вкладки, чтобы Future не пересоздавался
+              key: ValueKey(_selectedIndex == 0 ? 'events_markers' : 'clubs_markers'),
               future: _selectedIndex == 0
                   ? ev.eventsMarkers(context)
                   : clb.clubsMarkers(context),
               builder: (context, snapshot) {
+                // Показываем карту даже во время загрузки (с пустыми маркерами)
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return _buildMap([], markerColor);
+                }
+                
+                // Обрабатываем ошибки
+                if (snapshot.hasError) {
+                  debugPrint('Ошибка загрузки маркеров: ${snapshot.error}');
+                  return _buildMap([], markerColor);
+                }
+                
                 final markers = snapshot.data ?? [];
-                // Подстраиваем zoom после загрузки маркеров
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _fitBoundsToMarkers(markers);
-                });
+                
+                // Подстраиваем zoom после загрузки маркеров (только один раз)
+                if (markers.isNotEmpty) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      _fitBoundsToMarkers(markers);
+                    }
+                  });
+                }
+                
                 return _buildMap(markers, markerColor);
               },
             ),

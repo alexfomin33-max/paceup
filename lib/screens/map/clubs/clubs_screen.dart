@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'create_club_screen.dart';
@@ -113,9 +115,17 @@ Future<List<Map<String, dynamic>>> clubsMarkers(BuildContext context) async {
     final api = ApiService();
 
     // Загружаем маркеры с группировкой по локациям
-    final data = await api.get(
-      '/get_clubs.php',
-      queryParams: {'detail': 'false'},
+    // Добавляем таймаут для предотвращения зависания
+    final data = await api
+        .get(
+          '/get_clubs.php',
+          queryParams: {'detail': 'false'},
+        )
+        .timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        throw TimeoutException('Превышено время ожидания загрузки клубов');
+      },
     );
 
     if (data['success'] != true) {
@@ -149,6 +159,7 @@ Future<List<Map<String, dynamic>>> clubsMarkers(BuildContext context) async {
     }).toList();
   } catch (e) {
     // В случае ошибки возвращаем пустой список
+    debugPrint('Ошибка загрузки клубов: $e');
     return [];
   }
 }
