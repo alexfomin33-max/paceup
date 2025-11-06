@@ -128,8 +128,8 @@ class ClubsListFromApi extends StatelessWidget {
     // для ускорения первого кадра и плавного скролла.
     () {
       final dpr = MediaQuery.of(context).devicePixelRatio;
-      final targetW = (90 * dpr).round();
-      final targetH = (60 * dpr).round();
+      final targetW = (80 * dpr).round();
+      final targetH = (55 * dpr).round();
       final int limit = clubs.length < 8 ? clubs.length : 8;
       for (var i = 0; i < limit; i++) {
         final c = clubs[i] as Map<String, dynamic>;
@@ -156,36 +156,39 @@ class ClubsListFromApi extends StatelessWidget {
       VoidCallback? onTap,
     }) {
       final dpr = MediaQuery.of(context).devicePixelRatio;
-      final targetW = (90 * dpr).round();
-      final targetH = (60 * dpr).round();
+      final targetW = (80 * dpr).round();
+      final targetH = (55 * dpr).round();
 
-      final imageWidget = logoUrl != null && logoUrl.isNotEmpty
-          ? CachedNetworkImage(
-              imageUrl: logoUrl,
-              width: 90,
-              height: 60,
-              fit: BoxFit.cover,
-              fadeInDuration: const Duration(milliseconds: 120),
-              memCacheWidth: targetW,
-              memCacheHeight: targetH,
-              maxWidthDiskCache: targetW,
-              maxHeightDiskCache: targetH,
-              errorWidget: (_, __, ___) => Container(
-                width: 90,
-                height: 60,
+      final imageWidget = ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+        child: logoUrl != null && logoUrl.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: logoUrl,
+                width: 80,
+                height: 55,
+                fit: BoxFit.cover,
+                fadeInDuration: const Duration(milliseconds: 120),
+                memCacheWidth: targetW,
+                memCacheHeight: targetH,
+                maxWidthDiskCache: targetW,
+                maxHeightDiskCache: targetH,
+                errorWidget: (_, __, ___) => Container(
+                  width: 80,
+                  height: 55,
+                  color: AppColors.border,
+                  child: const Icon(Icons.broken_image, size: 24),
+                ),
+              )
+            : Container(
+                width: 80,
+                height: 55,
                 color: AppColors.border,
-                child: const Icon(Icons.broken_image, size: 24),
+                child: const Icon(Icons.image, size: 24),
               ),
-            )
-          : Container(
-              width: 90,
-              height: 60,
-              color: AppColors.border,
-              child: const Icon(Icons.image, size: 24),
-            );
+      );
 
       final row = Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           imageWidget,
           const SizedBox(width: 8),
@@ -197,13 +200,10 @@ class ClubsListFromApi extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.h14w6,
                 ),
-                const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(fontSize: 13)),
+                const SizedBox(height: 6),
+                Text(subtitle, style: AppTextStyles.h13w4),
               ],
             ),
           ),

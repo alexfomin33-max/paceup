@@ -776,7 +776,9 @@ class _EditEventScreenState extends State<EditEventScreen> {
                   EventTextField(
                     controller: descCtrl,
                     label: 'Описание события',
-                    maxLines: 5,
+                    minLines: 8, // ── минимальное количество строк для начальной высоты
+                    minHeight: 200, // ── минимальная высота в пикселях
+                    // maxLines не указываем, чтобы поле могло расти динамически
                   ),
 
                   const SizedBox(height: 25),
