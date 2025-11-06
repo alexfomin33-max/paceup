@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
+import '../../../widgets/transparent_route.dart';
 import 'event_detail_screen.dart';
 
 /// Каркас bottom sheet для вкладки «События».
@@ -254,7 +255,7 @@ class EventsListFromApi extends StatelessWidget {
           onTap: eventId != null
               ? () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
+                    TransparentPageRoute(
                       builder: (_) => EventDetailScreen(eventId: eventId),
                     ),
                   );

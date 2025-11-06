@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../theme/app_theme.dart';
-import '../../../../../widgets/primary_button.dart'; // ← подключаем глобальную кнопку
 
 /// Контент вкладки «Клубы»
 /// Табличный список «в одну коробку» (как на карте/в маршрутных списках).
@@ -61,29 +60,6 @@ class SearchClubsContent extends StatelessWidget {
                   ],
                 );
               }),
-            ),
-          ),
-        ),
-
-        const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-        // ───── «Создать клуб» — глобальная кнопка PrimaryButton
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Center(
-              child: PrimaryButton(
-                text: 'Создать клуб',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Экран создания клуба — скоро'),
-                    ),
-                  );
-                },
-                width: 220, // как у «Пригласить»
-                // expanded: true, // ← если когда-нибудь понадобится на всю ширину
-              ),
             ),
           ),
         ),

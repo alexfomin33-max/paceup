@@ -6,6 +6,10 @@
          и явно задаём фон через drawable, чтобы фон всегда был белым. -->
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">@drawable/launch_background</item>
+        <!-- ─────────── Белый статус бар для splash screen ─────────── -->
+        <!-- Устанавливаем белый цвет статус бара и тёмные иконки для белого фона -->
+        <item name="android:statusBarColor">@android:color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <!-- Тема окна во время и после инициализации Flutter. Держим светлую тему,

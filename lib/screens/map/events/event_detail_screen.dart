@@ -6,6 +6,7 @@ import '../../../theme/app_theme.dart';
 import '../../../service/api_service.dart';
 import '../../../service/auth_service.dart';
 import '../../../widgets/transparent_route.dart';
+import '../../../widgets/interactive_back_swipe.dart';
 import 'edit_event_screen.dart';
 
 /// Детальная страница события (на основе coffeerun_screen.dart)
@@ -167,30 +168,34 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: const Center(child: CircularProgressIndicator()),
+      return InteractiveBackSwipe(
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: const Center(child: CircularProgressIndicator()),
+        ),
       );
     }
 
     if (_error != null || _eventData == null) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _error ?? 'Событие не найдено',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Назад'),
-                ),
-              ],
+      return InteractiveBackSwipe(
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _error ?? 'Событие не найдено',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Назад'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -208,7 +213,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final participants = _eventData!['participants'] as List<dynamic>? ?? [];
     final participantsCount = _eventData!['participants_count'] as int? ?? 0;
 
-    return Scaffold(
+    return InteractiveBackSwipe(
+      child: Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         top: false,
@@ -475,6 +481,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }
