@@ -2,12 +2,12 @@
 // Экран вкладки "Основное" в профиле.
 // Здесь:
 //   • загружаем данные по API (FutureBuilder),
-//   • подписываемся на локальные предпочтения пользователя (GearPrefsScope),
 //   • собираем сливер-ленту из простых презентеров/виджетов,
 //   • используем вынесенные модели и секцию снаряжения.
 //
 // Важно: вся логика данных (парсинг JSON и модели) вынесена в main_tab_data.dart,
 // а секция снаряжения — в gear_section_sliver.dart. Это упрощает поддержку и тестирование.
+// Флаги видимости снаряжения (show_on_main) приходят из API.
 
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
@@ -15,7 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../theme/app_theme.dart';
-import 'widgets/gear_screen.dart';
 import '../equipment/viewing/viewing_equipment_screen.dart';
 import '../../../../service/api_service.dart';
 
@@ -71,7 +70,7 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
   }
 
   // Запрос к API с offline-first кэшированием
-  Future<MainTabData> _load() async {
+  Future<MainTabData> _load({bool forceRefresh = false}) async {
     final cacheKey = 'main_tab_${widget.userId}';
     
     try {
@@ -93,20 +92,31 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
       return MainTabData.fromJson(jsonMap);
     } catch (e) {
       // Если ошибка (нет интернета) - пробуем загрузить из кэша
-      debugPrint('⚠️ Ошибка загрузки main tab: $e, пробуем кэш...');
-      
-      final prefs = await SharedPreferences.getInstance();
-      final cachedJson = prefs.getString(cacheKey);
-      
-      if (cachedJson != null) {
-        debugPrint('✅ Загружены данные из кэша');
-        final jsonMap = jsonDecode(cachedJson) as Map<String, dynamic>;
-        return MainTabData.fromJson(jsonMap);
+      // Но только если это не принудительное обновление
+      if (!forceRefresh) {
+        debugPrint('⚠️ Ошибка загрузки main tab: $e, пробуем кэш...');
+        
+        final prefs = await SharedPreferences.getInstance();
+        final cachedJson = prefs.getString(cacheKey);
+        
+        if (cachedJson != null) {
+          debugPrint('✅ Загружены данные из кэша');
+          final jsonMap = jsonDecode(cachedJson) as Map<String, dynamic>;
+          return MainTabData.fromJson(jsonMap);
+        }
       }
       
-      // Если кэша нет - пробрасываем ошибку
+      // Если кэша нет или принудительное обновление - пробрасываем ошибку
       rethrow;
     }
+  }
+
+  // Метод для обновления данных (pull-to-refresh)
+  Future<void> _refresh() async {
+    setState(() {
+      _future = _load(forceRefresh: true);
+    });
+    await _future;
   }
 
   // Вкладка должна сохранять своё состояние (скролл, позиции и т.д.), когда мы перелистываем PageView
@@ -116,91 +126,105 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context); // важно для AutomaticKeepAliveClientMixin
-    final prefs = GearPrefsScope.of(
-      context,
-    ); // локальные настройки видимости снаряжения
 
     return FutureBuilder<MainTabData>(
       future: _future ??= _load(), // повторная подстраховка
       builder: (context, snap) {
-        // Состояние "ждём" — показываем индикатор по центру экрана
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const SliverFillRemainingCentered(
-            child: CupertinoActivityIndicator(),
-          );
-        }
-
-        // Состояние "ошибка" — показываем текст ошибки
-        if (snap.hasError) {
-          return SliverFillRemainingCentered(
-            child: Text(
-              'Не удалось загрузить данные\n${snap.error}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
-            ),
-          );
-        }
-
-        // Успешная загрузка — собираем сливеры
-        final data = snap.data!;
-
+        // Всегда показываем CustomScrollView с pull-to-refresh
         return CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // ───────────────── Активность (горизонтальный скроллер) ─────────────────
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-            const SliverToBoxAdapter(child: _SectionTitle('Активность')),
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-            // Преобразуем модели активности в простые элементы для карточек
-            // ───────────────── Временное скрытие первой карточки ─────────────────
-            // Комментарий: на время задачи исключаем первый элемент через skip(1),
-            // чтобы отображались только следующие три карточки.
-            SliverToBoxAdapter(
-              child: _ActivityScroller(
-                items: data.activity
-                    .skip(1)
-                    .map((a) => _ActItem(a.asset, a.value, a.label))
-                    .toList(growable: false),
-              ),
+            // ───────────────── Pull-to-refresh ─────────────────
+            CupertinoSliverRefreshControl(
+              onRefresh: _refresh,
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-            // ───────────────── Снаряжение (кроссовки / велосипеды) ─────────────────
-            // Вставляем секцию как полноценный sliver без дополнительных обёрток.
-            if (prefs.showShoes && data.shoes.isNotEmpty)
-              GearSectionSliver(
-                title: 'Кроссовки',
-                items: data.shoes,
-                isBike: false,
-                onItemTap: _openShoesView,
-              ),
-
-            if (prefs.showBikes && data.bikes.isNotEmpty)
-              GearSectionSliver(
-                title: 'Велосипед',
-                items: data.bikes,
-                isBike: true,
-                onItemTap: _openBikesView,
-              ),
-
-            // ───────────────── Личные рекорды ─────────────────
-            const SliverToBoxAdapter(child: _SectionTitle('Личные рекорды')),
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
-            SliverToBoxAdapter(child: _PRRow(items: data.prs)),
-
-            // ───────────────── Показатели ─────────────────
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            const SliverToBoxAdapter(child: _SectionTitle('Показатели')),
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
-            SliverToBoxAdapter(child: _MetricsCard(data: data.metrics)),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            // Состояние "ждём" (только при первой загрузке) — показываем индикатор
+            if (snap.connectionState == ConnectionState.waiting && !snap.hasData)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: CupertinoActivityIndicator(),
+                ),
+              )
+            // Состояние "ошибка" — показываем текст ошибки
+            else if (snap.hasError && !snap.hasData)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Text(
+                    'Не удалось загрузить данные\n${snap.error}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+                  ),
+                ),
+              )
+            // Успешная загрузка — собираем сливеры
+            else if (snap.hasData)
+              ..._buildContentSlivers(snap.data!),
           ],
         );
       },
     );
+  }
+
+  // Метод для построения контента (вынесен для читаемости)
+  List<Widget> _buildContentSlivers(MainTabData data) {
+    return [
+      // ───────────────── Активность (горизонтальный скроллер) ─────────────────
+      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+      const SliverToBoxAdapter(child: _SectionTitle('Активность')),
+      const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+      // Преобразуем модели активности в простые элементы для карточек
+      // ───────────────── Временное скрытие первой карточки ─────────────────
+      // Комментарий: на время задачи исключаем первый элемент через skip(1),
+      // чтобы отображались только следующие три карточки.
+      SliverToBoxAdapter(
+        child: _ActivityScroller(
+          items: data.activity
+              .skip(1)
+              .map((a) => _ActItem(a.asset, a.value, a.label))
+              .toList(growable: false),
+        ),
+      ),
+
+      const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+      // ───────────────── Снаряжение (кроссовки / велосипеды) ─────────────────
+      // Показываем только если флаг "На главном экране" включен (show_on_main=1)
+      // и есть снаряжение с main=1
+      // Кроссовки
+      if (data.showShoesOnMain && data.shoes.isNotEmpty)
+        GearSectionSliver(
+          title: 'Кроссовки',
+          items: data.shoes,
+          isBike: false,
+          onItemTap: _openShoesView,
+        ),
+
+      // Велосипеды
+      if (data.showBikesOnMain && data.bikes.isNotEmpty)
+        GearSectionSliver(
+          title: 'Велосипед',
+          items: data.bikes,
+          isBike: true,
+          onItemTap: _openBikesView,
+        ),
+
+      // ───────────────── Личные рекорды ─────────────────
+      const SliverToBoxAdapter(child: _SectionTitle('Личные рекорды')),
+      const SliverToBoxAdapter(child: SizedBox(height: 8)),
+      SliverToBoxAdapter(child: _PRRow(items: data.prs)),
+
+      // ───────────────── Показатели ─────────────────
+      const SliverToBoxAdapter(child: SizedBox(height: 16)),
+      const SliverToBoxAdapter(child: _SectionTitle('Показатели')),
+      const SliverToBoxAdapter(child: SizedBox(height: 8)),
+      SliverToBoxAdapter(child: _MetricsCard(data: data.metrics)),
+
+      const SliverToBoxAdapter(child: SizedBox(height: 24)),
+    ];
   }
 }
 

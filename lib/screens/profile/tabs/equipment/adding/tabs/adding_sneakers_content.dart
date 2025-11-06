@@ -1,7 +1,12 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../../../theme/app_theme.dart';
-import '../../../../../../widgets/primary_button.dart'; // ← глобальная бренд-кнопка
+import '../../../../../../widgets/primary_button.dart';
+import '../../../../../../service/api_service.dart';
+import '../../../../../../service/auth_service.dart';
+import '../widgets/autocomplete_text_field.dart';
 
 /// Контент для сегмента «Кроссовки»
 class AddingSneakersContent extends StatefulWidget {
@@ -15,10 +20,16 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
   // ─────────────────────────────────────────────────────────────────────
   //                             КОНТРОЛЛЕРЫ
   // ─────────────────────────────────────────────────────────────────────
-  final _brandCtrl = TextEditingController(text: 'Nike');
-  final _modelCtrl = TextEditingController(text: 'Air Zoom');
-  final _kmCtrl = TextEditingController(text: '250');
-  DateTime _inUseFrom = DateTime(2023, 7, 21);
+  final _brandCtrl = TextEditingController();
+  final _modelCtrl = TextEditingController();
+  final _kmCtrl = TextEditingController();
+  DateTime _inUseFrom = DateTime.now();
+  File? _imageFile;
+  final _picker = ImagePicker();
+  bool _isLoading = false;
+  
+  // Для автодополнения
+  final ApiService _api = ApiService();
 
   @override
   void dispose() {
@@ -29,12 +40,203 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
   }
 
   // ─────────────────────────────────────────────────────────────────────
+  //                           ПОИСК БРЕНДОВ
+  // ─────────────────────────────────────────────────────────────────────
+  Future<List<String>> _searchBrands(String query) async {
+    if (query.isEmpty) {
+      return [];
+    }
+
+    try {
+      final data = await _api.post(
+        '/search_equipment_brands.php',
+        body: {
+          'query': query,
+          'type': 'boots',
+        },
+      );
+
+      if (data['success'] == true) {
+        return (data['brands'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
+      }
+    } catch (e) {
+      // Игнорируем ошибки при поиске
+    }
+
+    return [];
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  //                           ПОИСК МОДЕЛЕЙ
+  // ─────────────────────────────────────────────────────────────────────
+  Future<List<String>> _searchModels(String query) async {
+    final brand = _brandCtrl.text.trim();
+    if (brand.isEmpty || query.isEmpty) {
+      return [];
+    }
+
+    try {
+      final data = await _api.post(
+        '/search_equipment_models.php',
+        body: {
+          'brand': brand,
+          'query': query,
+          'type': 'boots',
+        },
+      );
+
+      if (data['success'] == true) {
+        return (data['models'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
+      }
+    } catch (e) {
+      // Игнорируем ошибки при поиске
+    }
+
+    return [];
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  //                           ВЫБОР ИЗОБРАЖЕНИЯ
+  // ─────────────────────────────────────────────────────────────────────
+  Future<void> _pickImage() async {
+    final x = await _picker.pickImage(source: ImageSource.gallery);
+    if (x != null && mounted) {
+      setState(() => _imageFile = File(x.path));
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  //                           ОТПРАВКА ДАННЫХ
+  // ─────────────────────────────────────────────────────────────────────
+  Future<void> _saveEquipment() async {
+    if (_isLoading) return;
+
+    // Валидация
+    final brand = _brandCtrl.text.trim();
+    final model = _modelCtrl.text.trim();
+    final kmStr = _kmCtrl.text.trim();
+
+    if (brand.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Введите бренд')),
+      );
+      return;
+    }
+
+    if (model.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Введите модель')),
+      );
+      return;
+    }
+
+    // Дистанция необязательна, по умолчанию 0
+    int km = 0;
+    if (kmStr.isNotEmpty) {
+      final parsedKm = int.tryParse(kmStr);
+      if (parsedKm == null || parsedKm < 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Некорректная дистанция')),
+        );
+        return;
+      }
+      km = parsedKm;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final api = ApiService();
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Пользователь не авторизован')),
+          );
+        }
+        return;
+      }
+
+      // Формируем данные
+      final files = <String, File>{};
+      final fields = <String, String>{
+        'user_id': userId.toString(),
+        'type': 'boots',
+        'name': model,
+        'brand': brand,
+        'dist': km.toString(),
+        'main': '0', // По умолчанию не на главном экране
+      };
+
+      // Добавляем изображение, если есть
+      if (_imageFile != null) {
+        files['image'] = _imageFile!;
+      }
+
+      // Отправляем запрос
+      Map<String, dynamic> data;
+      if (files.isEmpty) {
+        // JSON запрос без файлов
+        data = await api.post('/add_equipment.php', body: fields);
+      } else {
+        // Multipart запрос с файлами
+        data = await api.postMultipart(
+          '/add_equipment.php',
+          files: files,
+          fields: fields,
+          timeout: const Duration(seconds: 60),
+        );
+      }
+
+      // Проверяем ответ
+      if (data['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Снаряжение успешно добавлено')),
+          );
+          // Закрываем экран после успешного сохранения
+          Navigator.of(context).pop();
+        }
+      } else {
+        final errorMsg = data['message'] ?? 'Ошибка при сохранении';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMsg)),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
   //                           ВЫБОР ДАТЫ (iOS)
   // ─────────────────────────────────────────────────────────────────────
   Future<void> _pickDate() async {
+    // Переменная для хранения выбранной даты, объявлена вне builder
+    // чтобы сохраняться между перестроениями
+    DateTime selectedDate = _inUseFrom;
+    
     await showCupertinoModalPopup(
       context: context,
-      builder: (_) {
+      builder: (popupContext) {
         return Container(
           height: 280,
           color: AppColors.surface,
@@ -46,13 +248,19 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
                   children: [
                     CupertinoButton(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(popupContext),
                       child: const Text('Отменить'),
                     ),
                     const Spacer(),
                     CupertinoButton(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        // Обновляем состояние только если виджет еще смонтирован
+                        if (mounted) {
+                          setState(() => _inUseFrom = selectedDate);
+                        }
+                        Navigator.pop(popupContext);
+                      },
                       child: const Text(
                         'Готово',
                         style: TextStyle(fontWeight: FontWeight.w600),
@@ -75,7 +283,10 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
                   mode: CupertinoDatePickerMode.date,
                   initialDateTime: _inUseFrom,
                   maximumDate: DateTime.now(),
-                  onDateTimeChanged: (d) => setState(() => _inUseFrom = d),
+                  onDateTimeChanged: (d) {
+                    // Обновляем переменную, объявленную в области видимости _pickDate
+                    selectedDate = d;
+                  },
                 ),
               ),
             ],
@@ -83,7 +294,6 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
         );
       },
     );
-    setState(() {});
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -126,6 +336,25 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
                         fit: BoxFit.contain,
                       ),
                     ),
+                    // Отображение выбранного изображения или заглушки
+                    if (_imageFile != null)
+                      Positioned.fill(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          child: Image.file(
+                            _imageFile!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(
+                                child: Icon(
+                                  Icons.error_outline,
+                                  color: AppColors.textSecondary,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     // кнопка «добавить фото» — снизу-справа
                     Positioned(
                       right: 70,
@@ -134,16 +363,8 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
                         color: AppColors.surface,
                         shape: const CircleBorder(),
                         child: IconButton(
-                          tooltip: 'Добавить фото (заглушка)',
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Заглушка: выбор фото не реализован',
-                                ),
-                              ),
-                            );
-                          },
+                          tooltip: 'Добавить фото',
+                          onPressed: _pickImage,
                           icon: const Icon(
                             Icons.add_a_photo_outlined,
                             size: 28,
@@ -167,16 +388,30 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
               // строки полей
               _FieldRow(
                 title: 'Бренд',
-                child: _RightTextField(
+                child: AutocompleteTextField(
                   controller: _brandCtrl,
                   hint: 'Введите бренд',
+                  onSearch: _searchBrands,
+                  onChanged: () {
+                    // Очищаем модель при изменении бренда
+                    setState(() {
+                      _modelCtrl.clear();
+                    });
+                  },
                 ),
               ),
               _FieldRow(
                 title: 'Модель',
-                child: _RightTextField(
-                  controller: _modelCtrl,
-                  hint: 'Введите модель',
+                child: ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _brandCtrl,
+                  builder: (context, brandValue, child) {
+                    return AutocompleteTextField(
+                      controller: _modelCtrl,
+                      hint: 'Введите модель',
+                      onSearch: _searchModels,
+                      enabled: brandValue.text.trim().isNotEmpty,
+                    );
+                  },
                 ),
               ),
               _FieldRow(
@@ -218,7 +453,8 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
         Center(
           child: PrimaryButton(
             text: 'Сохранить',
-            onPressed: () {},
+            onPressed: _saveEquipment,
+            isLoading: _isLoading,
             width: 220, // ← единая ширина, как у «Пригласить»
           ),
         ),
@@ -271,7 +507,7 @@ class _FieldRow extends StatelessWidget {
 }
 
 /// ───────────────────── Правый «плоский» TextField без рамки ─────────────────────
-class _RightTextField extends StatelessWidget {
+class _RightTextField extends StatefulWidget {
   final TextEditingController controller;
   final String hint;
   final TextInputType? keyboardType;
@@ -282,16 +518,21 @@ class _RightTextField extends StatelessWidget {
   });
 
   @override
+  State<_RightTextField> createState() => _RightTextFieldState();
+}
+
+class _RightTextFieldState extends State<_RightTextField> {
+  @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: controller,
+      controller: widget.controller,
       textAlign: TextAlign.right,
-      keyboardType: keyboardType,
-      decoration: const InputDecoration(
+      keyboardType: widget.keyboardType,
+      decoration: InputDecoration(
         isDense: true,
-        hintText: '',
+        hintText: widget.hint,
         border: InputBorder.none,
-        hintStyle: TextStyle(
+        hintStyle: const TextStyle(
           fontFamily: 'Inter',
           fontSize: 14,
           color: AppColors.textSecondary,
@@ -305,3 +546,4 @@ class _RightTextField extends StatelessWidget {
     );
   }
 }
+

@@ -108,15 +108,46 @@ class _GearCard extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
         child: Row(
           children: [
-            // Превью изображения
+            // Превью изображения (локальный asset или сетевой URL)
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Image.asset(
-                imageAsset,
-                width: 72,
-                height: 44,
-                fit: BoxFit.cover,
-              ),
+              child: imageAsset.startsWith('http://') || imageAsset.startsWith('https://')
+                  ? Image.network(
+                      imageAsset,
+                      width: 72,
+                      height: 44,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 72,
+                          height: 44,
+                          color: AppColors.border,
+                          child: const Icon(
+                            CupertinoIcons.photo,
+                            color: AppColors.textSecondary,
+                            size: 20,
+                          ),
+                        );
+                      },
+                    )
+                  : Image.asset(
+                      imageAsset,
+                      width: 72,
+                      height: 44,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 72,
+                          height: 44,
+                          color: AppColors.border,
+                          child: const Icon(
+                            CupertinoIcons.photo,
+                            color: AppColors.textSecondary,
+                            size: 20,
+                          ),
+                        );
+                      },
+                    ),
             ),
             const SizedBox(width: 12),
             // Текстовая часть с заголовком и метриками
