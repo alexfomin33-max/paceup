@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -28,36 +29,8 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
   bool isOpenCommunity =
       false; // false = закрытое сообщество (по умолчанию выбрано)
 
-  // ── список городов для автокомплита
-  static const List<String> _cities = [
-    'Москва',
-    'Санкт-Петербург',
-    'Владимир',
-    'Суздаль',
-    'Ярославль',
-    'Нижний Новгород',
-    'Иваново',
-    'Казань',
-    'Рязань',
-    'Тула',
-    'Тверь',
-    'Орёл',
-    'Кострома',
-    'Воронеж',
-    'Ростов',
-    'Краснодар',
-    'Сочи',
-    'Новосибирск',
-    'Екатеринбург',
-    'Челябинск',
-    'Пермь',
-    'Самара',
-    'Уфа',
-    'Омск',
-    'Красноярск',
-    'Владивосток',
-    'Хабаровск',
-  ];
+  // ── список городов для автокомплита (загружается из БД)
+  List<String> _cities = [];
 
   // ── медиа
   final picker = ImagePicker();
@@ -87,6 +60,32 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
       _refresh();
       _clearFieldError('city');
     });
+    // Загружаем список городов из БД
+    _loadCities();
+  }
+
+  /// Загрузка списка городов из БД через API
+  Future<void> _loadCities() async {
+    try {
+      final api = ApiService();
+      final data = await api.get('/get_cities.php').timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          throw TimeoutException('Превышено время ожидания загрузки городов');
+        },
+      );
+
+      if (data['success'] == true && data['cities'] != null) {
+        final cities = data['cities'] as List<dynamic>? ?? [];
+        setState(() {
+          _cities = cities.map((city) => city.toString()).toList();
+        });
+      }
+    } catch (e) {
+      // В случае ошибки оставляем пустой список
+      // Пользователь все равно сможет ввести город вручную
+      // Ошибка не критична, так как автокомплит работает и без списка
+    }
   }
 
   @override
