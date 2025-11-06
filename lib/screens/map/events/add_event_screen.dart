@@ -761,7 +761,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   EventTextField(
                     controller: descCtrl,
                     label: 'Описание события',
-                    maxLines: 5,
+                    minLines: 8, // ── минимальное количество строк для начальной высоты
+                    minHeight: 200, // ── минимальная высота в пикселях
+                    // maxLines не указываем, чтобы поле могло расти динамически
                   ),
                   const SizedBox(height: 16),
 
@@ -853,6 +855,8 @@ class EventTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final int maxLines;
+  final int? minLines; // ── минимальное количество строк для динамической высоты
+  final double? minHeight; // ── минимальная высота в пикселях
   final bool enabled;
   final Widget? trailing;
   final bool hasError; // ── состояние ошибки валидации
@@ -863,6 +867,8 @@ class EventTextField extends StatelessWidget {
     required this.controller,
     required this.label,
     this.maxLines = 1,
+    this.minLines,
+    this.minHeight,
     this.enabled = true,
     this.trailing,
     this.hasError = false,
@@ -882,9 +888,11 @@ class EventTextField extends StatelessWidget {
     final borderColor = hasError ? AppColors.error : AppColors.border;
     final disabledBorderColor = AppColors.border.withValues(alpha: 0.6);
 
+    // ── создаём TextFormField с поддержкой динамической высоты
     final field = TextFormField(
       controller: controller,
-      maxLines: maxLines,
+      minLines: minLines, // ── минимальное количество строк
+      maxLines: minLines != null ? null : maxLines, // ── если есть minLines, убираем ограничение maxLines для динамического роста
       enabled: enabled,
       style: TextStyle(color: textColor, fontFamily: 'Inter', fontSize: 14),
       decoration: InputDecoration(
@@ -920,14 +928,22 @@ class EventTextField extends StatelessWidget {
       ),
     );
 
-    if (trailing == null) return field;
+    // ── если указана минимальная высота, оборачиваем в ConstrainedBox
+    final constrainedField = minHeight != null
+        ? ConstrainedBox(
+            constraints: BoxConstraints(minHeight: minHeight!),
+            child: field,
+          )
+        : field;
+
+    if (trailing == null) return constrainedField;
 
     return Row(
-      crossAxisAlignment: maxLines == 1
+      crossAxisAlignment: (maxLines == 1 && minLines == null)
           ? CrossAxisAlignment.center
           : CrossAxisAlignment.start,
       children: [
-        Expanded(child: field),
+        Expanded(child: constrainedField),
         trailing!,
       ],
     );
