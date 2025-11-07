@@ -96,9 +96,8 @@ class SettingsScreen extends ConsumerWidget {
                     onTap: () async {
                       final result = await Navigator.of(context).push(
                         TransparentPageRoute(
-                          builder: (_) => EditPhoneScreen(
-                            currentPhone: settings.phone,
-                          ),
+                          builder: (_) =>
+                              EditPhoneScreen(currentPhone: settings.phone),
                         ),
                       );
                       if (result != null && context.mounted) {
@@ -131,9 +130,8 @@ class SettingsScreen extends ConsumerWidget {
                     onTap: () async {
                       final result = await Navigator.of(context).push(
                         TransparentPageRoute(
-                          builder: (_) => EditEmailScreen(
-                            currentEmail: settings.email,
-                          ),
+                          builder: (_) =>
+                              EditEmailScreen(currentEmail: settings.email),
                         ),
                       );
                       if (result != null && context.mounted) {
@@ -162,7 +160,9 @@ class SettingsScreen extends ConsumerWidget {
                     icon: CupertinoIcons.lock,
                     iconColor: AppColors.brandPrimary,
                     title: 'Пароль',
-                    trailingText: settings.hasPassword ? '********' : 'Не установлен',
+                    trailingText: settings.hasPassword
+                        ? '********'
+                        : 'Не установлен',
                     onTap: () async {
                       final result = await Navigator.of(context).push(
                         TransparentPageRoute(
@@ -407,7 +407,7 @@ class _SettingsTile extends StatelessWidget {
       onTap: onTap ?? () {},
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
         child: Row(
           children: [
             Container(

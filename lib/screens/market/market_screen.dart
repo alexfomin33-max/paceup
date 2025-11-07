@@ -14,6 +14,8 @@ import '../../widgets/segmented_pill.dart';
 import 'tabs/slots/slots_content.dart';
 import 'tabs/things/things_content.dart';
 import 'state/sale_screen.dart';
+import 'state/alert_creation_screen.dart';
+import '../../widgets/transparent_route.dart';
 
 // Те же локальные константы, что и в tasks_screen.dart
 const _kTabAnim = Duration(milliseconds: 300);
@@ -78,7 +80,11 @@ class _MarketScreenState extends State<MarketScreen> {
           IconButton(
             tooltip: 'Уведомления',
             onPressed: () {
-              // TODO: открыть экран уведомлений
+              Navigator.of(context, rootNavigator: true).push(
+                TransparentPageRoute(
+                  builder: (_) => const AlertCreationScreen(),
+                ),
+              );
             },
             icon: const Icon(
               CupertinoIcons.bell,
