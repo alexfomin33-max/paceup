@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSContactsUsageDescription</key>
+	<string>Приложению нужен доступ к контактам для поиска друзей по номеру телефона из вашей телефонной книги.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Используйте Face ID для быстрого и безопасного входа в приложение.</string>
 </dict>
 </plist>

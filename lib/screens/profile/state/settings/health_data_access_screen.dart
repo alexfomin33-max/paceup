@@ -93,8 +93,9 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
       
       if (!mounted) return;
       
+      final isGranted = granted ?? false;
       setState(() {
-        _hasAccess = granted ?? false;
+        _hasAccess = isGranted;
         _isLoading = false;
       });
 

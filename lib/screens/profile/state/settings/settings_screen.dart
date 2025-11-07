@@ -13,6 +13,7 @@ import 'health_data_access_screen.dart';
 import 'contacts_access_screen.dart';
 import 'help_info_screen.dart';
 import 'feedback_screen.dart';
+import 'biometric_screen.dart';
 import 'user_settings_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -196,7 +197,11 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Код-пароль и Face ID',
                   trailingText: 'Откл.',
                   onTap: () {
-                    // Пока оставляем заглушку
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const BiometricScreen(),
+                      ),
+                    );
                   },
                 ),
               ],
