@@ -145,7 +145,7 @@ class _PushNotificationsScreenState
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               CupertinoIcons.exclamationmark_triangle,
                               size: 48,
                               color: AppColors.error,
@@ -365,7 +365,7 @@ class _NotificationTile extends StatelessWidget {
             CupertinoSwitch(
               value: value,
               onChanged: onChanged,
-              activeColor: AppColors.brandPrimary,
+              activeTrackColor: AppColors.brandPrimary,
             ),
           ],
         ),

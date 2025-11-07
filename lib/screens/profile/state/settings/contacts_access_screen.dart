@@ -44,10 +44,20 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      // Если плагин недоступен, показываем дружелюбное сообщение
+      final errorMsg = e.toString();
+      if (errorMsg.contains('MissingPluginException') || 
+          errorMsg.contains('No implementation found')) {
+        setState(() {
+          _error = 'Плагин разрешений недоступен. Перезапустите приложение.';
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = errorMsg;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -102,10 +112,20 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      // Если плагин недоступен, показываем дружелюбное сообщение
+      final errorMsg = e.toString();
+      if (errorMsg.contains('MissingPluginException') || 
+          errorMsg.contains('No implementation found')) {
+        setState(() {
+          _error = 'Плагин разрешений недоступен. Перезапустите приложение после установки пакетов.';
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = errorMsg;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -129,7 +149,7 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               CupertinoIcons.exclamationmark_triangle,
                               size: 48,
                               color: AppColors.error,
@@ -168,14 +188,14 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                              const Row(
                                 children: [
                                   Icon(
                                     CupertinoIcons.info,
                                     size: 20,
                                     color: AppColors.brandPrimary,
                                   ),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8),
                                   Text(
                                     'Что это?',
                                     style: AppTextStyles.h14w6,
@@ -262,7 +282,7 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 'Как предоставить доступ:',
                                 style: AppTextStyles.h14w6,
                               ),

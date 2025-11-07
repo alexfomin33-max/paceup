@@ -65,8 +65,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       // Показываем сообщение об успехе
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Спасибо за ваше предложение!'),
+          const SnackBar(
+            content: Text('Спасибо за ваше предложение!'),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
           ),
@@ -95,13 +95,13 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           CupertinoIcons.checkmark_circle_fill,
                           size: 64,
                           color: AppColors.success,
                         ),
                         const SizedBox(height: 24),
-                        Text(
+                        const Text(
                           'Спасибо за ваше предложение!',
                           textAlign: TextAlign.center,
                           style: AppTextStyles.h17w6,
@@ -146,14 +146,14 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
+                            const Row(
                               children: [
                                 Icon(
                                   CupertinoIcons.info,
                                   size: 20,
                                   color: AppColors.brandPrimary,
                                 ),
-                                const SizedBox(width: 8),
+                                SizedBox(width: 8),
                                 Text(
                                   'Ваше мнение важно для нас',
                                   style: AppTextStyles.h14w6,

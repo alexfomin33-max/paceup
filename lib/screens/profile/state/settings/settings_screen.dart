@@ -14,7 +14,7 @@ import 'health_data_access_screen.dart';
 import 'contacts_access_screen.dart';
 import 'help_info_screen.dart';
 import 'feedback_screen.dart';
-import 'biometric_screen.dart';
+// import 'biometric_screen.dart'; // Закомментировано для macOS/web
 import 'user_settings_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -191,20 +191,21 @@ class SettingsScreen extends ConsumerWidget {
                     onTap: () {},
                   ),
                 ),
-                const _Divider(),
-                _SettingsTile(
-                  icon: CupertinoIcons.rectangle_on_rectangle_angled,
-                  iconColor: AppColors.brandPrimary,
-                  title: 'Код-пароль и Face ID',
-                  trailingText: 'Откл.',
-                  onTap: () {
-                    Navigator.of(context).push(
-                      TransparentPageRoute(
-                        builder: (_) => const BiometricScreen(),
-                      ),
-                    );
-                  },
-                ),
+                // Закомментировано: local_auth удален из проекта
+                // const _Divider(),
+                // _SettingsTile(
+                //   icon: CupertinoIcons.rectangle_on_rectangle_angled,
+                //   iconColor: AppColors.brandPrimary,
+                //   title: 'Код-пароль и Face ID',
+                //   trailingText: 'Откл.',
+                //   onTap: () {
+                //     Navigator.of(context).push(
+                //       TransparentPageRoute(
+                //         builder: (_) => const BiometricScreen(),
+                //       ),
+                //     );
+                //   },
+                // ),
               ],
             ),
 

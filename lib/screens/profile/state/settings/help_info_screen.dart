@@ -19,7 +19,7 @@ class HelpInfoScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
             children: [
               // Общая информация
-              _InfoSection(
+              const _InfoSection(
                 title: 'О приложении',
                 children: [
                   _InfoItem(
@@ -38,7 +38,7 @@ class HelpInfoScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Тренировки
-              _InfoSection(
+              const _InfoSection(
                 title: 'Тренировки',
                 children: [
                   _InfoItem(
@@ -57,7 +57,7 @@ class HelpInfoScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // События
-              _InfoSection(
+              const _InfoSection(
                 title: 'События',
                 children: [
                   _InfoItem(
@@ -76,7 +76,7 @@ class HelpInfoScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Клубы
-              _InfoSection(
+              const _InfoSection(
                 title: 'Клубы',
                 children: [
                   _InfoItem(
@@ -95,7 +95,7 @@ class HelpInfoScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Подписка PacePro
-              _InfoSection(
+              const _InfoSection(
                 title: 'PacePro',
                 children: [
                   _InfoItem(
@@ -114,7 +114,7 @@ class HelpInfoScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Контакты поддержки
-              _InfoSection(
+              const _InfoSection(
                 title: 'Поддержка',
                 children: [
                   _InfoItem(

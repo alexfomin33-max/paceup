@@ -100,7 +100,7 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
         _isLoading = false;
       });
 
-      if (granted != true) {
+      if (!isGranted) {
         // Показываем диалог с инструкциями
         if (mounted) {
           await showDialog(
