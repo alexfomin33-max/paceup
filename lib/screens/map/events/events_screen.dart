@@ -138,21 +138,25 @@ Future<List<Map<String, dynamic>>> eventsMarkers(
     }
 
     // Добавляем фильтры по датам
-    // ⚡️ Передаем даты только если они явно установлены пользователем
-    // (не передаем дефолтные даты, которые устанавливаются автоматически)
-    if (filterParams != null) {
-      // Проверяем, что дата начала не является дефолтной (сегодня)
-      final today = DateTime.now();
-      final defaultStartDate = DateTime(today.year, today.month, today.day);
+    // По умолчанию показываем события начиная с сегодняшней даты
+    final today = DateTime.now();
+    final defaultStartDate = DateTime(today.year, today.month, today.day);
+    
+    if (filterParams != null && filterParams.startDate != null) {
+      // Если фильтры установлены, используем дату из фильтров
+      queryParams['start_date'] =
+          DateFormat('yyyy-MM-dd').format(filterParams.startDate!);
+    } else {
+      // Если фильтры не установлены, используем дефолтную дату (сегодня)
+      queryParams['start_date'] =
+          DateFormat('yyyy-MM-dd').format(defaultStartDate);
+    }
+    
+    // Дата окончания передаем только если она явно установлена пользователем
+    if (filterParams != null && filterParams.endDate != null) {
       final defaultEndDate = DateTime(today.year + 1, today.month, today.day);
-      
-      if (filterParams.startDate != null &&
-          filterParams.startDate != defaultStartDate) {
-        queryParams['start_date'] =
-            DateFormat('yyyy-MM-dd').format(filterParams.startDate!);
-      }
-      if (filterParams.endDate != null &&
-          filterParams.endDate != defaultEndDate) {
+      // Передаем дату окончания только если она отличается от дефолтной
+      if (filterParams.endDate != defaultEndDate) {
         queryParams['end_date'] =
             DateFormat('yyyy-MM-dd').format(filterParams.endDate!);
       }
@@ -180,9 +184,9 @@ Future<List<Map<String, dynamic>>> eventsMarkers(
       // Формируем заголовок для bottom sheet (только название города с правильным склонением)
       String title = 'События';
       if (place.isNotEmpty) {
-        // Извлекаем только название города (последняя часть после запятой)
+        // Извлекаем только название города (первая часть до запятой)
         final parts = place.split(',');
-        final cityName = parts.isNotEmpty ? parts.last.trim() : place;
+        final cityName = parts.isNotEmpty ? parts.first.trim() : place;
         final cityDeclined = _formatCityInLocativeCase(cityName);
         title = 'События $cityDeclined';
       }

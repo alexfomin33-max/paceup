@@ -150,30 +150,54 @@ class _EditClubScreenState extends State<EditClubScreen> {
         }
 
         // Заполняем дату основания
-        final dateFormatted = club['date_formatted'] as String? ?? '';
-        if (dateFormatted.isNotEmpty) {
+        DateTime? parsedDate;
+        // ── используем foundation_date (формат "YYYY-MM-DD" из БД), а не date_formatted
+        final foundationDateStr = club['foundation_date'] as String? ?? '';
+        if (foundationDateStr.isNotEmpty) {
           try {
-            // Парсим дату в формате "dd.mm.yyyy"
-            final parts = dateFormatted.split('.');
-            if (parts.length == 3) {
-              foundationDate = DateTime(
-                int.parse(parts[2]),
-                int.parse(parts[1]),
-                int.parse(parts[0]),
-              );
-            }
+            // Парсим дату в формате "YYYY-MM-DD" (стандартный формат MySQL DATE)
+            parsedDate = DateTime.parse(foundationDateStr);
+            // ── обрезаем время, оставляем только дату
+            parsedDate = DateUtils.dateOnly(parsedDate);
           } catch (e) {
-            // Игнорируем ошибку парсинга
+            // ── если не удалось распарсить, пробуем альтернативный формат "dd.mm.yyyy"
+            try {
+              final parts = foundationDateStr.split('.');
+              if (parts.length == 3) {
+                parsedDate = DateTime(
+                  int.parse(parts[2]),
+                  int.parse(parts[1]),
+                  int.parse(parts[0]),
+                );
+                parsedDate = DateUtils.dateOnly(parsedDate);
+              }
+            } catch (e2) {
+              // Игнорируем ошибку парсинга
+            }
           }
         }
 
         // Заполняем медиа
-        logoUrl = club['logo_url'] as String?;
-        logoFilename = club['logo_filename'] as String?;
-        backgroundUrl = club['background_url'] as String?;
-        backgroundFilename = club['background_filename'] as String?;
+        final parsedLogoUrl = club['logo_url'] as String?;
+        // ── извлекаем имя файла из URL или используем поле logo из БД
+        final parsedLogoFilename = club['logo'] as String? ??
+            (parsedLogoUrl != null && parsedLogoUrl.isNotEmpty
+                ? Uri.parse(parsedLogoUrl).pathSegments.last
+                : null);
+        final parsedBackgroundUrl = club['background_url'] as String?;
+        // ── извлекаем имя файла из URL или используем поле background из БД
+        final parsedBackgroundFilename = club['background'] as String? ??
+            (parsedBackgroundUrl != null && parsedBackgroundUrl.isNotEmpty
+                ? Uri.parse(parsedBackgroundUrl).pathSegments.last
+                : null);
 
+        // ── обновляем состояние внутри setState, чтобы виджеты перестроились
         setState(() {
+          foundationDate = parsedDate;
+          logoUrl = parsedLogoUrl;
+          logoFilename = parsedLogoFilename;
+          backgroundUrl = parsedBackgroundUrl;
+          backgroundFilename = parsedBackgroundFilename;
           _loadingData = false;
         });
       } else {
@@ -337,7 +361,10 @@ class _EditClubScreenState extends State<EditClubScreen> {
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
         title: const Text('Удалить сообщество?'),
-        content: const Text('Это действие нельзя отменить.'),
+        content: const Text(
+          'Сообщество будет скрыто из приложения. '
+          'Вы сможете восстановить его позже.',
+        ),
         actions: [
           CupertinoDialogAction(
             isDefaultAction: true,
@@ -982,7 +1009,7 @@ class EventAutocompleteField extends StatelessWidget {
   }
 }
 
-class EventDateField extends StatelessWidget {
+class EventDateField extends StatefulWidget {
   final String label;
   final String valueText;
   final IconData icon;
@@ -999,21 +1026,49 @@ class EventDateField extends StatelessWidget {
   });
 
   @override
+  State<EventDateField> createState() => _EventDateFieldState();
+}
+
+class _EventDateFieldState extends State<EventDateField> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.valueText);
+  }
+
+  @override
+  void didUpdateWidget(EventDateField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // ── обновляем текст контроллера, если valueText изменился
+    if (oldWidget.valueText != widget.valueText) {
+      _controller.text = widget.valueText;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final borderColor = hasError ? AppColors.error : AppColors.border;
+    final borderColor = widget.hasError ? AppColors.error : AppColors.border;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: AbsorbPointer(
         child: TextFormField(
-          controller: TextEditingController(text: valueText),
+          controller: _controller,
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
             color: AppColors.textPrimary,
           ),
           decoration: InputDecoration(
-            label: _labelWithStar(label),
+            label: _labelWithStar(widget.label),
             floatingLabelBehavior: FloatingLabelBehavior.always,
             filled: true,
             fillColor: AppColors.surface,
@@ -1023,7 +1078,7 @@ class EventDateField extends StatelessWidget {
             ),
             prefixIcon: Padding(
               padding: const EdgeInsets.only(left: 8, right: 6),
-              child: Icon(icon, size: 18, color: AppColors.iconPrimary),
+              child: Icon(widget.icon, size: 18, color: AppColors.iconPrimary),
             ),
             prefixIconConstraints: const BoxConstraints(
               minHeight: 18,

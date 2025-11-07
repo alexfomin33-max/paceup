@@ -1,24 +1,48 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart';
-import 'settings_placeholder_screen.dart'; // 👈 экран-заглушка
 import '../../../../widgets/interactive_back_swipe.dart';
 import 'connected_trackers/connected_trackers_screen.dart';
+import 'edit_phone_screen.dart';
+import 'edit_email_screen.dart';
+import 'edit_password_screen.dart';
+import 'push_notifications_screen.dart';
+import 'health_data_access_screen.dart';
+import 'contacts_access_screen.dart';
+import 'help_info_screen.dart';
+import 'feedback_screen.dart';
+import 'user_settings_provider.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
-  void _open(BuildContext context, String title, {String? note}) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => SettingsPlaceholderScreen(title: title, note: note),
-      ),
-    );
+  /// Форматирование телефона для отображения
+  String _formatPhone(String phone) {
+    if (phone.isEmpty) return 'Не указан';
+    if (phone.length <= 4) return phone;
+    // Маскируем средние цифры
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 10) return phone;
+    return '+${digits.substring(0, 1)} (${digits.substring(1, 2)}**) ***-${digits.substring(digits.length - 2)}';
+  }
+
+  /// Форматирование email для отображения
+  String _formatEmail(String email) {
+    if (email.isEmpty) return 'Не указан';
+    if (email.length <= 3) return email;
+    final parts = email.split('@');
+    if (parts.length != 2) return email;
+    final name = parts[0];
+    final domain = parts[1];
+    if (name.length <= 2) return email;
+    return '${name.substring(0, 2)}***@$domain';
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settingsAsync = ref.watch(userSettingsProvider);
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.background,
@@ -31,7 +55,9 @@ class SettingsScreen extends StatelessWidget {
           children: [
             // Карточка подписки PacePro
             _SubscriptionCard(
-              onTap: () => _open(context, 'Управление подпиской PacePro'),
+              onTap: () {
+                // Пока оставляем заглушку
+              },
             ),
 
             const SizedBox(height: 12),
@@ -59,28 +85,109 @@ class SettingsScreen extends StatelessWidget {
             // Аккаунт
             _SettingsGroup(
               children: [
-                _SettingsTile(
-                  icon: CupertinoIcons.phone,
-                  iconColor: AppColors.brandPrimary,
-                  title: 'Телефон',
-                  trailingText: '+7 (9**) ***–25–38',
-                  onTap: () => _open(context, 'Телефон'),
+                settingsAsync.when(
+                  data: (settings) => _SettingsTile(
+                    icon: CupertinoIcons.phone,
+                    iconColor: AppColors.brandPrimary,
+                    title: 'Телефон',
+                    trailingText: _formatPhone(settings.phone),
+                    onTap: () async {
+                      final result = await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => EditPhoneScreen(
+                            currentPhone: settings.phone,
+                          ),
+                        ),
+                      );
+                      if (result != null && context.mounted) {
+                        ref.invalidate(userSettingsProvider);
+                      }
+                    },
+                  ),
+                  loading: () => _SettingsTile(
+                    icon: CupertinoIcons.phone,
+                    iconColor: AppColors.brandPrimary,
+                    title: 'Телефон',
+                    trailingText: 'Загрузка...',
+                    onTap: () {},
+                  ),
+                  error: (_, __) => _SettingsTile(
+                    icon: CupertinoIcons.phone,
+                    iconColor: AppColors.brandPrimary,
+                    title: 'Телефон',
+                    trailingText: 'Ошибка',
+                    onTap: () {},
+                  ),
                 ),
                 const _Divider(),
-                _SettingsTile(
-                  icon: CupertinoIcons.envelope,
-                  iconColor: AppColors.brandPrimary,
-                  title: 'E-mail',
-                  trailingText: 'pa*****@ya.ru',
-                  onTap: () => _open(context, 'E-mail'),
+                settingsAsync.when(
+                  data: (settings) => _SettingsTile(
+                    icon: CupertinoIcons.envelope,
+                    iconColor: AppColors.brandPrimary,
+                    title: 'E-mail',
+                    trailingText: _formatEmail(settings.email),
+                    onTap: () async {
+                      final result = await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => EditEmailScreen(
+                            currentEmail: settings.email,
+                          ),
+                        ),
+                      );
+                      if (result != null && context.mounted) {
+                        ref.invalidate(userSettingsProvider);
+                      }
+                    },
+                  ),
+                  loading: () => _SettingsTile(
+                    icon: CupertinoIcons.envelope,
+                    iconColor: AppColors.brandPrimary,
+                    title: 'E-mail',
+                    trailingText: 'Загрузка...',
+                    onTap: () {},
+                  ),
+                  error: (_, __) => _SettingsTile(
+                    icon: CupertinoIcons.envelope,
+                    iconColor: AppColors.brandPrimary,
+                    title: 'E-mail',
+                    trailingText: 'Ошибка',
+                    onTap: () {},
+                  ),
                 ),
                 const _Divider(),
-                _SettingsTile(
-                  icon: CupertinoIcons.lock,
-                  iconColor: AppColors.brandPrimary,
-                  title: 'Пароль',
-                  trailingText: '********',
-                  onTap: () => _open(context, 'Пароль'),
+                settingsAsync.when(
+                  data: (settings) => _SettingsTile(
+                    icon: CupertinoIcons.lock,
+                    iconColor: AppColors.brandPrimary,
+                    title: 'Пароль',
+                    trailingText: settings.hasPassword ? '********' : 'Не установлен',
+                    onTap: () async {
+                      final result = await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => EditPasswordScreen(
+                            hasPassword: settings.hasPassword,
+                          ),
+                        ),
+                      );
+                      if (result != null && context.mounted) {
+                        ref.invalidate(userSettingsProvider);
+                      }
+                    },
+                  ),
+                  loading: () => _SettingsTile(
+                    icon: CupertinoIcons.lock,
+                    iconColor: AppColors.brandPrimary,
+                    title: 'Пароль',
+                    trailingText: 'Загрузка...',
+                    onTap: () {},
+                  ),
+                  error: (_, __) => _SettingsTile(
+                    icon: CupertinoIcons.lock,
+                    iconColor: AppColors.brandPrimary,
+                    title: 'Пароль',
+                    trailingText: 'Ошибка',
+                    onTap: () {},
+                  ),
                 ),
                 const _Divider(),
                 _SettingsTile(
@@ -88,7 +195,9 @@ class SettingsScreen extends StatelessWidget {
                   iconColor: AppColors.brandPrimary,
                   title: 'Код-пароль и Face ID',
                   trailingText: 'Откл.',
-                  onTap: () => _open(context, 'Код-пароль и Face ID'),
+                  onTap: () {
+                    // Пока оставляем заглушку
+                  },
                 ),
               ],
             ),
@@ -102,35 +211,65 @@ class SettingsScreen extends StatelessWidget {
                   icon: CupertinoIcons.bell,
                   iconColor: AppColors.brandPrimary,
                   title: 'Push-уведомления',
-                  onTap: () => _open(context, 'Push-уведомления'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const PushNotificationsScreen(),
+                      ),
+                    );
+                  },
                 ),
                 const _Divider(),
                 _SettingsTile(
                   icon: CupertinoIcons.arrow_2_circlepath,
                   iconColor: AppColors.brandPrimary,
                   title: 'Доступ к данным',
-                  onTap: () => _open(context, 'Доступ к данным'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const HealthDataAccessScreen(),
+                      ),
+                    );
+                  },
                 ),
                 const _Divider(),
                 _SettingsTile(
                   icon: CupertinoIcons.person_2,
                   iconColor: AppColors.brandPrimary,
                   title: 'Контакты',
-                  onTap: () => _open(context, 'Контакты'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ContactsAccessScreen(),
+                      ),
+                    );
+                  },
                 ),
                 const _Divider(),
                 _SettingsTile(
                   icon: CupertinoIcons.question_circle,
                   iconColor: AppColors.brandPrimary,
                   title: 'Справочная информация',
-                  onTap: () => _open(context, 'Справочная информация'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const HelpInfoScreen(),
+                      ),
+                    );
+                  },
                 ),
                 const _Divider(),
                 _SettingsTile(
                   icon: CupertinoIcons.bubble_left,
                   iconColor: AppColors.brandPrimary,
                   title: 'Предложения по улучшению',
-                  onTap: () => _open(context, 'Предложения по улучшению'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const FeedbackScreen(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -147,11 +286,9 @@ class SettingsScreen extends StatelessWidget {
                   trailingText: '99 ₽',
                   trailingTextColor: AppColors.error,
                   trailingIconColor: AppColors.error, // 🔹 красная стрелка
-                  onTap: () => _open(
-                    context,
-                    'На кофе разработчикам',
-                    note: 'Здесь будет окно оплаты доната.',
-                  ),
+                  onTap: () {
+                    // Пока оставляем заглушку
+                  },
                 ),
               ],
             ),
@@ -165,11 +302,9 @@ class SettingsScreen extends StatelessWidget {
                   icon: CupertinoIcons.square_arrow_right,
                   iconColor: AppColors.brandPrimary,
                   title: 'Выйти',
-                  onTap: () => _open(
-                    context,
-                    'Выйти',
-                    note: 'Тут появится подтверждение и выход из аккаунта.',
-                  ),
+                  onTap: () {
+                    // Пока оставляем заглушку
+                  },
                 ),
               ],
             ),
