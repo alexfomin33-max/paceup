@@ -1,141 +1,147 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../../../widgets/interactive_back_swipe.dart';
 
 class CombiningScreen extends StatelessWidget {
   const CombiningScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-        centerTitle: true,
-        title: const Text('Объединение тренировки', style: AppTextStyles.h17w6),
-        leading: IconButton(
-          splashRadius: 22,
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(
-            CupertinoIcons.back,
-            size: 22,
-            color: AppColors.iconPrimary,
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: AppColors.surface,
+          surfaceTintColor: Colors.transparent,
+          centerTitle: true,
+          title: const Text(
+            'Объединение тренировки',
+            style: AppTextStyles.h17w6,
           ),
-        ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, thickness: 1, color: AppColors.border),
-        ),
-      ),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-          // ——— Инфо-текст
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: _InfoText(),
+          leading: IconButton(
+            splashRadius: 22,
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: const Icon(
+              CupertinoIcons.back,
+              size: 22,
+              color: AppColors.iconPrimary,
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-          // ——— Две тренировки, которые можно объединить
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            sliver: SliverList.list(
-              children: const [
-                _TrainingCard(
-                  dateText: '7 июня 2025, в 16:40',
-                  distance: '16,08 км',
-                  pace: '5:24 /км',
-                  time: '1:26:34',
-                  hr: '148',
-                ),
-                SizedBox(height: 12),
-                _TrainingCard(
-                  dateText: '7 июня 2025, в 18:24',
-                  distance: '5,12 км',
-                  pace: '5:47 /км',
-                  time: '45:18',
-                  hr: '154',
-                ),
-              ],
-            ),
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(1),
+            child: Divider(height: 1, thickness: 1, color: AppColors.border),
           ),
+        ),
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 20)),
+            // ——— Инфо-текст
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: _InfoText(),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-          // ——— Заголовок "После объединения"
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'После объединения',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+            // ——— Две тренировки, которые можно объединить
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              sliver: SliverList.list(
+                children: const [
+                  _TrainingCard(
+                    dateText: '7 июня 2025, в 16:40',
+                    distance: '16,08 км',
+                    pace: '5:24 /км',
+                    time: '1:26:34',
+                    hr: '148',
+                  ),
+                  SizedBox(height: 12),
+                  _TrainingCard(
+                    dateText: '7 июня 2025, в 18:24',
+                    distance: '5,12 км',
+                    pace: '5:47 /км',
+                    time: '45:18',
+                    hr: '154',
+                  ),
+                ],
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+            // ——— Заголовок "После объединения"
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'После объединения',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-          // ——— Итоговая карточка
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            sliver: SliverList.list(
-              children: const [
-                _TrainingCard(
-                  dateText: '7 июня 2025, в 16:40',
-                  distance: '21,20 км',
-                  pace: '5:32 /км',
-                  time: '2:11:52',
-                  hr: '150',
-                ),
-              ],
+            // ——— Итоговая карточка
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              sliver: SliverList.list(
+                children: const [
+                  _TrainingCard(
+                    dateText: '7 июня 2025, в 16:40',
+                    distance: '21,20 км',
+                    pace: '5:32 /км',
+                    time: '2:11:52',
+                    hr: '150',
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 18)),
+            const SliverToBoxAdapter(child: SizedBox(height: 18)),
 
-          // ——— Кнопка "Объединить"
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: SizedBox(
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.brandPrimary,
-                      foregroundColor: AppColors.surface,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      shape: const StadiumBorder(),
-                    ),
-                    child: const Text(
-                      'Объединить',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+            // ——— Кнопка "Объединить"
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Center(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.brandPrimary,
+                        foregroundColor: AppColors.surface,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        shape: const StadiumBorder(),
+                      ),
+                      child: const Text(
+                        'Объединить',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+        ),
       ),
     );
   }
@@ -308,7 +314,22 @@ class _MetricColumn extends StatelessWidget {
         const SizedBox(height: 10),
         Text(bottomTitle, style: label),
         const SizedBox(height: 1),
-        Text(bottomValue, style: value),
+        // Для "Ср. пульс" добавляем красное сердечко перед числом
+        bottomTitle == 'Ср. пульс'
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(
+                    CupertinoIcons.heart_fill,
+                    size: 12,
+                    color: AppColors.error,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(bottomValue, style: value),
+                ],
+              )
+            : Text(bottomValue, style: value),
       ],
     );
   }
