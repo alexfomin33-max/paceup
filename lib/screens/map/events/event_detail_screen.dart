@@ -141,30 +141,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  /// Приводим адрес к формату «Город, остальной адрес» для читабельности
-  String _formatPlace(String place) {
-    if (place.isEmpty) return place;
-
-    final parts = place
-        .split(',')
-        .map((p) => p.trim())
-        .where((p) => p.isNotEmpty)
-        .toList();
-
-    if (parts.length <= 1) {
-      return place;
-    }
-
-    final city = parts.removeLast();
-    final rest = parts.join(', ');
-
-    if (rest.isEmpty) {
-      return city;
-    }
-
-    return '$city, $rest';
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -208,7 +184,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final dateFormatted = _eventData!['date_formatted_short'] as String? ?? '';
     final time = _eventData!['event_time'] as String? ?? '';
     final place = _eventData!['place'] as String? ?? '';
-    final placeFormatted = _formatPlace(place);
     final photos = _eventData!['photos'] as List<dynamic>? ?? [];
     final participants = _eventData!['participants'] as List<dynamic>? ?? [];
     final participantsCount = _eventData!['participants_count'] as int? ?? 0;
@@ -302,7 +277,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           const SizedBox(height: 6),
                           _InfoRow(
                             icon: CupertinoIcons.location_solid,
-                            text: placeFormatted,
+                            text: place,
                           ),
 
                           if (photos.isNotEmpty) ...[

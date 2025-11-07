@@ -148,35 +148,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
     }
   }
 
-  /// Форматирование адреса: город первым, затем остальное
-  /// Если адрес содержит запятые, переставляет последнюю часть в начало
-  String _formatAddress(String address) {
-    if (address.isEmpty) return address;
-
-    final parts = address
-        .split(',')
-        .map((p) => p.trim())
-        .where((p) => p.isNotEmpty)
-        .toList();
-
-    // Если адрес не содержит запятых или только одна часть, возвращаем как есть
-    if (parts.length <= 1) {
-      return address;
-    }
-
-    // Берём последнюю часть как город (обычно город идёт последним в адресах)
-    final city = parts.removeLast();
-    final rest = parts.join(', ');
-
-    // Если остальное пусто, возвращаем только город
-    if (rest.isEmpty) {
-      return city;
-    }
-
-    // Формат: город, остальное
-    return '$city, $rest';
-  }
-
   /// Загрузка данных события для редактирования
   Future<void> _loadEventData() async {
     try {
@@ -208,7 +179,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
         // Заполняем текстовые поля
         nameCtrl.text = event['name'] as String? ?? '';
         final placeText = event['place'] as String? ?? '';
-        placeCtrl.text = _formatAddress(placeText);
+        placeCtrl.text = placeText;
         descCtrl.text = event['description'] as String? ?? '';
         clubCtrl.text = event['club_name'] as String? ?? '';
         templateCtrl.text = event['template_name'] as String? ?? '';
@@ -353,7 +324,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
       setState(() {
         selectedLocation = result.coordinates;
         if (result.address != null && result.address!.isNotEmpty) {
-          placeCtrl.text = _formatAddress(result.address!);
+          placeCtrl.text = result.address!;
         }
         _clearFieldError('place');
       });
