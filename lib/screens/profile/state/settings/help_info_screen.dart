@@ -1,0 +1,204 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import '../../../../../theme/app_theme.dart';
+import '../../../../../widgets/app_bar.dart';
+import '../../../../../widgets/interactive_back_swipe.dart';
+
+/// Экран справочной информации
+class HelpInfoScreen extends StatelessWidget {
+  const HelpInfoScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: const PaceAppBar(title: 'Справочная информация'),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+            children: [
+              // Общая информация
+              _InfoSection(
+                title: 'О приложении',
+                children: [
+                  _InfoItem(
+                    title: 'Что такое PaceUp?',
+                    content:
+                        'PaceUp — это социальная сеть для спортсменов, где вы можете делиться своими тренировками, находить единомышленников, участвовать в событиях и отслеживать свой прогресс.',
+                  ),
+                  _InfoItem(
+                    title: 'Как начать использовать?',
+                    content:
+                        'После регистрации вы можете начать добавлять тренировки, подписываться на других пользователей, создавать и участвовать в событиях, а также отслеживать свою статистику.',
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Тренировки
+              _InfoSection(
+                title: 'Тренировки',
+                children: [
+                  _InfoItem(
+                    title: 'Как добавить тренировку?',
+                    content:
+                        'Вы можете добавить тренировку вручную или импортировать её из подключённых трекеров (Apple Health, Google Fit, Garmin и др.).',
+                  ),
+                  _InfoItem(
+                    title: 'Какие типы тренировок поддерживаются?',
+                    content:
+                        'Приложение поддерживает бег, велоспорт, плавание и ходьбу. Вы можете указывать дистанцию, время, пульс и другие параметры.',
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // События
+              _InfoSection(
+                title: 'События',
+                children: [
+                  _InfoItem(
+                    title: 'Что такое события?',
+                    content:
+                        'События — это организованные мероприятия (забеги, велозаезды, заплывы), в которых вы можете участвовать или создавать свои собственные.',
+                  ),
+                  _InfoItem(
+                    title: 'Как создать событие?',
+                    content:
+                        'Перейдите на карту, нажмите кнопку создания события, заполните информацию о мероприятии и опубликуйте его.',
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Клубы
+              _InfoSection(
+                title: 'Клубы',
+                children: [
+                  _InfoItem(
+                    title: 'Что такое клубы?',
+                    content:
+                        'Клубы — это сообщества спортсменов по интересам. Вы можете создавать свои клубы или присоединяться к существующим.',
+                  ),
+                  _InfoItem(
+                    title: 'Как найти клуб?',
+                    content:
+                        'Используйте карту для поиска клубов в вашем городе или используйте поиск по названию.',
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Подписка PacePro
+              _InfoSection(
+                title: 'PacePro',
+                children: [
+                  _InfoItem(
+                    title: 'Что даёт подписка PacePro?',
+                    content:
+                        'Подписка PacePro открывает доступ к расширенной статистике, приоритетной поддержке, эксклюзивным событиям и другим премиум-функциям.',
+                  ),
+                  _InfoItem(
+                    title: 'Как оформить подписку?',
+                    content:
+                        'Перейдите в настройки и выберите "Управление подпиской PacePro" для оформления или управления подпиской.',
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Контакты поддержки
+              _InfoSection(
+                title: 'Поддержка',
+                children: [
+                  _InfoItem(
+                    title: 'Как связаться с поддержкой?',
+                    content:
+                        'Вы можете отправить предложение по улучшению через раздел "Предложения по улучшению" в настройках или написать нам на почту support@paceup.ru',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Секция информации
+class _InfoSection extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+  const _InfoSection({
+    required this.title,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: AppColors.border,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Text(
+              title,
+              style: AppTextStyles.h16w6,
+            ),
+          ),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+/// Элемент информации
+class _InfoItem extends StatelessWidget {
+  final String title;
+  final String content;
+  const _InfoItem({
+    required this.title,
+    required this.content,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.h14w6,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            content,
+            style: AppTextStyles.h14w4.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
