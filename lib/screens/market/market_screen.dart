@@ -51,17 +51,37 @@ class _MarketScreenState extends State<MarketScreen> {
       appBar: PaceAppBar(
         title: 'Маркет',
         showBack: false,
+        leadingWidth: 90,
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.of(
+              context,
+              rootNavigator: true,
+            ).push(CupertinoPageRoute(builder: (_) => const SaleScreen()));
+          },
+          child: Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'продать',
+                style: AppTextStyles.h15w4.copyWith(
+                  color: AppColors.brandPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.visible,
+              ),
+            ),
+          ),
+        ),
         actions: [
           IconButton(
-            tooltip: 'Продать вещь/слот',
+            tooltip: 'Уведомления',
             onPressed: () {
-              Navigator.of(
-                context,
-                rootNavigator: true,
-              ).push(CupertinoPageRoute(builder: (_) => const SaleScreen()));
+              // TODO: открыть экран уведомлений
             },
             icon: const Icon(
-              CupertinoIcons.money_rubl_circle,
+              CupertinoIcons.bell,
               size: 22,
               color: AppColors.iconPrimary,
             ),

@@ -34,6 +34,14 @@ class AppTextStyles {
   );
   // style: AppTextStyles.h15w5
 
+  static const TextStyle h15w4 = TextStyle(
+    fontFamily: 'Inter',
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textPrimary,
+  );
+  // style: AppTextStyles.h15w4
+
   static const TextStyle h14w6 = TextStyle(
     fontFamily: 'Inter',
     fontSize: 14,
