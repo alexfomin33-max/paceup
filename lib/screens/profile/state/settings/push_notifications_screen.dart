@@ -6,6 +6,7 @@ import '../../../../../service/auth_service.dart';
 import '../../../../../theme/app_theme.dart';
 import '../../../../../widgets/app_bar.dart';
 import '../../../../../widgets/interactive_back_swipe.dart';
+import '../../../../../widgets/primary_button.dart';
 
 /// Экран настроек Push-уведомлений
 class PushNotificationsScreen extends ConsumerStatefulWidget {
@@ -158,13 +159,9 @@ class _PushNotificationsScreenState
                               ),
                             ),
                             const SizedBox(height: 24),
-                            ElevatedButton(
+                            PrimaryButton(
+                              text: 'Повторить',
                               onPressed: _loadSettings,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.brandPrimary,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('Повторить'),
                             ),
                           ],
                         ),

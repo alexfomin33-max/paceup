@@ -6,6 +6,7 @@ import '../../../../../service/auth_service.dart';
 import '../../../../../theme/app_theme.dart';
 import '../../../../../widgets/app_bar.dart';
 import '../../../../../widgets/interactive_back_swipe.dart';
+import '../../../../../widgets/primary_button.dart';
 
 /// Экран предложений по улучшению
 class FeedbackScreen extends ConsumerStatefulWidget {
@@ -114,24 +115,13 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        ElevatedButton(
+                        PrimaryButton(
+                          text: 'Отправить ещё',
                           onPressed: () {
                             setState(() {
                               _isSubmitted = false;
                             });
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.brandPrimary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 32,
-                              vertical: 16,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                          ),
-                          child: const Text('Отправить ещё'),
                         ),
                       ],
                     ),
@@ -237,34 +227,11 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                       const SizedBox(height: 24),
 
                       // Кнопка отправки
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _submitFeedback,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.brandPrimary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                            disabledBackgroundColor: AppColors.disabled,
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                )
-                              : const Text(
-                                  'Отправить',
-                                  style: AppTextStyles.h16w6,
-                                ),
+                      Center(
+                        child: PrimaryButton(
+                          text: 'Отправить',
+                          onPressed: _submitFeedback,
+                          isLoading: _isLoading,
                         ),
                       ),
                     ],

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
+import '../../../../widgets/transparent_route.dart';
 import 'connected_trackers/connected_trackers_screen.dart';
 import 'edit_phone_screen.dart';
 import 'edit_email_screen.dart';
@@ -72,7 +73,7 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Подключенные трекеры',
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
+                      TransparentPageRoute(
                         builder: (_) => const ConnectedTrackersScreen(),
                       ),
                     );
@@ -94,7 +95,7 @@ class SettingsScreen extends ConsumerWidget {
                     trailingText: _formatPhone(settings.phone),
                     onTap: () async {
                       final result = await Navigator.of(context).push(
-                        MaterialPageRoute(
+                        TransparentPageRoute(
                           builder: (_) => EditPhoneScreen(
                             currentPhone: settings.phone,
                           ),
@@ -129,7 +130,7 @@ class SettingsScreen extends ConsumerWidget {
                     trailingText: _formatEmail(settings.email),
                     onTap: () async {
                       final result = await Navigator.of(context).push(
-                        MaterialPageRoute(
+                        TransparentPageRoute(
                           builder: (_) => EditEmailScreen(
                             currentEmail: settings.email,
                           ),
@@ -164,7 +165,7 @@ class SettingsScreen extends ConsumerWidget {
                     trailingText: settings.hasPassword ? '********' : 'Не установлен',
                     onTap: () async {
                       final result = await Navigator.of(context).push(
-                        MaterialPageRoute(
+                        TransparentPageRoute(
                           builder: (_) => EditPasswordScreen(
                             hasPassword: settings.hasPassword,
                           ),
@@ -198,7 +199,7 @@ class SettingsScreen extends ConsumerWidget {
                   trailingText: 'Откл.',
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
+                      TransparentPageRoute(
                         builder: (_) => const BiometricScreen(),
                       ),
                     );
@@ -218,7 +219,7 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Push-уведомления',
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
+                      TransparentPageRoute(
                         builder: (_) => const PushNotificationsScreen(),
                       ),
                     );
@@ -231,7 +232,7 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Доступ к данным',
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
+                      TransparentPageRoute(
                         builder: (_) => const HealthDataAccessScreen(),
                       ),
                     );
@@ -244,7 +245,7 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Контакты',
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
+                      TransparentPageRoute(
                         builder: (_) => const ContactsAccessScreen(),
                       ),
                     );
@@ -257,7 +258,7 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Справочная информация',
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
+                      TransparentPageRoute(
                         builder: (_) => const HelpInfoScreen(),
                       ),
                     );
@@ -270,7 +271,7 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Предложения по улучшению',
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
+                      TransparentPageRoute(
                         builder: (_) => const FeedbackScreen(),
                       ),
                     );
