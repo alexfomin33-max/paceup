@@ -1,70 +1,131 @@
 // lib/screens/profile/tabs/clubs_tab.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../state/search/search_screen.dart';
-import '../../map/clubs/coffeerun_vld/coffeerun_vld_screen.dart';
+import '../../map/clubs/club_detail_screen.dart';
 import '../../../widgets/primary_button.dart';
+import '../../../widgets/transparent_route.dart';
+import '../../../providers/profile/user_clubs_provider.dart';
+import '../../../models/club.dart';
 
-class ClubsTab extends StatefulWidget {
-  const ClubsTab({super.key});
+/// Вкладка "Клубы" в профиле пользователя
+///
+/// Загружает клубы пользователя через API и отображает их в сетке 2xN
+class ClubsTab extends ConsumerStatefulWidget {
+  final int userId; // ID пользователя, для которого показываем клубы
+  const ClubsTab({super.key, required this.userId});
+
   @override
-  State<ClubsTab> createState() => _ClubsTabState();
+  ConsumerState<ClubsTab> createState() => _ClubsTabState();
 }
 
-class _ClubsTabState extends State<ClubsTab>
+class _ClubsTabState extends ConsumerState<ClubsTab>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
-  // Данные клубов — подставил новые ассеты.
-  static const _clubs = <_Club>[
-    _Club(
-      title: 'PaceUp Club',
-      members: 58234,
-      asset: 'assets/club_1.png',
-      circleLogo: false,
-    ),
-    _Club(
-      title: '"CoffeeRun_vld"',
-      members: 400,
-      asset: 'assets/club_2.png',
-      circleLogo: false,
-    ),
-    _Club(
-      title: 'I Love Swimming',
-      members: 1670,
-      asset: 'assets/club_3.png',
-      circleLogo: true,
-    ),
-    _Club(
-      title: 'I Love Cycling',
-      members: 3217,
-      asset: 'assets/club_4.png',
-      circleLogo: true,
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    // Загружаем клубы пользователя через provider
+    final clubsAsync = ref.watch(userClubsProvider(widget.userId));
+
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-        // Сетка карточек 2xN
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          sliver: SliverGrid.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              mainAxisExtent: 174,
+        // Обработка состояний загрузки/ошибок/данных
+        clubsAsync.when(
+          data: (clubs) {
+            if (clubs.isEmpty) {
+              // Пустой список клубов
+              return SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        const Icon(
+                          CupertinoIcons.group,
+                          size: 48,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'У вас пока нет клубов',
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            // Сетка карточек 2xN
+            return SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              sliver: SliverGrid.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  mainAxisExtent: 174,
+                ),
+                itemCount: clubs.length,
+                itemBuilder: (context, i) => _ClubCard(club: clubs[i]),
+              ),
+            );
+          },
+          loading: () => const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
             ),
-            itemCount: _clubs.length,
-            itemBuilder: (context, i) => _ClubCard(_clubs[i]),
+          ),
+          error: (err, stack) => SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: Column(
+                  children: [
+                    const Icon(
+                      CupertinoIcons.exclamationmark_triangle,
+                      size: 48,
+                      color: AppColors.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Ошибка загрузки клубов',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 16,
+                        color: AppColors.error,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      err.toString(),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
 
@@ -98,9 +159,13 @@ class _ClubsTabState extends State<ClubsTab>
   }
 }
 
+/// Карточка клуба в сетке
+///
+/// Отображает логотип, название и количество участников
+/// При нажатии открывает детальную страницу клуба
 class _ClubCard extends StatelessWidget {
-  final _Club club;
-  const _ClubCard(this.club);
+  final Club club;
+  const _ClubCard({required this.club});
 
   @override
   Widget build(BuildContext context) {
@@ -115,19 +180,19 @@ class _ClubCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Логотип
+          // Логотип клуба (круглый)
           SizedBox(
             height: 100,
             width: 100,
-            child: club.circleLogo
-                ? ClipOval(child: _LogoImage(path: club.asset))
-                : ClipOval(child: _LogoImage(path: club.asset)),
+            child: ClipOval(
+              child: _ClubLogoImage(logoUrl: club.logoUrl),
+            ),
           ),
           const SizedBox(height: 8),
 
-          // Название
+          // Название клуба
           Text(
-            club.title,
+            club.name,
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -140,14 +205,14 @@ class _ClubCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
 
-          // Участники
+          // Количество участников
           Align(
             alignment: Alignment.center,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Участников: ${_formatMembers(club.members)}',
+                  'Участников: ${_formatMembers(club.membersCount)}',
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 12,
@@ -161,32 +226,60 @@ class _ClubCard extends StatelessWidget {
       ),
     );
 
-    // Делает кликабельной ТОЛЬКО карточку CoffeeRun_vld
-    final isCoffee = club.title.replaceAll('"', '') == 'CoffeeRun_vld';
-    if (!isCoffee) return card;
-
+    // Делаем карточку кликабельной для перехода на детальную страницу
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
-        Navigator.of(
-          context,
-        ).push(CupertinoPageRoute(builder: (_) => const CoffeeRunVldScreen()));
+        Navigator.of(context).push(
+          TransparentPageRoute(
+            builder: (_) => ClubDetailScreen(clubId: club.id),
+          ),
+        );
       },
       child: card,
     );
   }
 }
 
-class _LogoImage extends StatelessWidget {
-  final String path;
-  const _LogoImage({required this.path});
+/// Виджет для отображения логотипа клуба
+///
+/// Использует CachedNetworkImage для загрузки изображения из API
+/// Показывает placeholder при отсутствии логотипа или ошибке загрузки
+class _ClubLogoImage extends StatelessWidget {
+  final String? logoUrl;
+  const _ClubLogoImage({required this.logoUrl});
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      path,
+    // Если логотип не указан, показываем placeholder
+    if (logoUrl == null || logoUrl!.isEmpty) {
+      return Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const Icon(
+          CupertinoIcons.group,
+          size: 40,
+          color: AppColors.textSecondary,
+        ),
+      );
+    }
+
+    // Загружаем логотип из сети с кэшированием
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final targetW = (100 * dpr).round();
+    final targetH = (100 * dpr).round();
+
+    return CachedNetworkImage(
+      imageUrl: logoUrl!,
+      width: 100,
+      height: 100,
       fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => Container(
+      fadeInDuration: const Duration(milliseconds: 120),
+      memCacheWidth: targetW,
+      memCacheHeight: targetH,
+      maxWidthDiskCache: targetW,
+      maxHeightDiskCache: targetH,
+      errorWidget: (_, __, ___) => Container(
         color: AppColors.skeletonBase,
         alignment: Alignment.center,
         child: const Icon(
@@ -195,21 +288,13 @@ class _LogoImage extends StatelessWidget {
           color: AppColors.textSecondary,
         ),
       ),
+      placeholder: (_, __) => Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(strokeWidth: 2),
+      ),
     );
   }
-}
-
-class _Club {
-  final String title;
-  final int members;
-  final String asset;
-  final bool circleLogo;
-  const _Club({
-    required this.title,
-    required this.members,
-    required this.asset,
-    required this.circleLogo,
-  });
 }
 
 // Формат "58 234"
