@@ -58,10 +58,7 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
       final api = ApiService();
       await api.post(
         '/update_user_settings.php',
-        body: {
-          'user_id': userId,
-          'email': _emailController.text.trim(),
-        },
+        body: {'user_id': userId, 'email': _emailController.text.trim()},
       );
 
       if (!mounted) return;
@@ -81,7 +78,7 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: const PaceAppBar(title: 'E-mail'),
+        appBar: const PaceAppBar(title: 'Почта'),
         body: SafeArea(
           child: Form(
             key: _formKey,
@@ -152,4 +149,3 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
     );
   }
 }
-
