@@ -89,17 +89,17 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
       }
 
       // Запрашиваем разрешения
-      bool? granted = await _health!.requestAuthorization(_types);
+      final granted = await _health!.requestAuthorization(_types);
       
       if (!mounted) return;
       
-      final isGranted = granted ?? false;
+      final isGranted = granted == true;
       setState(() {
         _hasAccess = isGranted;
         _isLoading = false;
       });
 
-      if (granted != true) {
+      if (!isGranted) {
         // Показываем диалог с инструкциями
         if (mounted) {
           await showDialog(
@@ -150,7 +150,7 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               CupertinoIcons.exclamationmark_triangle,
                               size: 48,
                               color: AppColors.error,
@@ -193,14 +193,14 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                              const Row(
                                 children: [
                                   Icon(
                                     CupertinoIcons.info,
                                     size: 20,
                                     color: AppColors.brandPrimary,
                                   ),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8),
                                   Text(
                                     'Что это?',
                                     style: AppTextStyles.h14w6,
@@ -299,7 +299,7 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 'Как предоставить доступ:',
                                 style: AppTextStyles.h14w6,
                               ),

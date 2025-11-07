@@ -1,11 +1,21 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../theme/app_theme.dart';
 import '../../../../../widgets/app_bar.dart';
 import '../../../../../widgets/interactive_back_swipe.dart';
+
+import 'package:local_auth/local_auth.dart';
+
+// Проверка доступности local_auth на платформе
+bool get _isLocalAuthAvailable {
+  try {
+    return !Platform.isMacOS && !Platform.isWindows && !Platform.isLinux;
+  } catch (_) {
+    return false;
+  }
+}
 
 /// Экран настройки биометрии (Face ID / Touch ID / код-пароль)
 class BiometricScreen extends StatefulWidget {
@@ -16,7 +26,7 @@ class BiometricScreen extends StatefulWidget {
 }
 
 class _BiometricScreenState extends State<BiometricScreen> {
-  final LocalAuthentication _localAuth = LocalAuthentication();
+  late final LocalAuthentication _localAuth;
   bool _isLoading = false;
   bool _isEnabled = false;
   bool _isAvailable = false;
@@ -26,6 +36,9 @@ class _BiometricScreenState extends State<BiometricScreen> {
   @override
   void initState() {
     super.initState();
+    if (_isLocalAuthAvailable) {
+      _localAuth = LocalAuthentication();
+    }
     _checkAvailability();
     _loadSettings();
   }
@@ -37,7 +50,29 @@ class _BiometricScreenState extends State<BiometricScreen> {
       _error = null;
     });
 
+    // Проверяем доступность платформы
+    if (!_isLocalAuthAvailable) {
+      if (!mounted) return;
+      setState(() {
+        _isAvailable = false;
+        _isLoading = false;
+        _error = Platform.isMacOS 
+            ? 'Биометрия недоступна на macOS. Используйте iOS или Android устройство.'
+            : 'Биометрия недоступна на этой платформе.';
+      });
+      return;
+    }
+
     try {
+      if (!_isLocalAuthAvailable) {
+        if (!mounted) return;
+        setState(() {
+          _isAvailable = false;
+          _isLoading = false;
+        });
+        return;
+      }
+      
       final canCheckBiometrics = await _localAuth.canCheckBiometrics;
       final isDeviceSupported = await _localAuth.isDeviceSupported();
       
@@ -59,10 +94,22 @@ class _BiometricScreenState extends State<BiometricScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      // Если плагин недоступен, показываем дружелюбное сообщение
+      final errorMsg = e.toString();
+      if (errorMsg.contains('MissingPluginException') || 
+          errorMsg.contains('No implementation found')) {
+        setState(() {
+          _error = 'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.';
+          _isAvailable = false;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = errorMsg;
+          _isAvailable = false;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -108,7 +155,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
 
   /// Аутентификация и включение биометрии
   Future<void> _authenticateAndEnable() async {
-    if (!_isAvailable) {
+    if (!_isAvailable || !_isLocalAuthAvailable) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -159,11 +206,22 @@ class _BiometricScreenState extends State<BiometricScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _isEnabled = false;
-        _isLoading = false;
-      });
+      // Если плагин недоступен, показываем дружелюбное сообщение
+      final errorMsg = e.toString();
+      if (errorMsg.contains('MissingPluginException') || 
+          errorMsg.contains('No implementation found')) {
+        setState(() {
+          _error = 'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.';
+          _isEnabled = false;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = errorMsg;
+          _isEnabled = false;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -180,8 +238,6 @@ class _BiometricScreenState extends State<BiometricScreen> {
         return 'Сильная биометрия';
       case BiometricType.weak:
         return 'Слабая биометрия';
-      default:
-        return 'Биометрия';
     }
   }
 
@@ -205,7 +261,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               CupertinoIcons.exclamationmark_triangle,
                               size: 48,
                               color: AppColors.error,
@@ -248,14 +304,14 @@ class _BiometricScreenState extends State<BiometricScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                              const Row(
                                 children: [
                                   Icon(
                                     CupertinoIcons.info,
                                     size: 20,
                                     color: AppColors.brandPrimary,
                                   ),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8),
                                   Text(
                                     'Что это?',
                                     style: AppTextStyles.h14w6,
@@ -289,7 +345,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
                             padding: const EdgeInsets.all(16),
                             child: Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   CupertinoIcons.info,
                                   size: 24,
                                   color: AppColors.warning,
@@ -324,7 +380,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
+                                const Text(
                                   'Доступные методы:',
                                   style: AppTextStyles.h14w6,
                                 ),
@@ -374,7 +430,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
+                                      const Text(
                                         'Биометрическая защита',
                                         style: AppTextStyles.h14w6,
                                       ),
@@ -395,7 +451,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
                                   onChanged: _isLoading
                                       ? null
                                       : (value) => _toggleBiometric(value),
-                                  activeColor: AppColors.brandPrimary,
+                                  activeTrackColor: AppColors.brandPrimary,
                                 ),
                               ],
                             ),
