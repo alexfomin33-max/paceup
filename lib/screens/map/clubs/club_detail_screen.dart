@@ -28,6 +28,9 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
   bool _loading = true;
   String? _error;
   bool _canEdit = false; // Права на редактирование
+  bool _isMember = false; // Является ли пользователь участником
+  bool _isRequest = false; // Подана ли заявка (для закрытых клубов)
+  bool _isJoining = false; // Идёт ли процесс вступления
 
   @override
   void initState() {
@@ -54,9 +57,18 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
         final clubUserId = club['user_id'] as int?;
         final canEdit = userId != null && clubUserId == userId;
 
+        // Проверяем, является ли пользователь участником клуба
+        bool isMember = false;
+        if (userId != null) {
+          final members = club['members'] as List<dynamic>? ?? [];
+          isMember = members.any((m) => m['user_id'] == userId);
+        }
+
         setState(() {
           _clubData = club;
           _canEdit = canEdit;
+          _isMember = isMember;
+          _isRequest = false; // Сбрасываем статус заявки при загрузке
           _loading = false;
         });
 
@@ -114,6 +126,164 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
   }
 
   int _tab = 0; // 0 — Фото, 1 — Участники, 2 — Статистика, 3 — Зал славы
+
+  /// ──────────────────────── Вступление в клуб ────────────────────────
+  Future<void> _joinClub() async {
+    if (_isJoining || _clubData == null) return;
+
+    try {
+      setState(() => _isJoining = true);
+
+      final api = ApiService();
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Необходимо войти в систему'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        setState(() => _isJoining = false);
+        return;
+      }
+
+      final data = await api.post(
+        '/join_club.php',
+        body: {
+          'club_id': widget.clubId.toString(),
+          'user_id': userId.toString(),
+        },
+      );
+
+      if (data['success'] == true && mounted) {
+        final isMember = data['is_member'] as bool? ?? false;
+        final isRequest = data['is_request'] as bool? ?? false;
+        final message = data['message'] as String? ?? '';
+
+        setState(() {
+          _isMember = isMember;
+          _isRequest = isRequest;
+          _isJoining = false;
+        });
+
+        // Показываем сообщение пользователю
+        if (message.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+
+        // Обновляем данные клуба (чтобы обновилось количество участников)
+        _loadClub();
+      } else {
+        final errorMessage = data['message'] as String? ?? 'Ошибка вступления в клуб';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        setState(() => _isJoining = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка: ${e.toString()}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      setState(() => _isJoining = false);
+    }
+  }
+
+  /// ──────────────────────── Выход из клуба ────────────────────────
+  Future<void> _leaveClub() async {
+    if (_isJoining || _clubData == null) return;
+
+    try {
+      setState(() => _isJoining = true);
+
+      final api = ApiService();
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Необходимо войти в систему'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        setState(() => _isJoining = false);
+        return;
+      }
+
+      final data = await api.post(
+        '/leave_club.php',
+        body: {
+          'club_id': widget.clubId.toString(),
+          'user_id': userId.toString(),
+        },
+      );
+
+      if (data['success'] == true && mounted) {
+        final message = data['message'] as String? ?? '';
+
+        setState(() {
+          _isMember = false;
+          _isRequest = false;
+          _isJoining = false;
+        });
+
+        // Показываем сообщение пользователю
+        if (message.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+
+        // Обновляем данные клуба (чтобы обновилось количество участников)
+        _loadClub();
+      } else {
+        final errorMessage = data['message'] as String? ?? 'Ошибка выхода из клуба';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        setState(() => _isJoining = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка: ${e.toString()}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      setState(() => _isJoining = false);
+    }
+  }
 
   Widget _vDivider() =>
       Container(width: 1, height: 24, color: AppColors.border);
@@ -327,31 +497,56 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                       Align(
                         alignment: Alignment.center,
                         child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.brandPrimary,
-                            foregroundColor: AppColors.surface,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 30,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.xxl,
+                            onPressed: _isJoining
+                                ? null
+                                : _isMember
+                                    ? _leaveClub
+                                    : _joinClub,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _isMember
+                                  ? AppColors.disabled
+                                  : AppColors.brandPrimary,
+                              foregroundColor: _isMember
+                                  ? AppColors.textSecondary
+                                  : AppColors.surface,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 30,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.xxl,
+                                ),
                               ),
                             ),
-                          ),
-                          child: Text(
-                            isOpen ? 'Вступить в клуб' : 'Подать заявку',
-                            style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            child: _isJoining
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.surface,
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    _isMember
+                                        ? 'Выйти из клуба'
+                                        : _isRequest
+                                            ? 'Заявка подана'
+                                            : isOpen
+                                                ? 'Вступить в клуб'
+                                                : 'Подать заявку',
+                                    style: const TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
