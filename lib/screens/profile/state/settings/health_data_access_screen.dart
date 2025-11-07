@@ -5,6 +5,7 @@ import 'package:health/health.dart';
 import '../../../../../theme/app_theme.dart';
 import '../../../../../widgets/app_bar.dart';
 import '../../../../../widgets/interactive_back_swipe.dart';
+import '../../../../../widgets/primary_button.dart';
 
 /// Экран доступа к данным о здоровье
 class HealthDataAccessScreen extends StatefulWidget {
@@ -44,12 +45,12 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
 
     try {
       _health = Health();
-      
+
       // Проверяем доступность Health на платформе
       bool? available = await _health!.hasPermissions(_types);
-      
+
       if (!mounted) return;
-      
+
       setState(() {
         _hasAccess = available ?? false;
         _isLoading = false;
@@ -78,7 +79,7 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
     try {
       // Проверяем текущий статус
       bool? hasPermissions = await _health!.hasPermissions(_types);
-      
+
       if (hasPermissions == true) {
         if (!mounted) return;
         setState(() {
@@ -89,11 +90,11 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
       }
 
       // Запрашиваем разрешения
-      final granted = await _health!.requestAuthorization(_types);
-      
+      bool? granted = await _health!.requestAuthorization(_types);
+
       if (!mounted) return;
-      
-      final isGranted = granted == true;
+
+      final isGranted = granted ?? false;
       setState(() {
         _hasAccess = isGranted;
         _isLoading = false;
@@ -112,9 +113,9 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                     : 'Откройте Health Connect и предоставьте разрешения на чтение данных о тренировках, шагах, пульсе и калориях.',
               ),
               actions: [
-                TextButton(
+                PrimaryButton(
+                  text: 'Понятно',
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Понятно'),
                 ),
               ],
             ),
@@ -144,182 +145,159 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                   ),
                 )
               : _error != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              CupertinoIcons.exclamationmark_triangle,
-                              size: 48,
-                              color: AppColors.error,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _error!,
-                              textAlign: TextAlign.center,
-                              style: AppTextStyles.h14w4.copyWith(
-                                color: AppColors.error,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            ElevatedButton(
-                              onPressed: _initializeHealth,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.brandPrimary,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('Повторить'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Информационная карточка
-                        Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            border: Border.all(
-                              color: AppColors.border,
-                              width: 1,
-                            ),
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Row(
-                                children: [
-                                  Icon(
-                                    CupertinoIcons.info,
-                                    size: 20,
-                                    color: AppColors.brandPrimary,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Что это?',
-                                    style: AppTextStyles.h14w6,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Разрешение на доступ к данным о здоровье позволяет приложению импортировать ваши тренировки, шаги, пульс и калории из системных приложений Health (iOS) или Health Connect (Android).',
-                                style: AppTextStyles.h14w4.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
+                        Icon(
+                          CupertinoIcons.exclamationmark_triangle,
+                          size: 48,
+                          color: AppColors.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.h14w4.copyWith(
+                            color: AppColors.error,
                           ),
                         ),
-
                         const SizedBox(height: 24),
-
-                        // Статус доступа
-                        Container(
-                          decoration: BoxDecoration(
-                            color: _hasAccess
-                                ? AppColors.success.withValues(alpha: 0.1)
-                                : AppColors.warning.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            border: Border.all(
-                              color: _hasAccess
-                                  ? AppColors.success
-                                  : AppColors.warning,
-                              width: 1,
-                            ),
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
+                        PrimaryButton(
+                          text: 'Повторить',
+                          onPressed: _initializeHealth,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                  children: [
+                    // Информационная карточка
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(color: AppColors.border, width: 1),
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
                               Icon(
-                                _hasAccess
-                                    ? CupertinoIcons.checkmark_circle_fill
-                                    : CupertinoIcons.xmark_circle_fill,
-                                size: 24,
+                                CupertinoIcons.info,
+                                size: 20,
+                                color: AppColors.brandPrimary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text('Что это?', style: AppTextStyles.h14w6),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Разрешение на доступ к данным о здоровье позволяет приложению импортировать ваши тренировки, шаги, пульс и калории из системных приложений Health (iOS) или Health Connect (Android).',
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Статус доступа
+                    Container(
+                      decoration: BoxDecoration(
+                        color: _hasAccess
+                            ? AppColors.success.withValues(alpha: 0.1)
+                            : AppColors.warning.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: _hasAccess
+                              ? AppColors.success
+                              : AppColors.warning,
+                          width: 1,
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _hasAccess
+                                ? CupertinoIcons.checkmark_circle_fill
+                                : CupertinoIcons.xmark_circle_fill,
+                            size: 24,
+                            color: _hasAccess
+                                ? AppColors.success
+                                : AppColors.warning,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _hasAccess
+                                  ? 'Доступ предоставлен'
+                                  : 'Доступ не предоставлен',
+                              style: AppTextStyles.h14w5.copyWith(
                                 color: _hasAccess
                                     ? AppColors.success
                                     : AppColors.warning,
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  _hasAccess
-                                      ? 'Доступ предоставлен'
-                                      : 'Доступ не предоставлен',
-                                  style: AppTextStyles.h14w5.copyWith(
-                                    color: _hasAccess
-                                        ? AppColors.success
-                                        : AppColors.warning,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Кнопка запроса разрешений
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _requestPermissions,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.brandPrimary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                              ),
-                            ),
-                            child: Text(
-                              _hasAccess
-                                  ? 'Обновить разрешения'
-                                  : 'Запросить доступ',
-                              style: AppTextStyles.h16w6,
                             ),
                           ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Инструкции
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceMuted,
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Как предоставить доступ:',
-                                style: AppTextStyles.h14w6,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                Platform.isIOS
-                                    ? '1. Нажмите "Запросить доступ"\n2. В системном диалоге выберите типы данных\n3. Разрешите доступ к выбранным данным'
-                                    : '1. Нажмите "Запросить доступ"\n2. Откроется Health Connect\n3. Выберите типы данных и разрешите доступ',
-                                style: AppTextStyles.h14w4.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+
+                    const SizedBox(height: 24),
+
+                    // Кнопка запроса разрешений
+                    Center(
+                      child: PrimaryButton(
+                        text: _hasAccess
+                            ? 'Обновить разрешения'
+                            : 'Запросить доступ',
+                        onPressed: _requestPermissions,
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Инструкции
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Как предоставить доступ:',
+                            style: AppTextStyles.h14w6,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            Platform.isIOS
+                                ? '1. Нажмите "Запросить доступ"\n2. В системном диалоге выберите типы данных\n3. Разрешите доступ к выбранным данным'
+                                : '1. Нажмите "Запросить доступ"\n2. Откроется Health Connect\n3. Выберите типы данных и разрешите доступ',
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );
   }
 }
-

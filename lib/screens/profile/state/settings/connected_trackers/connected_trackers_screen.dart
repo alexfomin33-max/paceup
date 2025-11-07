@@ -6,6 +6,7 @@ import 'package:health/health.dart';
 
 import '../../../../../theme/app_theme.dart';
 import '../../../../../widgets/app_bar.dart'; // PaceAppBar
+import '../../../../../widgets/interactive_back_swipe.dart';
 import '../../../../../widgets/primary_button.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -382,7 +383,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
       });
     }
 
-    // Палитра tint’ов (iOS-системные)
+    // Палитра tint'ов (iOS-системные)
     const cWorkouts = CupertinoColors.systemPurple;
     const cSteps = CupertinoColors.systemGreen;
     const cDist = CupertinoColors.activeBlue;
@@ -390,9 +391,10 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
     const cHR = CupertinoColors.systemRed;
     const cInfo = CupertinoColors.systemGreen;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const PaceAppBar(title: 'Подключенные трекеры'),
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: const PaceAppBar(title: 'Подключенные трекеры'),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
@@ -519,6 +521,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

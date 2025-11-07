@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../theme/app_theme.dart';
 import '../../../../../widgets/app_bar.dart';
 import '../../../../../widgets/interactive_back_swipe.dart';
+import '../../../../../widgets/primary_button.dart';
 
 import 'package:local_auth/local_auth.dart';
 
@@ -275,13 +276,9 @@ class _BiometricScreenState extends State<BiometricScreen> {
                               ),
                             ),
                             const SizedBox(height: 24),
-                            ElevatedButton(
+                            PrimaryButton(
+                              text: 'Повторить',
                               onPressed: _checkAvailability,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.brandPrimary,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('Повторить'),
                             ),
                           ],
                         ),

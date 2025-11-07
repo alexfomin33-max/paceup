@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart' as ph;
 import '../../../../../theme/app_theme.dart';
 import '../../../../../widgets/app_bar.dart';
 import '../../../../../widgets/interactive_back_swipe.dart';
+import '../../../../../widgets/primary_button.dart';
 
 /// Экран доступа к контактам
 class ContactsAccessScreen extends StatefulWidget {
@@ -90,18 +91,20 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                     : 'Разрешите доступ к контактам в настройках Android:\n\nНастройки → Приложения → PaceUp → Разрешения → Контакты',
               ),
               actions: [
-                TextButton(
+                PrimaryButton(
+                  text: 'Понятно',
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Понятно'),
                 ),
-                if (status.isPermanentlyDenied)
-                  TextButton(
+                if (status.isPermanentlyDenied) ...[
+                  const SizedBox(width: 8),
+                  PrimaryButton(
+                    text: 'Открыть настройки',
                     onPressed: () {
                       ph.openAppSettings();
                       Navigator.of(context).pop();
                     },
-                    child: const Text('Открыть настройки'),
                   ),
+                ],
               ],
             ),
           );
@@ -160,13 +163,9 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                               ),
                             ),
                             const SizedBox(height: 24),
-                            ElevatedButton(
+                            PrimaryButton(
+                              text: 'Повторить',
                               onPressed: _checkPermission,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.brandPrimary,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('Повторить'),
                             ),
                           ],
                         ),
@@ -262,24 +261,12 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                         const SizedBox(height: 24),
 
                         // Кнопка запроса разрешений
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
+                        Center(
+                          child: PrimaryButton(
+                            text: _hasAccess
+                                ? 'Обновить разрешения'
+                                : 'Запросить доступ',
                             onPressed: _requestPermission,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.brandPrimary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                              ),
-                            ),
-                            child: Text(
-                              _hasAccess
-                                  ? 'Обновить разрешения'
-                                  : 'Запросить доступ',
-                              style: AppTextStyles.h16w6,
-                            ),
                           ),
                         ),
 
