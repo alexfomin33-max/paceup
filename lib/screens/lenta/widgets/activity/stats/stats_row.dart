@@ -106,13 +106,13 @@ class StatsRow extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(hrText, style: AppTextStyles.h14w5),
-                const SizedBox(width: 2),
                 const Icon(
                   CupertinoIcons.heart_fill,
                   color: AppColors.error,
                   size: 12,
                 ),
+                const SizedBox(width: 2),
+                Text(hrText, style: AppTextStyles.h14w5),
               ],
             ),
           ],
