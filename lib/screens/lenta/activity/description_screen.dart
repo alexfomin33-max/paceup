@@ -16,6 +16,7 @@ import '../../../widgets/route_card.dart' as ab show RouteCard;
 import '../../../models/activity_lenta.dart' as al;
 import 'combining_screen.dart';
 import '../../../widgets/app_bar.dart';
+import '../../../widgets/transparent_route.dart';
 
 /// Страница с подробным описанием тренировки.
 /// Верхний блок (аватар, дата, метрики) полностью повторяет ActivityBlock.
@@ -60,7 +61,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
             ),
             onPressed: () {
               Navigator.of(context).push(
-                CupertinoPageRoute(builder: (_) => const CombiningScreen()),
+                TransparentPageRoute(builder: (_) => const CombiningScreen()),
               );
             },
           ),
