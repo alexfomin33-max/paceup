@@ -23,22 +23,16 @@ class AvailableContent extends StatelessWidget {
             const _AvailableGrid(
               children: [
                 AvailableTaskCard(
-                  icon: Icons.pedal_bike,
-                  badge: '200 км',
+                  imageProvider: AssetImage('assets/ride200.jpg'),
                   title: '200 км на велосипеде за июнь',
-                  buttonText: 'Начать',
                 ),
                 AvailableTaskCard(
-                  icon: Icons.pool,
-                  badge: '10 км',
+                  imageProvider: AssetImage('assets/swim10.jpg'),
                   title: 'Проплыть в июне 10 км',
-                  buttonText: 'Начать',
                 ),
                 AvailableTaskCard(
-                  icon: Icons.directions_walk,
-                  badge: '250 000',
-                  title: 'Сделать 250 000 шагов за июнь',
-                  buttonText: 'Начать',
+                  imageProvider: AssetImage('assets/run50.jpg'),
+                  title: 'Пробежать 50 км за июнь',
                 ),
               ],
             ),
@@ -47,17 +41,15 @@ class AvailableContent extends StatelessWidget {
             const _SectionLabel('Экспедиции'),
             const SizedBox(height: 8),
 
-            _AvailableGrid(
+            _ExpeditionGrid(
               children: [
                 const AvailableExpeditionCard(
                   imageProvider: AssetImage('assets/Travel_velo.png'),
                   title: 'Путешествия на велосипеде',
-                  buttonText: 'Смотреть',
                 ),
                 AvailableExpeditionCard(
                   imageProvider: const AssetImage('assets/Travel_swim.png'),
                   title: 'Плавательное приключение',
-                  buttonText: 'Смотреть',
                   onPressed: () {
                     Navigator.of(context, rootNavigator: true).push(
                       TransparentPageRoute(
@@ -123,7 +115,26 @@ class _AvailableGrid extends StatelessWidget {
       crossAxisCount: 2,
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
-      childAspectRatio: 0.92,
+      childAspectRatio: 1.0, // квадратные карточки
+      physics: const NeverScrollableScrollPhysics(), // скроллит общий SCSV
+      shrinkWrap: true,
+      children: children,
+    );
+  }
+}
+
+/// Грид для карточек экспедиций с квадратными карточками
+class _ExpeditionGrid extends StatelessWidget {
+  final List<Widget> children;
+  const _ExpeditionGrid({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      crossAxisCount: 2,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.0, // квадратные карточки
       physics: const NeverScrollableScrollPhysics(), // скроллит общий SCSV
       shrinkWrap: true,
       children: children,
@@ -132,57 +143,69 @@ class _AvailableGrid extends StatelessWidget {
 }
 
 class AvailableTaskCard extends StatelessWidget {
-  final IconData icon;
-  final String badge;
+  final ImageProvider imageProvider;
   final String title;
-  final String buttonText;
   final VoidCallback? onPressed;
 
   const AvailableTaskCard({
     super.key,
-    required this.icon,
-    required this.badge,
+    required this.imageProvider,
     required this.title,
-    required this.buttonText,
     this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowSoft,
-            blurRadius: 1,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 4),
-          Center(
-            child: _SmallCircleBadgeIcon(icon: icon, badge: badge),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadowSoft,
+              blurRadius: 1,
+              offset: Offset(0, 1),
             ),
-          ),
-          const Spacer(),
-          _PrimarySmallButton(text: buttonText, onPressed: onPressed),
-        ],
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Картинка занимает 2/3 верхней части карточки
+            Expanded(
+              flex: 2,
+              child: Image(
+                image: imageProvider,
+                fit: BoxFit.cover,
+                width: double.infinity,
+              ),
+            ),
+            // Текст занимает 1/3 нижней части карточки
+            Expanded(
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Center(
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -191,137 +214,64 @@ class AvailableTaskCard extends StatelessWidget {
 class AvailableExpeditionCard extends StatelessWidget {
   final ImageProvider imageProvider;
   final String title;
-  final String buttonText;
   final VoidCallback? onPressed;
 
   const AvailableExpeditionCard({
     super.key,
     required this.imageProvider,
     required this.title,
-    required this.buttonText,
     this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowSoft,
-            blurRadius: 1,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: ClipOval(
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadowSoft,
+              blurRadius: 1,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Картинка занимает 2/3 верхней части карточки
+            Expanded(
+              flex: 2,
               child: Image(
                 image: imageProvider,
-                width: 72,
-                height: 72,
                 fit: BoxFit.cover,
+                width: double.infinity,
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const Spacer(),
-          _PrimarySmallButton(text: buttonText, onPressed: onPressed),
-        ],
-      ),
-    );
-  }
-}
-
-class _SmallCircleBadgeIcon extends StatelessWidget {
-  final IconData icon;
-  final String badge;
-  const _SmallCircleBadgeIcon({required this.icon, required this.badge});
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 72,
-          height: 72,
-          decoration: const BoxDecoration(
-            color: AppColors.backgroundGreen,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 28, color: AppColors.iconPrimary),
-        ),
-        Positioned(
-          bottom: -2,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              boxShadow: const [
-                BoxShadow(
-                  color: AppColors.shadowSoft,
-                  blurRadius: 1,
-                  offset: Offset(0, 1),
+            // Текст занимает 1/3 нижней части карточки
+            Expanded(
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Center(
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
-              ],
+              ),
             ),
-            child: Text(
-              badge,
-              style: const TextStyle(fontFamily: 'Inter', fontSize: 11),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PrimarySmallButton extends StatelessWidget {
-  final String text;
-  final VoidCallback? onPressed;
-  const _PrimarySmallButton({required this.text, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 36,
-      child: ElevatedButton(
-        onPressed: onPressed ?? () {},
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.brandPrimary,
-          foregroundColor: AppColors.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          ],
         ),
       ),
     );

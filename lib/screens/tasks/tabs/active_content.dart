@@ -27,7 +27,7 @@ class ActiveContent extends StatelessWidget {
               icon: CupertinoIcons.star,
               badgeText: '10 дней',
               title: '10 дней активности',
-              progressText: '6 из 10 дней',
+              progressText: '6 / 10 дней',
               percent: 0.60,
             ),
             const SizedBox(height: 12),
@@ -37,7 +37,7 @@ class ActiveContent extends StatelessWidget {
               icon: Icons.directions_run,
               badgeText: '200 км',
               title: '200 км бега',
-              progressText: '145,8 из 200 км',
+              progressText: '145,8 / 200 км',
               percent: 0.729,
               onTap: () {
                 Navigator.of(context, rootNavigator: true).push(
@@ -52,7 +52,7 @@ class ActiveContent extends StatelessWidget {
               icon: CupertinoIcons.arrow_up,
               badgeText: '1000 м',
               title: '1000 метров набора высоты',
-              progressText: '537 из 1000 м',
+              progressText: '537 / 1000 м',
               percent: 0.537,
             ),
             const SizedBox(height: 12),
@@ -62,7 +62,7 @@ class ActiveContent extends StatelessWidget {
               icon: CupertinoIcons.stopwatch,
               badgeText: '1000 мин',
               title: '1000 минут активности',
-              progressText: '618 из 1000 мин',
+              progressText: '618 / 1000 мин',
               percent: 0.618,
             ),
             const SizedBox(height: 20),
@@ -72,7 +72,7 @@ class ActiveContent extends StatelessWidget {
 
             ExpeditionCard(
               title: 'Суздаль',
-              progressText: '21 784 из 110 033 шагов',
+              progressText: '21 784 / 110 033 шагов',
               percent: 0.198,
               image: const _RoundImage(
                 provider: AssetImage('assets/Suzdal.png'),
@@ -87,7 +87,7 @@ class ActiveContent extends StatelessWidget {
 
             const ExpeditionCard(
               title: 'Монблан',
-              progressText: '3 521 из 4 810 метров',
+              progressText: '3 521 / 4 810 метров',
               percent: 0.732,
               image: _RoundImage(provider: AssetImage('assets/Monblan.png')),
             ),
@@ -208,7 +208,7 @@ class TaskCard extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: AppColors.success,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -302,7 +302,7 @@ class ExpeditionCard extends StatelessWidget {
                         fontFamily: 'Inter',
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.success,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -342,7 +342,7 @@ class _ProgressBar extends StatelessWidget {
           children: [
             Container(
               width: currentWidth,
-              height: 6,
+              height: 5,
               decoration: const BoxDecoration(
                 color: AppColors.success,
                 borderRadius: BorderRadius.only(
@@ -353,7 +353,7 @@ class _ProgressBar extends StatelessWidget {
             ),
             Expanded(
               child: Container(
-                height: 6,
+                height: 5,
                 decoration: const BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.only(

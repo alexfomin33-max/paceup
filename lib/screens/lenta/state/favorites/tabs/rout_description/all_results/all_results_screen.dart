@@ -148,6 +148,14 @@ class _ResultsList extends StatelessWidget {
                   top: BorderSide(color: AppColors.border, width: 0.5),
                   bottom: BorderSide(color: AppColors.border, width: 0.5),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadowSoft,
+                    offset: Offset(0, 1),
+                    blurRadius: 1,
+                    spreadRadius: 0,
+                  ),
+                ],
               ),
               child: Column(
                 children: List.generate(data.length - 1, (i) {

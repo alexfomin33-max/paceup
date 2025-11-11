@@ -323,9 +323,14 @@ class _ChatScreenState extends State<ChatScreen> {
                             final dpr = MediaQuery.of(context).devicePixelRatio;
                             final w = (44 * dpr).round();
                             final h = (44 * dpr).round();
-                            final url = _getAvatarUrl(chat.userAvatar, chat.userId);
+                            final url = _getAvatarUrl(
+                              chat.userAvatar,
+                              chat.userId,
+                            );
                             return CachedNetworkImage(
-                              key: ValueKey('avatar_${chat.id}_${chat.userId}_$url'),
+                              key: ValueKey(
+                                'avatar_${chat.id}_${chat.userId}_$url',
+                              ),
                               imageUrl: url,
                               width: 44,
                               height: 44,
@@ -373,7 +378,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     chat.userName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.h14w6,
+                                    style: AppTextStyles.h14w5,
                                   ),
                                 ),
                                 const SizedBox(width: 8),

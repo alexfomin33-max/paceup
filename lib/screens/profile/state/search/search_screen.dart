@@ -66,79 +66,79 @@ class _SearchPrefsPageState extends State<SearchPrefsPage> {
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.translucent,
         child: Column(
-        children: [
-          const SizedBox(height: 14),
+          children: [
+            const SizedBox(height: 14),
 
-          // Переключатель "Друзья / Клубы" с анимированным thumb
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Center(
-              child: SegmentedPill(
-                left: 'Друзья',
-                right: 'Клубы',
-                value: _index,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutCubic, // тот же, что и для animateToPage
-                haptics: true, // лёгкая отдача
-                onChanged: (v) {
-                  setState(() {
-                    _index = v;
-                    _controller.clear();
-                    _focus.unfocus();
-                  });
-                  _page.animateToPage(
-                    v,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOutCubic,
-                  );
-                },
+            // Переключатель "Друзья / Клубы" с анимированным thumb
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: SegmentedPill(
+                  left: 'Друзья',
+                  right: 'Клубы',
+                  value: _index,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic, // тот же, что и для animateToPage
+                  haptics: true, // лёгкая отдача
+                  onChanged: (v) {
+                    setState(() {
+                      _index = v;
+                      _controller.clear();
+                      _focus.unfocus();
+                    });
+                    _page.animateToPage(
+                      v,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOutCubic,
+                    );
+                  },
+                ),
               ),
             ),
-          ),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // Поисковое поле
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _SearchField(
-              controller: _controller,
-              focusNode: _focus,
-              hintText: isFriends ? 'Поиск друзей' : 'Поиск клуба',
-              onChanged: (_) => setState(() {}),
+            // Поисковое поле
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _SearchField(
+                controller: _controller,
+                focusNode: _focus,
+                hintText: isFriends ? 'Поиск друзей' : 'Поиск клуба',
+                onChanged: (_) => setState(() {}),
+              ),
             ),
-          ),
 
-          const SizedBox(height: 8),
+            const SizedBox(height: 8),
 
-          // Контент вкладок с горизонтальным свайпом
-          Expanded(
-            child: PageView(
-              controller: _page,
-              physics: const BouncingScrollPhysics(),
-              allowImplicitScrolling: true, // советую включить и здесь
-              onPageChanged: (i) {
-                if (_index == i) return; // гард от лишнего перерендера
-                setState(() {
-                  _index = i;
-                  _controller.clear(); // очищаем строку поиска
-                  _focus.unfocus(); // убираем клавиатуру/фокус
-                });
-              },
-              children: [
-                // Важно: даём ключи, чтобы сохранить состояние при переключении
-                SearchFriendsContent(
-                  key: const PageStorageKey('search_friends_page'),
-                  query: _controller.text.trim(),
-                ),
-                SearchClubsContent(
-                  key: const PageStorageKey('search_clubs_page'),
-                  query: _controller.text.trim(),
-                ),
-              ],
+            // Контент вкладок с горизонтальным свайпом
+            Expanded(
+              child: PageView(
+                controller: _page,
+                physics: const BouncingScrollPhysics(),
+                allowImplicitScrolling: true, // советую включить и здесь
+                onPageChanged: (i) {
+                  if (_index == i) return; // гард от лишнего перерендера
+                  setState(() {
+                    _index = i;
+                    _controller.clear(); // очищаем строку поиска
+                    _focus.unfocus(); // убираем клавиатуру/фокус
+                  });
+                },
+                children: [
+                  // Важно: даём ключи, чтобы сохранить состояние при переключении
+                  SearchFriendsContent(
+                    key: const PageStorageKey('search_friends_page'),
+                    query: _controller.text.trim(),
+                  ),
+                  SearchClubsContent(
+                    key: const PageStorageKey('search_clubs_page'),
+                    query: _controller.text.trim(),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
         ),
       ),
     );
@@ -170,7 +170,7 @@ class _SearchField extends StatelessWidget {
         controller: controller,
         focusNode: focusNode,
         onChanged: onChanged,
-        cursorColor: AppColors.brandPrimary,
+        cursorColor: AppColors.textSecondary,
         style: const TextStyle(fontFamily: 'Inter', fontSize: 16),
         decoration: InputDecoration(
           prefixIcon: const Icon(
@@ -185,22 +185,19 @@ class _SearchField extends StatelessWidget {
           hintStyle: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 15,
-            color: AppColors.textSecondary,
+            color: AppColors.textPlaceholder,
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.outline, width: 1),
+            borderSide: const BorderSide(color: AppColors.border, width: 0.7),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.outline, width: 1),
+            borderSide: const BorderSide(color: AppColors.border, width: 0.7),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              color: AppColors.brandPrimary,
-              width: 1.2,
-            ),
+            borderSide: const BorderSide(color: AppColors.outline, width: 1),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
         ),

@@ -60,10 +60,7 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
       final api = ApiService();
       await api.post(
         '/update_user_settings.php',
-        body: {
-          'user_id': userId,
-          'phone': _phoneController.text,
-        },
+        body: {'user_id': userId, 'phone': _phoneController.text},
       );
 
       if (!mounted) return;
@@ -113,7 +110,7 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: const BorderSide(
                         color: AppColors.brandPrimary,
-                        width: 2,
+                        width: 0.7,
                       ),
                     ),
                     errorBorder: OutlineInputBorder(
@@ -153,4 +150,3 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
     );
   }
 }
-

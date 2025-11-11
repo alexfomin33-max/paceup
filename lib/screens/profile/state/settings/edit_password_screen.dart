@@ -102,7 +102,7 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                           _obscureOldPassword
                               ? CupertinoIcons.eye_slash
                               : CupertinoIcons.eye,
-                          size: 20,
+                          size: 18,
                           color: AppColors.iconSecondary,
                         ),
                         onPressed: () {
@@ -123,7 +123,7 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                         borderRadius: BorderRadius.circular(AppRadius.md),
                         borderSide: const BorderSide(
                           color: AppColors.brandPrimary,
-                          width: 2,
+                          width: 0.7,
                         ),
                       ),
                       errorBorder: OutlineInputBorder(
@@ -156,7 +156,7 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                         _obscureNewPassword
                             ? CupertinoIcons.eye_slash
                             : CupertinoIcons.eye,
-                        size: 20,
+                        size: 18,
                         color: AppColors.iconSecondary,
                       ),
                       onPressed: () {
@@ -177,7 +177,7 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: const BorderSide(
                         color: AppColors.brandPrimary,
-                        width: 2,
+                        width: 0.7,
                       ),
                     ),
                     errorBorder: OutlineInputBorder(
@@ -212,7 +212,7 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                         _obscureConfirmPassword
                             ? CupertinoIcons.eye_slash
                             : CupertinoIcons.eye,
-                        size: 20,
+                        size: 18,
                         color: AppColors.iconSecondary,
                       ),
                       onPressed: () {
@@ -233,7 +233,7 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: const BorderSide(
                         color: AppColors.brandPrimary,
-                        width: 2,
+                        width: 0.7,
                       ),
                     ),
                     errorBorder: OutlineInputBorder(
@@ -271,4 +271,3 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
     );
   }
 }
-

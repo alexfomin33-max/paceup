@@ -192,9 +192,7 @@ class _ClubCard extends StatelessWidget {
           SizedBox(
             height: 100,
             width: 100,
-            child: ClipOval(
-              child: _ClubLogoImage(logoUrl: club.logoUrl),
-            ),
+            child: ClipOval(child: _ClubLogoImage(logoUrl: club.logoUrl)),
           ),
           const SizedBox(height: 8),
 
@@ -223,7 +221,7 @@ class _ClubCard extends StatelessWidget {
                   'Участников: ${_formatMembers(club.membersCount)}',
                   style: const TextStyle(
                     fontFamily: 'Inter',
-                    fontSize: 12,
+                    fontSize: 13,
                     height: 1.2,
                   ),
                 ),

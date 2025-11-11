@@ -21,7 +21,7 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
         body: CustomScrollView(
           slivers: [
             // ─────────── Верхнее фото + кнопка "назад"
-            SliverAppBar( 
+            SliverAppBar(
               pinned: false,
               floating: false,
               expandedHeight: 160,
@@ -116,7 +116,7 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                               color: AppColors.textPrimary,
                             ),
                           ),
-                          TextSpan(text: ' из '),
+                          TextSpan(text: ' / '),
                           TextSpan(
                             text: '110 033',
                             style: TextStyle(
@@ -193,7 +193,7 @@ class _MiniProgress extends StatelessWidget {
           children: [
             Container(
               width: w,
-              height: 6,
+              height: 5,
               decoration: const BoxDecoration(
                 color: AppColors.success,
                 borderRadius: BorderRadius.only(
@@ -204,7 +204,7 @@ class _MiniProgress extends StatelessWidget {
             ),
             Expanded(
               child: Container(
-                height: 6,
+                height: 5,
                 decoration: const BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.only(
