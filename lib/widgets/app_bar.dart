@@ -32,6 +32,7 @@ class PaceAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Color surfaceTintColor; // M3-тональный тинт
   final double elevation; // Тень в статике
   final double scrolledUnderElevation; // Тень при скролле под шапкой
+  final Color? shadowColor; // Цвет тени
 
   const PaceAppBar({
     super.key,
@@ -46,8 +47,9 @@ class PaceAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showBottomDivider = true,
     this.backgroundColor,
     this.surfaceTintColor = Colors.transparent,
-    this.elevation = 0,
-    this.scrolledUnderElevation = 0,
+    this.elevation = 1,
+    this.scrolledUnderElevation = 1,
+    this.shadowColor,
   }) : assert(
          title != null || titleWidget != null,
          'Передайте title или titleWidget',
@@ -61,6 +63,7 @@ class PaceAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       elevation: elevation,
       scrolledUnderElevation: scrolledUnderElevation,
+      shadowColor: shadowColor ?? AppColors.shadowSoft,
       backgroundColor: backgroundColor ?? AppColors.surface,
       surfaceTintColor: surfaceTintColor,
       centerTitle: centerTitle,

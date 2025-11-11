@@ -58,6 +58,14 @@ class _BookmarkCard extends StatelessWidget {
         color: AppColors.surface,
 
         border: Border.all(color: AppColors.border, width: 0.5),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.shadowSoft,
+            offset: Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: _BookmarkRow(e: e),
     );

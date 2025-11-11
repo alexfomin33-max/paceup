@@ -796,6 +796,14 @@ class _NameBlock extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border, width: 0.5),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.shadowSoft,
+            offset: Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -850,6 +858,14 @@ class _GroupBlock extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border, width: 0.5),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.shadowSoft,
+            offset: Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         children: [

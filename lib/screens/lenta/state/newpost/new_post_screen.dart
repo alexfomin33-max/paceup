@@ -48,7 +48,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.softBg,
 
         // ───── глобальная шапка
         appBar: const PaceAppBar(title: 'Новый пост'),
@@ -60,47 +60,47 @@ class _NewPostScreenState extends State<NewPostScreen> {
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-            children: [
-              const SizedBox(height: 2),
+              children: [
+                const SizedBox(height: 2),
 
-              // 🔹 Заголовок
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Фото поста',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                // 🔹 Заголовок
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Фото поста',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-              // 🔹 Горизонтальный список фото
-              SizedBox(
-                height: 76,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _addPhotoButton(),
-                    const SizedBox(width: 12),
-                    ..._images.map(
-                      (file) => Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: _photoPreview(file),
+                // 🔹 Горизонтальный список фото
+                SizedBox(
+                  height: 76,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _addPhotoButton(),
+                      const SizedBox(width: 12),
+                      ..._images.map(
+                        (file) => Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: _photoPreview(file),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // 🔹 описание растягивается
-              Expanded(child: _descriptionInput()),
-              const SizedBox(height: 24),
+                // 🔹 описание растягивается
+                Expanded(child: _descriptionInput()),
+                const SizedBox(height: 24),
 
-              // 🔹 Кнопка снова по центру
-              Center(child: _publishButton(context)),
-            ],
+                // 🔹 Кнопка снова по центру
+                Center(child: _publishButton(context)),
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );
@@ -115,7 +115,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
         height: 76,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          color: AppColors.background,
+          color: AppColors.surface,
           border: Border.all(color: AppColors.border),
         ),
         child: const Center(
@@ -155,7 +155,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
             height: 76,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              color: AppColors.background,
+              color: AppColors.surface,
             ),
             clipBehavior: Clip.hardEdge,
             child: Image.file(file, fit: BoxFit.cover),
@@ -197,7 +197,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: AppColors.border, width: 1),
       ),

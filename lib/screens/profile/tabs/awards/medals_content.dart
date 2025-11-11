@@ -157,6 +157,14 @@ class _MedalsMonthCard extends StatelessWidget {
             width: 0.5,
           ), // ← тонкий бордер
           borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: [
+            const BoxShadow(
+              color: AppColors.shadowSoft,
+              offset: Offset(0, 1),
+              blurRadius: 1,
+              spreadRadius: 0,
+            ),
+          ],
         ),
         padding: const EdgeInsets.all(12),
         child: _BadgesWrap(items: items),

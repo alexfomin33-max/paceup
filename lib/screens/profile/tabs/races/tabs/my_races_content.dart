@@ -105,6 +105,14 @@ class _RaceBlock extends StatelessWidget {
               top: BorderSide(color: AppColors.border, width: 0.5),
               bottom: BorderSide(color: AppColors.border, width: 0.5),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadowSoft,
+                offset: Offset(0, 1),
+                blurRadius: 1,
+                spreadRadius: 0,
+              ),
+            ],
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: IntrinsicHeight(
@@ -191,7 +199,7 @@ class _RaceBlock extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 15, color: AppColors.brandPrimary),
+        // Icon(icon, size: 15, color: AppColors.brandPrimary),
         const SizedBox(width: 6),
         Flexible(
           child: Text(
@@ -199,8 +207,8 @@ class _RaceBlock extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontFamily: 'Inter',
-              fontSize: 13,
-              fontWeight: FontWeight.w400, // мягче, как в «Друзьях»
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ),

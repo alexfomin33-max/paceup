@@ -110,6 +110,14 @@ class _YearChartCardState extends State<_YearChartCard> {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border, width: 0.7),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.shadowSoft,
+            offset: Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       child: Column(

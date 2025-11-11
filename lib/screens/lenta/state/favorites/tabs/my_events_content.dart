@@ -133,6 +133,14 @@ class _EventCard extends StatelessWidget {
 
         // стиль карточки такой же, как в других вкладках
         border: Border.all(color: AppColors.border, width: 0.5),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.shadowSoft,
+            offset: Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: _EventRow(e: e),
     );
@@ -253,6 +261,14 @@ class _InlineCalendar extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border, width: 0.5),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.shadowSoft,
+            offset: Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 16, 12, 10),

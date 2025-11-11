@@ -333,7 +333,7 @@ class _SubscriptionCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
-        decoration: _cardDecoration,
+        decoration: _cardDecoration(),
         padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
         child: Row(
           children: [
@@ -373,7 +373,7 @@ class _SettingsGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: _cardDecoration,
+      decoration: _cardDecoration(),
       child: Column(children: children),
     );
   }
@@ -457,8 +457,18 @@ class _Divider extends StatelessWidget {
   }
 }
 
-const _cardDecoration = BoxDecoration(
+BoxDecoration _cardDecoration() => const BoxDecoration(
   color: AppColors.surface,
   borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
-  border: Border.fromBorderSide(BorderSide(color: AppColors.border, width: 1)),
+  border: Border.fromBorderSide(
+    BorderSide(color: AppColors.border, width: 0.5),
+  ),
+  boxShadow: [
+    BoxShadow(
+      color: AppColors.shadowSoft,
+      offset: Offset(0, 1),
+      blurRadius: 1,
+      spreadRadius: 0,
+    ),
+  ],
 );

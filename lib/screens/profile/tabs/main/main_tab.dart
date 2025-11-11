@@ -72,7 +72,7 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
   // Запрос к API с offline-first кэшированием
   Future<MainTabData> _load({bool forceRefresh = false}) async {
     final cacheKey = 'main_tab_${widget.userId}';
-    
+
     try {
       // Попытка загрузить с сервера
       final api = ApiService();
@@ -95,17 +95,17 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
       // Но только если это не принудительное обновление
       if (!forceRefresh) {
         debugPrint('⚠️ Ошибка загрузки main tab: $e, пробуем кэш...');
-        
+
         final prefs = await SharedPreferences.getInstance();
         final cachedJson = prefs.getString(cacheKey);
-        
+
         if (cachedJson != null) {
           debugPrint('✅ Загружены данные из кэша');
           final jsonMap = jsonDecode(cachedJson) as Map<String, dynamic>;
           return MainTabData.fromJson(jsonMap);
         }
       }
-      
+
       // Если кэша нет или принудительное обновление - пробрасываем ошибку
       rethrow;
     }
@@ -135,17 +135,14 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
           physics: const BouncingScrollPhysics(),
           slivers: [
             // ───────────────── Pull-to-refresh ─────────────────
-            CupertinoSliverRefreshControl(
-              onRefresh: _refresh,
-            ),
+            CupertinoSliverRefreshControl(onRefresh: _refresh),
 
             // Состояние "ждём" (только при первой загрузке) — показываем индикатор
-            if (snap.connectionState == ConnectionState.waiting && !snap.hasData)
+            if (snap.connectionState == ConnectionState.waiting &&
+                !snap.hasData)
               const SliverFillRemaining(
                 hasScrollBody: false,
-                child: Center(
-                  child: CupertinoActivityIndicator(),
-                ),
+                child: Center(child: CupertinoActivityIndicator()),
               )
             // Состояние "ошибка" — показываем текст ошибки
             else if (snap.hasError && !snap.hasData)
@@ -298,6 +295,14 @@ class _ActivityCard extends StatelessWidget {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: AppColors.border, width: 0.5),
+          boxShadow: [
+            const BoxShadow(
+              color: AppColors.shadowSoft,
+              offset: Offset(0, 1),
+              blurRadius: 1,
+              spreadRadius: 0,
+            ),
+          ],
         ),
         padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
         child: Column(
@@ -358,6 +363,14 @@ class _PRRow extends StatelessWidget {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border, width: 0.5),
+          boxShadow: [
+            const BoxShadow(
+              color: AppColors.shadowSoft,
+              offset: Offset(0, 1),
+              blurRadius: 1,
+              spreadRadius: 0,
+            ),
+          ],
         ),
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
         child: Row(
@@ -415,6 +428,14 @@ class _MetricsCard extends StatelessWidget {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border, width: 0.5),
+          boxShadow: [
+            const BoxShadow(
+              color: AppColors.shadowSoft,
+              offset: Offset(0, 1),
+              blurRadius: 1,
+              spreadRadius: 0,
+            ),
+          ],
         ),
         child: Column(
           children: List.generate(rows.length, (i) {

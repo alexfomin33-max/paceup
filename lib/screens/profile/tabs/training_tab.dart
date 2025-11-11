@@ -268,6 +268,14 @@ class _CalendarCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border, width: 0.7),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.shadowSoft,
+            offset: Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
       child: Column(
@@ -448,6 +456,14 @@ class _WorkoutTable extends StatelessWidget {
           top: BorderSide(color: AppColors.border, width: 0.5),
           bottom: BorderSide(color: AppColors.border, width: 0.5),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowSoft,
+            offset: Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         children: List.generate(items.length, (i) {

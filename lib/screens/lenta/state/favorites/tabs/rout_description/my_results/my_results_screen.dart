@@ -38,7 +38,17 @@ class MyResultsScreen extends StatelessWidget {
             // — подшапка как в rout_description_screen.dart
             SliverToBoxAdapter(
               child: Container(
-                color: AppColors.surface,
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.shadowSoft,
+                      offset: Offset(0, 1),
+                      blurRadius: 1,
+                      spreadRadius: 0,
+                    ),
+                  ],
+                ),
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -129,6 +139,14 @@ class _ResultCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(0), // как в routes_content.dart
         border: Border.all(color: AppColors.border, width: 0.5),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.shadowSoft,
+            offset: Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: _ResultRow(e: e),
     );

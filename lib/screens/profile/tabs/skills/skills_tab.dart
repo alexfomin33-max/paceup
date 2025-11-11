@@ -142,6 +142,14 @@ class SkillCard extends StatelessWidget {
           width: 0.5, // тонкая рамка
         ),
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.shadowSoft,
+            offset: Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.symmetric(horizontal: 12),

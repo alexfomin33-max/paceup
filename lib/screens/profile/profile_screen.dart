@@ -136,7 +136,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               profile: profileState.profile,
               userId: widget.userId,
               onReload: () {
-                ref.read(profileHeaderProvider(widget.userId).notifier).reload();
+                ref
+                    .read(profileHeaderProvider(widget.userId).notifier)
+                    .reload();
               },
             ),
           ),

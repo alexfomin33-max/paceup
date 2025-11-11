@@ -28,6 +28,7 @@ abstract class AppColors {
   // └───────────────────────────────────────────────────────────────────────┘
   // Системные iOS-лайк фоны
   static const Color background = Color(0xFFF2F2F7); // systemGroupedBackground
+  static const Color softBg = Color(0xFFF5F5F5);
   // основная поверхность (карточки)
   static const Color surface = Color(0xFFFFFFFF);
   // слегка приглушённая поверхность
