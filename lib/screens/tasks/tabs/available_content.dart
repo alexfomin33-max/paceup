@@ -24,7 +24,7 @@ class AvailableContent extends StatelessWidget {
               children: [
                 AvailableTaskCard(
                   imageProvider: AssetImage('assets/ride200.jpg'),
-                  title: '200 км на велосипеде за июнь',
+                  title: 'Проехать 200 км на велосипеде за июнь',
                 ),
                 AvailableTaskCard(
                   imageProvider: AssetImage('assets/swim10.jpg'),
@@ -189,18 +189,16 @@ class AvailableTaskCard extends StatelessWidget {
               flex: 1,
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: Center(
-                  child: Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                child: Text(
+                  title,
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
@@ -258,15 +256,13 @@ class AvailableExpeditionCard extends StatelessWidget {
               flex: 1,
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: Center(
-                  child: Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                child: Text(
+                  title,
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),

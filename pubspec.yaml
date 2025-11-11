@@ -266,8 +266,13 @@ flutter:
      - assets/bookmark_2.png
      - assets/bookmark_3.png
      - assets/swim10.jpg
+     - assets/card200run.jpg
+     - assets/card200.png
      - assets/ride200.jpg
      - assets/run50.jpg
+     - assets/activity10.png
+     - assets/activity1000.png
+     - assets/height1000.jpg
    
 
  
