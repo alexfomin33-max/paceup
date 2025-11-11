@@ -157,9 +157,9 @@ flutter:
      - assets/Panamsky.png
      - assets/200k_run.png
      - assets/walking.png
-     - assets/running.png
-     - assets/cycling.png
-     - assets/swimming.png
+     - assets/running.jpg
+     - assets/cycling.jpg
+     - assets/swimming.webp
      - assets/bicycle.png
      - assets/5k.png
      - assets/10k.png

@@ -1,9 +1,9 @@
 /// Фиксированные ассеты для активности (тип → локальный asset)
 const Map<String, String> kActivityAssetByType = {
   'walking': 'assets/walking.png',
-  'running': 'assets/running.png',
-  'cycling': 'assets/cycling.png',
-  'swimming': 'assets/swimming.png',
+  'running': 'assets/running.jpg',
+  'cycling': 'assets/cycling.jpg',
+  'swimming': 'assets/swimming.webp',
 };
 
 /// Фиксированные ассеты для PR (код дистанции → локальный asset)

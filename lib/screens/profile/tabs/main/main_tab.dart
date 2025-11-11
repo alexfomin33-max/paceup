@@ -288,8 +288,10 @@ class _ActivityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Одна карточка активности
+    // Картинка занимает 2/3 верхней части, текст — нижнюю треть
     return SizedBox(
       width: 120,
+      height: 120,
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -304,42 +306,69 @@ class _ActivityCard extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
+        clipBehavior: Clip.antiAlias,
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Картинка (иконка вида активности)
-            ClipOval(
-              child: Image.asset(
-                item.asset,
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
+            // Картинка на всю ширину, занимает 2/3 высоты карточки
+            Expanded(
+              flex: 2,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(AppRadius.lg),
+                  topRight: Radius.circular(AppRadius.lg),
+                ),
+                child: Image.asset(
+                  item.asset,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: AppColors.border,
+                    child: const Icon(
+                      CupertinoIcons.photo,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 8),
-            // Значение (крупный текст)
-            Text(
-              item.value,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                height: 1.0,
-              ),
-            ),
-            const SizedBox(height: 6),
-            // Подпись (мелкий текст)
-            Text(
-              item.label,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                height: 1.0,
+            // Текст в нижней трети карточки
+            Expanded(
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Значение (крупный текст)
+                    Text(
+                      item.value,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        height: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    // Подпись (мелкий текст)
+                    Text(
+                      item.label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontFamily: 'Inter',
+                        fontSize: 11,
+                        height: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
