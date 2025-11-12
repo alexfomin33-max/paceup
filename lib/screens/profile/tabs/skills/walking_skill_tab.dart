@@ -1,6 +1,7 @@
 // lib/screens/walking_skill_tab.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
 
@@ -9,53 +10,62 @@ class WalkingSkillScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InteractiveBackSwipe(
-      child: Scaffold(
-        backgroundColor: AppColors.surface,
-        body: Column(
-          children: [
-            // ─────────── Неподвижный верхний блок
-            _FixedHeader(onBack: () => Navigator.of(context).pop()),
-            // ─────────── Контент скроллится отдельно
-            Expanded(
-              child: ListView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.zero,
-                children: [
-                  const SizedBox(height: 25), // требуемые 20px
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: _SectionTitle('Навык друзей'),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.surface,
-                      border: Border(
-                        top: BorderSide(color: AppColors.border, width: 0.5),
-                        bottom: BorderSide(color: AppColors.border, width: 0.5),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark.copyWith(
+        statusBarColor: Colors.white,
+        statusBarIconBrightness: Brightness.dark,
+      ),
+      child: InteractiveBackSwipe(
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: Column(
+            children: [
+              // ─────────── Неподвижный верхний блок
+              _FixedHeader(onBack: () => Navigator.of(context).pop()),
+              // ─────────── Контент скроллится отдельно
+              Expanded(
+                child: ListView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  children: [
+                    const SizedBox(height: 25), // требуемые 20px
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: _SectionTitle('Навык друзей'),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        border: Border(
+                          top: BorderSide(color: AppColors.border, width: 0.5),
+                          bottom: BorderSide(
+                            color: AppColors.border,
+                            width: 0.5,
+                          ),
+                        ),
+                      ),
+                      child: Column(
+                        children: List.generate(_rows.length, (i) {
+                          final r = _rows[i];
+                          final isMe = r.rank == 3; // подсветка как в макете
+                          return _FriendRow(
+                            rank: r.rank,
+                            name: r.name,
+                            value: r.value,
+                            avatar: r.avatar,
+                            highlight: isMe,
+                            isLast: i == _rows.length - 1,
+                          );
+                        }),
                       ),
                     ),
-                    child: Column(
-                      children: List.generate(_rows.length, (i) {
-                        final r = _rows[i];
-                        final isMe = r.rank == 3; // подсветка как в макете
-                        return _FriendRow(
-                          rank: r.rank,
-                          name: r.name,
-                          value: r.value,
-                          avatar: r.avatar,
-                          highlight: isMe,
-                          isLast: i == _rows.length - 1,
-                        );
-                      }),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -90,11 +100,13 @@ class _FixedHeader extends StatelessWidget {
                   ),
                   Expanded(
                     child: Center(
-                      child: Image.asset(
-                        'assets/skill_2.png',
-                        width: 96,
-                        height: 96,
-                        fit: BoxFit.contain,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/skill_2.png',
+                          width: 96,
+                          height: 96,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
@@ -130,7 +142,7 @@ class _FixedHeader extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.textSecondary,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -154,7 +166,8 @@ class _FixedHeader extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 13,
-                  height: 1.25,
+                  height: 1.35,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
@@ -166,11 +179,11 @@ class _FixedHeader extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              '0 из 7 000 шагов',
+              '0 / 7 000 шагов',
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 13,
-                color: AppColors.textSecondary,
+                color: AppColors.textPrimary,
               ),
             ),
 
@@ -198,7 +211,7 @@ class _MiniProgress extends StatelessWidget {
           children: [
             Container(
               width: w,
-              height: 6,
+              height: 5,
               decoration: const BoxDecoration(
                 color: AppColors.success,
                 borderRadius: BorderRadius.only(
@@ -209,7 +222,7 @@ class _MiniProgress extends StatelessWidget {
             ),
             Expanded(
               child: Container(
-                height: 6,
+                height: 5,
                 decoration: const BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.all(Radius.circular(AppRadius.xs)),
@@ -260,7 +273,7 @@ class _FriendRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final row = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.only(left: 12, right: 16, top: 8, bottom: 8),
       child: Row(
         children: [
           SizedBox(
@@ -270,8 +283,8 @@ class _FriendRow extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Inter',
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
                 color: highlight ? AppColors.success : AppColors.textPrimary,
               ),
             ),
@@ -280,8 +293,8 @@ class _FriendRow extends StatelessWidget {
           ClipOval(
             child: Image(
               image: avatar,
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               fit: BoxFit.cover,
             ),
           ),
@@ -290,16 +303,20 @@ class _FriendRow extends StatelessWidget {
             child: Text(
               name,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-          const SizedBox(width: 8),
           Text(
             value,
+            textAlign: TextAlign.right,
             style: TextStyle(
               fontFamily: 'Inter',
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
               color: highlight ? AppColors.success : AppColors.textPrimary,
             ),
           ),
