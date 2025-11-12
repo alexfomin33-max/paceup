@@ -151,7 +151,7 @@ class SkillCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
       margin: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
@@ -172,7 +172,7 @@ class SkillCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 8),
                 // Уровень слева + счётчик справа (над прогрессом)
                 Row(
                   children: [
@@ -193,12 +193,12 @@ class SkillCard extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.success,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 // Прогресс-бар
                 _SkillProgressBar(percent: percent),
               ],
@@ -221,14 +221,16 @@ class SkillCard extends StatelessWidget {
   }
 }
 
-/// Картинка навыка 64×64 без цветной подложки
+/// Круглая картинка навыка 64×64 без цветной подложки
 class _SkillImage extends StatelessWidget {
   final String asset;
   const _SkillImage({required this.asset});
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(asset, width: 64, height: 64, fit: BoxFit.contain);
+    return ClipOval(
+      child: Image.asset(asset, width: 64, height: 64, fit: BoxFit.cover),
+    );
   }
 }
 
@@ -247,7 +249,7 @@ class _SkillProgressBar extends StatelessWidget {
           children: [
             Container(
               width: cur,
-              height: 6,
+              height: 5,
               decoration: const BoxDecoration(
                 color: AppColors.success,
                 borderRadius: BorderRadius.only(
@@ -258,7 +260,7 @@ class _SkillProgressBar extends StatelessWidget {
             ),
             Expanded(
               child: Container(
-                height: 6,
+                height: 5,
                 decoration: const BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.all(Radius.circular(AppRadius.xs)),
@@ -288,7 +290,7 @@ class _InfoNote extends StatelessWidget {
           fontFamily: 'Inter',
           fontSize: 13,
           color: AppColors.textSecondary,
-          height: 1.35,
+          height: 1.5,
         ),
       ),
     );

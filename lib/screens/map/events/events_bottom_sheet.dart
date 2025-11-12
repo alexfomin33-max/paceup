@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/transparent_route.dart';
-import 'event_detail_screen2.dart';
+import 'event_detail_screen.dart';
 
 /// Каркас bottom sheet для вкладки «События».
 class EventsBottomSheet extends StatelessWidget {
@@ -14,7 +14,7 @@ class EventsBottomSheet extends StatelessWidget {
     super.key,
     required this.title,
     required this.child,
-    this.maxHeightFraction = 0.4, // не выше 50% экрана
+    this.maxHeightFraction = 0.4,
   });
 
   @override
@@ -256,7 +256,7 @@ class EventsListFromApi extends StatelessWidget {
               ? () {
                   Navigator.of(context).push(
                     TransparentPageRoute(
-                      builder: (_) => EventDetailScreen2(eventId: eventId),
+                      builder: (_) => EventDetailScreen(eventId: eventId),
                     ),
                   );
                 }

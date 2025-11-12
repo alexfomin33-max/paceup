@@ -24,6 +24,7 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
   bool _loading = true;
   String? _error;
   bool _canEdit = false; // Права на редактирование
+  String? _currentUserAvatar; // Аватар текущего пользователя из профиля
 
   @override
   void initState() {
@@ -50,9 +51,28 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
         final eventUserId = event['user_id'] as int?;
         final canEdit = userId != null && eventUserId == userId;
 
+        // ─── Загружаем аватар текущего пользователя из профиля (если это организатор)
+        String? currentUserAvatar;
+        if (userId != null && eventUserId == userId) {
+          try {
+            final profileData = await api.post(
+              '/user_profile_header.php',
+              body: {'user_id': userId.toString()},
+            );
+            final profile =
+                profileData['profile'] ?? profileData['data'] ?? profileData;
+            if (profile is Map) {
+              currentUserAvatar = profile['avatar'] as String?;
+            }
+          } catch (e) {
+            // Игнорируем ошибки загрузки аватара
+          }
+        }
+
         setState(() {
           _eventData = event;
           _canEdit = canEdit;
+          _currentUserAvatar = currentUserAvatar;
           _loading = false;
         });
 
@@ -144,10 +164,10 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return InteractiveBackSwipe(
+      return const InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.background,
-          body: const Center(child: CircularProgressIndicator()),
+          body: Center(child: CircularProgressIndicator()),
         ),
       );
     }
@@ -181,12 +201,73 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
     final logoUrl = _eventData!['logo_url'] as String? ?? '';
     final name = _eventData!['name'] as String? ?? '';
     final organizerName = _eventData!['organizer_name'] as String? ?? '';
+    final organizerAvatarUrl =
+        _eventData!['organizer_avatar_url'] as String? ?? '';
+    // Используем аватар из профиля, если аватар организатора отсутствует
+    final finalOrganizerAvatar = organizerAvatarUrl.isNotEmpty
+        ? organizerAvatarUrl
+        : (_currentUserAvatar?.isNotEmpty ?? false)
+        ? _currentUserAvatar!
+        : '';
     final dateFormatted = _eventData!['date_formatted_short'] as String? ?? '';
     final time = _eventData!['event_time'] as String? ?? '';
     final place = _eventData!['place'] as String? ?? '';
     final photos = _eventData!['photos'] as List<dynamic>? ?? [];
     final participants = _eventData!['participants'] as List<dynamic>? ?? [];
     final participantsCount = _eventData!['participants_count'] as int? ?? 0;
+
+    // ─── Извлекаем данные для метрик (опциональные поля из API)
+    final distanceMeters = _eventData!['distance_meters'] as num?;
+    final durationSeconds = _eventData!['duration_seconds'] as num?;
+
+    // ─── Форматирование метрик
+    String _formatDistance(double? meters) {
+      if (meters == null || meters <= 0) return '5 - 7 км';
+      final km = meters / 1000.0;
+      return '${km.toStringAsFixed(2)} км';
+    }
+
+    // ─── Форматирование сложности
+    String _formatDifficulty(double? meters, int? seconds) {
+      if (meters == null || meters <= 0 || seconds == null || seconds <= 0) {
+        return 'Лёгкая';
+      }
+      // Если данные есть, можно добавить логику определения сложности
+      // Пока возвращаем "Лёгкая" по умолчанию
+      return 'Лёгкая';
+    }
+
+    // ─── Подготовка метрик с цветными тинтами
+    final metrics = <_EventMetric>[
+      _EventMetric(
+        label: 'Адрес',
+        value: place.isNotEmpty ? place : '—',
+        tint: CupertinoColors.systemTeal,
+      ),
+      _EventMetric(
+        label: 'Дата',
+        value: dateFormatted.isNotEmpty ? dateFormatted : '—',
+        tint: CupertinoColors.systemIndigo,
+      ),
+      _EventMetric(
+        label: 'Время',
+        value: time.isNotEmpty ? time : '—',
+        tint: CupertinoColors.systemPurple,
+      ),
+      _EventMetric(
+        label: 'Дистанция',
+        value: _formatDistance(distanceMeters?.toDouble()),
+        tint: CupertinoColors.activeBlue,
+      ),
+      _EventMetric(
+        label: 'Сложность',
+        value: _formatDifficulty(
+          distanceMeters?.toDouble(),
+          durationSeconds?.toInt(),
+        ),
+        tint: CupertinoColors.systemGreen,
+      ),
+    ];
 
     return InteractiveBackSwipe(
       child: Scaffold(
@@ -238,7 +319,7 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
                                             : Container(
                                                 width: 100,
                                                 height: 100,
-                                                decoration: BoxDecoration(
+                                                decoration: const BoxDecoration(
                                                   color: AppColors.border,
                                                   shape: BoxShape.circle,
                                                 ),
@@ -273,20 +354,86 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
                                 ),
                                 const SizedBox(height: 10),
 
-                                _InfoRow(
-                                  icon: CupertinoIcons.person_crop_circle,
-                                  text: organizerName,
+                                // ─── Организатор с аватаркой 40×40
+                                Row(
+                                  children: [
+                                    ClipOval(
+                                      child: Builder(
+                                        builder: (context) {
+                                          if (finalOrganizerAvatar.isEmpty) {
+                                            return Container(
+                                              width: 40,
+                                              height: 40,
+                                              decoration: const BoxDecoration(
+                                                color: AppColors.border,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.person,
+                                                size: 24,
+                                              ),
+                                            );
+                                          }
+                                          final dpr = MediaQuery.of(
+                                            context,
+                                          ).devicePixelRatio;
+                                          final cacheWidth = (40 * dpr).round();
+                                          return CachedNetworkImage(
+                                            imageUrl: finalOrganizerAvatar,
+                                            width: 40,
+                                            height: 40,
+                                            fit: BoxFit.cover,
+                                            fadeInDuration: const Duration(
+                                              milliseconds: 120,
+                                            ),
+                                            memCacheWidth: cacheWidth,
+                                            errorWidget: (_, __, ___) =>
+                                                Container(
+                                                  width: 40,
+                                                  height: 40,
+                                                  color: AppColors.border,
+                                                  child: const Icon(
+                                                    Icons.person,
+                                                    size: 20,
+                                                  ),
+                                                ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Text(
+                                            'Организатор',
+                                            style: TextStyle(
+                                              fontFamily: 'Inter',
+                                              fontSize: 12,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            organizerName,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontFamily: 'Inter',
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 6),
-                                _InfoRow(
-                                  icon: CupertinoIcons.calendar_today,
-                                  text: '$dateFormatted, $time',
-                                ),
-                                const SizedBox(height: 6),
-                                _InfoRow(
-                                  icon: CupertinoIcons.location_solid,
-                                  text: place,
-                                ),
+
+                                // ─── Цветные метрики (как в training_day_screen)
+                                const SizedBox(height: 12),
+                                _EventMetricBlock(metrics: metrics),
 
                                 if (photos.isNotEmpty) ...[
                                   const SizedBox(height: 12),
@@ -496,28 +643,6 @@ class _CircleIconBtn extends StatelessWidget {
           child: Icon(icon, size: 18, color: AppColors.surface),
         ),
       ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _InfoRow({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: AppColors.brandPrimary),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -873,3 +998,76 @@ class _Member {
   const _Member(this.name, this.role, this.avatar, {this.roleIcon});
 }
 
+/// ─── Структура метрики события
+class _EventMetric {
+  final String label;
+  final String value;
+  final Color tint;
+  const _EventMetric({
+    required this.label,
+    required this.value,
+    required this.tint,
+  });
+}
+
+/// ─── Сетка метрик события (аналогично _MetricBlock из training_day_screen)
+class _EventMetricBlock extends StatelessWidget {
+  const _EventMetricBlock({required this.metrics});
+  final List<_EventMetric> metrics;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final itemWidth = width >= 420
+        ? (width - 12 * 2 - 8 * 2) / 3
+        : (width >= 360 ? (width - 12 * 2 - 8) / 2 : width - 12 * 2);
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: metrics.asMap().entries.map((entry) {
+        final index = entry.key;
+        final m = entry.value;
+        // Первое поле (Адрес) занимает ширину двух полей
+        final isFirst = index == 0;
+        final fieldWidth = isFirst ? (itemWidth * 2 + 8) : itemWidth;
+        final bg = m.tint.withValues(alpha: 0.06);
+        final br = m.tint.withValues(alpha: 0.22);
+        return SizedBox(
+          width: fieldWidth,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: br, width: 1),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  m.label,
+                  style: AppTextStyles.h12w4Ter,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  m.value,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: isFirst ? 2 : 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
