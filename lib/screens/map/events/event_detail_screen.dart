@@ -190,273 +190,277 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        top: false,
-        bottom: true,
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // ───────── Шапка без AppBar: SafeArea + кнопки у краёв + логотип по центру
-            SliverToBoxAdapter(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
-                  border: Border(
-                    bottom: BorderSide(color: AppColors.border, width: 1),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    SafeArea(
-                      bottom: false,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: SizedBox(
-                          height: 100,
-                          child: Row(
-                            children: [
-                              _CircleIconBtn(
-                                icon: CupertinoIcons.back,
-                                semantic: 'Назад',
-                                onTap: () => Navigator.of(context).maybePop(),
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          top: false,
+          bottom: false,
+          child: Stack(
+            children: [
+              // ───────── Скроллируемый контент
+              CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // ───────── Шапка без AppBar: SafeArea + кнопки у краёв + логотип по центру
+                  SliverToBoxAdapter(
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        border: Border(
+                          bottom: BorderSide(color: AppColors.border, width: 1),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          SafeArea(
+                            bottom: false,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
                               ),
-                              Expanded(
-                                child: Center(
-                                  child: logoUrl.isNotEmpty
-                                      ? ClipOval(
-                                          child: _HeaderLogo(url: logoUrl),
-                                        )
-                                      : Container(
-                                          width: 100,
-                                          height: 100,
-                                          decoration: BoxDecoration(
-                                            color: AppColors.border,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.event,
-                                            size: 48,
-                                          ),
-                                        ),
+                              child: SizedBox(
+                                height: 100,
+                                child: Row(
+                                  children: [
+                                    _CircleIconBtn(
+                                      icon: CupertinoIcons.back,
+                                      semantic: 'Назад',
+                                      onTap: () =>
+                                          Navigator.of(context).maybePop(),
+                                    ),
+                                    Expanded(
+                                      child: Center(
+                                        child: logoUrl.isNotEmpty
+                                            ? ClipOval(
+                                                child: _HeaderLogo(
+                                                  url: logoUrl,
+                                                ),
+                                              )
+                                            : Container(
+                                                width: 100,
+                                                height: 100,
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.border,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  Icons.event,
+                                                  size: 48,
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                    _CircleIconBtn(
+                                      icon: CupertinoIcons.pencil,
+                                      semantic: 'Редактировать',
+                                      onTap: _canEdit ? _openEditScreen : null,
+                                    ),
+                                  ],
                                 ),
                               ),
-                              _CircleIconBtn(
-                                icon: CupertinoIcons.pencil,
-                                semantic: 'Редактировать',
-                                onTap: _canEdit ? _openEditScreen : null,
+                            ),
+                          ),
+
+                          // Остальная часть шапки
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  name,
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyles.h17w6,
+                                ),
+                                const SizedBox(height: 10),
+
+                                _InfoRow(
+                                  icon: CupertinoIcons.person_crop_circle,
+                                  text: organizerName,
+                                ),
+                                const SizedBox(height: 6),
+                                _InfoRow(
+                                  icon: CupertinoIcons.calendar_today,
+                                  text: '$dateFormatted, $time',
+                                ),
+                                const SizedBox(height: 6),
+                                _InfoRow(
+                                  icon: CupertinoIcons.location_solid,
+                                  text: place,
+                                ),
+
+                                if (photos.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+
+                                  // Фотографии: всегда 3 ячейки для одинакового размера
+                                  Row(
+                                    children: () {
+                                      final widgets = <Widget>[];
+                                      for (var index = 0; index < 3; index++) {
+                                        final hasPhoto = index < photos.length;
+                                        final photoUrl = hasPhoto
+                                            ? photos[index] as String
+                                            : '';
+
+                                        widgets.add(
+                                          Expanded(
+                                            child: hasPhoto
+                                                ? _SquarePhoto(
+                                                    photoUrl,
+                                                    onTap: () =>
+                                                        _openGallery(index),
+                                                  )
+                                                : const SizedBox.shrink(),
+                                          ),
+                                        );
+
+                                        if (index < 2) {
+                                          widgets.add(
+                                            const SizedBox(width: 10),
+                                          );
+                                        }
+                                      }
+                                      return widgets;
+                                    }(),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                  // ───────── ЕДИНЫЙ нижний блок: вкладки + контент (растягивается до низа)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        border: Border(
+                          top: BorderSide(color: AppColors.border, width: 1),
+                          bottom: BorderSide(color: AppColors.border, width: 1),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Вкладки: каждая — в своей половине, центрирование текста, больше высота
+                          SizedBox(
+                            height: 52,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _HalfTab(
+                                    text: 'Описание',
+                                    selected: _tab == 0,
+                                    onTap: () => setState(() => _tab = 0),
+                                  ),
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 24,
+                                  color: AppColors.border,
+                                ),
+                                Expanded(
+                                  child: _HalfTab(
+                                    text: 'Участники ($participantsCount)',
+                                    selected: _tab == 1,
+                                    onTap: () => setState(() => _tab = 1),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const Divider(height: 1, color: AppColors.border),
+
+                          // Контент активной вкладки — растягивается до низа
+                          Expanded(
+                            child: _tab == 0
+                                ? Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      12,
+                                      12,
+                                      12,
+                                      12,
+                                    ),
+                                    child: EventDescriptionContent(
+                                      description:
+                                          _eventData!['description']
+                                              as String? ??
+                                          '',
+                                    ),
+                                  )
+                                : Padding(
+                                    padding: const EdgeInsets.only(
+                                      top: 0,
+                                      bottom: 0,
+                                    ),
+                                    child: EventMembersContent(
+                                      participants: participants,
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // ───────── Плавающая кнопка поверх контента
+              Positioned(
+                bottom: 20,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  top: false,
+                  child: Center(
+                    child: Material(
+                      color: AppColors.brandPrimary,
+                      borderRadius: BorderRadius.circular(AppRadius.xxl),
+                      elevation: 0,
+                      child: InkWell(
+                        onTap: () {},
+                        borderRadius: BorderRadius.circular(AppRadius.xxl),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 40,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.brandPrimary,
+                            borderRadius: BorderRadius.circular(AppRadius.xxl),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: AppColors.shadowMedium,
+                                blurRadius: 1,
+                                offset: Offset(0, 1),
                               ),
                             ],
+                          ),
+                          child: const Text(
+                            'Присоединиться',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.surface,
+                            ),
                           ),
                         ),
                       ),
                     ),
-
-                    // Остальная часть шапки
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            name,
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.h17w6,
-                          ),
-                          const SizedBox(height: 10),
-
-                          _InfoRow(
-                            icon: CupertinoIcons.person_crop_circle,
-                            text: organizerName,
-                          ),
-                          const SizedBox(height: 6),
-                          _InfoRow(
-                            icon: CupertinoIcons.calendar_today,
-                            text: '$dateFormatted, $time',
-                          ),
-                          const SizedBox(height: 6),
-                          _InfoRow(
-                            icon: CupertinoIcons.location_solid,
-                            text: place,
-                          ),
-
-                          if (photos.isNotEmpty) ...[
-                            const SizedBox(height: 12),
-
-                            // Фотографии: всегда 3 ячейки для одинакового размера
-                            Row(
-                              children: () {
-                                final widgets = <Widget>[];
-                                for (var index = 0; index < 3; index++) {
-                                  final hasPhoto = index < photos.length;
-                                  final photoUrl = hasPhoto
-                                      ? photos[index] as String
-                                      : '';
-
-                                  widgets.add(
-                                    Expanded(
-                                      child: hasPhoto
-                                          ? _SquarePhoto(
-                                              photoUrl,
-                                              onTap: () => _openGallery(index),
-                                            )
-                                          : const SizedBox.shrink(),
-                                    ),
-                                  );
-
-                                  if (index < 2) {
-                                    widgets.add(const SizedBox(width: 10));
-                                  }
-                                }
-                                return widgets;
-                              }(),
-                            ),
-                          ],
-
-                          const SizedBox(height: 12),
-
-                          // Кнопки действий — secondary, радиус 4
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: () {},
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.brandPrimary,
-                                    foregroundColor: AppColors.surface,
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.xs,
-                                      ),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Присоединиться',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: () {},
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.brandPrimary,
-                                    foregroundColor: AppColors.surface,
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.xs,
-                                      ),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Вступить в клуб',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-            // ───────── ЕДИНЫЙ нижний блок: вкладки + контент (растягивается до низа)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
-                  border: Border(
-                    top: BorderSide(color: AppColors.border, width: 1),
-                    bottom: BorderSide(color: AppColors.border, width: 1),
                   ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Вкладки: каждая — в своей половине, центрирование текста, больше высота
-                    SizedBox(
-                      height: 52,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _HalfTab(
-                              text: 'Описание',
-                              selected: _tab == 0,
-                              onTap: () => setState(() => _tab = 0),
-                            ),
-                          ),
-                          Container(
-                            width: 1,
-                            height: 24,
-                            color: AppColors.border,
-                          ),
-                          Expanded(
-                            child: _HalfTab(
-                              text: 'Участники ($participantsCount)',
-                              selected: _tab == 1,
-                              onTap: () => setState(() => _tab = 1),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const Divider(height: 1, color: AppColors.border),
-
-                    // Контент активной вкладки — растягивается до низа
-                    Expanded(
-                      child: _tab == 0
-                          ? Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                12,
-                                12,
-                                12,
-                                12,
-                              ),
-                              child: EventDescriptionContent(
-                                description:
-                                    _eventData!['description'] as String? ?? '',
-                              ),
-                            )
-                          : Padding(
-                              padding: const EdgeInsets.only(top: 0, bottom: 0),
-                              child: EventMembersContent(
-                                participants: participants,
-                              ),
-                            ),
-                    ),
-                  ],
-                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }
