@@ -95,12 +95,57 @@ class _CollectionsSliverGrid extends StatelessWidget {
   }
 }
 
+/// Матрица для полного обесцвечивания (sRGB)
+const List<double> _kGreyscaleMatrix = <double>[
+  0.2126,
+  0.7152,
+  0.0722,
+  0,
+  0,
+  0.2126,
+  0.7152,
+  0.0722,
+  0,
+  0,
+  0.2126,
+  0.7152,
+  0.0722,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+];
+
 class _CollectionTile extends StatelessWidget {
   final _CollItem item;
   const _CollectionTile({required this.item});
 
   @override
   Widget build(BuildContext context) {
+    // Изображение занимает всю ширину и 2/3 высоты карточки
+    Widget image = ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(AppRadius.md),
+        topRight: Radius.circular(AppRadius.md),
+      ),
+      child: Image.asset(
+        item.asset,
+        width: double.infinity,
+        fit: BoxFit.cover,
+      ),
+    );
+
+    // Для "locked" — обесцвечиваем картинку
+    if (item.locked) {
+      image = ColorFiltered(
+        colorFilter: const ColorFilter.matrix(_kGreyscaleMatrix),
+        child: image,
+      );
+    }
+
     final card = Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -116,24 +161,30 @@ class _CollectionTile extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ClipOval(
-            child: Image.asset(
-              item.asset,
-              width: 72,
-              height: 72,
-              fit: BoxFit.cover,
+          // Изображение занимает 2/3 высоты карточки
+          Expanded(flex: 2, child: image),
+          // Текст занимает 1/3 высоты карточки
+          Expanded(
+            flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Center(
+                child: Text(
+                  item.title,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            item.title,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
           ),
         ],
       ),
