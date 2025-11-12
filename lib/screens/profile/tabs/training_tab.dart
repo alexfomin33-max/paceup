@@ -502,8 +502,8 @@ class _WorkoutRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.xs),
             child: const Image(
               image: AssetImage('assets/training_map.png'),
-              width: 70,
-              height: 46,
+              width: 80,
+              height: 55,
               fit: BoxFit.cover,
             ),
           ),
@@ -533,35 +533,63 @@ class _WorkoutRow extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 10),
 
                 // Три метрики — строго таблично, с вертикальными разделителями
                 IntrinsicHeight(
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Expanded(
-                        child: Center(
-                          child: _metric(
+                      // Иконка вида спорта в отдельной колонке с фиксированной шириной
+                      SizedBox(
+                        width: 21,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Icon(
                             item.kind == 0
                                 ? Icons.directions_run
                                 : (item.kind == 1
                                       ? Icons.pedal_bike
                                       : Icons.pool),
-                            item.distText,
+                            size: 15,
+                            color: AppColors.brandPrimary,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 6),
                       Expanded(
-                        child: Center(
-                          child: _metric(Icons.access_time, item.durText),
+                        child: _metric(
+                          null,
+                          item.distText,
+                          MainAxisAlignment.start,
                         ),
                       ),
-
+                      const VerticalDivider(
+                        width: 1,
+                        thickness: 0.5,
+                        color: AppColors.divider,
+                        indent: 0,
+                        endIndent: 0,
+                      ),
                       Expanded(
-                        child: Center(
-                          child: _metric(Icons.speed, item.paceText),
+                        child: _metric(
+                          null,
+                          item.durText,
+                          MainAxisAlignment.center,
+                        ),
+                      ),
+                      const VerticalDivider(
+                        width: 1,
+                        thickness: 0.5,
+                        color: AppColors.divider,
+                        indent: 0,
+                        endIndent: 0,
+                      ),
+                      Expanded(
+                        child: _metric(
+                          null,
+                          item.paceText,
+                          MainAxisAlignment.center,
                         ),
                       ),
                     ],
@@ -575,13 +603,26 @@ class _WorkoutRow extends StatelessWidget {
     );
   }
 
-  Widget _metric(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 15, color: AppColors.brandPrimary),
-        const SizedBox(width: 6),
-        Text(text, style: const TextStyle(fontFamily: 'Inter', fontSize: 13)),
-      ],
+  Widget _metric(IconData? icon, String text, MainAxisAlignment alignment) {
+    return SizedBox(
+      width: double.infinity,
+      child: Row(
+        mainAxisAlignment: alignment,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 15, color: AppColors.iconSecondary),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            text,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

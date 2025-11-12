@@ -425,7 +425,14 @@ class _PRBadge extends StatelessWidget {
       children: [
         Image.asset(asset, width: 72, height: 72, fit: BoxFit.contain),
         const SizedBox(height: 6),
-        Text(time, style: const TextStyle(fontFamily: 'Inter', fontSize: 13)),
+        Text(
+          time,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ],
     );
   }
@@ -494,7 +501,7 @@ class _MetricsCard extends StatelessWidget {
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
-                          fontWeight: FontWeight.w400,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
