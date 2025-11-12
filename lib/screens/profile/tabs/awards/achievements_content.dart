@@ -157,21 +157,27 @@ class _BadgeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Базовое изображение с нужной формой (круг/скругление)
+    // Изображение занимает всю ширину и 2/3 высоты карточки
     Widget image = item.circle
-        ? ClipOval(
+        ? ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(AppRadius.md),
+              topRight: Radius.circular(AppRadius.md),
+            ),
             child: Image.asset(
               item.asset,
-              width: 72,
-              height: 72,
+              width: double.infinity,
               fit: BoxFit.cover,
             ),
           )
         : ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(AppRadius.md),
+              topRight: Radius.circular(AppRadius.md),
+            ),
             child: Image.asset(
               item.asset,
-              width: 72,
-              height: 72,
+              width: double.infinity,
               fit: BoxFit.cover,
             ),
           );
@@ -199,17 +205,30 @@ class _BadgeTile extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          image,
-          const SizedBox(height: 4),
-          Text(
-            item.caption,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
+          // Изображение занимает 2/3 высоты карточки
+          Expanded(flex: 2, child: image),
+          // Текст занимает 1/3 высоты карточки
+          Expanded(
+            flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Center(
+                child: Text(
+                  item.caption,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
