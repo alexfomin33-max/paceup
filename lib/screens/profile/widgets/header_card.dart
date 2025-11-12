@@ -32,8 +32,8 @@ class HeaderCard extends StatelessWidget {
           children: [
             // Скелетон аватарки
             Container(
-              width: 56,
-              height: 56,
+              width: 64,
+              height: 64,
               decoration: const BoxDecoration(
                 color: AppColors.skeletonBase,
                 shape: BoxShape.circle,
@@ -120,29 +120,29 @@ class HeaderCard extends StatelessWidget {
                 image: (p.avatar != null && p.avatar!.isNotEmpty)
                     ? p.avatar!
                     : 'assets/avatar_0.png',
-                size: 56,
+                size: 64,
                 fadeIn: true,
                 gapless: true,
               ),
 
-              Positioned(
-                bottom: -20,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 0,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.chipBg,
-                      borderRadius: BorderRadius.circular(AppRadius.xs),
-                    ),
-                    child: const Text('Pro', style: AppTextStyles.h11w6),
-                  ),
-                ),
-              ),
+              // Positioned(
+              //   bottom: -20,
+              //   left: 0,
+              //   right: 0,
+              //   child: Center(
+              //     child: Container(
+              //       padding: const EdgeInsets.symmetric(
+              //         horizontal: 6,
+              //         vertical: 0,
+              //       ),
+              //       decoration: BoxDecoration(
+              //         color: AppColors.chipBg,
+              //         borderRadius: BorderRadius.circular(AppRadius.xs),
+              //       ),
+              //       child: const Text('Pro', style: AppTextStyles.h11w6),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
           const SizedBox(width: 12),
