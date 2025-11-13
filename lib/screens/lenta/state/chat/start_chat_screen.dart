@@ -309,7 +309,10 @@ class _RowTile extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: () async {
         // Открываем персональный чат
-        final result = await Navigator.of(context).push(
+        final result = await Navigator.of(
+          context,
+          rootNavigator: true,
+        ).push(
           TransparentPageRoute(
             builder: (_) => PersonalChatScreen(
               chatId: 0, // Новый чат, будет создан на сервере
@@ -401,7 +404,10 @@ class _RowTile extends StatelessWidget {
                 color: AppColors.brandPrimary,
               ),
               onPressed: () async {
-                final result = await Navigator.of(context).push(
+                final result = await Navigator.of(
+                  context,
+                  rootNavigator: true,
+                ).push(
                   TransparentPageRoute(
                     builder: (_) => PersonalChatScreen(
                       chatId: 0,

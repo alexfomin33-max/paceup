@@ -23,34 +23,92 @@ class MembersRouteScreen extends StatefulWidget {
 class _MembersRouteScreenState extends State<MembersRouteScreen> {
   DateTime? _date;
 
+  // ── выбор даты через Cupertino-календарь (как в add_event_screen)
   Future<void> _pickDate() async {
     final now = DateTime.now();
-    final initial = _date ?? now;
+    final today = DateUtils.dateOnly(now);
+    DateTime temp = DateUtils.dateOnly(_date ?? today);
 
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime(now.year - 5),
-      lastDate: DateTime(now.year + 5),
-      helpText: 'Выберите дату',
-      locale: const Locale('ru', 'RU'),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.brandPrimary,
-              onPrimary: AppColors.surface,
-              onSurface: AppColors.textPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
+    final picker = CupertinoDatePicker(
+      mode: CupertinoDatePickerMode.date,
+      minimumDate: DateTime(now.year - 5),
+      maximumDate: DateTime(now.year + 5),
+      initialDateTime: temp.isBefore(today) ? today : temp,
+      onDateTimeChanged: (dt) => temp = DateUtils.dateOnly(dt),
     );
 
-    if (picked != null) {
-      setState(() => _date = picked);
+    final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
+    if (ok) {
+      setState(() => _date = temp);
     }
+  }
+
+  // ── показ Cupertino-модального окна с пикером (как в add_event_screen)
+  Future<T?> _showCupertinoSheet<T>({required Widget child}) {
+    return showCupertinoModalPopup<T>(
+      context: context,
+      useRootNavigator: true,
+      builder: (sheetCtx) => SafeArea(
+        top: false,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppRadius.lg),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                // маленькая серая полоска сверху (grabber)
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                  ),
+                ),
+                const SizedBox(height: 0),
+
+                // ── ПАНЕЛЬ С КНОПКАМИ
+                Container(
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: AppColors.border, width: 1),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        onPressed: () => Navigator.of(sheetCtx).pop(),
+                        child: const Text('Отмена'),
+                      ),
+                      const Spacer(),
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        onPressed: () => Navigator.of(sheetCtx).pop(true),
+                        child: const Text('Готово'),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                  ),
+                ),
+
+                // ── сам пикер
+                SizedBox(height: 260, child: child),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   static String _fmtDate(DateTime d) =>
@@ -97,7 +155,7 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
                     const SizedBox(height: 16),
                     _LabeledDateField(
                       label: 'Дата',
-                      text: _date == null ? '24.06.2025' : _fmtDate(_date!),
+                      text: _date == null ? '' : _fmtDate(_date!),
                       onTap: _pickDate,
                     ),
                   ],

@@ -424,7 +424,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 final item = GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () async {
-                    final result = await Navigator.of(context).push(
+                    final result = await Navigator.of(
+                      context,
+                      rootNavigator: true,
+                    ).push(
                       TransparentPageRoute(
                         builder: (_) => PersonalChatScreen(
                           chatId: chat.id,

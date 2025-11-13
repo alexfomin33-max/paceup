@@ -134,14 +134,12 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
     try {
       final response = await _api.post(
         '/create_chat.php',
-        body: {
-          'user2_id': widget.userId,
-        },
+        body: {'user2_id': widget.userId},
       );
 
       if (response['success'] == true) {
         final chatId = response['chat_id'] as int;
-        
+
         setState(() {
           _actualChatId = chatId;
           _isLoading = false;
@@ -168,7 +166,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
   /// ─── Загрузка начальных сообщений ───
   Future<void> _loadInitial() async {
     if (_isLoading || _currentUserId == null) return;
-    
+
     // Если чат еще не создан, не загружаем сообщения
     final chatId = _actualChatId ?? widget.chatId;
     if (chatId == 0) return;
@@ -235,7 +233,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
   /// ─── Загрузка старых сообщений (при прокрутке вверх) ───
   Future<void> _loadMore() async {
     if (_isLoadingMore || !_hasMore || _currentUserId == null) return;
-    
+
     final chatId = _actualChatId ?? widget.chatId;
     if (chatId == 0) return;
 
@@ -319,11 +317,9 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
       try {
         final createResponse = await _api.post(
           '/create_chat.php',
-          body: {
-            'user2_id': widget.userId,
-          },
+          body: {'user2_id': widget.userId},
         );
-        
+
         if (createResponse['success'] == true) {
           chatId = createResponse['chat_id'] as int;
           setState(() {
@@ -391,7 +387,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
   /// ─── Отметка сообщений как прочитанных ───
   Future<void> _markMessagesAsRead() async {
     if (_currentUserId == null) return;
-    
+
     final chatId = _actualChatId ?? widget.chatId;
     if (chatId == 0) return;
 
@@ -416,7 +412,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
   /// ─── Проверка новых сообщений ───
   Future<void> _checkNewMessages() async {
     if (_currentUserId == null || _lastMessageId == null) return;
-    
+
     final chatId = _actualChatId ?? widget.chatId;
     if (chatId == 0) return;
 
@@ -541,7 +537,10 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
                               width: 36,
                               height: 36,
                               color: AppColors.surfaceMuted,
-                              child: const Icon(CupertinoIcons.person, size: 20),
+                              child: const Icon(
+                                CupertinoIcons.person,
+                                size: 20,
+                              ),
                             );
                           },
                         );
@@ -582,89 +581,96 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
             ],
           ),
         ),
-        body: Column(
-          children: [
-            // ─── Прокручиваемая область с сообщениями ───
-            Expanded(
-              child: () {
-                if (_error != null && _messages.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Ошибка: $_error',
-                            style: const TextStyle(color: AppColors.error),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 12),
-                          OutlinedButton(
-                            onPressed: _loadInitial,
-                            child: const Text('Повторить'),
-                          ),
-                        ],
+        body: GestureDetector(
+          // ─── Убираем фокус с поля ввода при тапе на экран ───
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          behavior: HitTestBehavior.translucent,
+          child: Column(
+            children: [
+              // ─── Прокручиваемая область с сообщениями ───
+              Expanded(
+                child: () {
+                  if (_error != null && _messages.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Ошибка: $_error',
+                              style: const TextStyle(color: AppColors.error),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton(
+                              onPressed: _loadInitial,
+                              child: const Text('Повторить'),
+                            ),
+                          ],
+                        ),
                       ),
+                    );
+                  }
+
+                  if (_isLoading && _messages.isEmpty) {
+                    return const Center(child: CupertinoActivityIndicator());
+                  }
+
+                  return NotificationListener<ScrollNotification>(
+                    onNotification: (notification) {
+                      if (notification is ScrollStartNotification) {
+                        if (_scrollController.position.pixels <= 100 &&
+                            _hasMore &&
+                            !_isLoadingMore) {
+                          _loadMore();
+                        }
+                      }
+                      return false;
+                    },
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+                      itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == 0 && _isLoadingMore) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(child: CupertinoActivityIndicator()),
+                          );
+                        }
+
+                        final messageIndex = _isLoadingMore ? index - 1 : index;
+                        final message = _messages[messageIndex];
+
+                        return message.isMine
+                            ? _BubbleRight(
+                                text: message.text,
+                                time: _formatTime(message.createdAt),
+                              )
+                            : _BubbleLeft(
+                                text: message.text,
+                                time: _formatTime(message.createdAt),
+                                avatarUrl: _getAvatarUrl(widget.userAvatar),
+                              );
+                      },
                     ),
                   );
-                }
+                }(),
+              ),
 
-                if (_isLoading && _messages.isEmpty) {
-                  return const Center(child: CupertinoActivityIndicator());
-                }
-
-                return NotificationListener<ScrollNotification>(
-                  onNotification: (notification) {
-                    if (notification is ScrollStartNotification) {
-                      if (_scrollController.position.pixels <= 100 &&
-                          _hasMore &&
-                          !_isLoadingMore) {
-                        _loadMore();
-                      }
-                    }
-                    return false;
-                  },
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
-                    itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == 0 && _isLoadingMore) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(child: CupertinoActivityIndicator()),
-                        );
-                      }
-
-                      final messageIndex = _isLoadingMore ? index - 1 : index;
-                      final message = _messages[messageIndex];
-
-                      return message.isMine
-                          ? _BubbleRight(
-                              text: message.text,
-                              time: _formatTime(message.createdAt),
-                            )
-                          : _BubbleLeft(
-                              text: message.text,
-                              time: _formatTime(message.createdAt),
-                              avatarUrl: _getAvatarUrl(widget.userAvatar),
-                            );
-                    },
-                  ),
-                );
-              }(),
-            ),
-
-            // ─── Неподвижная нижняя панель ввода ───
-            _Composer(
-              controller: _ctrl,
-              onSend: _sendText,
-              onPickImage: () {
-                // TODO: Реализовать отправку изображений
-              },
-            ),
-          ],
+              // ─── Неподвижная нижняя панель ввода ───
+              _Composer(
+                controller: _ctrl,
+                onSend: _sendText,
+                onPickImage: () {
+                  // TODO: Реализовать отправку изображений
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
