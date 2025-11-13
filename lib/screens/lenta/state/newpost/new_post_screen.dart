@@ -6,6 +6,7 @@ import 'dart:async';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
 import '../../../../widgets/interactive_back_swipe.dart';
+import '../../../../widgets/primary_button.dart';
 import '../../../../service/api_service.dart';
 
 /// 🔹 Экран создания нового поста
@@ -21,6 +22,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
   final List<File> _images = []; // выбранные картинки
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _descController = TextEditingController();
+  final FocusNode _descFocusNode = FocusNode();
 
   bool _canPublish = false; // доступность кнопки
   bool _loading = false; // индикатор отправки
@@ -29,11 +31,13 @@ class _NewPostScreenState extends State<NewPostScreen> {
   void initState() {
     super.initState();
     _descController.addListener(_updatePublishState);
+    _descFocusNode.addListener(_updatePublishState);
   }
 
   @override
   void dispose() {
     _descController.dispose();
+    _descFocusNode.dispose();
     super.dispose();
   }
 
@@ -48,7 +52,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.softBg,
+        backgroundColor: AppColors.surface,
 
         // ───── глобальная шапка
         appBar: const PaceAppBar(title: 'Новый пост'),
@@ -90,7 +94,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
                 // 🔹 описание растягивается
                 Expanded(child: _descriptionInput()),
@@ -115,7 +119,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
         height: 76,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          color: AppColors.surface,
+          color: AppColors.background,
           border: Border.all(color: AppColors.border),
         ),
         child: const Center(
@@ -155,7 +159,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
             height: 76,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              color: AppColors.surface,
+              color: AppColors.background,
             ),
             clipBehavior: Clip.hardEdge,
             child: Image.file(file, fit: BoxFit.cover),
@@ -191,71 +195,66 @@ class _NewPostScreenState extends State<NewPostScreen> {
     );
   }
 
-  // 🔹 Поле описания — та же типографика и отступы
+  // 🔹 Поле описания с динамическим лейблом
   Widget _descriptionInput() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
-      child: TextField(
-        controller: _descController,
-        expands: true, // 🔹 растягивается по высоте
-        maxLines: null,
-        minLines: null,
-        decoration: const InputDecoration.collapsed(
-          hintText: 'Добавьте описание...',
-          hintStyle: AppTextStyles.h14w4Place,
+    // ── определяем, какой лейбл показывать
+    final bool hasText = _descController.text.trim().isNotEmpty;
+    final bool isFocused = _descFocusNode.hasFocus;
+    final String labelText = (hasText || isFocused)
+        ? 'Описание поста'
+        : 'Добавьте описание';
+
+    return TextField(
+      controller: _descController,
+      focusNode: _descFocusNode,
+      expands: true, // 🔹 растягивается по высоте
+      maxLines: null,
+      minLines: null,
+      textAlignVertical: TextAlignVertical.top, // 🔹 текст всегда сверху
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: AppTextStyles
+            .h14w4Sec, // 🔹 стиль лейбла, когда он внутри поля (нет текста)
+        floatingLabelStyle: TextStyle(
+          color: AppColors.textSecondary,
+        ), // 🔹 цвет лейбла, когда он всплывает (фокус или есть текст)
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
+        alignLabelWithHint: true, // 🔹 лейбл выравнивается с hintText
+        filled: true,
+        fillColor: AppColors.surface,
+        contentPadding: const EdgeInsets.all(12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
         ),
       ),
     );
   }
 
-  // 🔹 Кнопка публикации (размеры/цвета сохранены)
+  // 🔹 Кнопка публикации
   Widget _publishButton(BuildContext context) {
-    return SizedBox(
+    return PrimaryButton(
+      text: 'Опубликовать',
+      onPressed: _submitPost,
       width: 181,
       height: 40,
-      child: ElevatedButton(
-        onPressed: (_canPublish && !_loading) ? _submitPost : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _canPublish
-              ? AppColors.brandPrimary
-              : AppColors.disabledBg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-          ),
-        ),
-        child: _loading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.surface,
-                ),
-              )
-            : const Text(
-                'Опубликовать',
-                style: TextStyle(color: AppColors.surface),
-              ),
-      ),
+      isLoading: _loading,
+      enabled: _canPublish,
     );
   }
 
   // 🔹 Отправка поста на API
   Future<void> _submitPost() async {
-    if (_loading) return;
+    if (_loading || !_canPublish) return;
     final text = _descController.text.trim();
-    if (_images.isEmpty && text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Добавьте текст или вложения')),
-      );
-      return;
-    }
 
     setState(() => _loading = true);
     final api = ApiService();

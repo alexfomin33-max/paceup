@@ -57,6 +57,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
   late final TextEditingController _descController = TextEditingController(
     text: widget.initialText,
   );
+  final FocusNode _descFocusNode = FocusNode();
 
   bool _canSave = false; // активность кнопки «Сохранить»
   bool _loading = false; // индикатор отправки
@@ -65,12 +66,14 @@ class _EditPostScreenState extends State<EditPostScreen> {
   void initState() {
     super.initState();
     _descController.addListener(_updateSaveState);
+    _descFocusNode.addListener(_updateSaveState);
     _updateSaveState();
   }
 
   @override
   void dispose() {
     _descController.dispose();
+    _descFocusNode.dispose();
     super.dispose();
   }
 
@@ -145,7 +148,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
                 // 🔹 Описание
                 Expanded(child: _descriptionInput()),
@@ -327,24 +330,45 @@ class _EditPostScreenState extends State<EditPostScreen> {
     );
   }
 
-  // Поле описания
+  // 🔹 Поле описания с динамическим лейблом
   Widget _descriptionInput() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
-      child: TextField(
-        controller: _descController,
-        expands: true,
-        maxLines: null,
-        minLines: null,
-        decoration: const InputDecoration.collapsed(
-          hintText: 'Обновите описание…',
-          hintStyle: AppTextStyles.h14w4Place,
+    // ── определяем, какой лейбл показывать
+    final bool hasText = _descController.text.trim().isNotEmpty;
+    final bool isFocused = _descFocusNode.hasFocus;
+    final String labelText = (hasText || isFocused)
+        ? 'Описание поста'
+        : 'Обновите описание';
+
+    return TextField(
+      controller: _descController,
+      focusNode: _descFocusNode,
+      expands: true, // 🔹 растягивается по высоте
+      maxLines: null,
+      minLines: null,
+      textAlignVertical: TextAlignVertical.top, // 🔹 текст всегда сверху
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: AppTextStyles
+            .h14w4Sec, // 🔹 стиль лейбла, когда он внутри поля (нет текста)
+        floatingLabelStyle: TextStyle(
+          color: AppColors.textSecondary,
+        ), // 🔹 цвет лейбла, когда он всплывает (фокус или есть текст)
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
+        alignLabelWithHint: true, // 🔹 лейбл выравнивается с hintText
+        filled: true,
+        fillColor: AppColors.surface,
+        contentPadding: const EdgeInsets.all(12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
         ),
       ),
     );
@@ -358,6 +382,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
       width: 181,
       height: 44,
       isLoading: _loading,
+      enabled: _canSave,
     );
   }
 

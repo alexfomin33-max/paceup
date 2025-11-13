@@ -173,7 +173,10 @@ class SkillCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Уровень слева + счётчик справа (над прогрессом)
+                // Прогресс-бар
+                _SkillProgressBar(percent: percent),
+                const SizedBox(height: 6),
+                // Уровень слева + счётчик справа
                 Row(
                   children: [
                     Expanded(
@@ -198,9 +201,6 @@ class SkillCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                // Прогресс-бар
-                _SkillProgressBar(percent: percent),
               ],
             ),
           ),

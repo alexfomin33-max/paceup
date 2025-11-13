@@ -86,7 +86,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
           itemBuilder: (context, i) {
             final n = _items[i];
-            return Padding(
+            final item = Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,6 +126,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ],
               ),
             );
+
+            // ─── Нижняя граница под самой последней карточкой ───
+            final isLastVisible = i == _items.length - 1;
+            if (isLastVisible) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  item,
+                  const Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: AppColors.border,
+                  ),
+                ],
+              );
+            }
+
+            return item;
           },
         ),
       ),
