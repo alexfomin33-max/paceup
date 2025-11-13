@@ -27,7 +27,7 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
   File? _imageFile;
   final _picker = ImagePicker();
   bool _isLoading = false;
-  
+
   // Для автодополнения
   final ApiService _api = ApiService();
 
@@ -50,10 +50,7 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
     try {
       final data = await _api.post(
         '/search_equipment_brands.php',
-        body: {
-          'query': query,
-          'type': 'boots',
-        },
+        body: {'query': query, 'type': 'boots'},
       );
 
       if (data['success'] == true) {
@@ -81,11 +78,7 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
     try {
       final data = await _api.post(
         '/search_equipment_models.php',
-        body: {
-          'brand': brand,
-          'query': query,
-          'type': 'boots',
-        },
+        body: {'brand': brand, 'query': query, 'type': 'boots'},
       );
 
       if (data['success'] == true) {
@@ -123,16 +116,16 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
     final kmStr = _kmCtrl.text.trim();
 
     if (brand.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Введите бренд')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Введите бренд')));
       return;
     }
 
     if (model.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Введите модель')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Введите модель')));
       return;
     }
 
@@ -141,9 +134,9 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
     if (kmStr.isNotEmpty) {
       final parsedKm = int.tryParse(kmStr);
       if (parsedKm == null || parsedKm < 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Некорректная дистанция')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Некорректная дистанция')));
         return;
       }
       km = parsedKm;
@@ -208,16 +201,16 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
       } else {
         final errorMsg = data['message'] ?? 'Ошибка при сохранении';
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMsg)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(errorMsg)));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
       }
     } finally {
       if (mounted) {
@@ -233,7 +226,7 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
     // Переменная для хранения выбранной даты, объявлена вне builder
     // чтобы сохраняться между перестроениями
     DateTime selectedDate = _inUseFrom;
-    
+
     await showCupertinoModalPopup(
       context: context,
       builder: (popupContext) {
@@ -330,10 +323,13 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
                   fit: StackFit.expand,
                   children: [
                     Center(
-                      child: Image.asset(
-                        'assets/add_sneakers.png',
-                        width: 150,
-                        fit: BoxFit.contain,
+                      child: Opacity(
+                        opacity: 0.5,
+                        child: Image.asset(
+                          'assets/add_boots.png',
+                          width: 150,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                     // Отображение выбранного изображения или заглушки
@@ -427,7 +423,8 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
-                        color: AppColors.textSecondary, // правые значения серым
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -447,15 +444,21 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 25),
 
         // ─────────────────── Кнопка «Сохранить» (унифицированная) ───────────────────
         Center(
-          child: PrimaryButton(
-            text: 'Сохранить',
-            onPressed: _saveEquipment,
-            isLoading: _isLoading,
-            width: 220, // ← единая ширина, как у «Пригласить»
+          child: ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _brandCtrl,
+            builder: (context, brandValue, child) {
+              return PrimaryButton(
+                text: 'Сохранить',
+                onPressed: _saveEquipment,
+                isLoading: _isLoading,
+                enabled: brandValue.text.trim().isNotEmpty,
+                width: 220, // ← единая ширина, как у «Пригласить»
+              );
+            },
           ),
         ),
       ],
@@ -535,15 +538,15 @@ class _RightTextFieldState extends State<_RightTextField> {
         hintStyle: const TextStyle(
           fontFamily: 'Inter',
           fontSize: 14,
-          color: AppColors.textSecondary,
+          color: AppColors.textPlaceholder,
         ),
       ),
       style: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 14, // 14 pt
-        color: AppColors.textSecondary, // правые значения серым
+        color: AppColors.textPrimary,
+        fontWeight: FontWeight.w600,
       ),
     );
   }
 }
-

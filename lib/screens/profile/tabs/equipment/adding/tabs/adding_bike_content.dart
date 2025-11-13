@@ -24,7 +24,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
   File? _imageFile;
   final _picker = ImagePicker();
   bool _isLoading = false;
-  
+
   // Для автодополнения
   final ApiService _api = ApiService();
 
@@ -47,10 +47,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
     try {
       final data = await _api.post(
         '/search_equipment_brands.php',
-        body: {
-          'query': query,
-          'type': 'bike',
-        },
+        body: {'query': query, 'type': 'bike'},
       );
 
       if (data['success'] == true) {
@@ -78,11 +75,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
     try {
       final data = await _api.post(
         '/search_equipment_models.php',
-        body: {
-          'brand': brand,
-          'query': query,
-          'type': 'bike',
-        },
+        body: {'brand': brand, 'query': query, 'type': 'bike'},
       );
 
       if (data['success'] == true) {
@@ -101,7 +94,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
   Future<void> _pickDate() async {
     // Переменная для хранения выбранной даты, объявлена вне builder
     DateTime selectedDate = _inUseFrom;
-    
+
     await showCupertinoModalPopup(
       context: context,
       builder: (popupContext) {
@@ -185,16 +178,16 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
     final kmStr = _kmCtrl.text.trim();
 
     if (brand.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Введите бренд')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Введите бренд')));
       return;
     }
 
     if (model.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Введите модель')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Введите модель')));
       return;
     }
 
@@ -203,9 +196,9 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
     if (kmStr.isNotEmpty) {
       final parsedKm = int.tryParse(kmStr);
       if (parsedKm == null || parsedKm < 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Некорректная дистанция')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Некорректная дистанция')));
         return;
       }
       km = parsedKm;
@@ -270,16 +263,16 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
       } else {
         final errorMsg = data['message'] ?? 'Ошибка при сохранении';
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMsg)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(errorMsg)));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
       }
     } finally {
       if (mounted) {
@@ -314,10 +307,13 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
                   fit: StackFit.expand,
                   children: [
                     Center(
-                      child: Image.asset(
-                        'assets/add_bike.png',
-                        width: 150,
-                        fit: BoxFit.contain,
+                      child: Opacity(
+                        opacity: 0.5,
+                        child: Image.asset(
+                          'assets/add_bike.png',
+                          width: 150,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                     // Отображение выбранного изображения или заглушки
@@ -410,7 +406,8 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
-                        color: AppColors.textSecondary, // правые значения серым
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -430,15 +427,21 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 25),
 
         // ─────────────── Кнопка «Сохранить» — глобальный PrimaryButton ───────────────
         Center(
-          child: PrimaryButton(
-            text: 'Сохранить',
-            onPressed: _saveEquipment,
-            isLoading: _isLoading,
-            width: 220, // унифицированная ширина, как и в кроссовках
+          child: ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _brandCtrl,
+            builder: (context, brandValue, child) {
+              return PrimaryButton(
+                text: 'Сохранить',
+                onPressed: _saveEquipment,
+                isLoading: _isLoading,
+                enabled: brandValue.text.trim().isNotEmpty,
+                width: 220, // унифицированная ширина, как и в кроссовках
+              );
+            },
           ),
         ),
       ],
@@ -514,13 +517,14 @@ class _RightTextFieldState extends State<_RightTextField> {
         hintStyle: const TextStyle(
           fontFamily: 'Inter',
           fontSize: 14,
-          color: AppColors.textSecondary,
+          color: AppColors.textPlaceholder,
         ),
       ),
       style: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 14,
-        color: AppColors.textSecondary,
+        color: AppColors.textPrimary,
+        fontWeight: FontWeight.w600,
       ),
     );
   }

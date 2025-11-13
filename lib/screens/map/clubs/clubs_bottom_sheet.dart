@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/transparent_route.dart';
@@ -26,7 +27,7 @@ class ClubsBottomSheet extends StatelessWidget {
       top: false,
       child: Container(
         decoration: const BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.background,
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppRadius.lg),
           ),
@@ -54,17 +55,12 @@ class ClubsBottomSheet extends StatelessWidget {
                 child: Center(child: Text(title, style: AppTextStyles.h17w6)),
               ),
               const SizedBox(height: 12),
-              Container(height: 1, color: AppColors.border),
-              const SizedBox(height: 6),
 
               // контент — отдаем прокрутку на откуп дочернему виджету
               // чтобы списки могли лениво строиться без двойного скролла
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 2,
-                    vertical: 2,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 0),
                   child: child,
                 ),
               ),
@@ -148,8 +144,8 @@ class ClubsListFromApi extends StatelessWidget {
       }
     }();
 
-    // ───────────────────── Строка карточки клуба ─────────────────────
-    Widget cardRow({
+    // ───────────────────── Карточка клуба ─────────────────────
+    Widget clubCard({
       required String? logoUrl,
       required String title,
       required String subtitle,
@@ -175,49 +171,84 @@ class ClubsListFromApi extends StatelessWidget {
                 errorWidget: (_, __, ___) => Container(
                   width: 80,
                   height: 55,
-                  color: AppColors.border,
-                  child: const Icon(Icons.broken_image, size: 24),
+                  color: AppColors.skeletonBase,
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    CupertinoIcons.photo,
+                    size: 20,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               )
             : Container(
                 width: 80,
                 height: 55,
-                color: AppColors.border,
-                child: const Icon(Icons.image, size: 24),
+                color: AppColors.skeletonBase,
+                alignment: Alignment.center,
+                child: const Icon(
+                  CupertinoIcons.photo,
+                  size: 20,
+                  color: AppColors.textSecondary,
+                ),
               ),
       );
 
-      final row = Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          imageWidget,
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h14w6,
-                ),
-                const SizedBox(height: 6),
-                Text(subtitle, style: AppTextStyles.h13w4),
-              ],
+      final content = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            imageWidget,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.h14w6,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.h13w4,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
 
-      if (onTap == null) return row;
+      final card = Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: AppColors.border, width: 0.5),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadowSoft,
+              offset: Offset(0, 1),
+              blurRadius: 1,
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: content,
+      );
+
+      if (onTap == null) return card;
 
       return Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
           onTap: onTap,
-          child: row,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          child: card,
         ),
       );
     }
@@ -227,17 +258,16 @@ class ClubsListFromApi extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
       physics: const BouncingScrollPhysics(),
       itemCount: clubs.length,
-      separatorBuilder: (_, __) => const _ClubsDivider(),
+      separatorBuilder: (_, __) => const SizedBox(height: 2),
       itemBuilder: (context, index) {
         final club = clubs[index] as Map<String, dynamic>;
         final clubId = club['id'] as int?;
         final name = club['name'] as String? ?? '';
         final logoUrl = club['logo_url'] as String?;
-        final city = club['city'] as String? ?? '';
         final membersCount = club['members_count'] as int? ?? 0;
-        final subtitle = '$city · Участников: $membersCount';
+        final subtitle = 'Участников: $membersCount';
 
-        final row = cardRow(
+        return clubCard(
           logoUrl: logoUrl,
           title: name,
           subtitle: subtitle,
@@ -251,25 +281,7 @@ class ClubsListFromApi extends StatelessWidget {
                 }
               : null,
         );
-
-        // Нижняя граница под самой последней карточкой
-        if (index == clubs.length - 1) {
-          return Column(children: [row, const _ClubsDivider()]);
-        }
-
-        return row;
       },
-    );
-  }
-}
-
-class _ClubsDivider extends StatelessWidget {
-  const _ClubsDivider();
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
-      child: Divider(height: 1, thickness: 0.5, color: AppColors.border),
     );
   }
 }

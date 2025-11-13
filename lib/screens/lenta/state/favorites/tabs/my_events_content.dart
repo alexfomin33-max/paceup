@@ -13,7 +13,6 @@ class _MyEventsContentState extends State<MyEventsContent> {
   // Текущий месяц (по умолчанию июнь 2025 — как в макете)
   DateTime month = DateTime(2025, 6, 1);
   int? selectedDay; // выделенный день
-  static const marked = {10, 24}; // кружки-метки, как на скрине
 
   static const _items = <_FavEvent>[
     _FavEvent(
@@ -54,6 +53,20 @@ class _MyEventsContentState extends State<MyEventsContent> {
       month = DateTime(month.year, month.month + 1, 1);
       selectedDay = null;
     });
+  }
+
+  // ── Получение множества дней с событиями для текущего месяца
+  Set<int> _getMarkedDays() {
+    final markedDays = <int>{};
+    for (final event in _items) {
+      final eventDate = _parseDate(event.dateText);
+      if (eventDate != null &&
+          eventDate.year == month.year &&
+          eventDate.month == month.month) {
+        markedDays.add(eventDate.day);
+      }
+    }
+    return markedDays;
   }
 
   @override
@@ -97,7 +110,7 @@ class _MyEventsContentState extends State<MyEventsContent> {
             child: _InlineCalendar(
               month: month,
               selectedDay: selectedDay,
-              hasDots: marked,
+              hasDots: _getMarkedDays(),
               onDayTap: (d) => setState(() => selectedDay = d),
             ),
           ),
@@ -418,4 +431,45 @@ String _monthTitle(DateTime m) {
   ];
   final s = '${months[m.month - 1]} ${m.year}';
   return '${s[0].toUpperCase()}${s.substring(1)}';
+}
+
+// ── Парсинг даты из строки формата "10 июня 2025"
+DateTime? _parseDate(String dateText) {
+  const monthNames = [
+    'января',
+    'февраля',
+    'марта',
+    'апреля',
+    'мая',
+    'июня',
+    'июля',
+    'августа',
+    'сентября',
+    'октября',
+    'ноября',
+    'декабря',
+  ];
+
+  // Парсим строку вида "10 июня 2025"
+  final parts = dateText.trim().split(' ');
+  if (parts.length != 3) return null;
+
+  final dayStr = parts[0];
+  final monthStr = parts[1].toLowerCase();
+  final yearStr = parts[2];
+
+  final day = int.tryParse(dayStr);
+  if (day == null) return null;
+
+  final monthIndex = monthNames.indexWhere((m) => m == monthStr);
+  if (monthIndex == -1) return null;
+
+  final year = int.tryParse(yearStr);
+  if (year == null) return null;
+
+  try {
+    return DateTime(year, monthIndex + 1, day);
+  } catch (_) {
+    return null;
+  }
 }
