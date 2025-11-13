@@ -97,6 +97,8 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                     decoration: InputDecoration(
                       labelText: 'Текущий пароль',
                       errorText: _error,
+                      filled: true,
+                      fillColor: AppColors.surface,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureOldPassword
@@ -151,6 +153,8 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                   decoration: InputDecoration(
                     labelText: widget.hasPassword ? 'Новый пароль' : 'Пароль',
                     hintText: 'Минимум 6 символов',
+                    filled: true,
+                    fillColor: AppColors.surface,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureNewPassword
@@ -207,6 +211,8 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                   autocorrect: false,
                   decoration: InputDecoration(
                     labelText: 'Подтвердите пароль',
+                    filled: true,
+                    fillColor: AppColors.surface,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword

@@ -98,6 +98,8 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
                     labelText: 'Телефон',
                     hintText: '+7 (999) 123-45-67',
                     errorText: _error,
+                    filled: true,
+                    fillColor: AppColors.surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: const BorderSide(color: AppColors.border),

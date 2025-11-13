@@ -96,6 +96,8 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
                     labelText: 'E-mail',
                     hintText: 'example@mail.ru',
                     errorText: _error,
+                    filled: true,
+                    fillColor: AppColors.surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: const BorderSide(color: AppColors.border),
