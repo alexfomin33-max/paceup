@@ -334,20 +334,26 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
                     ),
                     // Отображение выбранного изображения или заглушки
                     if (_imageFile != null)
-                      Positioned.fill(
+                      Center(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(AppRadius.lg),
-                          child: Image.file(
-                            _imageFile!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Center(
-                                child: Icon(
-                                  Icons.error_outline,
-                                  color: AppColors.textSecondary,
-                                ),
-                              );
-                            },
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: 240,
+                              maxHeight: 140,
+                            ),
+                            child: Image.file(
+                              _imageFile!,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Icon(
+                                    Icons.error_outline,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),

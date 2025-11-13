@@ -98,10 +98,12 @@ class MainTabData {
     for (final e in (j['shoes'] as List? ?? const [])) {
       final m = e as Map<String, dynamic>;
       final stats = (m['stats'] as Map?)?.cast<String, dynamic>() ?? const {};
+      // Используем изображение из базы данных, если оно есть и не пустое
+      final imageUrl = m['image'] as String?;
       shoes.add(
         GearItem(
           title: m['title'] as String? ?? '',
-          imageAsset: m['image'] as String? ?? 'assets/Asics.png',
+          imageAsset: (imageUrl != null && imageUrl.isNotEmpty) ? imageUrl : '',
           mileage: (stats['mileage'] as String?) ?? '0 км',
           paceOrSpeed:
               (stats['pace'] as String?) ?? (stats['speed'] as String?) ?? '-',
@@ -114,10 +116,12 @@ class MainTabData {
     for (final e in (j['bikes'] as List? ?? const [])) {
       final m = e as Map<String, dynamic>;
       final stats = (m['stats'] as Map?)?.cast<String, dynamic>() ?? const {};
+      // Используем изображение из базы данных, если оно есть и не пустое
+      final imageUrl = m['image'] as String?;
       bikes.add(
         GearItem(
           title: m['title'] as String? ?? '',
-          imageAsset: m['image'] as String? ?? 'assets/bicycle.png',
+          imageAsset: (imageUrl != null && imageUrl.isNotEmpty) ? imageUrl : '',
           mileage: (stats['mileage'] as String?) ?? '0 км',
           paceOrSpeed:
               (stats['speed'] as String?) ?? (stats['pace'] as String?) ?? '-',

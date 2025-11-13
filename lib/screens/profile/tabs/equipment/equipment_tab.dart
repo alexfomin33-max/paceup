@@ -293,7 +293,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
             ),
           ),
         ],
-        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+        const SliverToBoxAdapter(child: SizedBox(height: 25)),
 
         // ─── Кнопка "Добавить снаряжение"
         SliverToBoxAdapter(

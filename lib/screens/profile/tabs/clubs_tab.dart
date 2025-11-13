@@ -113,7 +113,6 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
 
   /// Строит контент с клубами
   Widget _buildClubsContent(AsyncValue<List<Club>> clubsAsync) {
-
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
@@ -209,7 +208,7 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
           ),
         ),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 16)),
+        const SliverToBoxAdapter(child: SizedBox(height: 25)),
 
         // Кнопка "Найти клуб" (теперь глобальный PrimaryButton)
         SliverToBoxAdapter(
