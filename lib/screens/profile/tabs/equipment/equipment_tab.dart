@@ -24,7 +24,7 @@ class _GearItem {
   final bool isMain;
   final bool showOnMain;
   final String? imageUrl;
-  
+
   const _GearItem({
     required this.id,
     required this.equipUserId,
@@ -35,7 +35,7 @@ class _GearItem {
     required this.showOnMain,
     this.imageUrl,
   });
-  
+
   String get value => '$dist км';
 }
 
@@ -54,7 +54,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
   bool _isLoading = true;
   String? _error;
   int? _currentUserId;
-  
+
   // Флаги "На главном экране" для кроссовок и велосипедов
   // Используем значение из первого элемента, если есть
   bool _showShoesOnMain = false;
@@ -75,7 +75,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
     try {
       final authService = AuthService();
       final userId = await authService.getUserId();
-      
+
       if (userId == null) {
         setState(() {
           _error = 'Пользователь не авторизован';
@@ -123,8 +123,12 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
           }).toList();
 
           // Устанавливаем флаги "На главном экране" из первого элемента
-          _showShoesOnMain = _boots.isNotEmpty ? _boots.first.showOnMain : false;
-          _showBikesOnMain = _bikes.isNotEmpty ? _bikes.first.showOnMain : false;
+          _showShoesOnMain = _boots.isNotEmpty
+              ? _boots.first.showOnMain
+              : false;
+          _showBikesOnMain = _bikes.isNotEmpty
+              ? _bikes.first.showOnMain
+              : false;
 
           _isLoading = false;
         });
@@ -199,9 +203,9 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
         }
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка при обновлении: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Ошибка при обновлении: $e')));
     }
   }
 
@@ -210,9 +214,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
     super.build(context);
 
     if (_isLoading) {
-      return const Center(
-        child: CupertinoActivityIndicator(radius: 16),
-      );
+      return const Center(child: CupertinoActivityIndicator(radius: 16));
     }
 
     if (_error != null) {
@@ -260,7 +262,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
                   ),
                 );
               },
-              child: _GearListCard(items: _boots),
+              child: _GearListCard(items: _boots, isBoots: true),
             ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
@@ -287,7 +289,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
                   ),
                 );
               },
-              child: _GearListCard(items: _bikes),
+              child: _GearListCard(items: _bikes, isBoots: false),
             ),
           ),
         ],
@@ -368,7 +370,8 @@ class _SectionHeaderWithToggle extends StatelessWidget {
 // ───────────────────── Карточка-список с элементами снаряжения
 class _GearListCard extends StatelessWidget {
   final List<_GearItem> items;
-  const _GearListCard({required this.items});
+  final bool isBoots;
+  const _GearListCard({required this.items, required this.isBoots});
 
   @override
   Widget build(BuildContext context) {
@@ -397,7 +400,7 @@ class _GearListCard extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
                   child: Row(
                     children: [
-                      // Изображение или заглушка
+                      // Изображение или дефолтная картинка
                       ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         child: it.imageUrl != null && it.imageUrl!.isNotEmpty
@@ -407,28 +410,33 @@ class _GearListCard extends StatelessWidget {
                                 height: 40,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
-                                  return Container(
+                                  // При ошибке загрузки показываем дефолтное изображение
+                                  final image = Image.asset(
+                                    isBoots
+                                        ? 'assets/add_boots.png'
+                                        : 'assets/add_bike.png',
                                     width: 64,
                                     height: 40,
-                                    color: AppColors.border,
-                                    child: const Icon(
-                                      CupertinoIcons.photo,
-                                      color: AppColors.textSecondary,
-                                      size: 20,
-                                    ),
+                                    fit: BoxFit.cover,
                                   );
+                                  return isBoots
+                                      ? Opacity(opacity: 0.9, child: image)
+                                      : image;
                                 },
                               )
-                            : Container(
-                                width: 64,
-                                height: 40,
-                                color: AppColors.border,
-                                child: const Icon(
-                                  CupertinoIcons.photo,
-                                  color: AppColors.textSecondary,
-                                  size: 20,
-                                ),
-                              ),
+                            : () {
+                                final image = Image.asset(
+                                  isBoots
+                                      ? 'assets/add_boots.png'
+                                      : 'assets/add_bike.png',
+                                  width: 64,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                );
+                                return isBoots
+                                    ? Opacity(opacity: 0.9, child: image)
+                                    : image;
+                              }(),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -442,7 +450,7 @@ class _GearListCard extends StatelessWidget {
                               style: const TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 14,
-                                fontWeight: FontWeight.w400,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                             if (it.brand.isNotEmpty)
@@ -453,7 +461,7 @@ class _GearListCard extends StatelessWidget {
                                 style: const TextStyle(
                                   fontFamily: 'Inter',
                                   fontSize: 12,
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                           ],
@@ -465,7 +473,8 @@ class _GearListCard extends StatelessWidget {
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
-                          fontWeight: FontWeight.w400,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
