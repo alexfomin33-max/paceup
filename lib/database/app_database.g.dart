@@ -85,6 +85,17 @@ class $CachedActivitiesTable extends CachedActivities
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _lentaDateMeta = const VerificationMeta(
+    'lentaDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lentaDate = GeneratedColumn<DateTime>(
+    'lenta_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _userNameMeta = const VerificationMeta(
     'userName',
   );
@@ -271,6 +282,7 @@ class $CachedActivitiesTable extends CachedActivities
     type,
     dateStart,
     dateEnd,
+    lentaDate,
     userName,
     userAvatar,
     userGroup,
@@ -345,6 +357,12 @@ class $CachedActivitiesTable extends CachedActivities
       context.handle(
         _dateEndMeta,
         dateEnd.isAcceptableOrUnknown(data['date_end']!, _dateEndMeta),
+      );
+    }
+    if (data.containsKey('lenta_date')) {
+      context.handle(
+        _lentaDateMeta,
+        lentaDate.isAcceptableOrUnknown(data['lenta_date']!, _lentaDateMeta),
       );
     }
     if (data.containsKey('user_name')) {
@@ -467,6 +485,10 @@ class $CachedActivitiesTable extends CachedActivities
         DriftSqlType.dateTime,
         data['${effectivePrefix}date_end'],
       ),
+      lentaDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}lenta_date'],
+      ),
       userName: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}user_name'],
@@ -569,6 +591,7 @@ class CachedActivity extends DataClass implements Insertable<CachedActivity> {
   final String type;
   final DateTime? dateStart;
   final DateTime? dateEnd;
+  final DateTime? lentaDate;
   final String userName;
   final String userAvatar;
   final int userGroup;
@@ -593,6 +616,7 @@ class CachedActivity extends DataClass implements Insertable<CachedActivity> {
     required this.type,
     this.dateStart,
     this.dateEnd,
+    this.lentaDate,
     required this.userName,
     required this.userAvatar,
     required this.userGroup,
@@ -623,6 +647,9 @@ class CachedActivity extends DataClass implements Insertable<CachedActivity> {
     }
     if (!nullToAbsent || dateEnd != null) {
       map['date_end'] = Variable<DateTime>(dateEnd);
+    }
+    if (!nullToAbsent || lentaDate != null) {
+      map['lenta_date'] = Variable<DateTime>(lentaDate);
     }
     map['user_name'] = Variable<String>(userName);
     map['user_avatar'] = Variable<String>(userAvatar);
@@ -676,6 +703,9 @@ class CachedActivity extends DataClass implements Insertable<CachedActivity> {
       dateEnd: dateEnd == null && nullToAbsent
           ? const Value.absent()
           : Value(dateEnd),
+      lentaDate: lentaDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lentaDate),
       userName: Value(userName),
       userAvatar: Value(userAvatar),
       userGroup: Value(userGroup),
@@ -710,6 +740,7 @@ class CachedActivity extends DataClass implements Insertable<CachedActivity> {
       type: serializer.fromJson<String>(json['type']),
       dateStart: serializer.fromJson<DateTime?>(json['dateStart']),
       dateEnd: serializer.fromJson<DateTime?>(json['dateEnd']),
+      lentaDate: serializer.fromJson<DateTime?>(json['lentaDate']),
       userName: serializer.fromJson<String>(json['userName']),
       userAvatar: serializer.fromJson<String>(json['userAvatar']),
       userGroup: serializer.fromJson<int>(json['userGroup']),
@@ -739,6 +770,7 @@ class CachedActivity extends DataClass implements Insertable<CachedActivity> {
       'type': serializer.toJson<String>(type),
       'dateStart': serializer.toJson<DateTime?>(dateStart),
       'dateEnd': serializer.toJson<DateTime?>(dateEnd),
+      'lentaDate': serializer.toJson<DateTime?>(lentaDate),
       'userName': serializer.toJson<String>(userName),
       'userAvatar': serializer.toJson<String>(userAvatar),
       'userGroup': serializer.toJson<int>(userGroup),
@@ -766,6 +798,7 @@ class CachedActivity extends DataClass implements Insertable<CachedActivity> {
     String? type,
     Value<DateTime?> dateStart = const Value.absent(),
     Value<DateTime?> dateEnd = const Value.absent(),
+    Value<DateTime?> lentaDate = const Value.absent(),
     String? userName,
     String? userAvatar,
     int? userGroup,
@@ -790,6 +823,7 @@ class CachedActivity extends DataClass implements Insertable<CachedActivity> {
     type: type ?? this.type,
     dateStart: dateStart.present ? dateStart.value : this.dateStart,
     dateEnd: dateEnd.present ? dateEnd.value : this.dateEnd,
+    lentaDate: lentaDate.present ? lentaDate.value : this.lentaDate,
     userName: userName ?? this.userName,
     userAvatar: userAvatar ?? this.userAvatar,
     userGroup: userGroup ?? this.userGroup,
@@ -818,6 +852,7 @@ class CachedActivity extends DataClass implements Insertable<CachedActivity> {
       type: data.type.present ? data.type.value : this.type,
       dateStart: data.dateStart.present ? data.dateStart.value : this.dateStart,
       dateEnd: data.dateEnd.present ? data.dateEnd.value : this.dateEnd,
+      lentaDate: data.lentaDate.present ? data.lentaDate.value : this.lentaDate,
       userName: data.userName.present ? data.userName.value : this.userName,
       userAvatar: data.userAvatar.present
           ? data.userAvatar.value
@@ -863,6 +898,7 @@ class CachedActivity extends DataClass implements Insertable<CachedActivity> {
           ..write('type: $type, ')
           ..write('dateStart: $dateStart, ')
           ..write('dateEnd: $dateEnd, ')
+          ..write('lentaDate: $lentaDate, ')
           ..write('userName: $userName, ')
           ..write('userAvatar: $userAvatar, ')
           ..write('userGroup: $userGroup, ')
@@ -892,6 +928,7 @@ class CachedActivity extends DataClass implements Insertable<CachedActivity> {
     type,
     dateStart,
     dateEnd,
+    lentaDate,
     userName,
     userAvatar,
     userGroup,
@@ -920,6 +957,7 @@ class CachedActivity extends DataClass implements Insertable<CachedActivity> {
           other.type == this.type &&
           other.dateStart == this.dateStart &&
           other.dateEnd == this.dateEnd &&
+          other.lentaDate == this.lentaDate &&
           other.userName == this.userName &&
           other.userAvatar == this.userAvatar &&
           other.userGroup == this.userGroup &&
@@ -946,6 +984,7 @@ class CachedActivitiesCompanion extends UpdateCompanion<CachedActivity> {
   final Value<String> type;
   final Value<DateTime?> dateStart;
   final Value<DateTime?> dateEnd;
+  final Value<DateTime?> lentaDate;
   final Value<String> userName;
   final Value<String> userAvatar;
   final Value<int> userGroup;
@@ -970,6 +1009,7 @@ class CachedActivitiesCompanion extends UpdateCompanion<CachedActivity> {
     this.type = const Value.absent(),
     this.dateStart = const Value.absent(),
     this.dateEnd = const Value.absent(),
+    this.lentaDate = const Value.absent(),
     this.userName = const Value.absent(),
     this.userAvatar = const Value.absent(),
     this.userGroup = const Value.absent(),
@@ -995,6 +1035,7 @@ class CachedActivitiesCompanion extends UpdateCompanion<CachedActivity> {
     required String type,
     this.dateStart = const Value.absent(),
     this.dateEnd = const Value.absent(),
+    this.lentaDate = const Value.absent(),
     required String userName,
     required String userAvatar,
     required int userGroup,
@@ -1027,6 +1068,7 @@ class CachedActivitiesCompanion extends UpdateCompanion<CachedActivity> {
     Expression<String>? type,
     Expression<DateTime>? dateStart,
     Expression<DateTime>? dateEnd,
+    Expression<DateTime>? lentaDate,
     Expression<String>? userName,
     Expression<String>? userAvatar,
     Expression<int>? userGroup,
@@ -1052,6 +1094,7 @@ class CachedActivitiesCompanion extends UpdateCompanion<CachedActivity> {
       if (type != null) 'type': type,
       if (dateStart != null) 'date_start': dateStart,
       if (dateEnd != null) 'date_end': dateEnd,
+      if (lentaDate != null) 'lenta_date': lentaDate,
       if (userName != null) 'user_name': userName,
       if (userAvatar != null) 'user_avatar': userAvatar,
       if (userGroup != null) 'user_group': userGroup,
@@ -1079,6 +1122,7 @@ class CachedActivitiesCompanion extends UpdateCompanion<CachedActivity> {
     Value<String>? type,
     Value<DateTime?>? dateStart,
     Value<DateTime?>? dateEnd,
+    Value<DateTime?>? lentaDate,
     Value<String>? userName,
     Value<String>? userAvatar,
     Value<int>? userGroup,
@@ -1104,6 +1148,7 @@ class CachedActivitiesCompanion extends UpdateCompanion<CachedActivity> {
       type: type ?? this.type,
       dateStart: dateStart ?? this.dateStart,
       dateEnd: dateEnd ?? this.dateEnd,
+      lentaDate: lentaDate ?? this.lentaDate,
       userName: userName ?? this.userName,
       userAvatar: userAvatar ?? this.userAvatar,
       userGroup: userGroup ?? this.userGroup,
@@ -1146,6 +1191,9 @@ class CachedActivitiesCompanion extends UpdateCompanion<CachedActivity> {
     }
     if (dateEnd.present) {
       map['date_end'] = Variable<DateTime>(dateEnd.value);
+    }
+    if (lentaDate.present) {
+      map['lenta_date'] = Variable<DateTime>(lentaDate.value);
     }
     if (userName.present) {
       map['user_name'] = Variable<String>(userName.value);
@@ -1218,6 +1266,7 @@ class CachedActivitiesCompanion extends UpdateCompanion<CachedActivity> {
           ..write('type: $type, ')
           ..write('dateStart: $dateStart, ')
           ..write('dateEnd: $dateEnd, ')
+          ..write('lentaDate: $lentaDate, ')
           ..write('userName: $userName, ')
           ..write('userAvatar: $userAvatar, ')
           ..write('userGroup: $userGroup, ')
@@ -2352,6 +2401,7 @@ typedef $$CachedActivitiesTableCreateCompanionBuilder =
       required String type,
       Value<DateTime?> dateStart,
       Value<DateTime?> dateEnd,
+      Value<DateTime?> lentaDate,
       required String userName,
       required String userAvatar,
       required int userGroup,
@@ -2378,6 +2428,7 @@ typedef $$CachedActivitiesTableUpdateCompanionBuilder =
       Value<String> type,
       Value<DateTime?> dateStart,
       Value<DateTime?> dateEnd,
+      Value<DateTime?> lentaDate,
       Value<String> userName,
       Value<String> userAvatar,
       Value<int> userGroup,
@@ -2437,6 +2488,11 @@ class $$CachedActivitiesTableFilterComposer
 
   ColumnFilters<DateTime> get dateEnd => $composableBuilder(
     column: $table.dateEnd,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lentaDate => $composableBuilder(
+    column: $table.lentaDate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2570,6 +2626,11 @@ class $$CachedActivitiesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get lentaDate => $composableBuilder(
+    column: $table.lentaDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get userName => $composableBuilder(
     column: $table.userName,
     builder: (column) => ColumnOrderings(column),
@@ -2683,6 +2744,9 @@ class $$CachedActivitiesTableAnnotationComposer
   GeneratedColumn<DateTime> get dateEnd =>
       $composableBuilder(column: $table.dateEnd, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get lentaDate =>
+      $composableBuilder(column: $table.lentaDate, builder: (column) => column);
+
   GeneratedColumn<String> get userName =>
       $composableBuilder(column: $table.userName, builder: (column) => column);
 
@@ -2795,6 +2859,7 @@ class $$CachedActivitiesTableTableManager
                 Value<String> type = const Value.absent(),
                 Value<DateTime?> dateStart = const Value.absent(),
                 Value<DateTime?> dateEnd = const Value.absent(),
+                Value<DateTime?> lentaDate = const Value.absent(),
                 Value<String> userName = const Value.absent(),
                 Value<String> userAvatar = const Value.absent(),
                 Value<int> userGroup = const Value.absent(),
@@ -2819,6 +2884,7 @@ class $$CachedActivitiesTableTableManager
                 type: type,
                 dateStart: dateStart,
                 dateEnd: dateEnd,
+                lentaDate: lentaDate,
                 userName: userName,
                 userAvatar: userAvatar,
                 userGroup: userGroup,
@@ -2845,6 +2911,7 @@ class $$CachedActivitiesTableTableManager
                 required String type,
                 Value<DateTime?> dateStart = const Value.absent(),
                 Value<DateTime?> dateEnd = const Value.absent(),
+                Value<DateTime?> lentaDate = const Value.absent(),
                 required String userName,
                 required String userAvatar,
                 required int userGroup,
@@ -2869,6 +2936,7 @@ class $$CachedActivitiesTableTableManager
                 type: type,
                 dateStart: dateStart,
                 dateEnd: dateEnd,
+                lentaDate: lentaDate,
                 userName: userName,
                 userAvatar: userAvatar,
                 userGroup: userGroup,

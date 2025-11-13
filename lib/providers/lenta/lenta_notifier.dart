@@ -40,7 +40,8 @@ class LentaNotifier extends StateNotifier<LentaState> {
 
   /// Загрузка активностей через API
   /// 
-  /// Возвращает список, отсортированный по дате (старые сверху)
+  /// Возвращает список, отсортированный по дате из таблицы lenta (новые сверху)
+  /// API уже возвращает данные отсортированными по lenta.dates DESC
   Future<List<Activity>> _loadActivities({
     required int page,
     required int limit,
@@ -57,17 +58,19 @@ class LentaNotifier extends StateNotifier<LentaState> {
         .map(Activity.fromApi)
         .toList();
     
-    // Сортируем по дате: старые сверху (возрастание)
+    // ✅ Сортируем по lentaDate (дата из таблицы lenta) - новые сверху
+    // Это обеспечивает единую сортировку для активностей и постов
     activities.sort((a, b) {
-      final dateA = a.dateStart;
-      final dateB = b.dateStart;
+      final dateA = a.lentaDate;
+      final dateB = b.lentaDate;
       
       // Если даты отсутствуют, помещаем в конец
       if (dateA == null && dateB == null) return 0;
       if (dateA == null) return 1;
       if (dateB == null) return -1;
       
-      return dateA.compareTo(dateB);
+      // Сортировка по убыванию (новые сверху)
+      return dateB.compareTo(dateA);
     });
     
     return activities;
@@ -77,7 +80,8 @@ class LentaNotifier extends StateNotifier<LentaState> {
 
   /// Начальная загрузка (первая страница)
   ///
-  /// OFFLINE-FIRST ПОДХОД:
+  /// ✅ КЕШ ОТКЛЮЧЕН (можно быстро вернуть, раскомментировав блок ниже)
+  /// OFFLINE-FIRST ПОДХОД (отключен):
   /// 1. Сразу показываем кэш (0.05 сек) — пользователь видит контент мгновенно
   /// 2. В фоне загружаем свежие данные с сервера (1-3 сек)
   /// 3. Плавно обновляем UI и сохраняем в кэш
@@ -85,6 +89,8 @@ class LentaNotifier extends StateNotifier<LentaState> {
   Future<void> loadInitial() async {
     try {
       // ────────── ШАГ 1: Показываем кэш (мгновенно) ──────────
+      // ✅ ОТКЛЮЧЕНО: раскомментировать для включения кеша
+      /*
       final cachedItems = await _cache.getCachedActivities(
         userId: userId,
         limit: limit,
@@ -103,13 +109,15 @@ class LentaNotifier extends StateNotifier<LentaState> {
         // Если кэша нет — показываем индикатор загрузки
         state = state.copyWith(isRefreshing: true, error: null);
       }
+      */
 
-      // ────────── ШАГ 2: Загружаем свежие данные (фон) ──────────
-      state = state.copyWith(isRefreshing: true);
+      // Показываем индикатор загрузки
+      state = state.copyWith(isRefreshing: true, error: null);
 
+      // ────────── ШАГ 2: Загружаем свежие данные ──────────
       final freshItems = await _loadActivities(page: 1, limit: limit);
 
-      // Сохраняем в кэш
+      // Сохраняем в кэш (для возможного использования в будущем)
       await _cache.cacheActivities(freshItems, userId: userId);
 
       final newSeenIds = freshItems.map(_getId).toSet();
@@ -123,6 +131,8 @@ class LentaNotifier extends StateNotifier<LentaState> {
         error: null,
       );
     } catch (e) {
+      // ✅ ОТКЛЮЧЕНО: fallback на кеш при ошибке
+      /*
       // Если ошибка сети — показываем кэш (offline mode)
       if (state.items.isNotEmpty) {
         state = state.copyWith(
@@ -132,12 +142,15 @@ class LentaNotifier extends StateNotifier<LentaState> {
       } else {
         state = state.copyWith(error: e.toString(), isRefreshing: false);
       }
+      */
+      state = state.copyWith(error: e.toString(), isRefreshing: false);
     }
   }
 
   /// Pull-to-refresh (обновление первой страницы)
   ///
   /// Обновляет данные с сервера и сохраняет в кэш
+  /// ✅ Обновляет существующие элементы свежими данными (включая счетчики комментариев)
   Future<void> refresh() async {
     try {
       state = state.copyWith(isRefreshing: true, error: null);
@@ -147,14 +160,30 @@ class LentaNotifier extends StateNotifier<LentaState> {
       // Сохраняем в кэш
       await _cache.cacheActivities(freshItems, userId: userId);
 
-      // Обновляем только новые элементы, сохраняя старые внизу
-      final existingIds = state.seenIds;
-      final newItems = freshItems.where((item) {
-        return !existingIds.contains(_getId(item));
-      }).toList();
+      // Создаем Map для быстрого поиска свежих элементов по lentaId
+      final freshItemsMap = {
+        for (var item in freshItems) _getId(item): item
+      };
 
-      final updatedItems = [...newItems, ...state.items];
-      final updatedSeenIds = {...state.seenIds, ...newItems.map(_getId)};
+      // Обновляем существующие элементы свежими данными и добавляем новые
+      final updatedItems = <Activity>[];
+      final updatedSeenIds = <int>{};
+
+      // Сначала добавляем свежие элементы (новые и обновленные)
+      for (final freshItem in freshItems) {
+        final itemId = _getId(freshItem);
+        updatedItems.add(freshItem); // Используем свежие данные с сервера
+        updatedSeenIds.add(itemId);
+      }
+
+      // Затем добавляем старые элементы, которых нет в свежих данных
+      for (final oldItem in state.items) {
+        final itemId = _getId(oldItem);
+        if (!freshItemsMap.containsKey(itemId)) {
+          updatedItems.add(oldItem);
+          updatedSeenIds.add(itemId);
+        }
+      }
 
       state = state.copyWith(
         items: updatedItems,

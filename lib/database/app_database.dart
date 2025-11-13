@@ -49,6 +49,7 @@ class CachedActivities extends Table {
   // ────────── Даты (SQL-формат) ──────────
   DateTimeColumn get dateStart => dateTime().nullable()();
   DateTimeColumn get dateEnd => dateTime().nullable()();
+  DateTimeColumn get lentaDate => dateTime().nullable()(); // ✅ Дата из таблицы lenta для сортировки
 
   // ────────── Пользовательские данные ──────────
   TextColumn get userName => text()();
@@ -159,7 +160,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3; // ✅ Увеличена версия для добавления поля lentaDate
 
   // ────────────────────────── MIGRATION STRATEGY ──────────────────────────
 
@@ -170,8 +171,6 @@ class AppDatabase extends _$AppDatabase {
     },
     onUpgrade: (Migrator m, int from, int to) async {
       // Миграция с версии 1 на версию 2: добавляем поля city, age, followers, following
-      // ПРИМЕЧАНИЕ: Эта миграция не будет вызвана, если база была пересоздана выше
-      // Код оставлен для справки и будущих пользователей, обновляющихся с версии 1
       if (from < 2) {
         // Безопасное добавление колонок: игнорируем ошибки если они уже существуют
         for (final col in [
@@ -184,6 +183,28 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(cachedProfiles, col);
           } catch (_) {
             // Колонка уже существует, продолжаем
+          }
+        }
+      }
+      // ✅ Миграция с версии 2 на версию 3: добавляем поле lentaDate и очищаем старые данные
+      if (from < 3) {
+        try {
+          // Очищаем старые данные ленты (они без lentaDate и с неправильной сортировкой)
+          await m.database.customStatement(
+            'DELETE FROM cached_activities;',
+          );
+          // Добавляем колонку lenta_date типа DATETIME
+          await m.database.customStatement(
+            'ALTER TABLE cached_activities ADD COLUMN lenta_date DATETIME;',
+          );
+        } catch (_) {
+          // Если колонка уже существует, просто очищаем данные
+          try {
+            await m.database.customStatement(
+              'DELETE FROM cached_activities;',
+            );
+          } catch (_) {
+            // Игнорируем ошибки
           }
         }
       }
