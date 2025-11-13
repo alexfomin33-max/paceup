@@ -13,7 +13,7 @@ class _MyEventsContentState extends State<MyEventsContent> {
   // Текущий месяц (по умолчанию июнь 2025 — как в макете)
   DateTime month = DateTime(2025, 6, 1);
   int? selectedDay; // выделенный день
-  static const marked = {10, 17, 24}; // кружки-метки, как на скрине
+  static const marked = {10, 24}; // кружки-метки, как на скрине
 
   static const _items = <_FavEvent>[
     _FavEvent(
@@ -291,49 +291,72 @@ class _InlineCalendar extends StatelessWidget {
             // Сетка дней
             Column(
               children: List.generate(rows, (r) {
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(7, (c) {
-                    final cell = r * 7 + c;
-                    final d = cell - lead + 1;
-                    if (d < 1 || d > daysInMonth) {
-                      return const SizedBox(width: 36, height: 36);
-                    }
-                    final isSelected = selectedDay == d;
-                    final marked = hasDots.contains(d);
-                    return GestureDetector(
-                      onTap: () => onDayTap(d),
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.brandPrimary.withValues(alpha: 0.4)
-                              : null,
-                          shape: BoxShape.circle,
-                          border: marked
-                              ? Border.all(
-                                  color: AppColors.brandPrimary,
-                                  width: 1.4,
-                                )
-                              : null,
-                        ),
-                        child: Text(
-                          '$d',
-                          style: TextStyle(
-                            fontWeight: isSelected
-                                ? FontWeight.w400
-                                : FontWeight.w400,
-                            color: (c >= 5)
-                                ? AppColors.error
-                                : AppColors.textPrimary,
+                return Padding(
+                  // Добавляем вертикальный padding для создания промежутка между рядами кружочков
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(7, (c) {
+                      final cell = r * 7 + c;
+                      final d = cell - lead + 1;
+                      if (d < 1 || d > daysInMonth) {
+                        return const SizedBox(width: 36, height: 36);
+                      }
+                      final isSelected = selectedDay == d;
+                      final marked = hasDots.contains(d);
+                      return Padding(
+                        // Добавляем горизонтальный padding для создания промежутка между кружочками
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: GestureDetector(
+                          onTap: () => onDayTap(d),
+                          behavior: HitTestBehavior.opaque,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Внешний контейнер для border (кружочек)
+                              if (marked)
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppColors.brandPrimary,
+                                      width: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              // Внутренний контейнер для фона и текста
+                              Container(
+                                width: 36,
+                                height: 36,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.brandPrimary.withValues(
+                                          alpha: 0.4,
+                                        )
+                                      : null,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  '$d',
+                                  style: TextStyle(
+                                    fontWeight: isSelected
+                                        ? FontWeight.w400
+                                        : FontWeight.w400,
+                                    color: (c >= 5)
+                                        ? AppColors.error
+                                        : AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
+                  ),
                 );
               }),
             ),
