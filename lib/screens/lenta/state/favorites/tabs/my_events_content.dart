@@ -1,45 +1,74 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../theme/app_theme.dart';
+import '../../../../../models/event.dart';
+import '../../../../../providers/events/my_events_provider.dart';
+import '../../../../../providers/services/auth_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 /// Вкладка «Мои события» — карточный список с зазором 2 px
-class MyEventsContent extends StatefulWidget {
+class MyEventsContent extends ConsumerStatefulWidget {
   const MyEventsContent({super.key});
 
   @override
-  State<MyEventsContent> createState() => _MyEventsContentState();
+  ConsumerState<MyEventsContent> createState() => _MyEventsContentState();
 }
 
-class _MyEventsContentState extends State<MyEventsContent> {
-  // Текущий месяц (по умолчанию июнь 2025 — как в макете)
-  DateTime month = DateTime(2025, 6, 1);
+class _MyEventsContentState extends ConsumerState<MyEventsContent> {
+  // Текущий месяц (по умолчанию текущий месяц)
+  late DateTime month;
   int? selectedDay; // выделенный день
+  bool _monthInitialized = false; // флаг, что месяц уже инициализирован из событий
 
-  static const _items = <_FavEvent>[
-    _FavEvent(
-      title: 'Субботний коферан',
-      dateText: '10 июня 2025',
-      members: 33,
-      asset: 'assets/my_event_1.png',
-    ),
-    _FavEvent(
-      title: 'Трейл Изумрудные воды',
-      dateText: '24 июня 2025',
-      members: 475,
-      asset: 'assets/my_event_2.png',
-    ),
-    _FavEvent(
-      title: 'Забег Run With Love',
-      dateText: '13 июля 2025',
-      members: 118,
-      asset: 'assets/my_event_3.png',
-    ),
-    _FavEvent(
-      title: 'Полумарафон «Моя Столица»',
-      dateText: '5 октября 2025',
-      members: 4932,
-      asset: 'assets/my_event_4.png',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    month = DateTime.now();
+    month = DateTime(month.year, month.month, 1);
+  }
+
+  /// Устанавливает месяц календаря на месяц ближайшего события
+  void _updateMonthFromEvents(List<Event> events) {
+    if (_monthInitialized || events.isEmpty) return;
+
+    final now = DateTime.now();
+    DateTime? nearestDate;
+
+    // Ищем ближайшее событие (будущее или самое близкое к текущей дате)
+    for (final event in events) {
+      final eventDate = event.parsedDate;
+      if (eventDate == null) continue;
+
+      // Если это первое событие или оно ближе к текущей дате
+      if (nearestDate == null) {
+        nearestDate = eventDate;
+      } else {
+        // Предпочитаем будущие события
+        final isFuture = eventDate.isAfter(now);
+        final nearestIsFuture = nearestDate.isAfter(now);
+
+        if (isFuture && !nearestIsFuture) {
+          nearestDate = eventDate;
+        } else if (isFuture == nearestIsFuture) {
+          // Если оба в будущем или оба в прошлом - берем ближайшее
+          final diff = (eventDate.difference(now)).abs();
+          final nearestDiff = (nearestDate.difference(now)).abs();
+          if (diff < nearestDiff) {
+            nearestDate = eventDate;
+          }
+        }
+      }
+    }
+
+    final nearest = nearestDate;
+    if (nearest != null) {
+      setState(() {
+        month = DateTime(nearest.year, nearest.month, 1);
+        _monthInitialized = true;
+      });
+    }
+  }
 
   void _prevMonth() {
     setState(() {
@@ -56,10 +85,10 @@ class _MyEventsContentState extends State<MyEventsContent> {
   }
 
   // ── Получение множества дней с событиями для текущего месяца
-  Set<int> _getMarkedDays() {
+  Set<int> _getMarkedDays(List<Event> events) {
     final markedDays = <int>{};
-    for (final event in _items) {
-      final eventDate = _parseDate(event.dateText);
+    for (final event in events) {
+      final eventDate = event.parsedDate;
       if (eventDate != null &&
           eventDate.year == month.year &&
           eventDate.month == month.month) {
@@ -71,79 +100,205 @@ class _MyEventsContentState extends State<MyEventsContent> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        const SliverToBoxAdapter(child: SizedBox(height: 16)),
+    // Получаем текущего пользователя из AuthService
+    final currentUserIdAsync = ref.watch(currentUserIdProvider);
 
-        // ── Пагинация месяцев (вынесена наверх)
-        SliverToBoxAdapter(
-          child: Padding(
-            // оставляю твоё значение; можно подогнать позже
-            padding: const EdgeInsets.symmetric(horizontal: 100),
-            child: Row(
-              children: [
-                _MonthButton(
-                  icon: CupertinoIcons.chevron_left,
-                  onTap: _prevMonth,
-                ),
-                Expanded(
+    // Обрабатываем состояние загрузки userId
+    return currentUserIdAsync.when(
+      data: (userId) {
+        if (userId == null) {
+          // Пользователь не авторизован
+          return const CustomScrollView(
+            physics: BouncingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
                   child: Center(
-                    child: Text(_monthTitle(month), style: AppTextStyles.h15w5),
+                    child: Text(
+                      'Необходима авторизация',
+                      style: AppTextStyles.h14w4,
+                    ),
                   ),
                 ),
-                _MonthButton(
-                  icon: CupertinoIcons.chevron_right,
-                  onTap: _nextMonth,
+              ),
+            ],
+          );
+        }
+
+        // Загружаем события текущего пользователя через provider
+        // Загрузка происходит автоматически при создании провайдера
+        final eventsState = ref.watch(myEventsProvider(userId));
+
+        // Обновляем месяц календаря на месяц ближайшего события
+        if (eventsState.events.isNotEmpty && !eventsState.isLoading) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _updateMonthFromEvents(eventsState.events);
+          });
+        }
+
+        return RefreshIndicator.adaptive(
+          onRefresh: () async {
+            await ref.read(myEventsProvider(userId).notifier).refresh();
+          },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+              // ── Пагинация месяцев (вынесена наверх)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 100),
+                  child: Row(
+                    children: [
+                      _MonthButton(
+                        icon: CupertinoIcons.chevron_left,
+                        onTap: _prevMonth,
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            _monthTitle(month),
+                            style: AppTextStyles.h15w5,
+                          ),
+                        ),
+                      ),
+                      _MonthButton(
+                        icon: CupertinoIcons.chevron_right,
+                        onTap: _nextMonth,
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+              // ── Сам календарь (без заголовка месяца)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _InlineCalendar(
+                    month: month,
+                    selectedDay: selectedDay,
+                    hasDots: _getMarkedDays(eventsState.events),
+                    onDayTap: (d) => setState(() => selectedDay = d),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+              // ── Состояния загрузки и ошибок
+              if (eventsState.isLoading && eventsState.events.isEmpty)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(
+                      child: CupertinoActivityIndicator(),
+                    ),
+                  ),
+                )
+              else if (eventsState.error != null && eventsState.events.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Ошибка: ${eventsState.error}',
+                            style: AppTextStyles.h14w4,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          CupertinoButton(
+                            onPressed: () {
+                              ref
+                                  .read(myEventsProvider(userId).notifier)
+                                  .loadInitial();
+                            },
+                            child: const Text('Повторить'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              else if (eventsState.events.isEmpty)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(
+                      child: Text(
+                        'У вас пока нет событий',
+                        style: AppTextStyles.h14w4,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                // ── Карточный список с зазором 2 px (как в Закладках/Маршрутах)
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  sliver: SliverList.separated(
+                    itemCount: eventsState.events.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 2),
+                    itemBuilder: (context, i) =>
+                        _EventCard(event: eventsState.events[i]),
+                  ),
+                ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            ],
+          ),
+        );
+      },
+      loading: () => const CustomScrollView(
+        physics: BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CupertinoActivityIndicator()),
             ),
           ),
-        ),
-
-        const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-        // ── Сам календарь (без заголовка месяца)
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _InlineCalendar(
-              month: month,
-              selectedDay: selectedDay,
-              hasDots: _getMarkedDays(),
-              onDayTap: (d) => setState(() => selectedDay = d),
+        ],
+      ),
+      error: (err, stack) => CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: Text(
+                  'Ошибка: $err',
+                  style: AppTextStyles.h14w4,
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ),
           ),
-        ),
-
-        const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-        // ── Карточный список с зазором 2 px (как в Закладках/Маршрутах)
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          sliver: SliverList.separated(
-            itemCount: _items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 2),
-            itemBuilder: (context, i) => _EventCard(e: _items[i]),
-          ),
-        ),
-
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-      ],
+        ],
+      ),
     );
   }
 }
 
 class _EventCard extends StatelessWidget {
-  final _FavEvent e;
-  const _EventCard({required this.e});
+  final Event event;
+  const _EventCard({required this.event});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-
         // стиль карточки такой же, как в других вкладках
         border: Border.all(color: AppColors.border, width: 0.5),
         boxShadow: [
@@ -155,7 +310,7 @@ class _EventCard extends StatelessWidget {
           ),
         ],
       ),
-      child: _EventRow(e: e),
+      child: _EventRow(event: event),
     );
   }
 }
@@ -177,8 +332,8 @@ class _MonthButton extends StatelessWidget {
 }
 
 class _EventRow extends StatelessWidget {
-  final _FavEvent e;
-  const _EventRow({required this.e});
+  final Event event;
+  const _EventRow({required this.event});
 
   @override
   Widget build(BuildContext context) {
@@ -190,23 +345,42 @@ class _EventRow extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.xs),
-            child: Image.asset(
-              e.asset,
-              width: 80,
-              height: 55,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
-                width: 80,
-                height: 55,
-                color: AppColors.skeletonBase,
-                alignment: Alignment.center,
-                child: const Icon(
-                  CupertinoIcons.photo,
-                  size: 20,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
+            child: event.logoUrl != null && event.logoUrl!.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: event.logoUrl!,
+                    width: 80,
+                    height: 55,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, __, ___) => Container(
+                      width: 80,
+                      height: 55,
+                      color: AppColors.skeletonBase,
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        CupertinoIcons.photo,
+                        size: 20,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    placeholder: (_, __) => Container(
+                      width: 80,
+                      height: 55,
+                      color: AppColors.skeletonBase,
+                      alignment: Alignment.center,
+                      child: const CupertinoActivityIndicator(),
+                    ),
+                  )
+                : Container(
+                    width: 80,
+                    height: 55,
+                    color: AppColors.skeletonBase,
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      CupertinoIcons.photo,
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -214,14 +388,14 @@ class _EventRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  e.title,
+                  event.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.h14w6,
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '${e.dateText}  ·  Участников: ${_fmt(e.members)}',
+                  '${event.dateFormatted}  ·  Участников: ${_fmt(event.participantsCount)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.h13w4,
@@ -233,19 +407,6 @@ class _EventRow extends StatelessWidget {
       ),
     );
   }
-}
-
-class _FavEvent {
-  final String title;
-  final String dateText;
-  final int members;
-  final String asset;
-  const _FavEvent({
-    required this.title,
-    required this.dateText,
-    required this.members,
-    required this.asset,
-  });
 }
 
 class _InlineCalendar extends StatelessWidget {
@@ -433,43 +594,3 @@ String _monthTitle(DateTime m) {
   return '${s[0].toUpperCase()}${s.substring(1)}';
 }
 
-// ── Парсинг даты из строки формата "10 июня 2025"
-DateTime? _parseDate(String dateText) {
-  const monthNames = [
-    'января',
-    'февраля',
-    'марта',
-    'апреля',
-    'мая',
-    'июня',
-    'июля',
-    'августа',
-    'сентября',
-    'октября',
-    'ноября',
-    'декабря',
-  ];
-
-  // Парсим строку вида "10 июня 2025"
-  final parts = dateText.trim().split(' ');
-  if (parts.length != 3) return null;
-
-  final dayStr = parts[0];
-  final monthStr = parts[1].toLowerCase();
-  final yearStr = parts[2];
-
-  final day = int.tryParse(dayStr);
-  if (day == null) return null;
-
-  final monthIndex = monthNames.indexWhere((m) => m == monthStr);
-  if (monthIndex == -1) return null;
-
-  final year = int.tryParse(yearStr);
-  if (year == null) return null;
-
-  try {
-    return DateTime(year, monthIndex + 1, day);
-  } catch (_) {
-    return null;
-  }
-}
