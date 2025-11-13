@@ -91,7 +91,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
           ),
         ),
         PersistentTabConfig(
-          screen: _tabRoot(_navKeys[4], ProfileScreen(userId: widget.userId)),
+          screen: _tabRoot(_navKeys[4], const ProfileScreen()),
           item: ItemConfig(
             icon: const Icon(CupertinoIcons.person, size: navIconSize),
             title: "Профиль",

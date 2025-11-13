@@ -509,8 +509,19 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
       // Добавляем поля формы
       final userId = await authService.getUserId();
+      if (userId == null) {
+        if (!mounted) return;
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ошибка авторизации. Необходимо войти в систему'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
       fields['event_id'] = widget.eventId.toString();
-      fields['user_id'] = userId?.toString() ?? '1';
+      fields['user_id'] = userId.toString();
       fields['name'] = nameCtrl.text.trim();
       fields['activity'] = activity!;
       fields['place'] = placeCtrl.text.trim();

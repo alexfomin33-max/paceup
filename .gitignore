@@ -35,6 +35,7 @@ migrate_working_dir/
 
 # Configuration files with sensitive data
 # lib/config/app_config.dart
+lib/service/auth_service.dart
 
 # Symbolication related
 app.*.symbols
@@ -46,3 +47,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Flutter SDK (should not be in repository)
+../fluttersdk/
+fluttersdk/

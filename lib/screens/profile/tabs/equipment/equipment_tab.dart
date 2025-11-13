@@ -6,6 +6,7 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../service/api_service.dart';
 import '../../../../service/auth_service.dart';
@@ -160,6 +161,11 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
           },
         );
       }
+
+      // Очищаем кэш MainTab, чтобы данные обновились на главной странице профиля
+      final prefs = await SharedPreferences.getInstance();
+      final cacheKey = 'main_tab_$_currentUserId';
+      await prefs.remove(cacheKey);
 
       setState(() {
         if (isBoots) {

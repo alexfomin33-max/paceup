@@ -31,9 +31,55 @@ class MainTab extends StatefulWidget {
   State<MainTab> createState() => _MainTabState();
 }
 
-class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
+class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   // Храним будущий результат загрузки, чтобы не перезагружать при каждом build
   Future<MainTabData>? _future;
+  
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _future = _load(); // первая загрузка при открытии вкладки
+  }
+  
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // При возврате приложения из фона обновляем данные
+    if (state == AppLifecycleState.resumed) {
+      _checkAndReload();
+    }
+  }
+  
+  /// Проверяет, нужно ли обновить данные (если кэш был очищен)
+  Future<void> _checkAndReload() async {
+    if (!mounted) return;
+    
+    final prefs = await SharedPreferences.getInstance();
+    final cacheKey = 'main_tab_${widget.userId}';
+    final cachedJson = prefs.getString(cacheKey);
+    
+    // Если кэш был очищен и Future уже выполнен, принудительно обновляем данные
+    if (cachedJson == null && _future != null) {
+      // Проверяем, что Future уже завершен (чтобы не перезагружать во время загрузки)
+      try {
+        await _future!.timeout(const Duration(milliseconds: 100));
+        // Если Future завершен и кэш очищен, обновляем данные
+        if (mounted) {
+          setState(() {
+            _future = _load(forceRefresh: true);
+          });
+        }
+      } catch (e) {
+        // Future еще выполняется или произошла ошибка - ничего не делаем
+      }
+    }
+  }
 
   void _openShoesView() {
     Navigator.push(
@@ -53,11 +99,6 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _future = _load(); // первая загрузка при открытии вкладки
-  }
 
   @override
   void didUpdateWidget(covariant MainTab oldWidget) {
@@ -66,6 +107,10 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
     // перезапускаем загрузку данных.
     if (oldWidget.userId != widget.userId) {
       _future = _load();
+    } else {
+      // Проверяем кэш при обновлении виджета (например, при возврате на вкладку)
+      // Это нужно для обновления данных после очистки кэша из другой вкладки
+      _checkAndReload();
     }
   }
 
@@ -78,7 +123,7 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin {
       final api = ApiService();
       final jsonMap = await api.post(
         '/user_profile_maintab.php',
-        body: {'userId': '${widget.userId}'},
+        body: {'userId': widget.userId.toString()},
       );
 
       if (jsonMap['ok'] == false) {
