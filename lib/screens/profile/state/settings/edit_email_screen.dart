@@ -32,6 +32,7 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
         _error = null;
       });
     });
+    _focusNode.addListener(() => setState(() {}));
   }
 
   @override
@@ -39,6 +40,11 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
     _emailController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  // ── проверка, заполнено ли поле
+  bool get _isFormValid {
+    return _emailController.text.trim().isNotEmpty;
   }
 
   /// Сохранение нового email
@@ -79,7 +85,7 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.surface,
         appBar: const PaceAppBar(title: 'Почта'),
         body: GestureDetector(
           // Снимаем фокус при тапе вне поля ввода
@@ -103,27 +109,31 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
                     autocorrect: false,
                     decoration: InputDecoration(
                       labelText: 'E-mail',
+                      labelStyle: AppTextStyles.h14w4Sec,
+                      floatingLabelStyle: TextStyle(
+                        color: AppColors.textSecondary,
+                      ),
+                      floatingLabelBehavior: FloatingLabelBehavior.auto,
+                      alignLabelWithHint: true,
                       hintText: 'example@mail.ru',
+                      hintStyle: TextStyle(color: AppColors.textPlaceholder),
                       errorText: _error,
                       filled: true,
-                      fillColor: AppColors.surface,
+                      fillColor: AppColors.background,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                         borderSide: const BorderSide(color: AppColors.border),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                         borderSide: const BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: const BorderSide(
-                          color: AppColors.brandPrimary,
-                          width: 2,
-                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: const BorderSide(color: AppColors.border),
                       ),
                       errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                         borderSide: const BorderSide(color: AppColors.error),
                       ),
                     ),
@@ -150,6 +160,7 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
                       text: 'Сохранить',
                       onPressed: _saveEmail,
                       isLoading: _isLoading,
+                      enabled: _isFormValid,
                       horizontalPadding: 68,
                     ),
                   ),

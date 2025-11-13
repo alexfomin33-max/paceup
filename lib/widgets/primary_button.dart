@@ -4,6 +4,7 @@
 //  • Используется по всему приложению с единым стилем
 //  • Поддерживает фиксированную ширину или "растянуться" на всю строку
 //  • Есть состояние загрузки (isLoading) - блокирует нажатие во время загрузки
+//  • Когда enabled=false: кнопка некликабельна и имеет прозрачность 0.5
 //  • Кнопка всегда активна, валидация полей выполняется при нажатии
 //  • ВАЖНО: везде применяем ваши токены и Inter
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,6 +32,9 @@ class PrimaryButton extends StatelessWidget {
   /// Показать индикатор загрузки и запретить нажатие
   final bool isLoading;
 
+  /// Активна ли кнопка (если false — некликабельна и имеет прозрачность 0.5)
+  final bool enabled;
+
   /// Иконка слева (опционально)
   final Widget? leading;
 
@@ -51,6 +55,7 @@ class PrimaryButton extends StatelessWidget {
     this.width,
     this.height = 44,
     this.isLoading = false,
+    this.enabled = true,
     this.leading,
     this.trailing,
     this.textStyle,
@@ -61,9 +66,6 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     // ── итоговая ширина
     final double? finalWidth = width ?? (expanded ? double.infinity : null);
-
-    // ── если идёт загрузка — блокируем нажатие
-    final bool canPress = !isLoading;
 
     // ── единый контент кнопки: ведущая иконка + текст + хвостовая иконка
     final Widget content = Row(
@@ -102,9 +104,10 @@ class PrimaryButton extends StatelessWidget {
       ],
     );
 
-    // ── сама кнопка (всегда активна, только isLoading может блокировать)
+    // ── сама кнопка (всегда передаём onPressed, чтобы сохранить синий цвет)
+    // ── блокируем нажатия через IgnorePointer когда неактивна
     final Widget button = ElevatedButton(
-      onPressed: canPress ? onPressed : null,
+      onPressed: onPressed, // всегда передаём, чтобы не было серого disabled стиля
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.brandPrimary,
         foregroundColor: AppColors.surface,
@@ -124,6 +127,21 @@ class PrimaryButton extends StatelessWidget {
     );
 
     // ── задаём ширину контейнером-обёрткой
-    return SizedBox(width: finalWidth, height: height, child: button);
+    final Widget sizedButton =
+        SizedBox(width: finalWidth, height: height, child: button);
+
+    // ── если кнопка неактивна — блокируем нажатия и применяем прозрачность 0.5
+    if (!enabled) {
+      return IgnorePointer(
+        child: Opacity(opacity: 0.5, child: sizedButton),
+      );
+    }
+
+    // ── если идёт загрузка — блокируем нажатия, но без прозрачности
+    if (isLoading) {
+      return IgnorePointer(child: sizedButton);
+    }
+
+    return sizedButton;
   }
 }

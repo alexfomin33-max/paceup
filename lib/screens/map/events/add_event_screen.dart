@@ -47,9 +47,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
   // координаты выбранного места
   LatLng? selectedLocation;
 
-  // ── состояние ошибок валидации (какие поля должны быть подсвечены красным)
-  final Set<String> _errorFields = {};
-
   // ── состояние загрузки
   bool _loading = false;
 
@@ -64,20 +61,15 @@ class _AddEventScreenState extends State<AddEventScreen> {
       (placeCtrl.text.trim().isNotEmpty) &&
       (activity != null) &&
       (date != null) &&
-      (time != null);
+      (time != null) &&
+      (selectedLocation != null);
 
   @override
   void initState() {
     super.initState();
     _loadUserClubs(); // ── загружаем клубы пользователя при инициализации
-    nameCtrl.addListener(() {
-      _refresh();
-      _clearFieldError('name'); // ── очищаем ошибку при вводе
-    });
-    placeCtrl.addListener(() {
-      _refresh();
-      _clearFieldError('place'); // ── очищаем ошибку при вводе
-    });
+    nameCtrl.addListener(() => _refresh());
+    placeCtrl.addListener(() => _refresh());
   }
 
   @override
@@ -91,13 +83,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
   }
 
   void _refresh() => setState(() {});
-
-  // ── очистка ошибки для конкретного поля при взаимодействии
-  void _clearFieldError(String fieldName) {
-    if (_errorFields.contains(fieldName)) {
-      setState(() => _errorFields.remove(fieldName));
-    }
-  }
 
   Future<void> _pickLogo() async {
     final x = await picker.pickImage(source: ImageSource.gallery);
@@ -124,7 +109,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
         if (result.address != null && result.address!.isNotEmpty) {
           placeCtrl.text = result.address!;
         }
-        _clearFieldError('place'); // ── очищаем ошибку при выборе места
       });
     }
   }
@@ -143,10 +127,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
     if (ok) {
-      setState(() {
-        date = temp;
-        _clearFieldError('date'); // ── очищаем ошибку при выборе даты
-      });
+      setState(() => date = temp);
     }
   }
 
@@ -170,7 +151,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
     if (ok) {
       setState(() {
         time = TimeOfDay(hour: temp.hour, minute: temp.minute);
-        _clearFieldError('time'); // ── очищаем ошибку при выборе времени
       });
     }
   }
@@ -412,7 +392,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
           // Клуб
           final clubName = template['club_name'] as String?;
-          if (clubName != null && clubName.isNotEmpty && clubs.contains(clubName)) {
+          if (clubName != null &&
+              clubName.isNotEmpty &&
+              clubs.contains(clubName)) {
             createFromClub = true;
             selectedClub = clubName;
             clubCtrl.text = clubName;
@@ -423,15 +405,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
           templateCtrl.text = templateName;
         });
-
-        // Очищаем ошибки валидации
-        _errorFields.clear();
       } else {
         // Если шаблон не найден, показываем сообщение
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Шаблон не найден')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Шаблон не найден')));
         }
       }
     } catch (e) {
@@ -445,37 +424,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
     }
   }
 
-
   Future<void> _submit() async {
-    // ── проверяем все обязательные поля и подсвечиваем незаполненные
-    final Set<String> newErrors = {};
-
-    if (nameCtrl.text.trim().isEmpty) {
-      newErrors.add('name');
-    }
-    if (placeCtrl.text.trim().isEmpty) {
-      newErrors.add('place');
-    }
-    if (activity == null) {
-      newErrors.add('activity');
-    }
-    if (date == null) {
-      newErrors.add('date');
-    }
-    if (time == null) {
-      newErrors.add('time');
-    }
-    if (selectedLocation == null) {
-      newErrors.add('place'); // Помечаем место, т.к. координаты не выбраны
-    }
-
-    setState(() {
-      _errorFields.clear();
-      _errorFields.addAll(newErrors);
-    });
-
-    // ── если есть ошибки — не отправляем форму
-    if (newErrors.isNotEmpty) {
+    // ── проверяем валидность формы (кнопка неактивна, если форма невалидна, но на всякий случай)
+    if (!isFormValid) {
       return;
     }
 
@@ -683,7 +634,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   EventTextField(
                     controller: nameCtrl,
                     label: 'Название события*',
-                    hasError: _errorFields.contains('name'),
                   ),
                   const SizedBox(height: 25),
 
@@ -692,13 +642,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     label: 'Вид активности*',
                     value: activity,
                     items: const ['Бег', 'Велосипед', 'Плавание'],
-                    hasError: _errorFields.contains('activity'),
-                    onChanged: (v) => setState(() {
-                      activity = v;
-                      _clearFieldError(
-                        'activity',
-                      ); // ── очищаем ошибку при выборе
-                    }),
+                    onChanged: (v) => setState(() => activity = v),
                   ),
                   const SizedBox(height: 25),
 
@@ -708,7 +652,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     label: 'Место проведения*',
                     enabled: false,
                     textColorOverride: AppColors.textSecondary,
-                    hasError: _errorFields.contains('place'),
                     trailing: Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: SizedBox(
@@ -740,7 +683,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           label: 'Дата проведения*',
                           valueText: _fmtDate(date),
                           onTap: _pickDateCupertino,
-                          hasError: _errorFields.contains('date'),
                         ),
                       ),
                       const SizedBox(width: 20),
@@ -750,7 +692,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           valueText: _fmtTime(time),
                           icon: CupertinoIcons.time,
                           onTap: _pickTimeCupertino,
-                          hasError: _errorFields.contains('time'),
                         ),
                       ),
                     ],
@@ -761,7 +702,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   EventTextField(
                     controller: descCtrl,
                     label: 'Описание события',
-                    minLines: 8, // ── минимальное количество строк для начальной высоты
+                    minLines:
+                        8, // ── минимальное количество строк для начальной высоты
                     minHeight: 200, // ── минимальная высота в пикселях
                     // maxLines не указываем, чтобы поле могло расти динамически
                   ),
@@ -835,6 +777,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       },
                       expanded: false,
                       isLoading: _loading,
+                      enabled: isFormValid,
                     ),
                   ),
                 ],
@@ -855,11 +798,11 @@ class EventTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final int maxLines;
-  final int? minLines; // ── минимальное количество строк для динамической высоты
+  final int?
+  minLines; // ── минимальное количество строк для динамической высоты
   final double? minHeight; // ── минимальная высота в пикселях
   final bool enabled;
   final Widget? trailing;
-  final bool hasError; // ── состояние ошибки валидации
   final Color? textColorOverride;
 
   const EventTextField({
@@ -871,28 +814,28 @@ class EventTextField extends StatelessWidget {
     this.minHeight,
     this.enabled = true,
     this.trailing,
-    this.hasError = false,
     this.textColorOverride,
   });
 
   @override
   Widget build(BuildContext context) {
-    // цвета/бордеры в зависимости от enabled и hasError
+    // цвета/бордеры в зависимости от enabled
     final textColor =
         textColorOverride ??
         (enabled
             ? AppColors.textPrimary
             : AppColors.textPlaceholder); // «плейсхолдер/disabled»
     final fill = enabled ? AppColors.surface : AppColors.disabled;
-    // ── если есть ошибка — красный бордер, иначе обычный
-    final borderColor = hasError ? AppColors.error : AppColors.border;
+    final borderColor = AppColors.border;
     final disabledBorderColor = AppColors.border.withValues(alpha: 0.6);
 
     // ── создаём TextFormField с поддержкой динамической высоты
     final field = TextFormField(
       controller: controller,
       minLines: minLines, // ── минимальное количество строк
-      maxLines: minLines != null ? null : maxLines, // ── если есть minLines, убираем ограничение maxLines для динамического роста
+      maxLines: minLines != null
+          ? null
+          : maxLines, // ── если есть minLines, убираем ограничение maxLines для динамического роста
       enabled: enabled,
       style: TextStyle(color: textColor, fontFamily: 'Inter', fontSize: 14),
       decoration: InputDecoration(
@@ -906,7 +849,7 @@ class EventTextField extends StatelessWidget {
           vertical: 14,
         ),
 
-        // обычные рамки (с учётом ошибки)
+        // обычные рамки
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: BorderSide(color: borderColor),
@@ -955,7 +898,6 @@ class EventDateField extends StatelessWidget {
   final String valueText;
   final IconData icon;
   final VoidCallback onTap;
-  final bool hasError; // ── состояние ошибки валидации
 
   const EventDateField({
     super.key,
@@ -963,13 +905,11 @@ class EventDateField extends StatelessWidget {
     required this.valueText,
     this.icon = CupertinoIcons.calendar,
     required this.onTap,
-    this.hasError = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    // ── если есть ошибка — красный бордер, иначе обычный
-    final borderColor = hasError ? AppColors.error : AppColors.border;
+    final borderColor = AppColors.border;
 
     return GestureDetector(
       onTap: onTap,
@@ -1023,7 +963,6 @@ class EventDropdownField extends StatelessWidget {
   final List<String> items;
   final Function(String?) onChanged;
   final bool enabled;
-  final bool hasError; // ── состояние ошибки валидации
 
   const EventDropdownField({
     super.key,
@@ -1032,7 +971,6 @@ class EventDropdownField extends StatelessWidget {
     required this.items,
     required this.onChanged,
     this.enabled = true,
-    this.hasError = false,
   });
 
   @override
@@ -1041,8 +979,7 @@ class EventDropdownField extends StatelessWidget {
         ? AppColors.textPrimary
         : AppColors.textPlaceholder;
     final fill = enabled ? AppColors.surface : AppColors.disabled;
-    // ── если есть ошибка — красный бордер, иначе обычный
-    final borderColor = hasError ? AppColors.error : AppColors.border;
+    final borderColor = AppColors.border;
     final disabledBorderColor = AppColors.border.withValues(alpha: 0.6);
 
     return InputDecorator(
@@ -1288,24 +1225,13 @@ class _TemplateLoadBlock extends StatelessWidget {
 
             // Кнопка "Загрузить"
             IntrinsicWidth(
-              child: selectedTemplate != null
-                  ? PrimaryButton(
-                      text: 'Загрузить',
-                      onPressed: onLoad,
-                      expanded: false,
-                      isLoading: false,
-                    )
-                  : IgnorePointer(
-                      child: Opacity(
-                        opacity: 0.5,
-                        child: PrimaryButton(
-                          text: 'Загрузить',
-                          onPressed: () {},
-                          expanded: false,
-                          isLoading: false,
-                        ),
-                      ),
-                    ),
+              child: PrimaryButton(
+                text: 'Загрузить',
+                onPressed: onLoad,
+                expanded: false,
+                isLoading: false,
+                enabled: selectedTemplate != null,
+              ),
             ),
           ],
         ),

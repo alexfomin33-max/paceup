@@ -64,9 +64,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
   // координаты выбранного места
   LatLng? selectedLocation;
 
-  // ── состояние ошибок валидации (какие поля должны быть подсвечены красным)
-  final Set<String> _errorFields = {};
-
   // ── состояние загрузки
   bool _loading = false;
   bool _loadingData = true;
@@ -76,21 +73,16 @@ class _EditEventScreenState extends State<EditEventScreen> {
       (placeCtrl.text.trim().isNotEmpty) &&
       (activity != null) &&
       (date != null) &&
-      (time != null);
+      (time != null) &&
+      (selectedLocation != null);
 
   @override
   void initState() {
     super.initState();
     _loadUserClubs(); // ── загружаем клубы пользователя при инициализации
     _loadEventData();
-    nameCtrl.addListener(() {
-      _refresh();
-      _clearFieldError('name');
-    });
-    placeCtrl.addListener(() {
-      _refresh();
-      _clearFieldError('place');
-    });
+    nameCtrl.addListener(() => _refresh());
+    placeCtrl.addListener(() => _refresh());
   }
 
   @override
@@ -104,13 +96,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
   }
 
   void _refresh() => setState(() {});
-
-  // ── очистка ошибки для конкретного поля при взаимодействии
-  void _clearFieldError(String fieldName) {
-    if (_errorFields.contains(fieldName)) {
-      setState(() => _errorFields.remove(fieldName));
-    }
-  }
 
   // ── загрузка списка клубов пользователя
   Future<void> _loadUserClubs() async {
@@ -326,7 +311,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
         if (result.address != null && result.address!.isNotEmpty) {
           placeCtrl.text = result.address!;
         }
-        _clearFieldError('place');
       });
     }
   }
@@ -345,10 +329,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
     if (ok) {
-      setState(() {
-        date = temp;
-        _clearFieldError('date');
-      });
+      setState(() => date = temp);
     }
   }
 
@@ -372,7 +353,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
     if (ok) {
       setState(() {
         time = TimeOfDay(hour: temp.hour, minute: temp.minute);
-        _clearFieldError('time');
       });
     }
   }
@@ -455,34 +435,8 @@ class _EditEventScreenState extends State<EditEventScreen> {
   }
 
   Future<void> _submit() async {
-    // ── проверяем все обязательные поля и подсвечиваем незаполненные
-    final Set<String> newErrors = {};
-
-    if (nameCtrl.text.trim().isEmpty) {
-      newErrors.add('name');
-    }
-    if (placeCtrl.text.trim().isEmpty) {
-      newErrors.add('place');
-    }
-    if (activity == null) {
-      newErrors.add('activity');
-    }
-    if (date == null) {
-      newErrors.add('date');
-    }
-    if (time == null) {
-      newErrors.add('time');
-    }
-    if (selectedLocation == null) {
-      newErrors.add('place');
-    }
-
-    setState(() {
-      _errorFields.clear();
-      _errorFields.addAll(newErrors);
-    });
-
-    if (newErrors.isNotEmpty) {
+    // ── проверяем валидность формы (кнопка неактивна, если форма невалидна, но на всякий случай)
+    if (!isFormValid) {
       return;
     }
 
@@ -672,7 +626,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
                   EventTextField(
                     controller: nameCtrl,
                     label: 'Название события*',
-                    hasError: _errorFields.contains('name'),
                   ),
                   const SizedBox(height: 25),
 
@@ -681,11 +634,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                     label: 'Вид активности*',
                     value: activity,
                     items: const ['Бег', 'Велосипед', 'Плавание'],
-                    hasError: _errorFields.contains('activity'),
-                    onChanged: (v) => setState(() {
-                      activity = v;
-                      _clearFieldError('activity');
-                    }),
+                    onChanged: (v) => setState(() => activity = v),
                   ),
                   const SizedBox(height: 25),
 
@@ -695,7 +644,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
                     label: 'Место проведения*',
                     enabled: false,
                     textColorOverride: AppColors.textSecondary,
-                    hasError: _errorFields.contains('place'),
                     trailing: Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: SizedBox(
@@ -726,7 +674,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
                           label: 'Дата проведения*',
                           valueText: _fmtDate(date),
                           onTap: _pickDateCupertino,
-                          hasError: _errorFields.contains('date'),
                         ),
                       ),
                       const SizedBox(width: 20),
@@ -736,7 +683,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
                           valueText: _fmtTime(time),
                           icon: CupertinoIcons.time,
                           onTap: _pickTimeCupertino,
-                          hasError: _errorFields.contains('time'),
                         ),
                       ),
                     ],
@@ -747,7 +693,8 @@ class _EditEventScreenState extends State<EditEventScreen> {
                   EventTextField(
                     controller: descCtrl,
                     label: 'Описание события',
-                    minLines: 8, // ── минимальное количество строк для начальной высоты
+                    minLines:
+                        8, // ── минимальное количество строк для начальной высоты
                     minHeight: 200, // ── минимальная высота в пикселях
                     // maxLines не указываем, чтобы поле могло расти динамически
                   ),
@@ -762,6 +709,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                       },
                       expanded: false,
                       isLoading: _loading,
+                      enabled: isFormValid,
                     ),
                   ),
                 ],

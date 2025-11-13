@@ -32,6 +32,18 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    // ── добавляем слушатели для обновления состояния при изменении фокуса и текста
+    _oldPasswordFocusNode.addListener(() => setState(() {}));
+    _newPasswordFocusNode.addListener(() => setState(() {}));
+    _confirmPasswordFocusNode.addListener(() => setState(() {}));
+    _oldPasswordController.addListener(() => setState(() {}));
+    _newPasswordController.addListener(() => setState(() {}));
+    _confirmPasswordController.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     _oldPasswordController.dispose();
     _newPasswordController.dispose();
@@ -40,6 +52,21 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
     _newPasswordFocusNode.dispose();
     _confirmPasswordFocusNode.dispose();
     super.dispose();
+  }
+
+  // ── проверка, заполнены ли все обязательные поля
+  bool get _isFormValid {
+    final newPasswordFilled = _newPasswordController.text.trim().isNotEmpty;
+    final confirmPasswordFilled = _confirmPasswordController.text
+        .trim()
+        .isNotEmpty;
+
+    if (widget.hasPassword) {
+      final oldPasswordFilled = _oldPasswordController.text.trim().isNotEmpty;
+      return oldPasswordFilled && newPasswordFilled && confirmPasswordFilled;
+    }
+
+    return newPasswordFilled && confirmPasswordFilled;
   }
 
   /// Сохранение нового пароля
@@ -84,7 +111,7 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.surface,
         appBar: const PaceAppBar(title: 'Пароль'),
         body: GestureDetector(
           // Снимаем фокус при тапе вне полей ввода
@@ -100,52 +127,18 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                 children: [
                   // Поле старого пароля (если пароль уже установлен)
                   if (widget.hasPassword) ...[
-                    TextFormField(
+                    _buildPasswordField(
                       controller: _oldPasswordController,
                       focusNode: _oldPasswordFocusNode,
+                      labelText: 'Текущий пароль',
                       obscureText: _obscureOldPassword,
+                      onToggleObscure: () {
+                        setState(() {
+                          _obscureOldPassword = !_obscureOldPassword;
+                        });
+                      },
+                      errorText: _error,
                       textInputAction: TextInputAction.next,
-                      textCapitalization: TextCapitalization.none,
-                      autocorrect: false,
-                      decoration: InputDecoration(
-                        labelText: 'Текущий пароль',
-                        errorText: _error,
-                        filled: true,
-                        fillColor: AppColors.surface,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureOldPassword
-                                ? CupertinoIcons.eye_slash
-                                : CupertinoIcons.eye,
-                            size: 18,
-                            color: AppColors.iconSecondary,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureOldPassword = !_obscureOldPassword;
-                            });
-                          },
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          borderSide: const BorderSide(color: AppColors.border),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          borderSide: const BorderSide(color: AppColors.border),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          borderSide: const BorderSide(
-                            color: AppColors.brandPrimary,
-                            width: 0.7,
-                          ),
-                        ),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          borderSide: const BorderSide(color: AppColors.error),
-                        ),
-                      ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Введите текущий пароль';
@@ -157,52 +150,17 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                   ],
 
                   // Поле нового пароля
-                  TextFormField(
+                  _buildPasswordField(
                     controller: _newPasswordController,
                     focusNode: _newPasswordFocusNode,
+                    labelText: widget.hasPassword ? 'Новый пароль' : 'Пароль',
                     obscureText: _obscureNewPassword,
+                    onToggleObscure: () {
+                      setState(() {
+                        _obscureNewPassword = !_obscureNewPassword;
+                      });
+                    },
                     textInputAction: TextInputAction.next,
-                    textCapitalization: TextCapitalization.none,
-                    autocorrect: false,
-                    decoration: InputDecoration(
-                      labelText: widget.hasPassword ? 'Новый пароль' : 'Пароль',
-                      hintText: 'Минимум 6 символов',
-                      filled: true,
-                      fillColor: AppColors.surface,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureNewPassword
-                              ? CupertinoIcons.eye_slash
-                              : CupertinoIcons.eye,
-                          size: 18,
-                          color: AppColors.iconSecondary,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscureNewPassword = !_obscureNewPassword;
-                          });
-                        },
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: const BorderSide(
-                          color: AppColors.brandPrimary,
-                          width: 0.7,
-                        ),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: const BorderSide(color: AppColors.error),
-                      ),
-                    ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Введите пароль';
@@ -217,51 +175,18 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                   const SizedBox(height: 16),
 
                   // Поле подтверждения пароля
-                  TextFormField(
+                  _buildPasswordField(
                     controller: _confirmPasswordController,
                     focusNode: _confirmPasswordFocusNode,
+                    labelText: 'Подтвердите пароль',
                     obscureText: _obscureConfirmPassword,
+                    onToggleObscure: () {
+                      setState(() {
+                        _obscureConfirmPassword = !_obscureConfirmPassword;
+                      });
+                    },
                     textInputAction: TextInputAction.done,
-                    textCapitalization: TextCapitalization.none,
-                    autocorrect: false,
-                    decoration: InputDecoration(
-                      labelText: 'Подтвердите пароль',
-                      filled: true,
-                      fillColor: AppColors.surface,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureConfirmPassword
-                              ? CupertinoIcons.eye_slash
-                              : CupertinoIcons.eye,
-                          size: 18,
-                          color: AppColors.iconSecondary,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscureConfirmPassword = !_obscureConfirmPassword;
-                          });
-                        },
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: const BorderSide(
-                          color: AppColors.brandPrimary,
-                          width: 0.7,
-                        ),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: const BorderSide(color: AppColors.error),
-                      ),
-                    ),
+                    onFieldSubmitted: (_) => _savePassword(),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Подтвердите пароль';
@@ -271,7 +196,6 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                       }
                       return null;
                     },
-                    onFieldSubmitted: (_) => _savePassword(),
                   ),
 
                   const SizedBox(height: 30),
@@ -282,6 +206,7 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                       text: 'Сохранить',
                       onPressed: _savePassword,
                       isLoading: _isLoading,
+                      enabled: _isFormValid,
                       horizontalPadding: 68,
                     ),
                   ),
@@ -289,6 +214,71 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // ── Вспомогательный метод для создания поля пароля с единым стилем
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String labelText,
+    required bool obscureText,
+    required VoidCallback onToggleObscure,
+    TextInputAction textInputAction = TextInputAction.next,
+    String? errorText,
+    void Function(String)? onFieldSubmitted,
+    String? Function(String?)? validator,
+  }) {
+    // ── определяем, какой лейбл показывать
+    final bool hasText = controller.text.trim().isNotEmpty;
+    final bool isFocused = focusNode.hasFocus;
+    final String dynamicLabelText = (hasText || isFocused)
+        ? labelText
+        : labelText; // для паролей можно оставить одинаковый текст
+
+    return TextFormField(
+      controller: controller,
+      focusNode: focusNode,
+      obscureText: obscureText,
+      textInputAction: textInputAction,
+      textCapitalization: TextCapitalization.none,
+      autocorrect: false,
+      onFieldSubmitted: onFieldSubmitted,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: dynamicLabelText,
+        labelStyle: AppTextStyles.h14w4Sec,
+        floatingLabelStyle: TextStyle(color: AppColors.textSecondary),
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
+        alignLabelWithHint: true,
+        errorText: errorText,
+        filled: true,
+        fillColor: AppColors.background,
+        suffixIcon: IconButton(
+          icon: Icon(
+            obscureText ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
+            size: 18,
+            color: AppColors.iconSecondary,
+          ),
+          onPressed: onToggleObscure,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.error),
         ),
       ),
     );

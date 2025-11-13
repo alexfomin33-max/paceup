@@ -34,6 +34,7 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
         _error = null;
       });
     });
+    _focusNode.addListener(() => setState(() {}));
   }
 
   @override
@@ -41,6 +42,11 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
     _phoneController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  // ── проверка, заполнено ли поле
+  bool get _isFormValid {
+    return _phoneController.text.trim().isNotEmpty;
   }
 
   /// Сохранение нового телефона
@@ -81,7 +87,7 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.surface,
         appBar: const PaceAppBar(title: 'Телефон'),
         body: GestureDetector(
           // Снимаем фокус при тапе вне поля ввода
@@ -105,27 +111,31 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
                     textCapitalization: TextCapitalization.none,
                     decoration: InputDecoration(
                       labelText: 'Телефон',
+                      labelStyle: AppTextStyles.h14w4Sec,
+                      floatingLabelStyle: TextStyle(
+                        color: AppColors.textSecondary,
+                      ),
+                      floatingLabelBehavior: FloatingLabelBehavior.auto,
+                      alignLabelWithHint: true,
                       hintText: '+7 (999) 123-45-67',
+                      hintStyle: TextStyle(color: AppColors.textPlaceholder),
                       errorText: _error,
                       filled: true,
-                      fillColor: AppColors.surface,
+                      fillColor: AppColors.background,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                         borderSide: const BorderSide(color: AppColors.border),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                         borderSide: const BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: const BorderSide(
-                          color: AppColors.brandPrimary,
-                          width: 0.7,
-                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: const BorderSide(color: AppColors.border),
                       ),
                       errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                         borderSide: const BorderSide(color: AppColors.error),
                       ),
                     ),
@@ -151,6 +161,7 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
                       text: 'Сохранить',
                       onPressed: _savePhone,
                       isLoading: _isLoading,
+                      enabled: _isFormValid,
                       horizontalPadding: 68,
                     ),
                   ),
