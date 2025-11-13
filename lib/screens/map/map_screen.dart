@@ -9,13 +9,13 @@ import '../../config/app_config.dart';
 import 'events/events_screen.dart' as ev;
 import 'events/events_filters_bottom_sheet.dart';
 import 'clubs/clubs_screen.dart' as clb;
-import 'slots/slots_screen.dart' as slt;
+import 'coaches/coaches_screen.dart' as cch;
 import 'travelers/travelers_screen.dart' as trv;
 
 // нижние выезжающие окна
 import 'events/events_bottom_sheet.dart' as ebs;
 import 'clubs/clubs_bottom_sheet.dart' as cbs;
-import 'slots/slots_bottom_sheet.dart' as sbs;
+import 'coaches/coaches_bottom_sheet.dart' as cchbs;
 import 'travelers/travelers_bottom_sheet.dart' as tbs;
 
 class MapScreen extends StatefulWidget {
@@ -31,7 +31,7 @@ class _MapScreenState extends State<MapScreen> {
   /// Контроллер карты для управления zoom и центром
   final MapController _mapController = MapController();
 
-  final tabs = const ["События", "Клубы", "Слоты", "Попутчики"];
+  final tabs = const ["События", "Клубы", "Тренеры", "Попутчики"];
 
   /// Параметры фильтра событий (для обновления карты при применении фильтров)
   EventsFilterParams? _eventsFilterParams;
@@ -43,7 +43,7 @@ class _MapScreenState extends State<MapScreen> {
   final markerColors = const {
     0: AppColors.accentBlue, // события
     1: AppColors.error, // клубы
-    2: AppColors.success, // слоты
+    2: AppColors.success, // тренеры
     3: AppColors.accentPurple, // попутчики
   };
 
@@ -53,7 +53,7 @@ class _MapScreenState extends State<MapScreen> {
         // Клубы теперь асинхронные, не используется здесь
         return [];
       case 2:
-        return slt.slotsMarkers(context);
+        return cch.coachesMarkers(context);
       case 3:
       default:
         return trv.travelersMarkers(context);
@@ -212,7 +212,7 @@ class _MapScreenState extends State<MapScreen> {
           _buildMap(markers, markerColor),
           _buildTabs(),
           if (_selectedIndex == 1) const clb.ClubsFloatingButtons(),
-          if (_selectedIndex == 2) const slt.SlotsFloatingButtons(),
+          if (_selectedIndex == 2) const cch.CoachesFloatingButtons(),
           if (_selectedIndex == 3) const trv.TravelersFloatingButtons(),
         ],
       ),
@@ -286,9 +286,9 @@ class _MapScreenState extends State<MapScreen> {
                                 : content ?? const cbs.ClubsSheetPlaceholder(),
                           );
                         case 2:
-                          return sbs.SlotsBottomSheet(
+                          return cchbs.CoachesBottomSheet(
                             title: title,
-                            child: content ?? const sbs.SlotsSheetPlaceholder(),
+                            child: content ?? const cchbs.CoachesSheetPlaceholder(),
                           );
                         case 3:
                         default:

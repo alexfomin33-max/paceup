@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 
-/// Каркас bottom sheet для вкладки «Слоты» — 1:1 как в events_bottom_sheet.dart
-class SlotsBottomSheet extends StatelessWidget {
+/// Каркас bottom sheet для вкладки «Тренеры» — 1:1 как в events_bottom_sheet.dart
+class CoachesBottomSheet extends StatelessWidget {
   final String title;
   final Widget child;
   final double maxHeightFraction;
 
-  const SlotsBottomSheet({
+  const CoachesBottomSheet({
     super.key,
     required this.title,
     required this.child,
@@ -78,8 +78,8 @@ class SlotsBottomSheet extends StatelessWidget {
 }
 
 /// Заглушка (если контента нет)
-class SlotsSheetPlaceholder extends StatelessWidget {
-  const SlotsSheetPlaceholder({super.key});
+class CoachesSheetPlaceholder extends StatelessWidget {
+  const CoachesSheetPlaceholder({super.key});
   @override
   Widget build(BuildContext context) {
     return const Padding(
@@ -90,9 +90,9 @@ class SlotsSheetPlaceholder extends StatelessWidget {
 }
 
 /// Простой текст (аналог EventsSheetText/ClubsSheetText)
-class SlotsSheetText extends StatelessWidget {
+class CoachesSheetText extends StatelessWidget {
   final String text;
-  const SlotsSheetText(this.text, {super.key});
+  const CoachesSheetText(this.text, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -100,11 +100,11 @@ class SlotsSheetText extends StatelessWidget {
   }
 }
 
-/// Пригодится позже: пример списка слотов с превью 90×60 (как в «Событиях»)
+/// Пригодится позже: пример списка тренеров с превью 90×60 (как в «Событиях»)
 /// Пока НЕ используем, чтобы не требовать ассеты. Когда будут картинки,
-/// просто подставишь SlotsListVladimir() в маркер.
-class SlotsListVladimir extends StatelessWidget {
-  const SlotsListVladimir({super.key});
+/// просто подставишь CoachesListVladimir() в маркер.
+class CoachesListVladimir extends StatelessWidget {
+  const CoachesListVladimir({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -114,16 +114,16 @@ class SlotsListVladimir extends StatelessWidget {
       child: Column(
         children: [
           // Примеры: замени asset/тексты на реальные, когда появятся
-          _SlotRow(
-            asset: 'assets/slot_example_1.png',
-            title: 'Слот на «Золотые ворота»',
-            subtitle: '10 км · 21 июля 2025 · 1 слот',
+          _CoachRow(
+            asset: 'assets/coach_example_1.png',
+            title: 'Тренер на «Золотые ворота»',
+            subtitle: '10 км · 21 июля 2025 · 1 тренер',
           ),
-          _SlotsDivider(),
-          _SlotRow(
-            asset: 'assets/slot_example_2.png',
-            title: 'Слот на трейл «Клязьма»',
-            subtitle: '30 км · 3 августа 2025 · 2 слота',
+          _CoachesDivider(),
+          _CoachRow(
+            asset: 'assets/coach_example_2.png',
+            title: 'Тренер на трейл «Клязьма»',
+            subtitle: '30 км · 3 августа 2025 · 2 тренера',
           ),
         ],
       ),
@@ -131,8 +131,8 @@ class SlotsListVladimir extends StatelessWidget {
   }
 }
 
-class _SlotsDivider extends StatelessWidget {
-  const _SlotsDivider();
+class _CoachesDivider extends StatelessWidget {
+  const _CoachesDivider();
   @override
   Widget build(BuildContext context) {
     return const Padding(
@@ -142,13 +142,13 @@ class _SlotsDivider extends StatelessWidget {
   }
 }
 
-/// Ряд слота — превью строго 90×60, стили как в events/clubs
-class _SlotRow extends StatelessWidget {
+/// Ряд тренера — превью строго 90×60, стили как в events/clubs
+class _CoachRow extends StatelessWidget {
   final String asset;
   final String title;
   final String subtitle;
 
-  const _SlotRow({
+  const _CoachRow({
     required this.asset,
     required this.title,
     required this.subtitle,
@@ -192,3 +192,4 @@ class _SlotRow extends StatelessWidget {
     return row;
   }
 }
+

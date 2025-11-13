@@ -1,43 +1,46 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
-import 'slots_bottom_sheet.dart';
+import 'coaches_bottom_sheet.dart';
 import '../../../../../theme/app_theme.dart';
 
-/// Возвращает маркеры для вкладки «Слоты».
-List<Map<String, dynamic>> slotsMarkers(BuildContext context) {
+/// Возвращает маркеры для вкладки «Тренеры».
+List<Map<String, dynamic>> coachesMarkers(BuildContext context) {
   return [
     {
       'point': const LatLng(56.129057, 40.406635),
-      'title': 'Слоты Владимира',
+      'title': 'Тренеры Владимира',
       'count': 2,
-      'content': const SlotsSheetText('Владимир: слоты появятся здесь'),
+      'content': const CoachesSheetText('Владимир: тренеры появятся здесь'),
       // когда будут ассеты — подставь:
-      // 'content': const SlotsListVladimir(),
+      // 'content': const CoachesListVladimir(),
     },
     {
       'point': const LatLng(55.755864, 37.617698),
-      'title': 'Слоты Москвы',
+      'title': 'Тренеры Москвы',
       'count': 5,
-      'content': const SlotsSheetText('Москва: слоты появятся здесь'),
+      'content': const CoachesSheetText('Москва: тренеры появятся здесь'),
     },
     {
       'point': const LatLng(56.326797, 44.006516),
-      'title': 'Слоты Нижнего Новгорода',
+      'title': 'Тренеры Нижнего Новгорода',
       'count': 3,
-      'content': const SlotsSheetText('Нижний Новгород: слоты появятся здесь'),
+      'content': const CoachesSheetText(
+        'Нижний Новгород: тренеры появятся здесь',
+      ),
     },
     {
       'point': const LatLng(57.626559, 39.893813),
-      'title': 'Слоты Ярославля',
+      'title': 'Тренеры Ярославля',
       'count': 1,
-      'content': const SlotsSheetText('Ярославль: слоты появятся здесь'),
+      'content': const CoachesSheetText('Ярославль: тренеры появятся здесь'),
     },
   ];
 }
 
-// === Нижние кнопки для вкладки «Слоты» (как раньше) ===
-class SlotsFloatingButtons extends StatelessWidget {
-  const SlotsFloatingButtons({super.key});
+// === Нижние кнопки для вкладки «Тренеры» (как раньше) ===
+class CoachesFloatingButtons extends StatelessWidget {
+  const CoachesFloatingButtons({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -53,16 +56,16 @@ class SlotsFloatingButtons extends StatelessWidget {
             label: 'Фильтры',
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Фильтры слотов — скоро')),
+                const SnackBar(content: Text('Фильтры тренеров — скоро')),
               );
             },
           ),
           _SolidPillButton(
-            icon: Icons.sell_outlined,
-            label: 'Продать слот',
+            icon: CupertinoIcons.person_crop_circle_badge_plus,
+            label: 'Добавить',
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Продать слот — скоро')),
+                const SnackBar(content: Text('Добавить тренера — скоро')),
               );
             },
           ),
