@@ -42,6 +42,10 @@ class _MapScreenState extends State<MapScreen> {
   /// Ключ для FutureBuilder клубов (обновляется при создании или удалении клуба)
   Key _clubsMarkersKey = const ValueKey('clubs_markers_default');
 
+  /// Флаг инициализации карты для вкладок События и Клубы
+  /// Предотвращает мерцание - карта создается один раз
+  bool _mapInitialized = false;
+
   /// Цвета маркеров по вкладкам
   final markerColors = const {
     0: AppColors.accentBlue, // события
@@ -140,27 +144,40 @@ class _MapScreenState extends State<MapScreen> {
                 // Показываем карту даже во время загрузки (с пустыми маркерами)
                 // ⚠️ ВАЖНО: Откладываем создание FlutterMap до следующего кадра,
                 // чтобы не блокировать UI поток во время выполнения запроса
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !_mapInitialized) {
                   // Откладываем создание карты через Future.microtask,
                   // чтобы не блокировать UI поток во время выполнения запроса
                   return FutureBuilder<void>(
                     future: Future.microtask(() {}),
                     builder: (context, microtaskSnapshot) {
-                      return microtaskSnapshot.connectionState ==
-                              ConnectionState.done
-                          ? _buildMap([], markerColor)
-                          : Container(color: AppColors.surface);
+                      if (microtaskSnapshot.connectionState ==
+                          ConnectionState.done) {
+                        // Помечаем карту как инициализированную, чтобы она не пересоздавалась
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) {
+                            setState(() {
+                              _mapInitialized = true;
+                            });
+                          }
+                        });
+                        return _buildMap([], markerColor);
+                      }
+                      return Container(color: AppColors.surface);
                     },
                   );
                 }
 
+                // После первой инициализации всегда показываем карту
+                // Это предотвращает мерцание - карта не пересоздается
+                final markers = snapshot.hasData
+                    ? (snapshot.data ?? [])
+                    : <Map<String, dynamic>>[];
+
                 // Обрабатываем ошибки
                 if (snapshot.hasError) {
                   debugPrint('Ошибка загрузки маркеров: ${snapshot.error}');
-                  return _buildMap([], markerColor);
                 }
-
-                final markers = snapshot.data ?? [];
 
                 // Автоматическая подстройка zoom отключена для Событий и Клубов
                 // Пользователь может самостоятельно управлять масштабом карты
@@ -176,6 +193,8 @@ class _MapScreenState extends State<MapScreen> {
                   // Обновляем параметры фильтра
                   setState(() {
                     _eventsFilterParams = params;
+                    // Сбрасываем флаг инициализации при обновлении данных
+                    _mapInitialized = false;
                     // Обновляем ключ FutureBuilder для перезагрузки данных
                     _eventsMarkersKey = ValueKey(
                       'events_markers_${DateTime.now().millisecondsSinceEpoch}',
@@ -185,6 +204,8 @@ class _MapScreenState extends State<MapScreen> {
                 onEventCreated: () {
                   // Обновляем ключ FutureBuilder для перезагрузки данных после создания события
                   setState(() {
+                    // Сбрасываем флаг инициализации при обновлении данных
+                    _mapInitialized = false;
                     _eventsMarkersKey = ValueKey(
                       'events_markers_${DateTime.now().millisecondsSinceEpoch}',
                     );
@@ -196,6 +217,8 @@ class _MapScreenState extends State<MapScreen> {
                 onClubCreated: () {
                   // Обновляем ключ FutureBuilder для перезагрузки данных
                   setState(() {
+                    // Сбрасываем флаг инициализации при обновлении данных
+                    _mapInitialized = false;
                     _clubsMarkersKey = ValueKey(
                       'clubs_markers_${DateTime.now().millisecondsSinceEpoch}',
                     );
@@ -229,6 +252,8 @@ class _MapScreenState extends State<MapScreen> {
               onClubCreated: () {
                 // Обновляем ключ FutureBuilder для перезагрузки данных
                 setState(() {
+                  // Сбрасываем флаг инициализации при обновлении данных
+                  _mapInitialized = false;
                   _clubsMarkersKey = ValueKey(
                     'clubs_markers_${DateTime.now().millisecondsSinceEpoch}',
                   );
@@ -339,6 +364,8 @@ class _MapScreenState extends State<MapScreen> {
                       // Если клуб был удалён, обновляем маркеры на карте
                       if (result == 'club_deleted' && mounted) {
                         setState(() {
+                          // Сбрасываем флаг инициализации при обновлении данных
+                          _mapInitialized = false;
                           _clubsMarkersKey = ValueKey(
                             'clubs_markers_${DateTime.now().millisecondsSinceEpoch}',
                           );
@@ -406,7 +433,14 @@ class _MapScreenState extends State<MapScreen> {
             children: List.generate(tabs.length, (index) {
               final isSelected = _selectedIndex == index;
               return GestureDetector(
-                onTap: () => setState(() => _selectedIndex = index),
+                onTap: () {
+                  // Сбрасываем флаг инициализации при смене вкладки
+                  // Это нужно для корректной работы при переключении между вкладками
+                  if (_selectedIndex != index) {
+                    _mapInitialized = false;
+                  }
+                  setState(() => _selectedIndex = index);
+                },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
