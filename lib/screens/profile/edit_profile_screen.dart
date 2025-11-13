@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/app_theme.dart';
 import '../../providers/avatar_version_provider.dart';
+import '../../providers/profile/profile_header_provider.dart';
 import '../../widgets/app_bar.dart'; // наш глобальный AppBar
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../service/api_service.dart';
@@ -20,12 +21,12 @@ const double kQrIconSize = 24.0;
 const double kLabelWidth = 170.0;
 
 /// Экран редактирования профиля
-class EditProfileScreen extends StatefulWidget {
+class EditProfileScreen extends ConsumerStatefulWidget {
   final int userId;
   const EditProfileScreen({super.key, required this.userId});
 
   @override
-  State<EditProfileScreen> createState() => _EditProfileScreenState();
+  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
 /// ───────────────────────────── Состояния/панели ─────────────────────────────
@@ -258,7 +259,7 @@ class _FormPane extends StatelessWidget {
 
 /// ───────────────────────────── Логика экрана ─────────────────────────────
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
+class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   // загрузка/ошибка/сохранение
   bool _loadingProfile = false;
   String? _loadError;
@@ -557,6 +558,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       if (!mounted) return;
+      
+      // Обновляем данные профиля в шапке сразу после сохранения
+      ref.read(profileHeaderProvider(widget.userId).notifier).reload();
+      
       Navigator.of(context).maybePop(true);
     } catch (e, st) {
       debugPrint('❌ [EditProfile] SAVE error: $e\n$st');

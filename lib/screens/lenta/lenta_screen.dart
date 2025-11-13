@@ -8,6 +8,7 @@ import '../../theme/app_theme.dart';
 import '../../models/activity_lenta.dart';
 import '../../providers/lenta/lenta_provider.dart';
 import '../../utils/image_cache_manager.dart';
+import '../../service/auth_service.dart';
 
 import 'widgets/activity/activity_block.dart'; // карточка тренировки
 import 'widgets/recommended/recommended_block.dart'; // блок «Рекомендации»
@@ -32,10 +33,10 @@ const double kAppBarTapTarget = 42.0; // кликабельная область
 
 /// 🔹 Экран Ленты (Feed) с Riverpod State Management
 class LentaScreen extends ConsumerStatefulWidget {
-  final int userId;
+  final int? userId;
   final VoidCallback? onNewPostPressed;
 
-  const LentaScreen({super.key, required this.userId, this.onNewPostPressed});
+  const LentaScreen({super.key, this.userId, this.onNewPostPressed});
 
   @override
   ConsumerState<LentaScreen> createState() => _LentaScreenState();
@@ -49,6 +50,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
   // ——— Служебное ———
   final ScrollController _scrollController = ScrollController();
+  final AuthService _auth = AuthService();
+  int? _actualUserId; // Реальный userId (из widget или из AuthService)
 
   // ────────────────────────────────────────────────────────────────
   // 🖼️ PREFETCHING: отслеживаем предзагруженные индексы постов
@@ -67,20 +70,45 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   void initState() {
     super.initState();
 
-    // Начальная загрузка через Riverpod provider
-    Future.microtask(() {
-      ref.read(lentaProvider(widget.userId).notifier).loadInitial();
+    // Получаем userId из AuthService, если не передан или равен fallback значению
+    Future.microtask(() async {
+      int? userId = widget.userId;
+      
+      // Если userId не передан или равен fallback значению (123) — получаем из AuthService
+      if (userId == null || userId == 123) {
+        userId = await _auth.getUserId();
+      }
+      
+      if (userId == null) {
+        // Если userId всё ещё null — показываем ошибку
+        if (mounted) {
+          setState(() {
+            // Ошибка будет показана в build методе
+          });
+        }
+        return;
+      }
+      
+      _actualUserId = userId;
+      
+      if (mounted) {
+        setState(() {});
+        // Начальная загрузка через Riverpod provider
+        ref.read(lentaProvider(userId).notifier).loadInitial();
+      }
     });
 
     // Автоматическая подгрузка при скролле
     _scrollController.addListener(() {
-      final lentaState = ref.read(lentaProvider(widget.userId));
+      if (_actualUserId == null) return;
+      
+      final lentaState = ref.read(lentaProvider(_actualUserId!));
       final pos = _scrollController.position;
 
       if (lentaState.hasMore &&
           !lentaState.isLoadingMore &&
           pos.extentAfter < 400) {
-        ref.read(lentaProvider(widget.userId).notifier).loadMore();
+        ref.read(lentaProvider(_actualUserId!).notifier).loadMore();
       }
     });
   }
@@ -96,9 +124,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
   /// Pull-to-refresh обновление ленты
   Future<void> _onRefresh() async {
+    if (_actualUserId == null) return;
+    
     // Очищаем кеш предзагруженных индексов при обновлении
     _prefetchedIndices.clear();
-    await ref.read(lentaProvider(widget.userId).notifier).refresh();
+    await ref.read(lentaProvider(_actualUserId!).notifier).refresh();
   }
 
   // ———————————— Навигация / Колбэки ————————————
@@ -111,21 +141,25 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   }
 
   Future<void> _openNotifications() async {
+    if (_actualUserId == null) return;
+    
     MoreMenuHub.hide();
     await Navigator.of(
       context,
     ).push(TransparentPageRoute(builder: (_) => const NotificationsScreen()));
     if (!mounted) return;
     // Сбрасываем счётчик непрочитанных через Riverpod
-    ref.read(lentaProvider(widget.userId).notifier).setUnreadCount(0);
+    ref.read(lentaProvider(_actualUserId!).notifier).setUnreadCount(0);
   }
 
   Future<void> _createPost() async {
+    if (_actualUserId == null) return;
+    
     MoreMenuHub.hide();
 
     final created = await Navigator.of(context).push<bool>(
       TransparentPageRoute(
-        builder: (_) => NewPostScreen(userId: widget.userId),
+        builder: (_) => NewPostScreen(userId: _actualUserId!),
       ),
     );
 
@@ -140,7 +174,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     // Принудительное обновление с очисткой кэша
     // Используем forceRefresh вместо refresh для полного обновления данных
-    await ref.read(lentaProvider(widget.userId).notifier).forceRefresh();
+    await ref.read(lentaProvider(_actualUserId!).notifier).forceRefresh();
 
     // Прокрутка к началу
     if (_scrollController.hasClients) {
@@ -161,35 +195,41 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   }
 
   void _openActivity(Activity a) {
+    if (_actualUserId == null) return;
+    
     MoreMenuHub.hide();
     Navigator.of(context).push(
       CupertinoPageRoute(
         builder: (_) =>
-            ActivityDescriptionPage(activity: a, currentUserId: widget.userId),
+            ActivityDescriptionPage(activity: a, currentUserId: _actualUserId!),
       ),
     );
   }
 
   void _openComments({required String type, required int itemId}) {
+    if (_actualUserId == null) return;
+    
     MoreMenuHub.hide();
     showCupertinoModalBottomSheet(
       context: context,
       builder: (_) => CommentsBottomSheet(
         itemType: type,
         itemId: itemId,
-        currentUserId: widget.userId,
+        currentUserId: _actualUserId!,
       ),
     );
   }
 
   Future<void> _editPost(Activity post) async {
+    if (_actualUserId == null) return;
+    
     MoreMenuHub.hide();
 
     final updated = await Navigator.push<bool>(
       context,
       TransparentPageRoute(
         builder: (_) => EditPostScreen(
-          userId: widget.userId,
+          userId: _actualUserId!,
           postId: post.id,
           initialText: post.postContent,
           initialImageUrls: post.mediaImages,
@@ -208,14 +248,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       await Future.delayed(const Duration(milliseconds: 500));
 
       // Принудительное обновление с очисткой кэша
-      await ref.read(lentaProvider(widget.userId).notifier).forceRefresh();
+      await ref.read(lentaProvider(_actualUserId!).notifier).forceRefresh();
     }
   }
 
   /// Удаляет пост из списка через Riverpod (без диалога — диалог уже показан в PostCard)
   void _deletePost(Activity post) {
-    if (!mounted) return;
-    ref.read(lentaProvider(widget.userId).notifier).removeItem(post.lentaId);
+    if (!mounted || _actualUserId == null) return;
+    ref.read(lentaProvider(_actualUserId!).notifier).removeItem(post.lentaId);
   }
 
   // ────────────────────────────────────────────────────────────────
@@ -315,8 +355,42 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   Widget build(BuildContext context) {
     super.build(context);
 
+    // Если userId ещё не загружен — показываем индикатор загрузки
+    if (_actualUserId == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: PaceAppBar(
+          titleWidget: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: 'PACE',
+                  style: AppTextStyles.h17w6.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                TextSpan(
+                  text: 'UP',
+                  style: AppTextStyles.h17w6.copyWith(
+                    color: AppColors.greenUP,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          showBottomDivider: true,
+        ),
+        body: const Center(
+          child: CupertinoActivityIndicator(),
+        ),
+      );
+    }
+
     // Читаем состояние из Riverpod provider
-    final lentaState = ref.watch(lentaProvider(widget.userId));
+    final lentaState = ref.watch(lentaProvider(_actualUserId!));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -398,9 +472,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                   const SizedBox(height: 12),
                   OutlinedButton(
                     onPressed: () {
-                      ref
-                          .read(lentaProvider(widget.userId).notifier)
-                          .loadInitial();
+                      if (_actualUserId != null) {
+                        ref
+                            .read(lentaProvider(_actualUserId!).notifier)
+                            .loadInitial();
+                      }
                     },
                     child: const Text('Повторить'),
                   ),
@@ -565,10 +641,15 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   }
 
   Widget _buildFeedItem(Activity a) {
+    if (_actualUserId == null) {
+      // Если userId ещё не загружен, возвращаем пустой виджет
+      return const SizedBox.shrink();
+    }
+    
     if (a.type == 'post') {
       return PostCard(
         post: a,
-        currentUserId: widget.userId,
+        currentUserId: _actualUserId!,
         onOpenComments: () => _openComments(type: 'post', itemId: a.id),
         onEdit: () => _editPost(a),
         onDelete: () => _deletePost(a),
@@ -578,7 +659,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     return GestureDetector(
       behavior: HitTestBehavior.deferToChild,
       onTap: () => _openActivity(a),
-      child: ActivityBlock(activity: a, currentUserId: widget.userId),
+      child: ActivityBlock(activity: a, currentUserId: _actualUserId!),
     );
   }
 }

@@ -6,6 +6,8 @@ import '../../theme/app_theme.dart';
 import '../../widgets/app_bar.dart'; // ← наш глобальный AppBar
 import '../../../widgets/transparent_route.dart';
 import '../../providers/profile/profile_header_provider.dart';
+import '../../providers/profile/profile_header_state.dart';
+import '../../providers/services/auth_provider.dart';
 
 // общие виджеты
 import 'widgets/header_card.dart';
@@ -30,8 +32,9 @@ import 'state/search/search_screen.dart';
 import 'state/settings/settings_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
-  final int userId;
-  const ProfileScreen({super.key, required this.userId});
+  /// Опциональный userId. Если не передан, используется текущий пользователь из AuthService
+  final int? userId;
+  const ProfileScreen({super.key, this.userId});
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
@@ -76,9 +79,133 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Читаем состояние профиля из Riverpod provider
-    final profileState = ref.watch(profileHeaderProvider(widget.userId));
+    // Если userId передан явно, используем его, иначе получаем текущего пользователя из AuthService
+    if (widget.userId != null) {
+      // Используем переданный userId (например, при открытии профиля другого пользователя из ленты)
+      final profileState = ref.watch(profileHeaderProvider(widget.userId!));
+      return _buildProfileContent(widget.userId!, profileState);
+    }
 
+    // Получаем текущего пользователя из AuthService
+    final currentUserIdAsync = ref.watch(currentUserIdProvider);
+
+    // Обрабатываем состояние загрузки userId
+    return currentUserIdAsync.when(
+      data: (userId) {
+        if (userId == null) {
+          // Пользователь не авторизован
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: PaceAppBar(
+              titleWidget: const Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.sparkles,
+                    size: 20,
+                    color: AppColors.iconPrimary,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'AI тренер',
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 16),
+                  ),
+                  SizedBox(width: 6),
+                ],
+              ),
+              showBack: false,
+              showBottomDivider: true,
+            ),
+            body: const Center(
+              child: Text(
+                'Необходима авторизация',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          );
+        }
+
+        // Читаем состояние профиля из Riverpod provider для текущего пользователя
+        final profileState = ref.watch(profileHeaderProvider(userId));
+
+        return _buildProfileContent(userId, profileState);
+      },
+      loading: () => Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: PaceAppBar(
+          titleWidget: const Row(
+            children: [
+              Icon(
+                CupertinoIcons.sparkles,
+                size: 20,
+                color: AppColors.iconPrimary,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'AI тренер',
+                style: TextStyle(fontFamily: 'Inter', fontSize: 16),
+              ),
+              SizedBox(width: 6),
+            ],
+          ),
+          showBack: false,
+          showBottomDivider: true,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (err, stack) => Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: PaceAppBar(
+          titleWidget: const Row(
+            children: [
+              Icon(
+                CupertinoIcons.sparkles,
+                size: 20,
+                color: AppColors.iconPrimary,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'AI тренер',
+                style: TextStyle(fontFamily: 'Inter', fontSize: 16),
+              ),
+              SizedBox(width: 6),
+            ],
+          ),
+          showBack: false,
+          showBottomDivider: true,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                CupertinoIcons.exclamationmark_triangle,
+                size: 48,
+                color: AppColors.error,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Ошибка загрузки данных пользователя',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.error,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Строит контент профиля для указанного userId
+  Widget _buildProfileContent(int userId, ProfileHeaderState profileState) {
     return Scaffold(
       backgroundColor: AppColors.background,
 
@@ -134,10 +261,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           RepaintBoundary(
             child: HeaderCard(
               profile: profileState.profile,
-              userId: widget.userId,
+              userId: userId,
               onReload: () {
                 ref
-                    .read(profileHeaderProvider(widget.userId).notifier)
+                    .read(profileHeaderProvider(userId).notifier)
                     .reload();
               },
             ),
@@ -176,13 +303,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 physics: const BouncingScrollPhysics(),
                 onPageChanged: _onPageChanged,
                 children: [
-                  MainTab(userId: widget.userId),
+                  MainTab(userId: userId),
                   const PhotosTab(),
                   const StatsTab(),
                   const TrainingTab(),
                   const RacesTab(),
                   const GearTab(),
-                  ClubsTab(userId: widget.userId),
+                  const ClubsTab(),
                   const AwardsTab(),
                   const SkillsTab(),
                 ],

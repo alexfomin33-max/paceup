@@ -26,10 +26,14 @@ final userClubsProvider = FutureProvider.family<List<Club>, int>(
     final api = ref.watch(apiServiceProvider);
 
     try {
-      // Загружаем все клубы с подробной информацией
+      // Загружаем клубы, в которых пользователь является участником
+      // Используем параметр member_user_id для фильтрации по участникам
       final data = await api.get(
         '/get_clubs.php',
-        queryParams: {'detail': 'true'},
+        queryParams: {
+          'detail': 'true',
+          'member_user_id': userId.toString(),
+        },
         timeout: const Duration(seconds: 12),
       );
 
@@ -39,16 +43,11 @@ final userClubsProvider = FutureProvider.family<List<Club>, int>(
         );
       }
 
-      // Получаем список клубов из ответа
+      // Получаем список клубов из ответа (уже отфильтрованы по участникам на сервере)
       final clubsList = data['clubs'] as List<dynamic>? ?? [];
 
-      // Фильтруем клубы по user_id (клубы, созданные этим пользователем)
+      // Преобразуем в список Club моделей
       final userClubs = clubsList
-          .where((club) {
-            final clubData = club as Map<String, dynamic>;
-            final clubUserId = clubData['user_id'] as int?;
-            return clubUserId == userId;
-          })
           .map((club) => Club.fromJson(club as Map<String, dynamic>))
           .toList();
 

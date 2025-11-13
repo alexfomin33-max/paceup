@@ -208,23 +208,45 @@ class CacheService {
     int? followers,
     int? following,
   }) async {
-    await _db
-        .into(_db.cachedProfiles)
-        .insertOnConflictUpdate(
-          CachedProfilesCompanion.insert(
-            userId: userId,
-            name: name,
-            avatar: Value(avatar),
-            userGroup: Value(userGroup),
-            totalDistance: Value(totalDistance),
-            totalActivities: Value(totalActivities),
-            totalTime: Value(totalTime),
-            city: Value(city),
-            age: Value(age),
-            followers: Value(followers),
-            following: Value(following),
-          ),
-        );
+    // Проверяем, существует ли уже профиль с таким userId
+    final existing = await getCachedProfile(userId: userId);
+    
+    if (existing != null) {
+      // Обновляем существующую запись
+      await (_db.update(_db.cachedProfiles)
+            ..where((tbl) => tbl.userId.equals(userId)))
+          .write(
+            CachedProfilesCompanion(
+              name: Value(name),
+              avatar: Value(avatar),
+              userGroup: Value(userGroup),
+              totalDistance: Value(totalDistance),
+              totalActivities: Value(totalActivities),
+              totalTime: Value(totalTime),
+              city: Value(city),
+              age: Value(age),
+              followers: Value(followers),
+              following: Value(following),
+            ),
+          );
+    } else {
+      // Вставляем новую запись
+      await _db.into(_db.cachedProfiles).insert(
+            CachedProfilesCompanion.insert(
+              userId: userId,
+              name: name,
+              avatar: Value(avatar),
+              userGroup: Value(userGroup),
+              totalDistance: Value(totalDistance),
+              totalActivities: Value(totalActivities),
+              totalTime: Value(totalTime),
+              city: Value(city),
+              age: Value(age),
+              followers: Value(followers),
+              following: Value(following),
+            ),
+          );
+    }
   }
 
   /// Загружает профиль из кэша
@@ -235,6 +257,13 @@ class CacheService {
 
     final results = await query.get();
     return results.isEmpty ? null : results.first;
+  }
+
+  /// Очищает кэш профиля для указанного пользователя
+  Future<void> clearProfileCache({required int userId}) async {
+    await (_db.delete(
+      _db.cachedProfiles,
+    )..where((tbl) => tbl.userId.equals(userId))).go();
   }
 
   // ────────────────────────── МАРШРУТЫ ──────────────────────────

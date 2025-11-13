@@ -9,14 +9,15 @@ import '../../map/clubs/club_detail_screen.dart';
 import '../../../widgets/primary_button.dart';
 import '../../../widgets/transparent_route.dart';
 import '../../../providers/profile/user_clubs_provider.dart';
+import '../../../providers/services/auth_provider.dart';
 import '../../../models/club.dart';
 
 /// Вкладка "Клубы" в профиле пользователя
 ///
-/// Загружает клубы пользователя через API и отображает их в сетке 2xN
+/// Загружает клубы текущего авторизованного пользователя через API
+/// и отображает их в сетке 2xN
 class ClubsTab extends ConsumerStatefulWidget {
-  final int userId; // ID пользователя, для которого показываем клубы
-  const ClubsTab({super.key, required this.userId});
+  const ClubsTab({super.key});
 
   @override
   ConsumerState<ClubsTab> createState() => _ClubsTabState();
@@ -31,8 +32,87 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
   Widget build(BuildContext context) {
     super.build(context);
 
-    // Загружаем клубы пользователя через provider
-    final clubsAsync = ref.watch(userClubsProvider(widget.userId));
+    // Получаем текущего пользователя из AuthService
+    final currentUserIdAsync = ref.watch(currentUserIdProvider);
+
+    // Обрабатываем состояние загрузки userId
+    return currentUserIdAsync.when(
+      data: (userId) {
+        if (userId == null) {
+          // Пользователь не авторизован
+          return const CustomScrollView(
+            physics: BouncingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(
+                    child: Text(
+                      'Необходима авторизация',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        // Загружаем клубы текущего пользователя через provider
+        final clubsAsync = ref.watch(userClubsProvider(userId));
+
+        return _buildClubsContent(clubsAsync);
+      },
+      loading: () => const CustomScrollView(
+        physics: BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ),
+        ],
+      ),
+      error: (err, stack) => CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: Column(
+                  children: [
+                    const Icon(
+                      CupertinoIcons.exclamationmark_triangle,
+                      size: 48,
+                      color: AppColors.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Ошибка загрузки данных пользователя',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 16,
+                        color: AppColors.error,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Строит контент с клубами
+  Widget _buildClubsContent(AsyncValue<List<Club>> clubsAsync) {
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),

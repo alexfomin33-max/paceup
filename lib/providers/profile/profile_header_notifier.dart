@@ -9,7 +9,6 @@
 //  • Очистка кэша аватарки при обновлении
 // ────────────────────────────────────────────────────────────────────────────
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../service/api_service.dart';
@@ -48,21 +47,28 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
       final cached = await _cache.getCachedProfile(userId: userId);
 
       if (cached != null) {
-        // Конвертируем кэш в UserProfileHeader
-        // Используем все доступные данные из кэша, включая город, возраст и подписки
-        final cachedProfile = UserProfileHeader(
-          id: cached.userId,
-          firstName: cached.name.split(' ').first,
-          lastName: cached.name.split(' ').skip(1).join(' '),
-          avatar: cached.avatar.isEmpty ? null : cached.avatar,
-          city: cached.city,
-          age: cached.age,
-          followers: cached.followers,
-          following: cached.following,
-          status: null,
-        );
+        // Проверяем, что кэш соответствует запрашиваемому userId
+        if (cached.userId != userId) {
+          // Очищаем неправильный кэш
+          await _cache.clearProfileCache(userId: cached.userId);
+          state = state.copyWith(isLoading: true, error: null);
+        } else {
+          // Конвертируем кэш в UserProfileHeader
+          // Используем все доступные данные из кэша, включая город, возраст и подписки
+          final cachedProfile = UserProfileHeader(
+            id: cached.userId,
+            firstName: cached.name.split(' ').first,
+            lastName: cached.name.split(' ').skip(1).join(' '),
+            avatar: cached.avatar.isEmpty ? null : cached.avatar,
+            city: cached.city,
+            age: cached.age,
+            followers: cached.followers,
+            following: cached.following,
+            status: null,
+          );
 
-        state = state.copyWith(profile: cachedProfile, isLoading: false);
+          state = state.copyWith(profile: cachedProfile, isLoading: false);
+        }
       } else {
         state = state.copyWith(isLoading: true, error: null);
       }
@@ -75,7 +81,7 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
         body: {'user_id': '$userId'},
         timeout: const Duration(seconds: 12),
       );
-
+      
       // Сервер может вернуть данные в разных ключах
       final dynamic raw = map['profile'] ?? map['data'] ?? map;
 
@@ -125,17 +131,55 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
     // Сохраняем старый URL для очистки кэша
     final oldAvatar = state.profile?.avatar;
     
-    // ШАГ 1: Обновляем глобальную версию аватарки
+    // ШАГ 1: Очищаем кэш профиля для принудительной загрузки свежих данных
+    await _cache.clearProfileCache(userId: userId);
+    
+    // ШАГ 2: Обновляем глобальную версию аватарки
     // Это обновит аватарку везде: в профиле, ленте и редактировании
     _ref.read(avatarVersionProvider.notifier).bump();
     
-    // ШАГ 2: Загружаем свежие данные с сервера
-    await load();
+    // ШАГ 3: Загружаем свежие данные с сервера (без показа кэша)
+    // Пропускаем показ кэша, сразу загружаем с сервера
+    state = state.copyWith(isLoading: true);
+    
+    final map = await _api.post(
+      '/user_profile_header.php',
+      body: {'user_id': '$userId'},
+      timeout: const Duration(seconds: 12),
+    );
+    
+    // Сервер может вернуть данные в разных ключах
+    final dynamic raw = map['profile'] ?? map['data'] ?? map;
+
+    if (raw is! Map) {
+      throw const FormatException('Bad payload: not a JSON object');
+    }
+
+    final profile = UserProfileHeader.fromJson(
+      Map<String, dynamic>.from(raw),
+    );
+
+    // Сохраняем в кэш
+    await _cache.cacheProfile(
+      userId: profile.id,
+      name: '${profile.firstName} ${profile.lastName}',
+      avatar: profile.avatar ?? '',
+      userGroup: 0,
+      totalDistance: 0,
+      totalActivities: 0,
+      totalTime: 0,
+      city: profile.city,
+      age: profile.age,
+      followers: profile.followers,
+      following: profile.following,
+    );
+
+    state = state.copyWith(profile: profile, isLoading: false, error: null);
     
     final newAvatar = state.profile?.avatar;
     if (newAvatar == null || newAvatar.isEmpty) return;
     
-    // ШАГ 3: Очистка кэша для принудительной перезагрузки
+    // ШАГ 4: Очистка кэша для принудительной перезагрузки
     try {
       // Очищаем базовый URL
       await CachedNetworkImage.evictFromCache(newAvatar);
@@ -158,7 +202,6 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
       
     } catch (e) {
       // Игнорируем ошибки очистки кэша
-      debugPrint('⚠️ Ошибка очистки кэша аватарки: $e');
     }
   }
 }

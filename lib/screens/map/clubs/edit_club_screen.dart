@@ -506,8 +506,19 @@ class _EditClubScreenState extends State<EditClubScreen> {
 
       // Добавляем поля формы
       final userId = await authService.getUserId();
+      if (userId == null) {
+        if (!mounted) return;
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ошибка авторизации. Необходимо войти в систему'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
       fields['club_id'] = widget.clubId.toString();
-      fields['user_id'] = userId?.toString() ?? '1';
+      fields['user_id'] = userId.toString();
       fields['name'] = nameCtrl.text.trim();
       fields['city'] = cityCtrl.text.trim();
       fields['description'] = descCtrl.text.trim();
