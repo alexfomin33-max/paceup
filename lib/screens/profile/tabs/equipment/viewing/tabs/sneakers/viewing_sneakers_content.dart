@@ -2,36 +2,223 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../../theme/app_theme.dart';
 import '../../../../../../../widgets/more_menu_overlay.dart';
+import '../../../../../../../service/api_service.dart';
+import '../../../../../../../service/auth_service.dart';
 
-class ViewingSneakersContent extends StatelessWidget {
+/// Модель элемента снаряжения для просмотра
+class _SneakerItem {
+  final int id;
+  final int equipUserId;
+  final String brand;
+  final String model;
+  final int km;
+  final int workouts;
+  final int hours;
+  final String pace;
+  final String since;
+  final bool isMain;
+  final String? imageUrl;
+
+  const _SneakerItem({
+    required this.id,
+    required this.equipUserId,
+    required this.brand,
+    required this.model,
+    required this.km,
+    required this.workouts,
+    required this.hours,
+    required this.pace,
+    required this.since,
+    required this.isMain,
+    this.imageUrl,
+  });
+}
+
+class ViewingSneakersContent extends StatefulWidget {
   const ViewingSneakersContent({super.key});
 
   @override
+  State<ViewingSneakersContent> createState() => _ViewingSneakersContentState();
+}
+
+class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
+  List<_SneakerItem> _sneakers = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSneakers();
+  }
+
+  /// Получение жестких данных для полей, которых нет в API
+  /// На основе бренда и модели возвращает дефолтные значения
+  Map<String, dynamic> _getHardcodedData(String brand, String model) {
+    final brandLower = brand.toLowerCase();
+
+    // Для Asics (включая "Asics Fat Burner")
+    if (brandLower.contains('asics')) {
+      return {
+        'workouts': 46,
+        'hours': 48,
+        'pace': '4:18 /км',
+        'since': 'В использовании с 21 июля 2023 г.',
+      };
+    }
+
+    // Для Anta
+    if (brandLower.contains('anta')) {
+      return {
+        'workouts': 68,
+        'hours': 102,
+        'pace': '3:42 /км',
+        'since': 'В использовании с 18 августа 2022 г.',
+      };
+    }
+
+    // Дефолтные значения для других брендов
+    return {
+      'workouts': 0,
+      'hours': 0,
+      'pace': '0:00 /км',
+      'since': 'Дата не указана',
+    };
+  }
+
+  /// Загрузка кроссовок из API
+  Future<void> _loadSneakers() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        setState(() {
+          _error = 'Пользователь не авторизован';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final api = ApiService();
+      final data = await api.post(
+        '/get_equipment.php',
+        body: {'user_id': userId.toString()},
+      );
+
+      if (data['success'] == true) {
+        final bootsList = data['boots'] as List<dynamic>? ?? [];
+
+        setState(() {
+          _sneakers = bootsList.map((item) {
+            final brand = item['brand'] as String;
+            final model = item['name'] as String;
+
+            // Получаем жесткие данные для полей, которых нет в API
+            final hardcoded = _getHardcodedData(brand, model);
+
+            // Используем данные из API, если есть, иначе - жесткие данные
+            final paceStr =
+                item['pace'] as String? ?? hardcoded['pace'] as String;
+            final workouts =
+                item['workouts'] as int? ?? hardcoded['workouts'] as int;
+            final hours = item['hours'] as int? ?? hardcoded['hours'] as int;
+            final sinceDate = item['since'] as String?;
+            final sinceText = sinceDate != null && sinceDate.isNotEmpty
+                ? 'В использовании с $sinceDate'
+                : hardcoded['since'] as String;
+
+            return _SneakerItem(
+              id: item['id'] as int,
+              equipUserId: item['equip_user_id'] as int,
+              brand: brand,
+              model: model,
+              km: item['dist'] as int,
+              workouts: workouts,
+              hours: hours,
+              pace: paceStr,
+              since: sinceText,
+              isMain: (item['main'] as int) == 1,
+              imageUrl: item['image'] as String?,
+            );
+          }).toList();
+
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = data['message'] ?? 'Ошибка при загрузке кроссовок';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Ошибка: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Column(
+    if (_isLoading) {
+      return const Center(child: CupertinoActivityIndicator(radius: 16));
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _error!,
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            CupertinoButton(
+              onPressed: _loadSneakers,
+              child: const Text('Повторить'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_sneakers.isEmpty) {
+      return const Center(
+        child: Text(
+          'Нет кроссовок',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+      );
+    }
+
+    return Column(
       children: [
-        GearViewCard.shoes(
-          brand: 'Asics',
-          model: 'Jolt 3 Wide',
-          asset: 'assets/view_asics.png',
-          km: 582,
-          workouts: 46,
-          hours: 48,
-          pace: '4:18 /км',
-          since: 'В использовании с 21 июля 2023 г.',
-          mainBadgeText: 'Основные',
-        ),
-        SizedBox(height: 12),
-        GearViewCard.shoes(
-          brand: 'Anta',
-          model: 'M C202',
-          asset: 'assets/view_anta.png',
-          km: 1204,
-          workouts: 68,
-          hours: 102,
-          pace: '3:42 /км',
-          since: 'В использовании с 18 августа 2022 г.',
-        ),
+        ...List.generate(_sneakers.length, (index) {
+          final sneaker = _sneakers[index];
+          return Column(
+            children: [
+              if (index > 0) const SizedBox(height: 12),
+              GearViewCard.shoes(
+                brand: sneaker.brand,
+                model: sneaker.model,
+                imageUrl: sneaker.imageUrl,
+                km: sneaker.km,
+                workouts: sneaker.workouts,
+                hours: sneaker.hours,
+                pace: sneaker.pace,
+                since: sneaker.since,
+                mainBadgeText: sneaker.isMain ? 'Основные' : null,
+              ),
+            ],
+          );
+        }),
       ],
     );
   }
@@ -41,7 +228,8 @@ class ViewingSneakersContent extends StatelessWidget {
 class GearViewCard extends StatefulWidget {
   final String brand;
   final String model;
-  final String asset;
+  final String? asset; // Локальный asset (для обратной совместимости)
+  final String? imageUrl; // URL изображения из базы данных
   final int km;
   final int workouts;
   final int hours;
@@ -54,7 +242,8 @@ class GearViewCard extends StatefulWidget {
     super.key,
     required this.brand,
     required this.model,
-    required this.asset,
+    this.asset,
+    this.imageUrl,
     required this.km,
     required this.workouts,
     required this.hours,
@@ -68,7 +257,8 @@ class GearViewCard extends StatefulWidget {
     super.key,
     required this.brand,
     required this.model,
-    required this.asset,
+    this.asset,
+    this.imageUrl,
     required this.km,
     required this.workouts,
     required this.hours,
@@ -114,10 +304,7 @@ class _GearViewCardState extends State<GearViewCard> {
       ),
     ];
 
-    MoreMenuOverlay(
-      anchorKey: _menuKey,
-      items: items,
-    ).show(context);
+    MoreMenuOverlay(anchorKey: _menuKey, items: items).show(context);
   }
 
   @override
@@ -207,12 +394,45 @@ class _GearViewCardState extends State<GearViewCard> {
               ),
             ),
 
-          // ── Изображение
+          // ── Изображение (из базы данных или локальный asset)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: AspectRatio(
               aspectRatio: 16 / 7.8,
-              child: Image.asset(widget.asset, fit: BoxFit.contain),
+              child: widget.imageUrl != null && widget.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      widget.imageUrl!,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        // При ошибке загрузки показываем дефолтное изображение
+                        if (widget.asset != null) {
+                          return Image.asset(
+                            widget.asset!,
+                            fit: BoxFit.contain,
+                          );
+                        }
+                        return Container(
+                          color: AppColors.border,
+                          child: const Center(
+                            child: Icon(
+                              CupertinoIcons.photo,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : widget.asset != null
+                  ? Image.asset(widget.asset!, fit: BoxFit.contain)
+                  : Container(
+                      color: AppColors.border,
+                      child: const Center(
+                        child: Icon(
+                          CupertinoIcons.photo,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
             ),
           ),
 

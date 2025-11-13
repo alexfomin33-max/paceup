@@ -47,7 +47,8 @@ class GearSectionSliver extends StatelessWidget {
             onTap: onItemTap, // 👈 дергаем внешний колбэк
             child: _GearCard(
               title: g.title,
-              imageAsset: g.imageAsset,
+              imageUrl: g.imageAsset,
+              isBike: isBike,
               stat1Label: 'Пробег:',
               stat1Value: g.mileage,
               stat2Label: isBike ? 'Скорость:' : 'Темп:',
@@ -80,7 +81,8 @@ class _SectionTitle extends StatelessWidget {
 /// Карточка снаряжения: картинка + заголовок + две краткие метрики
 class _GearCard extends StatelessWidget {
   final String title;
-  final String imageAsset;
+  final String imageUrl; // URL изображения из базы данных (может быть пустым)
+  final bool isBike; // Флаг для определения типа снаряжения (кроссовки/велосипед)
   final String stat1Label;
   final String stat1Value;
   final String stat2Label;
@@ -88,7 +90,8 @@ class _GearCard extends StatelessWidget {
 
   const _GearCard({
     required this.title,
-    required this.imageAsset,
+    required this.imageUrl,
+    required this.isBike,
     required this.stat1Label,
     required this.stat1Value,
     required this.stat2Label,
@@ -97,6 +100,42 @@ class _GearCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Определяем дефолтное изображение в зависимости от типа снаряжения
+    final defaultImage = isBike ? 'assets/add_bike.png' : 'assets/add_boots.png';
+    
+    // Функция для получения виджета изображения
+    Widget _buildImage() {
+      // Если есть URL изображения и он не пустой, показываем сетевую картинку
+      if (imageUrl.isNotEmpty && 
+          (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))) {
+        return Image.network(
+          imageUrl,
+          width: 72,
+          height: 44,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // При ошибке загрузки показываем дефолтное изображение
+            final image = Image.asset(
+              defaultImage,
+              width: 72,
+              height: 44,
+              fit: BoxFit.cover,
+            );
+            return isBike ? image : Opacity(opacity: 0.9, child: image);
+          },
+        );
+      } else {
+        // Если URL нет или он пустой, показываем дефолтное изображение
+        final image = Image.asset(
+          defaultImage,
+          width: 72,
+          height: 44,
+          fit: BoxFit.cover,
+        );
+        return isBike ? image : Opacity(opacity: 0.9, child: image);
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
@@ -116,46 +155,10 @@ class _GearCard extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
         child: Row(
           children: [
-            // Превью изображения (локальный asset или сетевой URL)
+            // Превью изображения (из базы данных или дефолтное)
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: imageAsset.startsWith('http://') || imageAsset.startsWith('https://')
-                  ? Image.network(
-                      imageAsset,
-                      width: 72,
-                      height: 44,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 72,
-                          height: 44,
-                          color: AppColors.border,
-                          child: const Icon(
-                            CupertinoIcons.photo,
-                            color: AppColors.textSecondary,
-                            size: 20,
-                          ),
-                        );
-                      },
-                    )
-                  : Image.asset(
-                      imageAsset,
-                      width: 72,
-                      height: 44,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 72,
-                          height: 44,
-                          color: AppColors.border,
-                          child: const Icon(
-                            CupertinoIcons.photo,
-                            color: AppColors.textSecondary,
-                            size: 20,
-                          ),
-                        );
-                      },
-                    ),
+              child: _buildImage(),
             ),
             const SizedBox(width: 12),
             // Текстовая часть с заголовком и метриками
