@@ -86,8 +86,8 @@ class _CollectionsSliverGrid extends StatelessWidget {
         ),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
           childAspectRatio: 1.04,
         ),
       ),
@@ -131,11 +131,7 @@ class _CollectionTile extends StatelessWidget {
         topLeft: Radius.circular(AppRadius.md),
         topRight: Radius.circular(AppRadius.md),
       ),
-      child: Image.asset(
-        item.asset,
-        width: double.infinity,
-        fit: BoxFit.cover,
-      ),
+      child: Image.asset(item.asset, width: double.infinity, fit: BoxFit.cover),
     );
 
     // Для "locked" — обесцвечиваем картинку

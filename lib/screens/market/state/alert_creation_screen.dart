@@ -116,81 +116,95 @@ class _AlertCreationScreenState extends State<AlertCreationScreen> {
           showBottomDivider: true,
         ),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(12, 20, 12, 20),
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ─── Информационное сообщение ───
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Вам придёт оповещение, если кто-то разместит слот, '
-                  'соответствующий указанным критериям',
-                  style: AppTextStyles.h14w4.copyWith(
-                    color: AppColors.textSecondary,
+              // ─── Контейнер формы с фоном surface ───
+              Container(
+                decoration: const BoxDecoration(color: AppColors.surface),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // ─── Информационное сообщение ───
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 0),
+                        child: Text(
+                          'Вам придёт оповещение, если кто-то разместит слот, '
+                          'соответствующий указанным критериям',
+                          style: AppTextStyles.h14w4.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ─── Форма создания оповещения ───
+                      _LabeledTextField(
+                        label: 'Название события',
+                        hint: 'Официальное название события',
+                        controller: nameCtrl,
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 20),
+
+                      const _SmallLabel('Пол'),
+                      const SizedBox(height: 8),
+                      _GenderRow(
+                        maleSelected: _gender == Gender.male,
+                        femaleSelected: _gender == Gender.female,
+                        onMaleTap: () => setState(() => _gender = Gender.male),
+                        onFemaleTap: () =>
+                            setState(() => _gender = Gender.female),
+                      ),
+                      const SizedBox(height: 20),
+
+                      const _SmallLabel('Дистанция'),
+                      const SizedBox(height: 8),
+                      _ChipsRow(
+                        items: _distances,
+                        selectedIndex: _distanceIndex,
+                        onSelected: (i) => setState(() => _distanceIndex = i),
+                      ),
+                      const SizedBox(height: 24),
+
+                      Center(
+                        child: PrimaryButton(
+                          text: 'Создать оповещение',
+                          onPressed: _createAlert,
+                          width: 220,
+                        ),
+                      ),
+                    ],
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(height: 20),
-
-              // ─── Форма создания оповещения ───
-              _LabeledTextField(
-                label: 'Название события',
-                hint: 'Официальное название спортивного события',
-                controller: nameCtrl,
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 20),
-
-              const _SmallLabel('Пол'),
-              const SizedBox(height: 8),
-              _GenderRow(
-                maleSelected: _gender == Gender.male,
-                femaleSelected: _gender == Gender.female,
-                onMaleTap: () => setState(() => _gender = Gender.male),
-                onFemaleTap: () => setState(() => _gender = Gender.female),
-              ),
-              const SizedBox(height: 20),
-
-              const _SmallLabel('Дистанция'),
-              const SizedBox(height: 8),
-              _ChipsRow(
-                items: _distances,
-                selectedIndex: _distanceIndex,
-                onSelected: (i) => setState(() => _distanceIndex = i),
-              ),
-              const SizedBox(height: 24),
-
-              Center(
-                child: PrimaryButton(
-                  text: 'Создать оповещение',
-                  onPressed: _createAlert,
-                  width: 220,
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // ─── Разделительная линия ───
-              if (_alerts.isNotEmpty) ...[
-                const Divider(height: 1, thickness: 2, color: AppColors.border),
-                const SizedBox(height: 20),
-              ],
 
               // ─── Раздел «Текущие оповещения» ───
               if (_alerts.isNotEmpty) ...[
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: _SmallLabel('Текущие оповещения'),
-                ),
-                const SizedBox(height: 12),
-                ..._alerts.map(
-                  (alert) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: _AlertCard(
-                      alert: alert,
-                      onDelete: () => _deleteAlert(alert.id),
-                    ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 20, 12, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: _SmallLabel('Текущие оповещения'),
+                      ),
+                      const SizedBox(height: 12),
+                      ..._alerts.map(
+                        (alert) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _AlertCard(
+                            alert: alert,
+                            onDelete: () => _deleteAlert(alert.id),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -483,8 +497,8 @@ class _DeleteButton extends StatelessWidget {
         child: ElevatedButton(
           onPressed: onPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.red,
-            foregroundColor: AppColors.surface,
+            backgroundColor: AppColors.redBg,
+            foregroundColor: AppColors.red,
             elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             minimumSize: Size.zero,
@@ -498,6 +512,7 @@ class _DeleteButton extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 13,
               fontWeight: FontWeight.w400,
+              color: AppColors.red,
             ),
           ),
         ),
