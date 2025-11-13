@@ -390,9 +390,9 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                                   if (result == true && mounted) {
                                     _loadClub();
                                   }
-                                  // Если клуб был удалён, возвращаемся назад
+                                  // Если клуб был удалён, возвращаемся назад с результатом
                                   if (result == 'deleted' && mounted) {
-                                    Navigator.of(context).pop();
+                                    Navigator.of(context).pop('deleted');
                                   }
                                 },
                               ),

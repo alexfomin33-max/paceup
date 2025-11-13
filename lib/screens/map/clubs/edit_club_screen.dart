@@ -429,11 +429,6 @@ class _EditClubScreenState extends State<EditClubScreen> {
       if (success) {
         if (!mounted) return;
 
-        // Показываем успешное сообщение
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Сообщество успешно удалено')),
-        );
-
         // Возвращаемся на предыдущий экран с результатом удаления
         Navigator.of(context).pop('deleted');
       } else {
@@ -566,11 +561,6 @@ class _EditClubScreenState extends State<EditClubScreen> {
 
       if (success) {
         if (!mounted) return;
-
-        // Показываем успешное сообщение
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Клуб успешно обновлён')));
 
         // Возвращаемся на экран детализации с обновленными данными
         Navigator.of(context).pop(true);

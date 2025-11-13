@@ -214,10 +214,14 @@ class EventsFloatingButtons extends StatelessWidget {
   /// Текущие параметры фильтра (для восстановления состояния)
   final EventsFilterParams? currentFilterParams;
 
+  /// Callback для обновления данных после создания события
+  final VoidCallback? onEventCreated;
+
   const EventsFloatingButtons({
     super.key,
     this.onApplyFilters,
     this.currentFilterParams,
+    this.onEventCreated,
   });
 
   @override
@@ -248,11 +252,15 @@ class EventsFloatingButtons extends StatelessWidget {
           _SolidPillButton(
             icon: Icons.add_circle_outline,
             label: 'Добавить',
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              final result = await Navigator.push(
                 context,
                 TransparentPageRoute(builder: (_) => const AddEventScreen()),
               );
+              // Если событие было создано, вызываем callback для обновления данных на карте
+              if (result == 'created' && context.mounted) {
+                onEventCreated?.call();
+              }
             },
           ),
         ],

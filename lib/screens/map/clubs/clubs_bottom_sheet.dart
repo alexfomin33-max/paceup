@@ -272,12 +272,16 @@ class ClubsListFromApi extends StatelessWidget {
           title: name,
           subtitle: subtitle,
           onTap: clubId != null
-              ? () {
-                  Navigator.of(context).push(
+              ? () async {
+                  final result = await Navigator.of(context).push(
                     TransparentPageRoute(
                       builder: (_) => ClubDetailScreen(clubId: clubId),
                     ),
                   );
+                  // Если клуб был удалён, закрываем bottom sheet и обновляем данные
+                  if (result == 'deleted' && context.mounted) {
+                    Navigator.of(context).pop('club_deleted');
+                  }
                 }
               : null,
         );

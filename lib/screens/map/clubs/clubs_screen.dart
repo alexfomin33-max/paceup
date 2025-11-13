@@ -156,9 +156,14 @@ Future<List<Map<String, dynamic>>> clubsMarkers(BuildContext context) async {
   }
 }
 
-// === Нижние кнопки для вкладки «Клубы» (оставляем как было) ===
+// === Нижние кнопки для вкладки «Клубы» ===
 class ClubsFloatingButtons extends StatelessWidget {
-  const ClubsFloatingButtons({super.key});
+  final VoidCallback? onClubCreated;
+
+  const ClubsFloatingButtons({
+    super.key,
+    this.onClubCreated,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -181,11 +186,15 @@ class ClubsFloatingButtons extends StatelessWidget {
           _SolidPillButton(
             icon: Icons.group_add_outlined,
             label: 'Создать клуб',
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              final result = await Navigator.push(
                 context,
                 TransparentPageRoute(builder: (_) => const CreateClubScreen()),
               );
+              // Если клуб был создан, вызываем callback для обновления данных на карте
+              if (result == 'created' && context.mounted) {
+                onClubCreated?.call();
+              }
             },
           ),
         ],

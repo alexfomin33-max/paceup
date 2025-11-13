@@ -36,8 +36,17 @@ class _MapScreenState extends State<MapScreen> {
   /// Параметры фильтра событий (для обновления карты при применении фильтров)
   EventsFilterParams? _eventsFilterParams;
 
-  /// Ключ для FutureBuilder событий (обновляется при изменении фильтров)
+  /// Ключ для FutureBuilder событий (обновляется при изменении фильтров или создании события)
   Key _eventsMarkersKey = const ValueKey('events_markers_default');
+
+  /// Ключ для FutureBuilder клубов (обновляется при создании или удалении клуба)
+  Key _clubsMarkersKey = const ValueKey('clubs_markers_default');
+
+  /// Текущие маркеры событий (для отображения во время загрузки)
+  List<Map<String, dynamic>> _currentEventsMarkers = [];
+
+  /// Текущие маркеры клубов (для отображения во время загрузки)
+  List<Map<String, dynamic>> _currentClubsMarkers = [];
 
   /// Цвета маркеров по вкладкам
   final markerColors = const {
@@ -127,50 +136,50 @@ class _MapScreenState extends State<MapScreen> {
         body: Stack(
           children: [
             FutureBuilder<List<Map<String, dynamic>>>(
-              // Используем динамический ключ для событий (обновляется при применении фильтров)
-              // Для клубов используем статический ключ
+              // Используем динамический ключ для событий (обновляется при применении фильтров или создании события)
+              // Для клубов используем динамический ключ (обновляется при создании или удалении клуба)
               key: _selectedIndex == 0
                   ? _eventsMarkersKey
-                  : const ValueKey('clubs_markers'),
+                  : _clubsMarkersKey,
               future: _selectedIndex == 0
                   ? ev.eventsMarkers(context, filterParams: _eventsFilterParams)
                   : clb.clubsMarkers(context),
               builder: (context, snapshot) {
-                // Показываем карту даже во время загрузки (с пустыми маркерами)
-                // ⚠️ ВАЖНО: Откладываем создание FlutterMap до следующего кадра,
-                // чтобы не блокировать UI поток во время выполнения запроса
+                // Используем текущие маркеры во время загрузки для плавного обновления
+                List<Map<String, dynamic>> markersToShow;
+                
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  // Откладываем создание карты через Future.microtask,
-                  // чтобы не блокировать UI поток во время выполнения запроса
-                  return FutureBuilder<void>(
-                    future: Future.microtask(() {}),
-                    builder: (context, microtaskSnapshot) {
-                      return microtaskSnapshot.connectionState ==
-                              ConnectionState.done
-                          ? _buildMap([], markerColor)
-                          : Container(color: AppColors.surface);
-                    },
-                  );
-                }
-                
-                // Обрабатываем ошибки
-                if (snapshot.hasError) {
+                  // Во время загрузки используем последние загруженные маркеры
+                  markersToShow = _selectedIndex == 0
+                      ? _currentEventsMarkers
+                      : _currentClubsMarkers;
+                } else if (snapshot.hasError) {
                   debugPrint('Ошибка загрузки маркеров: ${snapshot.error}');
-                  return _buildMap([], markerColor);
+                  // При ошибке используем последние загруженные маркеры
+                  markersToShow = _selectedIndex == 0
+                      ? _currentEventsMarkers
+                      : _currentClubsMarkers;
+                } else {
+                  // Обновляем текущие маркеры при успешной загрузке
+                  final newMarkers = snapshot.data ?? [];
+                  if (_selectedIndex == 0) {
+                    _currentEventsMarkers = newMarkers;
+                  } else {
+                    _currentClubsMarkers = newMarkers;
+                  }
+                  markersToShow = newMarkers;
+                  
+                  // Подстраиваем zoom после загрузки маркеров (только один раз)
+                  if (markersToShow.isNotEmpty) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        _fitBoundsToMarkers(markersToShow);
+                      }
+                    });
+                  }
                 }
                 
-                final markers = snapshot.data ?? [];
-                
-                // Подстраиваем zoom после загрузки маркеров (только один раз)
-                if (markers.isNotEmpty) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) {
-                      _fitBoundsToMarkers(markers);
-                    }
-                  });
-                }
-                
-                return _buildMap(markers, markerColor);
+                return _buildMap(markersToShow, markerColor);
               },
             ),
             _buildTabs(),
@@ -187,8 +196,26 @@ class _MapScreenState extends State<MapScreen> {
                     );
                   });
                 },
+                onEventCreated: () {
+                  // Обновляем ключ FutureBuilder для перезагрузки данных после создания события
+                  setState(() {
+                    _eventsMarkersKey = ValueKey(
+                      'events_markers_${DateTime.now().millisecondsSinceEpoch}',
+                    );
+                  });
+                },
               ),
-            if (_selectedIndex == 1) const clb.ClubsFloatingButtons(),
+            if (_selectedIndex == 1)
+              clb.ClubsFloatingButtons(
+                onClubCreated: () {
+                  // Обновляем ключ FutureBuilder для перезагрузки данных
+                  setState(() {
+                    _clubsMarkersKey = ValueKey(
+                      'clubs_markers_${DateTime.now().millisecondsSinceEpoch}',
+                    );
+                  });
+                },
+              ),
           ],
         ),
       );
@@ -211,7 +238,17 @@ class _MapScreenState extends State<MapScreen> {
         children: [
           _buildMap(markers, markerColor),
           _buildTabs(),
-          if (_selectedIndex == 1) const clb.ClubsFloatingButtons(),
+          if (_selectedIndex == 1)
+            clb.ClubsFloatingButtons(
+              onClubCreated: () {
+                // Обновляем ключ FutureBuilder для перезагрузки данных
+                setState(() {
+                  _clubsMarkersKey = ValueKey(
+                    'clubs_markers_${DateTime.now().millisecondsSinceEpoch}',
+                  );
+                });
+              },
+            ),
           if (_selectedIndex == 2) const cch.CoachesFloatingButtons(),
           if (_selectedIndex == 3) const trv.TravelersFloatingButtons(),
         ],
@@ -306,7 +343,16 @@ class _MapScreenState extends State<MapScreen> {
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
                       builder: (_) => sheet,
-                    );
+                    ).then((result) {
+                      // Если клуб был удалён, обновляем маркеры на карте
+                      if (result == 'club_deleted' && mounted) {
+                        setState(() {
+                          _clubsMarkersKey = ValueKey(
+                            'clubs_markers_${DateTime.now().millisecondsSinceEpoch}',
+                          );
+                        });
+                      }
+                    });
                   },
 
                   child: Container(

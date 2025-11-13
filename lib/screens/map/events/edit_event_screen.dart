@@ -536,10 +536,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
       if (success) {
         if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Событие успешно обновлено')),
-        );
-
         // Возвращаемся на экран детализации с обновленными данными
         Navigator.of(context).pop(true);
       } else {

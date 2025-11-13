@@ -512,14 +512,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
       if (success) {
         if (!mounted) return;
 
-        // Показываем успешное сообщение
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Событие успешно создано')),
-        );
-
-        // Закрываем экран создания события и возвращаемся на карту
-        // Экран создания события открывается с карты, поэтому просто закрываем его
-        Navigator.of(context).pop();
+        // Закрываем экран создания события и возвращаемся на карту с результатом
+        // Экран создания события открывается с карты, поэтому возвращаем результат для обновления данных
+        Navigator.of(context).pop('created');
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
