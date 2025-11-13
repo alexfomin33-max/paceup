@@ -28,6 +28,7 @@
 
 import 'package:drift/drift.dart';
 import '../database/app_database.dart';
+import '../database/type_converters.dart';
 import '../models/activity_lenta.dart';
 
 class CacheService {
@@ -63,6 +64,7 @@ class CacheService {
         type: activity.type,
         dateStart: Value(activity.dateStart),
         dateEnd: Value(activity.dateEnd),
+        lentaDate: Value(activity.lentaDate), // ✅ Сохраняем дату из таблицы lenta
         userName: activity.userName,
         userAvatar: activity.userAvatar,
         userGroup: activity.userGroup,
@@ -82,10 +84,82 @@ class CacheService {
     }).toList();
 
     // ────────── Batch Insert: атомарная операция ──────────
-    // Все записи вставляются в одной транзакции
-    // Прирост: ~10x быстрее для списка >20 элементов
+    // ✅ Используем кастомный SQL с ON CONFLICT(lenta_id) DO UPDATE
+    // Это предотвращает ошибку UNIQUE constraint failed на lenta_id
+    // Все операции выполняются в одной транзакции через batch
+    const equipmentConverter = EquipmentListConverter();
+    const statsConverter = ActivityStatsConverter();
+    const pointsConverter = CoordListConverter();
+    const imagesConverter = StringListConverter();
+    const videosConverter = StringListConverter();
+    
     await _db.batch((batch) {
-      batch.insertAllOnConflictUpdate(_db.cachedActivities, companions);
+      for (final companion in companions) {
+        // Используем Type Converters для правильной сериализации JSON
+        final equipmentsJson = equipmentConverter.toSql(companion.equipments.value);
+        final statsJson = statsConverter.toSql(companion.stats.value);
+        final pointsJson = pointsConverter.toSql(companion.points.value);
+        final imagesJson = imagesConverter.toSql(companion.mediaImages.value);
+        final videosJson = videosConverter.toSql(companion.mediaVideos.value);
+        
+        // Используем кастомный SQL для обработки конфликта по lenta_id
+        batch.customStatement(
+          '''
+          INSERT INTO cached_activities (
+            activity_id, lenta_id, user_id, type, date_start, date_end, lenta_date,
+            user_name, user_avatar, user_group, likes, comments, is_like,
+            post_date_text, post_media_url, post_content, equipments, stats,
+            points, media_images, media_videos, cache_owner
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(lenta_id) DO UPDATE SET
+            activity_id = excluded.activity_id,
+            user_id = excluded.user_id,
+            type = excluded.type,
+            date_start = excluded.date_start,
+            date_end = excluded.date_end,
+            lenta_date = excluded.lenta_date,
+            user_name = excluded.user_name,
+            user_avatar = excluded.user_avatar,
+            user_group = excluded.user_group,
+            likes = excluded.likes,
+            comments = excluded.comments,
+            is_like = excluded.is_like,
+            post_date_text = excluded.post_date_text,
+            post_media_url = excluded.post_media_url,
+            post_content = excluded.post_content,
+            equipments = excluded.equipments,
+            stats = excluded.stats,
+            points = excluded.points,
+            media_images = excluded.media_images,
+            media_videos = excluded.media_videos,
+            cache_owner = excluded.cache_owner
+          ''',
+          [
+            companion.activityId.value,
+            companion.lentaId.value,
+            companion.userId.value,
+            companion.type.value,
+            companion.dateStart.value?.toIso8601String(),
+            companion.dateEnd.value?.toIso8601String(),
+            companion.lentaDate.value?.toIso8601String(), // ✅ Сохраняем lentaDate
+            companion.userName.value,
+            companion.userAvatar.value,
+            companion.userGroup.value,
+            companion.likes.value,
+            companion.comments.value,
+            companion.isLike.value ? 1 : 0,
+            companion.postDateText.value,
+            companion.postMediaUrl.value,
+            companion.postContent.value,
+            equipmentsJson,
+            statsJson,
+            pointsJson,
+            imagesJson,
+            videosJson,
+            companion.cacheOwner.value,
+          ],
+        );
+      }
     });
   }
 
@@ -95,7 +169,8 @@ class CacheService {
   /// • userId — ID пользователя
   /// • limit — максимальное количество активностей (по умолчанию 20)
   ///
-  /// Возвращает список активностей, отсортированных по дате (старые сверху)
+  /// Возвращает список активностей, отсортированных по lentaDate (новые сверху)
+  /// ✅ Использует дату из таблицы lenta для единой сортировки активностей и постов
   Future<List<Activity>> getCachedActivities({
     required int userId,
     int limit = 20,
@@ -103,7 +178,17 @@ class CacheService {
     final query = _db.select(_db.cachedActivities)
       ..where((tbl) => tbl.cacheOwner.equals(userId))
       ..orderBy([
-        (t) => OrderingTerm(expression: t.dateStart, mode: OrderingMode.asc),
+        // ✅ Сортируем по lentaDate (дата из таблицы lenta) - новые сверху
+        // Старые данные без lentaDate очищены в миграции, новые всегда имеют lentaDate
+        (t) => OrderingTerm(
+          expression: t.lentaDate,
+          mode: OrderingMode.desc,
+        ),
+        // Дополнительная сортировка по lentaId для стабильности
+        (t) => OrderingTerm(
+          expression: t.lentaId,
+          mode: OrderingMode.desc,
+        ),
       ])
       ..limit(limit);
 
@@ -399,6 +484,7 @@ class CacheService {
       dateStart: cached.dateStart,
       dateEnd: cached.dateEnd,
       lentaId: cached.lentaId,
+      lentaDate: cached.lentaDate, // ✅ Восстанавливаем дату из таблицы lenta
       userId: cached.userId,
       userName: cached.userName,
       userAvatar: cached.userAvatar,

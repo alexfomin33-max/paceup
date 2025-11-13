@@ -15,6 +15,7 @@ class Activity {
   final DateTime? dateStart; // top-level date_start (SQL-like string)
   final DateTime? dateEnd; // top-level date_end (SQL-like string)
   final int lentaId;
+  final DateTime? lentaDate; // ✅ Дата из таблицы lenta для единой сортировки
   final int userId;
   final String userName;
   final String userAvatar;
@@ -37,6 +38,7 @@ class Activity {
     required this.dateStart,
     required this.dateEnd,
     required this.lentaId,
+    this.lentaDate,
     required this.userId,
     required this.userName,
     required this.userAvatar,
@@ -79,6 +81,7 @@ class Activity {
       dateStart: _parseSqlDateTime(j['date_start']?.toString()),
       dateEnd: _parseSqlDateTime(j['date_end']?.toString()),
       lentaId: _asInt(j['lenta_id']),
+      lentaDate: _parseSqlDateTime(j['lenta_date']?.toString()), // ✅ Дата из таблицы lenta
       userId: _asInt(j['user_id']),
       userName: j['user_name']?.toString() ?? '',
       userAvatar: j['user_avatar']?.toString() ?? '',
@@ -111,6 +114,7 @@ class Activity {
       dateStart: dateStart,
       dateEnd: dateEnd,
       lentaId: lentaId,
+      lentaDate: lentaDate,
       userId: userId,
       userName: userName,
       userAvatar: userAvatar,
@@ -137,6 +141,7 @@ class Activity {
       dateStart: dateStart,
       dateEnd: dateEnd,
       lentaId: lentaId,
+      lentaDate: lentaDate,
       userId: userId,
       userName: userName,
       userAvatar: userAvatar,
@@ -320,12 +325,63 @@ double _asDouble(dynamic v) {
 }
 
 DateTime? _parseSqlDateTime(String? s) {
-  // Accepts "YYYY-MM-DD HH:mm:ss" -> converts to ISO-local: "YYYY-MM-DDTHH:mm:ss"
+  // ✅ Универсальный парсер: поддерживает оба формата
+  // - "YYYY-MM-DD HH:mm:ss" (SQL формат)
+  // - "YYYY-MM-DDTHH:mm:ss" или "YYYY-MM-DDTHH:mm:ss.000" (ISO формат)
   if (s == null || s.isEmpty) return null;
-  final normalized = s.replaceFirst(' ', 'T');
+  
+  // Убираем лишние пробелы и нормализуем строку
+  String normalized = s.trim();
+  
+  // Убираем миллисекунды если есть (формат .000 или .123456)
+  if (normalized.contains('.')) {
+    final dotIndex = normalized.indexOf('.');
+    // Проверяем, что после точки идут цифры (миллисекунды)
+    if (dotIndex > 0 && dotIndex < normalized.length - 1) {
+      // Находим конец миллисекунд (до пробела, 'Z', '+' или конца строки)
+      final afterDot = normalized.substring(dotIndex + 1);
+      final endIndex = afterDot.indexOf(RegExp(r'[^0-9]'));
+      if (endIndex > 0) {
+        // Убираем миллисекунды
+        normalized = normalized.substring(0, dotIndex) + 
+                    normalized.substring(dotIndex + 1 + endIndex);
+      } else {
+        // Миллисекунды в конце строки - просто убираем их
+        normalized = normalized.substring(0, dotIndex);
+      }
+    }
+  }
+  
   try {
-    return DateTime.parse(normalized);
-  } catch (_) {
+    // Если уже содержит 'T' - это ISO формат
+    if (normalized.contains('T')) {
+      return DateTime.parse(normalized);
+    }
+    // Иначе это SQL формат - заменяем пробел на 'T'
+    final withT = normalized.replaceFirst(' ', 'T');
+    return DateTime.parse(withT);
+  } catch (e) {
+    // Если парсинг не удался, пробуем ручной парсинг
+    try {
+      // Формат: "YYYY-MM-DD HH:mm:ss" или "YYYY-MM-DDTHH:mm:ss"
+      final parts = normalized.split(RegExp(r'[T ]'));
+      if (parts.length >= 2) {
+        final dateParts = parts[0].split('-');
+        final timeParts = parts[1].split(':');
+        if (dateParts.length == 3 && timeParts.length >= 2) {
+          return DateTime(
+            int.parse(dateParts[0]),
+            int.parse(dateParts[1]),
+            int.parse(dateParts[2]),
+            int.parse(timeParts[0]),
+            int.parse(timeParts[1]),
+            timeParts.length >= 3 ? int.parse(timeParts[2]) : 0,
+          );
+        }
+      }
+    } catch (_) {
+      return null;
+    }
     return null;
   }
 }

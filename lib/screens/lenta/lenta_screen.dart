@@ -51,7 +51,10 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   // ——— Служебное ———
   final ScrollController _scrollController = ScrollController();
   final AuthService _auth = AuthService();
-  int? _actualUserId; // Реальный userId (из widget или из AuthService)
+  // ✅ _actualUserId всегда получается из AuthService в initState()
+  // Используется для частых операций (loadMore, build) для оптимизации
+  // Для критичных операций (refresh, forceRefresh) всегда получаем из AuthService напрямую
+  int? _actualUserId;
 
   // ────────────────────────────────────────────────────────────────
   // 🖼️ PREFETCHING: отслеживаем предзагруженные индексы постов
@@ -70,13 +73,18 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   void initState() {
     super.initState();
 
-    // Получаем userId из AuthService, если не передан или равен fallback значению
+    // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
+    // widget.userId используется только как fallback, если AuthService вернет null
     Future.microtask(() async {
-      int? userId = widget.userId;
+      int? userId = await _auth.getUserId();
       
-      // Если userId не передан или равен fallback значению (123) — получаем из AuthService
-      if (userId == null || userId == 123) {
-        userId = await _auth.getUserId();
+      // Если AuthService вернул null, используем widget.userId (но не fallback 123)
+      if (userId == null) {
+        userId = widget.userId;
+        // Если widget.userId равен fallback значению (123) — игнорируем его
+        if (userId == 123) {
+          userId = null;
+        }
       }
       
       if (userId == null) {
@@ -99,6 +107,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     });
 
     // Автоматическая подгрузка при скролле
+    // ✅ Используем _actualUserId (уже получен из AuthService в initState)
+    // для оптимизации частых вызовов при скролле
     _scrollController.addListener(() {
       if (_actualUserId == null) return;
       
@@ -124,11 +134,13 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
   /// Pull-to-refresh обновление ленты
   Future<void> _onRefresh() async {
-    if (_actualUserId == null) return;
+    // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
+    final userId = await _auth.getUserId();
+    if (userId == null) return;
     
     // Очищаем кеш предзагруженных индексов при обновлении
     _prefetchedIndices.clear();
-    await ref.read(lentaProvider(_actualUserId!).notifier).refresh();
+    await ref.read(lentaProvider(userId).notifier).refresh();
   }
 
   // ———————————— Навигация / Колбэки ————————————
@@ -153,13 +165,15 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   }
 
   Future<void> _createPost() async {
-    if (_actualUserId == null) return;
+    // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
+    final userId = await _auth.getUserId();
+    if (userId == null) return;
     
     MoreMenuHub.hide();
 
     final created = await Navigator.of(context).push<bool>(
       TransparentPageRoute(
-        builder: (_) => NewPostScreen(userId: _actualUserId!),
+        builder: (_) => NewPostScreen(userId: userId),
       ),
     );
 
@@ -172,9 +186,10 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // Это важно для гарантированного получения нового поста в ответе API
     await Future.delayed(const Duration(milliseconds: 500));
 
+    // ✅ Используем userId из AuthService (уже получен выше) для forceRefresh
     // Принудительное обновление с очисткой кэша
     // Используем forceRefresh вместо refresh для полного обновления данных
-    await ref.read(lentaProvider(_actualUserId!).notifier).forceRefresh();
+    await ref.read(lentaProvider(userId).notifier).forceRefresh();
 
     // Прокрутка к началу
     if (_scrollController.hasClients) {
@@ -221,7 +236,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   }
 
   Future<void> _editPost(Activity post) async {
-    if (_actualUserId == null) return;
+    // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
+    final userId = await _auth.getUserId();
+    if (userId == null) return;
     
     MoreMenuHub.hide();
 
@@ -229,7 +246,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       context,
       TransparentPageRoute(
         builder: (_) => EditPostScreen(
-          userId: _actualUserId!,
+          userId: userId,
           postId: post.id,
           initialText: post.postContent,
           initialImageUrls: post.mediaImages,
@@ -247,8 +264,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       // 🔹 Задержка перед обновлением — даём серверу время обработать изменения
       await Future.delayed(const Duration(milliseconds: 500));
 
+      // ✅ Используем userId из AuthService для forceRefresh
       // Принудительное обновление с очисткой кэша
-      await ref.read(lentaProvider(_actualUserId!).notifier).forceRefresh();
+      await ref.read(lentaProvider(userId).notifier).forceRefresh();
     }
   }
 
@@ -471,12 +489,13 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                   Text('Ошибка: ${lentaState.error}'),
                   const SizedBox(height: 12),
                   OutlinedButton(
-                    onPressed: () {
-                      if (_actualUserId != null) {
+                    onPressed: () async {
+                      // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
+                      final userId = await _auth.getUserId();
+                      if (userId == null) return;
                         ref
-                            .read(lentaProvider(_actualUserId!).notifier)
+                          .read(lentaProvider(userId).notifier)
                             .loadInitial();
-                      }
                     },
                     child: const Text('Повторить'),
                   ),
@@ -516,8 +535,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
             child: ListView(
               controller: _scrollController,
               padding: const EdgeInsets.only(top: 4, bottom: 12),
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
               ),
               children: const [
                 SizedBox(height: 120),
@@ -530,45 +549,45 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           );
         }
 
-        return RefreshIndicator.adaptive(
-          onRefresh: _onRefresh,
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (n) {
-              // ────────── Скрываем меню при скролле ──────────
-              if (n is ScrollStartNotification ||
-                  n is ScrollUpdateNotification ||
-                  n is OverscrollNotification ||
-                  n is UserScrollNotification) {
-                MoreMenuHub.hide();
+        return NotificationListener<ScrollNotification>(
+          onNotification: (n) {
+            // ────────── Скрываем меню при скролле ──────────
+            if (n is ScrollStartNotification ||
+                n is ScrollUpdateNotification ||
+                n is OverscrollNotification ||
+                n is UserScrollNotification) {
+              MoreMenuHub.hide();
+            }
+
+            // ────────── SCROLL STATE TRACKING для prefetch ──────────
+            // ✅ Отслеживаем состояние скролла для оптимизации prefetch
+            if (n is ScrollStartNotification) {
+              // Начало скролла — отменяем prefetch
+              _isScrolling = true;
+            } else if (n is ScrollEndNotification) {
+              // Конец скролла — разрешаем prefetch
+              _isScrolling = false;
+
+              // ✅ Триггерим prefetch для текущей видимой позиции
+              // после остановки скролла (с debounce)
+              final pos = _scrollController.position;
+              if (pos.hasContentDimensions) {
+                final visibleIndex =
+                    (pos.pixels / (pos.maxScrollExtent / items.length))
+                        .floor();
+                _prefetchNextImages(visibleIndex, items);
               }
+            }
 
-              // ────────── SCROLL STATE TRACKING для prefetch ──────────
-              // ✅ Отслеживаем состояние скролла для оптимизации prefetch
-              if (n is ScrollStartNotification) {
-                // Начало скролла — отменяем prefetch
-                _isScrolling = true;
-              } else if (n is ScrollEndNotification) {
-                // Конец скролла — разрешаем prefetch
-                _isScrolling = false;
-
-                // ✅ Триггерим prefetch для текущей видимой позиции
-                // после остановки скролла (с debounce)
-                final pos = _scrollController.position;
-                if (pos.hasContentDimensions) {
-                  final visibleIndex =
-                      (pos.pixels / (pos.maxScrollExtent / items.length))
-                          .floor();
-                  _prefetchNextImages(visibleIndex, items);
-                }
-              }
-
-              return false;
-            },
+            return false;
+          },
+          child: RefreshIndicator.adaptive(
+            onRefresh: _onRefresh,
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.only(top: 4, bottom: 12),
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
               ),
               itemCount: items.length + (lentaState.isLoadingMore ? 1 : 0),
               // ────────────────────────────────────────────────────────

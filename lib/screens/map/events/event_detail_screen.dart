@@ -24,11 +24,33 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   bool _loading = true;
   String? _error;
   bool _canEdit = false; // Права на редактирование
+  bool _isParticipant = false; // Является ли текущий пользователь участником
+  bool _isTogglingParticipation = false; // Флаг процесса присоединения/выхода
+  final ScrollController _scrollController = ScrollController(); // Контроллер для отслеживания прокрутки
+  final GlobalKey<_EventMembersSliverState> _membersSliverKey = GlobalKey(); // Ключ для доступа к состоянию участников
 
   @override
   void initState() {
     super.initState();
     _loadEvent();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Обработка прокрутки для пагинации участников
+  void _onScroll() {
+    if (_tab == 1 && _scrollController.hasClients) {
+      final position = _scrollController.position;
+      // Подгружаем новые участники при достижении 80% прокрутки
+      if (position.pixels >= position.maxScrollExtent * 0.8) {
+        _membersSliverKey.currentState?.checkAndLoadMore();
+      }
+    }
   }
 
   /// Загрузка данных события через API
@@ -50,9 +72,24 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         final eventUserId = event['user_id'] as int?;
         final canEdit = userId != null && eventUserId == userId;
 
+        // Проверяем, является ли текущий пользователь участником
+        final participants = event['participants'] as List<dynamic>? ?? [];
+        bool isParticipant = false;
+        if (userId != null) {
+          for (final p in participants) {
+            final pMap = p as Map<String, dynamic>;
+            final pUserId = pMap['user_id'] as int?;
+            if (pUserId == userId) {
+              isParticipant = true;
+              break;
+            }
+          }
+        }
+
         setState(() {
           _eventData = event;
           _canEdit = canEdit;
+          _isParticipant = isParticipant;
           _loading = false;
         });
 
@@ -126,6 +163,100 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     }
   }
 
+  /// ──────────────────────── Присоединение/выход из события ────────────────────────
+  Future<void> _toggleParticipation() async {
+    if (_isTogglingParticipation || _eventData == null) return;
+
+    // Проверяем, что userId доступен
+    final authService = AuthService();
+    final userId = await authService.getUserId();
+    if (userId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ошибка: Пользователь не авторизован'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isTogglingParticipation = true;
+    });
+
+    try {
+      final api = ApiService();
+      final action = _isParticipant ? 'leave' : 'join';
+
+      final data = await api.post(
+        '/join_event.php',
+        body: {
+          'event_id': widget.eventId,
+          'action': action,
+        },
+      );
+
+      if (data['success'] == true) {
+        final isParticipant = data['is_participant'] as bool? ?? false;
+        final participantsCount = data['participants_count'] as int? ?? 0;
+
+        // Обновляем состояние
+        setState(() {
+          _isParticipant = isParticipant;
+          _isTogglingParticipation = false;
+        });
+
+        // Обновляем счетчик участников в данных события
+        if (_eventData != null) {
+          setState(() {
+            _eventData = {
+              ..._eventData!,
+              'participants_count': participantsCount,
+            };
+          });
+        }
+
+        // Если открыта вкладка участников, обновляем список
+        // (при присоединении пользователь появится, при выходе - исчезнет)
+        if (_tab == 1) {
+          // Небольшая задержка для завершения обновления состояния
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted) {
+              _membersSliverKey.currentState?.reloadParticipants();
+            }
+          });
+        }
+      } else {
+        final errorMessage = data['message'] as String? ?? 'Неизвестная ошибка';
+        setState(() {
+          _isTogglingParticipation = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isTogglingParticipation = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   int _tab = 0; // 0 — Описание, 1 — Участники
 
   void _openGallery(int startIndex) {
@@ -185,8 +316,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final time = _eventData!['event_time'] as String? ?? '';
     final place = _eventData!['place'] as String? ?? '';
     final photos = _eventData!['photos'] as List<dynamic>? ?? [];
-    final participants = _eventData!['participants'] as List<dynamic>? ?? [];
-    final participantsCount = _eventData!['participants_count'] as int? ?? 0;
 
     return InteractiveBackSwipe(
       child: Scaffold(
@@ -198,6 +327,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             children: [
               // ───────── Скроллируемый контент
               CustomScrollView(
+                controller: _scrollController,
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   // ───────── Шапка без AppBar: SafeArea + кнопки у краёв + логотип по центру
@@ -333,81 +463,75 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
                   const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-                  // ───────── ЕДИНЫЙ нижний блок: вкладки + контент (растягивается до низа)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
+                  // ───────── Вкладки: каждая — в своей половине, центрирование текста
+                  SliverToBoxAdapter(
                     child: Container(
                       decoration: const BoxDecoration(
                         color: AppColors.surface,
                         border: Border(
                           top: BorderSide(color: AppColors.border, width: 1),
-                          bottom: BorderSide(color: AppColors.border, width: 1),
                         ),
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Вкладки: каждая — в своей половине, центрирование текста, больше высота
-                          SizedBox(
-                            height: 52,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _HalfTab(
-                                    text: 'Описание',
-                                    selected: _tab == 0,
-                                    onTap: () => setState(() => _tab = 0),
-                                  ),
-                                ),
-                                Container(
-                                  width: 1,
-                                  height: 24,
-                                  color: AppColors.border,
-                                ),
-                                Expanded(
-                                  child: _HalfTab(
-                                    text: 'Участники ($participantsCount)',
-                                    selected: _tab == 1,
-                                    onTap: () => setState(() => _tab = 1),
-                                  ),
-                                ),
-                              ],
+                      child: SizedBox(
+                        height: 52,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _HalfTab(
+                                text: 'Описание',
+                                selected: _tab == 0,
+                                onTap: () => setState(() => _tab = 0),
+                              ),
                             ),
-                          ),
-
-                          const Divider(height: 1, color: AppColors.border),
-
-                          // Контент активной вкладки — растягивается до низа
-                          Expanded(
-                            child: _tab == 0
-                                ? Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      12,
-                                      12,
-                                      12,
-                                      12,
-                                    ),
-                                    child: EventDescriptionContent(
-                                      description:
-                                          _eventData!['description']
-                                              as String? ??
-                                          '',
-                                    ),
-                                  )
-                                : Padding(
-                                    padding: const EdgeInsets.only(
-                                      top: 0,
-                                      bottom: 0,
-                                    ),
-                                    child: EventMembersContent(
-                                      participants: participants,
-                                    ),
-                                  ),
-                          ),
-                        ],
+                            Container(
+                              width: 1,
+                              height: 24,
+                              color: AppColors.border,
+                            ),
+                            Expanded(
+                              child: _HalfTab(
+                                text: 'Участники (${_eventData?['participants_count'] ?? 0})',
+                                selected: _tab == 1,
+                                onTap: () => setState(() => _tab = 1),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
+
+                  // ───────── Разделитель
+                  const SliverToBoxAdapter(
+                    child: Divider(height: 1, color: AppColors.border),
+                  ),
+
+                  // ───────── Контент активной вкладки
+                  if (_tab == 0)
+                    // Вкладка "Описание" — фиксированный контент
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: AppColors.surface,
+                          border: Border(
+                            bottom: BorderSide(color: AppColors.border, width: 1),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                          child: EventDescriptionContent(
+                            description: _eventData!['description'] as String? ?? '',
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    // Вкладка "Участники" — скроллируемый список
+                    _EventMembersSliver(
+                      key: _membersSliverKey,
+                      eventId: widget.eventId,
+                    ),
                 ],
               ),
 
@@ -424,7 +548,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       borderRadius: BorderRadius.circular(AppRadius.xxl),
                       elevation: 0,
                       child: InkWell(
-                        onTap: () {},
+                        onTap: _isTogglingParticipation ? null : _toggleParticipation,
                         borderRadius: BorderRadius.circular(AppRadius.xxl),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -442,15 +566,26 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               ),
                             ],
                           ),
-                          child: const Text(
-                            'Присоединиться',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.surface,
-                            ),
-                          ),
+                          child: _isTogglingParticipation
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.surface,
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  _isParticipant ? 'Выйти' : 'Присоединиться',
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.surface,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
@@ -751,23 +886,342 @@ class EventDescriptionContent extends StatelessWidget {
   }
 }
 
-/// Контент участников события из API
-class EventMembersContent extends StatelessWidget {
-  final List<dynamic> participants;
-  const EventMembersContent({super.key, required this.participants});
+/// Sliver для участников события с пагинацией (используется в CustomScrollView)
+class _EventMembersSliver extends StatefulWidget {
+  final int eventId;
+  const _EventMembersSliver({super.key, required this.eventId});
+
+  @override
+  State<_EventMembersSliver> createState() => _EventMembersSliverState();
+}
+
+class _EventMembersSliverState extends State<_EventMembersSliver> {
+  final List<Map<String, dynamic>> _participants = [];
+  bool _loading = false;
+  bool _hasMore = true;
+  String? _error;
+  int _currentPage = 1;
+  static const int _limit = 25;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadParticipants();
+  }
+
+  /// Проверка и загрузка новых участников (вызывается из родительского ScrollController)
+  void checkAndLoadMore() {
+    if (!_loading && _hasMore && _error == null) {
+      _loadParticipants();
+    }
+  }
+
+  /// Перезагрузка списка участников с первой страницы
+  /// Используется после присоединения/выхода из события
+  void reloadParticipants() {
+    setState(() {
+      _participants.clear();
+      _currentPage = 1;
+      _hasMore = true;
+      _error = null;
+    });
+    _loadParticipants();
+  }
+
+  /// Загрузка участников с пагинацией
+  Future<void> _loadParticipants() async {
+    if (_loading || !_hasMore) return;
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final api = ApiService();
+      final data = await api.get(
+        '/get_event_participants.php',
+        queryParams: {
+          'event_id': widget.eventId.toString(),
+          'page': _currentPage.toString(),
+          'limit': _limit.toString(),
+        },
+      );
+
+      if (data['success'] == true) {
+        final participants = data['participants'] as List<dynamic>? ?? [];
+        final hasMore = data['has_more'] as bool? ?? false;
+
+        setState(() {
+          _participants.addAll(
+            participants
+                .where((p) => p != null && p is Map<String, dynamic>)
+                .map((p) => p as Map<String, dynamic>),
+          );
+          _hasMore = hasMore;
+          _currentPage++;
+          _loading = false;
+        });
+      } else {
+        final errorMessage = data['message'] as String? ?? 'Ошибка загрузки участников';
+        setState(() {
+          _loading = false;
+          if (_participants.isEmpty) {
+            _error = errorMessage;
+          }
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        if (_participants.isEmpty) {
+          _error = 'Ошибка: ${e.toString()}';
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (participants.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text('Участники отсутствуют', style: TextStyle(fontSize: 14)),
+    // Показываем индикатор загрузки при первой загрузке
+    if (_loading && _participants.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            border: Border(
+              bottom: BorderSide(color: AppColors.border, width: 1),
+            ),
+          ),
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
       );
     }
 
-    return Column(
-      children: List.generate(participants.length, (i) {
-        final p = participants[i] as Map<String, dynamic>;
+    // Показываем ошибку если есть
+    if (_error != null && _participants.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            border: Border(
+              bottom: BorderSide(color: AppColors.border, width: 1),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SelectableText.rich(
+              TextSpan(
+                text: 'Ошибка загрузки: ',
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
+                children: [
+                  TextSpan(
+                    text: _error,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Показываем пустое состояние
+    if (_participants.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            border: Border(
+              bottom: BorderSide(color: AppColors.border, width: 1),
+            ),
+          ),
+          child: const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'Участники отсутствуют',
+              style: TextStyle(fontSize: 14),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Используем SliverList для участников (часть общего скролла)
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          // Индикатор загрузки в конце списка
+          if (index >= _participants.length) {
+            if (!_loading) return const SizedBox.shrink();
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
+          final p = _participants[index];
+          if (p.isEmpty) return const SizedBox.shrink();
+
+          final name = (p['name'] as String?)?.trim() ?? 'Пользователь';
+          final avatarUrl = (p['avatar_url'] as String?)?.trim() ?? '';
+          final isOrganizer = p['is_organizer'] as bool? ?? false;
+
+          return Column(
+            children: [
+              _MemberRow(
+                member: _Member(
+                  name,
+                  isOrganizer ? 'Организатор' : null,
+                  avatarUrl,
+                  roleIcon: isOrganizer
+                      ? CupertinoIcons
+                          .person_crop_circle_fill_badge_checkmark
+                      : null,
+                ),
+              ),
+              if (index < _participants.length - 1)
+                const Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  color: AppColors.border,
+                ),
+            ],
+          );
+        },
+        childCount: _participants.length + (_loading ? 1 : 0),
+      ),
+    );
+  }
+}
+
+/// Контент участников события из API с пагинацией (для использования вне CustomScrollView)
+class EventMembersContent extends StatefulWidget {
+  final int eventId;
+  const EventMembersContent({super.key, required this.eventId});
+
+  @override
+  State<EventMembersContent> createState() => _EventMembersContentState();
+}
+
+class _EventMembersContentState extends State<EventMembersContent> {
+  final List<Map<String, dynamic>> _participants = [];
+  final ScrollController _scrollController = ScrollController();
+  bool _loading = false;
+  bool _hasMore = true;
+  int _currentPage = 1;
+  static const int _limit = 25;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadParticipants();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Обработка прокрутки для подгрузки новых участников
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent * 0.8 &&
+        !_loading &&
+        _hasMore) {
+      _loadParticipants();
+    }
+  }
+
+  /// Загрузка участников с пагинацией
+  Future<void> _loadParticipants() async {
+    if (_loading || !_hasMore) return;
+
+    setState(() {
+      _loading = true;
+    });
+
+    try {
+      final api = ApiService();
+      final data = await api.get(
+        '/get_event_participants.php',
+        queryParams: {
+          'event_id': widget.eventId.toString(),
+          'page': _currentPage.toString(),
+          'limit': _limit.toString(),
+        },
+      );
+
+      if (data['success'] == true) {
+        final participants = data['participants'] as List<dynamic>? ?? [];
+        final hasMore = data['has_more'] as bool? ?? false;
+
+        setState(() {
+          _participants.addAll(
+            participants.map((p) => p as Map<String, dynamic>),
+          );
+          _hasMore = hasMore;
+          _currentPage++;
+          _loading = false;
+        });
+      } else {
+        setState(() {
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_participants.isEmpty && !_loading) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Text(
+          'Участники отсутствуют',
+          style: TextStyle(fontSize: 14),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      physics: const BouncingScrollPhysics(),
+      itemCount: _participants.length + (_loading ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index >= _participants.length) {
+          // Индикатор загрузки в конце списка
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        final p = _participants[index];
         final name = p['name'] as String? ?? 'Пользователь';
         final avatarUrl = p['avatar_url'] as String? ?? '';
         final isOrganizer = p['is_organizer'] as bool? ?? false;
@@ -784,11 +1238,15 @@ class EventMembersContent extends StatelessWidget {
                     : null,
               ),
             ),
-            if (i != participants.length - 1)
-              const Divider(height: 1, thickness: 0.5, color: AppColors.border),
+            if (index < _participants.length - 1)
+              const Divider(
+                height: 1,
+                thickness: 0.5,
+                color: AppColors.border,
+              ),
           ],
         );
-      }),
+      },
     );
   }
 }
