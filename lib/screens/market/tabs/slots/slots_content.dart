@@ -18,6 +18,7 @@ class SlotsContent extends StatefulWidget {
 class _SlotsContentState extends State<SlotsContent> {
   // Поиск по названию события
   final TextEditingController _searchCtrl = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   String _searchQuery = '';
 
   // Раскрытые карточки (по индексу в текущем списке)
@@ -26,6 +27,7 @@ class _SlotsContentState extends State<SlotsContent> {
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -45,6 +47,7 @@ class _SlotsContentState extends State<SlotsContent> {
         if (index == 0) {
           return _SearchField(
             controller: _searchCtrl,
+            focusNode: _searchFocusNode,
             hintText: 'Название спортивного мероприятия',
             onChanged: (value) =>
                 setState(() => _searchQuery = value.trim().toLowerCase()),
@@ -80,68 +83,94 @@ class _SlotsContentState extends State<SlotsContent> {
 
 // ————————————————— Внутренние UI-компоненты —————————————————
 
-class _SearchField extends StatelessWidget {
+class _SearchField extends StatefulWidget {
   final TextEditingController controller;
+  final FocusNode focusNode;
   final String hintText;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
 
   const _SearchField({
     required this.controller,
+    required this.focusNode,
     required this.hintText,
     required this.onChanged,
     required this.onClear,
   });
 
   @override
+  State<_SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends State<_SearchField> {
+  @override
   Widget build(BuildContext context) {
-    final hasText = controller.text.isNotEmpty;
-    return TextField(
-      controller: controller,
-      onChanged: onChanged,
-      cursorColor: AppColors.textSecondary,
-      textInputAction: TextInputAction.search,
-      style: const TextStyle(fontFamily: 'Inter', fontSize: 15),
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 15,
-          color: AppColors.textPlaceholder,
-        ),
-        isDense: true,
-        filled: true,
-        fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
-        ),
-        prefixIcon: const Icon(
-          CupertinoIcons.search,
-          size: 18,
-          color: AppColors.iconSecondary,
-        ),
-        suffixIcon: hasText
-            ? IconButton(
-                icon: const Icon(
-                  CupertinoIcons.xmark_circle_fill,
-                  size: 18,
-                  color: AppColors.iconTertiary,
-                ),
-                onPressed: onClear,
-              )
-            : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.outline),
+    final hasText = widget.controller.text.isNotEmpty;
+    return Listener(
+      // При повторном тапе на поле, если оно уже в фокусе, снимаем фокус
+      onPointerDown: (_) {
+        // Сохраняем состояние фокуса ДО обработки тапа TextField
+        final wasFocused = widget.focusNode.hasFocus;
+
+        // Если поле уже было в фокусе, снимаем фокус после обработки тапа
+        if (wasFocused) {
+          // Используем небольшую задержку, чтобы дать TextField обработать тап
+          // (например, для установки курсора), затем снимаем фокус
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted && widget.focusNode.hasFocus) {
+              FocusScope.of(context).unfocus();
+            }
+          });
+        }
+      },
+      child: TextField(
+        controller: widget.controller,
+        focusNode: widget.focusNode,
+        onChanged: widget.onChanged,
+        cursorColor: AppColors.textSecondary,
+        textInputAction: TextInputAction.search,
+        style: const TextStyle(fontFamily: 'Inter', fontSize: 15),
+        decoration: InputDecoration(
+          hintText: widget.hintText,
+          hintStyle: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 15,
+            color: AppColors.textPlaceholder,
+          ),
+          isDense: true,
+          filled: true,
+          fillColor: AppColors.surface,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
+          prefixIcon: const Icon(
+            CupertinoIcons.search,
+            size: 18,
+            color: AppColors.iconSecondary,
+          ),
+          suffixIcon: hasText
+              ? IconButton(
+                  icon: const Icon(
+                    CupertinoIcons.xmark_circle_fill,
+                    size: 18,
+                    color: AppColors.iconTertiary,
+                  ),
+                  onPressed: widget.onClear,
+                )
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: const BorderSide(color: AppColors.outline),
+          ),
         ),
       ),
     );

@@ -40,6 +40,9 @@ class PrimaryButton extends StatelessWidget {
   /// Пользовательский текстовый стиль (по умолчанию — 15 / w500 / Inter)
   final TextStyle? textStyle;
 
+  /// Горизонтальный padding внутри кнопки (по умолчанию — 28)
+  final double horizontalPadding;
+
   const PrimaryButton({
     super.key,
     required this.text,
@@ -51,6 +54,7 @@ class PrimaryButton extends StatelessWidget {
     this.leading,
     this.trailing,
     this.textStyle,
+    this.horizontalPadding = 28,
   });
 
   @override
@@ -105,8 +109,8 @@ class PrimaryButton extends StatelessWidget {
         backgroundColor: AppColors.brandPrimary,
         foregroundColor: AppColors.surface,
         elevation: 0,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 28,
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
           vertical:
               0, // убираем вертикальный padding, используем только minimumSize
         ),

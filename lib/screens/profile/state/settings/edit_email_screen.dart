@@ -19,6 +19,7 @@ class EditEmailScreen extends ConsumerStatefulWidget {
 class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _focusNode = FocusNode();
   bool _isLoading = false;
   String? _error;
 
@@ -36,6 +37,7 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
   @override
   void dispose() {
     _emailController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -79,71 +81,80 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: const PaceAppBar(title: 'Почта'),
-        body: SafeArea(
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-              children: [
-                // Поле ввода email
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.done,
-                  textCapitalization: TextCapitalization.none,
-                  autocorrect: false,
-                  decoration: InputDecoration(
-                    labelText: 'E-mail',
-                    hintText: 'example@mail.ru',
-                    errorText: _error,
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(
-                        color: AppColors.brandPrimary,
-                        width: 2,
+        body: GestureDetector(
+          // Снимаем фокус при тапе вне поля ввода
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          behavior: HitTestBehavior.translucent,
+          child: SafeArea(
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                children: [
+                  // Поле ввода email
+                  TextFormField(
+                    controller: _emailController,
+                    focusNode: _focusNode,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.done,
+                    textCapitalization: TextCapitalization.none,
+                    autocorrect: false,
+                    decoration: InputDecoration(
+                      labelText: 'E-mail',
+                      hintText: 'example@mail.ru',
+                      errorText: _error,
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: const BorderSide(
+                          color: AppColors.brandPrimary,
+                          width: 2,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: const BorderSide(color: AppColors.error),
                       ),
                     ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(color: AppColors.error),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Введите email';
+                      }
+                      final emailRegex = RegExp(
+                        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                      );
+                      if (!emailRegex.hasMatch(value)) {
+                        return 'Некорректный формат email';
+                      }
+                      return null;
+                    },
+                    onFieldSubmitted: (_) => _saveEmail(),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Кнопка сохранения
+                  Center(
+                    child: PrimaryButton(
+                      text: 'Сохранить',
+                      onPressed: _saveEmail,
+                      isLoading: _isLoading,
+                      horizontalPadding: 68,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Введите email';
-                    }
-                    final emailRegex = RegExp(
-                      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-                    );
-                    if (!emailRegex.hasMatch(value)) {
-                      return 'Некорректный формат email';
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (_) => _saveEmail(),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Кнопка сохранения
-                Center(
-                  child: PrimaryButton(
-                    text: 'Сохранить',
-                    onPressed: _saveEmail,
-                    isLoading: _isLoading,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

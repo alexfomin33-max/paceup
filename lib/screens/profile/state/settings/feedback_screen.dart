@@ -19,6 +19,7 @@ class FeedbackScreen extends ConsumerStatefulWidget {
 class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   final _formKey = GlobalKey<FormState>();
   final _textController = TextEditingController();
+  final _focusNode = FocusNode();
   bool _isLoading = false;
   bool _isSubmitted = false;
   String? _error;
@@ -26,6 +27,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   @override
   void dispose() {
     _textController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -48,10 +50,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       final api = ApiService();
       await api.post(
         '/submit_feedback.php',
-        body: {
-          'user_id': userId,
-          'text': _textController.text.trim(),
-        },
+        body: {'user_id': userId, 'text': _textController.text.trim()},
       );
 
       if (!mounted) return;
@@ -87,60 +86,63 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: const PaceAppBar(title: 'Предложения по улучшению'),
-        body: SafeArea(
-          child: _isSubmitted
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          CupertinoIcons.checkmark_circle_fill,
-                          size: 64,
-                          color: AppColors.success,
-                        ),
-                        const SizedBox(height: 24),
-                        const Text(
-                          'Спасибо за ваше предложение!',
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.h17w6,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Мы рассмотрим ваше предложение и учтём его при разработке новых функций.',
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.h14w4.copyWith(
-                            color: AppColors.textSecondary,
+        body: GestureDetector(
+          // Снимаем фокус при тапе вне поля ввода
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          behavior: HitTestBehavior.translucent,
+          child: SafeArea(
+            child: _isSubmitted
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            CupertinoIcons.checkmark_circle_fill,
+                            size: 64,
+                            color: AppColors.success,
                           ),
-                        ),
-                        const SizedBox(height: 24),
-                        PrimaryButton(
-                          text: 'Отправить ещё',
-                          onPressed: () {
-                            setState(() {
-                              _isSubmitted = false;
-                            });
-                          },
-                        ),
-                      ],
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Спасибо за ваше предложение!',
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.h17w6,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Мы рассмотрим ваше предложение и учтём его при разработке новых функций.',
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          PrimaryButton(
+                            text: 'Отправить ещё',
+                            onPressed: () {
+                              setState(() {
+                                _isSubmitted = false;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                )
-              : Form(
-                  key: _formKey,
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                    children: [
+                  )
+                : Form(
+                    key: _formKey,
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                      children: [
                       // Информационная карточка
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.surface,
                           borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(
-                            color: AppColors.border,
-                            width: 1,
-                          ),
+                          border: Border.all(color: AppColors.border, width: 1),
                         ),
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -176,6 +178,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                       // Поле ввода предложения
                       TextFormField(
                         controller: _textController,
+                        focusNode: _focusNode,
                         maxLines: 10,
                         minLines: 6,
                         textInputAction: TextInputAction.newline,
@@ -201,7 +204,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                             borderRadius: BorderRadius.circular(AppRadius.md),
                             borderSide: const BorderSide(
                               color: AppColors.brandPrimary,
-                              width: 2,
+                              width: 0.7,
                             ),
                           ),
                           errorBorder: OutlineInputBorder(
@@ -224,7 +227,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                         },
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 30),
 
                       // Кнопка отправки
                       Center(
@@ -232,14 +235,15 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                           text: 'Отправить',
                           onPressed: _submitFeedback,
                           isLoading: _isLoading,
+                          horizontalPadding: 60,
                         ),
                       ),
                     ],
                   ),
                 ),
+          ),
         ),
       ),
     );
   }
 }
-

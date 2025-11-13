@@ -188,10 +188,14 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
             ],
           ),
         ),
-        body: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
+        body: GestureDetector(
+          // Снятие фокуса с поля ввода при тапе на любое место экрана
+          onTap: () => FocusScope.of(context).unfocus(),
+          behavior: HitTestBehavior.translucent,
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
                 itemCount: headerCount + _messages.length,
                 itemBuilder: (_, index) {
@@ -303,13 +307,14 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
               ),
             ),
 
-            // Composer (фиксирован внизу)
-            _Composer(
-              controller: _ctrl,
-              onSend: _sendText,
-              onPickImage: _pickImage,
-            ),
-          ],
+              // Composer (фиксирован внизу)
+              _Composer(
+                controller: _ctrl,
+                onSend: _sendText,
+                onPickImage: _pickImage,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -565,7 +570,7 @@ class _ParticipantRow extends StatelessWidget {
   const _ParticipantRow({required this.avatarAsset, required this.nameAndRole});
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+    padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
     child: Row(
       children: [
         CircleAvatar(radius: 14, backgroundImage: AssetImage(avatarAsset)),
@@ -582,7 +587,7 @@ class _BubbleLeft extends StatelessWidget {
   const _BubbleLeft({required this.text, required this.time});
   @override
   Widget build(BuildContext context) {
-    final max = MediaQuery.of(context).size.width * 0.72;
+    final max = MediaQuery.of(context).size.width * 0.75;
     return Padding(
       padding: const EdgeInsets.only(right: 12, left: 0, bottom: 12),
       child: Row(
@@ -628,12 +633,6 @@ class _BubbleLeft extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-          const SizedBox(width: 6),
-          const Icon(
-            CupertinoIcons.arrowshape_turn_up_left,
-            size: 18,
-            color: AppColors.iconSecondary,
           ),
         ],
       ),

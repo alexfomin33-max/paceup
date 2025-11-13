@@ -127,7 +127,7 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
   Widget build(BuildContext context) {
     // ─────────────────────────────────────────────────────────────
     // ВАЖНО: теперь в списке есть «хедеры», которые тоже скроллятся.
-    // headerCount = 6 элементов (дата, 2 участника, Стоимость, Divider, SizedBox)
+    // headerCount = 6 элементов (дата, Стоимость, 2 участника, Divider, SizedBox)
     // ─────────────────────────────────────────────────────────────
     const int headerCount = 6;
 
@@ -193,13 +193,17 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
             ],
           ),
         ),
-        body: Column(
-          children: [
-            // ─────────────────────────────────────────────────────────
-            // Прокручиваемая область: headers + сообщения в одном ListView
-            // ─────────────────────────────────────────────────────────
-            Expanded(
-              child: ListView.builder(
+        body: GestureDetector(
+          // Снятие фокуса с поля ввода при тапе на любое место экрана
+          onTap: () => FocusScope.of(context).unfocus(),
+          behavior: HitTestBehavior.translucent,
+          child: Column(
+            children: [
+              // ─────────────────────────────────────────────────────────
+              // Прокручиваемая область: headers + сообщения в одном ListView
+              // ─────────────────────────────────────────────────────────
+              Expanded(
+                child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
                 // bottom padding побольше, чтобы последний элемент не прятался за Composer
                 itemCount: headerCount + _messages.length,
@@ -211,21 +215,21 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
                     );
                   }
                   if (index == 1) {
+                    return _KVLine(
+                      k: 'Стоимость',
+                      v: PricePill(text: _formatPrice(widget.price)),
+                    );
+                  }
+                  if (index == 2) {
                     return const _ParticipantRow(
                       avatarAsset: 'assets/avatar_4.png',
                       nameAndRole: 'Екатерина Виноградова - продавец',
                     );
                   }
-                  if (index == 2) {
+                  if (index == 3) {
                     return const _ParticipantRow(
                       avatarAsset: 'assets/avatar_9.png',
                       nameAndRole: 'Анастасия Бутузова - покупатель',
-                    );
-                  }
-                  if (index == 3) {
-                    return _KVLine(
-                      k: 'Стоимость',
-                      v: PricePill(text: _formatPrice(widget.price)),
                     );
                   }
                   if (index == 4) {
@@ -257,15 +261,16 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
               ),
             ),
 
-            // ─────────────────────────────────────────────────────────
-            // Неподвижная нижняя панель ввода (Composer)
-            // ─────────────────────────────────────────────────────────
-            _Composer(
-              controller: _ctrl,
-              onSend: _sendText,
-              onPickImage: _pickImage, // плюсик — выбор фото из галереи
-            ),
-          ],
+              // ─────────────────────────────────────────────────────────
+              // Неподвижная нижняя панель ввода (Composer)
+              // ─────────────────────────────────────────────────────────
+              _Composer(
+                controller: _ctrl,
+                onSend: _sendText,
+                onPickImage: _pickImage, // плюсик — выбор фото из галереи
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -330,7 +335,7 @@ class _ParticipantRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
       child: Row(
         children: [
           CircleAvatar(radius: 14, backgroundImage: AssetImage(avatarAsset)),
@@ -342,7 +347,7 @@ class _ParticipantRow extends StatelessWidget {
   }
 }
 
-/// Левый «текстовый» пузырь продавца — с иконкой справа (как в макете)
+/// Левый «текстовый» пузырь продавца — без иконки справа
 class _BubbleLeft extends StatelessWidget {
   final String text;
   final String time;
@@ -350,8 +355,7 @@ class _BubbleLeft extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenW = MediaQuery.of(context).size.width;
-    final max = screenW * 0.72; // оставим место под правую иконку
+    final max = MediaQuery.of(context).size.width * 0.75;
 
     return Padding(
       padding: const EdgeInsets.only(right: 12, left: 0, bottom: 12),
@@ -398,13 +402,6 @@ class _BubbleLeft extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-
-          const SizedBox(width: 6),
-          const Icon(
-            CupertinoIcons.arrowshape_turn_up_left,
-            size: 18,
-            color: AppColors.iconSecondary,
           ),
         ],
       ),

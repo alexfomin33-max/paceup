@@ -22,6 +22,9 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
   final _oldPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _oldPasswordFocusNode = FocusNode();
+  final _newPasswordFocusNode = FocusNode();
+  final _confirmPasswordFocusNode = FocusNode();
   bool _isLoading = false;
   bool _obscureOldPassword = true;
   bool _obscureNewPassword = true;
@@ -33,6 +36,9 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
     _oldPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
+    _oldPasswordFocusNode.dispose();
+    _newPasswordFocusNode.dispose();
+    _confirmPasswordFocusNode.dispose();
     super.dispose();
   }
 
@@ -80,28 +86,92 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: const PaceAppBar(title: 'Пароль'),
-        body: SafeArea(
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-              children: [
-                // Поле старого пароля (если пароль уже установлен)
-                if (widget.hasPassword) ...[
+        body: GestureDetector(
+          // Снимаем фокус при тапе вне полей ввода
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          behavior: HitTestBehavior.translucent,
+          child: SafeArea(
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                children: [
+                  // Поле старого пароля (если пароль уже установлен)
+                  if (widget.hasPassword) ...[
+                    TextFormField(
+                      controller: _oldPasswordController,
+                      focusNode: _oldPasswordFocusNode,
+                      obscureText: _obscureOldPassword,
+                      textInputAction: TextInputAction.next,
+                      textCapitalization: TextCapitalization.none,
+                      autocorrect: false,
+                      decoration: InputDecoration(
+                        labelText: 'Текущий пароль',
+                        errorText: _error,
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureOldPassword
+                                ? CupertinoIcons.eye_slash
+                                : CupertinoIcons.eye,
+                            size: 18,
+                            color: AppColors.iconSecondary,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscureOldPassword = !_obscureOldPassword;
+                            });
+                          },
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderSide: const BorderSide(
+                            color: AppColors.brandPrimary,
+                            width: 0.7,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderSide: const BorderSide(color: AppColors.error),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Введите текущий пароль';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Поле нового пароля
                   TextFormField(
-                    controller: _oldPasswordController,
-                    obscureText: _obscureOldPassword,
+                    controller: _newPasswordController,
+                    focusNode: _newPasswordFocusNode,
+                    obscureText: _obscureNewPassword,
                     textInputAction: TextInputAction.next,
                     textCapitalization: TextCapitalization.none,
                     autocorrect: false,
                     decoration: InputDecoration(
-                      labelText: 'Текущий пароль',
-                      errorText: _error,
+                      labelText: widget.hasPassword ? 'Новый пароль' : 'Пароль',
+                      hintText: 'Минимум 6 символов',
                       filled: true,
                       fillColor: AppColors.surface,
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscureOldPassword
+                          _obscureNewPassword
                               ? CupertinoIcons.eye_slash
                               : CupertinoIcons.eye,
                           size: 18,
@@ -109,7 +179,7 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                         ),
                         onPressed: () {
                           setState(() {
-                            _obscureOldPassword = !_obscureOldPassword;
+                            _obscureNewPassword = !_obscureNewPassword;
                           });
                         },
                       ),
@@ -135,141 +205,88 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Введите текущий пароль';
+                        return 'Введите пароль';
+                      }
+                      if (value.length < 6) {
+                        return 'Пароль должен содержать минимум 6 символов';
                       }
                       return null;
                     },
                   ),
+
                   const SizedBox(height: 16),
+
+                  // Поле подтверждения пароля
+                  TextFormField(
+                    controller: _confirmPasswordController,
+                    focusNode: _confirmPasswordFocusNode,
+                    obscureText: _obscureConfirmPassword,
+                    textInputAction: TextInputAction.done,
+                    textCapitalization: TextCapitalization.none,
+                    autocorrect: false,
+                    decoration: InputDecoration(
+                      labelText: 'Подтвердите пароль',
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirmPassword
+                              ? CupertinoIcons.eye_slash
+                              : CupertinoIcons.eye,
+                          size: 18,
+                          color: AppColors.iconSecondary,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureConfirmPassword = !_obscureConfirmPassword;
+                          });
+                        },
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: const BorderSide(
+                          color: AppColors.brandPrimary,
+                          width: 0.7,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: const BorderSide(color: AppColors.error),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Подтвердите пароль';
+                      }
+                      if (value != _newPasswordController.text) {
+                        return 'Пароли не совпадают';
+                      }
+                      return null;
+                    },
+                    onFieldSubmitted: (_) => _savePassword(),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Кнопка сохранения
+                  Center(
+                    child: PrimaryButton(
+                      text: 'Сохранить',
+                      onPressed: _savePassword,
+                      isLoading: _isLoading,
+                      horizontalPadding: 68,
+                    ),
+                  ),
                 ],
-
-                // Поле нового пароля
-                TextFormField(
-                  controller: _newPasswordController,
-                  obscureText: _obscureNewPassword,
-                  textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.none,
-                  autocorrect: false,
-                  decoration: InputDecoration(
-                    labelText: widget.hasPassword ? 'Новый пароль' : 'Пароль',
-                    hintText: 'Минимум 6 символов',
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureNewPassword
-                            ? CupertinoIcons.eye_slash
-                            : CupertinoIcons.eye,
-                        size: 18,
-                        color: AppColors.iconSecondary,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureNewPassword = !_obscureNewPassword;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(
-                        color: AppColors.brandPrimary,
-                        width: 0.7,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(color: AppColors.error),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Введите пароль';
-                    }
-                    if (value.length < 6) {
-                      return 'Пароль должен содержать минимум 6 символов';
-                    }
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                // Поле подтверждения пароля
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  textInputAction: TextInputAction.done,
-                  textCapitalization: TextCapitalization.none,
-                  autocorrect: false,
-                  decoration: InputDecoration(
-                    labelText: 'Подтвердите пароль',
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? CupertinoIcons.eye_slash
-                            : CupertinoIcons.eye,
-                        size: 18,
-                        color: AppColors.iconSecondary,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(
-                        color: AppColors.brandPrimary,
-                        width: 0.7,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(color: AppColors.error),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Подтвердите пароль';
-                    }
-                    if (value != _newPasswordController.text) {
-                      return 'Пароли не совпадают';
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (_) => _savePassword(),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Кнопка сохранения
-                Center(
-                  child: PrimaryButton(
-                    text: 'Сохранить',
-                    onPressed: _savePassword,
-                    isLoading: _isLoading,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),

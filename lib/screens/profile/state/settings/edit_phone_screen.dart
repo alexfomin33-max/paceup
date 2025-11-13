@@ -20,6 +20,7 @@ class EditPhoneScreen extends ConsumerStatefulWidget {
 class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
+  final _focusNode = FocusNode();
   final _maskFormatter = MaskInputFormatter(mask: '+# (###) ###-##-##');
   bool _isLoading = false;
   String? _error;
@@ -38,6 +39,7 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
   @override
   void dispose() {
     _phoneController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -81,70 +83,79 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: const PaceAppBar(title: 'Телефон'),
-        body: SafeArea(
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-              children: [
-                // Поле ввода телефона
-                TextFormField(
-                  controller: _phoneController,
-                  inputFormatters: [_maskFormatter],
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.done,
-                  textCapitalization: TextCapitalization.none,
-                  decoration: InputDecoration(
-                    labelText: 'Телефон',
-                    hintText: '+7 (999) 123-45-67',
-                    errorText: _error,
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(
-                        color: AppColors.brandPrimary,
-                        width: 0.7,
+        body: GestureDetector(
+          // Снимаем фокус при тапе вне поля ввода
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          behavior: HitTestBehavior.translucent,
+          child: SafeArea(
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                children: [
+                  // Поле ввода телефона
+                  TextFormField(
+                    controller: _phoneController,
+                    focusNode: _focusNode,
+                    inputFormatters: [_maskFormatter],
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.done,
+                    textCapitalization: TextCapitalization.none,
+                    decoration: InputDecoration(
+                      labelText: 'Телефон',
+                      hintText: '+7 (999) 123-45-67',
+                      errorText: _error,
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: const BorderSide(
+                          color: AppColors.brandPrimary,
+                          width: 0.7,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: const BorderSide(color: AppColors.error),
                       ),
                     ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(color: AppColors.error),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Введите телефон';
+                      }
+                      // Убираем все нецифры для проверки
+                      final digits = value.replaceAll(RegExp(r'\D'), '');
+                      if (digits.length < 10) {
+                        return 'Некорректный формат телефона';
+                      }
+                      return null;
+                    },
+                    onFieldSubmitted: (_) => _savePhone(),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Кнопка сохранения
+                  Center(
+                    child: PrimaryButton(
+                      text: 'Сохранить',
+                      onPressed: _savePhone,
+                      isLoading: _isLoading,
+                      horizontalPadding: 68,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Введите телефон';
-                    }
-                    // Убираем все нецифры для проверки
-                    final digits = value.replaceAll(RegExp(r'\D'), '');
-                    if (digits.length < 10) {
-                      return 'Некорректный формат телефона';
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (_) => _savePhone(),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Кнопка сохранения
-                Center(
-                  child: PrimaryButton(
-                    text: 'Сохранить',
-                    onPressed: _savePhone,
-                    isLoading: _isLoading,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
