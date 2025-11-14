@@ -26,8 +26,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   bool _canEdit = false; // Права на редактирование
   bool _isParticipant = false; // Является ли текущий пользователь участником
   bool _isTogglingParticipation = false; // Флаг процесса присоединения/выхода
-  final ScrollController _scrollController = ScrollController(); // Контроллер для отслеживания прокрутки
-  final GlobalKey<_EventMembersSliverState> _membersSliverKey = GlobalKey(); // Ключ для доступа к состоянию участников
+  final ScrollController _scrollController =
+      ScrollController(); // Контроллер для отслеживания прокрутки
+  final GlobalKey<_EventMembersSliverState> _membersSliverKey =
+      GlobalKey(); // Ключ для доступа к состоянию участников
 
   @override
   void initState() {
@@ -192,10 +194,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
       final data = await api.post(
         '/join_event.php',
-        body: {
-          'event_id': widget.eventId,
-          'action': action,
-        },
+        body: {'event_id': widget.eventId, 'action': action},
       );
 
       if (data['success'] == true) {
@@ -235,10 +234,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
           );
         }
       }
@@ -490,7 +486,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             ),
                             Expanded(
                               child: _HalfTab(
-                                text: 'Участники (${_eventData?['participants_count'] ?? 0})',
+                                text:
+                                    'Участники (${_eventData?['participants_count'] ?? 0})',
                                 selected: _tab == 1,
                                 onTap: () => setState(() => _tab = 1),
                               ),
@@ -515,13 +512,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         decoration: const BoxDecoration(
                           color: AppColors.surface,
                           border: Border(
-                            bottom: BorderSide(color: AppColors.border, width: 1),
+                            bottom: BorderSide(
+                              color: AppColors.border,
+                              width: 1,
+                            ),
                           ),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                           child: EventDescriptionContent(
-                            description: _eventData!['description'] as String? ?? '',
+                            description:
+                                _eventData!['description'] as String? ?? '',
                           ),
                         ),
                       ),
@@ -548,7 +549,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       borderRadius: BorderRadius.circular(AppRadius.xxl),
                       elevation: 0,
                       child: InkWell(
-                        onTap: _isTogglingParticipation ? null : _toggleParticipation,
+                        onTap: _isTogglingParticipation
+                            ? null
+                            : _toggleParticipation,
                         borderRadius: BorderRadius.circular(AppRadius.xxl),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -963,7 +966,8 @@ class _EventMembersSliverState extends State<_EventMembersSliver> {
           _loading = false;
         });
       } else {
-        final errorMessage = data['message'] as String? ?? 'Ошибка загрузки участников';
+        final errorMessage =
+            data['message'] as String? ?? 'Ошибка загрузки участников';
         setState(() {
           _loading = false;
           if (_participants.isEmpty) {
@@ -994,9 +998,7 @@ class _EventMembersSliverState extends State<_EventMembersSliver> {
               bottom: BorderSide(color: AppColors.border, width: 1),
             ),
           ),
-          child: const Center(
-            child: CircularProgressIndicator(),
-          ),
+          child: const Center(child: CircularProgressIndicator()),
         ),
       );
     }
@@ -1062,28 +1064,29 @@ class _EventMembersSliverState extends State<_EventMembersSliver> {
     }
 
     // Используем SliverList для участников (часть общего скролла)
+    // Каждый элемент обёрнут в Container с фоном surface
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          // Индикатор загрузки в конце списка
-          if (index >= _participants.length) {
-            if (!_loading) return const SizedBox.shrink();
-            return const Padding(
-              padding: EdgeInsets.all(16),
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-          }
+      delegate: SliverChildBuilderDelegate((context, index) {
+        // Индикатор загрузки в конце списка
+        if (index >= _participants.length) {
+          if (!_loading) return const SizedBox.shrink();
+          return Container(
+            color: AppColors.surface,
+            padding: const EdgeInsets.all(16),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
 
-          final p = _participants[index];
-          if (p.isEmpty) return const SizedBox.shrink();
+        final p = _participants[index];
+        if (p.isEmpty) return const SizedBox.shrink();
 
-          final name = (p['name'] as String?)?.trim() ?? 'Пользователь';
-          final avatarUrl = (p['avatar_url'] as String?)?.trim() ?? '';
-          final isOrganizer = p['is_organizer'] as bool? ?? false;
+        final name = (p['name'] as String?)?.trim() ?? 'Пользователь';
+        final avatarUrl = (p['avatar_url'] as String?)?.trim() ?? '';
+        final isOrganizer = p['is_organizer'] as bool? ?? false;
 
-          return Column(
+        return Container(
+          color: AppColors.surface,
+          child: Column(
             children: [
               _MemberRow(
                 member: _Member(
@@ -1091,8 +1094,7 @@ class _EventMembersSliverState extends State<_EventMembersSliver> {
                   isOrganizer ? 'Организатор' : null,
                   avatarUrl,
                   roleIcon: isOrganizer
-                      ? CupertinoIcons
-                          .person_crop_circle_fill_badge_checkmark
+                      ? CupertinoIcons.person_crop_circle_fill_badge_checkmark
                       : null,
                 ),
               ),
@@ -1103,10 +1105,9 @@ class _EventMembersSliverState extends State<_EventMembersSliver> {
                   color: AppColors.border,
                 ),
             ],
-          );
-        },
-        childCount: _participants.length + (_loading ? 1 : 0),
-      ),
+          ),
+        );
+      }, childCount: _participants.length + (_loading ? 1 : 0)),
     );
   }
 }
@@ -1199,10 +1200,7 @@ class _EventMembersContentState extends State<EventMembersContent> {
     if (_participants.isEmpty && !_loading) {
       return const Padding(
         padding: EdgeInsets.all(16),
-        child: Text(
-          'Участники отсутствуют',
-          style: TextStyle(fontSize: 14),
-        ),
+        child: Text('Участники отсутствуют', style: TextStyle(fontSize: 14)),
       );
     }
 
@@ -1215,9 +1213,7 @@ class _EventMembersContentState extends State<EventMembersContent> {
           // Индикатор загрузки в конце списка
           return const Padding(
             padding: EdgeInsets.all(16),
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),
+            child: Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -1239,11 +1235,7 @@ class _EventMembersContentState extends State<EventMembersContent> {
               ),
             ),
             if (index < _participants.length - 1)
-              const Divider(
-                height: 1,
-                thickness: 0.5,
-                color: AppColors.border,
-              ),
+              const Divider(height: 1, thickness: 0.5, color: AppColors.border),
           ],
         );
       },

@@ -90,11 +90,11 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
       }
 
       // Запрашиваем разрешения
-      bool? granted = await _health!.requestAuthorization(_types);
+      final bool? granted = await _health!.requestAuthorization(_types);
 
       if (!mounted) return;
 
-      final isGranted = granted ?? false;
+      final bool isGranted = granted ?? false;
       setState(() {
         _hasAccess = isGranted;
         _isLoading = false;
