@@ -51,66 +51,103 @@ class _RouteCardState extends State<RouteCard> {
     }
 
     final center = _centerFromPoints(points);
+    final bounds = _boundsFromPoints(points);
 
-    return SizedBox(
-      width: double.infinity,
-      height: widget.height,
+    // Формируем финальный URL с подставленным API ключом
+    final finalUrlTemplate = AppConfig.mapTilesUrl.replaceAll(
+      '{apiKey}',
+      AppConfig.mapTilerApiKey,
+    );
 
-      // Полностью отключаем взаимодействие — это "картинка", а не интерактивная карта
-      child: IgnorePointer(
-        ignoring: true,
-        child: FlutterMap(
-          mapController: _mapController,
-          options: MapOptions(
-            initialCenter: center,
-            initialZoom: 12,
-            // Жесты отключены (дублируем через InteractionOptions на всякий случай)
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.none,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final hasValidSize =
+            constraints.maxWidth > 0 && constraints.maxHeight > 0;
+
+        // Если размер невалидный, показываем плейсхолдер
+        if (!hasValidSize) {
+          return SizedBox(
+            width: double.infinity,
+            height: widget.height,
+            child: const Center(
+              child: CircularProgressIndicator(color: AppColors.brandPrimary),
             ),
-            backgroundColor: Colors.transparent,
+          );
+        }
 
-            // Приготовим «вписывание» в onMapReady, когда размер уже известен
-            onMapReady: () {
-              final fit = CameraFit.bounds(
-                bounds: _boundsFromPoints(points),
-                padding: const EdgeInsets.all(12),
-              );
-              _mapController.fitCamera(fit);
-            },
-          ),
+        return SizedBox(
+          width: double.infinity,
+          height: widget.height,
+          // Полностью отключаем взаимодействие — это "картинка", а не интерактивная карта
+          child: IgnorePointer(
+            ignoring: true,
+            child: FlutterMap(
+              key: ValueKey('route_card_${points.length}'),
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: center,
+                initialZoom: 12,
+                // Жесты отключены (дублируем через InteractionOptions на всякий случай)
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.none,
+                ),
+                // Фоновый цвет карты (серый, если тайлы не загрузились)
+                backgroundColor: AppColors.surfaceMuted,
 
-          // Слои карты (тайлы + трек)
-          children: [
-            // Тайл-слой MapTiler Streets
-            TileLayer(
-              urlTemplate: AppConfig.mapTilesUrl,
-              additionalOptions: {'apiKey': AppConfig.mapTilerApiKey},
-              keepBuffer: 1,
-              retinaMode: true,
-              maxZoom: 18,
-              minZoom: 3,
-              userAgentPackageName: 'paceup.ru',
-            ),
+                // Приготовим «вписывание» в onMapReady, когда размер уже известен
+                onMapReady: () {
+                  // Небольшая задержка перед fitCamera для гарантии, что карта полностью инициализирована
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    final fit = CameraFit.bounds(
+                      bounds: bounds,
+                      padding: const EdgeInsets.all(12),
+                    );
+                    _mapController.fitCamera(fit);
+                  });
+                },
+              ),
 
-            // Атрибуция — корректно показываем источник данных
-            const RichAttributionWidget(
-              attributions: [TextSourceAttribution('MapTiler © OpenStreetMap')],
-            ),
+              // Слои карты (тайлы + трек)
+              children: [
+                // Тайл-слой MapTiler Streets
+                // Используем финальный URL с подставленным ключом
+                TileLayer(
+                  urlTemplate: finalUrlTemplate,
+                  keepBuffer: 1,
+                  retinaMode: true,
+                  maxZoom: 18,
+                  minZoom: 3,
+                  userAgentPackageName: 'paceup.ru',
 
-            // Линия трека
-            PolylineLayer(
-              polylines: [
-                Polyline(
-                  points: points,
-                  strokeWidth: 3.0,
-                  color: AppColors.brandPrimary,
+                  // Обработка ошибок загрузки тайлов (тихо игнорируем)
+                  errorTileCallback: (tile, error, stackTrace) {
+                    // Ошибки загрузки тайлов логируются только в debug режиме
+                  },
+                ),
+
+                // Атрибуция — корректно показываем источник данных
+                const RichAttributionWidget(
+                  attributions: [
+                    TextSourceAttribution('MapTiler © OpenStreetMap'),
+                  ],
+                ),
+
+                // Линия трека
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: points,
+                      strokeWidth: 3.0,
+                      color: AppColors.brandPrimary,
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

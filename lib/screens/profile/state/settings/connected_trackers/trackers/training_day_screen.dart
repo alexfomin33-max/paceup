@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -5,41 +6,24 @@ import 'package:flutter/material.dart';
 import 'package:health/health.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../../../../service/api_service.dart';
+import '../../../../../../service/auth_service.dart';
 import '../../../../../../theme/app_theme.dart';
 import '../../../../../../widgets/app_bar.dart';
 import '../../../../../../widgets/route_card.dart';
 import '../../../../../../models/route_bridge.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
-///  ЭКРАН «ДЕТАЛИ ТРЕНИРОВОК» С ТРЕМЯ ВКЛАДКАМИ (24.10 / 25.10 / 26.10)
-///  Стиль повторяет FavoritesScreen: TabBar + TabBarView + свайпы.
-///  Вкладка = отдельная загрузка данных по выбранной дате.
+///  ЭКРАН «ДЕТАЛИ ТРЕНИРОВОК» С ОДНОЙ ДАТОЙ (08.11)
+///  Загружает и отображает все данные тренировки за указанную дату.
 /// ─────────────────────────────────────────────────────────────────────────
-class TrainingDayTabsScreen extends StatefulWidget {
+class TrainingDayTabsScreen extends StatelessWidget {
   const TrainingDayTabsScreen({super.key});
 
   @override
-  State<TrainingDayTabsScreen> createState() => _TrainingDayTabsScreenState();
-}
-
-class _TrainingDayTabsScreenState extends State<TrainingDayTabsScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tab = TabController(length: 3, vsync: this);
-
-  @override
-  void dispose() {
-    _tab.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // Фиксированные даты по задаче
-    final List<_DateTab> dates = <_DateTab>[
-      _DateTab(label: '24.10', date: DateTime(2025, 10, 24)),
-      _DateTab(label: '25.10', date: DateTime(2025, 10, 25)),
-      _DateTab(label: '26.10', date: DateTime(2025, 10, 26)),
-    ];
+    // Фиксированная дата 08.11 (8 ноября 2025)
+    final trainingDate = DateTime(2025, 11, 8);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -47,75 +31,13 @@ class _TrainingDayTabsScreenState extends State<TrainingDayTabsScreen>
         title: 'Детали тренировок',
         showBottomDivider: false,
       ),
-      body: Column(
-        children: [
-          // ── Вкладки
-          Container(
-            color: AppColors.surface,
-            child: TabBar(
-              controller: _tab,
-              isScrollable: false,
-              labelColor: AppColors.brandPrimary,
-              unselectedLabelColor: AppColors.textPrimary,
-              indicatorColor: AppColors.brandPrimary,
-              indicatorWeight: 1,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-              tabs: dates
-                  .map(
-                    (e) => Tab(
-                      child: _TabLabel(
-                        icon: CupertinoIcons.calendar,
-                        text: e.label,
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-          // ── Контент вкладок со свайпом
-          Expanded(
-            child: TabBarView(
-              controller: _tab,
-              physics: const BouncingScrollPhysics(),
-              children: dates
-                  .map((e) => _TrainingTabContent(date: e.date))
-                  .toList(),
-            ),
-          ),
-        ],
-      ),
+      body: _TrainingTabContent(date: trainingDate),
     );
   }
-}
-
-class _TabLabel extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _TabLabel({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16),
-        const SizedBox(width: 6),
-        Text(text, overflow: TextOverflow.ellipsis),
-      ],
-    );
-  }
-}
-
-/// Простая структура для вкладок
-class _DateTab {
-  final String label;
-  final DateTime date;
-  const _DateTab({required this.label, required this.date});
 }
 
 /// ─────────────────────────────────────────────────────────────────────────
-///  КОНТЕНТ ВКЛАДКИ: грузим Workout/Distance/HR за день, считаем метрики,
+///  КОНТЕНТ ЭКРАНА: грузим Workout/Distance/HR за день, считаем метрики,
 ///  показываем карту маршрута (Android/Health Connect).
 /// ─────────────────────────────────────────────────────────────────────────
 class _TrainingTabContent extends StatefulWidget {
@@ -148,6 +70,8 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
   // ─── Форматтеры
   static String _dmy(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
+  static String _dm(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}';
   static String _hm(DateTime d) =>
       '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
   static String _hms(Duration d) {
@@ -300,6 +224,9 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
         _route = route;
         _status = 'Готово';
       });
+
+      // ─── Сохраняем данные в БД после успешной загрузки ───
+      await _saveToDatabase(w);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -310,11 +237,163 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
     }
   }
 
+  /// ─────────────────────────────────────────────────────────────────────────
+  /// СОХРАНЕНИЕ ДАННЫХ ТРЕНИРОВКИ В БАЗУ ДАННЫХ
+  /// 
+  /// Преобразует данные из Health Connect/HealthKit в формат БД и отправляет
+  /// на сервер через API endpoint create_activity.php
+  /// ─────────────────────────────────────────────────────────────────────────
+  Future<void> _saveToDatabase(HealthDataPoint workout) async {
+    // Проверяем наличие минимальных данных для сохранения
+    if (_wStart == null || _wEnd == null || _distanceMeters <= 0) {
+      return; // Нет данных для сохранения
+    }
+
+    try {
+      // Получаем ID пользователя
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ошибка: пользователь не авторизован'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+
+      // ─── Определяем тип активности из workout type ───
+      String activityType = _mapWorkoutTypeToActivityType(workout);
+
+      // ─── Формируем params (JSON с stats) ───
+      // Формат должен быть: [{"stats": {...}}] для совместимости с activities_lenta.php
+      final stats = <String, dynamic>{
+        'distance': _distanceMeters,
+        'duration': _duration.inSeconds,
+      };
+
+      // Добавляем средний пульс, если есть
+      if (_hrAvg != null) {
+        stats['avgHeartRate'] = _hrAvg;
+      }
+
+      // Добавляем временные метки в ISO8601 формате
+      stats['startedAt'] = _wStart!.toIso8601String();
+      stats['finishedAt'] = _wEnd!.toIso8601String();
+
+      // Вычисляем среднюю скорость и темп (если есть дистанция и время)
+      if (_distanceMeters > 0 && _duration.inSeconds > 0) {
+        final avgSpeed = (_distanceMeters / _duration.inSeconds) * 3.6; // км/ч
+        final avgPace = (_duration.inSeconds / (_distanceMeters / 1000.0)) / 60.0; // мин/км
+        stats['avgSpeed'] = avgSpeed;
+        stats['avgPace'] = avgPace;
+      }
+
+      final params = jsonEncode([{'stats': stats}]);
+
+      // ─── Формируем points (массив строк "LatLng(lat, lng)") ───
+      final pointsList = _route
+          .map((p) => 'LatLng(${p.latitude}, ${p.longitude})')
+          .toList();
+      final points = jsonEncode(pointsList);
+
+      // ─── Форматируем даты в формат MySQL (YYYY-MM-DD HH:mm:ss) ───
+      String formatDateTime(DateTime dt) {
+        return '${dt.year}-'
+            '${dt.month.toString().padLeft(2, '0')}-'
+            '${dt.day.toString().padLeft(2, '0')} '
+            '${dt.hour.toString().padLeft(2, '0')}:'
+            '${dt.minute.toString().padLeft(2, '0')}:'
+            '${dt.second.toString().padLeft(2, '0')}';
+      }
+
+      // ─── Подготавливаем данные для отправки ───
+      final body = <String, dynamic>{
+        'user_id': userId,
+        'type': activityType,
+        'date_start': formatDateTime(_wStart!),
+        'date_end': formatDateTime(_wEnd!),
+        'params': params,
+        'points': points,
+        'privacy': '0', // По умолчанию публичная
+        'equip_id': 0, // Нет привязки к оборудованию
+        'media': '', // Нет медиа файлов
+      };
+
+      // ─── Отправляем на сервер ───
+      final api = ApiService();
+      final response = await api.post('/create_activity.php', body: body);
+
+      if (response['success'] == true) {
+        // Успешно сохранено
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Тренировка сохранена в базу данных'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        // Ошибка сохранения
+        final errorMsg = response['message'] ?? 'Неизвестная ошибка';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ошибка сохранения: $errorMsg'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Ошибка при сохранении (логируем, но не показываем пользователю,
+      // чтобы не мешать просмотру данных)
+      debugPrint('Ошибка сохранения тренировки: $e');
+    }
+  }
+
+  /// ─────────────────────────────────────────────────────────────────────────
+  /// МАППИНГ ТИПА ТРЕНИРОВКИ ИЗ HEALTH CONNECT/HEALTHKIT
+  /// 
+  /// Преобразует тип workout из Health Connect/HealthKit в формат БД:
+  /// 'run', 'bike', 'swim'
+  /// ─────────────────────────────────────────────────────────────────────────
+  String _mapWorkoutTypeToActivityType(HealthDataPoint workout) {
+    // Пытаемся получить тип из workout value
+    final value = workout.value;
+    if (value is WorkoutHealthValue) {
+      // Используем workoutActivityType.name для определения типа
+      final activityTypeName = value.workoutActivityType.name.toLowerCase();
+      
+      // Маппинг типов активности на типы в БД
+      if (activityTypeName.contains('running') ||
+          activityTypeName.contains('walking') ||
+          activityTypeName.contains('hiking') ||
+          activityTypeName.contains('jogging')) {
+        return 'run';
+      } else if (activityTypeName.contains('cycling') ||
+          activityTypeName.contains('bike')) {
+        return 'bike';
+      } else if (activityTypeName.contains('swimming') ||
+          activityTypeName.contains('swim')) {
+        return 'swim';
+      }
+    }
+
+    // Если не удалось определить тип, используем 'run' по умолчанию
+    return 'run';
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // Обязательно для AutomaticKeepAliveClientMixin
 
-    final dateText = _dmy(widget.date);
+    // Формат даты для отображения: "08.11" (без года)
+    final dateText = _dm(widget.date);
 
     // Подготовим карточки с РАЗНЫМИ тинтами (как в connected_trackers_screen)
     final mDate = _M(
@@ -399,7 +478,11 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
                 const Text('Маршрут', style: AppTextStyles.h14w6),
                 const SizedBox(height: 8),
                 if (_route.length >= 2)
-                  RouteCard(points: _route, height: 220)
+                  // Обрезаем карту по скругленным углам контейнера
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: RouteCard(points: _route, height: 220),
+                  )
                 else
                   const Text(
                     'Маршрут не найден. Возможно, у источника нет трека, требуется разовый доступ в Health Connect, или данные ещё не пришли.',
