@@ -395,133 +395,133 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: const PaceAppBar(title: 'Подключенные трекеры'),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        children: [
-          // Инфоблок
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.border, width: 1),
-            ),
-            padding: const EdgeInsets.fromLTRB(12, 14, 12, 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  CupertinoIcons.waveform_path_ecg,
-                  size: 28,
-                  color: AppColors.brandPrimary,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    Platform.isIOS
-                        ? 'Синхронизация с Apple Здоровьем. Разрешите доступ, чтобы импортировать тренировки, пульс и ккал.'
-                        : 'Синхронизация через Health Connect. Разрешите доступ, чтобы импортировать тренировки, дистанцию, пульс и активные калории (если доступны источником).',
-                    style: AppTextStyles.h13w4,
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          children: [
+            // Инфоблок
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: AppColors.border, width: 1),
+              ),
+              padding: const EdgeInsets.fromLTRB(12, 14, 12, 16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    CupertinoIcons.waveform_path_ecg,
+                    size: 28,
+                    color: AppColors.brandPrimary,
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Кнопка синка
-          Center(
-            child: PrimaryButton(
-              text: _busy
-                  ? 'Синхронизация…'
-                  : (Platform.isIOS
-                        ? 'Синк из Apple Здоровья'
-                        : 'Синк из Health Connect'),
-              onPressed: _busy ? () {} : () => _fetchLast7Days(),
-              width: 260,
-              height: 44,
-              isLoading: _busy,
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Статус и метрики
-          if (_status.isNotEmpty)
-            _StatusRichCard(
-              title: 'Статус',
-              subtitle: _periodStart != null && _periodEnd != null
-                  ? 'Период: ${_dmy(_periodStart!)} — ${_dmy(_periodEnd!)}'
-                  : null,
-              message: _status,
-              topMetrics: [
-                _Metric(
-                  icon: CupertinoIcons.flag_circle_fill,
-                  label: 'Тренировки',
-                  value: _workouts.toString(),
-                  tint: cWorkouts,
-                ),
-                _Metric(
-                  icon: CupertinoIcons.chart_bar_alt_fill,
-                  label: 'Шаги',
-                  value: _stepsTotal.toString(), // << вернули
-                  tint: cSteps,
-                ),
-                _Metric(
-                  icon: CupertinoIcons.location_fill,
-                  label: 'Дистанция',
-                  value: _kmText2(_sumDistanceMeters),
-                  tint: cDist,
-                ),
-                _Metric(
-                  icon: CupertinoIcons.flame_fill,
-                  label: 'Активные ккал',
-                  value: _sumActiveKcal.toStringAsFixed(0),
-                  tint: cActive,
-                ),
-                _Metric(
-                  icon: CupertinoIcons.heart_fill,
-                  label: 'Средний пульс',
-                  value: _hrAvg != null ? _hrAvg!.toStringAsFixed(0) : '—',
-                  tint: cHR,
-                ),
-              ],
-              sections: [
-                // Таблица «Активность по дням»
-                if (_distanceByDayMeters.isNotEmpty ||
-                    _distanceTimeByDay.isNotEmpty ||
-                    _hrAvgByDay.isNotEmpty)
-                  _ActivityTable(
-                    distanceByDayMeters: _distanceByDayMeters,
-                    distanceTimeByDay: _distanceTimeByDay,
-                    hrAvgByDay: _hrAvgByDay,
-                    tint: cInfo,
-                    maxRows: 7,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      Platform.isIOS
+                          ? 'Синхронизация с Apple Здоровьем. Разрешите доступ, чтобы импортировать тренировки, пульс и ккал.'
+                          : 'Синхронизация через Health Connect. Разрешите доступ, чтобы импортировать тренировки, дистанцию, пульс и активные калории (если доступны источником).',
+                      style: AppTextStyles.h13w4,
+                    ),
                   ),
-              ],
+                ],
+              ),
             ),
 
-          // ───────────────────────────────────────────────────────────────
-          //  ОДНА PRIMARY-КНОПКА «ДЕТАЛИ ТРЕНИРОВОК»
-          //  Открывает экран со вкладками 24.10 / 25.10 / 26.10
-          // ───────────────────────────────────────────────────────────────
-          const SizedBox(height: 20),
-          Center(
-            child: PrimaryButton(
-              text: 'Детали тренировок',
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const TrainingDayTabsScreen(),
-                  ),
-                );
-              },
-              width: 260,
-              height: 44,
+            const SizedBox(height: 16),
+
+            // Кнопка синка
+            Center(
+              child: PrimaryButton(
+                text: _busy
+                    ? 'Синхронизация…'
+                    : (Platform.isIOS
+                          ? 'Синк из Apple Здоровья'
+                          : 'Синк из Health Connect'),
+                onPressed: _busy ? () {} : () => _fetchLast7Days(),
+                width: 260,
+                height: 44,
+                isLoading: _busy,
+              ),
             ),
-          ),
-        ],
-      ),
+
+            const SizedBox(height: 16),
+
+            // Статус и метрики
+            if (_status.isNotEmpty)
+              _StatusRichCard(
+                title: 'Статус',
+                subtitle: _periodStart != null && _periodEnd != null
+                    ? 'Период: ${_dmy(_periodStart!)} — ${_dmy(_periodEnd!)}'
+                    : null,
+                message: _status,
+                topMetrics: [
+                  _Metric(
+                    icon: CupertinoIcons.flag_circle_fill,
+                    label: 'Тренировки',
+                    value: _workouts.toString(),
+                    tint: cWorkouts,
+                  ),
+                  _Metric(
+                    icon: CupertinoIcons.chart_bar_alt_fill,
+                    label: 'Шаги',
+                    value: _stepsTotal.toString(), // << вернули
+                    tint: cSteps,
+                  ),
+                  _Metric(
+                    icon: CupertinoIcons.location_fill,
+                    label: 'Дистанция',
+                    value: _kmText2(_sumDistanceMeters),
+                    tint: cDist,
+                  ),
+                  _Metric(
+                    icon: CupertinoIcons.flame_fill,
+                    label: 'Активные ккал',
+                    value: _sumActiveKcal.toStringAsFixed(0),
+                    tint: cActive,
+                  ),
+                  _Metric(
+                    icon: CupertinoIcons.heart_fill,
+                    label: 'Средний пульс',
+                    value: _hrAvg != null ? _hrAvg!.toStringAsFixed(0) : '—',
+                    tint: cHR,
+                  ),
+                ],
+                sections: [
+                  // Таблица «Активность по дням»
+                  if (_distanceByDayMeters.isNotEmpty ||
+                      _distanceTimeByDay.isNotEmpty ||
+                      _hrAvgByDay.isNotEmpty)
+                    _ActivityTable(
+                      distanceByDayMeters: _distanceByDayMeters,
+                      distanceTimeByDay: _distanceTimeByDay,
+                      hrAvgByDay: _hrAvgByDay,
+                      tint: cInfo,
+                      maxRows: 7,
+                    ),
+                ],
+              ),
+
+            // ───────────────────────────────────────────────────────────────
+            //  ОДНА PRIMARY-КНОПКА «ДЕТАЛИ ТРЕНИРОВОК»
+            //  Открывает экран со вкладками 24.10 / 25.10 / 26.10
+            // ───────────────────────────────────────────────────────────────
+            const SizedBox(height: 20),
+            Center(
+              child: PrimaryButton(
+                text: 'Детали тренировок',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const TrainingDayTabsScreen(),
+                    ),
+                  );
+                },
+                width: 260,
+                height: 44,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

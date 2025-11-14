@@ -11,7 +11,7 @@ import '../../../../../../service/auth_service.dart';
 import '../../../../../../theme/app_theme.dart';
 import '../../../../../../widgets/app_bar.dart';
 import '../../../../../../widgets/route_card.dart';
-import '../../../../../../models/route_bridge.dart';
+import 'package:flutter/services.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
 ///  ЭКРАН «ДЕТАЛИ ТРЕНИРОВОК» С ОДНОЙ ДАТОЙ (08.11)
@@ -64,8 +64,11 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
   double _distanceMeters = 0;
   Duration _duration = Duration.zero;
   double? _hrAvg;
+  double? _hrMin;
+  double? _hrMax;
 
   List<LatLng> _route = const [];
+  List<Map<String, dynamic>> _routeData = const []; // Полные данные с высотой
 
   // ─── Форматтеры
   static String _dmy(DateTime d) =>
@@ -179,37 +182,64 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
         if (v is NumericHealthValue) distance += v.numericValue.toDouble();
       }
 
-      // 5) Средний пульс
+      // 5) Средний, минимальный и максимальный пульс
       final hrPoints = await _health.getHealthDataFromTypes(
         types: const [HealthDataType.HEART_RATE],
         startTime: wStart,
         endTime: wEnd,
       );
       double? hrAvg;
+      double? hrMin;
+      double? hrMax;
       if (hrPoints.isNotEmpty) {
-        double sum = 0;
-        int n = 0;
+        final hrValues = <double>[];
         for (final p in hrPoints) {
           final v = p.value;
           if (v is NumericHealthValue) {
-            sum += v.numericValue.toDouble();
-            n++;
+            hrValues.add(v.numericValue.toDouble());
           }
         }
-        if (n > 0) hrAvg = sum / n;
+        if (hrValues.isNotEmpty) {
+          hrAvg = hrValues.reduce((a, b) => a + b) / hrValues.length;
+          hrMin = hrValues.reduce((a, b) => a < b ? a : b);
+          hrMax = hrValues.reduce((a, b) => a > b ? a : b);
+        }
       }
 
       // 6) Длительность по самой сессии
       final dur = wEnd.difference(wStart);
 
-      // 7) Маршрут (Android/Health Connect)
+      // 7) Маршрут (Android/Health Connect) с высотой
       List<LatLng> route = const [];
+      List<Map<String, dynamic>> routeData = const [];
       if (Platform.isAndroid) {
         try {
-          route = await RouteBridge.instance.getRoutePoints(
-            start: routeStart,
-            end: routeEnd,
+          const channel = MethodChannel('paceup/route');
+          final res = await channel.invokeMethod<List<dynamic>>(
+            'getExerciseRoute',
+            <String, dynamic>{
+              'start': routeStart.millisecondsSinceEpoch,
+              'end': routeEnd.millisecondsSinceEpoch,
+            },
           );
+
+          if (res != null && res.isNotEmpty) {
+            // Получаем полные данные с высотой
+            routeData = res.map((e) {
+              final m = Map<String, dynamic>.from(e as Map);
+              return {
+                'lat': (m['lat'] as num).toDouble(),
+                'lng': (m['lng'] as num).toDouble(),
+                'alt': (m['alt'] as num?)?.toDouble(), // Высота
+              };
+            }).toList();
+
+            // Для отображения на карте (только координаты)
+            route = routeData
+                .where((p) => p['lat'] != null && p['lng'] != null)
+                .map((p) => LatLng(p['lat']!, p['lng']!))
+                .toList();
+          }
         } catch (_) {
           // Если требуется разовый консент — система сама покажет.
         }
@@ -221,7 +251,10 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
         _distanceMeters = distance;
         _duration = dur;
         _hrAvg = hrAvg;
+        _hrMin = hrMin;
+        _hrMax = hrMax;
         _route = route;
+        _routeData = routeData;
         _status = 'Готово';
       });
 
@@ -239,7 +272,7 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
 
   /// ─────────────────────────────────────────────────────────────────────────
   /// СОХРАНЕНИЕ ДАННЫХ ТРЕНИРОВКИ В БАЗУ ДАННЫХ
-  /// 
+  ///
   /// Преобразует данные из Health Connect/HealthKit в формат БД и отправляет
   /// на сервер через API endpoint create_activity.php
   /// ─────────────────────────────────────────────────────────────────────────
@@ -275,9 +308,15 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
         'duration': _duration.inSeconds,
       };
 
-      // Добавляем средний пульс, если есть
+      // Добавляем пульс (средний, минимальный, максимальный)
       if (_hrAvg != null) {
         stats['avgHeartRate'] = _hrAvg;
+      }
+      if (_hrMin != null) {
+        stats['minHeartRate'] = _hrMin;
+      }
+      if (_hrMax != null) {
+        stats['maxHeartRate'] = _hrMax;
       }
 
       // Добавляем временные метки в ISO8601 формате
@@ -287,12 +326,24 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
       // Вычисляем среднюю скорость и темп (если есть дистанция и время)
       if (_distanceMeters > 0 && _duration.inSeconds > 0) {
         final avgSpeed = (_distanceMeters / _duration.inSeconds) * 3.6; // км/ч
-        final avgPace = (_duration.inSeconds / (_distanceMeters / 1000.0)) / 60.0; // мин/км
+        final avgPace =
+            (_duration.inSeconds / (_distanceMeters / 1000.0)) / 60.0; // мин/км
         stats['avgSpeed'] = avgSpeed;
         stats['avgPace'] = avgPace;
       }
 
-      final params = jsonEncode([{'stats': stats}]);
+      // ─── Вычисляем статистику по высоте ───
+      if (_routeData.isNotEmpty) {
+        final altitudeStats = _calculateAltitudeStats(
+          _routeData,
+          _distanceMeters,
+        );
+        stats.addAll(altitudeStats);
+      }
+
+      final params = jsonEncode([
+        {'stats': stats},
+      ]);
 
       // ─── Формируем points (массив строк "LatLng(lat, lng)") ───
       final pointsList = _route
@@ -357,8 +408,120 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
   }
 
   /// ─────────────────────────────────────────────────────────────────────────
+  /// ВЫЧИСЛЕНИЕ СТАТИСТИКИ ПО ВЫСОТЕ
+  ///
+  /// Вычисляет minAltitude, maxAltitude, cumulativeElevationGain,
+  /// cumulativeElevationLoss, altPerKm из точек маршрута с высотой
+  /// ─────────────────────────────────────────────────────────────────────────
+  Map<String, dynamic> _calculateAltitudeStats(
+    List<Map<String, dynamic>> routeData,
+    double totalDistanceMeters,
+  ) {
+    final result = <String, dynamic>{};
+
+    // Фильтруем точки с валидной высотой (alt != null и alt >= 0)
+    final validPoints = routeData
+        .where((p) => p['alt'] != null && (p['alt'] as num).toDouble() >= 0)
+        .toList();
+
+    if (validPoints.isEmpty) {
+      // Если нет данных о высоте, возвращаем пустые значения
+      return {
+        'minAltitude': 0.0,
+        'minAltitudeCoords': null,
+        'maxAltitude': 0.0,
+        'maxAltitudeCoords': null,
+        'cumulativeElevationGain': 0.0,
+        'cumulativeElevationLoss': 0.0,
+        'altPerKm': <String, double>{},
+      };
+    }
+
+    // Находим минимальную и максимальную высоту
+    double minAlt = double.infinity;
+    double maxAlt = double.negativeInfinity;
+    Map<String, dynamic>? minAltCoords;
+    Map<String, dynamic>? maxAltCoords;
+
+    for (final point in validPoints) {
+      final alt = (point['alt'] as num).toDouble();
+      if (alt < minAlt) {
+        minAlt = alt;
+        minAltCoords = {'lat': point['lat'], 'lng': point['lng']};
+      }
+      if (alt > maxAlt) {
+        maxAlt = alt;
+        maxAltCoords = {'lat': point['lat'], 'lng': point['lng']};
+      }
+    }
+
+    result['minAltitude'] = minAlt.isFinite ? minAlt : 0.0;
+    result['minAltitudeCoords'] = minAltCoords;
+    result['maxAltitude'] = maxAlt.isFinite ? maxAlt : 0.0;
+    result['maxAltitudeCoords'] = maxAltCoords;
+
+    // Вычисляем cumulative elevation gain и loss
+    double cumulativeGain = 0.0;
+    double cumulativeLoss = 0.0;
+
+    for (int i = 1; i < validPoints.length; i++) {
+      final prevAlt = (validPoints[i - 1]['alt'] as num).toDouble();
+      final currAlt = (validPoints[i]['alt'] as num).toDouble();
+      final diff = currAlt - prevAlt;
+
+      if (diff > 0) {
+        cumulativeGain += diff;
+      } else if (diff < 0) {
+        cumulativeLoss += diff.abs();
+      }
+    }
+
+    result['cumulativeElevationGain'] = cumulativeGain;
+    result['cumulativeElevationLoss'] = cumulativeLoss;
+
+    // ─── Вычисляем среднюю высоту по километрам ───
+    final altPerKm = <String, double>{};
+
+    if (totalDistanceMeters > 0 && validPoints.length > 1) {
+      // Приблизительно распределяем точки по километрам
+      // Предполагаем равномерное распределение точек по дистанции
+      final totalKm = totalDistanceMeters / 1000.0;
+      final pointsPerKm = (validPoints.length / totalKm).ceil();
+
+      int kmIndex = 1;
+      final currentKmAlts = <double>[];
+
+      for (int i = 0; i < validPoints.length; i++) {
+        final alt = (validPoints[i]['alt'] as num).toDouble();
+        currentKmAlts.add(alt);
+
+        // Каждые pointsPerKm точек считаем за километр
+        if (currentKmAlts.length >= pointsPerKm ||
+            i == validPoints.length - 1) {
+          if (currentKmAlts.isNotEmpty) {
+            final avgAlt =
+                currentKmAlts.reduce((a, b) => a + b) / currentKmAlts.length;
+            final kmKey =
+                i == validPoints.length - 1 && (totalKm - kmIndex + 1) < 1.0
+                ? 'km_${kmIndex}_partial'
+                : 'km_$kmIndex';
+            altPerKm[kmKey] = avgAlt;
+
+            currentKmAlts.clear();
+            kmIndex++;
+          }
+        }
+      }
+    }
+
+    result['altPerKm'] = altPerKm;
+
+    return result;
+  }
+
+  /// ─────────────────────────────────────────────────────────────────────────
   /// МАППИНГ ТИПА ТРЕНИРОВКИ ИЗ HEALTH CONNECT/HEALTHKIT
-  /// 
+  ///
   /// Преобразует тип workout из Health Connect/HealthKit в формат БД:
   /// 'run', 'bike', 'swim'
   /// ─────────────────────────────────────────────────────────────────────────
@@ -368,7 +531,7 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
     if (value is WorkoutHealthValue) {
       // Используем workoutActivityType.name для определения типа
       final activityTypeName = value.workoutActivityType.name.toLowerCase();
-      
+
       // Маппинг типов активности на типы в БД
       if (activityTypeName.contains('running') ||
           activityTypeName.contains('walking') ||
