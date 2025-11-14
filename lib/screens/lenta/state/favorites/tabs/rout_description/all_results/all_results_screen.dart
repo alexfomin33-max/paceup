@@ -232,13 +232,56 @@ class _LeaderCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 20), // отступ под иконки сверху
-              // аватар по центру
-              ClipOval(
-                child: Image(
-                  image: item.avatar,
-                  width: 72, // чуть крупнее
-                  height: 72,
-                  fit: BoxFit.cover,
+              // аватар по центру с желтой обводкой и кружком с цифрой "1"
+              SizedBox(
+                width: 72,
+                height: 72,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // желтая обводка вокруг аватара
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.accentYellow,
+                      ),
+                      padding: const EdgeInsets.all(3),
+                      child: ClipOval(
+                        child: Image(
+                          image: item.avatar,
+                          width: 68,
+                          height: 68,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    // маленький желтый кружок с цифрой "1" в правом нижнем углу
+                    Positioned(
+                      right: 2,
+                      bottom: 2,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.accentYellow,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            '1',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 10),
