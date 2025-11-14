@@ -26,6 +26,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   bool _canEdit = false; // Права на редактирование
   bool _isParticipant = false; // Является ли текущий пользователь участником
   bool _isTogglingParticipation = false; // Флаг процесса присоединения/выхода
+  bool _isBookmarked = false; // Находится ли событие в закладках
+  bool _isTogglingBookmark = false; // Флаг процесса добавления/удаления закладки
   final ScrollController _scrollController =
       ScrollController(); // Контроллер для отслеживания прокрутки
   final GlobalKey<_EventMembersSliverState> _membersSliverKey =
@@ -88,10 +90,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           }
         }
 
+        // Проверяем статус закладки
+        final isBookmarked = event['is_bookmarked'] as bool? ?? false;
+
         setState(() {
           _eventData = event;
           _canEdit = canEdit;
           _isParticipant = isParticipant;
+          _isBookmarked = isBookmarked;
           _loading = false;
         });
 
@@ -153,15 +159,100 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   Future<void> _openEditScreen() async {
     if (!_canEdit) return;
 
-    final result = await Navigator.of(context).push<bool>(
+    final result = await Navigator.of(context).push<dynamic>(
       TransparentPageRoute(
         builder: (_) => EditEventScreen(eventId: widget.eventId),
       ),
     );
 
+    // Если событие было удалено, возвращаемся назад
+    if (result == 'deleted') {
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
+      return;
+    }
+
     // Если событие было обновлено, перезагружаем данные
     if (result == true) {
       await _loadEvent();
+    }
+  }
+
+  /// ──────────────────────── Добавление/удаление из закладок ────────────────────────
+  Future<void> _toggleBookmark() async {
+    if (_isTogglingBookmark || _eventData == null) return;
+
+    // Проверяем, что userId доступен
+    final authService = AuthService();
+    final userId = await authService.getUserId();
+    if (userId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ошибка: Пользователь не авторизован'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isTogglingBookmark = true;
+    });
+
+    try {
+      final api = ApiService();
+      final data = await api.post(
+        '/toggle_event_bookmark.php',
+        body: {'event_id': widget.eventId},
+      );
+
+      if (data['success'] == true) {
+        final isBookmarked = data['is_bookmarked'] as bool? ?? false;
+
+        // Обновляем состояние
+        setState(() {
+          _isBookmarked = isBookmarked;
+          _isTogglingBookmark = false;
+        });
+
+        // Обновляем данные события
+        if (_eventData != null) {
+          setState(() {
+            _eventData = {
+              ..._eventData!,
+              'is_bookmarked': isBookmarked,
+            };
+          });
+        }
+      } else {
+        final errorMessage = data['message'] as String? ?? 'Неизвестная ошибка';
+        setState(() {
+          _isTogglingBookmark = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isTogglingBookmark = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -375,11 +466,25 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                               ),
                                       ),
                                     ),
-                                    _CircleIconBtn(
-                                      icon: CupertinoIcons.pencil,
-                                      semantic: 'Редактировать',
-                                      onTap: _canEdit ? _openEditScreen : null,
-                                    ),
+                                    // Показываем карандаш для создателя, закладку для остальных
+                                    _canEdit
+                                        ? _CircleIconBtn(
+                                            icon: CupertinoIcons.pencil,
+                                            semantic: 'Редактировать',
+                                            onTap: _openEditScreen,
+                                          )
+                                        : _CircleIconBtn(
+                                            icon: CupertinoIcons.bookmark,
+                                            semantic: _isBookmarked
+                                                ? 'Удалить из закладок'
+                                                : 'Добавить в закладки',
+                                            onTap: _isTogglingBookmark
+                                                ? null
+                                                : _toggleBookmark,
+                                            color: _isBookmarked
+                                                ? AppColors.brandPrimary
+                                                : AppColors.textSecondary,
+                                          ),
                                   ],
                                 ),
                               ),
@@ -610,7 +715,13 @@ class _CircleIconBtn extends StatelessWidget {
   final IconData icon;
   final String? semantic;
   final VoidCallback? onTap;
-  const _CircleIconBtn({required this.icon, this.onTap, this.semantic});
+  final Color? color; // Цвет иконки (по умолчанию AppColors.surface)
+  const _CircleIconBtn({
+    required this.icon,
+    this.onTap,
+    this.semantic,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -631,7 +742,11 @@ class _CircleIconBtn extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 18, color: AppColors.surface),
+          child: Icon(
+            icon,
+            size: 18,
+            color: color ?? AppColors.surface,
+          ),
         ),
       ),
     );

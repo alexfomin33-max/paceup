@@ -9,6 +9,7 @@ import '../../config/app_config.dart';
 import 'events/events_screen.dart' as ev;
 import 'events/events_filters_bottom_sheet.dart';
 import 'clubs/clubs_screen.dart' as clb;
+import 'clubs/clubs_filters_bottom_sheet.dart';
 import 'coaches/coaches_screen.dart' as cch;
 import 'travelers/travelers_screen.dart' as trv;
 
@@ -36,10 +37,13 @@ class _MapScreenState extends State<MapScreen> {
   /// Параметры фильтра событий (для обновления карты при применении фильтров)
   EventsFilterParams? _eventsFilterParams;
 
+  /// Параметры фильтра клубов (для обновления карты при применении фильтров)
+  ClubsFilterParams? _clubsFilterParams;
+
   /// Ключ для FutureBuilder событий (обновляется при изменении фильтров или создании события)
   Key _eventsMarkersKey = const ValueKey('events_markers_default');
 
-  /// Ключ для FutureBuilder клубов (обновляется при создании или удалении клуба)
+  /// Ключ для FutureBuilder клубов (обновляется при изменении фильтров или создании клуба)
   Key _clubsMarkersKey = const ValueKey('clubs_markers_default');
 
   /// Флаг инициализации карты для вкладок События и Клубы
@@ -139,7 +143,7 @@ class _MapScreenState extends State<MapScreen> {
               key: _selectedIndex == 0 ? _eventsMarkersKey : _clubsMarkersKey,
               future: _selectedIndex == 0
                   ? ev.eventsMarkers(context, filterParams: _eventsFilterParams)
-                  : clb.clubsMarkers(context),
+                  : clb.clubsMarkers(context, filterParams: _clubsFilterParams),
               builder: (context, snapshot) {
                 // Показываем карту даже во время загрузки (с пустыми маркерами)
                 // ⚠️ ВАЖНО: Откладываем создание FlutterMap до следующего кадра,
@@ -214,8 +218,21 @@ class _MapScreenState extends State<MapScreen> {
               ),
             if (_selectedIndex == 1)
               clb.ClubsFloatingButtons(
+                currentFilterParams: _clubsFilterParams,
+                onApplyFilters: (params) {
+                  // Обновляем параметры фильтра
+                  setState(() {
+                    _clubsFilterParams = params;
+                    // Сбрасываем флаг инициализации при обновлении данных
+                    _mapInitialized = false;
+                    // Обновляем ключ FutureBuilder для перезагрузки данных
+                    _clubsMarkersKey = ValueKey(
+                      'clubs_markers_${DateTime.now().millisecondsSinceEpoch}',
+                    );
+                  });
+                },
                 onClubCreated: () {
-                  // Обновляем ключ FutureBuilder для перезагрузки данных
+                  // Обновляем ключ FutureBuilder для перезагрузки данных после создания клуба
                   setState(() {
                     // Сбрасываем флаг инициализации при обновлении данных
                     _mapInitialized = false;
@@ -249,8 +266,21 @@ class _MapScreenState extends State<MapScreen> {
           _buildTabs(),
           if (_selectedIndex == 1)
             clb.ClubsFloatingButtons(
+              currentFilterParams: _clubsFilterParams,
+              onApplyFilters: (params) {
+                // Обновляем параметры фильтра
+                setState(() {
+                  _clubsFilterParams = params;
+                  // Сбрасываем флаг инициализации при обновлении данных
+                  _mapInitialized = false;
+                  // Обновляем ключ FutureBuilder для перезагрузки данных
+                  _clubsMarkersKey = ValueKey(
+                    'clubs_markers_${DateTime.now().millisecondsSinceEpoch}',
+                  );
+                });
+              },
               onClubCreated: () {
-                // Обновляем ключ FutureBuilder для перезагрузки данных
+                // Обновляем ключ FutureBuilder для перезагрузки данных после создания клуба
                 setState(() {
                   // Сбрасываем флаг инициализации при обновлении данных
                   _mapInitialized = false;
@@ -361,6 +391,16 @@ class _MapScreenState extends State<MapScreen> {
                       backgroundColor: Colors.transparent,
                       builder: (_) => sheet,
                     ).then((result) {
+                      // Если событие было удалено, обновляем маркеры на карте
+                      if (result == 'event_deleted' && mounted) {
+                        setState(() {
+                          // Сбрасываем флаг инициализации при обновлении данных
+                          _mapInitialized = false;
+                          _eventsMarkersKey = ValueKey(
+                            'events_markers_${DateTime.now().millisecondsSinceEpoch}',
+                          );
+                        });
+                      }
                       // Если клуб был удалён, обновляем маркеры на карте
                       if (result == 'club_deleted' && mounted) {
                         setState(() {

@@ -1,62 +1,194 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../theme/app_theme.dart';
+import '../../../../../models/event.dart';
+import '../../../../../providers/events/bookmarked_events_provider.dart';
+import '../../../../../providers/services/auth_provider.dart';
+import '../../../../../widgets/transparent_route.dart';
+import '../../../../map/events/event_detail_screen.dart';
 
 /// Вкладка «Закладки» — карточный список с промежутками (как в Маршрутах)
-class BookmarksContent extends StatelessWidget {
+/// Загружает события из закладок пользователя через API
+class BookmarksContent extends ConsumerStatefulWidget {
   const BookmarksContent({super.key});
 
-  static const _items = <_Bookmark>[
-    _Bookmark(
-      'assets/bookmark_1.png',
-      '"Ночь. Стрелка. Ярославль"',
-      '29 июля 2025',
-      783,
-    ),
-    _Bookmark(
-      'assets/bookmark_2.png',
-      'Минский полумарафон 2025',
-      '7 сентября 2025',
-      1264,
-    ),
-    _Bookmark(
-      'assets/bookmark_3.png',
-      'Марафон «Алые паруса»',
-      '22 июня 2025',
-      13590,
-    ),
-  ];
+  @override
+  ConsumerState<BookmarksContent> createState() => _BookmarksContentState();
+}
 
+class _BookmarksContentState extends ConsumerState<BookmarksContent> {
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        const SliverToBoxAdapter(child: SizedBox(height: 10)),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          sliver: SliverList.separated(
-            itemCount: _items.length,
-            separatorBuilder: (_, _) =>
-                const SizedBox(height: 2), // такой же зазор, как в Маршрутах
-            itemBuilder: (context, i) => _BookmarkCard(e: _items[i]),
+    // Получаем текущего пользователя из AuthService
+    final currentUserIdAsync = ref.watch(currentUserIdProvider);
+
+    // Обрабатываем состояние загрузки userId
+    return currentUserIdAsync.when(
+      data: (userId) {
+        if (userId == null) {
+          // Пользователь не авторизован
+          return const CustomScrollView(
+            physics: BouncingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(
+                    child: Text(
+                      'Необходима авторизация',
+                      style: AppTextStyles.h14w4,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        // Загружаем события из закладок через provider
+        final eventsState = ref.watch(bookmarkedEventsProvider(userId));
+
+        return RefreshIndicator.adaptive(
+          onRefresh: () async {
+            await ref.read(bookmarkedEventsProvider(userId).notifier).refresh();
+          },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              const SliverToBoxAdapter(child: SizedBox(height: 10)),
+              
+              // ── Состояния загрузки и ошибок
+              if (eventsState.isLoading && eventsState.events.isEmpty)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(
+                      child: CupertinoActivityIndicator(),
+                    ),
+                  ),
+                )
+              else if (eventsState.error != null && eventsState.events.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Ошибка: ${eventsState.error}',
+                            style: AppTextStyles.h14w4,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          CupertinoButton(
+                            onPressed: () {
+                              ref
+                                  .read(bookmarkedEventsProvider(userId).notifier)
+                                  .loadInitial();
+                            },
+                            child: const Text('Повторить'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              else if (eventsState.events.isEmpty)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(
+                      child: Text(
+                        'У вас пока нет закладок',
+                        style: AppTextStyles.h14w4,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                // ── Карточный список с зазором 2 px (как в Маршрутах)
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  sliver: SliverList.separated(
+                    itemCount: eventsState.events.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: 2), // такой же зазор, как в Маршрутах
+                    itemBuilder: (context, i) {
+                      final event = eventsState.events[i];
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () async {
+                          final result = await Navigator.of(context).push<dynamic>(
+                            TransparentPageRoute(
+                              builder: (_) => EventDetailScreen(eventId: event.id),
+                            ),
+                          );
+                          // Если событие было удалено или удалено из закладок, обновляем список
+                          if (result == true || result == 'bookmark_removed') {
+                            if (mounted) {
+                              await ref
+                                  .read(bookmarkedEventsProvider(userId).notifier)
+                                  .refresh();
+                            }
+                          }
+                        },
+                        child: _BookmarkCard(event: event),
+                      );
+                    },
+                  ),
+                ),
+              
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            ],
           ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-      ],
+        );
+      },
+      loading: () => const CustomScrollView(
+        physics: BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CupertinoActivityIndicator()),
+            ),
+          ),
+        ],
+      ),
+      error: (err, stack) => CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: Text(
+                  'Ошибка: $err',
+                  style: AppTextStyles.h14w4,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _BookmarkCard extends StatelessWidget {
-  final _Bookmark e;
-  const _BookmarkCard({required this.e});
+  final Event event;
+  const _BookmarkCard({required this.event});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-
         border: Border.all(color: AppColors.border, width: 0.5),
         boxShadow: [
           const BoxShadow(
@@ -67,41 +199,135 @@ class _BookmarkCard extends StatelessWidget {
           ),
         ],
       ),
-      child: _BookmarkRow(e: e),
+      child: _BookmarkRow(event: event),
     );
   }
 }
 
-class _BookmarkRow extends StatelessWidget {
-  final _Bookmark e;
-  const _BookmarkRow({required this.e});
+class _BookmarkRow extends ConsumerWidget {
+  final Event event;
+  const _BookmarkRow({required this.event});
+
+  /// Показываем диалог подтверждения удаления из закладок
+  Future<bool> _confirmRemove(BuildContext context) async {
+    final result = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Удалить из закладок?'),
+        content: const Text('Событие будет удалено из ваших закладок.'),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  /// Обработчик удаления из закладок
+  Future<void> _handleRemoveBookmark(
+    BuildContext context,
+    WidgetRef ref,
+    int eventId,
+  ) async {
+    // Показываем диалог подтверждения
+    final confirmed = await _confirmRemove(context);
+    if (!confirmed) return;
+
+    // Получаем userId из AuthService
+    final authService = ref.read(authServiceProvider);
+    final userId = await authService.getUserId();
+    if (userId == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ошибка: Пользователь не авторизован'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Удаляем из закладок через notifier
+    final success = await ref
+        .read(bookmarkedEventsProvider(userId).notifier)
+        .removeBookmark(eventId);
+
+    if (context.mounted) {
+      if (success) {
+        // Показываем уведомление об успешном удалении (опционально)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Событие удалено из закладок'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        // Показываем ошибку
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ошибка при удалении из закладок'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       child: Row(
         children: [
-          // Превью
+          // Превью (главная картинка из события)
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.xs),
-            child: Image.asset(
-              e.asset,
-              width: 80,
-              height: 55,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
-                width: 80,
-                height: 55,
-                color: AppColors.skeletonBase,
-                alignment: Alignment.center,
-                child: const Icon(
-                  CupertinoIcons.photo,
-                  size: 20,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
+            child: event.logoUrl != null && event.logoUrl!.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: event.logoUrl!,
+                    width: 80,
+                    height: 55,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, __, ___) => Container(
+                      width: 80,
+                      height: 55,
+                      color: AppColors.skeletonBase,
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        CupertinoIcons.photo,
+                        size: 20,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    placeholder: (_, __) => Container(
+                      width: 80,
+                      height: 55,
+                      color: AppColors.skeletonBase,
+                      alignment: Alignment.center,
+                      child: const CupertinoActivityIndicator(),
+                    ),
+                  )
+                : Container(
+                    width: 80,
+                    height: 55,
+                    color: AppColors.skeletonBase,
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      CupertinoIcons.photo,
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
           ),
           const SizedBox(width: 10),
 
@@ -110,25 +336,23 @@ class _BookmarkRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Первая строка: Название + вертикальные 3 точки
+                // Первая строка: Название + красный кружок с крестиком
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        e.title,
+                        event.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.h14w6,
                       ),
                     ),
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(28, 28),
-                      onPressed: () {},
-                      child: const Icon(
-                        CupertinoIcons.ellipsis_vertical,
-                        size: 18,
-                        color: AppColors.textSecondary,
+                    _RemoveButton(
+                      eventId: event.id,
+                      onRemove: () => _handleRemoveBookmark(
+                        context,
+                        ref,
+                        event.id,
                       ),
                     ),
                   ],
@@ -136,7 +360,7 @@ class _BookmarkRow extends StatelessWidget {
                 const SizedBox(height: 6),
                 // Вторая строка: дата + участники
                 Text(
-                  '${e.dateText}  ·  Участников: ${_fmt(e.members)}',
+                  '${event.dateFormatted}  ·  Участников: ${_fmt(event.participantsCount)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.h13w4,
@@ -150,12 +374,36 @@ class _BookmarkRow extends StatelessWidget {
   }
 }
 
-class _Bookmark {
-  final String asset;
-  final String title;
-  final String dateText;
-  final int members;
-  const _Bookmark(this.asset, this.title, this.dateText, this.members);
+/// Кнопка удаления из закладок (красный кружок с крестиком)
+class _RemoveButton extends StatelessWidget {
+  final int eventId;
+  final VoidCallback onRemove;
+  const _RemoveButton({
+    required this.eventId,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      minimumSize: const Size(28, 28),
+      onPressed: onRemove,
+      child: Container(
+        width: 20,
+        height: 20,
+        decoration: const BoxDecoration(
+          color: AppColors.error,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          CupertinoIcons.xmark,
+          size: 12,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
 }
 
 String _fmt(int n) {

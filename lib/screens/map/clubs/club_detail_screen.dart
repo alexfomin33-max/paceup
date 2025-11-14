@@ -604,9 +604,11 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                           child: CoffeeRunVldPhotoContent(),
                         )
                       else if (_tab == 1)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 0, bottom: 0),
-                          child: CoffeeRunVldMembersContent(),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 0, bottom: 0),
+                          child: CoffeeRunVldMembersContent(
+                            clubId: widget.clubId,
+                          ),
                         )
                       else if (_tab == 2)
                         const Padding(

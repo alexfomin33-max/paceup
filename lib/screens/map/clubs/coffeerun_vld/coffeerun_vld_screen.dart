@@ -251,9 +251,11 @@ class _CoffeeRunVldScreenState extends State<CoffeeRunVldScreen> {
                         child: CoffeeRunVldPhotoContent(),
                       )
                     else if (_tab == 1)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 0, bottom: 0),
-                        child: CoffeeRunVldMembersContent(),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 0, bottom: 0),
+                        // TODO: Этот демо-экран использует фиктивный clubId.
+                        // В реальном приложении используйте ClubDetailScreen с реальным clubId.
+                        child: CoffeeRunVldMembersContent(clubId: 0),
                       )
                     else if (_tab == 2)
                       const Padding(
