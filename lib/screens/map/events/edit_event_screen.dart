@@ -67,6 +67,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
   // ── состояние загрузки
   bool _loading = false;
   bool _loadingData = true;
+  bool _deleting = false; // ── состояние удаления
 
   bool get isFormValid =>
       (nameCtrl.text.trim().isNotEmpty) &&
@@ -434,6 +435,11 @@ class _EditEventScreenState extends State<EditEventScreen> {
     return '$hh:$mm';
   }
 
+  /// Удаление события (заглушка, реализация будет добавлена позже)
+  Future<void> _deleteEvent() async {
+    // TODO: реализация удаления события
+  }
+
   Future<void> _submit() async {
     // ── проверяем валидность формы (кнопка неактивна, если форма невалидна, но на всякий случай)
     if (!isFormValid) {
@@ -707,17 +713,35 @@ class _EditEventScreenState extends State<EditEventScreen> {
                   ),
 
                   const SizedBox(height: 25),
-                  Align(
-                    alignment: Alignment.center,
-                    child: PrimaryButton(
-                      text: 'Сохранить изменения',
-                      onPressed: () {
-                        if (!_loading) _submit();
-                      },
-                      expanded: false,
-                      isLoading: _loading,
-                      enabled: isFormValid,
-                    ),
+                  // ── Кнопки: Сохранить и Удалить событие
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: PrimaryButton(
+                          text: 'Сохранить',
+                          onPressed: () {
+                            if (!_loading && !_deleting) _submit();
+                          },
+                          expanded: true,
+                          isLoading: _loading,
+                          enabled: isFormValid,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      TextButton(
+                        onPressed: _deleting || _loading ? null : _deleteEvent,
+                        child: const Text(
+                          'Удалить событие',
+                          style: TextStyle(
+                            color: AppColors.error,
+                            fontFamily: 'Inter',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
