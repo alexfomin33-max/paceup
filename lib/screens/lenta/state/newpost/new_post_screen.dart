@@ -244,8 +244,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
     return PrimaryButton(
       text: 'Опубликовать',
       onPressed: _submitPost,
-      width: 181,
-      height: 40,
+      width: 190,
       isLoading: _loading,
       enabled: _canPublish,
     );

@@ -379,8 +379,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
     return PrimaryButton(
       text: 'Сохранить',
       onPressed: _submitEdit,
-      width: 181,
-      height: 44,
+      width: 190,
       isLoading: _loading,
       enabled: _canSave,
     );

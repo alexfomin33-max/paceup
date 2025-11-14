@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'create_club_screen.dart';
+import 'clubs_filters_bottom_sheet.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/transparent_route.dart';
 import '../../../service/api_service.dart';
@@ -178,8 +179,11 @@ class ClubsFloatingButtons extends StatelessWidget {
             icon: Icons.tune,
             label: 'Фильтры',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Фильтры клубов — скоро')),
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const ClubsFiltersBottomSheet(),
               );
             },
           ),

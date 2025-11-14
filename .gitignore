@@ -51,3 +51,6 @@ app.*.map.json
 # Flutter SDK (should not be in repository)
 ../fluttersdk/
 fluttersdk/
+
+# Documentation
+/docs/

@@ -59,7 +59,7 @@ class PrimaryButton extends StatelessWidget {
     this.leading,
     this.trailing,
     this.textStyle,
-    this.horizontalPadding = 28,
+    this.horizontalPadding = 30,
   });
 
   @override
@@ -107,7 +107,8 @@ class PrimaryButton extends StatelessWidget {
     // ── сама кнопка (всегда передаём onPressed, чтобы сохранить синий цвет)
     // ── блокируем нажатия через IgnorePointer когда неактивна
     final Widget button = ElevatedButton(
-      onPressed: onPressed, // всегда передаём, чтобы не было серого disabled стиля
+      onPressed:
+          onPressed, // всегда передаём, чтобы не было серого disabled стиля
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.brandPrimary,
         foregroundColor: AppColors.surface,
@@ -127,14 +128,15 @@ class PrimaryButton extends StatelessWidget {
     );
 
     // ── задаём ширину контейнером-обёрткой
-    final Widget sizedButton =
-        SizedBox(width: finalWidth, height: height, child: button);
+    final Widget sizedButton = SizedBox(
+      width: finalWidth,
+      height: height,
+      child: button,
+    );
 
     // ── если кнопка неактивна — блокируем нажатия и применяем прозрачность 0.5
     if (!enabled) {
-      return IgnorePointer(
-        child: Opacity(opacity: 0.5, child: sizedButton),
-      );
+      return IgnorePointer(child: Opacity(opacity: 0.5, child: sizedButton));
     }
 
     // ── если идёт загрузка — блокируем нажатия, но без прозрачности
