@@ -273,12 +273,16 @@ class EventsListFromApi extends StatelessWidget {
           title: name,
           subtitle: subtitle,
           onTap: eventId != null
-              ? () {
-                  Navigator.of(context).push(
+              ? () async {
+                  final result = await Navigator.of(context).push<dynamic>(
                     TransparentPageRoute(
                       builder: (_) => EventDetailScreen(eventId: eventId),
                     ),
                   );
+                  // Если событие было удалено, закрываем bottom sheet с результатом
+                  if (result == true && context.mounted) {
+                    Navigator.of(context).pop('event_deleted');
+                  }
                 }
               : null,
         );

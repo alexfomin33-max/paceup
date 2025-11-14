@@ -111,14 +111,37 @@ String _declineCityName(String cityName) {
 
 /// Возвращает маркеры для вкладки «Клубы».
 /// Загружает данные через API и группирует клубы по локациям
-Future<List<Map<String, dynamic>>> clubsMarkers(BuildContext context) async {
+/// 
+/// [filterParams] - параметры фильтра (опционально)
+Future<List<Map<String, dynamic>>> clubsMarkers(
+  BuildContext context, {
+  ClubsFilterParams? filterParams,
+}) async {
   try {
     final api = ApiService();
+
+    // Формируем параметры запроса
+    final queryParams = <String, String>{
+      'detail': 'false',
+    };
+
+    // Добавляем фильтры по видам спорта
+    if (filterParams != null && filterParams.sports.isNotEmpty) {
+      final sports = filterParams.sports.map((s) => s.apiValue).toList();
+      queryParams['activities'] = sports.join(',');
+    }
+
+    // Добавляем фильтры по типам клубов
+    if (filterParams != null && filterParams.clubTypes.isNotEmpty) {
+      final clubTypes =
+          filterParams.clubTypes.map((t) => t.apiValue).toList();
+      queryParams['club_types'] = clubTypes.join(',');
+    }
 
     // Загружаем маркеры с группировкой по локациям
     final data = await api.get(
       '/get_clubs.php',
-      queryParams: {'detail': 'false'},
+      queryParams: queryParams,
     );
 
     if (data['success'] != true) {
@@ -159,10 +182,19 @@ Future<List<Map<String, dynamic>>> clubsMarkers(BuildContext context) async {
 
 // === Нижние кнопки для вкладки «Клубы» ===
 class ClubsFloatingButtons extends StatelessWidget {
+  /// Callback для применения фильтров
+  final Function(ClubsFilterParams)? onApplyFilters;
+
+  /// Текущие параметры фильтра (для восстановления состояния)
+  final ClubsFilterParams? currentFilterParams;
+
+  /// Callback для обновления данных после создания клуба
   final VoidCallback? onClubCreated;
 
   const ClubsFloatingButtons({
     super.key,
+    this.onApplyFilters,
+    this.currentFilterParams,
     this.onClubCreated,
   });
 
@@ -183,7 +215,13 @@ class ClubsFloatingButtons extends StatelessWidget {
                 context: context,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
-                builder: (context) => const ClubsFiltersBottomSheet(),
+                builder: (context) => ClubsFiltersBottomSheet(
+                  initialParams: currentFilterParams,
+                  onApplyFilters: (params) {
+                    // Вызываем callback для применения фильтров
+                    onApplyFilters?.call(params);
+                  },
+                ),
               );
             },
           ),

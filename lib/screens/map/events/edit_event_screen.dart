@@ -435,9 +435,107 @@ class _EditEventScreenState extends State<EditEventScreen> {
     return '$hh:$mm';
   }
 
-  /// Удаление события (заглушка, реализация будет добавлена позже)
+  /// ──────────────────────── Удаление события ────────────────────────
+  /// Показываем диалог подтверждения удаления
+  Future<bool> _confirmDelete() async {
+    final result = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Удалить событие?'),
+        content: const Text(
+          'Событие будет скрыто из приложения. '
+          'Это действие нельзя отменить.',
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  /// Удаление события
   Future<void> _deleteEvent() async {
-    // TODO: реализация удаления события
+    // ── показываем диалог подтверждения
+    final confirmed = await _confirmDelete();
+    if (!confirmed) return;
+
+    // ── защита от повторных нажатий
+    if (_deleting) return;
+    setState(() => _deleting = true);
+
+    final api = ApiService();
+    final authService = AuthService();
+
+    try {
+      final userId = await authService.getUserId();
+      if (userId == null) {
+        if (!mounted) return;
+        setState(() => _deleting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ошибка: Пользователь не авторизован'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Отправляем запрос на удаление
+      final data = await api.post(
+        '/delete_event.php',
+        body: {
+          'event_id': widget.eventId,
+          'user_id': userId,
+        },
+      );
+
+      // Проверяем ответ
+      bool success = false;
+      String? errorMessage;
+
+      if (data['success'] == true) {
+        success = true;
+      } else if (data['success'] == false) {
+        errorMessage = data['message'] ?? 'Ошибка при удалении события';
+      } else {
+        errorMessage = 'Неожиданный формат ответа сервера';
+      }
+
+      if (success) {
+        if (!mounted) return;
+
+        // Возвращаемся на предыдущий экран с результатом удаления
+        Navigator.of(context).pop('deleted');
+      } else {
+        if (!mounted) return;
+        setState(() => _deleting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage ?? 'Ошибка при удалении события'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _deleting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка сети: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _submit() async {
