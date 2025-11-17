@@ -4,6 +4,7 @@ import '../../../../../../../theme/app_theme.dart';
 import '../../../../../../../widgets/more_menu_overlay.dart';
 import '../../../../../../../service/api_service.dart';
 import '../../../../../../../service/auth_service.dart';
+import '../../../editing/editing_equipment_screen.dart';
 
 /// Модель элемента снаряжения для просмотра
 class _SneakerItem {
@@ -206,6 +207,7 @@ class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
             children: [
               if (index > 0) const SizedBox(height: 12),
               GearViewCard.shoes(
+                equipUserId: sneaker.equipUserId,
                 brand: sneaker.brand,
                 model: sneaker.model,
                 imageUrl: sneaker.imageUrl,
@@ -215,6 +217,7 @@ class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
                 pace: sneaker.pace,
                 since: sneaker.since,
                 mainBadgeText: sneaker.isMain ? 'Основные' : null,
+                onUpdate: _loadSneakers, // Callback для обновления списка после действий
               ),
             ],
           );
@@ -226,6 +229,7 @@ class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
 
 /// Публичная карточка для «Просмотра снаряжения»
 class GearViewCard extends StatefulWidget {
+  final int? equipUserId; // ID записи в equip_user для API запросов
   final String brand;
   final String model;
   final String? asset; // Локальный asset (для обратной совместимости)
@@ -237,9 +241,11 @@ class GearViewCard extends StatefulWidget {
   final String thirdLabel;
   final String since;
   final String? mainBadgeText;
+  final VoidCallback? onUpdate; // Callback для обновления списка после действий
 
   const GearViewCard.shoes({
     super.key,
+    this.equipUserId,
     required this.brand,
     required this.model,
     this.asset,
@@ -250,11 +256,13 @@ class GearViewCard extends StatefulWidget {
     required String pace,
     required this.since,
     this.mainBadgeText,
+    this.onUpdate,
   }) : thirdValue = pace,
        thirdLabel = 'Средний темп';
 
   const GearViewCard.bike({
     super.key,
+    this.equipUserId,
     required this.brand,
     required this.model,
     this.asset,
@@ -265,6 +273,7 @@ class GearViewCard extends StatefulWidget {
     required String speed,
     required this.since,
     this.mainBadgeText,
+    this.onUpdate,
   }) : thirdValue = speed,
        thirdLabel = 'Скорость';
 
@@ -277,34 +286,181 @@ class _GearViewCardState extends State<GearViewCard> {
   final GlobalKey _menuKey = GlobalKey();
 
   /// Показать всплывающее меню с действиями для карточки снаряжения
-  void _showMenu(BuildContext context) {
+  void _showMenu(BuildContext context) async {
+    // Если нет equipUserId, не показываем меню
+    if (widget.equipUserId == null) {
+      return;
+    }
+
     final items = <MoreMenuItem>[
       MoreMenuItem(
-        text: 'Сделать основными',
-        icon: CupertinoIcons.star_fill,
-        onTap: () {
-          // TODO: Реализовать логику установки как основных
-        },
+        text: widget.mainBadgeText != null ? 'Убрать из основных' : 'Сделать основными',
+        icon: widget.mainBadgeText != null 
+            ? CupertinoIcons.star_fill  // Залитая звезда для основных
+            : CupertinoIcons.star,      // Пустая звезда для неосновных
+        onTap: () => _setMain(context),
       ),
       MoreMenuItem(
         text: 'Редактировать',
         icon: CupertinoIcons.pencil,
-        onTap: () {
-          // TODO: Реализовать логику редактирования
-        },
+        onTap: () => _editEquipment(context),
       ),
       MoreMenuItem(
         text: 'Удалить',
         icon: CupertinoIcons.minus_circle,
         iconColor: AppColors.error,
         textStyle: const TextStyle(color: AppColors.error),
-        onTap: () {
-          // TODO: Реализовать логику удаления
-        },
+        onTap: () => _deleteEquipment(context),
       ),
     ];
 
     MoreMenuOverlay(anchorKey: _menuKey, items: items).show(context);
+  }
+
+  /// Установка снаряжения как основного
+  Future<void> _setMain(BuildContext context) async {
+    if (widget.equipUserId == null) return;
+
+    try {
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Пользователь не авторизован')),
+          );
+        }
+        return;
+      }
+
+      final api = ApiService();
+      final isCurrentlyMain = widget.mainBadgeText != null;
+      final data = await api.post(
+        '/set_main_equipment.php',
+        body: {
+          'user_id': userId.toString(),
+          'equip_user_id': widget.equipUserId.toString(),
+          'main': !isCurrentlyMain, // Передаем boolean, API сам преобразует
+        },
+      );
+
+      if (data['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isCurrentlyMain 
+                ? 'Снаряжение убрано из основных'
+                : 'Снаряжение установлено как основное'),
+            ),
+          );
+          // Обновляем список
+          widget.onUpdate?.call();
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data['message'] ?? 'Ошибка при обновлении')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка: $e')),
+        );
+      }
+    }
+  }
+
+  /// Редактирование снаряжения
+  Future<void> _editEquipment(BuildContext context) async {
+    if (widget.equipUserId == null) return;
+
+    // Открываем экран редактирования
+    final result = await Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (_) => EditingEquipmentScreen(
+          equipUserId: widget.equipUserId!,
+          type: 'boots', // В viewing_sneakers_content всегда кроссовки
+        ),
+      ),
+    );
+
+    // Если редактирование прошло успешно (вернулся true), обновляем список
+    if (result == true && mounted) {
+      widget.onUpdate?.call();
+    }
+  }
+
+  /// Удаление снаряжения
+  Future<void> _deleteEquipment(BuildContext context) async {
+    if (widget.equipUserId == null) return;
+
+    // Показываем диалог подтверждения
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Удалить снаряжение?'),
+        content: const Text('Это действие нельзя отменить.'),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Отмена'),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            child: const Text('Удалить'),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Пользователь не авторизован')),
+          );
+        }
+        return;
+      }
+
+      final api = ApiService();
+      final data = await api.post(
+        '/delete_equipment.php',
+        body: {
+          'user_id': userId.toString(),
+          'equip_user_id': widget.equipUserId.toString(),
+        },
+      );
+
+      if (data['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Снаряжение успешно удалено')),
+          );
+          // Обновляем список
+          widget.onUpdate?.call();
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data['message'] ?? 'Ошибка при удалении')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка: $e')),
+        );
+      }
+    }
   }
 
   @override
