@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/services/api_provider.dart';
 import '../../service/api_service.dart' show ApiException;
+import '../../widgets/primary_button.dart';
 
 /// 🔹 Первый экран регистрации — ввод базовых данных спортсмена
 class Regstep1Screen extends ConsumerStatefulWidget {
@@ -99,58 +101,63 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
         behavior: HitTestBehavior.translucent,
         child: SafeArea(
           child: SingleChildScrollView(
-          // 🔹 Скролл для маленьких экранов
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 🔹 Заголовок экрана
-                const Text(
-                  'Данные спортсмена',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.h17w6,
-                ),
-                const SizedBox(height: 30),
+            // 🔹 Скролл для маленьких экранов
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 🔹 Заголовок экрана
+                  const Text(
+                    'Данные спортсмена',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.h17w6,
+                  ),
+                  const SizedBox(height: 30),
 
-                // 🔹 Поля ввода
-                CustomTextField(controller: nameController, label: 'Имя*'),
-                const SizedBox(height: 20),
-                CustomTextField(
-                  controller: surnameController,
-                  label: 'Фамилия*',
-                ),
-                const SizedBox(height: 20),
-                CustomDateField(
-                  controller: dobController,
-                  label: 'Дата рождения*',
-                ),
-                const SizedBox(height: 20),
-                CustomDropdownField(
-                  label: 'Пол*',
-                  value: selectedGender,
-                  items: genders,
-                  onChanged: (value) => setState(() => selectedGender = value),
-                ),
-                const SizedBox(height: 20),
-                CustomTextField(controller: cityController, label: 'Город*'),
-                const SizedBox(height: 20),
-                CustomDropdownField(
-                  label: 'Основной вид спорта*',
-                  value: selectedSport,
-                  items: sports,
-                  onChanged: (value) => setState(() => selectedSport = value),
-                ),
-                const SizedBox(height: 50),
+                  // 🔹 Поля ввода
+                  CustomTextField(controller: nameController, label: 'Имя*'),
+                  const SizedBox(height: 20),
+                  CustomTextField(
+                    controller: surnameController,
+                    label: 'Фамилия*',
+                  ),
+                  const SizedBox(height: 20),
+                  CustomDateField(
+                    controller: dobController,
+                    label: 'Дата рождения*',
+                  ),
+                  const SizedBox(height: 20),
+                  CustomDropdownField(
+                    label: 'Пол*',
+                    value: selectedGender,
+                    items: genders,
+                    onChanged: (value) =>
+                        setState(() => selectedGender = value),
+                  ),
+                  const SizedBox(height: 20),
+                  CustomTextField(controller: cityController, label: 'Город*'),
+                  const SizedBox(height: 20),
+                  CustomDropdownField(
+                    label: 'Основной вид спорта*',
+                    value: selectedSport,
+                    items: sports,
+                    onChanged: (value) => setState(() => selectedSport = value),
+                  ),
+                  const SizedBox(height: 50),
 
-                // 🔹 Кнопка продолжения
-                ContinueButton(
-                  onPressed: _checkAndContinue,
-                  isEnabled: isFormValid,
-                ),
-              ],
+                  // 🔹 Кнопка продолжения
+                  Center(
+                    child: PrimaryButton(
+                      text: 'Продолжить',
+                      onPressed: _checkAndContinue,
+                      enabled: isFormValid,
+                      width: MediaQuery.of(context).size.width / 2,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
           ),
         ),
       ),
@@ -232,17 +239,81 @@ class CustomDateField extends StatelessWidget {
     required this.label,
   });
 
-  /// 🔹 Открытие DatePicker
+  /// 🔹 Открытие DatePicker снизу (Cupertino стиль)
   Future<void> _selectDate(BuildContext context) async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (pickedDate != null) {
-      controller.text = DateFormat('dd.MM.yyyy').format(pickedDate);
+    // 🔹 Переменная для хранения выбранной даты, объявлена вне builder
+    // чтобы сохраняться между перестроениями
+    DateTime selectedDate = DateTime(2000);
+
+    // 🔹 Если в контроллере уже есть дата, парсим её
+    if (controller.text.isNotEmpty) {
+      try {
+        selectedDate = DateFormat('dd.MM.yyyy').parse(controller.text);
+      } catch (e) {
+        selectedDate = DateTime(2000);
+      }
     }
+
+    await showCupertinoModalPopup(
+      context: context,
+      builder: (popupContext) {
+        return Container(
+          height: 280,
+          color: AppColors.surface,
+          child: Column(
+            children: [
+              SizedBox(
+                height: 44,
+                child: Row(
+                  children: [
+                    CupertinoButton(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      onPressed: () => Navigator.pop(popupContext),
+                      child: const Text('Отменить'),
+                    ),
+                    const Spacer(),
+                    CupertinoButton(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      onPressed: () {
+                        // 🔹 Обновляем контроллер с выбранной датой
+                        controller.text = DateFormat(
+                          'dd.MM.yyyy',
+                        ).format(selectedDate);
+                        Navigator.pop(popupContext);
+                      },
+                      child: const Text(
+                        'Готово',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(
+                height: 1,
+                thickness: 0.5,
+                color: AppColors.divider,
+                indent: 12,
+                endIndent: 12,
+              ),
+              // 🔹 Сам пикер даты
+              Expanded(
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: selectedDate,
+                  minimumDate: DateTime(1900),
+                  maximumDate: DateTime.now(),
+                  onDateTimeChanged: (d) {
+                    // 🔹 Обновляем переменную, объявленную в области видимости _selectDate
+                    selectedDate = d;
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -369,51 +440,10 @@ class CustomDropdownField extends StatelessWidget {
               value: item,
               child: Text(
                 item,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w400,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.w400),
               ),
             );
           }).toList(),
-        ),
-      ),
-    );
-  }
-}
-
-// ==========================
-// 🔹 Кнопка "Продолжить"
-// ==========================
-class ContinueButton extends StatelessWidget {
-  final VoidCallback onPressed;
-  final bool isEnabled;
-
-  const ContinueButton({
-    super.key,
-    required this.onPressed,
-    required this.isEnabled,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: isEnabled ? onPressed : null,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isEnabled
-            ? AppColors.brandPrimary
-            : AppColors.disabledBg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-      ),
-      child: const Text(
-        'Продолжить',
-        style: TextStyle(
-          color: AppColors.surface,
-          fontSize: 14,
-
-          fontWeight: FontWeight.w400,
         ),
       ),
     );

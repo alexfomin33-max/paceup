@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/services/api_provider.dart';
 import '../../service/api_service.dart' show ApiService, ApiException;
+import '../../widgets/primary_button.dart';
 
 /// 🔹 Экран регистрации — шаг 2
 /// Принимает [userId] для продолжения регистрации
@@ -32,83 +33,130 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
         behavior: HitTestBehavior.translucent,
         child: SafeArea(
           child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Параметры спортсмена',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.h17w6,
-                ),
-                const SizedBox(height: 15),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(
-                        context,
-                        '/lenta',
-                        arguments: {'userId': widget.userId},
-                      );
-                    },
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(50, 30),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      alignment: Alignment.centerRight,
-                    ),
-                    child: const Text(
-                      'Пропустить',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Параметры спортсмена',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.h17w6,
+                  ),
+                  const SizedBox(height: 15),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/lenta',
+                          arguments: {'userId': widget.userId},
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(50, 30),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        alignment: Alignment.centerRight,
+                      ),
+                      child: const Text(
+                        'Пропустить',
+                        style: TextStyle(
+                          color: AppColors.textTertiary,
+                          fontSize: 13,
 
-                        fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 25),
-                CustomTextField(
-                  controller: heightController,
-                  label: 'Рост, см',
-                  maxLength: 3,
-                ),
-                const SizedBox(height: 20),
-                CustomTextField(
-                  controller: weightController,
-                  label: 'Вес, кг',
-                  maxLength: 3,
-                ),
-                const SizedBox(height: 20),
-                CustomTextField(
-                  controller: maxPulseController,
-                  label: 'Максимальный пульс',
-                  maxLength: 3,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Данные необходимы для расчёта калорий, нагрузки, зон темпа и мощности.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
+                  const SizedBox(height: 25),
+                  CustomTextField(
+                    controller: heightController,
+                    label: 'Рост, см',
+                    maxLength: 3,
                   ),
-                ),
-                const SizedBox(height: 50),
+                  const SizedBox(height: 20),
+                  CustomTextField(
+                    controller: weightController,
+                    label: 'Вес, кг',
+                    maxLength: 3,
+                  ),
+                  const SizedBox(height: 20),
+                  CustomTextField(
+                    controller: maxPulseController,
+                    label: 'Максимальный пульс',
+                    maxLength: 3,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Данные необходимы для расчёта калорий, нагрузки, зон темпа и мощности.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 50),
 
-                // Кнопка "Завершить" с переходом на ленту
-                ContinueButton(
-                  userId: widget.userId,
-                  height: heightController,
-                  weight: weightController,
-                  pulse: maxPulseController,
-                ),
-              ],
+                  // 🔹 Кнопка "Завершить" с переходом на ленту
+                  Center(
+                    child: PrimaryButton(
+                      text: 'Завершить',
+                      onPressed: () async {
+                        final api = ref.read(apiServiceProvider);
+                        await saveForm(
+                          api,
+                          widget.userId,
+                          heightController,
+                          weightController,
+                          maxPulseController,
+                        );
+                        // 🔹 Проверяем, что контекст все еще смонтирован перед навигацией (после async-операции)
+                        if (!mounted) return;
+                        // 🔹 Переход на экран ленты
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/lenta',
+                          arguments: {'userId': widget.userId},
+                        );
+                      },
+                      width: MediaQuery.of(context).size.width / 2,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // 🔹 Кнопка "Назад" для возврата на предыдущий экран
+                  Center(
+                    child: SizedBox(
+                      width: 100,
+                      height: 40,
+                      child: TextButton(
+                        onPressed: () => Navigator.pushReplacementNamed(
+                          context,
+                          '/regstep1',
+                          arguments: {'userId': widget.userId},
+                        ),
+                        style: const ButtonStyle(
+                          overlayColor: WidgetStatePropertyAll(
+                            Colors.transparent,
+                          ),
+                          animationDuration: Duration(milliseconds: 0),
+                        ),
+                        child: const Text(
+                          "<-- Назад",
+                          style: TextStyle(
+                            color: AppColors.textTertiary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
           ),
         ),
       ),
@@ -195,65 +243,5 @@ Future<void> saveForm(
   } on ApiException {
     // 🔹 Игнорируем ошибку сохранения (регистрация необязательна, есть кнопка "Пропустить")
     // Пользователь может продолжить работу в приложении даже при сбое сохранения
-  }
-}
-
-class ContinueButton extends ConsumerStatefulWidget {
-  final int userId; // передаем userId для следующего экрана
-  final TextEditingController height;
-  final TextEditingController weight;
-  final TextEditingController pulse;
-
-  const ContinueButton({
-    super.key,
-    required this.userId,
-    required this.height,
-    required this.weight,
-    required this.pulse,
-  });
-
-  @override
-  ConsumerState<ContinueButton> createState() => _ContinueButtonState();
-}
-
-class _ContinueButtonState extends ConsumerState<ContinueButton> {
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () async {
-        final api = ref.read(apiServiceProvider);
-        await saveForm(
-          api,
-          widget.userId,
-          widget.height,
-          widget.weight,
-          widget.pulse,
-        );
-        // 🔹 Проверяем, что контекст все еще смонтирован перед навигацией (после async-операции)
-        if (!context.mounted) return;
-        // 🔹 Переход на экран ленты
-        Navigator.pushReplacementNamed(
-          context,
-          '/lenta',
-          arguments: {'userId': widget.userId},
-        );
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.brandPrimary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-      ),
-      child: const Text(
-        'Завершить',
-        style: TextStyle(
-          color: AppColors.surface,
-          fontSize: 14,
-
-          fontWeight: FontWeight.w400,
-        ),
-      ),
-    );
   }
 }

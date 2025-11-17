@@ -13,6 +13,17 @@ import 'widgets/app_bottom_nav_shell.dart';
 /// 🔹 Маршруты с нижней навигацией
 const bottomNavRoutes = ['/lenta'];
 
+/// 🔹 Маршруты экранов авторизации без анимации перехода
+const homeRoutes = [
+  '/home',
+  '/login',
+  '/createacc',
+  '/regstep1',
+  '/regstep2',
+  '/addaccsms',
+  '/loginsms',
+];
+
 /// 🔹 Генератор маршрутов
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
   final args = settings.arguments;
@@ -86,12 +97,22 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         // 🔹 Плавное появление с fade-in эффектом
         return FadeTransition(
-          opacity: CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeIn,
-          ),
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeIn),
           child: child,
         );
+      },
+    );
+  } else if (homeRoutes.contains(settings.name)) {
+    // 🔹 Для всех маршрутов экранов авторизации убираем анимацию
+    // Это обеспечивает мгновенные переходы между экранами home
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => screen,
+      settings: settings,
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        // 🔹 Без анимации - мгновенное появление экрана
+        return child;
       },
     );
   } else {

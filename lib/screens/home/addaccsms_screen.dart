@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_shell.dart';
@@ -27,16 +28,30 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
   final nodes = List.generate(6, (_) => FocusNode());
   //final storage = const FlutterSecureStorage();
 
+  // 🔹 Таймер для ограничения повторной отправки кода (60 секунд)
+  Timer? _resendTimer;
+  // 🔹 Оставшееся время до возможности повторной отправки (в секундах)
+  int _remainingSeconds = 60;
+
   @override
   void initState() {
     super.initState();
     // 🔹 При открытии экрана сразу отправляем запрос на регистрацию пользователя
     fetchApiData();
+    // 🔹 Запускаем таймер на 60 секунд для блокировки повторной отправки
+    _startResendTimer();
+    // 🔹 Устанавливаем фокус на первое поле ввода кода после отрисовки виджета
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        nodes[0].requestFocus();
+      }
+    });
   }
 
   @override
   void dispose() {
     // ✅ ДОБАВИЛИ: аккуратно освобождаем ресурсы
+    _resendTimer?.cancel();
     for (final c in controllers) {
       c.dispose();
     }
@@ -62,8 +77,33 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
     }
   }
 
+  /// 🔹 Запуск таймера на 60 секунд для блокировки повторной отправки
+  void _startResendTimer() {
+    _remainingSeconds = 60;
+    _resendTimer?.cancel();
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (_remainingSeconds > 0) {
+            _remainingSeconds--;
+          } else {
+            timer.cancel();
+          }
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
   /// 🔹 Метод для повторной отправки кода на номер
+  /// Доступен только после истечения таймера (60 секунд)
   Future<void> resendCode() async {
+    // 🔹 Проверяем, что таймер истек
+    if (_remainingSeconds > 0) {
+      return;
+    }
+
     try {
       final api = ref.read(apiServiceProvider);
       final data = await api.post(
@@ -71,6 +111,8 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
         body: {'phone': widget.phone},
       );
       debugPrint('resendCode response: $data');
+      // 🔹 После успешной отправки перезапускаем таймер
+      _startResendTimer();
     } on ApiException catch (e) {
       // 🔹 Лог ошибок при повторной отправке
       debugPrint('resendCode error: $e');
@@ -116,6 +158,7 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
         controller: controllers[index],
         focusNode: nodes[index],
         style: const TextStyle(color: AppColors.surface, fontSize: 20),
+        cursorColor: AppColors.surface,
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
         maxLength: 1, // 🔹 Ограничение на одну цифру
@@ -159,45 +202,51 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.translucent,
         child: AuthShell(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 40,
-          vertical: 100,
-        ),
-        overlayAlpha: 0.5, // раньше у вас было 127/255 ≈ 0.5
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Введите код, отправленный на номер\n${widget.phone}",
-              style: const TextStyle(color: AppColors.surface, fontSize: 15),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(6, (index) => _buildCodeField(index)),
-            ),
-            const SizedBox(height: 15),
-            TextButton(
-              onPressed: resendCode,
-              style: const ButtonStyle(
-                overlayColor: WidgetStatePropertyAll(Colors.transparent),
-                padding: WidgetStatePropertyAll(
-                  EdgeInsets.symmetric(vertical: 15),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 40,
+            vertical: 100,
+          ),
+          overlayAlpha: 0.5, // раньше у вас было 127/255 ≈ 0.5
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Введите код, отправленный на номер\n${widget.phone}",
+                style: const TextStyle(color: AppColors.surface, fontSize: 15),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(6, (index) => _buildCodeField(index)),
+              ),
+              const SizedBox(height: 15),
+              TextButton(
+                // 🔹 Кнопка активна только когда таймер истек (_remainingSeconds == 0)
+                onPressed: _remainingSeconds == 0 ? resendCode : null,
+                style: const ButtonStyle(
+                  overlayColor: WidgetStatePropertyAll(Colors.transparent),
+                  padding: WidgetStatePropertyAll(
+                    EdgeInsets.symmetric(vertical: 15),
+                  ),
+                ),
+                child: Text(
+                  // 🔹 Показываем оставшееся время или текст кнопки
+                  _remainingSeconds > 0
+                      ? "Отправить заново (${_remainingSeconds}с)"
+                      : "Отправить заново",
+                  style: TextStyle(
+                    color: _remainingSeconds > 0
+                        ? AppColors.surface.withOpacity(0.5)
+                        : AppColors.surface,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.left,
                 ),
               ),
-              child: const Text(
-                "Отправить заново",
-                style: TextStyle(
-                  color: AppColors.surface,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.left,
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );
