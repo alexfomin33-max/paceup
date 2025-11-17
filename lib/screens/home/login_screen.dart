@@ -71,7 +71,14 @@ class _EnterAccScreenState extends State<EnterAccScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔹 Получаем высоту клавиатуры для адаптации контента
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    // 🔹 Базовый отступ снизу, который уменьшается при появлении клавиатуры
+    final bottomPadding = 177.0 - (keyboardHeight * 0.3).clamp(0.0, 100.0);
+
     return Scaffold(
+      // 🔹 Отключаем автоматическую прокрутку Scaffold, используем свою
+      resizeToAvoidBottomInset: true,
       body: GestureDetector(
         // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
         onTap: () => FocusScope.of(context).unfocus(),
@@ -80,14 +87,17 @@ class _EnterAccScreenState extends State<EnterAccScreen> {
           children: [
             // 🔹 Основной контент: поле ввода и кнопка "Войти"
             AuthShell(
-              contentPadding: const EdgeInsets.only(
-                bottom: 177,
+              contentPadding: EdgeInsets.only(
+                bottom: bottomPadding,
                 left: 40,
                 right: 40,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+              child: SingleChildScrollView(
+                // 🔹 Прокручиваем контент при появлении клавиатуры
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                   // 🔹 Используем общий виджет для ввода телефона
                   PhoneInputField(
                     controller: phoneController,
@@ -148,14 +158,13 @@ class _EnterAccScreenState extends State<EnterAccScreen> {
                             ),
                     ),
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
-            // 🔹 Кнопка "Назад" позиционируется в том же месте, что и в createacc_screen.dart
-            // В createacc_screen.dart: contentPadding bottom = 65, кнопка внизу Column, центрирована
-            // Кнопка находится на высоте contentPadding (65px) от нижнего края и центрирована по горизонтали
+            // 🔹 Кнопка "Назад" позиционируется с учётом клавиатуры
             Positioned(
-              bottom: 65, // такой же bottom как contentPadding в createacc_screen
+              bottom: 65 + keyboardHeight, // 🔹 Сдвигаем кнопку вверх при появлении клавиатуры
               left: 0,
               right: 0,
               child: Center(

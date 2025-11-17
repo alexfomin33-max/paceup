@@ -154,59 +154,70 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔹 Получаем высоту клавиатуры для адаптации контента
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    // 🔹 Базовый отступ снизу, который уменьшается при появлении клавиатуры
+    final verticalPadding = 100.0 - (keyboardHeight * 0.3).clamp(0.0, 60.0);
+
     return Scaffold(
+      // 🔹 Отключаем автоматическую прокрутку Scaffold, используем свою
+      resizeToAvoidBottomInset: true,
       body: GestureDetector(
         // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.translucent,
         child: AuthShell(
-          contentPadding: const EdgeInsets.symmetric(
+          contentPadding: EdgeInsets.symmetric(
             horizontal: 40,
-            vertical: 100,
+            vertical: verticalPadding,
           ),
           overlayAlpha: 0.5,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Введите код, отправленный на номер\n${widget.phone}",
-                style: const TextStyle(
-                  color: AppColors.surface,
-                  fontSize: 15,
-                  fontFamily: 'Inter',
+          child: SingleChildScrollView(
+            // 🔹 Прокручиваем контент при появлении клавиатуры
+            physics: const ClampingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Введите код, отправленный на номер\n${widget.phone}",
+                  style: const TextStyle(
+                    color: AppColors.surface,
+                    fontSize: 15,
+                    fontFamily: 'Inter',
+                  ),
+                  textAlign: TextAlign.left,
                 ),
-                textAlign: TextAlign.left,
-              ),
-              const SizedBox(height: 20),
-              // 🔹 Используем общий виджет для ввода SMS-кода
-              SmsCodeInput(
-                key: _smsCodeInputKey,
-                onCodeComplete: _isSubmitting ? null : enterCode,
-                enabled: !_isSubmitting,
-              ),
-              // 🔹 Показываем ошибку, если есть
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 12),
-                SelectableText.rich(
-                  TextSpan(
-                    text: _errorMessage!,
-                    style: const TextStyle(
-                      color: AppColors.error,
-                      fontSize: 14,
-                      fontFamily: 'Inter',
+                const SizedBox(height: 20),
+                // 🔹 Используем общий виджет для ввода SMS-кода
+                SmsCodeInput(
+                  key: _smsCodeInputKey,
+                  onCodeComplete: _isSubmitting ? null : enterCode,
+                  enabled: !_isSubmitting,
+                ),
+                // 🔹 Показываем ошибку, если есть
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 12),
+                  SelectableText.rich(
+                    TextSpan(
+                      text: _errorMessage!,
+                      style: const TextStyle(
+                        color: AppColors.error,
+                        fontSize: 14,
+                        fontFamily: 'Inter',
+                      ),
                     ),
                   ),
+                ],
+                const SizedBox(height: 15),
+                // 🔹 Используем общий виджет для кнопки повторной отправки
+                ResendCodeButton(
+                  key: _resendButtonKey,
+                  onPressed: _isLoading ? null : resendCode,
+                  initialSeconds: 60,
                 ),
               ],
-              const SizedBox(height: 15),
-              // 🔹 Используем общий виджет для кнопки повторной отправки
-              ResendCodeButton(
-                key: _resendButtonKey,
-                onPressed: _isLoading ? null : resendCode,
-                initialSeconds: 60,
-              ),
-            ],
+            ),
           ),
         ),
       ),

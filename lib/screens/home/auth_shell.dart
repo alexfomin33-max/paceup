@@ -36,6 +36,10 @@ class _AuthShellState extends State<AuthShell> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    // 🔹 Адаптивный размер логотипа: 25% от ширины экрана, но в пределах 140-220px
+    final logoSize = (screenSize.width * 0.25).clamp(140.0, 220.0);
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -49,12 +53,12 @@ class _AuthShellState extends State<AuthShell> {
           alignment: Alignment.topCenter,
           child: Padding(
             padding: EdgeInsets.only(
-              top: MediaQuery.of(context).size.height * 0.11,
+              top: screenSize.height * 0.11,
             ),
             child: Image.asset(
               "assets/logo_icon.png",
-              width: 175,
-              height: 175,
+              width: logoSize,
+              height: logoSize,
               fit: BoxFit.contain,
             ),
           ),

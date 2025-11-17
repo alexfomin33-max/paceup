@@ -5,6 +5,7 @@ import '../../theme/app_theme.dart';
 import '../../providers/services/api_provider.dart';
 import '../../service/api_service.dart' show ApiService, ApiException;
 import '../../widgets/primary_button.dart';
+import '../../widgets/auth/custom_text_field.dart';
 
 /// 🔹 Экран регистрации — шаг 2
 /// Принимает [userId] для продолжения регистрации
@@ -23,9 +24,136 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
   final TextEditingController weightController = TextEditingController();
   final TextEditingController maxPulseController = TextEditingController();
 
+  /// 🔹 Флаг загрузки (блокирует повторные нажатия)
+  bool _isLoading = false;
+
+  /// 🔹 Сообщение об ошибке (если есть)
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    // 🔹 Очищаем ошибку при изменении полей
+    heightController.addListener(() {
+      if (_errorMessage != null) {
+        setState(() => _errorMessage = null);
+      }
+    });
+    weightController.addListener(() {
+      if (_errorMessage != null) {
+        setState(() => _errorMessage = null);
+      }
+    });
+    maxPulseController.addListener(() {
+      if (_errorMessage != null) {
+        setState(() => _errorMessage = null);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // 🔹 Освобождаем все контроллеры при уничтожении виджета
+    heightController.dispose();
+    weightController.dispose();
+    maxPulseController.dispose();
+    super.dispose();
+  }
+
+  /// 🔹 Валидация числовых полей (опционально, так как форма необязательна)
+  /// Проверяет, что если поля заполнены, то значения в разумных пределах
+  bool get _areFieldsValid {
+    final height = heightController.text.trim();
+    final weight = weightController.text.trim();
+    final pulse = maxPulseController.text.trim();
+
+    // 🔹 Если все поля пустые - это нормально (форма необязательна)
+    if (height.isEmpty && weight.isEmpty && pulse.isEmpty) {
+      return true;
+    }
+
+    // 🔹 Если заполнено - проверяем валидность значений
+    if (height.isNotEmpty) {
+      final h = int.tryParse(height);
+      if (h == null || h < 50 || h > 250) {
+        return false;
+      }
+    }
+    if (weight.isNotEmpty) {
+      final w = int.tryParse(weight);
+      if (w == null || w < 20 || w > 300) {
+        return false;
+      }
+    }
+    if (pulse.isNotEmpty) {
+      final p = int.tryParse(pulse);
+      if (p == null || p < 100 || p > 250) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /// 🔹 Обработка завершения регистрации
+  Future<void> _handleFinish() async {
+    if (_isLoading) return;
+
+    // 🔹 Проверяем валидность полей
+    if (!_areFieldsValid) {
+      setState(() {
+        _errorMessage =
+            'Проверьте корректность введённых данных (рост: 50-250 см, вес: 20-300 кг, пульс: 100-250 уд/мин)';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      await saveForm(
+        api,
+        widget.userId,
+        heightController,
+        weightController,
+        maxPulseController,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pushReplacementNamed(
+        context,
+        '/lenta',
+        arguments: {'userId': widget.userId},
+      );
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Ошибка сохранения данных: ${e.message}';
+        });
+      }
+      debugPrint('Ошибка при сохранении данных: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // 🔹 Получаем высоту клавиатуры для адаптации контента
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    // 🔹 Базовый отступ снизу, который уменьшается при появлении клавиатуры
+    final verticalPadding = 50.0 - (keyboardHeight * 0.2).clamp(0.0, 30.0);
+
     return Scaffold(
+      // 🔹 Отключаем автоматическую прокрутку Scaffold, используем свою
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.surface,
       body: GestureDetector(
         // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
@@ -33,8 +161,12 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
         behavior: HitTestBehavior.translucent,
         child: SafeArea(
           child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
+              padding: EdgeInsets.symmetric(
+                horizontal: 30,
+                vertical: verticalPadding,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -76,18 +208,30 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
                     controller: heightController,
                     label: 'Рост, см',
                     maxLength: 3,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 22),
                   CustomTextField(
                     controller: weightController,
                     label: 'Вес, кг',
                     maxLength: 3,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 22),
                   CustomTextField(
                     controller: maxPulseController,
                     label: 'Максимальный пульс',
                     maxLength: 3,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
                   ),
                   const SizedBox(height: 20),
                   const Text(
@@ -100,28 +244,28 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
                   ),
                   const SizedBox(height: 50),
 
+                  // 🔹 Показываем ошибку, если есть
+                  if (_errorMessage != null) ...[
+                    SelectableText.rich(
+                      TextSpan(
+                        text: _errorMessage!,
+                        style: const TextStyle(
+                          color: AppColors.error,
+                          fontSize: 14,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
                   // 🔹 Кнопка "Завершить" с переходом на ленту
                   Center(
                     child: PrimaryButton(
                       text: 'Завершить',
-                      onPressed: () async {
-                        final api = ref.read(apiServiceProvider);
-                        await saveForm(
-                          api,
-                          widget.userId,
-                          heightController,
-                          weightController,
-                          maxPulseController,
-                        );
-                        // 🔹 Проверяем, что контекст все еще смонтирован перед навигацией (после async-операции)
-                        if (!mounted) return;
-                        // 🔹 Переход на экран ленты
-                        Navigator.pushReplacementNamed(
-                          context,
-                          '/lenta',
-                          arguments: {'userId': widget.userId},
-                        );
-                      },
+                      onPressed: _handleFinish,
+                      isLoading: _isLoading,
                       width: MediaQuery.of(context).size.width / 2,
                     ),
                   ),
@@ -164,59 +308,6 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
   }
 }
 
-class CustomTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final int maxLength;
-
-  const CustomTextField({
-    super.key,
-    required this.controller,
-    required this.label,
-    this.maxLength = 3,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: TextInputType.number,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(maxLength),
-      ],
-      style: const TextStyle(color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        labelText: label,
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        labelStyle: const TextStyle(
-          color: AppColors.textSecondary,
-          fontSize: 16,
-
-          fontWeight: FontWeight.w500,
-        ),
-        filled: true,
-        fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 14,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-      ),
-    );
-  }
-}
 
 // ==========================
 // Кнопка Продолжить/Завершить

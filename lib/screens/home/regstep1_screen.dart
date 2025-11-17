@@ -6,6 +6,7 @@ import '../../theme/app_theme.dart';
 import '../../providers/services/api_provider.dart';
 import '../../service/api_service.dart' show ApiException;
 import '../../widgets/primary_button.dart';
+import '../../widgets/auth/custom_text_field.dart';
 
 /// 🔹 Первый экран регистрации — ввод базовых данных спортсмена
 class Regstep1Screen extends ConsumerStatefulWidget {
@@ -33,42 +34,67 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
   final List<String> genders = ['Муж', 'Жен'];
   final List<String> sports = ['Бег', 'Велосипед', 'Плавание'];
 
+  /// 🔹 Флаг загрузки (блокирует повторные нажатия)
+  bool _isLoading = false;
+
+  /// 🔹 Сообщение об ошибке (если есть)
+  String? _errorMessage;
+
   /// 🔹 Проверка корректности заполнения формы
   bool get isFormValid {
-    return nameController.text.isNotEmpty &&
-        surnameController.text.isNotEmpty &&
+    return nameController.text.trim().isNotEmpty &&
+        surnameController.text.trim().isNotEmpty &&
         dobController.text.isNotEmpty &&
         selectedGender != null &&
-        cityController.text.isNotEmpty &&
+        cityController.text.trim().isNotEmpty &&
         selectedSport != null;
   }
 
   /// 🔹 Метод сохранения введённых данных на сервере
   Future<void> saveForm() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
     try {
       final api = ref.read(apiServiceProvider);
       await api.post(
         '/save_reg_form1.php',
         body: {
           'user_id': '${widget.userId}', // 🔹 PHP ожидает строки
-          'name': nameController.text,
-          'surname': surnameController.text,
+          'name': nameController.text.trim(),
+          'surname': surnameController.text.trim(),
           'dateage': dobController.text,
-          'city': cityController.text,
+          'city': cityController.text.trim(),
           'gender': selectedGender!,
           'sport': selectedSport!,
         },
       );
     } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Ошибка сохранения данных: ${e.message}';
+        });
+      }
       debugPrint('Ошибка при отправке данных: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   /// 🔹 Метод проверки валидности формы и перехода на следующий экран
   Future<void> _checkAndContinue() async {
-    if (!isFormValid) return;
+    if (!isFormValid || _isLoading) return;
 
     await saveForm();
+
+    // 🔹 Если была ошибка, не переходим дальше
+    if (_errorMessage != null) return;
 
     // Проверка, что виджет ещё монтирован перед использованием context
     if (!mounted) return;
@@ -85,15 +111,49 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
     super.initState();
 
     // 🔹 Обновление состояния при изменении текста в полях
-    nameController.addListener(() => setState(() {}));
-    surnameController.addListener(() => setState(() {}));
-    dobController.addListener(() => setState(() {}));
-    cityController.addListener(() => setState(() {}));
+    nameController.addListener(() {
+      setState(() {
+        // 🔹 Очищаем ошибку при изменении полей
+        if (_errorMessage != null) _errorMessage = null;
+      });
+    });
+    surnameController.addListener(() {
+      setState(() {
+        if (_errorMessage != null) _errorMessage = null;
+      });
+    });
+    dobController.addListener(() {
+      setState(() {
+        if (_errorMessage != null) _errorMessage = null;
+      });
+    });
+    cityController.addListener(() {
+      setState(() {
+        if (_errorMessage != null) _errorMessage = null;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    // 🔹 Освобождаем все контроллеры при уничтожении виджета
+    nameController.dispose();
+    surnameController.dispose();
+    dobController.dispose();
+    cityController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // 🔹 Получаем высоту клавиатуры для адаптации контента
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    // 🔹 Базовый отступ снизу, который уменьшается при появлении клавиатуры
+    final verticalPadding = 50.0 - (keyboardHeight * 0.2).clamp(0.0, 30.0);
+
     return Scaffold(
+      // 🔹 Отключаем автоматическую прокрутку Scaffold, используем свою
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.surface,
       body: GestureDetector(
         // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
@@ -102,8 +162,12 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
         child: SafeArea(
           child: SingleChildScrollView(
             // 🔹 Скролл для маленьких экранов
+            physics: const ClampingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
+              padding: EdgeInsets.symmetric(
+                horizontal: 30,
+                vertical: verticalPadding,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -116,42 +180,77 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
                   const SizedBox(height: 30),
 
                   // 🔹 Поля ввода
-                  CustomTextField(controller: nameController, label: 'Имя*'),
-                  const SizedBox(height: 20),
+                  CustomTextField(
+                    controller: nameController,
+                    label: 'Имя*',
+                    showRequiredStar: true,
+                  ),
+                  const SizedBox(height: 22),
                   CustomTextField(
                     controller: surnameController,
                     label: 'Фамилия*',
+                    showRequiredStar: true,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 22),
                   CustomDateField(
                     controller: dobController,
                     label: 'Дата рождения*',
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 22),
                   CustomDropdownField(
                     label: 'Пол*',
                     value: selectedGender,
                     items: genders,
-                    onChanged: (value) =>
-                        setState(() => selectedGender = value),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedGender = value;
+                        if (_errorMessage != null) _errorMessage = null;
+                      });
+                    },
                   ),
-                  const SizedBox(height: 20),
-                  CustomTextField(controller: cityController, label: 'Город*'),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 22),
+                  CustomTextField(
+                    controller: cityController,
+                    label: 'Город*',
+                    showRequiredStar: true,
+                  ),
+                  const SizedBox(height: 22),
                   CustomDropdownField(
                     label: 'Основной вид спорта*',
                     value: selectedSport,
                     items: sports,
-                    onChanged: (value) => setState(() => selectedSport = value),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedSport = value;
+                        if (_errorMessage != null) _errorMessage = null;
+                      });
+                    },
                   ),
                   const SizedBox(height: 50),
+
+                  // 🔹 Показываем ошибку, если есть
+                  if (_errorMessage != null) ...[
+                    SelectableText.rich(
+                      TextSpan(
+                        text: _errorMessage!,
+                        style: const TextStyle(
+                          color: AppColors.error,
+                          fontSize: 14,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                  ],
 
                   // 🔹 Кнопка продолжения
                   Center(
                     child: PrimaryButton(
                       text: 'Продолжить',
                       onPressed: _checkAndContinue,
-                      enabled: isFormValid,
+                      enabled: isFormValid && !_isLoading,
+                      isLoading: _isLoading,
                       width: MediaQuery.of(context).size.width / 2,
                     ),
                   ),
@@ -159,67 +258,6 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ==========================
-// 🔹 Текстовое поле с обязательной звездочкой
-// ==========================
-class CustomTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-
-  const CustomTextField({
-    super.key,
-    required this.controller,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      style: const TextStyle(color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        label: RichText(
-          text: TextSpan(
-            text: label.replaceAll('*', ''),
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 16,
-
-              fontWeight: FontWeight.w500,
-            ),
-            children: [
-              if (label.contains('*'))
-                const TextSpan(
-                  text: '*',
-                  style: TextStyle(color: AppColors.error, fontSize: 16),
-                ),
-            ],
-          ),
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        filled: true,
-        fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 14,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
         ),
       ),
     );
@@ -257,13 +295,21 @@ class CustomDateField extends StatelessWidget {
     await showCupertinoModalPopup(
       context: context,
       builder: (popupContext) {
+        // 🔹 Адаптивная высота DatePicker: 40% от высоты экрана, но в пределах 250-350px
+        final screenHeight = MediaQuery.of(context).size.height;
+        final pickerHeight = (screenHeight * 0.35).clamp(250.0, 350.0);
+        // 🔹 Высота панели с кнопками: фиксированная 44px
+        final headerHeight = 44.0;
+        // 🔹 Высота разделителя: 1px
+        final dividerHeight = 1.0;
+
         return Container(
-          height: 280,
+          height: pickerHeight + headerHeight + dividerHeight,
           color: AppColors.surface,
           child: Column(
             children: [
               SizedBox(
-                height: 44,
+                height: headerHeight,
                 child: Row(
                   children: [
                     CupertinoButton(
@@ -296,8 +342,9 @@ class CustomDateField extends StatelessWidget {
                 indent: 12,
                 endIndent: 12,
               ),
-              // 🔹 Сам пикер даты
-              Expanded(
+              // 🔹 Сам пикер даты с адаптивной высотой
+              SizedBox(
+                height: pickerHeight,
                 child: CupertinoDatePicker(
                   mode: CupertinoDatePickerMode.date,
                   initialDateTime: selectedDate,
@@ -412,7 +459,7 @@ class CustomDropdownField extends StatelessWidget {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: const BorderSide(color: AppColors.border),
