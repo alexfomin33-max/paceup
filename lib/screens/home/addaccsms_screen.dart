@@ -1,10 +1,11 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_shell.dart';
 import '../../../theme/app_theme.dart';
 import '../../providers/services/api_provider.dart';
 import '../../service/api_service.dart' show ApiException;
+import '../../widgets/auth/sms_code_input.dart';
+import '../../widgets/auth/resend_code_button.dart';
 
 //import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -21,49 +22,38 @@ class AddAccSmsScreen extends ConsumerStatefulWidget {
 }
 
 class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
-  // 🔹 Контроллеры для каждого из 6 полей ввода кода
-  final controllers = List.generate(6, (_) => TextEditingController());
+  /// 🔹 Ключ для доступа к виджету SmsCodeInput (для очистки полей)
+  final GlobalKey<SmsCodeInputState> _smsCodeInputKey = GlobalKey();
 
-  // 🔹 FocusNode для каждого поля, чтобы автоматически переходить к следующему при вводе
-  final nodes = List.generate(6, (_) => FocusNode());
-  //final storage = const FlutterSecureStorage();
+  /// 🔹 Ключ для доступа к виджету ResendCodeButton (для перезапуска таймера)
+  final GlobalKey<ResendCodeButtonState> _resendButtonKey = GlobalKey();
 
-  // 🔹 Таймер для ограничения повторной отправки кода (60 секунд)
-  Timer? _resendTimer;
-  // 🔹 Оставшееся время до возможности повторной отправки (в секундах)
-  int _remainingSeconds = 60;
+  /// 🔹 Флаг загрузки (блокирует повторные отправки)
+  bool _isLoading = false;
+
+  /// 🔹 Флаг отправки кода (блокирует ввод во время проверки)
+  bool _isSubmitting = false;
+
+  /// 🔹 Сообщение об ошибке (если есть)
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     // 🔹 При открытии экрана сразу отправляем запрос на регистрацию пользователя
     fetchApiData();
-    // 🔹 Запускаем таймер на 60 секунд для блокировки повторной отправки
-    _startResendTimer();
-    // 🔹 Устанавливаем фокус на первое поле ввода кода после отрисовки виджета
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        nodes[0].requestFocus();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    // ✅ ДОБАВИЛИ: аккуратно освобождаем ресурсы
-    _resendTimer?.cancel();
-    for (final c in controllers) {
-      c.dispose();
-    }
-    for (final n in nodes) {
-      n.dispose();
-    }
-    super.dispose();
   }
 
   /// 🔹 Метод для первоначальной отправки запроса регистрации пользователя
   /// Отправляет номер телефона на сервер для генерации SMS-кода
   Future<void> fetchApiData() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
     try {
       final api = ref.read(apiServiceProvider);
       final data = await api.post(
@@ -72,37 +62,23 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
       );
       debugPrint('fetchApiData response: $data');
     } on ApiException catch (e) {
-      // 🔹 Ошибки игнорируются, можно добавить логирование или уведомление
+      // 🔹 Ошибки отправки кода только логируем, не показываем пользователю
       debugPrint('fetchApiData error: $e');
-    }
-  }
-
-  /// 🔹 Запуск таймера на 60 секунд для блокировки повторной отправки
-  void _startResendTimer() {
-    _remainingSeconds = 60;
-    _resendTimer?.cancel();
-    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    } finally {
       if (mounted) {
-        setState(() {
-          if (_remainingSeconds > 0) {
-            _remainingSeconds--;
-          } else {
-            timer.cancel();
-          }
-        });
-      } else {
-        timer.cancel();
+        setState(() => _isLoading = false);
       }
-    });
+    }
   }
 
   /// 🔹 Метод для повторной отправки кода на номер
-  /// Доступен только после истечения таймера (60 секунд)
   Future<void> resendCode() async {
-    // 🔹 Проверяем, что таймер истек
-    if (_remainingSeconds > 0) {
-      return;
-    }
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
     try {
       final api = ref.read(apiServiceProvider);
@@ -112,16 +88,27 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
       );
       debugPrint('resendCode response: $data');
       // 🔹 После успешной отправки перезапускаем таймер
-      _startResendTimer();
+      _resendButtonKey.currentState?.resetTimer();
     } on ApiException catch (e) {
-      // 🔹 Лог ошибок при повторной отправке
+      // 🔹 Ошибки повторной отправки кода только логируем, не показываем пользователю
       debugPrint('resendCode error: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
-  /// 🔹 Метод для проверки введенного кода
+  /// 🔹 Метод для проверки введённого кода
   /// Если сервер вернул корректный код, происходит переход на следующий экран регистрации
   Future<void> enterCode(String userCode) async {
+    if (_isSubmitting) return;
+
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+
     try {
       final api = ref.read(apiServiceProvider);
       final data = await api.post(
@@ -140,59 +127,32 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
         Navigator.pushReplacementNamed(
           context,
           '/regstep1', // экран следующего шага регистрации
-          arguments: {'userId': codeValue}, // передаем userId
+          arguments: {'userId': codeValue}, // передаём userId
         );
+      } else {
+        // 🔹 Неверный код — показываем ошибку и очищаем поля
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Неверный код. Попробуйте ещё раз.';
+          });
+          _smsCodeInputKey.currentState?.clear();
+        }
       }
     } on ApiException catch (e) {
-      // 🔹 Лог ошибок при проверке кода
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Ошибка проверки кода: ${e.message}';
+        });
+        _smsCodeInputKey.currentState?.clear();
+      }
       debugPrint('enterCode error: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
-  /// 🔹 Генерация отдельного поля для ввода одной цифры кода
-  Widget _buildCodeField(int index) {
-    return SizedBox(
-      width: 45,
-      height: 50,
-      child: TextFormField(
-        controller: controllers[index],
-        focusNode: nodes[index],
-        style: const TextStyle(color: AppColors.surface, fontSize: 20),
-        cursorColor: AppColors.surface,
-        keyboardType: TextInputType.number,
-        textAlign: TextAlign.center,
-        maxLength: 1, // 🔹 Ограничение на одну цифру
-        decoration: InputDecoration(
-          counterText: "", // 🔹 Скрываем счетчик символов
-          enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.surface),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.surface),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          filled: true,
-          fillColor: Colors.transparent,
-          contentPadding: const EdgeInsets.all(0),
-        ),
-        onChanged: (v) {
-          // 🔹 Логика автоматического перехода между полями
-          if (v.isNotEmpty && index < 5) {
-            // Если введена цифра и это не последний индекс — переходим к следующему полю
-            nodes[index + 1].requestFocus();
-          } else if (v.isEmpty && index > 0) {
-            // Если удалили цифру — возвращаемся к предыдущему полю
-            nodes[index - 1].requestFocus();
-          } else if (index == 5) {
-            // Если последний символ введен — объединяем код и отправляем на сервер
-            final code = controllers.map((c) => c.text).join();
-            enterCode(code);
-          }
-        },
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -206,44 +166,46 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
             horizontal: 40,
             vertical: 100,
           ),
-          overlayAlpha: 0.5, // раньше у вас было 127/255 ≈ 0.5
+          overlayAlpha: 0.5,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 "Введите код, отправленный на номер\n${widget.phone}",
-                style: const TextStyle(color: AppColors.surface, fontSize: 15),
+                style: const TextStyle(
+                  color: AppColors.surface,
+                  fontSize: 15,
+                  fontFamily: 'Inter',
+                ),
               ),
               const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) => _buildCodeField(index)),
+              // 🔹 Используем общий виджет для ввода SMS-кода
+              SmsCodeInput(
+                key: _smsCodeInputKey,
+                onCodeComplete: _isSubmitting ? null : enterCode,
+                enabled: !_isSubmitting,
               ),
+              // 🔹 Показываем ошибку, если есть
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 12),
+                SelectableText.rich(
+                  TextSpan(
+                    text: _errorMessage!,
+                    style: const TextStyle(
+                      color: AppColors.error,
+                      fontSize: 14,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 15),
-              TextButton(
-                // 🔹 Кнопка активна только когда таймер истек (_remainingSeconds == 0)
-                onPressed: _remainingSeconds == 0 ? resendCode : null,
-                style: const ButtonStyle(
-                  overlayColor: WidgetStatePropertyAll(Colors.transparent),
-                  padding: WidgetStatePropertyAll(
-                    EdgeInsets.symmetric(vertical: 15),
-                  ),
-                ),
-                child: Text(
-                  // 🔹 Показываем оставшееся время или текст кнопки
-                  _remainingSeconds > 0
-                      ? "Отправить заново (${_remainingSeconds}с)"
-                      : "Отправить заново",
-                  style: TextStyle(
-                    color: _remainingSeconds > 0
-                        ? AppColors.surface.withOpacity(0.5)
-                        : AppColors.surface,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.left,
-                ),
+              // 🔹 Используем общий виджет для кнопки повторной отправки
+              ResendCodeButton(
+                key: _resendButtonKey,
+                onPressed: _isLoading ? null : resendCode,
+                initialSeconds: 60,
               ),
             ],
           ),

@@ -1,7 +1,7 @@
 import "package:flutter/material.dart";
-import "package:mask_input_formatter/mask_input_formatter.dart"; // 🔹 Для форматирования ввода телефона
 import '../../theme/app_theme.dart';
 import 'auth_shell.dart';
+import '../../widgets/auth/phone_input_field.dart';
 
 /// 🔹 Обёртка для экрана создания аккаунта
 /// Используется для маршрутизации и возможного расширения функционала
@@ -11,16 +11,63 @@ class CreateaccScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Возвращаем основной экран регистрации с вводом телефона
-    return AddAccScreen();
+    return const AddAccScreen();
   }
 }
 
 /// 🔹 Основной экран регистрации с вводом телефона
-class AddAccScreen extends StatelessWidget {
-  AddAccScreen({super.key});
+class AddAccScreen extends StatefulWidget {
+  const AddAccScreen({super.key});
 
+  @override
+  State<AddAccScreen> createState() => _AddAccScreenState();
+}
+
+class _AddAccScreenState extends State<AddAccScreen> {
   /// 🔹 Контроллер для поля ввода телефона
   final TextEditingController phoneController = TextEditingController();
+
+  /// 🔹 Флаг валидности телефона
+  bool _isPhoneValid = false;
+
+  /// 🔹 Флаг загрузки (блокирует повторные нажатия)
+  bool _isLoading = false;
+
+  /// 🔹 Сообщение об ошибке (если есть)
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    // 🔹 Освобождаем контроллер при уничтожении виджета
+    phoneController.dispose();
+    super.dispose();
+  }
+
+  /// 🔹 Обработка нажатия кнопки "Зарегистрироваться"
+  void _handleRegister() {
+    // 🔹 Проверяем валидность телефона
+    if (!_isPhoneValid) {
+      setState(() {
+        _errorMessage = 'Введите корректный номер телефона';
+      });
+      return;
+    }
+
+    // 🔹 Блокируем повторные нажатия
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    // 🔹 Переходим на экран ввода SMS-кода
+    Navigator.pushReplacementNamed(
+      context,
+      '/addaccsms',
+      arguments: {'phone': phoneController.text},
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,61 +85,36 @@ class AddAccScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: double.infinity,
-                child: TextFormField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  style: const TextStyle(color: AppColors.surface),
-                  inputFormatters: [
-                    MaskInputFormatter(mask: '+# (###) ###-##-##'),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: "+7 (999) 123-45-67",
-                    labelText: "Телефон",
-                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                    hintStyle: const TextStyle(
-                      color: AppColors.textPlaceholder,
-                    ),
-                    labelStyle: const TextStyle(
-                      color: AppColors.surface,
-                      fontSize: 16,
-                    ),
-                    border: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        width: 1.0,
-                        color: AppColors.surface,
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        width: 1.0,
-                        color: AppColors.surface,
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        width: 1.0,
-                        color: AppColors.surface,
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
+              // 🔹 Используем общий виджет для ввода телефона
+              PhoneInputField(
+                controller: phoneController,
+                onValidationChanged: (isValid) {
+                  setState(() {
+                    _isPhoneValid = isValid;
+                    // 🔹 Очищаем ошибку при изменении валидности
+                    if (isValid) _errorMessage = null;
+                  });
+                },
+              ),
+              // 🔹 Показываем ошибку, если есть
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 12),
+                SelectableText.rich(
+                  TextSpan(
+                    text: _errorMessage!,
+                    style: const TextStyle(
+                      color: AppColors.error,
+                      fontSize: 14,
+                      fontFamily: 'Inter',
                     ),
                   ),
                 ),
-              ),
+              ],
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      '/addaccsms',
-                      arguments: {'phone': phoneController.text},
-                    );
-                  },
+                  onPressed: _isLoading ? null : _handleRegister,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.surface,
                     foregroundColor: AppColors.textPrimary,
@@ -102,11 +124,25 @@ class AddAccScreen extends StatelessWidget {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    "Зарегистрироваться",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    textAlign: TextAlign.center,
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.textPrimary,
+                            ),
+                          ),
+                        )
+                      : const Text(
+                          "Зарегистрироваться",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                 ),
               ),
               const SizedBox(height: 15),
@@ -123,8 +159,9 @@ class AddAccScreen extends StatelessWidget {
                 width: 100,
                 height: 36,
                 child: TextButton(
-                  onPressed: () =>
-                      Navigator.pushReplacementNamed(context, '/home'),
+                  onPressed: _isLoading
+                      ? null
+                      : () => Navigator.pushReplacementNamed(context, '/home'),
                   style: const ButtonStyle(
                     overlayColor: WidgetStatePropertyAll(Colors.transparent),
                     animationDuration: Duration(milliseconds: 0),
