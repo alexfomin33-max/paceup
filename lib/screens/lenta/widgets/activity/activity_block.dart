@@ -1,5 +1,6 @@
 // lib/screens/lenta/widgets/activity/activity_block.dart
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:latlong2/latlong.dart';
 
@@ -19,9 +20,12 @@ import '../comments_bottom_sheet.dart';
 import '../../activity/together/together_screen.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
+// Провайдеры
+import '../../../../providers/lenta/lenta_provider.dart';
+
 /// Главный виджет «тренировка».
 
-class ActivityBlock extends StatelessWidget {
+class ActivityBlock extends ConsumerWidget {
   final Activity activity;
   final int currentUserId;
 
@@ -32,8 +36,18 @@ class ActivityBlock extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final stats = activity.stats;
+    
+    // ────────────────────────────────────────────────────────────────
+    // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: получаем актуальный Activity из провайдера
+    // ────────────────────────────────────────────────────────────────
+    // Watch провайдер для получения актуального счетчика комментариев
+    final lentaState = ref.watch(lentaProvider(currentUserId));
+    final updatedActivity = lentaState.items.firstWhere(
+      (a) => a.lentaId == activity.lentaId,
+      orElse: () => activity, // fallback на переданную activity
+    );
 
     return Container(
       decoration: const BoxDecoration(
@@ -52,13 +66,13 @@ class ActivityBlock extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: ActivityHeader(
-              userId: activity.userId,
-              userName: activity.userName,
-              userAvatar: activity.userAvatar,
-              dateStart: activity.dateStart,
+              userId: updatedActivity.userId,
+              userName: updatedActivity.userName,
+              userAvatar: updatedActivity.userAvatar,
+              dateStart: updatedActivity.dateStart,
 
               // ⬇️ если в модели Activity есть готовая строка, как в Посте — используем её
-              dateTextOverride: activity.postDateText,
+              dateTextOverride: updatedActivity.postDateText,
               // Нижний слот — метрики
               bottom: StatsRow(
                 distanceMeters: stats?.distance,
@@ -74,14 +88,14 @@ class ActivityBlock extends StatelessWidget {
           // ───────────────── ЭКИПИРОВКА ─────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: EquipmentChip(items: activity.equipments),
+            child: EquipmentChip(items: updatedActivity.equipments),
           ),
 
           const SizedBox(height: 8),
 
           // ───────────────── МАРШРУТ ─────────────────
           RouteCard(
-            points: activity.points.map((c) => LatLng(c.lat, c.lng)).toList(),
+            points: updatedActivity.points.map((c) => LatLng(c.lat, c.lng)).toList(),
           ),
 
           const SizedBox(height: 12),
@@ -90,21 +104,51 @@ class ActivityBlock extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: ActivityActionsRow(
-              activityId: activity.id,
+              activityId: updatedActivity.id,
               currentUserId: currentUserId,
-              initialLikes: activity.likes,
-              initiallyLiked: activity.islike,
-              commentsCount: activity.comments,
+              initialLikes: updatedActivity.likes,
+              initiallyLiked: updatedActivity.islike,
+              commentsCount: updatedActivity.comments,
 
               // Открываем комментарии — поведение как было
               onOpenComments: () {
                 showCupertinoModalBottomSheet(
                   context: context,
-                  builder: (context) => CommentsBottomSheet(
-                    itemType: 'activity',
-                    itemId: activity.id,
-                    currentUserId: currentUserId,
-                  ),
+                  builder: (context) {
+                    // ────────────────────────────────────────────────────────────────
+                    // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: передаем lentaId и callback
+                    // ────────────────────────────────────────────────────────────────
+                    final lentaState = ref.read(lentaProvider(currentUserId));
+                    final activityItem = lentaState.items.firstWhere(
+                      (a) => a.lentaId == updatedActivity.lentaId,
+                      orElse: () => updatedActivity, // fallback на обновленную activity
+                    );
+                    
+                    return CommentsBottomSheet(
+                      itemType: 'activity',
+                      itemId: activityItem.id,
+                      currentUserId: currentUserId,
+                      lentaId: activityItem.lentaId,
+                      // Оптимистичное обновление: увеличиваем счетчик на 1
+                      onCommentAdded: () {
+                        // Получаем актуальный счетчик из провайдера перед обновлением
+                        final currentState = ref.read(
+                          lentaProvider(currentUserId),
+                        );
+                        final latestActivity = currentState.items.firstWhere(
+                          (a) => a.lentaId == activityItem.lentaId,
+                          orElse: () => activityItem, // fallback
+                        );
+                        
+                        ref.read(
+                          lentaProvider(currentUserId).notifier,
+                        ).updateComments(
+                          activityItem.lentaId,
+                          latestActivity.comments + 1,
+                        );
+                      },
+                    );
+                  },
                 );
               },
 

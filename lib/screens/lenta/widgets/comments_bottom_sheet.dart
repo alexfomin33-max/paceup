@@ -71,12 +71,16 @@ class CommentsBottomSheet extends StatefulWidget {
   final String itemType; // 'post' | 'activity'
   final int itemId;
   final int currentUserId;
+  final int lentaId; // ID из таблицы lenta для обновления счетчика
+  final VoidCallback? onCommentAdded; // Callback после успешного добавления комментария
 
   const CommentsBottomSheet({
     super.key,
     required this.itemType,
     required this.itemId,
     required this.currentUserId,
+    required this.lentaId,
+    this.onCommentAdded,
   });
 
   @override
@@ -222,6 +226,12 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         await _loadComments(refresh: true);
       }
       _scrollToTop();
+      
+      // ────────────────────────────────────────────────────────────────
+      // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: вызываем callback после успешного добавления
+      // ────────────────────────────────────────────────────────────────
+      widget.onCommentAdded?.call();
+      
       // НИЧЕГО не чистим здесь — уже очищено в кнопке
     } catch (e) {
       bool refreshOk = false;

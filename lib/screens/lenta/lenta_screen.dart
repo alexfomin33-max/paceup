@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
 import '../../models/activity_lenta.dart';
 import '../../providers/lenta/lenta_provider.dart';
+import '../../providers/chat/unread_chats_provider.dart';
 import '../../utils/image_cache_manager.dart';
 import '../../service/auth_service.dart';
 
@@ -69,6 +70,12 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   bool _isScrolling = false;
   static const Duration _debounceDelay = Duration(milliseconds: 300);
 
+  // ────────────────────────────────────────────────────────────────
+  // 🔔 POLLING: динамическое обновление счетчика непрочитанных чатов
+  // ────────────────────────────────────────────────────────────────
+  Timer? _unreadChatsPollingTimer;
+  static const Duration _pollingInterval = Duration(seconds: 5); // обновляем каждые 5 секунд
+
   @override
   void initState() {
     super.initState();
@@ -102,7 +109,17 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       if (mounted) {
         setState(() {});
         // Начальная загрузка через Riverpod provider
-        ref.read(lentaProvider(userId).notifier).loadInitial();
+        // После завершения загрузки обновим счетчик непрочитанных чатов
+        ref.read(lentaProvider(userId).notifier).loadInitial().then((_) {
+          if (mounted && _actualUserId != null && _actualUserId == userId) {
+            // Обновляем счетчик после завершения загрузки ленты
+            ref.read(unreadChatsProvider(_actualUserId!).notifier).loadUnreadCount();
+          }
+        });
+        // Загружаем количество непрочитанных чатов сразу (не ждем загрузки ленты)
+        ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
+        // Запускаем polling для динамического обновления счетчика
+        _startUnreadChatsPolling(userId);
       }
     });
 
@@ -126,7 +143,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   @override
   void dispose() {
     _scrollController.dispose();
-    _prefetchDebounceTimer?.cancel(); // ✅ Очищаем таймер
+    _prefetchDebounceTimer?.cancel(); // ✅ Очищаем таймер prefetch
+    _unreadChatsPollingTimer?.cancel(); // ✅ Очищаем таймер polling
     super.dispose();
   }
 
@@ -141,15 +159,50 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // Очищаем кеш предзагруженных индексов при обновлении
     _prefetchedIndices.clear();
     await ref.read(lentaProvider(userId).notifier).refresh();
+    // Обновляем количество непрочитанных чатов при обновлении ленты
+    ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔔 POLLING: динамическое обновление счетчика непрочитанных чатов
+  // ────────────────────────────────────────────────────────────────
+
+  /// Запускает периодическое обновление счетчика непрочитанных чатов
+  ///
+  /// ⚡ PERFORMANCE OPTIMIZATION:
+  /// - Интервал 5 секунд — баланс между актуальностью и нагрузкой на сервер
+  /// - Автоматическая остановка при dispose — предотвращает утечки памяти
+  /// - Проверка mounted перед обновлением — безопасность при закрытии экрана
+  ///
+  /// Обновляет счетчик каждые 5 секунд, чтобы пользователь видел
+  /// новые непрочитанные чаты в реальном времени.
+  void _startUnreadChatsPolling(int userId) {
+    _unreadChatsPollingTimer?.cancel(); // Отменяем предыдущий таймер, если есть
+    
+    _unreadChatsPollingTimer = Timer.periodic(_pollingInterval, (_) {
+      if (!mounted || _actualUserId == null) {
+        _unreadChatsPollingTimer?.cancel();
+        return;
+      }
+      
+      // Обновляем счетчик непрочитанных чатов
+      ref.read(unreadChatsProvider(_actualUserId!).notifier).loadUnreadCount();
+    });
   }
 
   // ———————————— Навигация / Колбэки ————————————
 
   Future<void> _openChat() async {
+    if (_actualUserId == null) return;
+    
     MoreMenuHub.hide();
     await Navigator.of(
       context,
     ).push(TransparentPageRoute(builder: (_) => const ChatScreen()));
+    
+    if (!mounted) return;
+    // Обновляем количество непрочитанных чатов после возврата из экрана чатов
+    ref.read(unreadChatsProvider(_actualUserId!).notifier).loadUnreadCount();
   }
 
   Future<void> _openNotifications() async {
@@ -224,6 +277,13 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   void _openComments({required String type, required int itemId}) {
     if (_actualUserId == null) return;
     
+    // Находим активность по itemId для получения lentaId
+    final lentaState = ref.read(lentaProvider(_actualUserId!));
+    final activity = lentaState.items.firstWhere(
+      (a) => a.id == itemId && a.type == type,
+      orElse: () => lentaState.items.first, // fallback (не должно произойти)
+    );
+    
     MoreMenuHub.hide();
     showCupertinoModalBottomSheet(
       context: context,
@@ -231,6 +291,24 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         itemType: type,
         itemId: itemId,
         currentUserId: _actualUserId!,
+        lentaId: activity.lentaId,
+        // ────────────────────────────────────────────────────────────────
+        // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: увеличиваем счетчик комментариев на 1
+        // ────────────────────────────────────────────────────────────────
+        onCommentAdded: () {
+          // Получаем актуальный счетчик из провайдера перед обновлением
+          final currentState = ref.read(lentaProvider(_actualUserId!));
+          final updatedActivity = currentState.items.firstWhere(
+            (a) => a.lentaId == activity.lentaId,
+            orElse: () => activity, // fallback на исходную activity
+          );
+          
+          // Оптимистичное обновление: увеличиваем счетчик на 1
+          ref.read(lentaProvider(_actualUserId!).notifier).updateComments(
+            activity.lentaId,
+            updatedActivity.comments + 1,
+          );
+        },
       ),
     );
   }
@@ -454,10 +532,34 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         ),
         // справа — чат и колокол с бейджем
         actions: [
-          _NavIcon(
-            icon: CupertinoIcons.bubble_left_bubble_right,
-            onPressed: _openChat,
+          // Иконка чатов с бейджем непрочитанных
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              _NavIcon(
+                icon: CupertinoIcons.bubble_left_bubble_right,
+                onPressed: _openChat,
+              ),
+              // Показываем бейдж только если есть непрочитанные чаты
+              if (_actualUserId != null)
+                Builder(
+                  builder: (context) {
+                    final unreadChatsState =
+                        ref.watch(unreadChatsProvider(_actualUserId!));
+                    final unreadChatsCount = unreadChatsState.unreadCount;
+                    if (unreadChatsCount > 0) {
+                      return Positioned(
+                        right: 4,
+                        top: 4,
+                        child: _Badge(count: unreadChatsCount),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+            ],
           ),
+          // Иконка уведомлений с бейджем
           Stack(
             clipBehavior: Clip.none,
             children: [
