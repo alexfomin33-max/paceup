@@ -346,11 +346,20 @@ class _EventRow extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.xs),
             child: event.logoUrl != null && event.logoUrl!.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: event.logoUrl!,
-                    width: 80,
-                    height: 55,
-                    fit: BoxFit.cover,
+                ? Builder(
+                    builder: (context) {
+                      final dpr = MediaQuery.of(context).devicePixelRatio;
+                      final targetW = (80 * dpr).round();
+                      final targetH = (55 * dpr).round();
+                      return CachedNetworkImage(
+                        imageUrl: event.logoUrl!,
+                        width: 80,
+                        height: 55,
+                        fit: BoxFit.cover,
+                        memCacheWidth: targetW,
+                        memCacheHeight: targetH,
+                        maxWidthDiskCache: targetW,
+                        maxHeightDiskCache: targetH,
                     errorWidget: (_, __, ___) => Container(
                       width: 80,
                       height: 55,
@@ -369,6 +378,8 @@ class _EventRow extends StatelessWidget {
                       alignment: Alignment.center,
                       child: const CupertinoActivityIndicator(),
                     ),
+                      );
+                    },
                   )
                 : Container(
                     width: 80,

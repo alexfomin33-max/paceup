@@ -51,21 +51,29 @@ class _EquipmentChipState extends State<EquipmentChip> {
               bottom: 3,
               child: ClipOval(
                 child: img.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: img,
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.cover,
+                    ? Builder(
+                        builder: (context) {
+                          final dpr = MediaQuery.of(context).devicePixelRatio;
+                          final w = (50 * dpr).round();
+                          return CachedNetworkImage(
+                            imageUrl: img,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            memCacheWidth: w,
+                            maxWidthDiskCache: w,
                         placeholder: (context, url) => Container(
                           width: 50,
                           height: 50,
                           color: AppColors.background,
                         ),
-                        errorWidget: (context, url, error) => Image.asset(
-                          'assets/Asics.png',
-                          width: 50,
-                          height: 50,
-                        ),
+                            errorWidget: (context, url, error) => Image.asset(
+                              'assets/Asics.png',
+                              width: 50,
+                              height: 50,
+                            ),
+                          );
+                        },
                       )
                     : Image.asset('assets/Asics.png', width: 50, height: 50),
               ),

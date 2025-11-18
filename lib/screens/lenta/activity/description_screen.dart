@@ -418,22 +418,30 @@ class _Avatar extends StatelessWidget {
     final isNet =
         urlOrAsset.startsWith('http://') || urlOrAsset.startsWith('https://');
     return isNet
-        ? CachedNetworkImage(
-            imageUrl: urlOrAsset,
-            width: 50,
-            height: 50,
-            fit: BoxFit.cover,
+        ? Builder(
+            builder: (context) {
+              final dpr = MediaQuery.of(context).devicePixelRatio;
+              final w = (50 * dpr).round();
+              return CachedNetworkImage(
+                imageUrl: urlOrAsset,
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+                memCacheWidth: w,
+                maxWidthDiskCache: w,
             placeholder: (context, url) => Container(
               width: 50,
               height: 50,
               color: AppColors.background,
             ),
-            errorWidget: (context, url, error) => Image.asset(
-              'assets/avatar_2.png',
-              width: 50,
-              height: 50,
-              fit: BoxFit.cover,
-            ),
+                errorWidget: (context, url, error) => Image.asset(
+                  'assets/avatar_2.png',
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                ),
+              );
+            },
           )
         : Image.asset(
             urlOrAsset.isNotEmpty ? urlOrAsset : 'assets/avatar_2.png',

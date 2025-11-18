@@ -221,15 +221,23 @@ class _EditPostScreenState extends State<EditPostScreen> {
                     color: AppColors.background,
                   ),
                   clipBehavior: Clip.hardEdge,
-                  child: CachedNetworkImage(
-                    imageUrl: ex.url,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) =>
-                        Container(color: AppColors.background),
-                    errorWidget: (context, url, error) => Container(
-                      color: AppColors.background,
-                      child: const Icon(Icons.error),
-                    ),
+                  child: Builder(
+                    builder: (context) {
+                      final dpr = MediaQuery.of(context).devicePixelRatio;
+                      final side = (76 * dpr).round();
+                      return CachedNetworkImage(
+                        imageUrl: ex.url,
+                        fit: BoxFit.cover,
+                        memCacheWidth: side,
+                        maxWidthDiskCache: side,
+                        placeholder: (context, url) =>
+                            Container(color: AppColors.background),
+                        errorWidget: (context, url, error) => Container(
+                          color: AppColors.background,
+                          child: const Icon(Icons.error),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),

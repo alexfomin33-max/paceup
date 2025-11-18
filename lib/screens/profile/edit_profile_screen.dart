@@ -683,6 +683,7 @@ class _AvatarEditable extends ConsumerWidget {
         children: [
           ClipOval(
             child: _buildAvatarImage(
+              context: context,
               size: size,
               cacheWidth: cacheW,
               avatarVersion: avatarVersion,
@@ -713,6 +714,7 @@ class _AvatarEditable extends ConsumerWidget {
   }
 
   Widget _buildAvatarImage({
+    required BuildContext context,
     required double size,
     required int cacheWidth,
     required int avatarVersion,
@@ -754,12 +756,16 @@ class _AvatarEditable extends ConsumerWidget {
           ? '$url${separator}v=$avatarVersion'
           : url;
 
+      final dpr = MediaQuery.of(context).devicePixelRatio;
+      final w = (size * dpr).round();
       return CachedNetworkImage(
         imageUrl: versionedUrl,
         // НЕ передаем cacheManager - используется DefaultCacheManager с offline support
         width: size,
         height: size,
         fit: BoxFit.cover,
+        memCacheWidth: w,
+        maxWidthDiskCache: w,
         placeholder: (context, url) =>
             Container(width: size, height: size, color: AppColors.skeletonBase),
         errorWidget: (context, url, error) => Image.asset(

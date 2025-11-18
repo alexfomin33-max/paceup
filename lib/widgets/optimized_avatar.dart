@@ -62,7 +62,7 @@ class OptimizedAvatar extends ConsumerWidget {
     // Определяем «эффективный» источник — нужен стабильный ключ для AnimatedSwitcher.
     final String effectiveSource = _effectiveSource(avatarVersion);
 
-    final Widget image = _buildImage(effectiveSource);
+    final Widget image = _buildImage(effectiveSource, context);
 
     // Без fade — рендерим как есть (ноль лишней стоимости)
     if (!fadeIn) {
@@ -111,7 +111,7 @@ class OptimizedAvatar extends ConsumerWidget {
     return 'asset:$p';
   }
 
-  Widget _buildImage(String effectiveSource) {
+  Widget _buildImage(String effectiveSource, BuildContext context) {
     if (effectiveSource.startsWith('net:')) {
       // Сетевой кейс — используем CachedNetworkImage с unified кэш-менеджером
       // ✅ UNIFIED IMAGE CACHE:
@@ -124,12 +124,16 @@ class OptimizedAvatar extends ConsumerWidget {
       // - Автоматическая очистка старых файлов (7 дней)
       final url = effectiveSource.substring(4);
 
+      final dpr = MediaQuery.of(context).devicePixelRatio;
+      final w = (size * dpr).round();
       return CachedNetworkImage(
         imageUrl: url,
         // НЕ передаем cacheManager - используется DefaultCacheManager с offline support
         width: size,
         height: size,
         fit: fit,
+        memCacheWidth: w,
+        maxWidthDiskCache: w,
         // Плавный placeholder (прозрачный для gaplessPlayback эффекта)
         placeholder: (context, url) => const SizedBox.shrink(),
         // Fallback на дефолтную аватарку при ошибке

@@ -60,15 +60,13 @@ class _BookmarksContentState extends ConsumerState<BookmarksContent> {
             ),
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 10)),
-              
+
               // ── Состояния загрузки и ошибок
               if (eventsState.isLoading && eventsState.events.isEmpty)
                 const SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.all(24),
-                    child: Center(
-                      child: CupertinoActivityIndicator(),
-                    ),
+                    child: Center(child: CupertinoActivityIndicator()),
                   ),
                 )
               else if (eventsState.error != null && eventsState.events.isEmpty)
@@ -88,7 +86,9 @@ class _BookmarksContentState extends ConsumerState<BookmarksContent> {
                           CupertinoButton(
                             onPressed: () {
                               ref
-                                  .read(bookmarkedEventsProvider(userId).notifier)
+                                  .read(
+                                    bookmarkedEventsProvider(userId).notifier,
+                                  )
                                   .loadInitial();
                             },
                             child: const Text('Повторить'),
@@ -116,23 +116,28 @@ class _BookmarksContentState extends ConsumerState<BookmarksContent> {
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   sliver: SliverList.separated(
                     itemCount: eventsState.events.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: 2), // такой же зазор, как в Маршрутах
+                    separatorBuilder: (_, _) => const SizedBox(
+                      height: 2,
+                    ), // такой же зазор, как в Маршрутах
                     itemBuilder: (context, i) {
                       final event = eventsState.events[i];
                       return GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () async {
-                          final result = await Navigator.of(context).push<dynamic>(
-                            TransparentPageRoute(
-                              builder: (_) => EventDetailScreen(eventId: event.id),
-                            ),
-                          );
+                          final result = await Navigator.of(context)
+                              .push<dynamic>(
+                                TransparentPageRoute(
+                                  builder: (_) =>
+                                      EventDetailScreen(eventId: event.id),
+                                ),
+                              );
                           // Если событие было удалено или удалено из закладок, обновляем список
                           if (result == true || result == 'bookmark_removed') {
                             if (mounted) {
                               await ref
-                                  .read(bookmarkedEventsProvider(userId).notifier)
+                                  .read(
+                                    bookmarkedEventsProvider(userId).notifier,
+                                  )
                                   .refresh();
                             }
                           }
@@ -142,7 +147,7 @@ class _BookmarksContentState extends ConsumerState<BookmarksContent> {
                     },
                   ),
                 ),
-              
+
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           ),
@@ -293,29 +298,40 @@ class _BookmarkRow extends ConsumerWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.xs),
             child: event.logoUrl != null && event.logoUrl!.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: event.logoUrl!,
-                    width: 80,
-                    height: 55,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => Container(
-                      width: 80,
-                      height: 55,
-                      color: AppColors.skeletonBase,
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        CupertinoIcons.photo,
-                        size: 20,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    placeholder: (_, __) => Container(
-                      width: 80,
-                      height: 55,
-                      color: AppColors.skeletonBase,
-                      alignment: Alignment.center,
-                      child: const CupertinoActivityIndicator(),
-                    ),
+                ? Builder(
+                    builder: (context) {
+                      final dpr = MediaQuery.of(context).devicePixelRatio;
+                      final targetW = (80 * dpr).round();
+                      final targetH = (55 * dpr).round();
+                      return CachedNetworkImage(
+                        imageUrl: event.logoUrl!,
+                        width: 80,
+                        height: 55,
+                        fit: BoxFit.cover,
+                        memCacheWidth: targetW,
+                        memCacheHeight: targetH,
+                        maxWidthDiskCache: targetW,
+                        maxHeightDiskCache: targetH,
+                        errorWidget: (_, __, ___) => Container(
+                          width: 80,
+                          height: 55,
+                          color: AppColors.skeletonBase,
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            CupertinoIcons.photo,
+                            size: 20,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        placeholder: (_, __) => Container(
+                          width: 80,
+                          height: 55,
+                          color: AppColors.skeletonBase,
+                          alignment: Alignment.center,
+                          child: const CupertinoActivityIndicator(),
+                        ),
+                      );
+                    },
                   )
                 : Container(
                     width: 80,
@@ -349,11 +365,8 @@ class _BookmarkRow extends ConsumerWidget {
                     ),
                     _RemoveButton(
                       eventId: event.id,
-                      onRemove: () => _handleRemoveBookmark(
-                        context,
-                        ref,
-                        event.id,
-                      ),
+                      onRemove: () =>
+                          _handleRemoveBookmark(context, ref, event.id),
                     ),
                   ],
                 ),
@@ -378,10 +391,7 @@ class _BookmarkRow extends ConsumerWidget {
 class _RemoveButton extends StatelessWidget {
   final int eventId;
   final VoidCallback onRemove;
-  const _RemoveButton({
-    required this.eventId,
-    required this.onRemove,
-  });
+  const _RemoveButton({required this.eventId, required this.onRemove});
 
   @override
   Widget build(BuildContext context) {
@@ -396,11 +406,7 @@ class _RemoveButton extends StatelessWidget {
           color: AppColors.error,
           shape: BoxShape.circle,
         ),
-        child: const Icon(
-          CupertinoIcons.xmark,
-          size: 12,
-          color: Colors.white,
-        ),
+        child: const Icon(CupertinoIcons.xmark, size: 12, color: Colors.white),
       ),
     );
   }

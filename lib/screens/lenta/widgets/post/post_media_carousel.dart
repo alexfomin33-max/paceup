@@ -68,6 +68,9 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
                   final url = widget.imageUrls[i];
 
                   // ✅ Используем дефолтный CacheManager для offline поддержки
+                  final dpr = MediaQuery.of(context).devicePixelRatio;
+                  final screenW = constraints.maxWidth;
+                  final targetW = (screenW * dpr).round();
                   return CachedNetworkImage(
                     imageUrl: url,
                     // НЕ передаем cacheManager - используется DefaultCacheManager с offline support
@@ -75,6 +78,8 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
                     width: double.infinity,
                     height: double.infinity,
                     filterQuality: FilterQuality.low,
+                    memCacheWidth: targetW,
+                    maxWidthDiskCache: targetW,
                     placeholder: (context, url) => Container(
                       color: AppColors.disabled,
                       child: const Center(child: CupertinoActivityIndicator()),
@@ -130,17 +135,26 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
       fit: StackFit.expand,
       children: [
         // ✅ Дефолтный cache для video placeholder
-        CachedNetworkImage(
-          imageUrl: _videoPlaceholder,
-          fit: BoxFit.cover,
-          errorWidget: (context, url, error) => Container(
-            color: AppColors.disabled,
-            child: const Icon(
-              CupertinoIcons.video_camera,
-              size: 48,
-              color: AppColors.textTertiary,
-            ),
-          ),
+        Builder(
+          builder: (context) {
+            final dpr = MediaQuery.of(context).devicePixelRatio;
+            final screenW = MediaQuery.of(context).size.width;
+            final targetW = (screenW * dpr).round();
+            return CachedNetworkImage(
+              imageUrl: _videoPlaceholder,
+              fit: BoxFit.cover,
+              memCacheWidth: targetW,
+              maxWidthDiskCache: targetW,
+              errorWidget: (context, url, error) => Container(
+                color: AppColors.disabled,
+                child: const Icon(
+                  CupertinoIcons.video_camera,
+                  size: 48,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            );
+          },
         ),
         Container(color: AppColors.scrim20),
         const Center(
