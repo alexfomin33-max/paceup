@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../../theme/app_theme.dart';
 import '../../../../../../../widgets/more_menu_overlay.dart';
+import '../../../../../../../widgets/transparent_route.dart';
 import '../../../../../../../service/api_service.dart';
 import '../../../../../../../service/auth_service.dart';
 import '../../../editing/editing_equipment_screen.dart';
@@ -217,7 +218,8 @@ class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
                 pace: sneaker.pace,
                 since: sneaker.since,
                 mainBadgeText: sneaker.isMain ? 'Основные' : null,
-                onUpdate: _loadSneakers, // Callback для обновления списка после действий
+                onUpdate:
+                    _loadSneakers, // Callback для обновления списка после действий
               ),
             ],
           );
@@ -242,6 +244,7 @@ class GearViewCard extends StatefulWidget {
   final String since;
   final String? mainBadgeText;
   final VoidCallback? onUpdate; // Callback для обновления списка после действий
+  final String equipmentType; // Тип снаряжения: 'boots' или 'bike'
 
   const GearViewCard.shoes({
     super.key,
@@ -258,7 +261,8 @@ class GearViewCard extends StatefulWidget {
     this.mainBadgeText,
     this.onUpdate,
   }) : thirdValue = pace,
-       thirdLabel = 'Средний темп';
+       thirdLabel = 'Средний темп',
+       equipmentType = 'boots';
 
   const GearViewCard.bike({
     super.key,
@@ -275,7 +279,8 @@ class GearViewCard extends StatefulWidget {
     this.mainBadgeText,
     this.onUpdate,
   }) : thirdValue = speed,
-       thirdLabel = 'Скорость';
+       thirdLabel = 'Скорость',
+       equipmentType = 'bike';
 
   @override
   State<GearViewCard> createState() => _GearViewCardState();
@@ -294,10 +299,13 @@ class _GearViewCardState extends State<GearViewCard> {
 
     final items = <MoreMenuItem>[
       MoreMenuItem(
-        text: widget.mainBadgeText != null ? 'Убрать из основных' : 'Сделать основными',
-        icon: widget.mainBadgeText != null 
-            ? CupertinoIcons.star_fill  // Залитая звезда для основных
-            : CupertinoIcons.star,      // Пустая звезда для неосновных
+        text: widget.mainBadgeText != null
+            ? 'Убрать из основных'
+            : 'Сделать основными',
+        icon: widget.mainBadgeText != null
+            ? CupertinoIcons
+                  .star_fill // Залитая звезда для основных
+            : CupertinoIcons.star, // Пустая звезда для неосновных
         onTap: () => _setMain(context),
       ),
       MoreMenuItem(
@@ -348,9 +356,11 @@ class _GearViewCardState extends State<GearViewCard> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(isCurrentlyMain 
-                ? 'Снаряжение убрано из основных'
-                : 'Снаряжение установлено как основное'),
+              content: Text(
+                isCurrentlyMain
+                    ? 'Снаряжение убрано из основных'
+                    : 'Снаряжение установлено как основное',
+              ),
             ),
           );
           // Обновляем список
@@ -365,9 +375,9 @@ class _GearViewCardState extends State<GearViewCard> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
       }
     }
   }
@@ -378,10 +388,10 @@ class _GearViewCardState extends State<GearViewCard> {
 
     // Открываем экран редактирования
     final result = await Navigator.of(context).push(
-      CupertinoPageRoute(
+      TransparentPageRoute(
         builder: (_) => EditingEquipmentScreen(
           equipUserId: widget.equipUserId!,
-          type: 'boots', // В viewing_sneakers_content всегда кроссовки
+          type: widget.equipmentType, // Используем тип из конструктора
         ),
       ),
     );
@@ -456,9 +466,9 @@ class _GearViewCardState extends State<GearViewCard> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
       }
     }
   }

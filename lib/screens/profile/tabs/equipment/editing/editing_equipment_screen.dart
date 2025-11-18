@@ -2,6 +2,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../theme/app_theme.dart';
+import '../../../../../widgets/interactive_back_swipe.dart';
 import 'tabs/editing_sneakers_content.dart';
 import 'tabs/editing_bike_content.dart';
 
@@ -20,7 +21,8 @@ class EditingEquipmentScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return InteractiveBackSwipe(
+      child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
@@ -48,7 +50,7 @@ class EditingEquipmentScreen extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
           child: type == 'bike'
               ? EditingBikeContent(
                   equipUserId: equipUserId,
@@ -57,6 +59,7 @@ class EditingEquipmentScreen extends StatelessWidget {
                   equipUserId: equipUserId,
                 ),
         ),
+      ),
       ),
     );
   }
