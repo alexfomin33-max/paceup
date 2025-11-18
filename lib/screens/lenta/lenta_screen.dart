@@ -74,7 +74,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   // 🔔 POLLING: динамическое обновление счетчика непрочитанных чатов
   // ────────────────────────────────────────────────────────────────
   Timer? _unreadChatsPollingTimer;
-  static const Duration _pollingInterval = Duration(seconds: 5); // обновляем каждые 5 секунд
+  static const Duration _pollingInterval = Duration(
+    seconds: 5,
+  ); // обновляем каждые 5 секунд
 
   @override
   void initState() {
@@ -84,7 +86,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // widget.userId используется только как fallback, если AuthService вернет null
     Future.microtask(() async {
       int? userId = await _auth.getUserId();
-      
+
       // Если AuthService вернул null, используем widget.userId (но не fallback 123)
       if (userId == null) {
         userId = widget.userId;
@@ -93,7 +95,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           userId = null;
         }
       }
-      
+
       if (userId == null) {
         // Если userId всё ещё null — показываем ошибку
         if (mounted) {
@@ -103,9 +105,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         }
         return;
       }
-      
+
       _actualUserId = userId;
-      
+
       if (mounted) {
         setState(() {});
         // Начальная загрузка через Riverpod provider
@@ -113,7 +115,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         ref.read(lentaProvider(userId).notifier).loadInitial().then((_) {
           if (mounted && _actualUserId != null && _actualUserId == userId) {
             // Обновляем счетчик после завершения загрузки ленты
-            ref.read(unreadChatsProvider(_actualUserId!).notifier).loadUnreadCount();
+            ref
+                .read(unreadChatsProvider(_actualUserId!).notifier)
+                .loadUnreadCount();
           }
         });
         // Загружаем количество непрочитанных чатов сразу (не ждем загрузки ленты)
@@ -128,7 +132,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // для оптимизации частых вызовов при скролле
     _scrollController.addListener(() {
       if (_actualUserId == null) return;
-      
+
       final lentaState = ref.read(lentaProvider(_actualUserId!));
       final pos = _scrollController.position;
 
@@ -155,7 +159,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
     final userId = await _auth.getUserId();
     if (userId == null) return;
-    
+
     // Очищаем кеш предзагруженных индексов при обновлении
     _prefetchedIndices.clear();
     await ref.read(lentaProvider(userId).notifier).refresh();
@@ -178,13 +182,13 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   /// новые непрочитанные чаты в реальном времени.
   void _startUnreadChatsPolling(int userId) {
     _unreadChatsPollingTimer?.cancel(); // Отменяем предыдущий таймер, если есть
-    
+
     _unreadChatsPollingTimer = Timer.periodic(_pollingInterval, (_) {
       if (!mounted || _actualUserId == null) {
         _unreadChatsPollingTimer?.cancel();
         return;
       }
-      
+
       // Обновляем счетчик непрочитанных чатов
       ref.read(unreadChatsProvider(_actualUserId!).notifier).loadUnreadCount();
     });
@@ -194,12 +198,12 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
   Future<void> _openChat() async {
     if (_actualUserId == null) return;
-    
+
     MoreMenuHub.hide();
     await Navigator.of(
       context,
     ).push(TransparentPageRoute(builder: (_) => const ChatScreen()));
-    
+
     if (!mounted) return;
     // Обновляем количество непрочитанных чатов после возврата из экрана чатов
     ref.read(unreadChatsProvider(_actualUserId!).notifier).loadUnreadCount();
@@ -207,7 +211,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
   Future<void> _openNotifications() async {
     if (_actualUserId == null) return;
-    
+
     MoreMenuHub.hide();
     await Navigator.of(
       context,
@@ -221,13 +225,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
     final userId = await _auth.getUserId();
     if (userId == null) return;
-    
+
     MoreMenuHub.hide();
 
     final created = await Navigator.of(context).push<bool>(
-      TransparentPageRoute(
-        builder: (_) => NewPostScreen(userId: userId),
-      ),
+      TransparentPageRoute(builder: (_) => NewPostScreen(userId: userId)),
     );
 
     if (!mounted || created != true) return;
@@ -264,7 +266,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
   void _openActivity(Activity a) {
     if (_actualUserId == null) return;
-    
+
     MoreMenuHub.hide();
     Navigator.of(context).push(
       CupertinoPageRoute(
@@ -276,14 +278,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
   void _openComments({required String type, required int itemId}) {
     if (_actualUserId == null) return;
-    
+
     // Находим активность по itemId для получения lentaId
     final lentaState = ref.read(lentaProvider(_actualUserId!));
     final activity = lentaState.items.firstWhere(
       (a) => a.id == itemId && a.type == type,
       orElse: () => lentaState.items.first, // fallback (не должно произойти)
     );
-    
+
     MoreMenuHub.hide();
     showCupertinoModalBottomSheet(
       context: context,
@@ -302,12 +304,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
             (a) => a.lentaId == activity.lentaId,
             orElse: () => activity, // fallback на исходную activity
           );
-          
+
           // Оптимистичное обновление: увеличиваем счетчик на 1
-          ref.read(lentaProvider(_actualUserId!).notifier).updateComments(
-            activity.lentaId,
-            updatedActivity.comments + 1,
-          );
+          ref
+              .read(lentaProvider(_actualUserId!).notifier)
+              .updateComments(activity.lentaId, updatedActivity.comments + 1);
         },
       ),
     );
@@ -317,7 +318,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
     final userId = await _auth.getUserId();
     if (userId == null) return;
-    
+
     MoreMenuHub.hide();
 
     final updated = await Navigator.push<bool>(
@@ -479,14 +480,16 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           ),
           showBottomDivider: true,
         ),
-        body: const Center(
-          child: CupertinoActivityIndicator(),
-        ),
+        body: const Center(child: CupertinoActivityIndicator()),
       );
     }
 
     // Читаем состояние из Riverpod provider
     final lentaState = ref.watch(lentaProvider(_actualUserId!));
+    // Читаем состояние непрочитанных чатов
+    final unreadChatsState = _actualUserId != null
+        ? ref.watch(unreadChatsProvider(_actualUserId!))
+        : null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -540,22 +543,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                 icon: CupertinoIcons.bubble_left_bubble_right,
                 onPressed: _openChat,
               ),
-              // Показываем бейдж только если есть непрочитанные чаты
-              if (_actualUserId != null)
-                Builder(
-                  builder: (context) {
-                    final unreadChatsState =
-                        ref.watch(unreadChatsProvider(_actualUserId!));
-                    final unreadChatsCount = unreadChatsState.unreadCount;
-                    if (unreadChatsCount > 0) {
-                      return Positioned(
-                        right: 4,
-                        top: 4,
-                        child: _Badge(count: unreadChatsCount),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
+              if (unreadChatsState != null && unreadChatsState.unreadCount > 0)
+                Positioned(
+                  right: 4,
+                  top: 4,
+                  child: _Badge(count: unreadChatsState.unreadCount),
                 ),
             ],
           ),
@@ -595,9 +587,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                       // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
                       final userId = await _auth.getUserId();
                       if (userId == null) return;
-                        ref
-                          .read(lentaProvider(userId).notifier)
-                            .loadInitial();
+                      ref.read(lentaProvider(userId).notifier).loadInitial();
                     },
                     child: const Text('Повторить'),
                   ),
@@ -675,8 +665,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               final pos = _scrollController.position;
               if (pos.hasContentDimensions) {
                 final visibleIndex =
-                    (pos.pixels / (pos.maxScrollExtent / items.length))
-                        .floor();
+                    (pos.pixels / (pos.maxScrollExtent / items.length)).floor();
                 _prefetchNextImages(visibleIndex, items);
               }
             }
@@ -766,7 +755,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       // Если userId ещё не загружен, возвращаем пустой виджет
       return const SizedBox.shrink();
     }
-    
+
     if (a.type == 'post') {
       return PostCard(
         post: a,

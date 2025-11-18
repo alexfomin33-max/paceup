@@ -96,16 +96,16 @@ class SplashScreenState extends State<SplashScreen>
         // 🔹 Если получили userId → переходим на основной экран с данными пользователя
         Navigator.pushReplacementNamed(
           context,
-          '/home', // Можно заменить на HomeShell для bottom nav
+          '/lenta', // Можно заменить на HomeShell для bottom nav
           arguments: {'userId': userId},
         );
       } else {
         // 🔹 fallback: userId не найден, переходим на общий HomeScreen
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/lenta');
       }
     } else {
       // 🔹 Пользователь не авторизован → показываем экран приветствия / HomeScreen
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/lenta');
     }
   }
 

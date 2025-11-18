@@ -378,7 +378,10 @@ class _ChatScreenState extends State<ChatScreen> {
                                     chat.userName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.h14w5,
+                                    // ─── Жирный стиль для непрочитанных сообщений ───
+                                    style: chat.unread
+                                        ? AppTextStyles.h14w6
+                                        : AppTextStyles.h14w5,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -398,7 +401,12 @@ class _ChatScreenState extends State<ChatScreen> {
                                     chat.lastMessage,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.h13w4Sec,
+                                    // ─── Жирный стиль для непрочитанных сообщений ───
+                                    style: chat.unread
+                                        ? AppTextStyles.h13w6.copyWith(
+                                            color: AppColors.textSecondary,
+                                          )
+                                        : AppTextStyles.h13w4Sec,
                                   ),
                                 ),
                                 if (chat.unread)
@@ -424,19 +432,17 @@ class _ChatScreenState extends State<ChatScreen> {
                 final item = GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () async {
-                    final result = await Navigator.of(
-                      context,
-                      rootNavigator: true,
-                    ).push(
-                      TransparentPageRoute(
-                        builder: (_) => PersonalChatScreen(
-                          chatId: chat.id,
-                          userId: chat.userId,
-                          userName: chat.userName,
-                          userAvatar: chat.userAvatar,
-                        ),
-                      ),
-                    );
+                    final result =
+                        await Navigator.of(context, rootNavigator: true).push(
+                          TransparentPageRoute(
+                            builder: (_) => PersonalChatScreen(
+                              chatId: chat.id,
+                              userId: chat.userId,
+                              userName: chat.userName,
+                              userAvatar: chat.userAvatar,
+                            ),
+                          ),
+                        );
 
                     // Обновляем список чатов после возврата из чата
                     if (result == true && mounted) {
