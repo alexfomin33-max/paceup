@@ -18,7 +18,6 @@ import 'widgets/post/post_card.dart'; // карточка поста (с поп�
 import 'state/newpost/new_post_screen.dart';
 import 'state/newpost/edit_post_screen.dart';
 import 'widgets/comments_bottom_sheet.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 import 'state/chat/chat_screen.dart';
 import 'state/notifications/notifications_screen.dart';
@@ -287,8 +286,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     );
 
     MoreMenuHub.hide();
-    showCupertinoModalBottomSheet(
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 Используем showModalBottomSheet с useRootNavigator для перекрытия нижнего меню
+    // ────────────────────────────────────────────────────────────────
+    showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (_) => CommentsBottomSheet(
         itemType: type,
         itemId: itemId,

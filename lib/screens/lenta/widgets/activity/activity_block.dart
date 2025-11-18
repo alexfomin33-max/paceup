@@ -1,5 +1,6 @@
 // lib/screens/lenta/widgets/activity/activity_block.dart
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:latlong2/latlong.dart';
@@ -18,7 +19,6 @@ import 'actions/activity_actions_row.dart';
 // Для комментариев и «вместе» — поведение как в исходном коде
 import '../comments_bottom_sheet.dart';
 import '../../activity/together/together_screen.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 // Провайдеры
 import '../../../../providers/lenta/lenta_provider.dart';
@@ -112,8 +112,14 @@ class ActivityBlock extends ConsumerWidget {
 
               // Открываем комментарии — поведение как было
               onOpenComments: () {
-                showCupertinoModalBottomSheet(
+                // ────────────────────────────────────────────────────────────────
+                // 🔹 Используем showModalBottomSheet с useRootNavigator для перекрытия нижнего меню
+                // ────────────────────────────────────────────────────────────────
+                showModalBottomSheet(
                   context: context,
+                  useRootNavigator: true,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
                   builder: (context) {
                     // ────────────────────────────────────────────────────────────────
                     // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: передаем lentaId и callback

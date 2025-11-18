@@ -72,7 +72,8 @@ class CommentsBottomSheet extends StatefulWidget {
   final int itemId;
   final int currentUserId;
   final int lentaId; // ID из таблицы lenta для обновления счетчика
-  final VoidCallback? onCommentAdded; // Callback после успешного добавления комментария
+  final VoidCallback?
+  onCommentAdded; // Callback после успешного добавления комментария
 
   const CommentsBottomSheet({
     super.key,
@@ -226,12 +227,12 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         await _loadComments(refresh: true);
       }
       _scrollToTop();
-      
+
       // ────────────────────────────────────────────────────────────────
       // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: вызываем callback после успешного добавления
       // ────────────────────────────────────────────────────────────────
       widget.onCommentAdded?.call();
-      
+
       // НИЧЕГО не чистим здесь — уже очищено в кнопке
     } catch (e) {
       bool refreshOk = false;
@@ -261,7 +262,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   @override
   Widget build(BuildContext context) {
     // Верстка как в твоем примере: белая карточка, радиус 20, maxHeight = 60% экрана.
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 SafeArea(top: false): позволяет bottom sheet перекрывать нижнее навигационное меню
+    // ────────────────────────────────────────────────────────────────
     return SafeArea(
+      top: false,
       child: AnimatedPadding(
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
@@ -283,22 +288,56 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
             onTap: () => FocusScope.of(context).unfocus(),
             behavior: HitTestBehavior.translucent,
             child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Список комментариев (Flexible как в образце)
-              Flexible(child: _buildBody()),
-              // Разделитель бледно-серого цвета
-              const Divider(height: 1, color: AppColors.border),
-              // Поле ввода — как в примере
-              _ComposerBar(
-                key: ValueKey('composerBar_$_composerReset'), // 👈 ключ бара
-                textFieldKey: ValueKey('composerTF_$_composerReset'),
-                controller: _textCtrl,
-                focusNode: _composerFocus,
-                sending: _sending,
-                onSend: _sendComment,
-              ),
-            ],
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ──── Ручка для перетаскивания ────
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 10, top: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                  ),
+                ),
+
+                // ──── Заголовок ────
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(
+                    child: Text('Комментарии', style: AppTextStyles.h17w6),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // ──── Разделительная линия ────
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: AppColors.border,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Список комментариев (Flexible как в образце)
+                Flexible(child: _buildBody()),
+                // Разделитель бледно-серого цвета
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: Divider(height: 1, color: AppColors.border),
+                ),
+                // Поле ввода — как в примере
+                _ComposerBar(
+                  key: ValueKey('composerBar_$_composerReset'), // 👈 ключ бара
+                  textFieldKey: ValueKey('composerTF_$_composerReset'),
+                  controller: _textCtrl,
+                  focusNode: _composerFocus,
+                  sending: _sending,
+                  onSend: _sendComment,
+                ),
+              ],
             ),
           ),
         ),
@@ -352,21 +391,27 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                   )
                 : null,
           ),
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  c.userName,
-                  style: AppTextStyles.h14w4,
-                  overflow: TextOverflow.ellipsis,
+          title: Transform.translate(
+            offset: const Offset(0, -4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    c.userName,
+                    style: AppTextStyles.h14w6.copyWith(letterSpacing: 0),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              Text('· $humanDate', style: AppTextStyles.h12w4Ter),
-            ],
+                const SizedBox(width: 6),
+                Text('· $humanDate', style: AppTextStyles.h12w4Ter),
+              ],
+            ),
           ),
-          subtitle: Text(c.text, style: AppTextStyles.h13w5),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 0),
+            child: Text(c.text, style: AppTextStyles.h13w4),
+          ),
         );
       },
     );

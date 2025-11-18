@@ -15,6 +15,7 @@ class AppTextStyles {
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h16w6
 
@@ -23,6 +24,7 @@ class AppTextStyles {
     fontSize: 15,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h15w6
 
@@ -31,6 +33,7 @@ class AppTextStyles {
     fontSize: 15,
     fontWeight: FontWeight.w500,
     color: AppColors.textPrimary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h15w5
 
@@ -39,6 +42,7 @@ class AppTextStyles {
     fontSize: 15,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h15w4
 
@@ -47,6 +51,7 @@ class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h14w6
 
@@ -55,6 +60,7 @@ class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w500,
     color: AppColors.textPrimary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h14w5
 
@@ -63,6 +69,7 @@ class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h14w4
 
@@ -71,6 +78,7 @@ class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h14w4Sec
 
@@ -79,6 +87,7 @@ class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.textTertiary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h14w4Tert
 
@@ -87,6 +96,7 @@ class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.textPlaceholder,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h14w4Place
 
@@ -95,6 +105,7 @@ class AppTextStyles {
     fontSize: 13,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h13w6
 
@@ -103,6 +114,7 @@ class AppTextStyles {
     fontSize: 13,
     fontWeight: FontWeight.w500,
     color: AppColors.textPrimary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h13w5
 
@@ -111,6 +123,7 @@ class AppTextStyles {
     fontSize: 13,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
+    letterSpacing: 0,
   );
 
   static const TextStyle h13w4Sec = TextStyle(
@@ -118,6 +131,7 @@ class AppTextStyles {
     fontSize: 13,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h13w4Sec
 
@@ -126,6 +140,7 @@ class AppTextStyles {
     fontSize: 12,
     fontWeight: FontWeight.w500,
     color: AppColors.textPrimary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h12w5
 
@@ -134,6 +149,7 @@ class AppTextStyles {
     fontSize: 12,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h12w4
 
@@ -142,6 +158,7 @@ class AppTextStyles {
     fontSize: 12,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h12w4Sec
 
@@ -150,6 +167,7 @@ class AppTextStyles {
     fontSize: 12,
     fontWeight: FontWeight.w400,
     color: AppColors.textTertiary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h12w4Ter
 
@@ -158,6 +176,7 @@ class AppTextStyles {
     fontSize: 11,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h11w6
 
@@ -166,6 +185,7 @@ class AppTextStyles {
     fontSize: 11,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h11w4Sec
 
@@ -174,6 +194,7 @@ class AppTextStyles {
     fontSize: 11,
     fontWeight: FontWeight.w400,
     color: AppColors.textTertiary,
+    letterSpacing: 0,
   );
   // style: AppTextStyles.h11w4Ter
 }
