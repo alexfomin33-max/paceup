@@ -322,7 +322,6 @@ class _ChatScreenState extends State<ChatScreen> {
                           builder: (context) {
                             final dpr = MediaQuery.of(context).devicePixelRatio;
                             final w = (44 * dpr).round();
-                            final h = (44 * dpr).round();
                             final url = _getAvatarUrl(
                               chat.userAvatar,
                               chat.userId,
@@ -337,9 +336,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               fit: BoxFit.cover,
                               fadeInDuration: const Duration(milliseconds: 120),
                               memCacheWidth: w,
-                              memCacheHeight: h,
                               maxWidthDiskCache: w,
-                              maxHeightDiskCache: h,
                               errorWidget: (_, __, ___) {
                                 return Image.asset(
                                   'assets/${chat.userAvatar}',

@@ -352,7 +352,6 @@ class _ClubLogoImage extends StatelessWidget {
     // Загружаем логотип из сети с кэшированием
     final dpr = MediaQuery.of(context).devicePixelRatio;
     final targetW = (100 * dpr).round();
-    final targetH = (100 * dpr).round();
 
     return CachedNetworkImage(
       imageUrl: logoUrl!,
@@ -361,9 +360,7 @@ class _ClubLogoImage extends StatelessWidget {
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: targetW,
-      memCacheHeight: targetH,
       maxWidthDiskCache: targetW,
-      maxHeightDiskCache: targetH,
       errorWidget: (_, __, ___) => Container(
         color: AppColors.skeletonBase,
         alignment: Alignment.center,

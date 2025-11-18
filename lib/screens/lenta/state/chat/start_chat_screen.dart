@@ -338,7 +338,6 @@ class _RowTile extends StatelessWidget {
                 builder: (context) {
                   final dpr = MediaQuery.of(context).devicePixelRatio;
                   final w = (44 * dpr).round();
-                  final h = (44 * dpr).round();
                   return CachedNetworkImage(
                     imageUrl: avatarUrl,
                     width: 44,
@@ -346,9 +345,7 @@ class _RowTile extends StatelessWidget {
                     fit: BoxFit.cover,
                     fadeInDuration: const Duration(milliseconds: 120),
                     memCacheWidth: w,
-                    memCacheHeight: h,
                     maxWidthDiskCache: w,
-                    maxHeightDiskCache: h,
                     errorWidget: (_, __, ___) {
                       return Container(
                         width: 44,

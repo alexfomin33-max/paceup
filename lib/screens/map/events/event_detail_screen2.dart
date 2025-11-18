@@ -656,7 +656,6 @@ class _HeaderLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final dpr = MediaQuery.of(context).devicePixelRatio;
     final w = (100 * dpr).round();
-    final h = (100 * dpr).round();
     return CachedNetworkImage(
       imageUrl: url,
       width: 100,
@@ -664,9 +663,7 @@ class _HeaderLogo extends StatelessWidget {
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
-      memCacheHeight: h,
       maxWidthDiskCache: w,
-      maxHeightDiskCache: h,
       errorWidget: (_, __, ___) => Container(
         width: 100,
         height: 100,
@@ -686,7 +683,6 @@ class _Avatar40 extends StatelessWidget {
   Widget build(BuildContext context) {
     final dpr = MediaQuery.of(context).devicePixelRatio;
     final w = (40 * dpr).round();
-    final h = (40 * dpr).round();
     return CachedNetworkImage(
       imageUrl: url,
       width: 40,
@@ -694,9 +690,7 @@ class _Avatar40 extends StatelessWidget {
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
-      memCacheHeight: h,
       maxWidthDiskCache: w,
-      maxHeightDiskCache: h,
       errorWidget: (_, __, ___) => Container(
         width: 40,
         height: 40,
@@ -730,9 +724,7 @@ class _SquarePhoto extends StatelessWidget {
                 fit: BoxFit.cover,
                 fadeInDuration: const Duration(milliseconds: 120),
                 memCacheWidth: target,
-                memCacheHeight: target,
                 maxWidthDiskCache: target,
-                maxHeightDiskCache: target,
                 errorWidget: (_, __, ___) => Container(
                   color: AppColors.border,
                   child: const Icon(Icons.image, size: 48),

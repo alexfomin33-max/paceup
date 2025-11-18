@@ -1334,9 +1334,7 @@ class _MediaTile extends StatelessWidget {
                       fit: BoxFit.cover,
                       fadeInDuration: const Duration(milliseconds: 120),
                       memCacheWidth: side,
-                      memCacheHeight: side,
                       maxWidthDiskCache: side,
-                      maxHeightDiskCache: side,
                       errorWidget: (_, __, ___) => Container(
                         width: width,
                         height: 70,

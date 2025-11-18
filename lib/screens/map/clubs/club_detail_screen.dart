@@ -700,7 +700,6 @@ class _HeaderLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final dpr = MediaQuery.of(context).devicePixelRatio;
     final w = (64 * dpr).round();
-    final h = (64 * dpr).round();
     return CachedNetworkImage(
       imageUrl: url,
       width: 64,
@@ -708,9 +707,7 @@ class _HeaderLogo extends StatelessWidget {
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
-      memCacheHeight: h,
       maxWidthDiskCache: w,
-      maxHeightDiskCache: h,
       errorWidget: (_, __, ___) => Container(
         width: 64,
         height: 64,

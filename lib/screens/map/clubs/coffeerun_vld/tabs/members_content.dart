@@ -7,10 +7,7 @@ import '../../../../../service/api_service.dart';
 /// ──────────────────────── Контент участников клуба из API с пагинацией ────────────────────────
 class CoffeeRunVldMembersContent extends StatefulWidget {
   final int clubId;
-  const CoffeeRunVldMembersContent({
-    super.key,
-    required this.clubId,
-  });
+  const CoffeeRunVldMembersContent({super.key, required this.clubId});
 
   @override
   State<CoffeeRunVldMembersContent> createState() =>
@@ -73,9 +70,7 @@ class _CoffeeRunVldMembersContentState
         final hasMore = data['has_more'] as bool? ?? false;
 
         setState(() {
-          _members.addAll(
-            members.map((m) => m as Map<String, dynamic>),
-          );
+          _members.addAll(members.map((m) => m as Map<String, dynamic>));
           _hasMore = hasMore;
           _currentPage++;
           _loading = false;
@@ -112,6 +107,7 @@ class _CoffeeRunVldMembersContentState
       controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       shrinkWrap: true,
+      padding: EdgeInsets.zero,
       itemCount: _members.length + (_loading ? 1 : 0),
       itemBuilder: (context, index) {
         if (index >= _members.length) {
@@ -139,10 +135,7 @@ class _CoffeeRunVldMembersContentState
                     child: Text(
                       rank.toString(),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 13,
-                      ),
+                      style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -199,7 +192,7 @@ class _CoffeeRunVldMembersContentState
                     icon: Icon(
                       role != null
                           ? CupertinoIcons
-                              .person_crop_circle_fill_badge_checkmark
+                                .person_crop_circle_fill_badge_checkmark
                           : CupertinoIcons.person_crop_circle_badge_plus,
                       size: 24,
                       color: role != null
@@ -211,11 +204,7 @@ class _CoffeeRunVldMembersContentState
               ),
             ),
             if (index < _members.length - 1)
-              const Divider(
-                height: 1,
-                thickness: 0.5,
-                color: AppColors.border,
-              ),
+              const Divider(height: 1, thickness: 0.5, color: AppColors.border),
           ],
         );
       },
@@ -232,7 +221,6 @@ class _Avatar36 extends StatelessWidget {
   Widget build(BuildContext context) {
     final dpr = MediaQuery.of(context).devicePixelRatio;
     final w = (36 * dpr).round();
-    final h = (36 * dpr).round();
     return CachedNetworkImage(
       imageUrl: url,
       width: 36,
@@ -240,9 +228,7 @@ class _Avatar36 extends StatelessWidget {
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
-      memCacheHeight: h,
       maxWidthDiskCache: w,
-      maxHeightDiskCache: h,
       errorWidget: (_, __, ___) => Container(
         width: 36,
         height: 36,

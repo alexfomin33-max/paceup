@@ -514,7 +514,6 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
                   builder: (context) {
                     final dpr = MediaQuery.of(context).devicePixelRatio;
                     final w = (36 * dpr).round();
-                    final h = (36 * dpr).round();
                     final url = _getAvatarUrl(widget.userAvatar);
                     return CachedNetworkImage(
                       imageUrl: url,
@@ -523,9 +522,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
                       fit: BoxFit.cover,
                       fadeInDuration: const Duration(milliseconds: 120),
                       memCacheWidth: w,
-                      memCacheHeight: h,
                       maxWidthDiskCache: w,
-                      maxHeightDiskCache: h,
                       errorWidget: (_, __, ___) {
                         return Image.asset(
                           'assets/${widget.userAvatar}',
@@ -708,7 +705,6 @@ class _BubbleLeft extends StatelessWidget {
               builder: (context) {
                 final dpr = MediaQuery.of(context).devicePixelRatio;
                 final w = (28 * dpr).round();
-                final h = (28 * dpr).round();
                 return CachedNetworkImage(
                   imageUrl: avatarUrl,
                   width: 28,
@@ -716,9 +712,7 @@ class _BubbleLeft extends StatelessWidget {
                   fit: BoxFit.cover,
                   fadeInDuration: const Duration(milliseconds: 120),
                   memCacheWidth: w,
-                  memCacheHeight: h,
                   maxWidthDiskCache: w,
-                  maxHeightDiskCache: h,
                   errorWidget: (_, __, ___) => Container(
                     width: 28,
                     height: 28,

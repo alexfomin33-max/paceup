@@ -27,7 +27,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   bool _isParticipant = false; // Является ли текущий пользователь участником
   bool _isTogglingParticipation = false; // Флаг процесса присоединения/выхода
   bool _isBookmarked = false; // Находится ли событие в закладках
-  bool _isTogglingBookmark = false; // Флаг процесса добавления/удаления закладки
+  bool _isTogglingBookmark =
+      false; // Флаг процесса добавления/удаления закладки
   final ScrollController _scrollController =
       ScrollController(); // Контроллер для отслеживания прокрутки
   final GlobalKey<_EventMembersSliverState> _membersSliverKey =
@@ -221,10 +222,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         // Обновляем данные события
         if (_eventData != null) {
           setState(() {
-            _eventData = {
-              ..._eventData!,
-              'is_bookmarked': isBookmarked,
-            };
+            _eventData = {..._eventData!, 'is_bookmarked': isBookmarked};
           });
         }
       } else {
@@ -234,10 +232,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
           );
         }
       }
@@ -742,11 +737,7 @@ class _CircleIconBtn extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(
-            icon,
-            size: 18,
-            color: color ?? AppColors.surface,
-          ),
+          child: Icon(icon, size: 18, color: color ?? AppColors.surface),
         ),
       ),
     );
@@ -784,7 +775,6 @@ class _HeaderLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final dpr = MediaQuery.of(context).devicePixelRatio;
     final w = (100 * dpr).round();
-    final h = (100 * dpr).round();
     return CachedNetworkImage(
       imageUrl: url,
       width: 100,
@@ -792,9 +782,7 @@ class _HeaderLogo extends StatelessWidget {
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
-      memCacheHeight: h,
       maxWidthDiskCache: w,
-      maxHeightDiskCache: h,
       errorWidget: (_, __, ___) => Container(
         width: 100,
         height: 100,
@@ -814,7 +802,6 @@ class _Avatar40 extends StatelessWidget {
   Widget build(BuildContext context) {
     final dpr = MediaQuery.of(context).devicePixelRatio;
     final w = (40 * dpr).round();
-    final h = (40 * dpr).round();
     return CachedNetworkImage(
       imageUrl: url,
       width: 40,
@@ -822,9 +809,7 @@ class _Avatar40 extends StatelessWidget {
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
-      memCacheHeight: h,
       maxWidthDiskCache: w,
-      maxHeightDiskCache: h,
       errorWidget: (_, __, ___) => Container(
         width: 40,
         height: 40,
@@ -858,9 +843,7 @@ class _SquarePhoto extends StatelessWidget {
                 fit: BoxFit.cover,
                 fadeInDuration: const Duration(milliseconds: 120),
                 memCacheWidth: target,
-                memCacheHeight: target,
                 maxWidthDiskCache: target,
-                maxHeightDiskCache: target,
                 errorWidget: (_, __, ___) => Container(
                   color: AppColors.border,
                   child: const Icon(Icons.image, size: 48),
