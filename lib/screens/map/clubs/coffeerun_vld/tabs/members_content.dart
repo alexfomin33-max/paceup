@@ -122,37 +122,27 @@ class _CoffeeRunVldMembersContentState
         final name = m['name'] as String? ?? 'Пользователь';
         final avatarUrl = m['avatar_url'] as String? ?? '';
         final role = m['role'] as String?;
-        final rank = index + 1; // Номер позиции (начиная с 1)
 
         return Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
                 children: [
-                  SizedBox(
-                    width: 20,
-                    child: Text(
-                      rank.toString(),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
                   ClipOval(
                     child: avatarUrl.isNotEmpty
-                        ? _Avatar36(url: avatarUrl)
+                        ? _Avatar40(url: avatarUrl)
                         : Container(
-                            width: 36,
-                            height: 36,
+                            width: 40,
+                            height: 40,
                             decoration: const BoxDecoration(
                               color: AppColors.border,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.person, size: 20),
+                            child: const Icon(Icons.person, size: 24),
                           ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,7 +152,7 @@ class _CoffeeRunVldMembersContentState
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 13,
+                            fontSize: 14,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
@@ -195,9 +185,10 @@ class _CoffeeRunVldMembersContentState
                                 .person_crop_circle_fill_badge_checkmark
                           : CupertinoIcons.person_crop_circle_badge_plus,
                       size: 24,
-                      color: role != null
-                          ? AppColors.iconTertiary
-                          : AppColors.brandPrimary,
+                    ),
+                    style: IconButton.styleFrom(
+                      foregroundColor: AppColors.brandPrimary,
+                      disabledForegroundColor: AppColors.disabledText,
                     ),
                   ),
                 ],
@@ -212,28 +203,28 @@ class _CoffeeRunVldMembersContentState
   }
 }
 
-/// ──────────────────────── Аватар 36×36 с кэшем ────────────────────────
-class _Avatar36 extends StatelessWidget {
+/// ──────────────────────── Аватар 40×40 с кэшем ────────────────────────
+class _Avatar40 extends StatelessWidget {
   final String url;
-  const _Avatar36({required this.url});
+  const _Avatar40({required this.url});
 
   @override
   Widget build(BuildContext context) {
     final dpr = MediaQuery.of(context).devicePixelRatio;
-    final w = (36 * dpr).round();
+    final w = (40 * dpr).round();
     return CachedNetworkImage(
       imageUrl: url,
-      width: 36,
-      height: 36,
+      width: 40,
+      height: 40,
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
       errorWidget: (_, __, ___) => Container(
-        width: 36,
-        height: 36,
+        width: 40,
+        height: 40,
         color: AppColors.border,
-        child: const Icon(Icons.person, size: 20),
+        child: const Icon(Icons.person, size: 24),
       ),
     );
   }
