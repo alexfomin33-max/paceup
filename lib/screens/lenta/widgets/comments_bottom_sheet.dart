@@ -531,77 +531,87 @@ class _ComposerBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              key: textFieldKey,
-              controller: controller,
-              focusNode: focusNode,
-              minLines: 1,
-              maxLines: 5,
-              textInputAction: TextInputAction.newline,
-              keyboardType: TextInputType.multiline,
-              decoration: InputDecoration(
-                hintText: "Написать комментарий...",
-                hintStyle: AppTextStyles.h14w4Place,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: AppColors.background,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: sending
-                ? null
-                : () async {
-                    // 1) аккуратно забираем текст
-                    controller.clearComposing();
-                    final text = controller.text.trim();
-                    if (text.isEmpty) return;
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 Отслеживаем изменения текста для активации/деактивации кнопки
+    // ────────────────────────────────────────────────────────────────
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, _) {
+        final hasText = value.text.trim().isNotEmpty;
+        final isEnabled = hasText && !sending;
 
-                    // 2) СРАЗУ очищаем поле (до сети)
-                    controller.value = const TextEditingValue(
-                      text: '',
-                      selection: TextSelection.collapsed(offset: 0),
-                      composing: TextRange.empty,
-                    );
-
-                    // 3) Можно оставить фокус в поле
-                    focusNode.requestFocus();
-
-                    // 4) Отправляем наверх уже «снятый» текст
-                    await onSend(text);
-                  },
-            style: ElevatedButton.styleFrom(
-              shape: const CircleBorder(),
-              backgroundColor: AppColors.surface,
-              padding: const EdgeInsets.all(10),
-              elevation: 0,
-            ),
-            child: sending
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CupertinoActivityIndicator(),
-                  )
-                : const Icon(
-                    Icons.send,
-                    size: 22,
-                    color: AppColors.brandPrimary,
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  key: textFieldKey,
+                  controller: controller,
+                  focusNode: focusNode,
+                  minLines: 1,
+                  maxLines: 5,
+                  textInputAction: TextInputAction.newline,
+                  keyboardType: TextInputType.multiline,
+                  decoration: InputDecoration(
+                    hintText: "Написать комментарий...",
+                    hintStyle: AppTextStyles.h14w4Place,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.xxl),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.softBg,
                   ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                onPressed: isEnabled
+                    ? () async {
+                        // 1) аккуратно забираем текст
+                        controller.clearComposing();
+                        final text = controller.text.trim();
+                        if (text.isEmpty) return;
+
+                        // 2) СРАЗУ очищаем поле (до сети)
+                        controller.value = const TextEditingValue(
+                          text: '',
+                          selection: TextSelection.collapsed(offset: 0),
+                          composing: TextRange.empty,
+                        );
+
+                        // 3) Можно оставить фокус в поле
+                        focusNode.requestFocus();
+
+                        // 4) Отправляем наверх уже «снятый» текст
+                        await onSend(text);
+                      }
+                    : null,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: sending
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CupertinoActivityIndicator(),
+                      )
+                    : Icon(
+                        Icons.send,
+                        size: 22,
+                        color: isEnabled
+                            ? AppColors.brandPrimary
+                            : AppColors.textPlaceholder,
+                      ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

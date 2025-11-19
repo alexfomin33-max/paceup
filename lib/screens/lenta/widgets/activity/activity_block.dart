@@ -38,7 +38,7 @@ class ActivityBlock extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = activity.stats;
-    
+
     // ────────────────────────────────────────────────────────────────
     // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: получаем актуальный Activity из провайдера
     // ────────────────────────────────────────────────────────────────
@@ -91,11 +91,17 @@ class ActivityBlock extends ConsumerWidget {
             child: EquipmentChip(items: updatedActivity.equipments),
           ),
 
-          const SizedBox(height: 8),
+          // ────────────────────────────────────────────────────────────────
+          // 📏 ДИНАМИЧЕСКОЕ РАССТОЯНИЕ: уменьшаем, если нет экипировки
+          // ────────────────────────────────────────────────────────────────
+          SizedBox(height: updatedActivity.equipments.isNotEmpty ? 8 : 0),
 
           // ───────────────── МАРШРУТ ─────────────────
           RouteCard(
-            points: updatedActivity.points.map((c) => LatLng(c.lat, c.lng)).toList(),
+            points: updatedActivity.points
+                .map((c) => LatLng(c.lat, c.lng))
+                .toList(),
+            height: 240, // Увеличена высота карты для лучшей видимости маршрута
           ),
 
           const SizedBox(height: 12),
@@ -127,9 +133,10 @@ class ActivityBlock extends ConsumerWidget {
                     final lentaState = ref.read(lentaProvider(currentUserId));
                     final activityItem = lentaState.items.firstWhere(
                       (a) => a.lentaId == updatedActivity.lentaId,
-                      orElse: () => updatedActivity, // fallback на обновленную activity
+                      orElse: () =>
+                          updatedActivity, // fallback на обновленную activity
                     );
-                    
+
                     return CommentsBottomSheet(
                       itemType: 'activity',
                       itemId: activityItem.id,
@@ -145,13 +152,13 @@ class ActivityBlock extends ConsumerWidget {
                           (a) => a.lentaId == activityItem.lentaId,
                           orElse: () => activityItem, // fallback
                         );
-                        
-                        ref.read(
-                          lentaProvider(currentUserId).notifier,
-                        ).updateComments(
-                          activityItem.lentaId,
-                          latestActivity.comments + 1,
-                        );
+
+                        ref
+                            .read(lentaProvider(currentUserId).notifier)
+                            .updateComments(
+                              activityItem.lentaId,
+                              latestActivity.comments + 1,
+                            );
                       },
                     );
                   },

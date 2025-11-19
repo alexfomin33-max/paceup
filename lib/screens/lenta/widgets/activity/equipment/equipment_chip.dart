@@ -26,12 +26,24 @@ class _EquipmentChipState extends State<EquipmentChip> {
 
   @override
   Widget build(BuildContext context) {
-    final al.Equipment? e = widget.items.isNotEmpty ? widget.items.first : null;
-    final String name = (e?.name ?? '').trim().isNotEmpty
-        ? e!.name
-        : "Asics Jolt 3 Wide 'Dive Blue'";
-    final int mileage = e?.mileage ?? 582;
+    // ────────────────────────────────────────────────────────────────
+    // 📦 ИСПОЛЬЗОВАНИЕ ДАННЫХ ИЗ БД: убираем жестко вбитые значения
+    // ────────────────────────────────────────────────────────────────
+    // Если нет данных об экипировке, не показываем чип
+    if (widget.items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final al.Equipment? e = widget.items.first;
+    // Используем данные из API, если они есть
+    final String name = (e?.name ?? '').trim();
+    final int mileage = e?.mileage ?? 0;
     final String img = e?.img ?? '';
+
+    // Если имя пустое, не показываем чип
+    if (name.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Padding(
       // как было в исходном Equipment: внутренний паддинг 10
@@ -67,22 +79,45 @@ class _EquipmentChipState extends State<EquipmentChip> {
                           height: 50,
                           color: AppColors.background,
                         ),
-                            errorWidget: (context, url, error) => Image.asset(
-                              'assets/Asics.png',
+                            errorWidget: (context, url, error) => Container(
                               width: 50,
                               height: 50,
+                              decoration: BoxDecoration(
+                                color: AppColors.background,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.sportscourt,
+                                size: 24,
+                                color: AppColors.iconSecondary,
+                              ),
                             ),
                           );
                         },
                       )
-                    : Image.asset('assets/Asics.png', width: 50, height: 50),
+                    : Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.sportscourt,
+                          size: 24,
+                          color: AppColors.iconSecondary,
+                        ),
+                      ),
               ),
             ),
             // текст
+            // ────────────────────────────────────────────────────────────────
+            // 📏 ДИНАМИЧЕСКАЯ ПРАВАЯ ГРАНИЦА: если кнопки нет, текст занимает больше места
+            // ────────────────────────────────────────────────────────────────
             Positioned(
               left: 60,
               top: 7,
-              right: 60,
+              right: widget.items.length > 1 ? 60 : 10, // если кнопки нет, больше места для текста
               child: Text.rich(
                 TextSpan(
                   children: [
@@ -108,31 +143,36 @@ class _EquipmentChipState extends State<EquipmentChip> {
             ),
 
             // кнопка вызова попапа (якорь)
-            Positioned(
-              right: 8,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: GestureDetector(
-                  onTap: () =>
-                      EquipmentPopup.showAnchored(context, anchorKey: _menuKey),
-                  child: Container(
-                    key: _menuKey, // ← важный ключ для позиционирования попапа
-                    width: 28,
-                    height: 28,
-                    decoration: const BoxDecoration(
-                      color: AppColors.surface,
-                      shape: BoxShape.circle,
+            // Показываем только если есть несколько элементов экипировки
+            if (widget.items.length > 1)
+              Positioned(
+                right: 8,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () => EquipmentPopup.showAnchored(
+                      context,
+                      anchorKey: _menuKey,
+                      items: widget.items,
                     ),
-                    child: const Icon(
-                      CupertinoIcons.ellipsis,
-                      size: 16,
-                      color: AppColors.iconPrimary,
+                    child: Container(
+                      key: _menuKey, // ← важный ключ для позиционирования попапа
+                      width: 28,
+                      height: 28,
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.ellipsis,
+                        size: 16,
+                        color: AppColors.iconPrimary,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),

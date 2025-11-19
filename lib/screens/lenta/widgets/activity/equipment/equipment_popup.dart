@@ -1,6 +1,8 @@
 // lib/screens/lenta/widgets/activity/equipment/equipment_popup.dart
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../theme/app_theme.dart';
+import '../../../../../models/activity_lenta.dart' as al;
 
 /// Попап экипировки, якорящийся к кнопке справа от чипа.
 /// Поведение и размеры совпадают с исходным вариантом:
@@ -10,9 +12,11 @@ import '../../../../../theme/app_theme.dart';
 /// - Горизонталь: прижимаем правым краем к кнопке; не выходим за границы экрана.
 class EquipmentPopup {
   /// Показать попап, привязанный к виджету с [anchorKey].
+  /// Использует реальные данные из [items] вместо жестко вбитых значений.
   static void showAnchored(
     BuildContext context, {
     required GlobalKey anchorKey,
+    required List<al.Equipment> items,
   }) {
     final overlay = Overlay.of(context, rootOverlay: true);
     final anchorContext = anchorKey.currentContext;
@@ -26,7 +30,13 @@ class EquipmentPopup {
     final screenSize = MediaQuery.of(context).size;
 
     const double popupW = 288;
-    const double popupH = 114;
+    // ────────────────────────────────────────────────────────────────
+    // 📏 ДИНАМИЧЕСКАЯ ВЫСОТА: вычисляем на основе количества элементов
+    // ────────────────────────────────────────────────────────────────
+    // Каждый элемент: 56px, разделители: 1px между элементами
+    // Минимум 1 элемент (56px), максимум ограничиваем разумным значением
+    final itemCount = items.length.clamp(1, 5); // максимум 5 элементов
+    final double popupH = (itemCount * 56.0) + ((itemCount - 1) * 1.0);
 
     // Горизонталь: выравниваем правым краем по кнопке, но в пределах экрана.
     double left = offset.dx + size.width - popupW;
@@ -51,6 +61,7 @@ class EquipmentPopup {
         width: popupW,
         height: popupH,
         onDismiss: close,
+        items: items,
       ),
     );
 
@@ -64,6 +75,7 @@ class _AnimatedPopup extends StatefulWidget {
   final double width;
   final double height;
   final VoidCallback onDismiss;
+  final List<al.Equipment> items;
 
   const _AnimatedPopup({
     required this.left,
@@ -71,6 +83,7 @@ class _AnimatedPopup extends StatefulWidget {
     required this.width,
     required this.height,
     required this.onDismiss,
+    required this.items,
   });
 
   @override
@@ -145,7 +158,7 @@ class _AnimatedPopupState extends State<_AnimatedPopup>
                     ],
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: const _PopupContent(),
+                  child: _PopupContent(items: widget.items),
                 ),
               ),
             ),
@@ -156,44 +169,63 @@ class _AnimatedPopupState extends State<_AnimatedPopup>
   }
 }
 
-/// Контент попапа: 2 строки обуви по 56px и разделитель 1px.
+/// Контент попапа: строки экипировки по 56px и разделители 1px.
+/// ────────────────────────────────────────────────────────────────
+/// 📦 ИСПОЛЬЗОВАНИЕ ДАННЫХ ИЗ БД: используем реальные данные из items
+/// ────────────────────────────────────────────────────────────────
 class _PopupContent extends StatelessWidget {
-  const _PopupContent();
+  final List<al.Equipment> items;
+
+  const _PopupContent({required this.items});
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      children: [
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // 📏 ОГРАНИЧЕНИЕ КОЛИЧЕСТВА: показываем максимум 5 элементов
+    // ────────────────────────────────────────────────────────────────
+    final displayItems = items.take(5).toList();
+    final List<Widget> children = [];
+    for (int i = 0; i < displayItems.length; i++) {
+      if (i > 0) {
+        children.add(
+          const Divider(
+            height: 1,
+            thickness: 0.5,
+            color: AppColors.divider,
+            indent: 8,
+            endIndent: 8,
+          ),
+        );
+      }
+      final item = displayItems[i];
+      children.add(
         _ShoeRow(
-          imageAsset: 'assets/Hoka.png',
-          name: 'Hoka One One Bondi 8',
-          mileageKm: 836,
+          imageUrl: item.img,
+          name: item.name,
+          mileageKm: item.mileage,
         ),
-        Divider(
-          height: 1,
-          thickness: 0.5,
-          color: AppColors.divider,
-          indent: 8,
-          endIndent: 8,
-        ),
-        _ShoeRow(
-          imageAsset: 'assets/Anta.png',
-          name: 'Anta M C202',
-          mileageKm: 1204,
-        ),
-      ],
-    );
+      );
+    }
+
+    return Column(children: children);
   }
 }
 
 /// Одна строка 56px: слева 80px под картинку, справа — текстовый блок.
+/// ────────────────────────────────────────────────────────────────
+/// 📦 ИСПОЛЬЗОВАНИЕ ДАННЫХ ИЗ БД: используем imageUrl из API
+/// ────────────────────────────────────────────────────────────────
 class _ShoeRow extends StatelessWidget {
-  final String imageAsset;
+  final String imageUrl;
   final String name;
   final int mileageKm;
 
   const _ShoeRow({
-    required this.imageAsset,
+    required this.imageUrl,
     required this.name,
     required this.mileageKm,
   });
@@ -205,13 +237,49 @@ class _ShoeRow extends StatelessWidget {
       width: double.infinity,
       child: Row(
         children: [
-          // Слева 80×56
+          // Слева 80×56 - изображение из БД или заглушка
           Container(
             width: 80,
             height: 56,
             color: AppColors.surface,
             padding: const EdgeInsets.all(8),
-            child: Image.asset(imageAsset, fit: BoxFit.fill),
+            child: imageUrl.isNotEmpty
+                ? Builder(
+                    builder: (context) {
+                      final dpr = MediaQuery.of(context).devicePixelRatio;
+                      final w = (64 * dpr).round();
+                      return CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        fit: BoxFit.contain,
+                        memCacheWidth: w,
+                        maxWidthDiskCache: w,
+                        placeholder: (context, url) => Container(
+                          color: AppColors.background,
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: AppColors.background,
+                          child: const Icon(
+                            Icons.sports_soccer,
+                            size: 32,
+                            color: AppColors.iconSecondary,
+                          ),
+                        ),
+                      );
+                    },
+                  )
+                : Container(
+                    color: AppColors.background,
+                    child: const Icon(
+                      Icons.sports_soccer,
+                      size: 32,
+                      color: AppColors.iconSecondary,
+                    ),
+                  ),
           ),
           // Справа 208×56
           Expanded(
