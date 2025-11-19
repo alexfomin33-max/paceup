@@ -232,12 +232,16 @@ class _ChatScreenState extends State<ChatScreen> {
                   await _loadInitial();
                 }
               },
-              child: const Padding(
-                padding: EdgeInsets.only(right: 12),
-                child: Icon(
-                  CupertinoIcons.add_circled,
-                  size: 20,
-                  color: AppColors.iconPrimary,
+              child: const SizedBox(
+                width: 48,
+                height: 48,
+                child: Padding(
+                  padding: EdgeInsets.only(right: 6),
+                  child: Icon(
+                    CupertinoIcons.add_circled,
+                    size: 20,
+                    color: AppColors.iconPrimary,
+                  ),
                 ),
               ),
             ),
