@@ -127,6 +127,7 @@ class _SearchPrefsPageState extends State<SearchPrefsPage> {
                 },
                 children: [
                   // Важно: даём ключи, чтобы сохранить состояние при переключении
+                  // query передается как prop, виджет обновится через setState при изменении текста
                   SearchFriendsContent(
                     key: const PageStorageKey('search_friends_page'),
                     query: _controller.text.trim(),
