@@ -5,6 +5,7 @@ import '../sneakers/viewing_sneakers_content.dart'
     show GearViewCard; // теперь публичный класс
 import '../../../../../../../service/api_service.dart';
 import '../../../../../../../service/auth_service.dart';
+import '../../../../../../../utils/equipment_date_format.dart';
 
 /// Модель элемента велосипеда для просмотра
 class _BikeItem {
@@ -129,9 +130,10 @@ class _ViewingBikeContentState extends State<ViewingBikeContent> {
             final workouts =
                 item['workouts'] as int? ?? hardcoded['workouts'] as int;
             final hours = item['hours'] as int? ?? hardcoded['hours'] as int;
-            final sinceDate = item['since'] as String?;
-            final sinceText = sinceDate != null && sinceDate.isNotEmpty
-                ? 'В использовании с $sinceDate'
+            // Получаем дату из базы данных
+            final inUseSinceStr = item['in_use_since'] as String?;
+            final sinceText = inUseSinceStr != null && inUseSinceStr.isNotEmpty
+                ? formatEquipmentDateWithPrefix(inUseSinceStr)
                 : hardcoded['since'] as String;
 
             return _BikeItem(

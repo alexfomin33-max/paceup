@@ -6,6 +6,7 @@ import '../../../../../../../widgets/more_menu_overlay.dart';
 import '../../../../../../../widgets/transparent_route.dart';
 import '../../../../../../../service/api_service.dart';
 import '../../../../../../../service/auth_service.dart';
+import '../../../../../../../utils/equipment_date_format.dart';
 import '../../../editing/editing_equipment_screen.dart';
 
 /// Модель элемента снаряжения для просмотра
@@ -131,9 +132,10 @@ class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
             final workouts =
                 item['workouts'] as int? ?? hardcoded['workouts'] as int;
             final hours = item['hours'] as int? ?? hardcoded['hours'] as int;
-            final sinceDate = item['since'] as String?;
-            final sinceText = sinceDate != null && sinceDate.isNotEmpty
-                ? 'В использовании с $sinceDate'
+            // Получаем дату из базы данных
+            final inUseSinceStr = item['in_use_since'] as String?;
+            final sinceText = inUseSinceStr != null && inUseSinceStr.isNotEmpty
+                ? formatEquipmentDateWithPrefix(inUseSinceStr)
                 : hardcoded['since'] as String;
 
             return _SneakerItem(

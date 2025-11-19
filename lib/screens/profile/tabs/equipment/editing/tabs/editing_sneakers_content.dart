@@ -86,6 +86,16 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
           _modelCtrl.text = data['name'] ?? '';
           _kmCtrl.text = data['dist']?.toString() ?? '0';
           _currentImageUrl = data['image'] as String?;
+          // Загружаем дату из базы
+          final inUseSinceStr = data['in_use_since'] as String?;
+          if (inUseSinceStr != null && inUseSinceStr.isNotEmpty) {
+            try {
+              _inUseFrom = DateTime.parse(inUseSinceStr);
+            } catch (e) {
+              // Если не удалось распарсить, оставляем текущую дату
+              _inUseFrom = DateTime.now();
+            }
+          }
           _isLoadingData = false;
         });
       } else {
@@ -237,6 +247,7 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
         'name': model,
         'brand': brand,
         'dist': km.toString(),
+        'in_use_since': _formatDateForApi(_inUseFrom), // Дата в формате DD.MM.YYYY
       };
 
       // Добавляем изображение, если выбрано новое
@@ -361,6 +372,14 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
     final dd = d.day.toString().padLeft(2, '0');
     final mm = d.month.toString().padLeft(2, '0');
     final yy = d.year.toString();
+    return '$dd.$mm.$yy';
+  }
+
+  /// Форматирует дату для отправки в API (DD.MM.YYYY)
+  String _formatDateForApi(DateTime date) {
+    final dd = date.day.toString().padLeft(2, '0');
+    final mm = date.month.toString().padLeft(2, '0');
+    final yy = date.year.toString();
     return '$dd.$mm.$yy';
   }
 

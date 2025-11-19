@@ -167,6 +167,7 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
         'brand': brand,
         'dist': km.toString(),
         'main': '0', // По умолчанию не на главном экране
+        'in_use_since': _formatDateForApi(_inUseFrom), // Дата в формате DD.MM.YYYY
       };
 
       // Добавляем изображение, если есть
@@ -297,6 +298,14 @@ class _AddingSneakersContentState extends State<AddingSneakersContent> {
     final dd = d.day.toString().padLeft(2, '0');
     final mm = d.month.toString().padLeft(2, '0');
     final yy = d.year.toString();
+    return '$dd.$mm.$yy';
+  }
+
+  /// Форматирует дату для отправки в API (DD.MM.YYYY)
+  String _formatDateForApi(DateTime date) {
+    final dd = date.day.toString().padLeft(2, '0');
+    final mm = date.month.toString().padLeft(2, '0');
+    final yy = date.year.toString();
     return '$dd.$mm.$yy';
   }
 
