@@ -97,23 +97,23 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
     if (_clubData == null) return;
     final dpr = MediaQuery.of(context).devicePixelRatio;
 
-    // Логотип в шапке: 64×64
+    // Логотип в шапке: 80×80
     final logoUrl = _clubData!['logo_url'] as String?;
     if (logoUrl != null && logoUrl.isNotEmpty) {
-      final w = (64 * dpr).round();
-      final h = (64 * dpr).round();
+      final w = (80 * dpr).round();
+      final h = (80 * dpr).round();
       precacheImage(
         CachedNetworkImageProvider(logoUrl, maxWidth: w, maxHeight: h),
         context,
       );
     }
 
-    // Фоновая картинка (cover 160px)
+    // Фоновая картинка (cover 170px)
     final backgroundUrl = _clubData!['background_url'] as String?;
     if (backgroundUrl != null && backgroundUrl.isNotEmpty) {
       final screenW = MediaQuery.of(context).size.width;
       final targetW = (screenW * dpr).round();
-      final targetH = (160 * dpr).round();
+      final targetH = (170 * dpr).round();
       precacheImage(
         CachedNetworkImageProvider(
           backgroundUrl,
@@ -183,7 +183,8 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
         // Обновляем данные клуба (чтобы обновилось количество участников)
         _loadClub();
       } else {
-        final errorMessage = data['message'] as String? ?? 'Ошибка вступления в клуб';
+        final errorMessage =
+            data['message'] as String? ?? 'Ошибка вступления в клуб';
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -261,7 +262,8 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
         // Обновляем данные клуба (чтобы обновилось количество участников)
         _loadClub();
       } else {
-        final errorMessage = data['message'] as String? ?? 'Ошибка выхода из клуба';
+        final errorMessage =
+            data['message'] as String? ?? 'Ошибка выхода из клуба';
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -343,64 +345,102 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
           child: CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // ───────── Cover + overlay-кнопки
+              // ───────── Cover + overlay-кнопки + логотип
               SliverToBoxAdapter(
-                child: Stack(
-                  children: [
-                    // Cover изображение (если есть)
-                    if (backgroundUrl.isNotEmpty)
-                      _BackgroundImage(url: backgroundUrl)
-                    else
-                      Container(
-                        width: double.infinity,
-                        height: 160,
-                        color: AppColors.border,
-                      ),
-                    // Верхние кнопки
-                    SafeArea(
-                      bottom: false,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                child: Container(
+                  color: AppColors
+                      .surface, // Цвет полоски для нижней половины логотипа
+                  padding: const EdgeInsets.only(
+                    bottom: 41,
+                  ), // Место для нижней половины логотипа с обводкой
+                  child: Stack(
+                    clipBehavior: Clip
+                        .none, // Разрешаем отображение элементов за пределами Stack
+                    children: [
+                      // Cover изображение (если есть)
+                      if (backgroundUrl.isNotEmpty)
+                        _BackgroundImage(url: backgroundUrl)
+                      else
+                        Container(
+                          width: double.infinity,
+                          height: 170,
+                          color: AppColors.border,
                         ),
-                        child: Row(
-                          children: [
-                            _CircleIconBtn(
-                              icon: CupertinoIcons.back,
-                              semantic: 'Назад',
-                              onTap: () => Navigator.of(context).maybePop(),
-                            ),
-                            const Spacer(),
-                            if (_canEdit)
+                      // Верхние кнопки
+                      SafeArea(
+                        bottom: false,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            children: [
                               _CircleIconBtn(
-                                icon: CupertinoIcons.pencil,
-                                semantic: 'Редактировать',
-                                onTap: () async {
-                                  // Переходим на экран редактирования клуба
-                                  final result = await Navigator.of(context)
-                                      .push(
-                                        TransparentPageRoute(
-                                          builder: (_) => EditClubScreen(
-                                            clubId: widget.clubId,
-                                          ),
-                                        ),
-                                      );
-                                  // Если редактирование прошло успешно, обновляем данные
-                                  if (result == true && mounted) {
-                                    _loadClub();
-                                  }
-                                  // Если клуб был удалён, возвращаемся назад с результатом
-                                  if (result == 'deleted' && mounted) {
-                                    Navigator.of(context).pop('deleted');
-                                  }
-                                },
+                                icon: CupertinoIcons.back,
+                                semantic: 'Назад',
+                                onTap: () => Navigator.of(context).maybePop(),
                               ),
-                          ],
+                              const Spacer(),
+                              if (_canEdit)
+                                _CircleIconBtn(
+                                  icon: CupertinoIcons.pencil,
+                                  semantic: 'Редактировать',
+                                  onTap: () async {
+                                    // Переходим на экран редактирования клуба
+                                    final result = await Navigator.of(context)
+                                        .push(
+                                          TransparentPageRoute(
+                                            builder: (_) => EditClubScreen(
+                                              clubId: widget.clubId,
+                                            ),
+                                          ),
+                                        );
+                                    // Если редактирование прошло успешно, обновляем данные
+                                    if (result == true && mounted) {
+                                      _loadClub();
+                                    }
+                                    // Если клуб был удалён, возвращаемся назад с результатом
+                                    if (result == 'deleted' && mounted) {
+                                      Navigator.of(context).pop('deleted');
+                                    }
+                                  },
+                                ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      // Логотип наполовину на фоне (позиционирован внизу фона)
+                      Positioned(
+                        left: 12,
+                        bottom:
+                            -41, // Половина логотипа с обводкой (82/2 = 41) выходит за границу фона
+                        child: Container(
+                          width:
+                              82, // 80 + 1*2 (логотип + обводка с двух сторон)
+                          height: 82,
+                          decoration: const BoxDecoration(
+                            color: AppColors.surface,
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(1), // Толщина обводки
+                          child: ClipOval(
+                            child: logoUrl.isNotEmpty
+                                ? _HeaderLogo(url: logoUrl)
+                                : Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.border,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.group, size: 12),
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -413,32 +453,17 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                       bottom: BorderSide(color: AppColors.border, width: 1),
                     ),
                   ),
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                  padding: const EdgeInsets.fromLTRB(
+                    12,
+                    12, // Небольшой отступ от нижней половины логотипа (которая уже в полоске выше)
+                    12,
+                    12,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Лого + имя
-                      Row(
-                        children: [
-                          ClipOval(
-                            child: logoUrl.isNotEmpty
-                                ? _HeaderLogo(url: logoUrl)
-                                : Container(
-                                    width: 64,
-                                    height: 64,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.border,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.group, size: 32),
-                                  ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(name, style: AppTextStyles.h17w6),
-                          ),
-                        ],
-                      ),
+                      // Имя клуба (логотип теперь в Stack выше)
+                      Text(name, style: AppTextStyles.h17w6),
                       const SizedBox(height: 10),
 
                       // Описание
@@ -497,56 +522,56 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                       Align(
                         alignment: Alignment.center,
                         child: ElevatedButton(
-                            onPressed: _isJoining
-                                ? null
-                                : _isMember
-                                    ? _leaveClub
-                                    : _joinClub,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _isMember
-                                  ? AppColors.disabled
-                                  : AppColors.brandPrimary,
-                              foregroundColor: _isMember
-                                  ? AppColors.textSecondary
-                                  : AppColors.surface,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 30,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.xxl,
-                                ),
+                          onPressed: _isJoining
+                              ? null
+                              : _isMember
+                              ? _leaveClub
+                              : _joinClub,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _isMember
+                                ? AppColors.disabled
+                                : AppColors.brandPrimary,
+                            foregroundColor: _isMember
+                                ? AppColors.textSecondary
+                                : AppColors.surface,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 30,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.xxl,
                               ),
                             ),
-                            child: _isJoining
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        AppColors.surface,
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    _isMember
-                                        ? 'Выйти из клуба'
-                                        : _isRequest
-                                            ? 'Заявка подана'
-                                            : isOpen
-                                                ? 'Вступить в клуб'
-                                                : 'Подать заявку',
-                                    style: const TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
+                          ),
+                          child: _isJoining
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.surface,
                                     ),
                                   ),
-                          ),
+                                )
+                              : Text(
+                                  _isMember
+                                      ? 'Выйти из клуба'
+                                      : _isRequest
+                                      ? 'Заявка подана'
+                                      : isOpen
+                                      ? 'Вступить в клуб'
+                                      : 'Подать заявку',
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                         ),
+                      ),
                     ],
                   ),
                 ),
@@ -658,7 +683,7 @@ class _CircleIconBtn extends StatelessWidget {
           width: 34,
           height: 34,
           decoration: const BoxDecoration(
-            color: AppColors.scrim20,
+            color: AppColors.scrim40,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
@@ -691,7 +716,7 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-/// Круглый логотип 64×64 с кэшем
+/// Круглый логотип 80×80 с кэшем
 class _HeaderLogo extends StatelessWidget {
   final String url;
   const _HeaderLogo({required this.url});
@@ -699,18 +724,18 @@ class _HeaderLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dpr = MediaQuery.of(context).devicePixelRatio;
-    final w = (64 * dpr).round();
+    final w = (80 * dpr).round();
     return CachedNetworkImage(
       imageUrl: url,
-      width: 64,
-      height: 64,
+      width: 80,
+      height: 80,
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
       errorWidget: (_, __, ___) => Container(
-        width: 64,
-        height: 64,
+        width: 80,
+        height: 80,
         color: AppColors.border,
         child: const Icon(Icons.image, size: 32),
       ),
@@ -718,7 +743,7 @@ class _HeaderLogo extends StatelessWidget {
   }
 }
 
-/// Фоновая картинка клуба (cover 160px высота)
+/// Фоновая картинка клуба (cover 170px высота)
 class _BackgroundImage extends StatelessWidget {
   final String url;
   const _BackgroundImage({required this.url});
@@ -728,11 +753,11 @@ class _BackgroundImage extends StatelessWidget {
     final dpr = MediaQuery.of(context).devicePixelRatio;
     final screenW = MediaQuery.of(context).size.width;
     final targetW = (screenW * dpr).round();
-    final targetH = (160 * dpr).round();
+    final targetH = (170 * dpr).round();
     return CachedNetworkImage(
       imageUrl: url,
       width: double.infinity,
-      height: 160,
+      height: 170,
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: targetW,
@@ -741,7 +766,7 @@ class _BackgroundImage extends StatelessWidget {
       maxHeightDiskCache: targetH,
       errorWidget: (_, __, ___) => Container(
         width: double.infinity,
-        height: 160,
+        height: 170,
         color: AppColors.border,
         child: const Icon(Icons.image, size: 48),
       ),
