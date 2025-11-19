@@ -50,6 +50,7 @@ class _CoffeeRunVldMembersContentState
   Future<void> _loadMembers() async {
     if (_loading || !_hasMore) return;
 
+    if (!mounted) return; // Проверка перед первым setState
     setState(() {
       _loading = true;
     });
@@ -64,6 +65,8 @@ class _CoffeeRunVldMembersContentState
           'limit': _limit.toString(),
         },
       );
+
+      if (!mounted) return; // Проверка после асинхронного запроса
 
       if (data['success'] == true) {
         final members = data['members'] as List<dynamic>? ?? [];
@@ -81,6 +84,7 @@ class _CoffeeRunVldMembersContentState
         });
       }
     } catch (e) {
+      if (!mounted) return; // Проверка в catch блоке
       setState(() {
         _loading = false;
       });
@@ -153,7 +157,7 @@ class _CoffeeRunVldMembersContentState
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 14,
-                            fontWeight: FontWeight.w400,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                         if (role != null) ...[
