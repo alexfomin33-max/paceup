@@ -1,4 +1,5 @@
 // lib/screens/chat_screen.dart
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -55,7 +56,8 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen>
+    with WidgetsBindingObserver {
   final ApiService _api = ApiService();
   final AuthService _auth = AuthService();
   final ScrollController _scrollController = ScrollController();
@@ -67,17 +69,93 @@ class _ChatScreenState extends State<ChatScreen> {
   int _offset = 0;
   String? _error;
 
+  // ─── Polling для автоматического обновления списка чатов ───
+  Timer? _refreshTimer;
+  static const Duration _refreshInterval = Duration(seconds: 5);
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadInitial();
     _scrollController.addListener(_onScroll);
+    _startRefreshTimer();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _refreshTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // ─── Обновляем список при возврате приложения из фона ───
+    if (state == AppLifecycleState.resumed) {
+      _softRefresh();
+    }
+  }
+
+  /// ─── Запуск таймера для периодического обновления ───
+  void _startRefreshTimer() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
+      if (mounted) {
+        _softRefresh();
+      }
+    });
+  }
+
+  /// ─── Мягкое обновление: обновляет данные без сброса позиции скролла ───
+  Future<void> _softRefresh() async {
+    // Не обновляем, если идет загрузка или загрузка следующей страницы
+    if (_isLoading || _isLoadingMore) return;
+
+    try {
+      final userId = await _auth.getUserId();
+      if (userId == null) return;
+
+      final response = await _api.get(
+        '/get_chats.php',
+        queryParams: {
+          'user_id': userId.toString(),
+          'offset': '0',
+          'limit': '20',
+        },
+      );
+
+      if (response['success'] == true && mounted) {
+        final List<dynamic> chatsJson = response['chats'] as List<dynamic>;
+        final newChats = chatsJson
+            .map((json) => ChatItem.fromJson(json as Map<String, dynamic>))
+            .toList();
+
+        // ─── Обновляем список, сохраняя позицию скролла ───
+        final currentScrollPosition = _scrollController.hasClients
+            ? _scrollController.position.pixels
+            : 0.0;
+
+        setState(() {
+          _chats = newChats;
+          _hasMore = response['has_more'] as bool? ?? false;
+          _offset = newChats.length;
+        });
+
+        // ─── Восстанавливаем позицию скролла после обновления ───
+        if (_scrollController.hasClients && currentScrollPosition > 0) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_scrollController.hasClients) {
+              _scrollController.jumpTo(currentScrollPosition);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // Игнорируем ошибки при мягком обновлении, чтобы не мешать пользователю
+      // Ошибки будут показаны только при полной загрузке
+    }
   }
 
   /// ─── Загрузка начального списка чатов ───

@@ -66,7 +66,8 @@ class ChatMessage {
 /// ────────────────────────────────────────────────────────────────────────
 /// Состояние экрана персонального чата
 /// ────────────────────────────────────────────────────────────────────────
-class _PersonalChatScreenState extends State<PersonalChatScreen> {
+class _PersonalChatScreenState extends State<PersonalChatScreen>
+    with WidgetsBindingObserver {
   final _ctrl = TextEditingController();
   final _scrollController = ScrollController();
   final ApiService _api = ApiService();
@@ -86,15 +87,31 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initChat();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _ctrl.dispose();
     _scrollController.dispose();
     _pollingTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // ─── Обновляем сообщения при возврате приложения из фона ───
+    if (state == AppLifecycleState.resumed) {
+      final chatId = _actualChatId ?? widget.chatId;
+      if (chatId != 0 && _currentUserId != null) {
+        // Проверяем новые сообщения при возврате
+        _checkNewMessages();
+        // Отмечаем сообщения как прочитанные
+        _markMessagesAsRead();
+      }
+    }
   }
 
   /// ─── Инициализация чата ───
@@ -195,9 +212,13 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
             .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
             .toList();
 
-        // Обновляем last_message_id
+        // Обновляем last_message_id (берем самый последний ID)
         if (messages.isNotEmpty) {
-          _lastMessageId = messages.last.id;
+          // Находим максимальный ID среди всех сообщений
+          _lastMessageId = messages.map((m) => m.id).reduce((a, b) => a > b ? a : b);
+        } else {
+          // Если сообщений нет, устанавливаем last_message_id в 0
+          _lastMessageId = 0;
         }
 
         setState(() {
@@ -405,16 +426,21 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
   void _startPolling() {
     _pollingTimer?.cancel();
     _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      _checkNewMessages();
+      if (mounted) {
+        _checkNewMessages();
+      }
     });
   }
 
   /// ─── Проверка новых сообщений ───
   Future<void> _checkNewMessages() async {
-    if (_currentUserId == null || _lastMessageId == null) return;
+    if (_currentUserId == null) return;
 
     final chatId = _actualChatId ?? widget.chatId;
     if (chatId == 0) return;
+
+    // Если last_message_id еще не установлен, используем 0
+    final lastId = _lastMessageId ?? 0;
 
     try {
       final response = await _api.get(
@@ -422,7 +448,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
         queryParams: {
           'chat_id': chatId.toString(),
           'user_id': _currentUserId.toString(),
-          'last_message_id': _lastMessageId.toString(),
+          'last_message_id': lastId.toString(),
         },
       );
 
@@ -433,11 +459,16 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
             .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
             .toList();
 
-        if (newMessages.isNotEmpty) {
+        if (newMessages.isNotEmpty && mounted) {
+          // Обновляем last_message_id на максимальный ID среди новых сообщений
+          final maxNewId = newMessages.map((m) => m.id).reduce((a, b) => a > b ? a : b);
+          
           setState(() {
             _messages.addAll(newMessages);
-            _lastMessageId =
-                response['last_message_id'] as int? ?? _lastMessageId;
+            // Всегда обновляем на максимальный ID, если он больше текущего
+            if (maxNewId > (lastId)) {
+              _lastMessageId = maxNewId;
+            }
           });
 
           // Отмечаем новые сообщения как прочитанные, если они от другого пользователя
@@ -448,17 +479,27 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
           }
 
           // Прокрутка вниз при получении новых сообщений
+          // Только если пользователь уже находится внизу списка
           if (_scrollController.hasClients) {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-            );
+            final isNearBottom = _scrollController.position.pixels >=
+                _scrollController.position.maxScrollExtent - 100;
+            
+            if (isNearBottom) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_scrollController.hasClients && mounted) {
+                  _scrollController.animateTo(
+                    _scrollController.position.maxScrollExtent,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOut,
+                  );
+                }
+              });
+            }
           }
         }
       }
     } catch (e) {
-      // Игнорируем ошибки polling
+      // Игнорируем ошибки polling, чтобы не мешать пользователю
     }
   }
 
