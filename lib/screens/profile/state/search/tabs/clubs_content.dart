@@ -1,69 +1,135 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../theme/app_theme.dart';
+import '../../../../../providers/search/clubs_search_provider.dart';
+import '../../../../map/clubs/club_detail_screen.dart';
 
 /// Контент вкладки «Клубы»
 /// Табличный список «в одну коробку» (как на карте/в маршрутных списках).
-class SearchClubsContent extends StatelessWidget {
+class SearchClubsContent extends ConsumerWidget {
   final String query;
   const SearchClubsContent({super.key, required this.query});
 
-  static const _clubs = <_Club>[
-    _Club('Бег вреден', 'Владимир', 267, 'assets/find_club_1.png'),
-    _Club('I Love Circle', 'Владимир', 120, 'assets/find_club_2.png'),
-    _Club('I Love Ski', 'Москва', 1384, 'assets/find_club_3.png'),
-    _Club('I Love Running', 'Москва', 3439, 'assets/find_club_4.png'),
-    _Club('Плывущие по реке', 'Нижний Новгород', 354, 'assets/find_club_5.png'),
-  ];
-
   @override
-  Widget build(BuildContext context) {
-    final q = query.toLowerCase();
-    final items = q.isEmpty
-        ? _clubs
-        : _clubs
-              .where(
-                (e) =>
-                    e.title.toLowerCase().contains(q) ||
-                    e.city.toLowerCase().contains(q),
-              )
-              .toList();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final trimmedQuery = query.trim();
+    final isSearching = trimmedQuery.isNotEmpty;
+    
+    final clubsAsync = isSearching
+        ? ref.watch(searchClubsProvider(trimmedQuery))
+        : ref.watch(recommendedClubsProvider);
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 8)),
-        const SliverToBoxAdapter(child: _SectionTitle('Рекомендованные клубы')),
+        if (!isSearching)
+          const SliverToBoxAdapter(
+            child: _SectionTitle('Рекомендованные клубы'),
+          ),
+        clubsAsync.when(
+          data: (clubs) {
+            if (clubs.isEmpty) {
+              return SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Center(
+                    child: Text(
+                      isSearching
+                          ? 'Клубы не найдены'
+                          : 'Рекомендованные клубы отсутствуют',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
 
-        // ───── Табличный блок (как в map_screen списках)
-        SliverToBoxAdapter(
-          child: Container(
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              border: Border(
-                top: BorderSide(color: AppColors.border, width: 0.5),
-                bottom: BorderSide(color: AppColors.border, width: 0.5),
+            return SliverToBoxAdapter(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  border: Border(
+                    top: BorderSide(color: AppColors.border, width: 0.5),
+                    bottom: BorderSide(color: AppColors.border, width: 0.5),
+                  ),
+                ),
+                child: Column(
+                  children: List.generate(clubs.length, (i) {
+                    final club = clubs[i];
+                    return Column(
+                      children: [
+                        _ClubRow(club: club),
+                        if (i != clubs.length - 1)
+                          const Divider(
+                            height: 1,
+                            thickness: 0.5,
+                            color: AppColors.divider,
+                          ),
+                      ],
+                    );
+                  }),
+                ),
+              ),
+            );
+          },
+          loading: () => const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(
+                child: CupertinoActivityIndicator(),
               ),
             ),
-            child: Column(
-              children: List.generate(items.length, (i) {
-                final c = items[i];
-                return Column(
-                  children: [
-                    _ClubRow(c: c),
-                    if (i != items.length - 1)
-                      const Divider(
-                        height: 1,
-                        thickness: 0.5,
-                        color: AppColors.divider,
-                      ),
-                  ],
-                );
-              }),
-            ),
           ),
+          error: (error, stack) {
+            debugPrint('❌ Ошибка загрузки клубов: $error');
+            debugPrint('Stack trace: $stack');
+            return SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        CupertinoIcons.exclamationmark_circle,
+                        size: 48,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Ошибка загрузки',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        error.toString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
-
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ],
     );
@@ -71,60 +137,78 @@ class SearchClubsContent extends StatelessWidget {
 }
 
 class _ClubRow extends StatelessWidget {
-  final _Club c;
-  const _ClubRow({required this.c});
+  final ClubSearch club;
+  const _ClubRow({required this.club});
+
+  void _onTap(BuildContext context) {
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (_) => ClubDetailScreen(clubId: club.id),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      child: Row(
-        children: [
-          // Превью
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-            child: Image.asset(
-              c.asset,
-              width: 80,
-              height: 55,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
+    return InkWell(
+      onTap: () => _onTap(context),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          children: [
+            // Превью (логотип клуба)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.xs),
+              child: CachedNetworkImage(
+                imageUrl: club.logoUrl,
                 width: 80,
                 height: 55,
-                color: AppColors.skeletonBase,
-                alignment: Alignment.center,
-                child: const Icon(
-                  CupertinoIcons.photo,
-                  size: 20,
-                  color: AppColors.textSecondary,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  width: 80,
+                  height: 55,
+                  color: AppColors.skeletonBase,
+                  alignment: Alignment.center,
+                  child: const CupertinoActivityIndicator(),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  width: 80,
+                  height: 55,
+                  color: AppColors.skeletonBase,
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    CupertinoIcons.photo,
+                    size: 20,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
+            const SizedBox(width: 12),
 
-          // Название и детали
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  c.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h14w6,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${c.city}  ·  Участников: ${_fmt(c.members)}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h13w4,
-                ),
-              ],
+            // Название и детали
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    club.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.h14w6,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${club.city}  ·  Участников: ${_fmt(club.membersCount)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.h13w4,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -150,14 +234,7 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _Club {
-  final String title;
-  final String city;
-  final int members;
-  final String asset;
-  const _Club(this.title, this.city, this.members, this.asset);
-}
-
+/// Форматирование числа участников с разделителями тысяч
 String _fmt(int n) {
   final s = n.toString();
   final b = StringBuffer();
