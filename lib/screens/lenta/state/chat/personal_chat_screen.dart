@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
@@ -72,6 +73,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
   final _scrollController = ScrollController();
   final ApiService _api = ApiService();
   final AuthService _auth = AuthService();
+  final ImagePicker _picker = ImagePicker();
 
   List<ChatMessage> _messages = [];
   bool _isLoading = false;
@@ -83,6 +85,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
   String? _error;
   Timer? _pollingTimer;
   int? _actualChatId; // Реальный chatId (создается если widget.chatId = 0)
+  double _previousKeyboardHeight = 0; // Для отслеживания изменений клавиатуры
 
   @override
   void initState() {
@@ -98,6 +101,63 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
     _scrollController.dispose();
     _pollingTimer?.cancel();
     super.dispose();
+  }
+
+  /// ─── Прокрутка вниз к последним сообщениям ───
+  void _scrollToBottom({bool animated = true, bool force = false}) {
+    if (!_scrollController.hasClients || !mounted) return;
+
+    // Если force = true, всегда прокручиваем (например, при открытии клавиатуры)
+    if (!force) {
+      // Проверяем, находится ли пользователь уже внизу (в пределах 200px от конца)
+      final isNearBottom =
+          _scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200;
+
+      // Прокручиваем только если пользователь уже внизу
+      if (!isNearBottom) return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients && mounted) {
+        if (animated) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        } else {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        }
+      }
+    });
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    // ─── Отслеживаем изменения клавиатуры через didChangeMetrics ───
+    // Этот метод вызывается при изменении размеров экрана, включая появление клавиатуры
+    if (!mounted) return;
+
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    if (keyboardHeight > 0 && _previousKeyboardHeight == 0) {
+      // Клавиатура только что открылась - прокручиваем вниз с задержкой
+      // Делаем две прокрутки: быструю и затем еще одну после полного появления клавиатуры
+      // force = true, чтобы всегда прокручивать при открытии клавиатуры
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          _scrollToBottom(force: true);
+        }
+      });
+      // Дополнительная прокрутка после полного появления клавиатуры
+      Future.delayed(const Duration(milliseconds: 350), () {
+        if (mounted) {
+          _scrollToBottom(force: true);
+        }
+      });
+    }
+    _previousKeyboardHeight = keyboardHeight;
   }
 
   @override
@@ -215,7 +275,9 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
         // Обновляем last_message_id (берем самый последний ID)
         if (messages.isNotEmpty) {
           // Находим максимальный ID среди всех сообщений
-          _lastMessageId = messages.map((m) => m.id).reduce((a, b) => a > b ? a : b);
+          _lastMessageId = messages
+              .map((m) => m.id)
+              .reduce((a, b) => a > b ? a : b);
         } else {
           // Если сообщений нет, устанавливаем last_message_id в 0
           _lastMessageId = 0;
@@ -295,6 +357,38 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
       setState(() {
         _isLoadingMore = false;
       });
+    }
+  }
+
+  /// ─── Выбор изображения из галереи ───
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+      );
+      if (pickedFile != null) {
+        // TODO: Реализовать отправку изображения в чат
+        // Пока что просто показываем, что изображение выбрано
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Изображение выбрано. Отправка изображений будет реализована позже.',
+              ),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка выбора изображения: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -461,8 +555,10 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
 
         if (newMessages.isNotEmpty && mounted) {
           // Обновляем last_message_id на максимальный ID среди новых сообщений
-          final maxNewId = newMessages.map((m) => m.id).reduce((a, b) => a > b ? a : b);
-          
+          final maxNewId = newMessages
+              .map((m) => m.id)
+              .reduce((a, b) => a > b ? a : b);
+
           setState(() {
             _messages.addAll(newMessages);
             // Всегда обновляем на максимальный ID, если он больше текущего
@@ -481,9 +577,10 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
           // Прокрутка вниз при получении новых сообщений
           // Только если пользователь уже находится внизу списка
           if (_scrollController.hasClients) {
-            final isNearBottom = _scrollController.position.pixels >=
+            final isNearBottom =
+                _scrollController.position.pixels >=
                 _scrollController.position.maxScrollExtent - 100;
-            
+
             if (isNearBottom) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (_scrollController.hasClients && mounted) {
@@ -520,12 +617,18 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
 
   @override
   Widget build(BuildContext context) {
+    // ─── Получаем высоту клавиатуры для адаптации ───
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.surface,
+        resizeToAvoidBottomInset: true,
         appBar: AppBar(
           backgroundColor: AppColors.surface,
+          surfaceTintColor: Colors.transparent,
           elevation: 0.5,
+          scrolledUnderElevation: 0, // ─── Убираем тень при скролле ───
           leadingWidth: 40,
           leading: Transform.translate(
             offset: const Offset(-4, 0),
@@ -618,6 +721,15 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
               ),
             ],
           ),
+          // ─── Нижняя граница под AppBar ───
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(0.5),
+            child: Divider(
+              height: 0.5,
+              thickness: 0.5,
+              color: AppColors.border,
+            ),
+          ),
         ),
         body: GestureDetector(
           // ─── Убираем фокус с поля ввода при тапе на экран ───
@@ -670,7 +782,16 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
                     },
                     child: ListView.builder(
                       controller: _scrollController,
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+                      // ─── Динамический padding: учитываем высоту клавиатуры и панели ввода ───
+                      // Панель ввода (_Composer) имеет минимальную высоту ~100px
+                      // При открытой клавиатуре добавляем небольшой дополнительный отступ
+                      padding: EdgeInsets.fromLTRB(
+                        12,
+                        8,
+                        12,
+                        // Базовый отступ для панели ввода, при открытой клавиатуре немного больше
+                        keyboardHeight > 0 ? 50 : 50,
+                      ),
                       itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
                       itemBuilder: (context, index) {
                         if (index == 0 && _isLoadingMore) {
@@ -703,8 +824,16 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
               _Composer(
                 controller: _ctrl,
                 onSend: _sendText,
-                onPickImage: () {
-                  // TODO: Реализовать отправку изображений
+                onPickImage: _pickImage,
+                onFocus: () {
+                  // ─── Прокручиваем вниз при фокусе на поле ввода ───
+                  // Небольшая задержка, чтобы клавиатура успела появиться
+                  // force = true, чтобы всегда прокручивать при фокусе
+                  Future.delayed(const Duration(milliseconds: 150), () {
+                    if (mounted) {
+                      _scrollToBottom(force: true);
+                    }
+                  });
                 },
               ),
             ],
@@ -770,9 +899,8 @@ class _BubbleLeft extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: AppColors.softBg,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -831,7 +959,6 @@ class _BubbleRight extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.greenBg,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.greenBr),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -871,11 +998,13 @@ class _Composer extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
   final VoidCallback onPickImage;
+  final VoidCallback? onFocus;
 
   const _Composer({
     required this.controller,
     required this.onSend,
     required this.onPickImage,
+    this.onFocus,
   });
 
   @override
@@ -883,19 +1012,31 @@ class _Composer extends StatefulWidget {
 }
 
 class _ComposerState extends State<_Composer> {
+  final _focusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
     widget.controller.addListener(_onChanged);
+    _focusNode.addListener(_onFocusChange);
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(_onChanged);
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
     super.dispose();
   }
 
   void _onChanged() => setState(() {});
+
+  void _onFocusChange() {
+    // ─── Вызываем колбэк при получении фокуса ───
+    if (_focusNode.hasFocus && widget.onFocus != null) {
+      widget.onFocus!();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -907,14 +1048,8 @@ class _ComposerState extends State<_Composer> {
         padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
         decoration: const BoxDecoration(
           color: AppColors.surface,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowSoft,
-              blurRadius: 8,
-              offset: Offset(0, -2),
-            ),
-          ],
-          border: Border(top: BorderSide(color: AppColors.border)),
+          // ─── Нижняя граница, как у AppBar ───
+          border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
         ),
         child: Row(
           children: [
@@ -927,11 +1062,12 @@ class _ComposerState extends State<_Composer> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  color: AppColors.softBg,
+                  borderRadius: BorderRadius.circular(AppRadius.xxl),
                 ),
                 child: TextField(
                   controller: widget.controller,
+                  focusNode: _focusNode,
                   minLines: 1,
                   maxLines: 4,
                   decoration: const InputDecoration(
