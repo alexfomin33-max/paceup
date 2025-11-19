@@ -455,7 +455,7 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                   ),
                   padding: const EdgeInsets.fromLTRB(
                     12,
-                    12, // Небольшой отступ от нижней половины логотипа (которая уже в полоске выше)
+                    10, // Небольшой отступ от нижней половины логотипа (которая уже в полоске выше)
                     12,
                     12,
                   ),
@@ -469,7 +469,7 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
 
                       // Описание
                       if (description.isNotEmpty)

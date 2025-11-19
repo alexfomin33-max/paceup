@@ -44,7 +44,7 @@ class ClubsBottomSheet extends StatelessWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 10, top: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: AppColors.outline,
                   borderRadius: BorderRadius.circular(AppRadius.xs),
                 ),
               ),
