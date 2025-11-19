@@ -84,46 +84,63 @@ class _CategoryDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      isExpanded: true,
-      onChanged: onChanged,
-      dropdownColor: AppColors.surface,
-      menuMaxHeight: 300,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      decoration: InputDecoration(
-        isDense: true,
-        filled: true,
-        fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.outline),
-        ),
-      ),
-      items: options.map((o) {
-        return DropdownMenuItem<String>(
-          value: o,
-          child: Text(
-            o,
+    final screenWidth = MediaQuery.of(context).size.width;
+    final dropdownWidth = screenWidth * 0.3;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 0, 0, 4),
+        child: SizedBox(
+          width: dropdownWidth,
+          child: DropdownButtonFormField<String>(
+            value: value,
+            isExpanded: true,
+            onChanged: onChanged,
+            dropdownColor: AppColors.surface,
+            menuMaxHeight: 300,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            // Стрелка выпадающего меню
+            icon: const Icon(
+              Icons.arrow_drop_down,
+              color: AppColors.iconSecondary,
+            ),
+            decoration: const InputDecoration(
+              isDense: true,
+              // Убираем фон
+              filled: false,
+              contentPadding: EdgeInsets.fromLTRB(0, 6, 16, 8),
+              // Только нижняя подчеркивающая линия
+              border: UnderlineInputBorder(
+                borderSide: BorderSide(color: AppColors.outline),
+              ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: AppColors.outline),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: AppColors.outline, width: 2),
+              ),
+            ),
             style: const TextStyle(
               fontFamily: 'Inter',
               fontWeight: FontWeight.w400,
+              color: AppColors.textPrimary,
             ),
+            items: options.map((o) {
+              return DropdownMenuItem<String>(
+                value: o,
+                child: Text(
+                  o,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              );
+            }).toList(),
           ),
-        );
-      }).toList(),
+        ),
+      ),
     );
   }
 }

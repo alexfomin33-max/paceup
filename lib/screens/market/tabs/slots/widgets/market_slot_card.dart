@@ -69,7 +69,7 @@ class MarketSlotCard extends StatelessWidget {
                               item.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.h14w4,
+                              style: AppTextStyles.h14w5,
                             ),
                           ),
                           if (_hasDetails) ...[
