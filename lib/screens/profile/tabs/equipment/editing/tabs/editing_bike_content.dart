@@ -330,9 +330,6 @@ class _EditingBikeContentState extends State<EditingBikeContent> {
       // Проверяем ответ
       if (data['success'] == true) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Снаряжение успешно обновлено')),
-          );
           // Закрываем экран после успешного сохранения
           Navigator.of(context).pop(true); // Возвращаем true для обновления списка
         }
