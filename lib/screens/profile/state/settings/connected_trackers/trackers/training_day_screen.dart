@@ -14,24 +14,82 @@ import '../../../../../../widgets/route_card.dart';
 import 'package:flutter/services.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
-///  ЭКРАН «ДЕТАЛИ ТРЕНИРОВОК» С ОДНОЙ ДАТОЙ (08.11)
-///  Загружает и отображает все данные тренировки за указанную дату.
+///  ЭКРАН «ДЕТАЛИ ТРЕНИРОВОК» С ВКЛАДКАМИ ПО ДАТАМ
+///  Загружает и отображает данные тренировок за указанные даты.
 /// ─────────────────────────────────────────────────────────────────────────
-class TrainingDayTabsScreen extends StatelessWidget {
+class TrainingDayTabsScreen extends StatefulWidget {
   const TrainingDayTabsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Фиксированная дата 08.11 (8 ноября 2025)
-    final trainingDate = DateTime(2025, 11, 8);
+  State<TrainingDayTabsScreen> createState() => _TrainingDayTabsScreenState();
+}
 
+class _TrainingDayTabsScreenState extends State<TrainingDayTabsScreen> {
+  // Даты для вкладок: 08.11, 14.11, 15.11 (2025 год)
+  final List<DateTime> _dates = [
+    DateTime(2025, 11, 8),
+    DateTime(2025, 11, 14),
+    DateTime(2025, 11, 15),
+  ];
+
+  int _selectedIndex = 0;
+
+  static String _dm(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const PaceAppBar(
         title: 'Детали тренировок',
         showBottomDivider: false,
       ),
-      body: _TrainingTabContent(date: trainingDate),
+      body: Column(
+        children: [
+          // ───────────────────────────────────────────────────────────────
+          //  СЕГМЕНТИРОВАННЫЙ КОНТРОЛ ДЛЯ ВЫБОРА ДАТЫ
+          // ───────────────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: CupertinoSlidingSegmentedControl<int>(
+              groupValue: _selectedIndex,
+              onValueChanged: (value) {
+                if (value != null) {
+                  setState(() => _selectedIndex = value);
+                }
+              },
+              children: {
+                for (int i = 0; i < _dates.length; i++)
+                  i: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    child: Text(
+                      _dm(_dates[i]),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              },
+            ),
+          ),
+          // ───────────────────────────────────────────────────────────────
+          //  КОНТЕНТ ВКЛАДКИ С ДАННЫМИ ТРЕНИРОВКИ
+          //  Используем key для пересоздания виджета при смене даты
+          // ───────────────────────────────────────────────────────────────
+          Expanded(
+            child: _TrainingTabContent(
+              key: ValueKey(_dates[_selectedIndex]),
+              date: _dates[_selectedIndex],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -41,7 +99,7 @@ class TrainingDayTabsScreen extends StatelessWidget {
 ///  показываем карту маршрута (Android/Health Connect).
 /// ─────────────────────────────────────────────────────────────────────────
 class _TrainingTabContent extends StatefulWidget {
-  const _TrainingTabContent({required this.date});
+  const _TrainingTabContent({super.key, required this.date});
 
   final DateTime date;
 
@@ -69,6 +127,7 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
 
   List<LatLng> _route = const [];
   List<Map<String, dynamic>> _routeData = const []; // Полные данные с высотой
+  String? _routeError; // Ошибка загрузки маршрута
 
   // ─── Форматтеры
   static String _dmy(DateTime d) =>
@@ -212,6 +271,7 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
       // 7) Маршрут (Android/Health Connect) с высотой
       List<LatLng> route = const [];
       List<Map<String, dynamic>> routeData = const [];
+      String? routeError;
       if (Platform.isAndroid) {
         try {
           const channel = MethodChannel('paceup/route');
@@ -239,9 +299,30 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
                 .where((p) => p['lat'] != null && p['lng'] != null)
                 .map((p) => LatLng(p['lat']!, p['lng']!))
                 .toList();
+          } else {
+            // Маршрут не найден - возможно, требуется одноразовое согласие
+            // или маршрут просто отсутствует в Health Connect
+            routeError =
+                'Маршрут не найден. Возможно, требуется разрешение в Health Connect или маршрут не был записан.';
           }
-        } catch (_) {
-          // Если требуется разовый консент — система сама покажет.
+        } on PlatformException catch (e) {
+          // Обрабатываем специфичные ошибки от нативной стороны
+          if (e.code == 'consent_denied') {
+            routeError =
+                'Требуется одноразовое разрешение на доступ к маршруту в Health Connect.';
+          } else if (e.code == 'no_permission') {
+            routeError =
+                'Нет разрешения на чтение маршрутов. Проверьте настройки Health Connect.';
+          } else if (e.code == 'health_connect_unavailable') {
+            routeError = 'Health Connect недоступен на этом устройстве.';
+          } else {
+            routeError = 'Ошибка загрузки маршрута: ${e.message ?? e.code}';
+          }
+          debugPrint('Ошибка загрузки маршрута: ${e.code} - ${e.message}');
+        } catch (e) {
+          // Общая ошибка
+          routeError = 'Ошибка загрузки маршрута: $e';
+          debugPrint('Ошибка загрузки маршрута: $e');
         }
       }
 
@@ -255,6 +336,7 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
         _hrMax = hrMax;
         _route = route;
         _routeData = routeData;
+        _routeError = routeError;
         _status = 'Готово';
       });
 
@@ -646,11 +728,39 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                     child: RouteCard(points: _route, height: 220),
                   )
-                else
-                  const Text(
-                    'Маршрут не найден. Возможно, у источника нет трека, требуется разовый доступ в Health Connect, или данные ещё не пришли.',
-                    style: AppTextStyles.h12w4Ter,
+                else ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceMuted,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      border: Border.all(
+                        color: AppColors.warning.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          CupertinoIcons.info_circle,
+                          size: 18,
+                          color: AppColors.warning,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _routeError ??
+                                'Маршрут не найден. Возможно, у источника нет трека, требуется разовый доступ в Health Connect, или данные ещё не пришли.',
+                            style: AppTextStyles.h12w4Ter.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                ],
               ],
             ),
           )

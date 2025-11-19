@@ -20,6 +20,7 @@ import '../../../../../widgets/primary_button.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'trackers/training_day_screen.dart'; // новый экран с вкладками
+import 'utils/workout_importer.dart'; // утилита для импорта тренировок
 
 class ConnectedTrackersScreen extends StatefulWidget {
   const ConnectedTrackersScreen({super.key});
@@ -75,6 +76,11 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
 
   // Для SnackBar
   String? _snackBarMessage;
+
+  // Для импорта тренировок
+  bool _importing = false;
+  int _importedCount = 0;
+  int _failedCount = 0;
 
   @override
   void initState() {
@@ -246,35 +252,9 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
         byType.putIfAbsent(p.type, () => <HealthDataPoint>[]).add(p);
       }
 
-      // Пульс — средний по периоду + средний по дням
-      final hrVals = <double>[];
-      final hrSumByDay = <DateTime, double>{};
-      final hrCountByDay = <DateTime, int>{};
-      for (final p
-          in byType[HealthDataType.HEART_RATE] ?? const <HealthDataPoint>[]) {
-        final v = p.value;
-        if (v is NumericHealthValue) {
-          final d = v.numericValue.toDouble();
-          hrVals.add(d);
-          final key = _dayKey(p.dateFrom);
-          hrSumByDay.update(key, (old) => old + d, ifAbsent: () => d);
-          hrCountByDay.update(key, (old) => old + 1, ifAbsent: () => 1);
-        }
-      }
-      double? hrAvg;
-      if (hrVals.isNotEmpty) {
-        double sum = 0;
-        for (final d in hrVals) {
-          sum += d;
-        }
-        hrAvg = sum / hrVals.length;
-      }
-      hrSumByDay.forEach((k, sum) {
-        final c = hrCountByDay[k] ?? 1;
-        _hrAvgByDay[k] = sum / c;
-      });
+      // Пульс будет считаться только во время тренировок (см. ниже)
 
-      // Шаги — сумма
+      // Шаги — сумма за весь период (общая активность)
       int stepsTotal = 0;
       for (final p
           in byType[HealthDataType.STEPS] ?? const <HealthDataPoint>[]) {
@@ -284,46 +264,31 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
         }
       }
 
-      // Дистанция и «время» — ТОЛЬКО по DISTANCE_DELTA
-      double distanceMeters = 0;
-      final distancePoints =
-          byType[HealthDataType.DISTANCE_DELTA] ?? const <HealthDataPoint>[];
-      for (final p in distancePoints) {
-        final v = p.value;
-        if (v is NumericHealthValue) {
-          final m = v.numericValue.toDouble();
-          distanceMeters += m;
-          final day = _dayKey(p.dateFrom);
-          _distanceByDayMeters.update(day, (old) => old + m, ifAbsent: () => m);
-
-          // вклад во «время» из окна записи DISTANCE_DELTA
-          final dur = p.dateTo.difference(p.dateFrom);
-          if (dur > Duration.zero) {
-            _distanceTimeByDay.update(
-              day,
-              (old) => old + dur,
-              ifAbsent: () => dur,
-            );
-          }
-        }
-      }
-
-      // Активные ккал: сумма
-      double activeKcal = 0;
-      for (final p
-          in byType[HealthDataType.ACTIVE_ENERGY_BURNED] ??
-              const <HealthDataPoint>[]) {
-        final v = p.value;
-        if (v is NumericHealthValue) activeKcal += v.numericValue.toDouble();
-      }
-
-      // Тренировки — только считаем и сохраняем окна (карты уже не показываем)
+      // ─────────────────────────────────────────────────────────────────────
+      //  ТРЕНИРОВКИ: извлекаем данные из каждой тренировки
+      //  Дистанция, время и калории берутся ТОЛЬКО из тренировок
+      // ─────────────────────────────────────────────────────────────────────
       final workouts =
           byType[HealthDataType.WORKOUT] ?? const <HealthDataPoint>[];
       _workoutWindows.clear();
       _workoutInfos.clear();
-      for (final p in workouts) {
-        final v = p.value;
+
+      double distanceMeters = 0;
+      double activeKcal = 0;
+
+      // Пульс — только во время тренировок
+      final hrValsAllWorkouts = <double>[];
+      final hrSumByDay = <DateTime, double>{};
+      final hrCountByDay = <DateTime, int>{};
+
+      // Для каждой тренировки получаем её данные
+      for (final workout in workouts) {
+        final wStart = workout.dateFrom;
+        final wEnd = workout.dateTo;
+        final wDuration = wEnd.difference(wStart);
+
+        // Определяем тип тренировки
+        final v = workout.value;
         String kind = 'Тренировка';
         if (v is WorkoutHealthValue) {
           kind = v.workoutActivityType.name;
@@ -340,15 +305,100 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
           }
         }
 
-        final origStart = p.dateFrom;
-        final origEnd = p.dateTo;
-        final start = origStart.subtract(const Duration(minutes: 5));
-        final end = origEnd.add(const Duration(minutes: 5));
+        // Сохраняем информацию о тренировке
+        final start = wStart.subtract(const Duration(minutes: 5));
+        final end = wEnd.add(const Duration(minutes: 5));
         _workoutWindows.add(DateTimeRange(start: start, end: end));
-        _workoutInfos.add(
-          _WorkoutInfo(start: origStart, end: origEnd, kind: kind),
-        );
+        _workoutInfos.add(_WorkoutInfo(start: wStart, end: wEnd, kind: kind));
+
+        // Запрашиваем дистанцию для этой тренировки
+        try {
+          final dists = await _health.getHealthDataFromTypes(
+            types: const [HealthDataType.DISTANCE_DELTA],
+            startTime: wStart,
+            endTime: wEnd,
+          );
+          double workoutDistance = 0;
+          for (final p in dists) {
+            final val = p.value;
+            if (val is NumericHealthValue) {
+              workoutDistance += val.numericValue.toDouble();
+            }
+          }
+          distanceMeters += workoutDistance;
+
+          // Добавляем в разбивку по дням
+          final day = _dayKey(wStart);
+          _distanceByDayMeters.update(
+            day,
+            (old) => old + workoutDistance,
+            ifAbsent: () => workoutDistance,
+          );
+          _distanceTimeByDay.update(
+            day,
+            (old) => old + wDuration,
+            ifAbsent: () => wDuration,
+          );
+        } catch (_) {
+          // Если не удалось получить дистанцию, продолжаем
+        }
+
+        // Запрашиваем калории для этой тренировки
+        try {
+          final calories = await _health.getHealthDataFromTypes(
+            types: const [HealthDataType.ACTIVE_ENERGY_BURNED],
+            startTime: wStart,
+            endTime: wEnd,
+          );
+          for (final p in calories) {
+            final val = p.value;
+            if (val is NumericHealthValue) {
+              activeKcal += val.numericValue.toDouble();
+            }
+          }
+        } catch (_) {
+          // Если не удалось получить калории, продолжаем
+        }
+
+        // Запрашиваем пульс для этой тренировки
+        try {
+          final hrPoints = await _health.getHealthDataFromTypes(
+            types: const [HealthDataType.HEART_RATE],
+            startTime: wStart,
+            endTime: wEnd,
+          );
+          if (hrPoints.isNotEmpty) {
+            final day = _dayKey(wStart);
+
+            for (final p in hrPoints) {
+              final val = p.value;
+              if (val is NumericHealthValue) {
+                final hr = val.numericValue.toDouble();
+                hrValsAllWorkouts.add(hr);
+                // Суммируем все значения пульса за день
+                hrSumByDay.update(day, (old) => old + hr, ifAbsent: () => hr);
+                hrCountByDay.update(day, (old) => old + 1, ifAbsent: () => 1);
+              }
+            }
+          }
+        } catch (_) {
+          // Если не удалось получить пульс, продолжаем
+        }
       }
+
+      // Вычисляем средний пульс по всем тренировкам
+      double? hrAvg;
+      if (hrValsAllWorkouts.isNotEmpty) {
+        final sum = hrValsAllWorkouts.reduce((a, b) => a + b);
+        hrAvg = sum / hrValsAllWorkouts.length;
+      }
+
+      // Обновляем разбивку по дням: средний пульс = сумма / количество
+      _hrAvgByDay.clear();
+      hrSumByDay.forEach((k, sum) {
+        final count = hrCountByDay[k] ?? 1;
+        _hrAvgByDay[k] = sum / count;
+      });
 
       setState(() {
         _stepsTotal = stepsTotal; // << вернули шаги
@@ -358,7 +408,8 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
 
         _workouts = workouts.length;
 
-        _status = 'Готово: синх за 7 дней выполнен.';
+        _status =
+            'Готово: синх за 7 дней выполнен. Найдено тренировок: ${workouts.length}';
       });
     } catch (e) {
       if (!mounted) return;
@@ -366,6 +417,95 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
       _showSnackBar('Ошибка: $e');
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  // ───────── Импорт всех найденных тренировок ─────────
+
+  /// ─────────────────────────────────────────────────────────────────────────
+  /// ИМПОРТ ВСЕХ ТРЕНИРОВОК ИЗ HEALTH CONNECT В БД
+  ///
+  /// Загружает все тренировки за последние 7 дней и сохраняет их в базу данных
+  /// ─────────────────────────────────────────────────────────────────────────
+  Future<void> _importAllWorkouts() async {
+    if (_importing) return;
+
+    setState(() {
+      _importing = true;
+      _importedCount = 0;
+      _failedCount = 0;
+      _status = 'Импорт тренировок…';
+    });
+
+    try {
+      final ok = await _requestPermissions();
+      if (!mounted) return;
+      if (!ok) {
+        setState(() {
+          _status = 'Доступ к данным не выдан.';
+          _importing = false;
+        });
+        return;
+      }
+
+      // Получаем все тренировки за период
+      final now = DateTime.now();
+      final weekAgo = now.subtract(const Duration(days: 7));
+      final workouts = await _health.getHealthDataFromTypes(
+        types: const [HealthDataType.WORKOUT],
+        startTime: weekAgo,
+        endTime: now,
+      );
+
+      if (workouts.isEmpty) {
+        setState(() {
+          _status = 'Тренировки не найдены.';
+          _importing = false;
+        });
+        return;
+      }
+
+      // Сортируем по дате начала (старые первыми)
+      workouts.sort((a, b) => a.dateFrom.compareTo(b.dateFrom));
+
+      // Импортируем каждую тренировку
+      for (int i = 0; i < workouts.length; i++) {
+        if (!mounted) return;
+        final workout = workouts[i];
+        setState(() {
+          _status = 'Импорт тренировки ${i + 1} из ${workouts.length}…';
+        });
+
+        final result = await importWorkout(workout, _health);
+
+        if (result.success) {
+          _importedCount++;
+        } else {
+          _failedCount++;
+        }
+
+        // Небольшая задержка между импортами, чтобы не перегружать сервер
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _status =
+            'Импорт завершён: успешно ${_importedCount}, ошибок $_failedCount';
+        _importing = false;
+      });
+
+      _showSnackBar(
+        'Импортировано тренировок: $_importedCount${_failedCount > 0 ? ', ошибок: $_failedCount' : ''}',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _status = 'Ошибка импорта: $e';
+        _importing = false;
+      });
+      _showSnackBar('Ошибка импорта: $e');
     }
   }
 
@@ -406,23 +546,74 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
                 border: Border.all(color: AppColors.border, width: 1),
               ),
               padding: const EdgeInsets.fromLTRB(12, 14, 12, 16),
-              child: Row(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    CupertinoIcons.waveform_path_ecg,
-                    size: 28,
-                    color: AppColors.brandPrimary,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        CupertinoIcons.waveform_path_ecg,
+                        size: 28,
+                        color: AppColors.brandPrimary,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          Platform.isIOS
+                              ? 'Синхронизация с Apple Здоровьем. Разрешите доступ, чтобы импортировать тренировки, пульс и ккал.'
+                              : 'Синхронизация через Health Connect. Разрешите доступ, чтобы импортировать тренировки, дистанцию, пульс и активные калории (если доступны источником).',
+                          style: AppTextStyles.h13w4,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      Platform.isIOS
-                          ? 'Синхронизация с Apple Здоровьем. Разрешите доступ, чтобы импортировать тренировки, пульс и ккал.'
-                          : 'Синхронизация через Health Connect. Разрешите доступ, чтобы импортировать тренировки, дистанцию, пульс и активные калории (если доступны источником).',
-                      style: AppTextStyles.h13w4,
+                  // ───────────────────────────────────────────────────────────────
+                  //  ИНСТРУКЦИИ ПО НАСТРОЙКЕ GARMIN CONNECT
+                  // ───────────────────────────────────────────────────────────────
+                  if (Platform.isAndroid) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        border: Border.all(
+                          color: AppColors.brandPrimary.withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                CupertinoIcons.info_circle_fill,
+                                size: 18,
+                                color: AppColors.brandPrimary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Настройка Garmin Connect',
+                                style: AppTextStyles.h13w6,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Чтобы выгружать тренировки из Garmin Connect:\n\n'
+                            '1. Откройте приложение Garmin Connect\n'
+                            '2. Перейдите в Настройки → Подключения\n'
+                            '3. Найдите "Health Connect" и подключите\n'
+                            '4. Включите синхронизацию тренировок\n'
+                            '5. Вернитесь сюда и нажмите "Синк из Health Connect"',
+                            style: AppTextStyles.h12w4Ter,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -502,22 +693,37 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
               ),
 
             // ───────────────────────────────────────────────────────────────
-            //  ОДНА PRIMARY-КНОПКА «ДЕТАЛИ ТРЕНИРОВОК»
-            //  Открывает экран со вкладками 24.10 / 25.10 / 26.10
+            //  КНОПКИ: ДЕТАЛИ ТРЕНИРОВОК И ИМПОРТ
             // ───────────────────────────────────────────────────────────────
             const SizedBox(height: 20),
             Center(
-              child: PrimaryButton(
-                text: 'Детали тренировок',
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const TrainingDayTabsScreen(),
+              child: Column(
+                children: [
+                  PrimaryButton(
+                    text: 'Детали тренировок',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const TrainingDayTabsScreen(),
+                        ),
+                      );
+                    },
+                    width: 260,
+                    height: 44,
+                  ),
+                  if (_workouts > 0) ...[
+                    const SizedBox(height: 12),
+                    PrimaryButton(
+                      text: _importing
+                          ? 'Импорт…'
+                          : 'Импортировать все тренировки',
+                      onPressed: _importing ? () {} : _importAllWorkouts,
+                      width: 260,
+                      height: 44,
+                      isLoading: _importing,
                     ),
-                  );
-                },
-                width: 260,
-                height: 44,
+                  ],
+                ],
               ),
             ),
           ],
