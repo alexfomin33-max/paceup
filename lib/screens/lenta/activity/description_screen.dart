@@ -106,7 +106,11 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(a.userName, style: AppTextStyles.h15w5),
+                              // ✅ Выводим имя и фамилию пользователя из базы данных
+                              Text(
+                                a.userName.isNotEmpty ? a.userName : 'Аноним',
+                                style: AppTextStyles.h15w5,
+                              ),
                               const SizedBox(height: 2),
                               Text(
                                 _fmtDate(a.dateStart),
