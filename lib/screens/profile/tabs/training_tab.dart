@@ -1,115 +1,208 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../providers/training/training_provider.dart';
+import '../../../../widgets/route_card.dart';
+import '../../lenta/activity/description_screen.dart';
+import '../../../../models/activity_lenta.dart' as al;
+import '../../../../providers/services/auth_provider.dart';
 
-class TrainingTab extends StatefulWidget {
+class TrainingTab extends ConsumerStatefulWidget {
   const TrainingTab({super.key});
 
   @override
-  State<TrainingTab> createState() => _TrainingTabState();
+  ConsumerState<TrainingTab> createState() => _TrainingTabState();
 }
 
-class _TrainingTabState extends State<TrainingTab>
+class _TrainingTabState extends ConsumerState<TrainingTab>
     with AutomaticKeepAliveClientMixin {
   // Текущий месяц
-  DateTime _month = DateTime(2025, 6, 1);
+  late DateTime _month;
 
   // Мультиселект видов спорта: 0 бег, 1 вело, 2 плавание
   final Set<int> _sports = {0, 1, 2};
 
+  // Флаг для инициализации месяца только один раз при первой загрузке
+  bool _monthInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Инициализируем месяц текущей датой (будет обновлён из API)
+    _month = DateTime.now();
+    _month = DateTime(_month.year, _month.month, 1);
+  }
+
   @override
   bool get wantKeepAlive => true;
-
-  // Пузырьки на календаре (пример для Июня 2025)
-  final Map<int, String> _juneBubbles = const {
-    2: '8,4',
-    4: '24,2',
-    6: '5,1',
-    7: '8,5',
-    10: '7,2',
-    11: '16,1',
-    12: '5,8',
-    13: '6,0',
-    15: '10,7',
-    18: '21,2',
-    21: '11,3',
-    24: '8,5',
-    25: '16,0',
-    27: '9,7',
-  };
-
-  // Демо-лента тренировок
-  late final List<_Workout> _all = [
-    _Workout(
-      DateTime(2025, 6, 18, 20, 52),
-      0,
-      '21,24 км',
-      '1:48:52',
-      '4:15 /км',
-    ),
-    _Workout(DateTime(2025, 6, 17, 9, 32), 2, '2,85 км', '35:28', '1,52 м/с'),
-    _Workout(
-      DateTime(2025, 6, 16, 10, 35),
-      1,
-      '58,42 км',
-      '2:35:11',
-      '35,7 км/ч',
-    ),
-    _Workout(DateTime(2025, 6, 15, 8, 13), 0, '10,70 км', '58:52', '5:48 /км'),
-  ];
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
-    final items = _all
-        .where((w) => _sports.contains(w.kind))
-        .toList(growable: false);
-    final bubbles = (_month.year == 2025 && _month.month == 6)
-        ? _juneBubbles
-        : const <int, String>{};
+    // Получаем данные из провайдера
+    final trainingDataAsync = ref.watch(trainingActivitiesProvider(_sports));
 
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        const SliverToBoxAdapter(child: SizedBox(height: 14)),
+    return trainingDataAsync.when(
+      data: (data) {
+        // Если получили месяц последней тренировки, устанавливаем его только при первой загрузке
+        if (data.lastWorkoutMonth != null && mounted && !_monthInitialized) {
+          try {
+            final parts = data.lastWorkoutMonth!.split('-');
+            if (parts.length == 2) {
+              final year = int.parse(parts[0]);
+              final month = int.parse(parts[1]);
+              final newMonth = DateTime(year, month, 1);
+              // Обновляем месяц только при первой загрузке
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() {
+                    _month = newMonth;
+                    _monthInitialized = true;
+                  });
+                }
+              });
+            }
+          } catch (e) {
+            // Игнорируем ошибки парсинга
+            _monthInitialized = true; // Помечаем как инициализированный даже при ошибке
+          }
+        } else if (data.lastWorkoutMonth != null) {
+          // Помечаем как инициализированный, если месяц уже был установлен ранее
+          _monthInitialized = true;
+        }
 
-        // ── Панель: «Июнь 2025», ◄ ►, иконки справа
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: _MonthToolbar(
-              month: _month,
-              sports: _sports,
-              onPrev: () => setState(
-                () => _month = DateTime(_month.year, _month.month - 1, 1),
+        // Фильтруем тренировки по текущему месяцу
+        final items = data.activities
+            .where((w) {
+              return w.when.year == _month.year &&
+                  w.when.month == _month.month;
+            })
+            .toList(growable: false);
+
+        // Получаем календарь для текущего месяца
+        final monthKey = '${_month.year}-${_month.month.toString().padLeft(2, '0')}';
+        final calendarData = <int, String>{};
+        
+        // Получаем дни для текущего месяца из календаря
+        if (data.calendar.containsKey(monthKey)) {
+          final daysMap = data.calendar[monthKey]!;
+          for (final entry in daysMap.entries) {
+            final day = int.tryParse(entry.key);
+            final dist = entry.value;
+            if (day != null) {
+              calendarData[day] = dist;
+            }
+          }
+        }
+
+        return CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            const SliverToBoxAdapter(child: SizedBox(height: 14)),
+
+            // ── Панель: «Июнь 2025», ◄ ►, иконки справа
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: _MonthToolbar(
+                  month: _month,
+                  sports: _sports,
+                  onPrev: () => setState(
+                    () => _month = DateTime(_month.year, _month.month - 1, 1),
+                  ),
+                  onNext: () => setState(
+                    () => _month = DateTime(_month.year, _month.month + 1, 1),
+                  ),
+                  onToggleSport: (i) => setState(() {
+                    if (_sports.contains(i)) {
+                      _sports.remove(i);
+                    } else {
+                      _sports.add(i);
+                    }
+                    // Инвалидируем провайдер для перезагрузки данных
+                    ref.invalidate(trainingActivitiesProvider(_sports));
+                  }),
+                ),
               ),
-              onNext: () => setState(
-                () => _month = DateTime(_month.year, _month.month + 1, 1),
-              ),
-              onToggleSport: (i) => setState(() {
-                _sports.contains(i) ? _sports.remove(i) : _sports.add(i);
-              }),
             ),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+            // ── Карточка календаря
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: _CalendarCard(month: _month, bubbles: calendarData),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 10)),
+
+            // ── Таблица тренировок (единый контейнер на всю ширину, без скруглений)
+            if (items.isEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Center(
+                    child: Text(
+                      data.activities.isEmpty
+                          ? 'Нет тренировок за выбранные виды спорта'
+                          : 'Нет тренировок в ${_MonthToolbar._monthTitle(_month)}',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              )
+            else
+              SliverToBoxAdapter(
+                child: _WorkoutTable(
+                  items: items.map((a) => _Workout.fromTraining(a)).toList(),
+                ),
+              ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+          ],
+        );
+      },
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: CircularProgressIndicator(color: AppColors.brandPrimary),
+        ),
+      ),
+      error: (error, stack) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: SelectableText.rich(
+            TextSpan(
+              text: 'Ошибка загрузки тренировок:\n',
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                color: AppColors.textPrimary,
+              ),
+              children: [
+                TextSpan(
+                  text: error.toString(),
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    color: AppColors.error,
+                  ),
+                ),
+              ],
+            ),
+            textAlign: TextAlign.center,
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-        // ── Карточка календаря
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: _CalendarCard(month: _month, bubbles: bubbles),
-          ),
-        ),
-
-        const SliverToBoxAdapter(child: SizedBox(height: 10)),
-
-        // ── Таблица тренировок (единый контейнер на всю ширину, без скруглений)
-        SliverToBoxAdapter(child: _WorkoutTable(items: items)),
-
-        const SliverToBoxAdapter(child: SizedBox(height: 20)),
-      ],
+      ),
     );
   }
 }
@@ -175,7 +268,7 @@ class _MonthToolbar extends StatelessWidget {
     );
   }
 
-  String _monthTitle(DateTime m) {
+  static String _monthTitle(DateTime m) {
     const mnames = [
       'Январь',
       'Февраль',
@@ -486,25 +579,55 @@ class _WorkoutTable extends StatelessWidget {
   }
 }
 
-class _WorkoutRow extends StatelessWidget {
+class _WorkoutRow extends ConsumerWidget {
   final _Workout item;
   const _WorkoutRow({required this.item});
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      // слева/сверху/снизу уменьшены, справа прежний 12
-      padding: const EdgeInsets.fromLTRB(8, 6, 10, 6),
-      child: Row(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return InkWell(
+      onTap: () async {
+        final auth = ref.read(authServiceProvider);
+        final userId = await auth.getUserId();
+        if (userId == null) return;
+
+        // Получаем данные пользователя (пока используем дефолтные значения)
+        final userName = 'Пользователь';
+        final userAvatar = 'assets/avatar_2.png';
+
+        final activity = item.toActivity(userId, userName, userAvatar);
+
+        if (!context.mounted) return;
+
+        Navigator.of(context).push(
+          CupertinoPageRoute(
+            builder: (_) => ActivityDescriptionPage(
+              activity: activity,
+              currentUserId: userId,
+            ),
+          ),
+        );
+      },
+      child: Padding(
+        // слева/сверху/снизу уменьшены, справа прежний 12
+        padding: const EdgeInsets.fromLTRB(8, 6, 10, 6),
+        child: Row(
         children: [
-          // Мини-карта 70x46
+          // Мини-карта 80x55 (статичная карта маршрута)
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.xs),
-            child: const Image(
-              image: AssetImage('assets/training_map.png'),
+            child: SizedBox(
               width: 80,
               height: 55,
-              fit: BoxFit.cover,
+              child: item.points.isEmpty
+                  ? const Image(
+                      image: AssetImage('assets/training_map.png'),
+                      fit: BoxFit.cover,
+                    )
+                  : RouteCard(
+                      points: item.points,
+                      height: 55,
+                    ),
             ),
           ),
           const SizedBox(width: 12),
@@ -599,6 +722,7 @@ class _WorkoutRow extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -648,12 +772,117 @@ class _WorkoutRow extends StatelessWidget {
   }
 }
 
-/// Модель
+/// Модель тренировки
 class _Workout {
+  final int id;
   final DateTime when;
   final int kind; // 0 бег, 1 вело, 2 плавание
   final String distText;
   final String durText;
   final String paceText;
-  _Workout(this.when, this.kind, this.distText, this.durText, this.paceText);
+  final List<LatLng> points; // Точки маршрута для карты
+  final double distance; // км для конвертации
+  final int duration; // секунды для конвертации
+  final double pace; // темп для конвертации
+
+  _Workout(
+    this.id,
+    this.when,
+    this.kind,
+    this.distText,
+    this.durText,
+    this.paceText,
+    this.distance,
+    this.duration,
+    this.pace, [
+    this.points = const [],
+  ]);
+
+  /// Создаёт из TrainingActivity
+  factory _Workout.fromTraining(TrainingActivity activity) {
+    // Конвертируем RoutePoint в LatLng
+    final latLngPoints = activity.points
+        .map((p) => LatLng(p.lat, p.lng))
+        .toList(growable: false);
+
+    return _Workout(
+      activity.id,
+      activity.when,
+      activity.sportType,
+      activity.distanceText,
+      activity.durationText,
+      activity.paceText,
+      activity.distance,
+      activity.duration,
+      activity.pace,
+      latLngPoints,
+    );
+  }
+
+  /// Конвертирует в Activity для description_screen
+  al.Activity toActivity(int userId, String userName, String userAvatar) {
+    // Определяем тип спорта как строку
+    final sportTypeStr = kind == 0 ? 'run' : (kind == 1 ? 'bike' : 'swim');
+
+    // Создаём ActivityStats из доступных данных
+    final stats = al.ActivityStats(
+      distance: distance * 1000, // км -> метры
+      realDistance: distance * 1000,
+      avgSpeed: pace > 0 ? 60.0 / pace : 0.0, // км/ч (приблизительно)
+      avgPace: pace,
+      minAltitude: 0.0,
+      minAltitudeCoords: null,
+      maxAltitude: 0.0,
+      maxAltitudeCoords: null,
+      cumulativeElevationGain: 0.0,
+      cumulativeElevationLoss: 0.0,
+      startedAt: when,
+      startedAtCoords: points.isNotEmpty
+          ? al.Coord(lat: points.first.latitude, lng: points.first.longitude)
+          : null,
+      finishedAt: when.add(Duration(seconds: duration)),
+      finishedAtCoords: points.isNotEmpty
+          ? al.Coord(lat: points.last.latitude, lng: points.last.longitude)
+          : null,
+      duration: duration,
+      bounds: points.length >= 2
+          ? [
+              al.Coord(lat: points.first.latitude, lng: points.first.longitude),
+              al.Coord(lat: points.last.latitude, lng: points.last.longitude),
+            ]
+          : [],
+      avgHeartRate: null,
+      heartRatePerKm: {},
+      pacePerKm: {},
+    );
+
+    // Конвертируем LatLng в Coord
+    final coordPoints = points
+        .map((p) => al.Coord(lat: p.latitude, lng: p.longitude))
+        .toList();
+
+    return al.Activity(
+      id: id,
+      type: sportTypeStr,
+      dateStart: when,
+      dateEnd: when.add(Duration(seconds: duration)),
+      lentaId: id, // Используем id активности как lentaId
+      lentaDate: when,
+      userId: userId,
+      userName: userName,
+      userAvatar: userAvatar,
+      likes: 0,
+      comments: 0,
+      userGroup: 0,
+      equipments: const [],
+      stats: stats,
+      points: coordPoints,
+      postDateText: '',
+      postMediaUrl: '',
+      postContent: '',
+      islike: false,
+      mediaImages: const [],
+      mediaVideos: const [],
+    );
+  }
 }
