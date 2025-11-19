@@ -78,11 +78,172 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+// ───────────────────── Адаптивное изображение снаряжения
+// Определяет пропорции изображения и выбирает подходящий BoxFit
+class _AdaptiveGearImage extends StatefulWidget {
+  final String? imageUrl;
+  final bool isBike;
+  const _AdaptiveGearImage({required this.imageUrl, required this.isBike});
+
+  @override
+  State<_AdaptiveGearImage> createState() => _AdaptiveGearImageState();
+}
+
+class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
+  BoxFit _fit = BoxFit.cover;
+  ImageStreamListener? _listener;
+  ImageStream? _imageStream;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.imageUrl != null &&
+        widget.imageUrl!.isNotEmpty &&
+        (widget.imageUrl!.startsWith('http://') ||
+            widget.imageUrl!.startsWith('https://'))) {
+      _determineFit();
+    }
+  }
+
+  @override
+  void didUpdateWidget(_AdaptiveGearImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.imageUrl != oldWidget.imageUrl) {
+      _cleanupListener();
+      if (widget.imageUrl != null &&
+          widget.imageUrl!.isNotEmpty &&
+          (widget.imageUrl!.startsWith('http://') ||
+              widget.imageUrl!.startsWith('https://'))) {
+        _determineFit();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _cleanupListener();
+    super.dispose();
+  }
+
+  void _cleanupListener() {
+    if (_listener != null && _imageStream != null) {
+      _imageStream!.removeListener(_listener!);
+      _listener = null;
+      _imageStream = null;
+    }
+  }
+
+  void _determineFit() {
+    if (widget.imageUrl == null ||
+        widget.imageUrl!.isEmpty ||
+        (!widget.imageUrl!.startsWith('http://') &&
+            !widget.imageUrl!.startsWith('https://'))) {
+      return;
+    }
+
+    final imageProvider = NetworkImage(widget.imageUrl!);
+    _imageStream = imageProvider.resolve(const ImageConfiguration());
+
+    _listener = ImageStreamListener(
+      (ImageInfo imageInfo, bool _) {
+        final image = imageInfo.image;
+        final width = image.width.toDouble();
+        final height = image.height.toDouble();
+        final aspectRatio = width / height;
+
+        // Если соотношение меньше 1.5, используем fitHeight
+        // (фиксированная высота, ширина подстраивается)
+        // Иначе используем cover (как было)
+        if (mounted) {
+          setState(() {
+            _fit = aspectRatio < 1.5 ? BoxFit.fitHeight : BoxFit.cover;
+          });
+        }
+        _cleanupListener();
+      },
+      onError: (exception, stackTrace) {
+        // При ошибке используем cover по умолчанию
+        if (mounted) {
+          setState(() {
+            _fit = BoxFit.cover;
+          });
+        }
+        _cleanupListener();
+      },
+    );
+
+    _imageStream!.addListener(_listener!);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final defaultImage = widget.isBike
+        ? 'assets/add_bike.png'
+        : 'assets/add_boots.png';
+
+    if (widget.imageUrl != null &&
+        widget.imageUrl!.isNotEmpty &&
+        (widget.imageUrl!.startsWith('http://') ||
+            widget.imageUrl!.startsWith('https://'))) {
+      // Для fitHeight ограничиваем ширину, чтобы изображение не выходило за границы
+      final imageWidget = _fit == BoxFit.fitHeight
+          ? SizedBox(
+              width: 66,
+              height: 44,
+              child: Image.network(
+                widget.imageUrl!,
+                fit: _fit,
+                errorBuilder: (context, error, stackTrace) {
+                  final image = Image.asset(
+                    defaultImage,
+                    width: 66,
+                    height: 44,
+                    fit: BoxFit.cover,
+                  );
+                  return widget.isBike
+                      ? image
+                      : Opacity(opacity: 0.9, child: image);
+                },
+              ),
+            )
+          : Image.network(
+              widget.imageUrl!,
+              width: 66,
+              height: 44,
+              fit: _fit,
+              errorBuilder: (context, error, stackTrace) {
+                final image = Image.asset(
+                  defaultImage,
+                  width: 66,
+                  height: 44,
+                  fit: BoxFit.cover,
+                );
+                return widget.isBike
+                    ? image
+                    : Opacity(opacity: 0.9, child: image);
+              },
+            );
+
+      return imageWidget;
+    }
+
+    // Дефолтное изображение
+    final image = Image.asset(
+      defaultImage,
+      width: 66,
+      height: 44,
+      fit: BoxFit.cover,
+    );
+    return widget.isBike ? image : Opacity(opacity: 0.9, child: image);
+  }
+}
+
 /// Карточка снаряжения: картинка + заголовок + две краткие метрики
 class _GearCard extends StatelessWidget {
   final String title;
   final String imageUrl; // URL изображения из базы данных (может быть пустым)
-  final bool isBike; // Флаг для определения типа снаряжения (кроссовки/велосипед)
+  final bool
+  isBike; // Флаг для определения типа снаряжения (кроссовки/велосипед)
   final String stat1Label;
   final String stat1Value;
   final String stat2Label;
@@ -100,42 +261,6 @@ class _GearCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Определяем дефолтное изображение в зависимости от типа снаряжения
-    final defaultImage = isBike ? 'assets/add_bike.png' : 'assets/add_boots.png';
-    
-    // Функция для получения виджета изображения
-    Widget _buildImage() {
-      // Если есть URL изображения и он не пустой, показываем сетевую картинку
-      if (imageUrl.isNotEmpty && 
-          (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))) {
-        return Image.network(
-          imageUrl,
-          width: 72,
-          height: 44,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            // При ошибке загрузки показываем дефолтное изображение
-            final image = Image.asset(
-              defaultImage,
-              width: 72,
-              height: 44,
-              fit: BoxFit.cover,
-            );
-            return isBike ? image : Opacity(opacity: 0.9, child: image);
-          },
-        );
-      } else {
-        // Если URL нет или он пустой, показываем дефолтное изображение
-        final image = Image.asset(
-          defaultImage,
-          width: 72,
-          height: 44,
-          fit: BoxFit.cover,
-        );
-        return isBike ? image : Opacity(opacity: 0.9, child: image);
-      }
-    }
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
@@ -158,7 +283,15 @@ class _GearCard extends StatelessWidget {
             // Превью изображения (из базы данных или дефолтное)
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: _buildImage(),
+              child: _AdaptiveGearImage(
+                imageUrl:
+                    imageUrl.isNotEmpty &&
+                        (imageUrl.startsWith('http://') ||
+                            imageUrl.startsWith('https://'))
+                    ? imageUrl
+                    : null,
+                isBike: isBike,
+              ),
             ),
             const SizedBox(width: 12),
             // Текстовая часть с заголовком и метриками
