@@ -101,10 +101,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       data: (userId) {
         if (userId == null) {
           // Пользователь не авторизован
-          return Scaffold(
+          return const Scaffold(
             backgroundColor: AppColors.background,
             appBar: PaceAppBar(
-              titleWidget: const Row(
+              titleWidget: Row(
                 children: [
                   Icon(
                     CupertinoIcons.sparkles,
@@ -122,7 +122,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               showBack: false,
               showBottomDivider: true,
             ),
-            body: const Center(
+            body: Center(
               child: Text(
                 'Необходима авторизация',
                 style: TextStyle(
@@ -140,10 +140,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
         return _buildProfileContent(userId, profileState);
       },
-      loading: () => Scaffold(
+      loading: () => const Scaffold(
         backgroundColor: AppColors.background,
         appBar: PaceAppBar(
-          titleWidget: const Row(
+          titleWidget: Row(
             children: [
               Icon(
                 CupertinoIcons.sparkles,
@@ -161,14 +161,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           showBack: false,
           showBottomDivider: true,
         ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => Scaffold(
+      error: (err, stack) => const Scaffold(
         backgroundColor: AppColors.background,
         appBar: PaceAppBar(
-          titleWidget: const Row(
+          titleWidget: Row(
             children: [
               Icon(
                 CupertinoIcons.sparkles,
@@ -190,13 +188,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 CupertinoIcons.exclamationmark_triangle,
                 size: 48,
                 color: AppColors.error,
               ),
-              const SizedBox(height: 16),
-              const Text(
+              SizedBox(height: 16),
+              Text(
                 'Ошибка загрузки данных пользователя',
                 style: TextStyle(
                   fontFamily: 'Inter',
@@ -270,9 +268,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               profile: profileState.profile,
               userId: userId,
               onReload: () {
-                ref
-                    .read(profileHeaderProvider(userId).notifier)
-                    .reload();
+                ref.read(profileHeaderProvider(userId).notifier).reload();
               },
             ),
           ),
@@ -336,10 +332,16 @@ class _AppIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(icon, color: AppColors.iconPrimary, size: 20),
-      onPressed: onPressed ?? () {},
-      splashRadius: 22,
+    return SizedBox(
+      width: 44.0, // kAppBarTapTarget
+      height: 44.0, // kAppBarTapTarget
+      child: IconButton(
+        onPressed: onPressed ?? () {},
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 44.0, minHeight: 44.0),
+        icon: Icon(icon, color: AppColors.iconPrimary, size: 20.0),
+        splashRadius: 22,
+      ),
     );
   }
 }
