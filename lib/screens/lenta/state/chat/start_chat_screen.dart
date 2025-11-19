@@ -232,20 +232,7 @@ class _PeopleList extends StatelessWidget {
               ),
             ),
             child: Column(
-              children: List.generate(users.length, (i) {
-                final user = users[i];
-                return Column(
-                  children: [
-                    if (i.isEven)
-                      ColoredBox(
-                        color: AppColors.surfaceMuted,
-                        child: _RowTile(user: user),
-                      )
-                    else
-                      _RowTile(user: user),
-                  ],
-                );
-              }),
+              children: users.map((user) => _RowTile(user: user)).toList(),
             ),
           ),
         ),
