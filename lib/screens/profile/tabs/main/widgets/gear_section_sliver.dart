@@ -311,10 +311,18 @@ class _GearCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      const Icon(
-                        CupertinoIcons.pencil,
-                        size: 16,
-                        color: AppColors.textSecondary,
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: AppColors.skeletonBase,
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.pencil,
+                          size: 12,
+                          color: AppColors.iconPrimary,
+                        ),
                       ),
                       const SizedBox(width: 2),
                     ],
