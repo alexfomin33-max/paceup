@@ -298,154 +298,159 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildMap(List<Map<String, dynamic>> markers, Color markerColor) {
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: LatLng(56.129057, 40.406635),
-        initialZoom: 6.0,
-        onMapReady: () {
-          // Подстраиваем zoom после инициализации карты
-          // Для Событий (0) и Клубов (1) автоматическая подстройка отключена
-          if (_selectedIndex != 0 && _selectedIndex != 1) {
-            _fitBoundsToMarkers(markers);
-          }
-        },
-      ),
-      children: [
-        TileLayer(
-          urlTemplate: AppConfig.mapTilesUrl,
-          additionalOptions: {'apiKey': AppConfig.mapTilerApiKey},
-          userAgentPackageName: 'paceup.ru',
-          maxZoom: 19,
-          minZoom: 3,
-          keepBuffer: 1,
-          retinaMode: false,
+    return SizedBox.expand(
+      child: FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          initialCenter: LatLng(56.129057, 40.406635),
+          initialZoom: 6.0,
+          // Фоновый цвет карты (серый, если тайлы не загрузились)
+          backgroundColor: AppColors.surface,
+          onMapReady: () {
+            // Подстраиваем zoom после инициализации карты
+            // Для Событий (0) и Клубов (1) автоматическая подстройка отключена
+            if (_selectedIndex != 0 && _selectedIndex != 1) {
+              _fitBoundsToMarkers(markers);
+            }
+          },
         ),
-        const RichAttributionWidget(
-          attributions: [TextSourceAttribution('MapTiler © OpenStreetMap')],
-        ),
-        MarkerLayer(
-          markers: markers.map((m) {
-            try {
-              final LatLng point = m['point'] as LatLng;
-              final String title = m['title'] as String;
-              final int count = m['count'] as int;
-              final dynamic events =
-                  m['events']; // Для событий храним список событий
-              final Widget? content = m['content'] as Widget?;
+        children: [
+          TileLayer(
+            urlTemplate: AppConfig.mapTilesUrl,
+            additionalOptions: {'apiKey': AppConfig.mapTilerApiKey},
+            userAgentPackageName: 'paceup.ru',
+            maxZoom: 19,
+            minZoom: 3,
+            keepBuffer: 1,
+            retinaMode: false,
+          ),
+          const RichAttributionWidget(
+            attributions: [TextSourceAttribution('MapTiler © OpenStreetMap')],
+          ),
+          MarkerLayer(
+            markers: markers.map((m) {
+              try {
+                final LatLng point = m['point'] as LatLng;
+                final String title = m['title'] as String;
+                final int count = m['count'] as int;
+                final dynamic events = m['events'];
+                final Widget? content = m['content'] as Widget?;
 
-              return Marker(
-                point: point,
-                width: 28,
-                height: 28,
-                child: GestureDetector(
-                  onTap: () {
-                    final Widget sheet = () {
-                      switch (_selectedIndex) {
-                        case 0:
-                          // Для событий создаём виджет со списком событий из API
-                          return ebs.EventsBottomSheet(
-                            title: title,
-                            child: events != null && events is List
-                                ? ebs.EventsListFromApi(
-                                    events: events,
-                                    latitude: m['latitude'] as double?,
-                                    longitude: m['longitude'] as double?,
-                                  )
-                                : content ?? const ebs.EventsSheetPlaceholder(),
-                          );
-                        case 1:
-                          // Для клубов создаём виджет со списком клубов из API
-                          return cbs.ClubsBottomSheet(
-                            title: title,
-                            child: m['clubs'] != null && m['clubs'] is List
-                                ? cbs.ClubsListFromApi(
-                                    clubs: m['clubs'] as List<dynamic>,
-                                    latitude: m['latitude'] as double?,
-                                    longitude: m['longitude'] as double?,
-                                  )
-                                : content ?? const cbs.ClubsSheetPlaceholder(),
-                          );
-                        case 2:
-                          return cchbs.CoachesBottomSheet(
-                            title: title,
-                            child:
-                                content ??
-                                const cchbs.CoachesSheetPlaceholder(),
-                          );
-                        case 3:
-                        default:
-                          return tbs.TravelersBottomSheet(
-                            title: title,
-                            child:
-                                content ??
-                                const tbs.TravelersSheetPlaceholder(),
-                          );
-                      }
-                    }();
+                return Marker(
+                  point: point,
+                  width: 28,
+                  height: 28,
+                  child: GestureDetector(
+                    onTap: () {
+                      final Widget sheet = () {
+                        switch (_selectedIndex) {
+                          case 0:
+                            // Для событий создаём виджет со списком событий из API
+                            return ebs.EventsBottomSheet(
+                              title: title,
+                              child: events != null && events is List
+                                  ? ebs.EventsListFromApi(
+                                      events: events,
+                                      latitude: m['latitude'] as double?,
+                                      longitude: m['longitude'] as double?,
+                                    )
+                                  : content ??
+                                        const ebs.EventsSheetPlaceholder(),
+                            );
+                          case 1:
+                            // Для клубов создаём виджет со списком клубов из API
+                            return cbs.ClubsBottomSheet(
+                              title: title,
+                              child: m['clubs'] != null && m['clubs'] is List
+                                  ? cbs.ClubsListFromApi(
+                                      clubs: m['clubs'] as List<dynamic>,
+                                      latitude: m['latitude'] as double?,
+                                      longitude: m['longitude'] as double?,
+                                    )
+                                  : content ??
+                                        const cbs.ClubsSheetPlaceholder(),
+                            );
+                          case 2:
+                            return cchbs.CoachesBottomSheet(
+                              title: title,
+                              child:
+                                  content ??
+                                  const cchbs.CoachesSheetPlaceholder(),
+                            );
+                          case 3:
+                          default:
+                            return tbs.TravelersBottomSheet(
+                              title: title,
+                              child:
+                                  content ??
+                                  const tbs.TravelersSheetPlaceholder(),
+                            );
+                        }
+                      }();
 
-                    showModalBottomSheet(
-                      context: context,
-                      useRootNavigator: true,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => sheet,
-                    ).then((result) {
-                      // Если событие было удалено, обновляем маркеры на карте
-                      if (result == 'event_deleted' && mounted) {
-                        setState(() {
-                          // Сбрасываем флаг инициализации при обновлении данных
-                          _mapInitialized = false;
-                          _eventsMarkersKey = ValueKey(
-                            'events_markers_${DateTime.now().millisecondsSinceEpoch}',
-                          );
-                        });
-                      }
-                      // Если клуб был удалён, обновляем маркеры на карте
-                      if (result == 'club_deleted' && mounted) {
-                        setState(() {
-                          // Сбрасываем флаг инициализации при обновлении данных
-                          _mapInitialized = false;
-                          _clubsMarkersKey = ValueKey(
-                            'clubs_markers_${DateTime.now().millisecondsSinceEpoch}',
-                          );
-                        });
-                      }
-                    });
-                  },
+                      showModalBottomSheet(
+                        context: context,
+                        useRootNavigator: true,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => sheet,
+                      ).then((result) {
+                        // Если событие было удалено, обновляем маркеры на карте
+                        if (result == 'event_deleted' && mounted) {
+                          setState(() {
+                            // Сбрасываем флаг инициализации при обновлении данных
+                            _mapInitialized = false;
+                            _eventsMarkersKey = ValueKey(
+                              'events_markers_${DateTime.now().millisecondsSinceEpoch}',
+                            );
+                          });
+                        }
+                        // Если клуб был удалён, обновляем маркеры на карте
+                        if (result == 'club_deleted' && mounted) {
+                          setState(() {
+                            // Сбрасываем флаг инициализации при обновлении данных
+                            _mapInitialized = false;
+                            _clubsMarkersKey = ValueKey(
+                              'clubs_markers_${DateTime.now().millisecondsSinceEpoch}',
+                            );
+                          });
+                        }
+                      });
+                    },
 
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: markerColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.border, width: 1),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '$count',
-                      style: const TextStyle(
-                        color: AppColors.surface,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: markerColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.border, width: 1),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '$count',
+                        style: const TextStyle(
+                          color: AppColors.surface,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            } catch (e) {
-              // Возвращаем пустой маркер, чтобы не сломать отрисовку
-              return Marker(
-                point: LatLng(0, 0),
-                width: 0,
-                height: 0,
-                child: const SizedBox.shrink(),
-              );
-            }
-          }).toList(),
-        ),
-      ],
+                );
+              } catch (e) {
+                // Возвращаем пустой маркер, чтобы не сломать отрисовку
+                return Marker(
+                  point: LatLng(0, 0),
+                  width: 0,
+                  height: 0,
+                  child: const SizedBox.shrink(),
+                );
+              }
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 

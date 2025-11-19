@@ -25,15 +25,28 @@ import 'widgets/gear_section_sliver.dart';
 
 class MainTab extends StatefulWidget {
   final int userId; // ID пользователя, для которого показываем вкладку
-  const MainTab({super.key, required this.userId});
+  final VoidCallback? onTabActivated; // Callback при активации вкладки
+  const MainTab({super.key, required this.userId, this.onTabActivated});
 
   @override
   State<MainTab> createState() => _MainTabState();
+  
+  /// Публичный метод для принудительной проверки кэша (можно вызвать извне через GlobalKey)
+  static void checkCache(GlobalKey<MainTabState>? key) {
+    key?.currentState?.checkCache();
+  }
 }
 
-class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
+/// Публичный класс состояния для доступа извне
+abstract class MainTabState extends State<MainTab> {
+  /// Публичный метод для принудительной проверки кэша
+  void checkCache();
+}
+
+class _MainTabState extends MainTabState with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   // Храним будущий результат загрузки, чтобы не перезагружать при каждом build
   Future<MainTabData>? _future;
+  bool _isCheckingCache = false; // Флаг для предотвращения параллельных проверок
   
   @override
   void initState() {
@@ -56,47 +69,71 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin, W
     }
   }
   
+  @override
+  void checkCache() {
+    _checkAndReload();
+  }
+  
   /// Проверяет, нужно ли обновить данные (если кэш был очищен)
-  Future<void> _checkAndReload() async {
-    if (!mounted) return;
+  /// Возвращает true, если данные были обновлены
+  Future<bool> _checkAndReload() async {
+    if (!mounted || _isCheckingCache) return false;
     
-    final prefs = await SharedPreferences.getInstance();
-    final cacheKey = 'main_tab_${widget.userId}';
-    final cachedJson = prefs.getString(cacheKey);
-    
-    // Если кэш был очищен и Future уже выполнен, принудительно обновляем данные
-    if (cachedJson == null && _future != null) {
-      // Проверяем, что Future уже завершен (чтобы не перезагружать во время загрузки)
-      try {
-        await _future!.timeout(const Duration(milliseconds: 100));
-        // Если Future завершен и кэш очищен, обновляем данные
+    _isCheckingCache = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cacheKey = 'main_tab_${widget.userId}';
+      final cachedJson = prefs.getString(cacheKey);
+      
+      // Если кэш был очищен, принудительно обновляем данные
+      if (cachedJson == null) {
+        // Проверяем, что Future уже завершен (чтобы не перезагружать во время загрузки)
+        if (_future != null) {
+          try {
+            await _future!.timeout(const Duration(milliseconds: 100));
+          } catch (e) {
+            // Future еще выполняется - ничего не делаем, выходим
+            return false;
+          }
+        }
+        // Если Future завершен или его нет, обновляем данные
         if (mounted) {
           setState(() {
             _future = _load(forceRefresh: true);
           });
+          return true;
         }
-      } catch (e) {
-        // Future еще выполняется или произошла ошибка - ничего не делаем
       }
+      return false;
+    } finally {
+      _isCheckingCache = false;
     }
   }
 
-  void _openShoesView() {
-    Navigator.push(
+  void _openShoesView() async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => const ViewingEquipmentScreen(initialSegment: 0),
       ),
     );
+    // Обновляем данные после возврата (если кэш был очищен)
+    if (mounted) {
+      _checkAndReload();
+    }
   }
 
-  void _openBikesView() {
-    Navigator.push(
+  void _openBikesView() async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => const ViewingEquipmentScreen(initialSegment: 1),
       ),
     );
+    // Обновляем данные после возврата (если кэш был очищен)
+    if (mounted) {
+      _checkAndReload();
+    }
   }
 
 
@@ -110,9 +147,18 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin, W
     } else {
       // Проверяем кэш при обновлении виджета (например, при возврате на вкладку)
       // Это нужно для обновления данных после очистки кэша из другой вкладки
-      _checkAndReload();
+      // Используем addPostFrameCallback, чтобы не блокировать didUpdateWidget
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkAndReload();
+      });
+    }
+    // Если изменился callback, сохраняем его для использования
+    if (oldWidget.onTabActivated != widget.onTabActivated) {
+      // Callback изменился - это может означать, что вкладка активирована
+      widget.onTabActivated?.call();
     }
   }
+  
 
   // Запрос к API с offline-first кэшированием
   Future<MainTabData> _load({bool forceRefresh = false}) async {
@@ -172,6 +218,16 @@ class _MainTabState extends State<MainTab> with AutomaticKeepAliveClientMixin, W
   Widget build(BuildContext context) {
     super.build(context); // важно для AutomaticKeepAliveClientMixin
 
+    // Проверяем кэш при каждом build (асинхронно, чтобы не блокировать UI)
+    // Это нужно для обновления данных при переключении на вкладку из другого экрана
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndReload();
+    });
+
+    return _buildContent();
+  }
+
+  Widget _buildContent() {
     return FutureBuilder<MainTabData>(
       future: _future ??= _load(), // повторная подстраховка
       builder: (context, snap) {

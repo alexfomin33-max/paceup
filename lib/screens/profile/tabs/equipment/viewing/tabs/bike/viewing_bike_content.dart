@@ -148,6 +148,12 @@ class _ViewingBikeContentState extends State<ViewingBikeContent> {
               imageUrl: item['image'] as String?,
             );
           }).toList();
+          // Сортируем: основные элементы первыми
+          _bikes.sort((a, b) {
+            if (a.isMain && !b.isMain) return -1;
+            if (!a.isMain && b.isMain) return 1;
+            return 0;
+          });
 
           _isLoading = false;
         });

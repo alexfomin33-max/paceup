@@ -377,7 +377,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     overflow: TextOverflow.ellipsis,
                                     // ─── Жирный стиль для непрочитанных сообщений ───
                                     style: chat.unread
-                                        ? AppTextStyles.h14w6
+                                        ? AppTextStyles.h14w5
                                         : AppTextStyles.h14w5,
                                   ),
                                 ),
@@ -401,7 +401,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     // ─── Жирный стиль для непрочитанных сообщений ───
                                     style: chat.unread
                                         ? AppTextStyles.h13w6.copyWith(
-                                            color: AppColors.textSecondary,
+                                            color: AppColors.textPrimary,
                                           )
                                         : AppTextStyles.h13w4Sec,
                                   ),

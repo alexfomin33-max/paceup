@@ -463,7 +463,12 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Имя клуба (логотип теперь в Stack выше)
-                      Text(name, style: AppTextStyles.h17w6),
+                      Text(
+                        name,
+                        style: AppTextStyles.h17w6.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       const SizedBox(height: 10),
 
                       // Описание
@@ -472,49 +477,40 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                           description,
                           style: const TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 13,
+                            fontSize: 14,
                             height: 1.5,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      if (description.isNotEmpty) const SizedBox(height: 10),
+                      if (description.isNotEmpty) const SizedBox(height: 12),
 
                       // Инфо-блок
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.disabled,
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          border: Border.all(color: AppColors.border, width: 1),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        child: Column(
-                          children: [
-                            // Статус открытости клуба
+                      Column(
+                        children: [
+                          // Статус открытости клуба
+                          _InfoRow(
+                            icon: isOpen
+                                ? CupertinoIcons.lock_open
+                                : CupertinoIcons.lock_fill,
+                            text: isOpen
+                                ? 'Открытое беговое сообщество'
+                                : 'Закрытое беговое сообщество',
+                          ),
+                          const SizedBox(height: 6),
+                          if (dateFormatted.isNotEmpty) ...[
                             _InfoRow(
-                              icon: isOpen
-                                  ? CupertinoIcons.lock_open
-                                  : CupertinoIcons.lock_fill,
-                              text: isOpen
-                                  ? 'Открытое беговое сообщество'
-                                  : 'Закрытое беговое сообщество',
+                              icon: CupertinoIcons.calendar_today,
+                              text: 'Основан: $dateFormatted',
                             ),
                             const SizedBox(height: 6),
-                            if (dateFormatted.isNotEmpty) ...[
-                              _InfoRow(
-                                icon: CupertinoIcons.calendar_today,
-                                text: 'Основан: $dateFormatted',
-                              ),
-                              const SizedBox(height: 6),
-                            ],
-                            // Количество участников
-                            _InfoRow(
-                              icon: CupertinoIcons.person_2_fill,
-                              text: 'Участников: $membersCount',
-                            ),
                           ],
-                        ),
+                          // Количество участников
+                          _InfoRow(
+                            icon: CupertinoIcons.person_2_fill,
+                            text: 'Участников: $membersCount',
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
 
@@ -529,7 +525,7 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                               : _joinClub,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _isMember
-                                ? AppColors.disabled
+                                ? AppColors.background
                                 : AppColors.brandPrimary,
                             foregroundColor: _isMember
                                 ? AppColors.textSecondary
@@ -708,7 +704,7 @@ class _InfoRow extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+            style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
           ),
         ),
       ],
