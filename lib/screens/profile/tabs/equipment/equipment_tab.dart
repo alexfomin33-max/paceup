@@ -108,6 +108,12 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
               imageUrl: item['image'] as String?,
             );
           }).toList();
+          // Сортируем: основные элементы первыми
+          _boots.sort((a, b) {
+            if (a.isMain && !b.isMain) return -1;
+            if (!a.isMain && b.isMain) return 1;
+            return 0;
+          });
 
           _bikes = bikesList.map((item) {
             return _GearItem(
@@ -121,6 +127,12 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
               imageUrl: item['image'] as String?,
             );
           }).toList();
+          // Сортируем: основные элементы первыми
+          _bikes.sort((a, b) {
+            if (a.isMain && !b.isMain) return -1;
+            if (!a.isMain && b.isMain) return 1;
+            return 0;
+          });
 
           // Устанавливаем флаги "На главном экране" из первого элемента
           _showShoesOnMain = _boots.isNotEmpty
@@ -254,13 +266,15 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
           SliverToBoxAdapter(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () {
-                Navigator.of(context).push(
+              onTap: () async {
+                await Navigator.of(context).push(
                   CupertinoPageRoute(
                     builder: (_) =>
                         const ViewingEquipmentScreen(initialSegment: 0),
                   ),
                 );
+                // Обновляем данные после возврата
+                _loadEquipment();
               },
               child: _GearListCard(items: _boots, isBoots: true),
             ),
@@ -281,13 +295,15 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
           SliverToBoxAdapter(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () {
-                Navigator.of(context).push(
+              onTap: () async {
+                await Navigator.of(context).push(
                   CupertinoPageRoute(
                     builder: (_) =>
                         const ViewingEquipmentScreen(initialSegment: 1),
                   ),
                 );
+                // Обновляем данные после возврата
+                _loadEquipment();
               },
               child: _GearListCard(items: _bikes, isBoots: false),
             ),

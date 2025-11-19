@@ -55,6 +55,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   final PageController _pageController = PageController();
   final GearPrefs _gearPrefs = GearPrefs();
+  final GlobalKey<MainTabState> _mainTabKey = GlobalKey<MainTabState>();
 
   int _tab = 0;
 
@@ -75,7 +76,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  void _onPageChanged(int i) => setState(() => _tab = i);
+  void _onPageChanged(int i) {
+    setState(() => _tab = i);
+    // При переключении на вкладку "Основное" (индекс 0) проверяем кэш
+    if (i == 0) {
+      MainTab.checkCache(_mainTabKey);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -303,7 +310,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 physics: const BouncingScrollPhysics(),
                 onPageChanged: _onPageChanged,
                 children: [
-                  MainTab(userId: userId),
+                  MainTab(key: _mainTabKey, userId: userId),
                   const PhotosTab(),
                   const StatsTab(),
                   const TrainingTab(),

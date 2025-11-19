@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../../../theme/app_theme.dart';
 import '../../../../../../../widgets/more_menu_overlay.dart';
 import '../../../../../../../widgets/transparent_route.dart';
@@ -149,6 +150,12 @@ class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
               imageUrl: item['image'] as String?,
             );
           }).toList();
+          // Сортируем: основные элементы первыми
+          _sneakers.sort((a, b) {
+            if (a.isMain && !b.isMain) return -1;
+            if (!a.isMain && b.isMain) return 1;
+            return 0;
+          });
 
           _isLoading = false;
         });
@@ -354,15 +361,10 @@ class _GearViewCardState extends State<GearViewCard> {
 
       if (data['success'] == true) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                isCurrentlyMain
-                    ? 'Снаряжение убрано из основных'
-                    : 'Снаряжение установлено как основное',
-              ),
-            ),
-          );
+          // Очищаем кэш MainTab, чтобы данные обновились на главной странице профиля
+          final prefs = await SharedPreferences.getInstance();
+          final cacheKey = 'main_tab_$userId';
+          await prefs.remove(cacheKey);
           // Обновляем список
           widget.onUpdate?.call();
         }
