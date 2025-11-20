@@ -1,13 +1,13 @@
 // lib/screens/lenta/widgets/activity_description_block.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:ui' as ui; // для ui.Path
 import 'package:latlong2/latlong.dart' as ll;
 
 import '../../../theme/app_theme.dart';
 // Берём готовые виджеты (чтобы совпадал верх с ActivityBlock)
-import '../widgets/activity/stats/stats_row.dart' as ab show MetricVertical;
+import '../widgets/activity/header/activity_header.dart';
+import '../widgets/activity/stats/stats_row.dart';
 import '../widgets/activity/equipment/equipment_chip.dart'
     as ab
     show EquipmentChip;
@@ -17,6 +17,7 @@ import '../../../models/activity_lenta.dart' as al;
 import 'combining_screen.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/transparent_route.dart';
+import '../../../widgets/interactive_back_swipe.dart';
 
 /// Страница с подробным описанием тренировки.
 /// Верхний блок (аватар, дата, метрики) полностью повторяет ActivityBlock.
@@ -45,428 +46,187 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
     final a = widget.activity;
     final stats = a.stats;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: PaceAppBar(
-        title: 'Тренировка',
-        showBottomDivider:
-            false, // чтобы не было двойной линии со следующим блоком
-        actions: [
-          IconButton(
-            splashRadius: 22,
-            icon: const Icon(
-              CupertinoIcons.personalhotspot,
-              size: 20,
-              color: AppColors.iconPrimary,
-            ),
-            onPressed: () {
-              Navigator.of(context).push(
-                TransparentPageRoute(builder: (_) => const CombiningScreen()),
-              );
-            },
-          ),
-          IconButton(
-            splashRadius: 22,
-            icon: const Icon(
-              CupertinoIcons.ellipsis,
-              size: 20,
-              color: AppColors.iconPrimary,
-            ),
-            onPressed: () {},
-          ),
-        ],
-      ),
-
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // ───────── Верхний блок (как в ActivityBlock)
-          SliverToBoxAdapter(
-            child: Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
-                border: Border(
-                  top: BorderSide(width: 0.5, color: AppColors.border),
-                  bottom: BorderSide(width: 0.5, color: AppColors.border),
-                ),
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: PaceAppBar(
+          title: 'Тренировка',
+          showBottomDivider:
+              false, // чтобы не было двойной линии со следующим блоком
+          actions: [
+            IconButton(
+              splashRadius: 22,
+              icon: const Icon(
+                CupertinoIcons.personalhotspot,
+                size: 20,
+                color: AppColors.iconPrimary,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Шапка: аватар, имя, дата, метрики
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipOval(child: _Avatar(a.userAvatar)),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // ✅ Выводим имя и фамилию пользователя из базы данных
-                              Text(
-                                a.userName.isNotEmpty ? a.userName : 'Аноним',
-                                style: AppTextStyles.h15w5,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _fmtDate(a.dateStart),
-                                style: AppTextStyles.h12w4Sec,
-                              ),
-                              const SizedBox(height: 18),
-
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ab.MetricVertical(
-                                    mainTitle: "Расстояние",
-                                    mainValue: stats != null
-                                        ? "${(stats.distance / 1000).toStringAsFixed(2)} км"
-                                        : "—",
-                                    subTitle: "Набор высоты",
-                                    subValue: stats != null
-                                        ? "${stats.cumulativeElevationGain.toStringAsFixed(0)} м"
-                                        : "—",
-                                  ),
-                                  const SizedBox(width: 24),
-                                  ab.MetricVertical(
-                                    mainTitle: "Время",
-                                    mainValue: stats != null
-                                        ? _fmtDuration(stats.duration)
-                                        : "—",
-                                    subTitle: "Каденс",
-                                    subValue:
-                                        "—", // поля в модели нет — показываем «—»
-                                  ),
-                                  const SizedBox(width: 24),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        "Темп",
-                                        style: AppTextStyles.h12w4Ter,
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        stats != null
-                                            ? _fmtPace(stats.avgPace)
-                                            : "—",
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      const Text(
-                                        "Средний пульс",
-                                        style: AppTextStyles.h12w4Ter,
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            stats?.avgHeartRate
-                                                    ?.toStringAsFixed(0) ??
-                                                "—",
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 2),
-                                          const Icon(
-                                            CupertinoIcons.heart_fill,
-                                            color: AppColors.error,
-                                            size: 12,
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Плашка «обувь» (из ActivityBlock)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: ab.EquipmentChip(
-                      items: a.equipments,
-                      userId: a.userId,
-                      activityType: a.type,
-                      activityId: a.id,
-                      activityDistance: (stats?.distance ?? 0.0) / 1000.0, // конвертируем метры в километры
-                      onEquipmentChanged: () {
-                        // Обновляем страницу после замены эквипа
-                        setState(() {
-                          // Перезагружаем данные активности
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Плашка «часы» — по ширине как «обувь»: добавили такой же внутренний отступ 10
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: _WatchPill(
-                        asset: 'assets/garmin.png',
-                        title: 'Garmin Forerunner 965',
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-                ],
+              onPressed: () {
+                Navigator.of(context).push(
+                  TransparentPageRoute(builder: (_) => const CombiningScreen()),
+                );
+              },
+            ),
+            IconButton(
+              splashRadius: 22,
+              icon: const Icon(
+                CupertinoIcons.ellipsis,
+                size: 20,
+                color: AppColors.iconPrimary,
               ),
+              onPressed: () {},
             ),
-          ),
+          ],
+        ),
 
-          // ───────── Карта маршрута
-          SliverToBoxAdapter(
-            child: ab.RouteCard(
-              points: a.points.map((c) => ll.LatLng(c.lat, c.lng)).toList(),
-            ),
-          ),
-
-          // ───────── Панель иконок под картой — белый фон, как в ActivityBlock
-          SliverToBoxAdapter(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
-                border: Border(
-                  bottom: BorderSide(width: 0.5, color: AppColors.border),
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        CupertinoIcons.heart,
-                        size: 20,
-                        color: AppColors.error,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${a.likes}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Icon(
-                        CupertinoIcons.chat_bubble,
-                        size: 20,
-                        color: AppColors.warning,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${a.comments}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Row(
-                    children: [
-                      Icon(
-                        CupertinoIcons.person_2,
-                        size: 20,
-                        color: AppColors.success,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        '48',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Icon(
-                        CupertinoIcons.person_crop_circle_badge_plus,
-                        size: 20,
-                        color: AppColors.brandPrimary,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        '3',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-          // ───────── «Отрезки» — таблица на всю ширину экрана
-          const SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(12, 8, 12, 8),
-                  child: Text('Отрезки', style: AppTextStyles.h15w5),
-                ),
-                _SplitsTableFull(),
-              ],
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-          // ───────── Сегменты — как в communication_prefs.dart (вынесены отдельно)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: _SegmentedPill(
-                  left: 'Темп',
-                  center: 'Пульс',
-                  right: 'Высота',
-                  value: _chartTab,
-                  onChanged: (v) => setState(() => _chartTab = v),
-                ),
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-          // ───────── ЕДИНЫЙ блок: график + сводка темпа
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            sliver: SliverToBoxAdapter(
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // ───────── Верхний блок (как в ActivityBlock)
+            SliverToBoxAdapter(
               child: Container(
-                padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
-                decoration: BoxDecoration(
+                width: double.infinity,
+                decoration: const BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.border, width: 1),
+                  border: Border(
+                    top: BorderSide(width: 0.5, color: AppColors.border),
+                    bottom: BorderSide(width: 0.5, color: AppColors.border),
+                  ),
                 ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      height: 210,
-                      width: double.infinity,
-                      child: _SimpleLineChart(mode: _chartTab),
+                    // Шапка: аватар, имя, дата, метрики (как в ActivityBlock)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: ActivityHeader(
+                        userId: widget.currentUserId,
+                        userName: a.userName.isNotEmpty ? a.userName : 'Аноним',
+                        userAvatar: a.userAvatar,
+                        dateStart: a.dateStart,
+                        dateTextOverride: a.postDateText,
+                        bottom: StatsRow(
+                          distanceMeters: stats?.distance,
+                          durationSec: stats?.duration,
+                          elevationGainM: stats?.cumulativeElevationGain,
+                          avgPaceMinPerKm: stats?.avgPace,
+                          avgHeartRate: stats?.avgHeartRate,
+                        ),
+                        bottomGap: 12.0,
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    const Divider(
-                      height: 1,
-                      thickness: 0.5,
-                      color: AppColors.border,
+
+                    // Плашка «обувь» (из ActivityBlock)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: ab.EquipmentChip(items: a.equipments),
                     ),
                     const SizedBox(height: 4),
-                    const _PaceSummary(), // подписи «Самый быстрый/Средний/Самый медленный»
+
+                    // Плашка «часы» — по ширине как «обувь»: добавили такой же внутренний отступ 10
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: _WatchPill(
+                          asset: 'assets/garmin.png',
+                          title: 'Garmin Forerunner 965',
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
                   ],
                 ),
               ),
             ),
-          ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
+            // ───────── Карта маршрута
+            SliverToBoxAdapter(
+              child: ab.RouteCard(
+                points: a.points.map((c) => ll.LatLng(c.lat, c.lng)).toList(),
+                height:
+                    240, // Увеличена высота карты для лучшей видимости маршрута
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+            // ───────── «Отрезки» — таблица на всю ширину экрана
+            const SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(12, 8, 12, 8),
+                    child: Text('Отрезки', style: AppTextStyles.h15w5),
+                  ),
+                  _SplitsTableFull(),
+                ],
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            // ───────── Сегменты — как в communication_prefs.dart (вынесены отдельно)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Center(
+                  child: _SegmentedPill(
+                    left: 'Темп',
+                    center: 'Пульс',
+                    right: 'Высота',
+                    value: _chartTab,
+                    onChanged: (v) => setState(() => _chartTab = v),
+                  ),
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            // ───────── ЕДИНЫЙ блок: график + сводка темпа
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              sliver: SliverToBoxAdapter(
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: AppColors.border, width: 1),
+                  ),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 210,
+                        width: double.infinity,
+                        child: _SimpleLineChart(mode: _chartTab),
+                      ),
+                      const SizedBox(height: 6),
+                      const Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        color: AppColors.border,
+                      ),
+                      const SizedBox(height: 4),
+                      const _PaceSummary(), // подписи «Самый быстрый/Средний/Самый медленный»
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+        ),
       ),
     );
-  }
-
-  // helpers
-  String _fmtDate(DateTime? dt) {
-    if (dt == null) return '';
-    final dd = dt.day.toString().padLeft(2, '0');
-    final mm = dt.month.toString().padLeft(2, '0');
-    final hh = dt.hour.toString().padLeft(2, '0');
-    final min = dt.minute.toString().padLeft(2, '0');
-    return "$dd.$mm.${dt.year}, в $hh:$min";
-  }
-
-  String _fmtDuration(num? seconds) {
-    if (seconds == null) return '';
-    final total = seconds.toInt();
-    final h = total ~/ 3600;
-    final m = (total % 3600) ~/ 60;
-    final s = total % 60;
-    return h > 0
-        ? '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}'
-        : '$m:${s.toString().padLeft(2, '0')}';
-  }
-
-  String _fmtPace(double paceMinPerKm) {
-    final minutes = paceMinPerKm.floor();
-    final seconds = ((paceMinPerKm - minutes) * 60).round();
-    return '$minutes:${seconds.toString().padLeft(2, '0')} / км';
   }
 }
 
 /// ───────────────────────────── ВСПОМОГАТЕЛЬНЫЕ ВИДЖЕТЫ ─────────────────────
-
-class _Avatar extends StatelessWidget {
-  final String urlOrAsset;
-  const _Avatar(this.urlOrAsset);
-
-  @override
-  Widget build(BuildContext context) {
-    final isNet =
-        urlOrAsset.startsWith('http://') || urlOrAsset.startsWith('https://');
-    return isNet
-        ? Builder(
-            builder: (context) {
-              final dpr = MediaQuery.of(context).devicePixelRatio;
-              final w = (50 * dpr).round();
-              return CachedNetworkImage(
-                imageUrl: urlOrAsset,
-                width: 50,
-                height: 50,
-                fit: BoxFit.cover,
-                memCacheWidth: w,
-                maxWidthDiskCache: w,
-            placeholder: (context, url) => Container(
-              width: 50,
-              height: 50,
-              color: AppColors.background,
-            ),
-                errorWidget: (context, url, error) => Image.asset(
-                  'assets/avatar_2.png',
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                ),
-              );
-            },
-          )
-        : Image.asset(
-            urlOrAsset.isNotEmpty ? urlOrAsset : 'assets/avatar_2.png',
-            width: 50,
-            height: 50,
-            fit: BoxFit.cover,
-          );
-  }
-}
 
 /// Плашка «часы» — визуально как плашка «обувь», НО без кнопки «…»
 class _WatchPill extends StatelessWidget {
