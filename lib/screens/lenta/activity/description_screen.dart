@@ -116,10 +116,18 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                       ),
                     ),
 
-                    // Плашка «обувь» (из ActivityBlock)
+                    // Плашка «обувь» (из ActivityBlock) — без кнопки меню
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: ab.EquipmentChip(items: a.equipments),
+                      child: ab.EquipmentChip(
+                        items: a.equipments,
+                        userId: a.userId,
+                        activityType: a.type,
+                        activityId: a.id,
+                        activityDistance: (stats?.distance ?? 0.0) / 1000.0,
+                        showMenuButton:
+                            false, // скрываем кнопку меню на странице описания
+                      ),
                     ),
                     const SizedBox(height: 4),
 

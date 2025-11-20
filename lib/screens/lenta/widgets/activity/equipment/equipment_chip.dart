@@ -18,6 +18,7 @@ class EquipmentChip extends StatefulWidget {
   final int activityId; // ID активности для обновления эквипа
   final double activityDistance; // дистанция активности в километрах
   final VoidCallback? onEquipmentChanged; // callback после замены эквипа
+  final bool showMenuButton; // показывать ли кнопку меню с тремя точками
 
   const EquipmentChip({
     super.key,
@@ -27,6 +28,7 @@ class EquipmentChip extends StatefulWidget {
     required this.activityId,
     this.activityDistance = 0.0,
     this.onEquipmentChanged,
+    this.showMenuButton = true, // по умолчанию показываем кнопку для обратной совместимости
   });
 
   @override
@@ -140,12 +142,12 @@ class _EquipmentChipState extends State<EquipmentChip> {
             ),
             // текст
             // ────────────────────────────────────────────────────────────────
-            // 📏 ПРАВАЯ ГРАНИЦА: всегда резервируем место для кнопки
+            // 📏 ПРАВАЯ ГРАНИЦА: резервируем место для кнопки только если она видима
             // ────────────────────────────────────────────────────────────────
             Positioned(
               left: 60,
               top: 7,
-              right: 60, // всегда резервируем место для кнопки
+              right: widget.showMenuButton ? 60 : 8, // резервируем место только если кнопка видна
               child: Text.rich(
                 TextSpan(
                   children: [
@@ -172,42 +174,42 @@ class _EquipmentChipState extends State<EquipmentChip> {
 
             // кнопка вызова попапа (якорь)
             // ────────────────────────────────────────────────────────────────
-            // 🔹 Показываем всегда, если есть хотя бы один элемент экипировки
-            // Попап может показывать один или несколько элементов
+            // 🔹 Показываем только если showMenuButton = true
             // ────────────────────────────────────────────────────────────────
-            Positioned(
-              right: 8,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: GestureDetector(
-                  onTap: () => EquipmentPopup.showAnchored(
-                    context,
-                    anchorKey: _menuKey,
-                    items: widget.items,
-                    userId: widget.userId,
-                    activityType: widget.activityType,
-                    activityId: widget.activityId,
-                    activityDistance: widget.activityDistance,
-                    onEquipmentChanged: widget.onEquipmentChanged,
-                  ),
-                  child: Container(
-                    key: _menuKey, // ← важный ключ для позиционирования попапа
-                    width: 28,
-                    height: 28,
-                    decoration: const BoxDecoration(
-                      color: AppColors.surface,
-                      shape: BoxShape.circle,
+            if (widget.showMenuButton)
+              Positioned(
+                right: 8,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () => EquipmentPopup.showAnchored(
+                      context,
+                      anchorKey: _menuKey,
+                      items: widget.items,
+                      userId: widget.userId,
+                      activityType: widget.activityType,
+                      activityId: widget.activityId,
+                      activityDistance: widget.activityDistance,
+                      onEquipmentChanged: widget.onEquipmentChanged,
                     ),
-                    child: const Icon(
-                      CupertinoIcons.ellipsis,
-                      size: 16,
-                      color: AppColors.iconPrimary,
+                    child: Container(
+                      key: _menuKey, // ← важный ключ для позиционирования попапа
+                      width: 28,
+                      height: 28,
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.ellipsis,
+                        size: 16,
+                        color: AppColors.iconPrimary,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),
