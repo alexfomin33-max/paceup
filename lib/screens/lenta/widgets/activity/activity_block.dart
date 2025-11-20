@@ -22,6 +22,7 @@ import '../../activity/together/together_screen.dart';
 
 // Провайдеры
 import '../../../../providers/lenta/lenta_provider.dart';
+import '../../../../service/api_service.dart';
 
 // Меню с тремя точками
 import '../../../../widgets/more_menu_overlay.dart';
@@ -116,7 +117,12 @@ class ActivityBlock extends ConsumerWidget {
                             iconColor: AppColors.error,
                             textStyle: const TextStyle(color: AppColors.error),
                             onTap: () {
-                              // TODO: Реализовать удаление активности
+                              _handleDeleteActivity(
+                                context: context,
+                                ref: ref,
+                                activity: updatedActivity,
+                                currentUserId: currentUserId,
+                              );
                             },
                           ),
                         ];
@@ -139,6 +145,7 @@ class ActivityBlock extends ConsumerWidget {
               activityType: updatedActivity.type,
               activityId: updatedActivity.id,
               activityDistance: (stats?.distance ?? 0.0) / 1000.0, // конвертируем метры в километры
+              showMenuButton: updatedActivity.userId == currentUserId,
               onEquipmentChanged: () {
                 // Обновляем ленту после замены эквипа
                 ref.read(lentaProvider(currentUserId).notifier).forceRefresh();
@@ -235,3 +242,166 @@ class ActivityBlock extends ConsumerWidget {
     );
   }
 }
+
+// ────────────────────────────────────────────────────────────────
+//                        ЛОКАЛЬНЫЕ ХЕЛПЕРЫ
+// ────────────────────────────────────────────────────────────────
+
+/// Обработчик удаления тренировки.
+///
+/// 1. Спрашиваем подтверждение у пользователя.
+/// 2. Показываем модальный индикатор с блокировкой ввода.
+/// 3. Вызываем API `/delete_activity.php`.
+/// 4. При успехе удаляем элемент из провайдера `lentaProvider`.
+/// 5. При ошибке показываем SelectableText.rich с сообщением об ошибке.
+Future<void> _handleDeleteActivity({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Activity activity,
+  required int currentUserId,
+}) async {
+  final confirmed = await _confirmDeletion(context);
+  if (!confirmed) return;
+
+  final navigator = Navigator.of(context, rootNavigator: true);
+  _showBlockingLoader(context);
+
+  final success = await _sendDeleteActivityRequest(
+    userId: currentUserId,
+    activityId: activity.id,
+  );
+
+  if (navigator.mounted) {
+    navigator.pop();
+  }
+
+  if (success) {
+    await ref
+        .read(lentaProvider(currentUserId).notifier)
+        .removeItem(activity.lentaId);
+  } else {
+    await _showErrorDialog(
+      context: context,
+      message: 'Не удалось удалить тренировку. Попробуйте ещё раз.',
+    );
+  }
+}
+
+/// Показывает модальный диалог подтверждения.
+Future<bool> _confirmDeletion(BuildContext context) async {
+  final result = await showCupertinoDialog<bool>(
+    context: context,
+    builder: (ctx) => CupertinoAlertDialog(
+      title: const Text('Удалить тренировку?'),
+      content: const Text('Действие нельзя отменить.'),
+      actions: [
+        CupertinoDialogAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('Отмена'),
+        ),
+        CupertinoDialogAction(
+          isDestructiveAction: true,
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: const Text('Удалить'),
+        ),
+      ],
+    ),
+  );
+
+  return result ?? false;
+}
+
+/// Показываем лоадер, пока ждём ответ сервера.
+void _showBlockingLoader(BuildContext context) {
+  showCupertinoDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const CupertinoAlertDialog(
+      content: Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoActivityIndicator(),
+            SizedBox(height: 12),
+            Text('Удаляем тренировку…'),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// Универсальный показ ошибки через SelectableText.rich (вместо SnackBar).
+Future<void> _showErrorDialog({
+  required BuildContext context,
+  required String message,
+}) {
+  return showCupertinoDialog<void>(
+    context: context,
+    builder: (ctx) => CupertinoAlertDialog(
+      title: const Text('Ошибка'),
+      content: Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: SelectableText.rich(
+          TextSpan(
+            text: message,
+            style: const TextStyle(
+              color: AppColors.error,
+              fontSize: 15,
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        CupertinoDialogAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text('Понятно'),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Вызывает API удаления активности и возвращает bool-успех.
+///
+/// ⚡ PERFORMANCE OPTIMIZATION:
+/// - Timeout 12 секунд — баланс между надежностью и UX
+/// - Простая проверка success — быстрая валидация ответа
+/// - Обработка ApiException — корректная обработка сетевых ошибок
+Future<bool> _sendDeleteActivityRequest({
+  required int userId,
+  required int activityId,
+}) async {
+  try {
+    final api = ApiService();
+    final response = await api.post(
+      '/delete_activity.php',
+      body: {
+        'userId': '$userId',
+        'activityId': '$activityId',
+      },
+      timeout: const Duration(seconds: 12),
+    );
+
+    // ────────────────────────────────────────────────────────────────
+    // ✅ ПРОВЕРКА УСПЕШНОСТИ: API возвращает {success: true, message: 'Тренировка удалена'}
+    // ────────────────────────────────────────────────────────────────
+    final success = response['success'] == true;
+    final message = response['message']?.toString() ?? '';
+
+    // Дополнительная проверка по сообщению для надежности
+    return success || message == 'Тренировка удалена';
+  } on ApiException catch (e) {
+    // Логируем ошибку API для отладки
+    debugPrint('⚠️ Ошибка удаления активности: ${e.message}');
+    return false;
+  } catch (e) {
+    // Логируем неожиданные ошибки
+    debugPrint('⚠️ Неожиданная ошибка при удалении активности: $e');
+    return false;
+  }
+}
+
