@@ -56,8 +56,7 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen>
-    with WidgetsBindingObserver {
+class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final ApiService _api = ApiService();
   final AuthService _auth = AuthService();
   final ScrollController _scrollController = ScrollController();
@@ -317,7 +316,7 @@ class _ChatScreenState extends State<ChatScreen>
                   padding: EdgeInsets.only(right: 6),
                   child: Icon(
                     CupertinoIcons.add_circled,
-                    size: 20,
+                    size: 22,
                     color: AppColors.iconPrimary,
                   ),
                 ),
