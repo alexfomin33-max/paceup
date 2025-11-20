@@ -61,63 +61,71 @@ class _EquipmentChipState extends State<EquipmentChip> {
               left: 3,
               top: 3,
               bottom: 3,
-              child: ClipOval(
-                child: img.isNotEmpty
-                    ? Builder(
-                        builder: (context) {
-                          final dpr = MediaQuery.of(context).devicePixelRatio;
-                          final w = (50 * dpr).round();
-                          return CachedNetworkImage(
-                            imageUrl: img,
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            memCacheWidth: w,
-                            maxWidthDiskCache: w,
-                        placeholder: (context, url) => Container(
-                          width: 50,
-                          height: 50,
-                          color: AppColors.background,
-                        ),
-                            errorWidget: (context, url, error) => Container(
+              child: Container(
+                width: 50,
+                height: 50,
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  shape: BoxShape.circle,
+                ),
+                child: ClipOval(
+                  child: img.isNotEmpty
+                      ? Builder(
+                          builder: (context) {
+                            final dpr = MediaQuery.of(context).devicePixelRatio;
+                            final w = (50 * dpr).round();
+                            return CachedNetworkImage(
+                              imageUrl: img,
                               width: 50,
                               height: 50,
-                              decoration: BoxDecoration(
-                                color: AppColors.background,
-                                shape: BoxShape.circle,
+                              fit: BoxFit.contain,
+                              memCacheWidth: w,
+                              maxWidthDiskCache: w,
+                              placeholder: (context, url) => Container(
+                                width: 50,
+                                height: 50,
+                                color: AppColors.surface,
                               ),
-                              child: const Icon(
-                                CupertinoIcons.sportscourt,
-                                size: 24,
-                                color: AppColors.iconSecondary,
+                              errorWidget: (context, url, error) => Container(
+                                width: 50,
+                                height: 50,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.surface,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.sportscourt,
+                                  size: 24,
+                                  color: AppColors.iconSecondary,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      )
-                    : Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: AppColors.background,
-                          shape: BoxShape.circle,
+                            );
+                          },
+                        )
+                      : Container(
+                          width: 50,
+                          height: 50,
+                          decoration: const BoxDecoration(
+                            color: AppColors.surface,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            CupertinoIcons.sportscourt,
+                            size: 24,
+                            color: AppColors.iconSecondary,
+                          ),
                         ),
-                        child: const Icon(
-                          CupertinoIcons.sportscourt,
-                          size: 24,
-                          color: AppColors.iconSecondary,
-                        ),
-                      ),
+                ),
               ),
             ),
             // текст
             // ────────────────────────────────────────────────────────────────
-            // 📏 ДИНАМИЧЕСКАЯ ПРАВАЯ ГРАНИЦА: если кнопки нет, текст занимает больше места
+            // 📏 ПРАВАЯ ГРАНИЦА: всегда резервируем место для кнопки
             // ────────────────────────────────────────────────────────────────
             Positioned(
               left: 60,
               top: 7,
-              right: widget.items.length > 1 ? 60 : 10, // если кнопки нет, больше места для текста
+              right: 60, // всегда резервируем место для кнопки
               child: Text.rich(
                 TextSpan(
                   children: [
@@ -143,36 +151,38 @@ class _EquipmentChipState extends State<EquipmentChip> {
             ),
 
             // кнопка вызова попапа (якорь)
-            // Показываем только если есть несколько элементов экипировки
-            if (widget.items.length > 1)
-              Positioned(
-                right: 8,
-                top: 0,
-                bottom: 0,
-                child: Center(
-                  child: GestureDetector(
-                    onTap: () => EquipmentPopup.showAnchored(
-                      context,
-                      anchorKey: _menuKey,
-                      items: widget.items,
+            // ────────────────────────────────────────────────────────────────
+            // 🔹 Показываем всегда, если есть хотя бы один элемент экипировки
+            // Попап может показывать один или несколько элементов
+            // ────────────────────────────────────────────────────────────────
+            Positioned(
+              right: 8,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: GestureDetector(
+                  onTap: () => EquipmentPopup.showAnchored(
+                    context,
+                    anchorKey: _menuKey,
+                    items: widget.items,
+                  ),
+                  child: Container(
+                    key: _menuKey, // ← важный ключ для позиционирования попапа
+                    width: 28,
+                    height: 28,
+                    decoration: const BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
                     ),
-                    child: Container(
-                      key: _menuKey, // ← важный ключ для позиционирования попапа
-                      width: 28,
-                      height: 28,
-                      decoration: const BoxDecoration(
-                        color: AppColors.surface,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        CupertinoIcons.ellipsis,
-                        size: 16,
-                        color: AppColors.iconPrimary,
-                      ),
+                    child: const Icon(
+                      CupertinoIcons.ellipsis,
+                      size: 16,
+                      color: AppColors.iconPrimary,
                     ),
                   ),
                 ),
               ),
+            ),
           ],
         ),
       ),

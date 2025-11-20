@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/app_theme.dart';
 import '../../config/app_config.dart';
 
@@ -336,10 +337,27 @@ class _MapScreenState extends State<MapScreen> {
                 final dynamic events = m['events'];
                 final Widget? content = m['content'] as Widget?;
 
+                // ──────────── Для событий используем увеличенный маркер с логотипом ────────────
+                final bool isEventsTab = _selectedIndex == 0;
+                final double markerSize = isEventsTab ? 44.0 : 28.0;
+
+                // Извлекаем логотип первого события для маркера (только для вкладки События)
+                String? eventLogoUrl;
+                if (isEventsTab && events != null && events is List && events.isNotEmpty) {
+                  final firstEvent = events[0] as Map<String, dynamic>?;
+                  if (firstEvent != null) {
+                    eventLogoUrl = firstEvent['logo_url'] as String?;
+                    // Проверяем, что URL не пустой
+                    if (eventLogoUrl != null && eventLogoUrl.isEmpty) {
+                      eventLogoUrl = null;
+                    }
+                  }
+                }
+
                 return Marker(
                   point: point,
-                  width: 28,
-                  height: 28,
+                  width: markerSize,
+                  height: markerSize,
                   child: GestureDetector(
                     onTap: () {
                       final Widget sheet = () {
@@ -419,22 +437,65 @@ class _MapScreenState extends State<MapScreen> {
                     },
 
                     child: Container(
-                      width: 28,
-                      height: 28,
+                      width: markerSize,
+                      height: markerSize,
                       decoration: BoxDecoration(
                         color: markerColor,
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.border, width: 1),
                       ),
                       alignment: Alignment.center,
-                      child: Text(
-                        '$count',
-                        style: const TextStyle(
-                          color: AppColors.surface,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                      ),
+                      // ──────────── Для событий показываем логотип, для остальных — цифру ────────────
+                      child: isEventsTab && eventLogoUrl != null
+                          ? ClipOval(
+                              child: CachedNetworkImage(
+                                imageUrl: eventLogoUrl,
+                                width: markerSize,
+                                height: markerSize,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) => Container(
+                                  width: markerSize,
+                                  height: markerSize,
+                                  color: markerColor,
+                                  alignment: Alignment.center,
+                                  child: Icon(
+                                    Icons.event,
+                                    size: markerSize * 0.5,
+                                    color: AppColors.surface,
+                                  ),
+                                ),
+                                placeholder: (_, __) => Container(
+                                  width: markerSize,
+                                  height: markerSize,
+                                  color: markerColor,
+                                  alignment: Alignment.center,
+                                  child: SizedBox(
+                                    width: markerSize * 0.5,
+                                    height: markerSize * 0.5,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.surface,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : isEventsTab
+                              ? Icon(
+                                  Icons.event,
+                                  size: markerSize * 0.5,
+                                  color: AppColors.surface,
+                                )
+                              : Text(
+                                  '$count',
+                                  style: TextStyle(
+                                    color: AppColors.surface,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: markerSize * 0.5,
+                                  ),
+                                ),
                     ),
                   ),
                 );
