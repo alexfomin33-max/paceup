@@ -163,28 +163,34 @@ class Activity {
 
 class Equipment {
   final String name;
+  final String brand; // название бренда из БД
   final int mileage;
   final String img;
   final bool main;
   final double myRating;
   final String type;
+  final int? equipUserId; // ID записи из таблицы equip_user (для замены эквипа)
 
   Equipment({
     required this.name,
+    this.brand = '', // по умолчанию пустая строка
     required this.mileage,
     required this.img,
     required this.main,
     required this.myRating,
     required this.type,
+    this.equipUserId,
   });
 
   factory Equipment.fromJson(Map<String, dynamic> j) => Equipment(
     name: j['name']?.toString() ?? '',
+    brand: j['brand']?.toString() ?? '', // парсим brand из JSON
     mileage: _asInt(j['mileage']),
     img: j['img']?.toString() ?? '',
     main: j['main'].toString() == '1' || j['main'] == true,
     myRating: _asDouble(j['myraiting']),
     type: j['type']?.toString() ?? '',
+    equipUserId: j['equip_user_id'] != null ? _asInt(j['equip_user_id']) : null,
   );
 }
 

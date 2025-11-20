@@ -13,8 +13,21 @@ import '../../../../../theme/app_theme.dart';
 /// - Кнопка справа 28×28, белая, иконка CupertinoIcons.ellipsis size:16
 class EquipmentChip extends StatefulWidget {
   final List<al.Equipment> items;
+  final int userId; // ID пользователя для загрузки всего эквипа
+  final String activityType; // тип активности (run, bike) для определения типа эквипа
+  final int activityId; // ID активности для обновления эквипа
+  final double activityDistance; // дистанция активности в километрах
+  final VoidCallback? onEquipmentChanged; // callback после замены эквипа
 
-  const EquipmentChip({super.key, required this.items});
+  const EquipmentChip({
+    super.key,
+    required this.items,
+    required this.userId,
+    required this.activityType,
+    required this.activityId,
+    this.activityDistance = 0.0,
+    this.onEquipmentChanged,
+  });
 
   @override
   State<EquipmentChip> createState() => _EquipmentChipState();
@@ -37,8 +50,15 @@ class _EquipmentChipState extends State<EquipmentChip> {
     final al.Equipment? e = widget.items.first;
     // Используем данные из API, если они есть
     final String name = (e?.name ?? '').trim();
+    final String brand = (e?.brand ?? '').trim(); // получаем бренд из модели
     final int mileage = e?.mileage ?? 0;
     final String img = e?.img ?? '';
+
+    // Формируем полное название: бренд + название обуви
+    // Если бренд есть — показываем "Бренд Название", иначе только название
+    final String displayName = brand.isNotEmpty 
+        ? '$brand $name'
+        : name;
 
     // Если имя пустое, не показываем чип
     if (name.isEmpty) {
@@ -130,7 +150,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                 TextSpan(
                   children: [
                     TextSpan(
-                      text: "$name\n",
+                      text: "$displayName\n",
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -165,6 +185,11 @@ class _EquipmentChipState extends State<EquipmentChip> {
                     context,
                     anchorKey: _menuKey,
                     items: widget.items,
+                    userId: widget.userId,
+                    activityType: widget.activityType,
+                    activityId: widget.activityId,
+                    activityDistance: widget.activityDistance,
+                    onEquipmentChanged: widget.onEquipmentChanged,
                   ),
                   child: Container(
                     key: _menuKey, // ← важный ключ для позиционирования попапа

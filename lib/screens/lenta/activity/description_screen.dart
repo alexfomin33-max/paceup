@@ -200,7 +200,19 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                   // Плашка «обувь» (из ActivityBlock)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: ab.EquipmentChip(items: a.equipments),
+                    child: ab.EquipmentChip(
+                      items: a.equipments,
+                      userId: a.userId,
+                      activityType: a.type,
+                      activityId: a.id,
+                      activityDistance: (stats?.distance ?? 0.0) / 1000.0, // конвертируем метры в километры
+                      onEquipmentChanged: () {
+                        // Обновляем страницу после замены эквипа
+                        setState(() {
+                          // Перезагружаем данные активности
+                        });
+                      },
+                    ),
                   ),
                   const SizedBox(height: 4),
 

@@ -88,7 +88,17 @@ class ActivityBlock extends ConsumerWidget {
           // ───────────────── ЭКИПИРОВКА ─────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: EquipmentChip(items: updatedActivity.equipments),
+            child: EquipmentChip(
+              items: updatedActivity.equipments,
+              userId: updatedActivity.userId,
+              activityType: updatedActivity.type,
+              activityId: updatedActivity.id,
+              activityDistance: (stats?.distance ?? 0.0) / 1000.0, // конвертируем метры в километры
+              onEquipmentChanged: () {
+                // Обновляем ленту после замены эквипа
+                ref.read(lentaProvider(currentUserId).notifier).forceRefresh();
+              },
+            ),
           ),
 
           // ────────────────────────────────────────────────────────────────
