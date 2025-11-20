@@ -237,6 +237,20 @@ class CacheService {
         .write(CachedActivitiesCompanion(comments: Value(newComments)));
   }
 
+  /// Обновляет список медиафайлов активности в кэше
+  Future<void> updateCachedActivityMedia({
+    required int activityId,
+    required List<String> mediaImages,
+  }) async {
+    await (_db.update(_db.cachedActivities)
+          ..where((tbl) => tbl.activityId.equals(activityId)))
+        .write(
+          CachedActivitiesCompanion(
+            mediaImages: Value(mediaImages),
+          ),
+        );
+  }
+
   /// Пакетное обновление лайков для нескольких активностей
   ///
   /// Параметры:

@@ -159,6 +159,36 @@ class Activity {
       mediaVideos: mediaVideos,
     );
   }
+
+  /// Создаёт копию с обновлёнными медиафайлами
+  Activity copyWithMedia({
+    List<String>? images,
+    List<String>? videos,
+  }) {
+    return Activity(
+      id: id,
+      type: type,
+      dateStart: dateStart,
+      dateEnd: dateEnd,
+      lentaId: lentaId,
+      lentaDate: lentaDate,
+      userId: userId,
+      userName: userName,
+      userAvatar: userAvatar,
+      likes: likes,
+      comments: comments,
+      userGroup: userGroup,
+      equipments: equipments,
+      stats: stats,
+      points: points,
+      postDateText: postDateText,
+      postMediaUrl: postMediaUrl,
+      postContent: postContent,
+      islike: islike,
+      mediaImages: images ?? mediaImages,
+      mediaVideos: videos ?? mediaVideos,
+    );
+  }
 }
 
 class Equipment {

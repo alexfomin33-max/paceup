@@ -324,4 +324,24 @@ class LentaNotifier extends StateNotifier<LentaState> {
   void setUnreadCount(int count) {
     state = state.copyWith(unreadCount: count);
   }
+
+  /// Обновляет список фотографий для активности и кэша
+  Future<void> updateActivityMedia({
+    required int activityId,
+    required List<String> mediaImages,
+  }) async {
+    final updatedItems = state.items.map((item) {
+      if (item.id == activityId) {
+        return item.copyWithMedia(images: mediaImages);
+      }
+      return item;
+    }).toList();
+
+    state = state.copyWith(items: updatedItems);
+
+    await _cache.updateCachedActivityMedia(
+      activityId: activityId,
+      mediaImages: mediaImages,
+    );
+  }
 }

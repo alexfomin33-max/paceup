@@ -1,6 +1,9 @@
 // lib/screens/lenta/widgets/activity/activity_block.dart
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -24,6 +27,7 @@ import '../../activity/together/together_screen.dart';
 // Провайдеры
 import '../../../../providers/lenta/lenta_provider.dart';
 import '../../../../service/api_service.dart';
+import '../../../../service/auth_service.dart';
 
 // Меню с тремя точками
 import '../../../../widgets/more_menu_overlay.dart';
@@ -118,7 +122,9 @@ class ActivityBlock extends ConsumerWidget {
                             onTap: () {
                               _handleAddPhotos(
                                 context: context,
+                                ref: ref,
                                 activityId: updatedActivity.id,
+                                currentUserId: currentUserId,
                               );
                             },
                           ),
@@ -266,43 +272,137 @@ class ActivityBlock extends ConsumerWidget {
 /// Само добавление фотографий в тренировку будет реализовано позже.
 Future<void> _handleAddPhotos({
   required BuildContext context,
+  required WidgetRef ref,
   required int activityId,
+  required int currentUserId,
 }) async {
   final picker = ImagePicker();
+  final auth = AuthService();
+  final navigator = Navigator.of(context, rootNavigator: true);
+  var loaderShown = false;
+
+  void hideLoader() {
+    if (loaderShown && navigator.mounted) {
+      navigator.pop();
+      loaderShown = false;
+    }
+  }
 
   try {
-    // ────────────────────────────────────────────────────────────────
-    // 📸 ВЫБОР ФОТОГРАФИЙ: открываем галерею для множественного выбора
-    // ────────────────────────────────────────────────────────────────
-    final List<XFile> pickedFiles = await picker.pickMultiImage();
+    final pickedFiles = await picker.pickMultiImage();
+    if (pickedFiles.isEmpty) return;
 
-    if (pickedFiles.isEmpty) {
-      // Пользователь отменил выбор фотографий
+    final userId = await auth.getUserId();
+    if (userId == null) {
+      if (context.mounted) {
+        await _showErrorDialog(
+          context: context,
+          message:
+              'Не удалось определить пользователя. Пожалуйста, авторизуйтесь.',
+        );
+      }
       return;
     }
 
-    // ────────────────────────────────────────────────────────────────
-    // 🔹 ВРЕМЕННАЯ РЕАЛИЗАЦИЯ: пока просто логируем выбранные файлы
-    // ────────────────────────────────────────────────────────────────
-    // TODO: Реализовать сохранение фотографий в тренировку
-    debugPrint(
-      '📸 Выбрано фотографий: ${pickedFiles.length} для активности $activityId',
+    final filesForUpload = <String, File>{};
+    for (var i = 0; i < pickedFiles.length; i++) {
+      final path = pickedFiles[i].path;
+      if (path.isEmpty) continue;
+      filesForUpload['file$i'] = File(path);
+    }
+
+    if (filesForUpload.isEmpty) {
+      if (context.mounted) {
+        await _showErrorDialog(
+          context: context,
+          message: 'Не удалось подготовить файлы для загрузки.',
+        );
+      }
+      return;
+    }
+
+    _showBlockingLoader(
+      context,
+      message: 'Загружаем фотографии…',
+    );
+    loaderShown = true;
+
+    final api = ApiService();
+    final response = await api.postMultipart(
+      '/upload_activity_photos.php',
+      files: filesForUpload,
+      fields: {
+        'user_id': '$userId',
+        'activity_id': '$activityId',
+      },
+      timeout: const Duration(minutes: 2),
     );
 
-    // Показываем пользователю, что фотографии выбраны
-    // (в будущем здесь будет загрузка на сервер)
-    if (context.mounted) {
-      // Можно показать краткое уведомление, что фотографии выбраны
-      // Но пока просто закрываем меню
-    }
-  } catch (e) {
-    // Обрабатываем ошибки выбора фотографий
-    debugPrint('⚠️ Ошибка при выборе фотографий: $e');
+    hideLoader();
 
+    if (response['success'] != true) {
+      final message = response['message']?.toString() ??
+          'Не удалось загрузить фотографии. Попробуйте ещё раз.';
+      if (context.mounted) {
+        await _showErrorDialog(context: context, message: message);
+      }
+      return;
+    }
+
+    final images = (response['images'] as List?)
+            ?.whereType<String>()
+            .toList(growable: false) ??
+        const [];
+
+    if (images.isNotEmpty) {
+      await ref
+          .read(lentaProvider(currentUserId).notifier)
+          .updateActivityMedia(
+            activityId: activityId,
+            mediaImages: images,
+          );
+    } else {
+      await ref.read(lentaProvider(currentUserId).notifier).refresh();
+    }
+
+    if (context.mounted) {
+      await showCupertinoDialog<void>(
+        context: context,
+        builder: (ctx) => CupertinoAlertDialog(
+          title: const Text('Готово'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: Text('Фотографии добавлены к тренировке.'),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Ок'),
+            ),
+          ],
+        ),
+      );
+    }
+  } on PlatformException catch (e) {
+    hideLoader();
     if (context.mounted) {
       await _showErrorDialog(
         context: context,
-        message: 'Не удалось открыть галерею. Попробуйте ещё раз.',
+        message: 'Нет доступа к галерее: ${e.message ?? 'неизвестная ошибка'}.',
+      );
+    }
+  } on ApiException catch (e) {
+    hideLoader();
+    if (context.mounted) {
+      await _showErrorDialog(context: context, message: e.message);
+    }
+  } catch (e) {
+    hideLoader();
+    if (context.mounted) {
+      await _showErrorDialog(
+        context: context,
+        message: 'Не удалось загрузить фотографии. Попробуйте ещё раз.',
       );
     }
   }
@@ -374,19 +474,22 @@ Future<bool> _confirmDeletion(BuildContext context) async {
 }
 
 /// Показываем лоадер, пока ждём ответ сервера.
-void _showBlockingLoader(BuildContext context) {
+void _showBlockingLoader(
+  BuildContext context, {
+  String message = 'Удаляем тренировку…',
+}) {
   showCupertinoDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => const CupertinoAlertDialog(
+    builder: (_) => CupertinoAlertDialog(
       content: Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CupertinoActivityIndicator(),
-            SizedBox(height: 12),
-            Text('Удаляем тренировку…'),
+            const CupertinoActivityIndicator(),
+            const SizedBox(height: 12),
+            Text(message),
           ],
         ),
       ),
