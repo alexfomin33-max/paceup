@@ -21,6 +21,9 @@ class ActivityHeader extends StatelessWidget {
   final Widget? bottom;
   final double bottomGap;
 
+  /// Trailing виджет (например, кнопка меню с тремя точками)
+  final Widget? trailing;
+
   const ActivityHeader({
     super.key,
     required this.userId,
@@ -30,6 +33,7 @@ class ActivityHeader extends StatelessWidget {
     this.dateTextOverride,
     this.bottom,
     this.bottomGap = 18.0,
+    this.trailing,
   });
 
   @override
@@ -54,6 +58,7 @@ class ActivityHeader extends StatelessWidget {
       },
       bottom: bottom,
       bottomGap: bottomGap,
+      trailing: trailing,
     );
   }
 }

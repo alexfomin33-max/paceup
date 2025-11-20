@@ -50,18 +50,18 @@ class MemberContent extends StatelessWidget {
             }),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
         // Кнопка «Покинуть группу»
         SizedBox(
           height: 44,
-          width: 250,
+          width: 200,
           child: OutlinedButton(
             onPressed: () {},
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.error, width: 1),
+              side: BorderSide.none,
               foregroundColor: AppColors.error,
-              backgroundColor: AppColors.surface,
+              backgroundColor: AppColors.backgroundRed,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.xl),
               ),

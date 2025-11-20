@@ -23,6 +23,9 @@ import '../../activity/together/together_screen.dart';
 // Провайдеры
 import '../../../../providers/lenta/lenta_provider.dart';
 
+// Меню с тремя точками
+import '../../../../widgets/more_menu_overlay.dart';
+
 /// Главный виджет «тренировка».
 
 class ActivityBlock extends ConsumerWidget {
@@ -48,6 +51,11 @@ class ActivityBlock extends ConsumerWidget {
       (a) => a.lentaId == activity.lentaId,
       orElse: () => activity, // fallback на переданную activity
     );
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 КЛЮЧ ДЛЯ МЕНЮ: нужен для привязки всплывающего меню
+    // ────────────────────────────────────────────────────────────────
+    final menuKey = GlobalKey();
 
     return Container(
       decoration: const BoxDecoration(
@@ -82,6 +90,43 @@ class ActivityBlock extends ConsumerWidget {
                 avgHeartRate: stats?.avgHeartRate,
               ),
               bottomGap: 12.0,
+
+              // ────────────────────────────────────────────────────────────────
+              // 🔹 МЕНЮ С ТРЕМЯ ТОЧКАМИ: показываем только автору активности
+              // ────────────────────────────────────────────────────────────────
+              trailing: updatedActivity.userId == currentUserId
+                  ? IconButton(
+                      key: menuKey,
+                      icon: const Icon(
+                        CupertinoIcons.ellipsis,
+                        color: AppColors.iconPrimary,
+                      ),
+                      onPressed: () {
+                        final items = <MoreMenuItem>[
+                          MoreMenuItem(
+                            text: 'Редактировать',
+                            icon: CupertinoIcons.pencil,
+                            onTap: () {
+                              // TODO: Реализовать редактирование активности
+                            },
+                          ),
+                          MoreMenuItem(
+                            text: 'Удалить тренировку',
+                            icon: CupertinoIcons.minus_circle,
+                            iconColor: AppColors.error,
+                            textStyle: const TextStyle(color: AppColors.error),
+                            onTap: () {
+                              // TODO: Реализовать удаление активности
+                            },
+                          ),
+                        ];
+                        MoreMenuOverlay(
+                          anchorKey: menuKey,
+                          items: items,
+                        ).show(context);
+                      },
+                    )
+                  : null,
             ),
           ),
 
