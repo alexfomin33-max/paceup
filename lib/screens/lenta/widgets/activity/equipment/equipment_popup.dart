@@ -38,7 +38,7 @@ class EquipmentPopup {
     final offset = box.localToGlobal(Offset.zero);
     final screenSize = MediaQuery.of(context).size;
 
-    const double popupW = 288;
+    const double popupW = 260;
     // ────────────────────────────────────────────────────────────────
     // 📏 ДИНАМИЧЕСКАЯ ВЫСОТА: будет вычисляться на основе содержимого
     // ────────────────────────────────────────────────────────────────
@@ -202,7 +202,8 @@ class _AnimatedPopupState extends State<_AnimatedPopup>
                         activityDistance: widget.activityDistance,
                         onEquipmentChanged: () {
                           widget.onDismiss(); // закрываем попап
-                          widget.onEquipmentChanged?.call(); // вызываем callback
+                          widget.onEquipmentChanged
+                              ?.call(); // вызываем callback
                         },
                       ),
                     ),
@@ -287,21 +288,24 @@ class _PopupContentState extends State<_PopupContent> {
 
       if (data['success'] == true) {
         // Получаем эквип нужного типа (boots или bikes)
-        final List<dynamic> equipmentList =
-            equipmentType == 'boots' ? data['boots'] ?? [] : data['bikes'] ?? [];
+        final List<dynamic> equipmentList = equipmentType == 'boots'
+            ? data['boots'] ?? []
+            : data['bikes'] ?? [];
 
         // Преобразуем в модель Equipment с equip_user_id
         final List<al.Equipment> allEquipment = equipmentList
-            .map((item) => al.Equipment.fromJson({
-                  'name': item['name'] ?? '',
-                  'brand': item['brand'] ?? '',
-                  'mileage': item['dist'] ?? 0,
-                  'img': item['image'] ?? '',
-                  'main': item['main'] ?? false,
-                  'myraiting': 0.0,
-                  'type': equipmentType,
-                  'equip_user_id': item['equip_user_id'],
-                }))
+            .map(
+              (item) => al.Equipment.fromJson({
+                'name': item['name'] ?? '',
+                'brand': item['brand'] ?? '',
+                'mileage': item['dist'] ?? 0,
+                'img': item['image'] ?? '',
+                'main': item['main'] ?? false,
+                'myraiting': 0.0,
+                'type': equipmentType,
+                'equip_user_id': item['equip_user_id'],
+              }),
+            )
             .toList();
 
         // Исключаем уже показанный эквип (сравниваем по name и brand)
@@ -311,9 +315,11 @@ class _PopupContentState extends State<_PopupContent> {
             .toSet();
 
         final List<al.Equipment> filteredEquipment = allEquipment
-            .where((e) => !shownEquipmentIds.contains(
-                  '${e.brand}|${e.name}'.toLowerCase(),
-                ))
+            .where(
+              (e) => !shownEquipmentIds.contains(
+                '${e.brand}|${e.name}'.toLowerCase(),
+              ),
+            )
             .toList();
 
         setState(() {
@@ -354,7 +360,9 @@ class _PopupContentState extends State<_PopupContent> {
     }
 
     // Получаем текущий эквип (который был показан в блоке)
-    final currentEquipment = widget.items.isNotEmpty ? widget.items.first : null;
+    final currentEquipment = widget.items.isNotEmpty
+        ? widget.items.first
+        : null;
     if (currentEquipment == null || currentEquipment.equipUserId == null) {
       // Если нет текущего эквипа — не можем заменить
       return;
@@ -413,10 +421,7 @@ class _PopupContentState extends State<_PopupContent> {
       return const SizedBox(
         height: 56,
         child: Center(
-          child: Text(
-            'Нет другого эквипа',
-            style: AppTextStyles.h12w4,
-          ),
+          child: Text('Нет другого эквипа', style: AppTextStyles.h12w4),
         ),
       );
     }
@@ -498,9 +503,7 @@ class _ShoeRow extends StatelessWidget {
                       placeholder: (context, url) => Container(
                         color: AppColors.background,
                         child: const Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       ),
                       errorWidget: (context, url, error) => Container(

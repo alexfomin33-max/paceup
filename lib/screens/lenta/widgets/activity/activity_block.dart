@@ -2,6 +2,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:latlong2/latlong.dart';
 
@@ -112,6 +113,16 @@ class ActivityBlock extends ConsumerWidget {
                             },
                           ),
                           MoreMenuItem(
+                            text: 'Добавить фотографии',
+                            icon: CupertinoIcons.photo_on_rectangle,
+                            onTap: () {
+                              _handleAddPhotos(
+                                context: context,
+                                activityId: updatedActivity.id,
+                              );
+                            },
+                          ),
+                          MoreMenuItem(
                             text: 'Удалить тренировку',
                             icon: CupertinoIcons.minus_circle,
                             iconColor: AppColors.error,
@@ -144,7 +155,9 @@ class ActivityBlock extends ConsumerWidget {
               userId: updatedActivity.userId,
               activityType: updatedActivity.type,
               activityId: updatedActivity.id,
-              activityDistance: (stats?.distance ?? 0.0) / 1000.0, // конвертируем метры в километры
+              activityDistance:
+                  (stats?.distance ?? 0.0) /
+                  1000.0, // конвертируем метры в километры
               showMenuButton: updatedActivity.userId == currentUserId,
               onEquipmentChanged: () {
                 // Обновляем ленту после замены эквипа
@@ -247,6 +260,54 @@ class ActivityBlock extends ConsumerWidget {
 //                        ЛОКАЛЬНЫЕ ХЕЛПЕРЫ
 // ────────────────────────────────────────────────────────────────
 
+/// Обработчик добавления фотографий к тренировке.
+///
+/// Открывает галерею телефона для выбора нескольких фотографий.
+/// Само добавление фотографий в тренировку будет реализовано позже.
+Future<void> _handleAddPhotos({
+  required BuildContext context,
+  required int activityId,
+}) async {
+  final picker = ImagePicker();
+
+  try {
+    // ────────────────────────────────────────────────────────────────
+    // 📸 ВЫБОР ФОТОГРАФИЙ: открываем галерею для множественного выбора
+    // ────────────────────────────────────────────────────────────────
+    final List<XFile> pickedFiles = await picker.pickMultiImage();
+
+    if (pickedFiles.isEmpty) {
+      // Пользователь отменил выбор фотографий
+      return;
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ВРЕМЕННАЯ РЕАЛИЗАЦИЯ: пока просто логируем выбранные файлы
+    // ────────────────────────────────────────────────────────────────
+    // TODO: Реализовать сохранение фотографий в тренировку
+    debugPrint(
+      '📸 Выбрано фотографий: ${pickedFiles.length} для активности $activityId',
+    );
+
+    // Показываем пользователю, что фотографии выбраны
+    // (в будущем здесь будет загрузка на сервер)
+    if (context.mounted) {
+      // Можно показать краткое уведомление, что фотографии выбраны
+      // Но пока просто закрываем меню
+    }
+  } catch (e) {
+    // Обрабатываем ошибки выбора фотографий
+    debugPrint('⚠️ Ошибка при выборе фотографий: $e');
+
+    if (context.mounted) {
+      await _showErrorDialog(
+        context: context,
+        message: 'Не удалось открыть галерею. Попробуйте ещё раз.',
+      );
+    }
+  }
+}
+
 /// Обработчик удаления тренировки.
 ///
 /// 1. Спрашиваем подтверждение у пользователя.
@@ -347,10 +408,7 @@ Future<void> _showErrorDialog({
         child: SelectableText.rich(
           TextSpan(
             text: message,
-            style: const TextStyle(
-              color: AppColors.error,
-              fontSize: 15,
-            ),
+            style: const TextStyle(color: AppColors.error, fontSize: 15),
           ),
         ),
       ),
@@ -379,10 +437,7 @@ Future<bool> _sendDeleteActivityRequest({
     final api = ApiService();
     final response = await api.post(
       '/delete_activity.php',
-      body: {
-        'userId': '$userId',
-        'activityId': '$activityId',
-      },
+      body: {'userId': '$userId', 'activityId': '$activityId'},
       timeout: const Duration(seconds: 12),
     );
 
@@ -404,4 +459,3 @@ Future<bool> _sendDeleteActivityRequest({
     return false;
   }
 }
-

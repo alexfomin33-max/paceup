@@ -24,6 +24,7 @@ import 'state/notifications/notifications_screen.dart';
 import 'state/favorites/favorites_screen.dart';
 import 'activity/description_screen.dart';
 import '../../widgets/more_menu_hub.dart';
+import '../../widgets/more_menu_overlay.dart';
 import '../../widgets/app_bar.dart'; // ← глобальный AppBar
 import '../../widgets/transparent_route.dart';
 
@@ -55,6 +56,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   // Используется для частых операций (loadMore, build) для оптимизации
   // Для критичных операций (refresh, forceRefresh) всегда получаем из AuthService напрямую
   int? _actualUserId;
+  // Ключ для кнопки создания поста (для выпадающего меню)
+  final GlobalKey _createMenuKey = GlobalKey();
 
   // ────────────────────────────────────────────────────────────────
   // 🖼️ PREFETCHING: отслеживаем предзагруженные индексы постов
@@ -218,6 +221,31 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     if (!mounted) return;
     // Сбрасываем счётчик непрочитанных через Riverpod
     ref.read(lentaProvider(_actualUserId!).notifier).setUnreadCount(0);
+  }
+
+  /// Показывает выпадающее меню для кнопки создания поста
+  void _showCreateMenu() {
+    final items = <MoreMenuItem>[
+      MoreMenuItem(
+        text: 'Новый пост',
+        icon: CupertinoIcons.add_circled,
+        onTap: _createPost,
+      ),
+      MoreMenuItem(
+        text: 'Добавить тренировку',
+        icon: Icons.emoji_events_outlined,
+        onTap: _addActivity,
+      ),
+    ];
+    MoreMenuOverlay(anchorKey: _createMenuKey, items: items).show(context);
+  }
+
+  /// Обработчик добавления тренировки
+  void _addActivity() {
+    MoreMenuHub.hide();
+    // TODO: Реализовать навигацию к экрану добавления тренировки
+    // Показываем заглушку или можно добавить навигацию к нужному экрану
+    // Например: Navigator.push(context, ...);
   }
 
   Future<void> _createPost() async {
@@ -532,8 +560,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               _NavIcon(icon: CupertinoIcons.star, onPressed: _openFavorites),
               const SizedBox(width: 4),
               _NavIcon(
+                key: _createMenuKey,
                 icon: CupertinoIcons.add_circled,
-                onPressed: _createPost,
+                onPressed: _showCreateMenu,
               ),
             ],
           ),
@@ -785,7 +814,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
 /// Единый вид для иконок в AppBar — размер 22, tap-target 44×44
 class _NavIcon extends StatelessWidget {
-  const _NavIcon({required this.icon, required this.onPressed});
+  const _NavIcon({super.key, required this.icon, required this.onPressed});
 
   final IconData icon;
   final VoidCallback onPressed;
