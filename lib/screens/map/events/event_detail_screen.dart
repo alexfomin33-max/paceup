@@ -357,10 +357,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return InteractiveBackSwipe(
+      return const InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.background,
-          body: const Center(child: CircularProgressIndicator()),
+          body: Center(child: CircularProgressIndicator()),
         ),
       );
     }
@@ -450,7 +450,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                             : Container(
                                                 width: 100,
                                                 height: 100,
-                                                decoration: BoxDecoration(
+                                                decoration: const BoxDecoration(
                                                   color: AppColors.border,
                                                   shape: BoxShape.circle,
                                                 ),
@@ -469,7 +469,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                             onTap: _openEditScreen,
                                           )
                                         : _CircleIconBtn(
-                                            icon: CupertinoIcons.bookmark,
+                                            icon: CupertinoIcons.star_fill,
                                             semantic: _isBookmarked
                                                 ? 'Удалить из закладок'
                                                 : 'Добавить в закладки',
@@ -477,8 +477,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                                 ? null
                                                 : _toggleBookmark,
                                             color: _isBookmarked
-                                                ? AppColors.brandPrimary
-                                                : AppColors.textSecondary,
+                                                ? AppColors.orange
+                                                : AppColors.surface,
                                           ),
                                   ],
                                 ),
@@ -645,7 +645,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   top: false,
                   child: Center(
                     child: Material(
-                      color: AppColors.brandPrimary,
+                      color: _isParticipant
+                          ? AppColors.red
+                          : AppColors.brandPrimary,
                       borderRadius: BorderRadius.circular(AppRadius.xxl),
                       elevation: 0,
                       child: InkWell(
@@ -659,7 +661,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.brandPrimary,
+                            color: _isParticipant
+                                ? AppColors.red
+                                : AppColors.brandPrimary,
                             borderRadius: BorderRadius.circular(AppRadius.xxl),
                             boxShadow: const [
                               BoxShadow(

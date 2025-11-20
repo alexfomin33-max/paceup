@@ -228,7 +228,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     final items = <MoreMenuItem>[
       MoreMenuItem(
         text: 'Новый пост',
-        icon: CupertinoIcons.add_circled,
+        icon: CupertinoIcons.square_pencil,
         onTap: _createPost,
       ),
       MoreMenuItem(

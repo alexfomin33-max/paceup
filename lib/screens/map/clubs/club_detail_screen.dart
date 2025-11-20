@@ -1,6 +1,7 @@
 // lib/screens/map/clubs/club_detail_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../../../service/api_service.dart';
@@ -12,18 +13,19 @@ import 'coffeerun_vld/tabs/stats_content.dart';
 import 'coffeerun_vld/tabs/glory_content.dart';
 import 'edit_club_screen.dart';
 import '../../../widgets/transparent_route.dart';
+import '../../../providers/profile/user_clubs_provider.dart';
 
 /// Детальная страница клуба (на основе event_detail_screen.dart)
-class ClubDetailScreen extends StatefulWidget {
+class ClubDetailScreen extends ConsumerStatefulWidget {
   final int clubId;
 
   const ClubDetailScreen({super.key, required this.clubId});
 
   @override
-  State<ClubDetailScreen> createState() => _ClubDetailScreenState();
+  ConsumerState<ClubDetailScreen> createState() => _ClubDetailScreenState();
 }
 
-class _ClubDetailScreenState extends State<ClubDetailScreen> {
+class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
   Map<String, dynamic>? _clubData;
   bool _loading = true;
   String? _error;
@@ -162,7 +164,6 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
       if (data['success'] == true && mounted) {
         final isMember = data['is_member'] as bool? ?? false;
         final isRequest = data['is_request'] as bool? ?? false;
-        final message = data['message'] as String? ?? '';
 
         setState(() {
           _isMember = isMember;
@@ -170,18 +171,13 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
           _isJoining = false;
         });
 
-        // Показываем сообщение пользователю
-        if (message.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(message),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-
         // Обновляем данные клуба (чтобы обновилось количество участников)
         _loadClub();
+
+        // Инвалидируем provider клубов пользователя для обновления списка в clubs_tab.dart
+        if (userId != null) {
+          ref.invalidate(userClubsProvider(userId));
+        }
       } else {
         final errorMessage =
             data['message'] as String? ?? 'Ошибка вступления в клуб';
@@ -241,26 +237,19 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
       );
 
       if (data['success'] == true && mounted) {
-        final message = data['message'] as String? ?? '';
-
         setState(() {
           _isMember = false;
           _isRequest = false;
           _isJoining = false;
         });
 
-        // Показываем сообщение пользователю
-        if (message.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(message),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-
         // Обновляем данные клуба (чтобы обновилось количество участников)
         _loadClub();
+
+        // Инвалидируем provider клубов пользователя для обновления списка в clubs_tab.dart
+        if (userId != null) {
+          ref.invalidate(userClubsProvider(userId));
+        }
       } else {
         final errorMessage =
             data['message'] as String? ?? 'Ошибка выхода из клуба';
