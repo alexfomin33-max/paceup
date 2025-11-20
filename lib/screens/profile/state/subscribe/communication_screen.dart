@@ -175,6 +175,9 @@ class _SearchField extends StatelessWidget {
         controller: controller,
         focusNode: focusNode,
         onChanged: onChanged,
+        textCapitalization: TextCapitalization.words,
+        keyboardType: TextInputType.name,
+        textInputAction: TextInputAction.search,
         cursorColor: AppColors.textSecondary,
         style: const TextStyle(fontFamily: 'Inter', fontSize: 15),
         decoration: InputDecoration(
