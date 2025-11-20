@@ -268,7 +268,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     MoreMenuHub.hide();
     Navigator.of(context).push(
-      CupertinoPageRoute(
+      TransparentPageRoute(
         builder: (_) =>
             ActivityDescriptionPage(activity: a, currentUserId: _actualUserId!),
       ),

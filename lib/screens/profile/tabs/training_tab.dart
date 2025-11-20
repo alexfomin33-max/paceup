@@ -8,6 +8,7 @@ import '../../../../widgets/route_card.dart';
 import '../../lenta/activity/description_screen.dart';
 import '../../../../models/activity_lenta.dart' as al;
 import '../../../../providers/services/auth_provider.dart';
+import '../../../../widgets/transparent_route.dart';
 
 class TrainingTab extends ConsumerStatefulWidget {
   const TrainingTab({super.key});
@@ -600,7 +601,7 @@ class _WorkoutRow extends ConsumerWidget {
         if (!context.mounted) return;
 
         Navigator.of(context).push(
-          CupertinoPageRoute(
+          TransparentPageRoute(
             builder: (_) => ActivityDescriptionPage(
               activity: activity,
               currentUserId: userId,
