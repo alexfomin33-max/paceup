@@ -40,12 +40,12 @@ String formatFeedDateText({
 
   // Иначе — полная дата с месяцем (родительный падеж)
   final monthName = _getMonthNameGenitive(date.month);
-  
+
   // Если тот же год — год не показываем
   if (date.year == now.year) {
     return '${date.day} $monthName, $time';
   }
-  
+
   // Если другой год — показываем год
   return '${date.day} $monthName ${date.year}, $time';
 }
@@ -82,38 +82,82 @@ String _getMonthNameGenitive(int month) {
 /// Также обрабатывает форматы:
 ///   - "Сегодня, в 15:40"
 ///   - "Вчера, в 18:50"
+///   - "29 октября 2025, в 15:40" (с годом)
+///   - "29 октября, в 15:40" (без года)
 String _normalizeServerDateText(String text) {
   // Если уже "Сегодня" или "Вчера" — оставляем как есть
   if (text.startsWith('Сегодня') || text.startsWith('Вчера')) {
     return text;
   }
 
-  // Регулярка для парсинга: "dd месяца yyyy, в HH:mm" или "dd месяца, в HH:mm"
-  // Пример: "29 октября 2025, в 15:40"
-  final regex = RegExp(
-    r'^(\d{1,2})\s+([а-яА-Я]+)(?:\s+(\d{4}))?,\s+в\s+(\d{2}):(\d{2})$',
-  );
-
-  final match = regex.firstMatch(text);
-  if (match == null) return text; // не распознали — возвращаем как есть
-
-  final day = match.group(1)!;
-  final monthName = match.group(2)!;
-  final yearStr = match.group(3); // может быть null
-  final hour = match.group(4)!;
-  final minute = match.group(5)!;
-
-  // Если года нет в строке — возвращаем как есть
-  if (yearStr == null) return text;
-
-  final year = int.tryParse(yearStr);
   final currentYear = DateTime.now().year;
 
-  // Если год текущий — убираем его
-  if (year == currentYear) {
-    return '$day $monthName, в $hour:$minute';
+  // ──────────────────────────────────────────────────────────────
+  // Более гибкая регулярка: ищем год в любом месте строки
+  // ──────────────────────────────────────────────────────────────
+  // Паттерн 1: "dd месяца yyyy, в HH:mm" (с годом)
+  // Паттерн 2: "dd месяца, в HH:mm" (без года)
+  // Примеры: "29 октября 2025, в 15:40" или "29 октября, в 15:40"
+  final regexWithYear = RegExp(
+    r'^(\d{1,2})\s+([а-яА-ЯёЁ]+)\s+(\d{4}),\s*в\s+(\d{1,2}):(\d{2})$',
+    caseSensitive: false,
+  );
+
+  final matchWithYear = regexWithYear.firstMatch(text);
+  if (matchWithYear != null) {
+    final day = matchWithYear.group(1)!;
+    final monthName = matchWithYear.group(2)!;
+    final yearStr = matchWithYear.group(3)!;
+    final hour = matchWithYear.group(4)!.padLeft(2, '0');
+    final minute = matchWithYear.group(5)!;
+
+    final year = int.tryParse(yearStr);
+    if (year != null && year == currentYear) {
+      // Год текущий — убираем его
+      return '$day $monthName, в $hour:$minute';
+    }
+    // Год не текущий — возвращаем как есть
+    return text;
   }
 
-  // Иначе — возвращаем с годом
+  // ──────────────────────────────────────────────────────────────
+  // Паттерн без года: "dd месяца, в HH:mm"
+  // ──────────────────────────────────────────────────────────────
+  final regexWithoutYear = RegExp(
+    r'^(\d{1,2})\s+([а-яА-ЯёЁ]+),\s*в\s+(\d{1,2}):(\d{2})$',
+    caseSensitive: false,
+  );
+
+  final matchWithoutYear = regexWithoutYear.firstMatch(text);
+  if (matchWithoutYear != null) {
+    // Уже без года — возвращаем как есть
+    return text;
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Если не распознали формат — пытаемся найти год вручную
+  // ──────────────────────────────────────────────────────────────
+  // Ищем паттерн: число месяца, название месяца, год (4 цифры), запятая, "в", время
+  // Более гибкий поиск года между месяцем и запятой
+  final flexiblePattern = RegExp(
+    r'(\d{1,2})\s+([а-яА-ЯёЁ]+)\s+(\d{4})(\s*,\s*в\s+\d{1,2}:\d{2})',
+    caseSensitive: false,
+  );
+
+  final flexibleMatch = flexiblePattern.firstMatch(text);
+  if (flexibleMatch != null) {
+    final day = flexibleMatch.group(1)!;
+    final monthName = flexibleMatch.group(2)!;
+    final yearStr = flexibleMatch.group(3)!;
+    final timePart = flexibleMatch.group(4)!; // ", в HH:mm"
+
+    final year = int.tryParse(yearStr);
+    if (year != null && year == currentYear) {
+      // Год текущий — убираем его
+      return '$day $monthName$timePart';
+    }
+  }
+
+  // Не распознали — возвращаем как есть
   return text;
 }
