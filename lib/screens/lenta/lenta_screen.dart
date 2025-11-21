@@ -27,6 +27,7 @@ import '../../widgets/more_menu_hub.dart';
 import '../../widgets/more_menu_overlay.dart';
 import '../../widgets/app_bar.dart'; // ← глобальный AppBar
 import '../../widgets/transparent_route.dart';
+import '../../widgets/primary_button.dart'; // ← кнопка для повтора
 
 /// Единые размеры для AppBar в iOS-стиле
 const double kAppBarIconSize = 22.0; // сама иконка ~20–22pt
@@ -608,22 +609,46 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       body: () {
         // Показываем ошибку, если есть
         if (lentaState.error != null && lentaState.items.isEmpty) {
+          // ── Определяем, является ли ошибка сетевой
+          final errorText = lentaState.error!.toLowerCase();
+          final isNetworkError = errorText.contains('failed host lookup') ||
+              errorText.contains('ошибка сети') ||
+              errorText.contains('нет подключения') ||
+              errorText.contains('socketexception') ||
+              errorText.contains('network') ||
+              errorText.contains('connection');
+
+          // ── Пользовательское сообщение для сетевых ошибок
+          final displayMessage = isNetworkError
+              ? 'Нет соединения с интернетом'
+              : 'Ошибка: ${lentaState.error}';
+
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Ошибка: ${lentaState.error}'),
-                  const SizedBox(height: 12),
-                  OutlinedButton(
+                  SelectableText.rich(
+                    TextSpan(
+                      text: displayMessage,
+                      style: const TextStyle(
+                        color: AppColors.error,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  PrimaryButton(
+                    text: 'Повторить',
                     onPressed: () async {
                       // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
                       final userId = await _auth.getUserId();
                       if (userId == null) return;
                       ref.read(lentaProvider(userId).notifier).loadInitial();
                     },
-                    child: const Text('Повторить'),
+                    width: MediaQuery.of(context).size.width / 2,
                   ),
                 ],
               ),

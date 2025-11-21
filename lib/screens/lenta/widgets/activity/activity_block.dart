@@ -23,6 +23,7 @@ import 'actions/activity_actions_row.dart';
 // Для комментариев и «вместе» — поведение как в исходном коде
 import '../comments_bottom_sheet.dart';
 import '../../activity/together/together_screen.dart';
+import '../../activity/edit_activity_screen.dart';
 
 // Провайдеры
 import '../../../../providers/lenta/lenta_provider.dart';
@@ -113,7 +114,27 @@ class ActivityBlock extends ConsumerWidget {
                             text: 'Редактировать',
                             icon: CupertinoIcons.pencil,
                             onTap: () {
-                              // TODO: Реализовать редактирование активности
+                              Navigator.of(context)
+                                  .push(
+                                    CupertinoPageRoute(
+                                      builder: (_) => EditActivityScreen(
+                                        activity: updatedActivity,
+                                        currentUserId: currentUserId,
+                                      ),
+                                    ),
+                                  )
+                                  .then((updated) {
+                                    // Если изменения были сохранены, обновляем ленту
+                                    if (updated == true) {
+                                      ref
+                                          .read(
+                                            lentaProvider(
+                                              currentUserId,
+                                            ).notifier,
+                                          )
+                                          .forceRefresh();
+                                    }
+                                  });
                             },
                           ),
                           MoreMenuItem(
