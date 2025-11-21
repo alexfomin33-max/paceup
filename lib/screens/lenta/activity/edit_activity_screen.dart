@@ -414,6 +414,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       maxLines: 12,
       minLines: 7,
       textAlignVertical: TextAlignVertical.top,
+      style: AppTextStyles.h14w4,
       decoration: InputDecoration(
         hintText: 'Введите описание тренировки',
         hintStyle: AppTextStyles.h14w4Place,

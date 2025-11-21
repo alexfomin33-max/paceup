@@ -23,6 +23,7 @@ import 'state/chat/chat_screen.dart';
 import 'state/notifications/notifications_screen.dart';
 import 'state/favorites/favorites_screen.dart';
 import 'activity/description_screen.dart';
+import 'activity/add_activity_screen.dart';
 import '../../widgets/more_menu_hub.dart';
 import '../../widgets/more_menu_overlay.dart';
 import '../../widgets/app_bar.dart'; // ← глобальный AppBar
@@ -242,11 +243,37 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   }
 
   /// Обработчик добавления тренировки
-  void _addActivity() {
+  Future<void> _addActivity() async {
+    if (_actualUserId == null) return;
+
     MoreMenuHub.hide();
-    // TODO: Реализовать навигацию к экрану добавления тренировки
-    // Показываем заглушку или можно добавить навигацию к нужному экрану
-    // Например: Navigator.push(context, ...);
+
+    final created = await Navigator.of(context).push<bool>(
+      TransparentPageRoute(
+        builder: (_) => AddActivityScreen(currentUserId: _actualUserId!),
+      ),
+    );
+
+    if (!mounted || created != true) return;
+
+    // Очищаем кеш предзагруженных индексов
+    _prefetchedIndices.clear();
+
+    // 🔹 Задержка перед обновлением — даём серверу время обработать активность
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // ✅ Используем _actualUserId для forceRefresh
+    // Принудительное обновление с очисткой кэша
+    await ref.read(lentaProvider(_actualUserId!).notifier).forceRefresh();
+
+    // Прокрутка к началу
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   Future<void> _createPost() async {
@@ -611,7 +638,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         if (lentaState.error != null && lentaState.items.isEmpty) {
           // ── Определяем, является ли ошибка сетевой
           final errorText = lentaState.error!.toLowerCase();
-          final isNetworkError = errorText.contains('failed host lookup') ||
+          final isNetworkError =
+              errorText.contains('failed host lookup') ||
               errorText.contains('ошибка сети') ||
               errorText.contains('нет подключения') ||
               errorText.contains('socketexception') ||
