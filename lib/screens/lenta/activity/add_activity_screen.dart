@@ -17,8 +17,10 @@ import '../../../models/activity_lenta.dart';
 import '../../../service/api_service.dart';
 import '../../../service/auth_service.dart';
 import '../../../providers/lenta/lenta_provider.dart';
+import '../../../widgets/transparent_route.dart';
 
 import '../widgets/activity/equipment/equipment_chip.dart';
+import 'description_screen.dart';
 
 /// ────────────────────────────────────────────────────────────────
 /// 🔹 ЭКРАН ДОБАВЛЕНИЯ АКТИВНОСТИ
@@ -59,6 +61,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   DateTime? _activityDate;
   TimeOfDay? _startTime;
   Duration? _duration; // По умолчанию не выбрана
+  
+  // Дистанция тренировки (в километрах)
+  final TextEditingController _distanceController = TextEditingController();
 
   // Состояние видимости: 0 = Все пользователи, 1 = Только подписчики, 2 = Только Вы
   int _selectedVisibility = 0;
@@ -89,6 +94,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   void dispose() {
     _descriptionController.dispose();
     _descriptionFocusNode.dispose();
+    _distanceController.dispose();
     super.dispose();
   }
 
@@ -173,6 +179,18 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                       ),
                     ],
                   ),
+
+                  const SizedBox(height: 24),
+
+                  // ────────────────────────────────────────────────────────────────
+                  // 📏 ДИСТАНЦИЯ ТРЕНИРОВКИ
+                  // ────────────────────────────────────────────────────────────────
+                  const Text(
+                    'Дистанция (км)',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDistanceField(),
 
                   const SizedBox(height: 24),
 
@@ -624,6 +642,47 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                 ? AppTextStyles.h14w4
                 : AppTextStyles.h14w4Place,
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Поле ввода дистанции
+  Widget _buildDistanceField() {
+    return TextField(
+      controller: _distanceController,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      textInputAction: TextInputAction.next,
+      style: AppTextStyles.h14w4,
+      decoration: InputDecoration(
+        hintText: '0.0',
+        hintStyle: AppTextStyles.h14w4Place,
+        filled: true,
+        fillColor: AppColors.surface,
+        contentPadding: const EdgeInsets.all(12),
+        prefixIcon: const Padding(
+          padding: EdgeInsets.only(left: 12, right: 6),
+          child: Icon(
+            CupertinoIcons.location,
+            size: 18,
+            color: AppColors.iconPrimary,
+          ),
+        ),
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 18 + 14,
+          minHeight: 18,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
         ),
       ),
     );
@@ -1181,15 +1240,34 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       final dateStartStr = formatDateTime(dateStart);
       final dateEndStr = formatDateTime(dateEnd);
 
-      // Формируем params (минимальные stats)
+      // Получаем дистанцию из поля ввода (в километрах)
+      final distanceKm = double.tryParse(
+        _distanceController.text.trim().replaceAll(',', '.'),
+      ) ?? 0.0;
+      final distanceMeters = (distanceKm * 1000).round();
+
+      // Рассчитываем темп (минуты на километр)
+      double avgPace = 0.0;
+      if (distanceKm > 0 && duration.inSeconds > 0) {
+        // Темп = (время в секундах / дистанция в км) / 60 (чтобы получить минуты)
+        avgPace = (duration.inSeconds / distanceKm) / 60.0;
+      }
+
+      // Рассчитываем среднюю скорость (км/ч)
+      double avgSpeed = 0.0;
+      if (distanceKm > 0 && duration.inSeconds > 0) {
+        avgSpeed = (distanceKm / duration.inSeconds) * 3600.0;
+      }
+
+      // Формируем params с рассчитанными значениями
       final params = jsonEncode([
         {
           'stats': {
-            'distance': 0.0,
-            'realDistance': 0.0,
-            'avgSpeed': 0.0,
-            'avgPace': 0.0,
-            'duration': 0,
+            'distance': distanceMeters.toDouble(),
+            'realDistance': distanceMeters.toDouble(),
+            'avgSpeed': avgSpeed,
+            'avgPace': avgPace,
+            'duration': duration.inSeconds,
           },
         },
       ]);
@@ -1197,16 +1275,16 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       // Формируем points (пустой массив)
       final points = jsonEncode([]);
 
-      // Получаем equip_id из выбранной экипировки
-      int equipId = 0;
+      // Получаем equip_user_id из выбранной экипировки
+      int equipUserId = 0;
       if (_showEquipment && _selectedEquipment != null) {
-        equipId = _selectedEquipment!.equipUserId ?? 0;
+        equipUserId = _selectedEquipment!.equipUserId ?? 0;
       }
 
-      // Сначала создаем активность
+      // Создаем активность через новый API endpoint
       final api = ApiService();
       final response = await api.post(
-        '/create_activity.php',
+        '/create_activity_from_form.php',
         body: {
           'user_id': userId.toString(),
           'type': _activityTypeMap[_selectedActivityType] ?? 'run',
@@ -1215,26 +1293,78 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           'params': params,
           'points': points,
           'privacy': _selectedVisibility.toString(),
-          'equip_id': equipId.toString(),
+          'equip_user_id': equipUserId.toString(),
+          'distance_km': distanceKm.toString(),
           'content': _descriptionController.text.trim(),
-          'media': '',
         },
       );
 
       if (response['success'] == true) {
         final activityId = response['activity_id'] as int?;
-        if (activityId != null && _images.isNotEmpty) {
+        final lentaId = response['lenta_id'] as int?;
+        
+        if (activityId != null) {
           // Загружаем фотографии, если они есть
-          await _uploadPhotos(activityId, userId);
-        }
+          if (_images.isNotEmpty) {
+            await _uploadPhotos(activityId, userId);
+          }
 
-        // Обновляем ленту
-        await ref
-            .read(lentaProvider(widget.currentUserId).notifier)
-            .forceRefresh();
+          // Обновляем ленту
+          await ref
+              .read(lentaProvider(widget.currentUserId).notifier)
+              .forceRefresh();
 
-        if (mounted) {
-          Navigator.of(context).pop(true); // Возвращаемся с флагом успеха
+          // Небольшая задержка для гарантии обновления данных на сервере
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          if (mounted) {
+            // Получаем созданную активность из обновленного провайдера
+            final lentaState = ref.read(lentaProvider(widget.currentUserId));
+            Activity? createdActivity;
+            
+            try {
+              createdActivity = lentaState.items.firstWhere(
+                (a) => a.id == activityId || a.lentaId == (lentaId ?? 0),
+              );
+            } catch (e) {
+              // Если активность не найдена, пробуем еще раз после небольшой задержки
+              await Future.delayed(const Duration(milliseconds: 300));
+              final updatedState = ref.read(lentaProvider(widget.currentUserId));
+              try {
+                createdActivity = updatedState.items.firstWhere(
+                  (a) => a.id == activityId || a.lentaId == (lentaId ?? 0),
+                );
+              } catch (e2) {
+                // Если все еще не найдена, просто закрываем экран
+                if (mounted) {
+                  Navigator.of(context).pop(true);
+                }
+                return;
+              }
+            }
+
+            if (createdActivity != null && mounted) {
+              // Закрываем экран добавления
+              Navigator.of(context).pop();
+
+              // Открываем экран описания тренировки
+              Navigator.of(context).push(
+                TransparentPageRoute(
+                  builder: (_) => ActivityDescriptionPage(
+                    activity: createdActivity!,
+                    currentUserId: widget.currentUserId,
+                  ),
+                ),
+              );
+            } else if (mounted) {
+              // Если активность не найдена, просто закрываем экран
+              Navigator.of(context).pop(true);
+            }
+          }
+        } else {
+          if (mounted) {
+            _showError('Не удалось получить ID созданной тренировки');
+          }
         }
       } else {
         final message =
