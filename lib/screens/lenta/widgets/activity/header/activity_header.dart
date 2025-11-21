@@ -53,15 +53,21 @@ class ActivityHeader extends StatelessWidget {
       date: dateStart, // иначе локально форматируем
     );
 
+    // ──────────────────────────────────────────────────────────────
+    // ОБРАБОТЧИК ПЕРЕХОДА В ПРОФИЛЬ: используется для аватара и имени
+    // ──────────────────────────────────────────────────────────────
+    void openProfile() {
+      Navigator.of(context).push(
+        CupertinoPageRoute(builder: (_) => ProfileScreen(userId: userId)),
+      );
+    }
+
     return UserHeader(
       userName: userName,
       userAvatar: userAvatar,
       dateText: dateText,
-      onAvatarTap: () {
-        Navigator.of(context).push(
-          CupertinoPageRoute(builder: (_) => ProfileScreen(userId: userId)),
-        );
-      },
+      onAvatarTap: openProfile,
+      onNameTap: openProfile,
       middle: middle,
       middleGap: middleGap,
       bottom: bottom,

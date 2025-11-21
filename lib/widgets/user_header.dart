@@ -14,6 +14,7 @@ class UserHeader extends StatelessWidget {
   final String userAvatar; // url или asset
   final String dateText; // готовая строка даты
   final VoidCallback? onAvatarTap;
+  final VoidCallback? onNameTap; // обработчик клика на имя пользователя
   final Widget? trailing; // справа, например, кнопка "…"
   final Widget? middle; // между заголовком и bottom (например, описание)
   final double middleGap; // отступ между заголовком и middle
@@ -29,6 +30,7 @@ class UserHeader extends StatelessWidget {
     required this.userAvatar,
     required this.dateText,
     this.onAvatarTap,
+    this.onNameTap,
     this.trailing,
     this.middle,
     this.middleGap = 12.0,
@@ -70,11 +72,18 @@ class UserHeader extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          userName,
-                          style: AppTextStyles.h15w5,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        // ──────────────────────────────────────────────────────────────
+                        // ИМЯ ПОЛЬЗОВАТЕЛЯ: кликабельно, если передан onNameTap
+                        // ──────────────────────────────────────────────────────────────
+                        GestureDetector(
+                          onTap: onNameTap ?? onAvatarTap,
+                          // Используем onAvatarTap как fallback для совместимости
+                          child: Text(
+                            userName,
+                            style: AppTextStyles.h15w5,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(

@@ -13,6 +13,8 @@ import '../../../../utils/feed_date.dart';
 
 // ✅ универсальное всплывающее меню (уже вынесено в lib/widgets)
 import '../../../../widgets/more_menu_overlay.dart';
+import '../../../../widgets/transparent_route.dart';
+import '../../../profile/profile_screen.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 ///   КАРТОЧКА ПОСТА
@@ -178,6 +180,24 @@ class _PostCardState extends State<PostCard> {
                 serverText: post.postDateText,
                 date: post.dateStart,
               ),
+
+              // ──────────────────────────────────────────────────────────────
+              // ✅ ПЕРЕХОД В ПРОФИЛЬ: клик на аватар или имя открывает профиль автора
+              // ──────────────────────────────────────────────────────────────
+              onAvatarTap: () {
+                Navigator.of(context).push(
+                  TransparentPageRoute(
+                    builder: (_) => ProfileScreen(userId: post.userId),
+                  ),
+                );
+              },
+              onNameTap: () {
+                Navigator.of(context).push(
+                  TransparentPageRoute(
+                    builder: (_) => ProfileScreen(userId: post.userId),
+                  ),
+                );
+              },
 
               // trailing — наша кнопка "…"
               // ──────────────────────────────────────────────────────────────
