@@ -33,10 +33,7 @@ import '../widgets/activity/equipment/equipment_chip.dart';
 class AddActivityScreen extends ConsumerStatefulWidget {
   final int currentUserId;
 
-  const AddActivityScreen({
-    super.key,
-    required this.currentUserId,
-  });
+  const AddActivityScreen({super.key, required this.currentUserId});
 
   @override
   ConsumerState<AddActivityScreen> createState() => _AddActivityScreenState();
@@ -146,31 +143,58 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   // ────────────────────────────────────────────────────────────────
                   // 👟 4. ДОБАВИТЬ ЭКИПИРОВКУ (чекбокс + EquipmentChip)
                   // ────────────────────────────────────────────────────────────────
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: _showEquipment,
-                        onChanged: (value) {
-                          setState(() {
-                            _showEquipment = value ?? false;
-                            if (_showEquipment && _availableEquipment.isEmpty) {
-                              _loadEquipment();
-                            }
-                          });
-                        },
-                      ),
-                      const Text(
-                        'Добавить экипировку',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                      ),
+                  // Показываем только для "Бег" и "Велосипед"
+                  if (_shouldShowEquipment()) ...[
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: Transform.scale(
+                            scale: 0.85, // Уменьшаем размер на 15%
+                            alignment: Alignment.centerLeft,
+                            child: Checkbox(
+                              value: _showEquipment,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                              activeColor:
+                                  AppColors.brandPrimary, // Цвет при выборе
+                              checkColor: AppColors.surface, // Цвет галочки
+                              side: const BorderSide(
+                                color: AppColors
+                                    .iconSecondary, // Более светлый цвет границы
+                                width: 1.5,
+                              ),
+                              onChanged: (value) {
+                                setState(() {
+                                  _showEquipment = value ?? false;
+                                  if (_showEquipment &&
+                                      _availableEquipment.isEmpty) {
+                                    _loadEquipment();
+                                  }
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Добавить экипировку',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_showEquipment) ...[
+                      const SizedBox(height: 8),
+                      _buildEquipmentSection(),
                     ],
-                  ),
-                  if (_showEquipment) ...[
-                    const SizedBox(height: 8),
-                    _buildEquipmentSection(),
                   ],
 
-                  const SizedBox(height: 24),
+                  SizedBox(height: _shouldShowEquipment() ? 24 : 0),
 
                   // ────────────────────────────────────────────────────────────────
                   // 👁️ 5. КТО ВИДИТ ТРЕНИРОВКУ (выпадающий список)
@@ -343,7 +367,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                         maxWidthDiskCache: w,
                         placeholder: (context, url) => Container(
                           color: AppColors.background,
-                          child: const Center(child: CupertinoActivityIndicator()),
+                          child: const Center(
+                            child: CupertinoActivityIndicator(),
+                          ),
                         ),
                         errorWidget: (context, url, error) => Container(
                           color: AppColors.background,
@@ -418,7 +444,10 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                 _selectedActivityType = newValue;
                 // При смене типа тренировки сбрасываем выбранную экипировку
                 _selectedEquipment = null;
-                if (_showEquipment) {
+                // Если выбран "Плавание" — скрываем экипировку
+                if (!_shouldShowEquipment()) {
+                  _showEquipment = false;
+                } else if (_showEquipment) {
                   _loadEquipment();
                 }
               });
@@ -533,10 +562,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         child: DropdownButton<Equipment>(
           value: _selectedEquipment,
           isExpanded: true,
-          hint: const Text(
-            'Выберите экипировку',
-            style: AppTextStyles.h14w4,
-          ),
+          hint: const Text('Выберите экипировку', style: AppTextStyles.h14w4),
           onChanged: (Equipment? newValue) {
             setState(() {
               _selectedEquipment = newValue;
@@ -701,6 +727,13 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     }
   }
 
+  /// Проверяет, нужно ли показывать чекбокс экипировки
+  /// Показываем только для "Бег" и "Велосипед"
+  bool _shouldShowEquipment() {
+    return _selectedActivityType == 'Бег' ||
+        _selectedActivityType == 'Велосипед';
+  }
+
   /// Преобразует тип активности в тип эквипа
   String _activityTypeToEquipmentType(String activityType) {
     final String type = activityType.toLowerCase();
@@ -757,8 +790,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             'avgSpeed': 0.0,
             'avgPace': 0.0,
             'duration': 0,
-          }
-        }
+          },
+        },
       ]);
 
       // Формируем points (пустой массив)
@@ -805,8 +838,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         }
       } else {
         final message =
-            response['message']?.toString() ??
-            'Не удалось создать тренировку';
+            response['message']?.toString() ?? 'Не удалось создать тренировку';
         if (mounted) {
           _showError(message);
         }
@@ -922,4 +954,3 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     });
   }
 }
-
