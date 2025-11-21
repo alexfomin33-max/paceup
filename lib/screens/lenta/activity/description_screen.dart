@@ -149,16 +149,17 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
               ),
             ),
 
-            // ───────── Карта маршрута
-            SliverToBoxAdapter(
-              child: ab.RouteCard(
-                points: a.points.map((c) => ll.LatLng(c.lat, c.lng)).toList(),
-                height:
-                    240, // Увеличена высота карты для лучшей видимости маршрута
+            // ───────── Карта маршрута (только если есть точки)
+            if (a.points.isNotEmpty) ...[
+              SliverToBoxAdapter(
+                child: ab.RouteCard(
+                  points: a.points.map((c) => ll.LatLng(c.lat, c.lng)).toList(),
+                  height:
+                      240, // Увеличена высота карты для лучшей видимости маршрута
+                ),
               ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+              const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            ],
 
             // ───────── «Отрезки» — таблица на всю ширину экрана
             const SliverToBoxAdapter(

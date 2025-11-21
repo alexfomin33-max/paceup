@@ -49,16 +49,63 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    // Общее количество слайдов: карта (1) + фотографии
-    final totalSlides = 1 + widget.imageUrls.length;
+    // ────────────────────────────────────────────────────────────────
+    // 📍 ЛОГИКА ОТОБРАЖЕНИЯ: карта только если есть точки маршрута
+    // ────────────────────────────────────────────────────────────────
+    
+    // Если нет точек маршрута и нет фотографий — ничего не показываем
+    if (widget.points.isEmpty && widget.imageUrls.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
-    // Если нет фотографий, показываем только карту
+    // Если нет точек маршрута, но есть фотографии — показываем только фотографии
+    if (widget.points.isEmpty) {
+      return SizedBox(
+        height: widget.height,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: widget.imageUrls.length,
+              allowImplicitScrolling: false,
+              physics: const BouncingScrollPhysics(),
+              onPageChanged: (index) {
+                setState(() => _currentIndex = index);
+                // Очищаем кэш изображений, которые далеко от текущего
+                final evictIndex = index - 2;
+                if (evictIndex >= 0 && evictIndex < widget.imageUrls.length) {
+                  _evictNetworkImage(widget.imageUrls[evictIndex]);
+                }
+              },
+              itemBuilder: (context, index) {
+                return _buildPhotoSlide(widget.imageUrls[index]);
+              },
+            ),
+            // Индикаторы точек, если фотографий больше одной
+            if (widget.imageUrls.length > 1)
+              Positioned(
+                bottom: _dotsBottom,
+                left: 0,
+                right: 0,
+                child: _buildDots(widget.imageUrls.length),
+              ),
+          ],
+        ),
+      );
+    }
+
+    // Если есть точки маршрута, но нет фотографий — показываем только карту
     if (widget.imageUrls.isEmpty) {
       return RouteCard(
         points: widget.points,
         height: widget.height,
       );
     }
+
+    // Если есть и точки, и фотографии — показываем карусель с картой и фотографиями
+    // Общее количество слайдов: карта (1) + фотографии
+    final totalSlides = 1 + widget.imageUrls.length;
 
     return SizedBox(
       height: widget.height,

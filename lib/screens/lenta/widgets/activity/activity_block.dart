@@ -203,13 +203,16 @@ class ActivityBlock extends ConsumerWidget {
           SizedBox(height: updatedActivity.equipments.isNotEmpty ? 8 : 0),
 
           // ───────────────── МАРШРУТ С ФОТОГРАФИЯМИ ─────────────────
-          ActivityRouteCarousel(
-            points: updatedActivity.points
-                .map((c) => LatLng(c.lat, c.lng))
-                .toList(),
-            imageUrls: updatedActivity.mediaImages,
-            height: 240, // Увеличена высота карты для лучшей видимости маршрута
-          ),
+          // Показываем только если есть точки маршрута или есть изображения
+          if (updatedActivity.points.isNotEmpty ||
+              updatedActivity.mediaImages.isNotEmpty)
+            ActivityRouteCarousel(
+              points: updatedActivity.points
+                  .map((c) => LatLng(c.lat, c.lng))
+                  .toList(),
+              imageUrls: updatedActivity.mediaImages,
+              height: 240, // Увеличена высота карты для лучшей видимости маршрута
+            ),
 
           // ────────────────────────────────────────────────────────────────
           // 📝 ОПИСАНИЕ ТРЕНИРОВКИ: после карты, до лайков/комментариев
