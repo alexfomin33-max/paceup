@@ -39,74 +39,79 @@ class UserHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      // ──────────────────────────────────────────────────────────────
-      // ВЕРХНИЙ РЯД: аватар слева, справа — колонка с заголовком и bottom
-      // ──────────────────────────────────────────────────────────────
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // АВАТАР (кликабелен опционально)
-        GestureDetector(
-          onTap: onAvatarTap,
-          child: Avatar(image: userAvatar, size: avatarSize),
-        ),
-        const SizedBox(width: 12),
+        // ──────────────────────────────────────────────────────────────
+        // ВЕРХНИЙ РЯД: аватар слева, справа — колонка с заголовком
+        // ──────────────────────────────────────────────────────────────
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // АВАТАР (кликабелен опционально)
+            GestureDetector(
+              onTap: onAvatarTap,
+              child: Avatar(image: userAvatar, size: avatarSize),
+            ),
+            const SizedBox(width: 12),
 
-        // ПРАВАЯ КОЛОНКА: (1) заголовок фиксированной высоты = avatarSize
-        // с вертикальным центрированием имени/даты; (2) опциональный bottom ниже.
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ──────────────────────────────────────────────────────────────
-              // ЗАГОЛОВОК (ИМЯ + ДАТА): всегда по вертикальному центру аватара
-              // ──────────────────────────────────────────────────────────────
+            // ПРАВАЯ КОЛОНКА: (1) заголовок фиксированной высоты = avatarSize
+            // с вертикальным центрированием имени/даты; (2) опциональный middle ниже.
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ──────────────────────────────────────────────────────────────
+                  // ЗАГОЛОВОК (ИМЯ + ДАТА): всегда по вертикальному центру аватара
+                  // ──────────────────────────────────────────────────────────────
+                  SizedBox(
+                    height: avatarSize,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName,
+                          style: AppTextStyles.h15w5,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          dateText,
+                          style: AppTextStyles.h12w4Sec,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ──────────────────────────────────────────────────────────────
+                  // СРЕДНИЙ СЛОТ (например, описание тренировки)
+                  // ──────────────────────────────────────────────────────────────
+                  if (middle != null) ...[SizedBox(height: middleGap), middle!],
+                ],
+              ),
+            ),
+
+            // ──────────────────────────────────────────────────────────────
+            // TRAILING (например, кнопка "…"): центрируем по аватару
+            // ──────────────────────────────────────────────────────────────
+            if (trailing != null) ...[
+              const SizedBox(width: 8),
               SizedBox(
                 height: avatarSize,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      userName,
-                      style: AppTextStyles.h15w5,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      dateText,
-                      style: AppTextStyles.h12w4Sec,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+                child: Center(child: trailing!),
               ),
-
-              // ──────────────────────────────────────────────────────────────
-              // СРЕДНИЙ СЛОТ (например, описание тренировки)
-              // ──────────────────────────────────────────────────────────────
-              if (middle != null) ...[SizedBox(height: middleGap), middle!],
-
-              // ──────────────────────────────────────────────────────────────
-              // НИЖНИЙ СЛОТ (например, метрики Активности)
-              // ──────────────────────────────────────────────────────────────
-              if (bottom != null) ...[SizedBox(height: bottomGap), bottom!],
             ],
-          ),
+          ],
         ),
 
         // ──────────────────────────────────────────────────────────────
-        // TRAILING (например, кнопка "…"): центрируем по аватару
+        // НИЖНИЙ СЛОТ (например, метрики Активности): занимает всю ширину
         // ──────────────────────────────────────────────────────────────
-        if (trailing != null) ...[
-          const SizedBox(width: 8),
-          SizedBox(
-            height: avatarSize,
-            child: Center(child: trailing!),
-          ),
-        ],
+        if (bottom != null) ...[SizedBox(height: bottomGap), bottom!],
       ],
     );
   }

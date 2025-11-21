@@ -98,6 +98,10 @@ class ActivityBlock extends ConsumerWidget {
                 elevationGainM: stats?.cumulativeElevationGain,
                 avgPaceMinPerKm: stats?.avgPace,
                 avgHeartRate: stats?.avgHeartRate,
+                // ────────────────────────────────────────────────────────────────
+                // Тренировка добавлена вручную, если нет GPS-трека (points пустой)
+                // ────────────────────────────────────────────────────────────────
+                isManuallyAdded: updatedActivity.points.isEmpty,
               ),
               bottomGap: 12.0,
 
@@ -290,6 +294,11 @@ class ActivityBlock extends ConsumerWidget {
                   CupertinoPageRoute(builder: (_) => const TogetherScreen()),
                 );
               },
+
+              // ────────────────────────────────────────────────────────────────
+              // Скрываем правые иконки для тренировок, добавленных вручную
+              // ────────────────────────────────────────────────────────────────
+              hideRightActions: updatedActivity.points.isEmpty,
             ),
           ),
 

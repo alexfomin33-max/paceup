@@ -14,6 +14,7 @@ class ActivityActionsRow extends StatefulWidget {
   final int initialLikes;
   final bool initiallyLiked;
   final int commentsCount;
+  final bool hideRightActions;
 
   final VoidCallback? onOpenComments;
   final VoidCallback? onOpenTogether;
@@ -25,6 +26,7 @@ class ActivityActionsRow extends StatefulWidget {
     required this.initialLikes,
     required this.initiallyLiked,
     required this.commentsCount,
+    this.hideRightActions = false,
     this.onOpenComments,
     this.onOpenTogether,
   });
@@ -169,29 +171,30 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
           ],
         ),
 
-        // Правая группа: «совместно»
-        Row(
-          children: [
-            const Icon(
-              CupertinoIcons.person_2,
-              size: 20,
-              color: AppColors.success,
-            ),
-            const SizedBox(width: 4),
-            const Text('48', style: AppTextStyles.h14w4),
-            const SizedBox(width: 12),
-            GestureDetector(
-              onTap: widget.onOpenTogether,
-              child: const Icon(
-                CupertinoIcons.person_crop_circle_badge_plus,
+        // Правая группа: «совместно» (скрываем для тренировок, добавленных вручную)
+        if (!widget.hideRightActions)
+          Row(
+            children: [
+              const Icon(
+                CupertinoIcons.person_2,
                 size: 20,
-                color: AppColors.brandPrimary,
+                color: AppColors.success,
               ),
-            ),
-            const SizedBox(width: 4),
-            const Text('3', style: AppTextStyles.h14w4),
-          ],
-        ),
+              const SizedBox(width: 4),
+              const Text('48', style: AppTextStyles.h14w4),
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: widget.onOpenTogether,
+                child: const Icon(
+                  CupertinoIcons.person_crop_circle_badge_plus,
+                  size: 20,
+                  color: AppColors.brandPrimary,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Text('3', style: AppTextStyles.h14w4),
+            ],
+          ),
       ],
     );
   }

@@ -111,6 +111,10 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                           elevationGainM: stats?.cumulativeElevationGain,
                           avgPaceMinPerKm: stats?.avgPace,
                           avgHeartRate: stats?.avgHeartRate,
+                          // ────────────────────────────────────────────────────────────────
+                          // Тренировка добавлена вручную, если нет GPS-трека (points пустой)
+                          // ────────────────────────────────────────────────────────────────
+                          isManuallyAdded: a.points.isEmpty,
                         ),
                         bottomGap: 12.0,
                       ),
