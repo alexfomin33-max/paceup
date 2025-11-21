@@ -32,6 +32,7 @@ import '../../../../service/auth_service.dart';
 
 // Меню с тремя точками
 import '../../../../widgets/more_menu_overlay.dart';
+import '../../../../widgets/transparent_route.dart';
 
 /// Главный виджет «тренировка».
 
@@ -116,7 +117,7 @@ class ActivityBlock extends ConsumerWidget {
                             onTap: () {
                               Navigator.of(context)
                                   .push(
-                                    CupertinoPageRoute(
+                                    TransparentPageRoute(
                                       builder: (_) => EditActivityScreen(
                                         activity: updatedActivity,
                                         currentUserId: currentUserId,

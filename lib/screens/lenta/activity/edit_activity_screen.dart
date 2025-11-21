@@ -59,6 +59,9 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   // Список фотографий (для отображения в карусели)
   final List<String> _imageUrls = [];
 
+  // Индекс перетаскиваемой фотографии
+  int? _draggedIndex;
+
   @override
   void initState() {
     super.initState();
@@ -94,9 +97,24 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         widget.activity.postContent.trim();
     final visibilityChanged = _selectedVisibility != widget.activity.userGroup;
 
+    // Проверяем, изменился ли порядок или количество фотографий
+    final originalImages = widget.activity.mediaImages;
+    final imagesChanged =
+        _imageUrls.length != originalImages.length ||
+        !_listsEqual(_imageUrls, originalImages);
+
     setState(() {
-      _hasChanges = textChanged || visibilityChanged;
+      _hasChanges = textChanged || visibilityChanged || imagesChanged;
     });
+  }
+
+  /// Сравнивает два списка строк на равенство
+  bool _listsEqual(List<String> list1, List<String> list2) {
+    if (list1.length != list2.length) return false;
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i] != list2[i]) return false;
+    }
+    return true;
   }
 
   @override
@@ -112,7 +130,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           child: SafeArea(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -121,7 +139,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                   // ────────────────────────────────────────────────────────────────
                   const Text(
                     'Фото тренировки',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   _buildPhotoCarousel(),
@@ -133,7 +151,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                   // ────────────────────────────────────────────────────────────────
                   const Text(
                     'Описание тренировки',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   _buildDescriptionInput(),
@@ -145,7 +163,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                   // ────────────────────────────────────────────────────────────────
                   const Text(
                     'Экипировка',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   _buildEquipmentSection(),
@@ -157,7 +175,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                   // ────────────────────────────────────────────────────────────────
                   const Text(
                     'Кто видит тренировку',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   _buildVisibilitySelector(),
@@ -208,8 +226,9 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
             return _buildMapItem(routePoints);
           }
           // Остальные элементы — фотографии
-          final imageUrl = _imageUrls[index - 2];
-          return _buildPhotoItem(imageUrl);
+          final photoIndex = index - 2;
+          final imageUrl = _imageUrls[photoIndex];
+          return _buildDraggablePhotoItem(imageUrl, photoIndex);
         },
       ),
     );
@@ -264,8 +283,56 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     );
   }
 
-  /// Один элемент фотографии в карусели
-  Widget _buildPhotoItem(String imageUrl) {
+  /// Перетаскиваемый элемент фотографии
+  Widget _buildDraggablePhotoItem(String imageUrl, int photoIndex) {
+    final isDragging = _draggedIndex == photoIndex;
+
+    return LongPressDraggable<String>(
+      data: imageUrl,
+      feedback: Material(
+        color: Colors.transparent,
+        child: Opacity(
+          opacity: 0.8,
+          child: _buildPhotoItemContent(imageUrl, isDragging: true),
+        ),
+      ),
+      onDragStarted: () {
+        setState(() {
+          _draggedIndex = photoIndex;
+        });
+      },
+      onDragEnd: (details) {
+        setState(() {
+          _draggedIndex = null;
+        });
+      },
+      child: DragTarget<String>(
+        onWillAccept: (data) => data != imageUrl,
+        onAccept: (data) {
+          final oldIndex = _imageUrls.indexOf(data);
+          final newIndex = photoIndex;
+
+          if (oldIndex != -1 && oldIndex != newIndex) {
+            setState(() {
+              _imageUrls.removeAt(oldIndex);
+              _imageUrls.insert(newIndex, data);
+              _checkForChanges();
+            });
+          }
+        },
+        builder: (context, candidateData, rejectedData) {
+          final isTargeted = candidateData.isNotEmpty;
+          return Opacity(
+            opacity: isDragging ? 0.5 : (isTargeted ? 0.7 : 1.0),
+            child: _buildPhotoItemContent(imageUrl, isDragging: isDragging),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Содержимое элемента фотографии (без обертки drag and drop)
+  Widget _buildPhotoItemContent(String imageUrl, {bool isDragging = false}) {
     return Builder(
       builder: (context) {
         final dpr = MediaQuery.of(context).devicePixelRatio;
@@ -283,7 +350,12 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   color: AppColors.background,
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(
+                    color: isDragging
+                        ? AppColors.brandPrimary
+                        : AppColors.border,
+                    width: isDragging ? 2 : 1,
+                  ),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: CachedNetworkImage(
@@ -336,24 +408,15 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
   /// Поле ввода описания
   Widget _buildDescriptionInput() {
-    final bool hasText = _descriptionController.text.trim().isNotEmpty;
-    final bool isFocused = _descriptionFocusNode.hasFocus;
-    final String labelText = (hasText || isFocused)
-        ? 'Описание тренировки'
-        : 'Введите описание тренировки';
-
     return TextField(
       controller: _descriptionController,
       focusNode: _descriptionFocusNode,
-      maxLines: 6,
-      minLines: 3,
+      maxLines: 12,
+      minLines: 7,
       textAlignVertical: TextAlignVertical.top,
       decoration: InputDecoration(
-        labelText: labelText,
-        labelStyle: AppTextStyles.h14w4Sec,
-        floatingLabelStyle: const TextStyle(color: AppColors.textSecondary),
-        floatingLabelBehavior: FloatingLabelBehavior.auto,
-        alignLabelWithHint: true,
+        hintText: 'Введите описание тренировки',
+        hintStyle: AppTextStyles.h14w4Place,
         filled: true,
         fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.all(12),
@@ -399,109 +462,53 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       'Только Вы',
     ];
 
-    return GestureDetector(
-      onTap: () => _showVisibilityPicker(),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
+    return InputDecorator(
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: AppColors.surface,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: AppColors.border, width: 1),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(options[_selectedVisibility], style: AppTextStyles.h14w4),
-            const Icon(
-              CupertinoIcons.chevron_down,
-              size: 18,
-              color: AppColors.iconSecondary,
-            ),
-          ],
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
         ),
       ),
-    );
-  }
-
-  /// Показывает CupertinoPicker для выбора видимости
-  void _showVisibilityPicker() {
-    const List<String> options = [
-      'Все пользователи',
-      'Только подписчики',
-      'Только Вы',
-    ];
-
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (context) => Container(
-        height: 216,
-        padding: const EdgeInsets.only(top: 6),
-        margin: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            children: [
-              // Заголовок и кнопка "Готово"
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Кто видит тренировку',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text(
-                        'Готово',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.brandPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: CupertinoPicker(
-                  scrollController: FixedExtentScrollController(
-                    initialItem: _selectedVisibility,
-                  ),
-                  itemExtent: 32,
-                  onSelectedItemChanged: (index) {
-                    setState(() {
-                      _selectedVisibility = index;
-                      _checkForChanges();
-                    });
-                  },
-                  children: options
-                      .map(
-                        (option) => Center(
-                          child: Text(option, style: AppTextStyles.h14w4),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ),
-            ],
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: options[_selectedVisibility],
+          isExpanded: true,
+          onChanged: (String? newValue) {
+            if (newValue != null) {
+              final index = options.indexOf(newValue);
+              if (index != -1) {
+                setState(() {
+                  _selectedVisibility = index;
+                  _checkForChanges();
+                });
+              }
+            }
+          },
+          dropdownColor: AppColors.surface,
+          menuMaxHeight: 300,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          icon: const Icon(
+            Icons.arrow_drop_down,
+            color: AppColors.iconSecondary,
           ),
+          style: AppTextStyles.h14w4,
+          items: options.map((option) {
+            return DropdownMenuItem<String>(
+              value: option,
+              child: Text(option, style: AppTextStyles.h14w4),
+            );
+          }).toList(),
         ),
       ),
     );
@@ -511,16 +518,16 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   Widget _buildSaveButton() {
     return PrimaryButton(
       text: 'Сохранить',
-      onPressed: _hasChanges && !_isLoading ? _saveChanges : () {},
+      onPressed: !_isLoading ? _saveChanges : () {},
       width: 190,
       isLoading: _isLoading,
-      enabled: _hasChanges,
+      enabled: true,
     );
   }
 
   /// Сохраняет изменения на сервер
   Future<void> _saveChanges() async {
-    if (_isLoading || !_hasChanges) return;
+    if (_isLoading) return;
 
     setState(() => _isLoading = true);
 
@@ -542,6 +549,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           'activity_id': widget.activity.id.toString(),
           'content': _descriptionController.text.trim(),
           'user_group': _selectedVisibility.toString(),
+          'media_images': _imageUrls, // Отправляем новый порядок фотографий
         },
       );
 
