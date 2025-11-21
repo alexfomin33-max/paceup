@@ -238,12 +238,13 @@ class CacheService {
   }
 
   /// Обновляет список медиафайлов активности в кэше
+  /// Использует lentaId для точной идентификации элемента в ленте
   Future<void> updateCachedActivityMedia({
-    required int activityId,
+    required int lentaId,
     required List<String> mediaImages,
   }) async {
     await (_db.update(_db.cachedActivities)
-          ..where((tbl) => tbl.activityId.equals(activityId)))
+          ..where((tbl) => tbl.lentaId.equals(lentaId)))
         .write(
           CachedActivitiesCompanion(
             mediaImages: Value(mediaImages),

@@ -16,7 +16,7 @@ import '../../../../models/activity_lenta.dart';
 // Подвиджеты
 import 'header/activity_header.dart';
 import 'stats/stats_row.dart';
-import '../../../../../widgets/route_card.dart';
+import '../../../../../widgets/activity_route_carousel.dart';
 import 'equipment/equipment_chip.dart';
 import 'actions/activity_actions_row.dart';
 
@@ -124,6 +124,7 @@ class ActivityBlock extends ConsumerWidget {
                                 context: context,
                                 ref: ref,
                                 activityId: updatedActivity.id,
+                                lentaId: updatedActivity.lentaId,
                                 currentUserId: currentUserId,
                               );
                             },
@@ -177,11 +178,12 @@ class ActivityBlock extends ConsumerWidget {
           // ────────────────────────────────────────────────────────────────
           SizedBox(height: updatedActivity.equipments.isNotEmpty ? 8 : 0),
 
-          // ───────────────── МАРШРУТ ─────────────────
-          RouteCard(
+          // ───────────────── МАРШРУТ С ФОТОГРАФИЯМИ ─────────────────
+          ActivityRouteCarousel(
             points: updatedActivity.points
                 .map((c) => LatLng(c.lat, c.lng))
                 .toList(),
+            imageUrls: updatedActivity.mediaImages,
             height: 240, // Увеличена высота карты для лучшей видимости маршрута
           ),
 
@@ -269,11 +271,12 @@ class ActivityBlock extends ConsumerWidget {
 /// Обработчик добавления фотографий к тренировке.
 ///
 /// Открывает галерею телефона для выбора нескольких фотографий.
-/// Само добавление фотографий в тренировку будет реализовано позже.
+/// Использует lentaId для точной идентификации элемента в ленте.
 Future<void> _handleAddPhotos({
   required BuildContext context,
   required WidgetRef ref,
   required int activityId,
+  required int lentaId,
   required int currentUserId,
 }) async {
   final picker = ImagePicker();
@@ -321,27 +324,22 @@ Future<void> _handleAddPhotos({
       return;
     }
 
-    _showBlockingLoader(
-      context,
-      message: 'Загружаем фотографии…',
-    );
+    _showBlockingLoader(context, message: 'Загружаем фотографии…');
     loaderShown = true;
 
     final api = ApiService();
     final response = await api.postMultipart(
       '/upload_activity_photos.php',
       files: filesForUpload,
-      fields: {
-        'user_id': '$userId',
-        'activity_id': '$activityId',
-      },
+      fields: {'user_id': '$userId', 'activity_id': '$activityId'},
       timeout: const Duration(minutes: 2),
     );
 
     hideLoader();
 
     if (response['success'] != true) {
-      final message = response['message']?.toString() ??
+      final message =
+          response['message']?.toString() ??
           'Не удалось загрузить фотографии. Попробуйте ещё раз.';
       if (context.mounted) {
         await _showErrorDialog(context: context, message: message);
@@ -349,18 +347,16 @@ Future<void> _handleAddPhotos({
       return;
     }
 
-    final images = (response['images'] as List?)
-            ?.whereType<String>()
-            .toList(growable: false) ??
+    final images =
+        (response['images'] as List?)?.whereType<String>().toList(
+          growable: false,
+        ) ??
         const [];
 
     if (images.isNotEmpty) {
       await ref
           .read(lentaProvider(currentUserId).notifier)
-          .updateActivityMedia(
-            activityId: activityId,
-            mediaImages: images,
-          );
+          .updateActivityMedia(lentaId: lentaId, mediaImages: images);
     } else {
       await ref.read(lentaProvider(currentUserId).notifier).refresh();
     }

@@ -326,12 +326,13 @@ class LentaNotifier extends StateNotifier<LentaState> {
   }
 
   /// Обновляет список фотографий для активности и кэша
+  /// Использует lentaId для точной идентификации элемента в ленте
   Future<void> updateActivityMedia({
-    required int activityId,
+    required int lentaId,
     required List<String> mediaImages,
   }) async {
     final updatedItems = state.items.map((item) {
-      if (item.id == activityId) {
+      if (_getId(item) == lentaId) {
         return item.copyWithMedia(images: mediaImages);
       }
       return item;
@@ -340,7 +341,7 @@ class LentaNotifier extends StateNotifier<LentaState> {
     state = state.copyWith(items: updatedItems);
 
     await _cache.updateCachedActivityMedia(
-      activityId: activityId,
+      lentaId: lentaId,
       mediaImages: mediaImages,
     );
   }
