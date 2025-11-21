@@ -7,6 +7,7 @@ import '../../../../theme/app_theme.dart';
 import '../../../../models/activity_lenta.dart';
 import 'post_media_carousel.dart';
 import '../../../../widgets/user_header.dart';
+import '../../../../widgets/expandable_text.dart';
 import '../../../../service/api_service.dart';
 import '../../../../utils/feed_date.dart';
 
@@ -242,12 +243,12 @@ class _PostCardState extends State<PostCard> {
           ),
 
           // ──────────────────────────────────────────────────────────────
-          // ТЕКСТ ПОСТА (если пустой — ничего не рисуем)
+          // ТЕКСТ ПОСТА: после медиа, до лайков/комментариев (с раскрытием)
           // ──────────────────────────────────────────────────────────────
           if (post.postContent.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(left: 12, right: 12, top: 12),
-              child: Text(post.postContent),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+              child: ExpandableText(text: post.postContent),
             ),
 
           // ──────────────────────────────────────────────────────────────
