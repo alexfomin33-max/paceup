@@ -55,6 +55,11 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     'Плавание': 'swim',
   };
 
+  // Дата и время тренировки
+  DateTime? _activityDate;
+  TimeOfDay? _startTime;
+  Duration? _duration; // По умолчанию не выбрана
+
   // Состояние видимости: 0 = Все пользователи, 1 = Только подписчики, 2 = Только Вы
   int _selectedVisibility = 0;
 
@@ -129,7 +134,59 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   const SizedBox(height: 24),
 
                   // ────────────────────────────────────────────────────────────────
-                  // 📝 3. ОПИСАНИЕ ТРЕНИРОВКИ
+                  // 📅 3. ДАТА И ВРЕМЯ ТРЕНИРОВКИ
+                  // ────────────────────────────────────────────────────────────────
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Дата тренировки',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildDateField(),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Время начала',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildTimeField(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  const Text(
+                    'Длительность',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDurationField(),
+
+                  const SizedBox(height: 24),
+
+                  // ────────────────────────────────────────────────────────────────
+                  // 📝 4. ОПИСАНИЕ ТРЕНИРОВКИ
                   // ────────────────────────────────────────────────────────────────
                   const Text(
                     'Описание тренировки',
@@ -141,7 +198,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   const SizedBox(height: 24),
 
                   // ────────────────────────────────────────────────────────────────
-                  // 👟 4. ДОБАВИТЬ ЭКИПИРОВКУ (чекбокс + EquipmentChip)
+                  // 👟 5. ДОБАВИТЬ ЭКИПИРОВКУ (чекбокс + EquipmentChip)
                   // ────────────────────────────────────────────────────────────────
                   // Показываем только для "Бег" и "Велосипед"
                   if (_shouldShowEquipment()) ...[
@@ -197,7 +254,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   SizedBox(height: _shouldShowEquipment() ? 24 : 0),
 
                   // ────────────────────────────────────────────────────────────────
-                  // 👁️ 5. КТО ВИДИТ ТРЕНИРОВКУ (выпадающий список)
+                  // 👁️ 6. КТО ВИДИТ ТРЕНИРОВКУ (выпадающий список)
                   // ────────────────────────────────────────────────────────────────
                   const Text(
                     'Кто видит тренировку',
@@ -436,7 +493,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           isExpanded: true,
           hint: const Text(
             'Выберите тип тренировки',
-            style: AppTextStyles.h14w4,
+            style: AppTextStyles.h14w4Place,
           ),
           onChanged: (String? newValue) {
             if (newValue != null) {
@@ -467,6 +524,157 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               child: Text(option, style: AppTextStyles.h14w4),
             );
           }).toList(),
+        ),
+      ),
+    );
+  }
+
+  /// Поле выбора даты тренировки
+  Widget _buildDateField() {
+    return GestureDetector(
+      onTap: _pickDate,
+      child: AbsorbPointer(
+        child: InputDecorator(
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.surface,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
+            prefixIcon: const Padding(
+              padding: EdgeInsets.only(left: 12, right: 6),
+              child: Icon(
+                CupertinoIcons.calendar,
+                size: 18,
+                color: AppColors.iconPrimary,
+              ),
+            ),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 18 + 14,
+              minHeight: 18,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.border, width: 1),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.border, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.border, width: 1),
+            ),
+          ),
+          child: Text(
+            _activityDate != null
+                ? _formatDate(_activityDate!)
+                : 'Выберите дату',
+            style: _activityDate != null
+                ? AppTextStyles.h14w4
+                : AppTextStyles.h14w4Place,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Поле выбора времени начала
+  Widget _buildTimeField() {
+    return GestureDetector(
+      onTap: _pickTime,
+      child: AbsorbPointer(
+        child: InputDecorator(
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.surface,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
+            prefixIcon: const Padding(
+              padding: EdgeInsets.only(left: 12, right: 6),
+              child: Icon(
+                CupertinoIcons.time,
+                size: 18,
+                color: AppColors.iconPrimary,
+              ),
+            ),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 18 + 14,
+              minHeight: 18,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.border, width: 1),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.border, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.border, width: 1),
+            ),
+          ),
+          child: Text(
+            _startTime != null ? _formatTime(_startTime!) : 'Выберите время',
+            style: _startTime != null
+                ? AppTextStyles.h14w4
+                : AppTextStyles.h14w4Place,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Поле выбора длительности тренировки
+  Widget _buildDurationField() {
+    return GestureDetector(
+      onTap: _pickDuration,
+      child: AbsorbPointer(
+        child: InputDecorator(
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.surface,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
+            prefixIcon: const Padding(
+              padding: EdgeInsets.only(left: 12, right: 6),
+              child: Icon(
+                CupertinoIcons.timer,
+                size: 18,
+                color: AppColors.iconPrimary,
+              ),
+            ),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 18 + 14,
+              minHeight: 18,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.border, width: 1),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.border, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.border, width: 1),
+            ),
+          ),
+          child: Text(
+            _formatDuration(_duration).isEmpty
+                ? 'Выберите длительность'
+                : _formatDuration(_duration),
+            style: _duration != null
+                ? AppTextStyles.h14w4
+                : AppTextStyles.h14w4Place,
+          ),
         ),
       ),
     );
@@ -734,6 +942,176 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         _selectedActivityType == 'Велосипед';
   }
 
+  /// Форматирует дату в формат dd.MM.yyyy
+  String _formatDate(DateTime date) {
+    final dd = date.day.toString().padLeft(2, '0');
+    final mm = date.month.toString().padLeft(2, '0');
+    final yy = date.year.toString();
+    return '$dd.$mm.$yy';
+  }
+
+  /// Форматирует время в формат HH:mm
+  String _formatTime(TimeOfDay time) {
+    final hh = time.hour.toString().padLeft(2, '0');
+    final mm = time.minute.toString().padLeft(2, '0');
+    return '$hh:$mm';
+  }
+
+  /// Форматирует длительность в формат "X ч Y мин Z сек"
+  String _formatDuration(Duration? duration) {
+    if (duration == null) return '';
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    final seconds = duration.inSeconds.remainder(60);
+
+    final parts = <String>[];
+    if (hours > 0) parts.add('$hours ч');
+    if (minutes > 0) parts.add('$minutes мин');
+    if (seconds > 0 || parts.isEmpty) parts.add('$seconds сек');
+
+    return parts.join(' ');
+  }
+
+  /// Показывает пикер для выбора даты
+  Future<void> _pickDate() async {
+    final today = DateUtils.dateOnly(DateTime.now());
+    DateTime temp = DateUtils.dateOnly(_activityDate ?? today);
+
+    final picker = CupertinoDatePicker(
+      mode: CupertinoDatePickerMode.date,
+      minimumDate: today,
+      maximumDate: today.add(const Duration(days: 365 * 2)),
+      initialDateTime: temp.isBefore(today) ? today : temp,
+      onDateTimeChanged: (dt) => temp = DateUtils.dateOnly(dt),
+    );
+
+    final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
+    if (ok) {
+      setState(() {
+        _activityDate = temp;
+      });
+    }
+  }
+
+  /// Показывает пикер для выбора времени начала
+  Future<void> _pickTime() async {
+    DateTime temp = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+      _startTime?.hour ?? 12,
+      _startTime?.minute ?? 0,
+    );
+
+    final picker = CupertinoDatePicker(
+      mode: CupertinoDatePickerMode.time,
+      use24hFormat: true,
+      initialDateTime: temp,
+      onDateTimeChanged: (dt) => temp = dt,
+    );
+
+    final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
+    if (ok) {
+      setState(() {
+        _startTime = TimeOfDay(hour: temp.hour, minute: temp.minute);
+      });
+    }
+  }
+
+  /// Показывает пикер для выбора длительности (часы, минуты, секунды)
+  Future<void> _pickDuration() async {
+    int tempHours = _duration?.inHours.clamp(0, 23) ?? 0;
+    int tempMinutes = _duration?.inMinutes.remainder(60) ?? 0;
+    int tempSeconds = _duration?.inSeconds.remainder(60) ?? 0;
+
+    final picker = _DurationPicker(
+      initialHours: tempHours,
+      initialMinutes: tempMinutes,
+      initialSeconds: tempSeconds,
+      onChanged: (hours, minutes, seconds) {
+        tempHours = hours;
+        tempMinutes = minutes;
+        tempSeconds = seconds;
+      },
+    );
+
+    final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
+    if (ok) {
+      setState(() {
+        _duration = Duration(
+          hours: tempHours,
+          minutes: tempMinutes,
+          seconds: tempSeconds,
+        );
+      });
+    }
+  }
+
+  /// Показывает Cupertino bottom sheet с пикером
+  Future<T?> _showCupertinoSheet<T>({required Widget child}) {
+    return showCupertinoModalPopup<T>(
+      context: context,
+      useRootNavigator: true,
+      builder: (sheetCtx) => SafeArea(
+        top: false,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppRadius.lg),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                // маленькая серая полоска сверху (grabber)
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                  ),
+                ),
+                const SizedBox(height: 0),
+                // ПАНЕЛЬ С КНОПКАМИ
+                Container(
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: AppColors.border, width: 1),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        onPressed: () => Navigator.of(sheetCtx).pop(),
+                        child: const Text('Отмена'),
+                      ),
+                      const Spacer(),
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        onPressed: () => Navigator.of(sheetCtx).pop(true),
+                        child: const Text('Готово'),
+                      ),
+                    ],
+                  ),
+                ),
+                // Пикер с фиксированной высотой (предотвращает зависание)
+                SizedBox(height: 260, child: child),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Преобразует тип активности в тип эквипа
   String _activityTypeToEquipmentType(String activityType) {
     final String type = activityType.toLowerCase();
@@ -777,9 +1155,31 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             '${dt.second.toString().padLeft(2, '0')}';
       }
 
-      final now = DateTime.now();
-      final dateStart = formatDateTime(now);
-      final dateEnd = formatDateTime(now.add(const Duration(minutes: 1)));
+      // Используем выбранные дату и время, или текущее время по умолчанию
+      DateTime dateStart;
+      DateTime dateEnd;
+
+      // Если длительность не выбрана, используем 1 час по умолчанию
+      final duration = _duration ?? const Duration(hours: 1);
+
+      if (_activityDate != null && _startTime != null) {
+        dateStart = DateTime(
+          _activityDate!.year,
+          _activityDate!.month,
+          _activityDate!.day,
+          _startTime!.hour,
+          _startTime!.minute,
+        );
+        dateEnd = dateStart.add(duration);
+      } else {
+        // Если дата/время не выбраны, используем текущее время
+        final now = DateTime.now();
+        dateStart = now;
+        dateEnd = now.add(duration);
+      }
+
+      final dateStartStr = formatDateTime(dateStart);
+      final dateEndStr = formatDateTime(dateEnd);
 
       // Формируем params (минимальные stats)
       final params = jsonEncode([
@@ -810,8 +1210,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         body: {
           'user_id': userId.toString(),
           'type': _activityTypeMap[_selectedActivityType] ?? 'run',
-          'date_start': dateStart,
-          'date_end': dateEnd,
+          'date_start': dateStartStr,
+          'date_end': dateEndStr,
           'params': params,
           'points': points,
           'privacy': _selectedVisibility.toString(),
@@ -952,5 +1352,155 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     setState(() {
       _images.remove(image);
     });
+  }
+}
+
+/// ────────────────────────────────────────────────────────────────
+/// 🔹 КАСТОМНЫЙ ПИКЕР ДЛИТЕЛЬНОСТИ (часы, минуты, секунды)
+/// ────────────────────────────────────────────────────────────────
+/// Использует три CupertinoPicker для выбора часов, минут и секунд
+/// ────────────────────────────────────────────────────────────────
+class _DurationPicker extends StatefulWidget {
+  final int initialHours;
+  final int initialMinutes;
+  final int initialSeconds;
+  final Function(int hours, int minutes, int seconds) onChanged;
+
+  const _DurationPicker({
+    required this.initialHours,
+    required this.initialMinutes,
+    required this.initialSeconds,
+    required this.onChanged,
+  });
+
+  @override
+  State<_DurationPicker> createState() => _DurationPickerState();
+}
+
+class _DurationPickerState extends State<_DurationPicker> {
+  late FixedExtentScrollController _hoursController;
+  late FixedExtentScrollController _minutesController;
+  late FixedExtentScrollController _secondsController;
+
+  int _currentHours = 0;
+  int _currentMinutes = 0;
+  int _currentSeconds = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentHours = widget.initialHours;
+    _currentMinutes = widget.initialMinutes;
+    _currentSeconds = widget.initialSeconds;
+    _hoursController = FixedExtentScrollController(
+      initialItem: widget.initialHours,
+    );
+    _minutesController = FixedExtentScrollController(
+      initialItem: widget.initialMinutes,
+    );
+    _secondsController = FixedExtentScrollController(
+      initialItem: widget.initialSeconds,
+    );
+  }
+
+  @override
+  void dispose() {
+    _hoursController.dispose();
+    _minutesController.dispose();
+    _secondsController.dispose();
+    super.dispose();
+  }
+
+  void _updateDuration(int hours, int minutes, int seconds) {
+    setState(() {
+      _currentHours = hours;
+      _currentMinutes = minutes;
+      _currentSeconds = seconds;
+    });
+    widget.onChanged(hours, minutes, seconds);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 260,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Часы (0-23)
+          SizedBox(
+            width: 60,
+            child: CupertinoPicker(
+              scrollController: _hoursController,
+              itemExtent: 32,
+              onSelectedItemChanged: (index) {
+                _updateDuration(index, _currentMinutes, _currentSeconds);
+              },
+              children: List.generate(
+                24,
+                (i) => Center(child: Text('$i', style: AppTextStyles.h17w6)),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text('ч', style: AppTextStyles.h14w4),
+          ),
+          const SizedBox(width: 16),
+
+          // Минуты (0-59)
+          SizedBox(
+            width: 60,
+            child: CupertinoPicker(
+              scrollController: _minutesController,
+              itemExtent: 32,
+              onSelectedItemChanged: (index) {
+                _updateDuration(_currentHours, index, _currentSeconds);
+              },
+              children: List.generate(
+                60,
+                (i) => Center(
+                  child: Text(
+                    i.toString().padLeft(2, '0'),
+                    style: AppTextStyles.h18w6,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text('мин', style: AppTextStyles.h14w4),
+          ),
+          const SizedBox(width: 16),
+
+          // Секунды (0-59)
+          SizedBox(
+            width: 60,
+            child: CupertinoPicker(
+              scrollController: _secondsController,
+              itemExtent: 32,
+              onSelectedItemChanged: (index) {
+                _updateDuration(_currentHours, _currentMinutes, index);
+              },
+              children: List.generate(
+                60,
+                (i) => Center(
+                  child: Text(
+                    i.toString().padLeft(2, '0'),
+                    style: AppTextStyles.h17w6,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text('сек', style: AppTextStyles.h14w4),
+          ),
+        ],
+      ),
+    );
   }
 }

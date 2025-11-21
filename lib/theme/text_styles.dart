@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 import 'app_theme.dart';
 
 class AppTextStyles {
+  static const TextStyle h18w6 = TextStyle(
+    fontFamily: 'Inter',
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
+  // style: AppTextStyles.h18w6
+
   static const TextStyle h17w6 = TextStyle(
     fontFamily: 'Inter',
     fontSize: 17,
