@@ -17,6 +17,10 @@ class ActivityHeader extends StatelessWidget {
   /// Он будет иметь приоритет над локальным форматированием.
   final String? dateTextOverride;
 
+  /// Слот между заголовком и bottom — сюда передаём описание тренировки
+  final Widget? middle;
+  final double middleGap;
+
   /// Слот снизу — сюда передаём StatsRow из ActivityBlock
   final Widget? bottom;
   final double bottomGap;
@@ -31,6 +35,8 @@ class ActivityHeader extends StatelessWidget {
     required this.userAvatar,
     required this.dateStart,
     this.dateTextOverride,
+    this.middle,
+    this.middleGap = 12.0,
     this.bottom,
     this.bottomGap = 18.0,
     this.trailing,
@@ -56,6 +62,8 @@ class ActivityHeader extends StatelessWidget {
           CupertinoPageRoute(builder: (_) => ProfileScreen(userId: userId)),
         );
       },
+      middle: middle,
+      middleGap: middleGap,
       bottom: bottom,
       bottomGap: bottomGap,
       trailing: trailing,
