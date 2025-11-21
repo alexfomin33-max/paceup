@@ -438,17 +438,28 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   }
 
   /// Секция с экипировкой
+  /// Использует обновленную активность из провайдера для отображения актуального эквипа
   Widget _buildEquipmentSection() {
+    // Получаем обновленную активность из провайдера (если есть)
+    final lentaState = ref.watch(lentaProvider(widget.currentUserId));
+    final updatedActivity = lentaState.items.firstWhere(
+      (a) => a.lentaId == widget.activity.lentaId,
+      orElse: () => widget.activity,
+    );
+    
     return EquipmentChip(
-      items: widget.activity.equipments,
-      userId: widget.activity.userId,
-      activityType: widget.activity.type,
-      activityId: widget.activity.id,
-      activityDistance: (widget.activity.stats?.distance ?? 0.0) / 1000.0,
+      items: updatedActivity.equipments,
+      userId: updatedActivity.userId,
+      activityType: updatedActivity.type,
+      activityId: updatedActivity.id,
+      activityDistance: (updatedActivity.stats?.distance ?? 0.0) / 1000.0,
       showMenuButton: true,
-      onEquipmentChanged: () {
+      onEquipmentChanged: () async {
         // Обновляем ленту после замены эквипа
-        ref.read(lentaProvider(widget.currentUserId).notifier).forceRefresh();
+        await ref
+            .read(lentaProvider(widget.currentUserId).notifier)
+            .forceRefresh();
+        
         // Проверяем изменения
         _checkForChanges();
       },

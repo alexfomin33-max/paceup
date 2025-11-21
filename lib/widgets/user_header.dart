@@ -15,6 +15,8 @@ class UserHeader extends StatelessWidget {
   final String dateText; // готовая строка даты
   final VoidCallback? onAvatarTap;
   final Widget? trailing; // справа, например, кнопка "…"
+  final Widget? middle; // между заголовком и bottom (например, описание)
+  final double middleGap; // отступ между заголовком и middle
   final Widget? bottom; // снизу, например, StatsRow
   final double bottomGap; // отступ между датой и bottom (по исходнику 18)
 
@@ -28,6 +30,8 @@ class UserHeader extends StatelessWidget {
     required this.dateText,
     this.onAvatarTap,
     this.trailing,
+    this.middle,
+    this.middleGap = 12.0,
     this.bottom,
     this.bottomGap = 18.0,
     this.avatarSize = 50.0,
@@ -79,6 +83,11 @@ class UserHeader extends StatelessWidget {
                   ],
                 ),
               ),
+
+              // ──────────────────────────────────────────────────────────────
+              // СРЕДНИЙ СЛОТ (например, описание тренировки)
+              // ──────────────────────────────────────────────────────────────
+              if (middle != null) ...[SizedBox(height: middleGap), middle!],
 
               // ──────────────────────────────────────────────────────────────
               // НИЖНИЙ СЛОТ (например, метрики Активности)
