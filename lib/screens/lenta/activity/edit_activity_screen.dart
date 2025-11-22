@@ -196,15 +196,19 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   }
 
   /// Горизонтальная карусель фотографий
-  /// Порядок: кнопка добавления фото → карта → фотографии
+  /// Порядок: кнопка добавления фото → карта (если есть маршрут) → фотографии
   Widget _buildPhotoCarousel() {
-    // Преобразуем точки маршрута в LatLng для карты
-    final routePoints = widget.activity.points
-        .map((c) => LatLng(c.lat, c.lng))
-        .toList();
+    // Проверяем, есть ли у тренировки маршрут
+    final hasRoute = widget.activity.points.isNotEmpty;
 
-    // Общее количество элементов: кнопка добавления (1) + карта (1) + фотографии
-    final totalItems = 2 + _imageUrls.length;
+    // Преобразуем точки маршрута в LatLng для карты (если есть)
+    final routePoints = hasRoute
+        ? widget.activity.points.map((c) => LatLng(c.lat, c.lng)).toList()
+        : <LatLng>[];
+
+    // Общее количество элементов:
+    // кнопка добавления (1) + карта (1, если есть маршрут) + фотографии
+    final totalItems = 1 + (hasRoute ? 1 : 0) + _imageUrls.length;
 
     return SizedBox(
       height: 96, // 90 + 6 (padding сверху для кнопок удаления)
@@ -221,12 +225,16 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           if (index == 0) {
             return _buildAddPhotoButton();
           }
-          // Второй элемент — карта
-          if (index == 1) {
+
+          // Если есть маршрут, второй элемент — карта
+          if (hasRoute && index == 1) {
             return _buildMapItem(routePoints);
           }
+
           // Остальные элементы — фотографии
-          final photoIndex = index - 2;
+          // Если есть маршрут, фотографии начинаются с index 2
+          // Если нет маршрута, фотографии начинаются с index 1
+          final photoIndex = hasRoute ? index - 2 : index - 1;
           final imageUrl = _imageUrls[photoIndex];
           return _buildDraggablePhotoItem(imageUrl, photoIndex);
         },
@@ -446,7 +454,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       (a) => a.lentaId == widget.activity.lentaId,
       orElse: () => widget.activity,
     );
-    
+
     return EquipmentChip(
       items: updatedActivity.equipments,
       userId: updatedActivity.userId,
@@ -459,7 +467,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         await ref
             .read(lentaProvider(widget.currentUserId).notifier)
             .forceRefresh();
-        
+
         // Проверяем изменения
         _checkForChanges();
       },

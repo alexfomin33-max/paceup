@@ -61,7 +61,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   DateTime? _activityDate;
   TimeOfDay? _startTime;
   Duration? _duration; // По умолчанию не выбрана
-  
+
   // Дистанция тренировки (в километрах)
   final TextEditingController _distanceController = TextEditingController();
 
@@ -183,23 +183,45 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   const SizedBox(height: 24),
 
                   // ────────────────────────────────────────────────────────────────
-                  // 📏 ДИСТАНЦИЯ ТРЕНИРОВКИ
+                  // 📏 ДИСТАНЦИЯ И ДЛИТЕЛЬНОСТЬ ТРЕНИРОВКИ
                   // ────────────────────────────────────────────────────────────────
-                  const Text(
-                    'Дистанция (км)',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Дистанция (км)',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildDistanceField(),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Длительность',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildDurationField(),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  _buildDistanceField(),
-
-                  const SizedBox(height: 24),
-
-                  const Text(
-                    'Длительность',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildDurationField(),
 
                   const SizedBox(height: 24),
 
@@ -558,7 +580,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             fillColor: AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: 4,
+              vertical: 18,
             ),
             prefixIcon: const Padding(
               padding: EdgeInsets.only(left: 12, right: 6),
@@ -609,7 +631,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             fillColor: AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: 4,
+              vertical: 18,
             ),
             prefixIcon: const Padding(
               padding: EdgeInsets.only(left: 12, right: 6),
@@ -659,7 +681,10 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         hintStyle: AppTextStyles.h14w4Place,
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.all(12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 17,
+        ),
         prefixIcon: const Padding(
           padding: EdgeInsets.only(left: 12, right: 6),
           child: Icon(
@@ -699,7 +724,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             fillColor: AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: 4,
+              vertical: 18,
             ),
             prefixIcon: const Padding(
               padding: EdgeInsets.only(left: 12, right: 6),
@@ -727,9 +752,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             ),
           ),
           child: Text(
-            _formatDuration(_duration).isEmpty
-                ? 'Выберите длительность'
-                : _formatDuration(_duration),
+            _duration != null ? _formatDuration(_duration) : '00:00:00',
             style: _duration != null
                 ? AppTextStyles.h14w4
                 : AppTextStyles.h14w4Place,
@@ -747,6 +770,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       maxLines: 12,
       minLines: 7,
       textAlignVertical: TextAlignVertical.top,
+      style: AppTextStyles.h14w4,
       decoration: InputDecoration(
         hintText: 'Введите описание тренировки',
         hintStyle: AppTextStyles.h14w4Place,
@@ -1025,8 +1049,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
     final parts = <String>[];
     if (hours > 0) parts.add('$hours ч');
-    if (minutes > 0) parts.add('$minutes мин');
-    if (seconds > 0 || parts.isEmpty) parts.add('$seconds сек');
+    if (minutes > 0) parts.add('$minutes м');
+    if (seconds > 0 || parts.isEmpty) parts.add('$seconds с');
 
     return parts.join(' ');
   }
@@ -1241,9 +1265,11 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       final dateEndStr = formatDateTime(dateEnd);
 
       // Получаем дистанцию из поля ввода (в километрах)
-      final distanceKm = double.tryParse(
-        _distanceController.text.trim().replaceAll(',', '.'),
-      ) ?? 0.0;
+      final distanceKm =
+          double.tryParse(
+            _distanceController.text.trim().replaceAll(',', '.'),
+          ) ??
+          0.0;
       final distanceMeters = (distanceKm * 1000).round();
 
       // Рассчитываем темп (минуты на километр)
@@ -1302,7 +1328,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       if (response['success'] == true) {
         final activityId = response['activity_id'] as int?;
         final lentaId = response['lenta_id'] as int?;
-        
+
         if (activityId != null) {
           // Загружаем фотографии, если они есть
           if (_images.isNotEmpty) {
@@ -1321,7 +1347,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             // Получаем созданную активность из обновленного провайдера
             final lentaState = ref.read(lentaProvider(widget.currentUserId));
             Activity? createdActivity;
-            
+
             try {
               createdActivity = lentaState.items.firstWhere(
                 (a) => a.id == activityId || a.lentaId == (lentaId ?? 0),
@@ -1329,7 +1355,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             } catch (e) {
               // Если активность не найдена, пробуем еще раз после небольшой задержки
               await Future.delayed(const Duration(milliseconds: 300));
-              final updatedState = ref.read(lentaProvider(widget.currentUserId));
+              final updatedState = ref.read(
+                lentaProvider(widget.currentUserId),
+              );
               try {
                 createdActivity = updatedState.items.firstWhere(
                   (a) => a.id == activityId || a.lentaId == (lentaId ?? 0),
@@ -1569,13 +1597,29 @@ class _DurationPickerState extends State<_DurationPicker> {
               },
               children: List.generate(
                 24,
-                (i) => Center(child: Text('$i', style: AppTextStyles.h17w6)),
+                (i) => Center(
+                  child: Text(
+                    '$i',
+                    style: const TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text('ч', style: AppTextStyles.h14w4),
+            child: Text(
+              'ч',
+              style: const TextStyle(
+                fontSize: 21,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textPrimary,
+              ),
+            ),
           ),
           const SizedBox(width: 16),
 
@@ -1593,7 +1637,11 @@ class _DurationPickerState extends State<_DurationPicker> {
                 (i) => Center(
                   child: Text(
                     i.toString().padLeft(2, '0'),
-                    style: AppTextStyles.h18w6,
+                    style: const TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ),
@@ -1601,7 +1649,14 @@ class _DurationPickerState extends State<_DurationPicker> {
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text('мин', style: AppTextStyles.h14w4),
+            child: Text(
+              'мин',
+              style: const TextStyle(
+                fontSize: 21,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textPrimary,
+              ),
+            ),
           ),
           const SizedBox(width: 16),
 
@@ -1619,7 +1674,11 @@ class _DurationPickerState extends State<_DurationPicker> {
                 (i) => Center(
                   child: Text(
                     i.toString().padLeft(2, '0'),
-                    style: AppTextStyles.h17w6,
+                    style: const TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ),
@@ -1627,7 +1686,14 @@ class _DurationPickerState extends State<_DurationPicker> {
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text('сек', style: AppTextStyles.h14w4),
+            child: Text(
+              'сек',
+              style: const TextStyle(
+                fontSize: 21,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textPrimary,
+              ),
+            ),
           ),
         ],
       ),

@@ -1,50 +1,75 @@
+// lib/screens/lenta/state/newpost/new_post_screen.dart
 import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:async';
+
 import '../../../../theme/app_theme.dart';
-import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
+import '../../../../widgets/app_bar.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
 import '../../../../widgets/primary_button.dart';
 import '../../../../service/api_service.dart';
+import '../../../../providers/lenta/lenta_provider.dart';
 
-/// 🔹 Экран создания нового поста
-class NewPostScreen extends StatefulWidget {
+/// ────────────────────────────────────────────────────────────────
+/// 🔹 ЭКРАН СОЗДАНИЯ НОВОГО ПОСТА
+/// ────────────────────────────────────────────────────────────────
+/// Позволяет создать новый пост с:
+/// 1. Фотографиями поста (горизонтальная карусель)
+/// 2. Описанием поста (текстовое поле)
+/// ────────────────────────────────────────────────────────────────
+class NewPostScreen extends ConsumerStatefulWidget {
   final int userId;
+
   const NewPostScreen({super.key, required this.userId});
 
   @override
-  State<NewPostScreen> createState() => _NewPostScreenState();
+  ConsumerState<NewPostScreen> createState() => _NewPostScreenState();
 }
 
-class _NewPostScreenState extends State<NewPostScreen> {
-  final List<File> _images = []; // выбранные картинки
-  final ImagePicker _picker = ImagePicker();
-  final TextEditingController _descController = TextEditingController();
-  final FocusNode _descFocusNode = FocusNode();
+class _NewPostScreenState extends ConsumerState<NewPostScreen> {
+  // ────────────────────────────────────────────────────────────────
+  // 📝 КОНТРОЛЛЕРЫ И СОСТОЯНИЕ
+  // ────────────────────────────────────────────────────────────────
+  late final TextEditingController _descriptionController;
+  late final FocusNode _descriptionFocusNode;
 
-  bool _canPublish = false; // доступность кнопки
-  bool _loading = false; // индикатор отправки
+  // Список выбранных фотографий
+  final List<File> _images = [];
+
+  // Состояние загрузки
+  bool _isLoading = false;
+
+  // Доступность кнопки публикации
+  bool _canPublish = false;
+
+  // Состояние видимости: 0 = Все пользователи, 1 = Только подписчики, 2 = Только Вы
+  int _selectedVisibility = 0;
 
   @override
   void initState() {
     super.initState();
-    _descController.addListener(_updatePublishState);
-    _descFocusNode.addListener(_updatePublishState);
+    _descriptionController = TextEditingController();
+    _descriptionFocusNode = FocusNode();
+    _descriptionController.addListener(_updatePublishState);
+    _descriptionFocusNode.addListener(_updatePublishState);
   }
 
   @override
   void dispose() {
-    _descController.dispose();
-    _descFocusNode.dispose();
+    _descriptionController.dispose();
+    _descriptionFocusNode.dispose();
     super.dispose();
   }
 
+  /// Обновляет состояние доступности кнопки публикации
   void _updatePublishState() {
     setState(() {
       _canPublish =
-          _images.isNotEmpty || _descController.text.trim().isNotEmpty;
+          _images.isNotEmpty || _descriptionController.text.trim().isNotEmpty;
     });
   }
 
@@ -53,56 +78,60 @@ class _NewPostScreenState extends State<NewPostScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.surface,
-
-        // ───── глобальная шапка
         appBar: const PaceAppBar(title: 'Новый пост'),
-
         body: GestureDetector(
-          // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
+          // Скрываем клавиатуру при нажатии на пустую область
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.translucent,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 2),
-
-                // 🔹 Заголовок
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Фото поста',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ────────────────────────────────────────────────────────────────
+                  // 📸 1. ФОТОГРАФИИ ПОСТА (горизонтальная карусель)
+                  // ────────────────────────────────────────────────────────────────
+                  const Text(
+                    'Фотографии поста',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
-                ),
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
+                  _buildPhotoCarousel(),
 
-                // 🔹 Горизонтальный список фото
-                SizedBox(
-                  height: 76,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      _addPhotoButton(),
-                      const SizedBox(width: 12),
-                      ..._images.map(
-                        (file) => Padding(
-                          padding: const EdgeInsets.only(right: 12),
-                          child: _photoPreview(file),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 24),
+
+                  // ────────────────────────────────────────────────────────────────
+                  // 📝 2. ОПИСАНИЕ ПОСТА
+                  // ────────────────────────────────────────────────────────────────
+                  const Text(
+                    'Описание поста',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 8),
+                  _buildDescriptionInput(),
 
-                // 🔹 описание растягивается
-                Expanded(child: _descriptionInput()),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // 🔹 Кнопка снова по центру
-                Center(child: _publishButton(context)),
-              ],
+                  // ────────────────────────────────────────────────────────────────
+                  // 👁️ 3. КТО ВИДИТ ПОСТ (выпадающий список)
+                  // ────────────────────────────────────────────────────────────────
+                  const Text(
+                    'Кто видит пост',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildVisibilitySelector(),
+
+                  const SizedBox(height: 32),
+
+                  // ────────────────────────────────────────────────────────────────
+                  // 💾 КНОПКА ПУБЛИКАЦИИ
+                  // ────────────────────────────────────────────────────────────────
+                  Center(child: _buildPublishButton()),
+                ],
+              ),
             ),
           ),
         ),
@@ -110,13 +139,39 @@ class _NewPostScreenState extends State<NewPostScreen> {
     );
   }
 
-  // 🔹 Кнопка добавления фото — без пунктира, с иконкой фото
-  Widget _addPhotoButton() {
+  /// Горизонтальная карусель фотографий
+  Widget _buildPhotoCarousel() {
+    // Общее количество элементов: кнопка добавления + фотографии
+    final totalItems = 1 + _images.length;
+
+    return SizedBox(
+      height: 90,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: totalItems,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          // Первый элемент — кнопка добавления фото
+          if (index == 0) {
+            return _buildAddPhotoButton();
+          }
+          // Остальные элементы — фотографии
+          final photoIndex = index - 1;
+          final file = _images[photoIndex];
+          return _buildPhotoItem(file, photoIndex);
+        },
+      ),
+    );
+  }
+
+  /// Кнопка добавления фотографии
+  Widget _buildAddPhotoButton() {
     return GestureDetector(
-      onTap: _pickImage,
+      onTap: _handleAddPhotos,
       child: Container(
-        width: 76,
-        height: 76,
+        width: 90,
+        height: 90,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.sm),
           color: AppColors.background,
@@ -133,48 +188,53 @@ class _NewPostScreenState extends State<NewPostScreen> {
     );
   }
 
-  // 🔹 Превью выбранного фото (без рамки) с кнопкой удаления
-  Widget _photoPreview(File file) {
+  /// Элемент фотографии с кнопкой удаления
+  Widget _buildPhotoItem(File file, int photoIndex) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
         GestureDetector(
           onTap: () async {
-            // по тапу можно заменить картинку
-            final XFile? pickedFile = await _picker.pickImage(
+            // По тапу можно заменить картинку
+            final picker = ImagePicker();
+            final XFile? pickedFile = await picker.pickImage(
               source: ImageSource.gallery,
             );
             if (pickedFile != null) {
               setState(() {
-                final idx = _images.indexOf(file);
-                if (idx != -1) {
-                  _images[idx] = File(pickedFile.path);
-                }
+                _images[photoIndex] = File(pickedFile.path);
                 _updatePublishState();
               });
             }
           },
           child: Container(
-            width: 76,
-            height: 76,
+            width: 90,
+            height: 90,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.sm),
               color: AppColors.background,
             ),
             clipBehavior: Clip.hardEdge,
-            child: Image.file(file, fit: BoxFit.cover),
+            child: Image.file(
+              file,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: AppColors.background,
+                child: const Icon(
+                  CupertinoIcons.photo,
+                  size: 24,
+                  color: AppColors.iconSecondary,
+                ),
+              ),
+            ),
           ),
         ),
+        // Кнопка удаления в правом верхнем углу
         Positioned(
           right: -6,
           top: -6,
           child: GestureDetector(
-            onTap: () {
-              setState(() {
-                _images.remove(file);
-                _updatePublishState();
-              });
-            },
+            onTap: () => _handleDeletePhoto(file),
             child: Container(
               width: 24,
               height: 24,
@@ -195,31 +255,18 @@ class _NewPostScreenState extends State<NewPostScreen> {
     );
   }
 
-  // 🔹 Поле описания с динамическим лейблом
-  Widget _descriptionInput() {
-    // ── определяем, какой лейбл показывать
-    final bool hasText = _descController.text.trim().isNotEmpty;
-    final bool isFocused = _descFocusNode.hasFocus;
-    final String labelText = (hasText || isFocused)
-        ? 'Описание поста'
-        : 'Добавьте описание';
-
+  /// Поле ввода описания
+  Widget _buildDescriptionInput() {
     return TextField(
-      controller: _descController,
-      focusNode: _descFocusNode,
-      expands: true, // 🔹 растягивается по высоте
-      maxLines: null,
-      minLines: null,
-      textAlignVertical: TextAlignVertical.top, // 🔹 текст всегда сверху
+      controller: _descriptionController,
+      focusNode: _descriptionFocusNode,
+      maxLines: 24,
+      minLines: 14,
+      textAlignVertical: TextAlignVertical.top,
+      style: AppTextStyles.h14w4,
       decoration: InputDecoration(
-        labelText: labelText,
-        labelStyle: AppTextStyles
-            .h14w4Sec, // 🔹 стиль лейбла, когда он внутри поля (нет текста)
-        floatingLabelStyle: TextStyle(
-          color: AppColors.textSecondary,
-        ), // 🔹 цвет лейбла, когда он всплывает (фокус или есть текст)
-        floatingLabelBehavior: FloatingLabelBehavior.auto,
-        alignLabelWithHint: true, // 🔹 лейбл выравнивается с hintText
+        hintText: 'Добавьте описание',
+        hintStyle: AppTextStyles.h14w4Place,
         filled: true,
         fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.all(12),
@@ -239,26 +286,87 @@ class _NewPostScreenState extends State<NewPostScreen> {
     );
   }
 
-  // 🔹 Кнопка публикации
-  Widget _publishButton(BuildContext context) {
+  /// Выпадающий список для выбора видимости
+  Widget _buildVisibilitySelector() {
+    const List<String> options = [
+      'Все пользователи',
+      'Только подписчики',
+      'Только Вы',
+    ];
+
+    return InputDecorator(
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: AppColors.surface,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: options[_selectedVisibility],
+          isExpanded: true,
+          alignment: AlignmentDirectional.centerStart,
+          onChanged: (String? newValue) {
+            if (newValue != null) {
+              final index = options.indexOf(newValue);
+              if (index != -1) {
+                setState(() {
+                  _selectedVisibility = index;
+                });
+              }
+            }
+          },
+          dropdownColor: AppColors.surface,
+          menuMaxHeight: 300,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          icon: const Icon(
+            Icons.arrow_drop_down,
+            color: AppColors.iconSecondary,
+          ),
+          style: AppTextStyles.h14w4,
+          items: options.map((option) {
+            return DropdownMenuItem<String>(
+              value: option,
+              child: Text(option, style: AppTextStyles.h14w4),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  /// Кнопка публикации
+  Widget _buildPublishButton() {
     return PrimaryButton(
       text: 'Опубликовать',
-      onPressed: _submitPost,
+      onPressed: !_isLoading ? _submitPost : () {},
       width: 190,
-      isLoading: _loading,
+      isLoading: _isLoading,
       enabled: _canPublish,
     );
   }
 
-  // 🔹 Отправка поста на API
+  /// Сохраняет пост на сервер
   Future<void> _submitPost() async {
-    if (_loading || !_canPublish) return;
-    final text = _descController.text.trim();
+    if (_isLoading || !_canPublish) return;
 
-    setState(() => _loading = true);
-    final api = ApiService();
+    final text = _descriptionController.text.trim();
+
+    setState(() => _isLoading = true);
 
     try {
+      final api = ApiService();
       Map<String, dynamic> data;
 
       if (_images.isEmpty) {
@@ -266,10 +374,10 @@ class _NewPostScreenState extends State<NewPostScreen> {
         data = await api.post(
           '/create_post.php',
           body: {
-            'user_id': '${widget.userId}',
+            'user_id': widget.userId.toString(),
             'text': text,
-            'privacy': 'public',
-          }, // 🔹 PHP ожидает строки
+            'privacy': _selectedVisibility.toString(),
+          },
         );
       } else {
         // Multipart-запрос (с файлами)
@@ -284,25 +392,19 @@ class _NewPostScreenState extends State<NewPostScreen> {
           fields: {
             'user_id': widget.userId.toString(),
             'text': text,
-            'privacy': 'public',
+            'privacy': _selectedVisibility.toString(),
           },
           timeout: const Duration(seconds: 60),
         );
       }
 
-      // 🔍 Дебаг: проверяем формат ответа
-      print('🔍 [CREATE POST] Response: $data');
-      print('🔍 [CREATE POST] Response type: ${data.runtimeType}');
-      print('🔍 [CREATE POST] Response keys: ${data.keys.toList()}');
-
-      // 🔹 Проверяем разные форматы ответа API
+      // Проверяем разные форматы ответа API
       bool success = false;
       String? errorMessage;
 
       // Формат 1: прямой success в корне
       if (data['success'] == true) {
         success = true;
-        print('✅ [CREATE POST] Success (direct): true');
       }
       // Формат 2: success в data массиве
       else if (data['data'] is List && (data['data'] as List).isNotEmpty) {
@@ -310,10 +412,8 @@ class _NewPostScreenState extends State<NewPostScreen> {
         if (firstItem is Map<String, dynamic>) {
           if (firstItem['success'] == true) {
             success = true;
-            print('✅ [CREATE POST] Success (in data array): true');
           } else {
             errorMessage = firstItem['message']?.toString();
-            print('❌ [CREATE POST] Error (in data array): $errorMessage');
           }
         }
       }
@@ -322,63 +422,112 @@ class _NewPostScreenState extends State<NewPostScreen> {
         final dataObj = data['data'] as Map<String, dynamic>;
         if (dataObj['success'] == true) {
           success = true;
-          print('✅ [CREATE POST] Success (in data object): true');
         } else {
           errorMessage = dataObj['message']?.toString();
-          print('❌ [CREATE POST] Error (in data object): $errorMessage');
         }
       }
       // Формат 4: error или message в корне
       else if (data['error'] != null || data['message'] != null) {
         errorMessage = (data['error'] ?? data['message']).toString();
-        print('❌ [CREATE POST] Error (direct): $errorMessage');
       }
       // Неизвестный формат
       else {
         errorMessage = 'Неизвестный формат ответа сервера';
-        print('❌ [CREATE POST] Unknown response format');
       }
 
       if (success) {
-        _descController.clear();
+        // Очищаем форму
+        _descriptionController.clear();
         setState(() {
           _images.clear();
+          _canPublish = false;
         });
+
+        // Обновляем ленту
+        await ref.read(lentaProvider(widget.userId).notifier).forceRefresh();
+
+        // Небольшая задержка для гарантии обновления данных на сервере
+        await Future.delayed(const Duration(milliseconds: 500));
+
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Пост опубликован')));
           Navigator.pop(context, true);
         }
       } else {
-        if (!mounted) {
-          return; // 🔹 Проверка mounted перед использованием context
-        }
+        if (!mounted) return;
         final msg = errorMessage ?? 'Ошибка сервера';
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(msg)));
+        _showError(msg);
       }
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
+      _showError('Ошибка: $e');
+    } catch (e) {
+      if (!mounted) return;
+      _showError('Ошибка при создании поста: $e');
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
-  // 🔹 Выбор изображения из галереи
-  Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-    );
-    if (pickedFile != null) {
+  /// Обработчик добавления фотографий к посту
+  Future<void> _handleAddPhotos() async {
+    final picker = ImagePicker();
+
+    try {
+      final pickedFiles = await picker.pickMultiImage();
+      if (pickedFiles.isEmpty) return;
+
+      // Сохраняем выбранные файлы локально
+      final files = pickedFiles.map((file) => File(file.path)).toList();
       setState(() {
-        _images.add(File(pickedFile.path));
+        _images.addAll(files);
         _updatePublishState();
       });
+    } on PlatformException catch (e) {
+      if (mounted) {
+        _showError(
+          'Нет доступа к галерее: ${e.message ?? 'неизвестная ошибка'}.',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Не удалось загрузить фотографии. Попробуйте ещё раз.');
+      }
     }
+  }
+
+  /// Обработчик удаления фотографии
+  void _handleDeletePhoto(File file) {
+    setState(() {
+      _images.remove(file);
+      _updatePublishState();
+    });
+  }
+
+  /// Показывает ошибку
+  void _showError(String message) {
+    showCupertinoDialog<void>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Ошибка'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: SelectableText.rich(
+            TextSpan(
+              text: message,
+              style: const TextStyle(color: AppColors.error, fontSize: 15),
+            ),
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Понятно'),
+          ),
+        ],
+      ),
+    );
   }
 }
