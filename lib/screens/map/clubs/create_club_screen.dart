@@ -24,8 +24,8 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
   final descCtrl = TextEditingController();
 
   // ── выборы
-  String? activity = 'Бег';
-  DateTime? foundationDate = DateTime.now();
+  String? activity;
+  DateTime? foundationDate;
   bool isOpenCommunity =
       true; // true = открытое сообщество (по умолчанию выбрано)
 
@@ -347,54 +347,186 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ── Медиа: логотип + фоновая картинка
+                  // ---------- Медиа: логотип + фоновая картинка ----------
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: _MediaColumn(
-                          label: 'Логотип клуба',
-                          file: logoFile,
-                          onPick: _pickLogo,
-                          onRemove: () => setState(() => logoFile = null),
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Логотип клуба',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _MediaTile(
+                            file: logoFile,
+                            onPick: _pickLogo,
+                            onRemove: () => setState(() => logoFile = null),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 40),
                       Expanded(
-                        child: _MediaColumn(
-                          label: 'Фоновая картинка',
-                          file: backgroundFile,
-                          onPick: _pickBackground,
-                          onRemove: () => setState(() => backgroundFile = null),
-                          width: 140,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Фоновая картинка',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              height: 90,
+                              child: _MediaTile(
+                                file: backgroundFile,
+                                onPick: _pickBackground,
+                                onRemove: () =>
+                                    setState(() => backgroundFile = null),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 24),
 
-                  // ── Название клуба
-                  EventTextField(
+                  // ---------- Название клуба ----------
+                  const Text(
+                    'Название клуба',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
                     controller: nameCtrl,
-                    label: 'Название клуба*',
-                    hasError: _errorFields.contains('name'),
+                    style: AppTextStyles.h14w4,
+                    decoration: InputDecoration(
+                      hintText: 'Введите название клуба',
+                      hintStyle: AppTextStyles.h14w4Place,
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 17,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: BorderSide(
+                          color: _errorFields.contains('name')
+                              ? AppColors.error
+                              : AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: BorderSide(
+                          color: _errorFields.contains('name')
+                              ? AppColors.error
+                              : AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: BorderSide(
+                          color: _errorFields.contains('name')
+                              ? AppColors.error
+                              : AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 24),
 
-                  // ── Вид активности
-                  EventDropdownField(
-                    label: 'Вид активности*',
-                    value: activity,
-                    items: const ['Бег', 'Велосипед', 'Плавание'],
-                    hasError: _errorFields.contains('activity'),
-                    onChanged: (v) => setState(() {
-                      activity = v;
-                      _clearFieldError('activity');
-                    }),
+                  // ---------- Вид активности ----------
+                  const Text(
+                    'Вид активности',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 8),
+                  InputDecorator(
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: BorderSide(
+                          color: _errorFields.contains('activity')
+                              ? AppColors.error
+                              : AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: BorderSide(
+                          color: _errorFields.contains('activity')
+                              ? AppColors.error
+                              : AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: BorderSide(
+                          color: _errorFields.contains('activity')
+                              ? AppColors.error
+                              : AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: activity,
+                        isExpanded: true,
+                        hint: const Text(
+                          'Выберите вид активности',
+                          style: AppTextStyles.h14w4Place,
+                        ),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              activity = newValue;
+                              _clearFieldError('activity');
+                            });
+                          }
+                        },
+                        dropdownColor: AppColors.surface,
+                        menuMaxHeight: 300,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        icon: const Icon(
+                          Icons.arrow_drop_down,
+                          color: AppColors.iconSecondary,
+                        ),
+                        style: AppTextStyles.h14w4,
+                        items: const ['Бег', 'Велосипед', 'Плавание'].map((
+                          option,
+                        ) {
+                          return DropdownMenuItem<String>(
+                            value: option,
+                            child: Text(option, style: AppTextStyles.h14w4),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
 
-                  // ── Радиокнопки: Открытое/Закрытое сообщество
+                  // ---------- Радиокнопки: Открытое/Закрытое сообщество ----------
                   Row(
                     children: [
                       SizedBox(
@@ -430,12 +562,16 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                       const Text('Закрытое сообщество'),
                     ],
                   ),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 24),
 
-                  // ── Город
-                  EventAutocompleteField(
+                  // ---------- Город ----------
+                  const Text(
+                    'Город',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  _CityAutocompleteField(
                     controller: cityCtrl,
-                    label: 'Город*',
                     suggestions: _cities,
                     hasError: _errorFields.contains('city'),
                     onSelected: (city) {
@@ -443,33 +579,123 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                       _clearFieldError('city');
                     },
                   ),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 24),
 
-                  // ── Дата основания клуба
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.5,
-                        child: EventDateField(
-                          label: 'Дата основания клуба*',
-                          valueText: _fmtDate(foundationDate),
-                          onTap: _pickDateCupertino,
-                          hasError: _errorFields.contains('foundationDate'),
+                  // ---------- Дата основания клуба ----------
+                  const Text(
+                    'Дата основания клуба',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: _pickDateCupertino,
+                    child: AbsorbPointer(
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: AppColors.surface,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 18,
+                          ),
+                          prefixIcon: const Padding(
+                            padding: EdgeInsets.only(
+                              left: 12,
+                              right: 6,
+                            ),
+                            child: Icon(
+                              CupertinoIcons.calendar,
+                              size: 18,
+                              color: AppColors.iconPrimary,
+                            ),
+                          ),
+                          prefixIconConstraints: const BoxConstraints(
+                            minWidth: 18 + 14,
+                            minHeight: 18,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide(
+                              color: _errorFields.contains('foundationDate')
+                                  ? AppColors.error
+                                  : AppColors.border,
+                              width: 1,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide(
+                              color: _errorFields.contains('foundationDate')
+                                  ? AppColors.error
+                                  : AppColors.border,
+                              width: 1,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide(
+                              color: _errorFields.contains('foundationDate')
+                                  ? AppColors.error
+                                  : AppColors.border,
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          foundationDate != null
+                              ? _fmtDate(foundationDate!)
+                              : 'Выберите дату',
+                          style: foundationDate != null
+                              ? AppTextStyles.h14w4
+                              : AppTextStyles.h14w4Place,
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 24),
 
-                  // ── Описание
-                  EventTextField(
-                    controller: descCtrl,
-                    label: 'Описание',
-                    minLines: 8, // ── минимальное количество строк для начальной высоты
-                    minHeight: 200, // ── минимальная высота в пикселях
-                    // maxLines не указываем, чтобы поле могло расти динамически
+                  // ---------- Описание ----------
+                  const Text(
+                    'Описание',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: descCtrl,
+                    maxLines: 12,
+                    minLines: 7,
+                    textAlignVertical: TextAlignVertical.top,
+                    style: AppTextStyles.h14w4,
+                    decoration: InputDecoration(
+                      hintText: 'Введите описание клуба',
+                      hintStyle: AppTextStyles.h14w4Place,
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      contentPadding: const EdgeInsets.all(12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: const BorderSide(
+                          color: AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: const BorderSide(
+                          color: AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: const BorderSide(
+                          color: AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   Align(
                     alignment: Alignment.center,
                     child: PrimaryButton(
@@ -479,6 +705,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                       },
                       expanded: false,
                       isLoading: _loading,
+                      enabled: isFormValid,
                     ),
                   ),
                 ],
@@ -492,110 +719,18 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
 }
 
 //
-// ── ЛОКАЛЬНЫЕ ВИДЖЕТЫ (переиспользуем из add_event_screen.dart)
+// --------------------------- ВСПОМОГАТЕЛЬНЫЕ ВИДЖЕТЫ ---------------------------
 //
 
-class EventTextField extends StatelessWidget {
+// ── автокомплит для города
+class _CityAutocompleteField extends StatelessWidget {
   final TextEditingController controller;
-  final String label;
-  final int maxLines;
-  final int? minLines; // ── минимальное количество строк для динамической высоты
-  final double? minHeight; // ── минимальная высота в пикселях
-  final bool enabled;
-  final Widget? trailing;
-  final bool hasError;
-  final Color? textColorOverride;
-
-  const EventTextField({
-    super.key,
-    required this.controller,
-    required this.label,
-    this.maxLines = 1,
-    this.minLines,
-    this.minHeight,
-    this.enabled = true,
-    this.trailing,
-    this.hasError = false,
-    this.textColorOverride,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor =
-        textColorOverride ??
-        (enabled ? AppColors.textPrimary : AppColors.textPlaceholder);
-    final fill = enabled ? AppColors.surface : AppColors.disabled;
-    final borderColor = hasError ? AppColors.error : AppColors.border;
-    final disabledBorderColor = AppColors.border.withValues(alpha: 0.6);
-
-    // ── создаём TextFormField с поддержкой динамической высоты
-    final field = TextFormField(
-      controller: controller,
-      minLines: minLines, // ── минимальное количество строк
-      maxLines: minLines != null ? null : maxLines, // ── если есть minLines, убираем ограничение maxLines для динамического роста
-      enabled: enabled,
-      style: TextStyle(color: textColor, fontFamily: 'Inter', fontSize: 14),
-      decoration: InputDecoration(
-        label: label.isEmpty ? null : _labelWithStar(label),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        filled: true,
-        fillColor: fill,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 14,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: borderColor),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: borderColor),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: borderColor),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: disabledBorderColor),
-        ),
-      ),
-    );
-
-    // ── если указана минимальная высота, оборачиваем в ConstrainedBox
-    final constrainedField = minHeight != null
-        ? ConstrainedBox(
-            constraints: BoxConstraints(minHeight: minHeight!),
-            child: field,
-          )
-        : field;
-
-    if (trailing == null) return constrainedField;
-
-    return Row(
-      crossAxisAlignment: (maxLines == 1 && minLines == null)
-          ? CrossAxisAlignment.center
-          : CrossAxisAlignment.start,
-      children: [
-        Expanded(child: constrainedField),
-        trailing!,
-      ],
-    );
-  }
-}
-
-class EventAutocompleteField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
   final List<String> suggestions;
   final Function(String) onSelected;
   final bool hasError;
 
-  const EventAutocompleteField({
-    super.key,
+  const _CityAutocompleteField({
     required this.controller,
-    required this.label,
     required this.suggestions,
     required this.onSelected,
     this.hasError = false,
@@ -636,37 +771,33 @@ class EventAutocompleteField extends StatelessWidget {
               }
             });
 
-            return TextFormField(
+            return TextField(
               controller: textEditingController,
               focusNode: focusNode,
-              onFieldSubmitted: (String value) {
+              onSubmitted: (String value) {
                 onFieldSubmitted();
               },
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontFamily: 'Inter',
-                fontSize: 14,
-              ),
+              style: AppTextStyles.h14w4,
               decoration: InputDecoration(
-                label: _labelWithStar(label),
-                floatingLabelBehavior: FloatingLabelBehavior.always,
+                hintText: 'Введите город',
+                hintStyle: AppTextStyles.h14w4Place,
                 filled: true,
                 fillColor: AppColors.surface,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 14,
+                  vertical: 17,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: borderColor),
+                  borderSide: BorderSide(color: borderColor, width: 1),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: borderColor),
+                  borderSide: BorderSide(color: borderColor, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: borderColor),
+                  borderSide: BorderSide(color: borderColor, width: 1),
                 ),
               ),
             );
@@ -701,11 +832,7 @@ class EventAutocompleteField extends StatelessWidget {
                           ),
                           child: Text(
                             option,
-                            style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 14,
-                              color: AppColors.textPrimary,
-                            ),
+                            style: AppTextStyles.h14w4,
                           ),
                         ),
                       );
@@ -719,227 +846,19 @@ class EventAutocompleteField extends StatelessWidget {
   }
 }
 
-class EventDateField extends StatelessWidget {
-  final String label;
-  final String valueText;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool hasError;
-
-  const EventDateField({
-    super.key,
-    required this.label,
-    required this.valueText,
-    this.icon = CupertinoIcons.calendar,
-    required this.onTap,
-    this.hasError = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = hasError ? AppColors.error : AppColors.border;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AbsorbPointer(
-        child: TextFormField(
-          controller: TextEditingController(text: valueText),
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            color: AppColors.textPrimary,
-          ),
-          decoration: InputDecoration(
-            label: _labelWithStar(label),
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-            filled: true,
-            fillColor: AppColors.surface,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 14,
-            ),
-            prefixIcon: Padding(
-              padding: const EdgeInsets.only(left: 8, right: 6),
-              child: Icon(icon, size: 18, color: AppColors.iconPrimary),
-            ),
-            prefixIconConstraints: const BoxConstraints(
-              minHeight: 18,
-              minWidth: 18 + 14,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(color: borderColor),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(color: borderColor),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(color: borderColor),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class EventDropdownField extends StatelessWidget {
-  final String label;
-  final String? value;
-  final List<String> items;
-  final Function(String?) onChanged;
-  final bool enabled;
-  final bool hasError;
-
-  const EventDropdownField({
-    super.key,
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-    this.enabled = true,
-    this.hasError = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = enabled
-        ? AppColors.textPrimary
-        : AppColors.textPlaceholder;
-    final fill = enabled ? AppColors.surface : AppColors.disabled;
-    final borderColor = hasError ? AppColors.error : AppColors.border;
-    final disabledBorderColor = AppColors.border.withValues(alpha: 0.6);
-
-    return InputDecorator(
-      decoration: InputDecoration(
-        isDense: true,
-        label: label.isEmpty ? null : _labelWithStar(label),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        filled: true,
-        fillColor: fill,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: borderColor),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: borderColor),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: borderColor),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: disabledBorderColor),
-        ),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: Icon(
-            Icons.arrow_drop_down,
-            color: enabled ? AppColors.iconSecondary : AppColors.iconTertiary,
-          ),
-          dropdownColor: AppColors.surface,
-          menuMaxHeight: 300,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          style: TextStyle(color: textColor, fontFamily: 'Inter'),
-          disabledHint: value == null
-              ? const SizedBox.shrink()
-              : Text(
-                  value!,
-                  style: TextStyle(color: textColor, fontFamily: 'Inter'),
-                ),
-          onChanged: enabled ? onChanged : null,
-          items: items.map((item) {
-            return DropdownMenuItem(
-              value: item,
-              child: Text(
-                item,
-                style: TextStyle(
-                  color: textColor,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-}
-
 //
-// ── ВСПОМОГАТЕЛЬНЫЕ МЕДИА-ТАЙЛЫ
+// --------------------------- ВСПОМОГАТЕЛЬНЫЕ МЕДИА-ТАЙЛЫ ---------------------------
 //
-
-class _SmallLabel extends StatelessWidget {
-  final String text;
-  const _SmallLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 14,
-        height: 1.4,
-        color: AppColors.textPrimary,
-      ),
-    );
-  }
-}
-
-class _MediaColumn extends StatelessWidget {
-  final String label;
-  final File? file;
-  final VoidCallback onPick;
-  final VoidCallback onRemove;
-  final double width;
-
-  const _MediaColumn({
-    required this.label,
-    required this.file,
-    required this.onPick,
-    required this.onRemove,
-    this.width = 70,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SmallLabel(label),
-        const SizedBox(height: 6),
-        _MediaTile(
-          file: file,
-          onPick: onPick,
-          onRemove: onRemove,
-          width: width,
-        ),
-      ],
-    );
-  }
-}
 
 class _MediaTile extends StatelessWidget {
   final File? file;
   final VoidCallback onPick;
   final VoidCallback onRemove;
-  final double width;
 
   const _MediaTile({
     required this.file,
     required this.onPick,
     required this.onRemove,
-    this.width = 70,
   });
 
   @override
@@ -949,12 +868,12 @@ class _MediaTile extends StatelessWidget {
       return GestureDetector(
         onTap: onPick,
         child: Container(
-          width: width,
-          height: 70,
+          width: 90,
+          height: 90,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             color: AppColors.background,
-            border: Border.all(color: AppColors.border), // ← рамка только здесь
+            border: Border.all(color: AppColors.border),
           ),
           child: const Center(
             child: Icon(
@@ -972,35 +891,44 @@ class _MediaTile extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         GestureDetector(
-          onTap: onPick, // тап по фото — заменить
-          child: Container(
-            width: width,
-            height: 70,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              image: DecorationImage(
-                image: FileImage(file!),
-                fit: BoxFit.cover,
+          onTap: onPick,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: Image.file(
+              file!,
+              fit: BoxFit.cover,
+              width: 90,
+              height: 90,
+              errorBuilder: (context, error, stackTrace) => Container(
+                width: 90,
+                height: 90,
+                color: AppColors.background,
+                child: const Icon(
+                  CupertinoIcons.photo,
+                  size: 24,
+                  color: AppColors.iconSecondary,
+                ),
               ),
             ),
           ),
         ),
         Positioned(
-          top: -6,
           right: -6,
+          top: -6,
           child: GestureDetector(
             onTap: onRemove,
             child: Container(
-              width: 22,
-              height: 22,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.error,
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: AppColors.border),
               ),
               child: const Icon(
-                Icons.close,
-                size: 16,
-                color: AppColors.surface,
+                CupertinoIcons.clear_circled_solid,
+                size: 20,
+                color: AppColors.error,
               ),
             ),
           ),
@@ -1008,21 +936,4 @@ class _MediaTile extends StatelessWidget {
       ],
     );
   }
-}
-
-//
-// ── УТИЛИТА: лейбл с красной звёздочкой
-//
-
-Widget _labelWithStar(String label) {
-  return RichText(
-    text: TextSpan(
-      text: label.replaceAll('*', ''),
-      style: const TextStyle(
-        color: AppColors.textSecondary,
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
-      ),
-    ),
-  );
 }

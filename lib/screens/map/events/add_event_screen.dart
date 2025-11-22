@@ -1420,21 +1420,16 @@ class _MediaTile extends StatelessWidget {
       children: [
         GestureDetector(
           onTap: onPick,
-          child: Container(
-            width: 90,
-            height: 90,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              color: AppColors.background,
-              border: Border.all(color: AppColors.border, width: 1),
-            ),
-            clipBehavior: Clip.antiAlias,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             child: Image.file(
               file!,
               fit: BoxFit.cover,
               width: 90,
               height: 90,
               errorBuilder: (context, error, stackTrace) => Container(
+                width: 90,
+                height: 90,
                 color: AppColors.background,
                 child: const Icon(
                   CupertinoIcons.photo,
