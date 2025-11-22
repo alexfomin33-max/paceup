@@ -48,7 +48,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   late final TextEditingController _descriptionController;
   late final FocusNode _descriptionFocusNode;
 
-  // Тип тренировки: "Бег", "Велосипед", "Плавание"
+  // Вид тренировки: "Бег", "Велосипед", "Плавание"
   String? _selectedActivityType;
   static const List<String> _activityTypes = ['Бег', 'Велосипед', 'Плавание'];
   static const Map<String, String> _activityTypeMap = {
@@ -128,10 +128,10 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   const SizedBox(height: 24),
 
                   // ────────────────────────────────────────────────────────────────
-                  // 🏃 2. ТИП ТРЕНИРОВКИ (выпадающий список)
+                  // 🏃 2. ВИД ТРЕНИРОВКИ (выпадающий список)
                   // ────────────────────────────────────────────────────────────────
                   const Text(
-                    'Тип тренировки',
+                    'Вид тренировки',
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
@@ -532,7 +532,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           value: _selectedActivityType,
           isExpanded: true,
           hint: const Text(
-            'Выберите тип тренировки',
+            'Выберите вид тренировки',
             style: AppTextStyles.h14w4Place,
           ),
           onChanged: (String? newValue) {
@@ -1212,7 +1212,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
     // Валидация
     if (_selectedActivityType == null) {
-      _showError('Выберите тип тренировки');
+      _showError('Выберите вид тренировки');
       return;
     }
 

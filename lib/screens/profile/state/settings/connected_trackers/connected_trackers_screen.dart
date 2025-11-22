@@ -287,7 +287,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
         final wEnd = workout.dateTo;
         final wDuration = wEnd.difference(wStart);
 
-        // Определяем тип тренировки
+        // Определяем вид тренировки
         final v = workout.value;
         String kind = 'Тренировка';
         if (v is WorkoutHealthValue) {
