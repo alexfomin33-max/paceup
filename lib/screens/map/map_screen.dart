@@ -10,14 +10,14 @@ import 'events/events_screen.dart' as ev;
 import 'events/events_filters_bottom_sheet.dart';
 import 'clubs/clubs_screen.dart' as clb;
 import 'clubs/clubs_filters_bottom_sheet.dart';
-import 'coaches/coaches_screen.dart' as cch;
-import 'travelers/travelers_screen.dart' as trv;
+// import 'coaches/coaches_screen.dart' as cch; // тренеры - временно закомментировано
+// import 'travelers/travelers_screen.dart' as trv; // попутчики - временно закомментировано
 
 // нижние выезжающие окна
 import 'events/events_bottom_sheet.dart' as ebs;
 import 'clubs/clubs_bottom_sheet.dart' as cbs;
-import 'coaches/coaches_bottom_sheet.dart' as cchbs;
-import 'travelers/travelers_bottom_sheet.dart' as tbs;
+// import 'coaches/coaches_bottom_sheet.dart' as cchbs; // тренеры - временно закомментировано
+// import 'travelers/travelers_bottom_sheet.dart' as tbs; // попутчики - временно закомментировано
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -32,7 +32,7 @@ class _MapScreenState extends State<MapScreen> {
   /// Контроллер карты для управления zoom и центром
   final MapController _mapController = MapController();
 
-  final tabs = const ["События", "Клубы", "Тренеры", "Попутчики"];
+  final tabs = const ["События", "Клубы"]; // "Тренеры", "Попутчики" - временно закомментировано
 
   /// Параметры фильтра событий (для обновления карты при применении фильтров)
   EventsFilterParams? _eventsFilterParams;
@@ -54,8 +54,8 @@ class _MapScreenState extends State<MapScreen> {
   final markerColors = const {
     0: AppColors.accentBlue, // события
     1: AppColors.error, // клубы
-    2: AppColors.success, // тренеры
-    3: AppColors.accentPurple, // попутчики
+    // 2: AppColors.success, // тренеры - временно закомментировано
+    // 3: AppColors.accentPurple, // попутчики - временно закомментировано
   };
 
   List<Map<String, dynamic>> _markersForTabSync(BuildContext context) {
@@ -63,11 +63,13 @@ class _MapScreenState extends State<MapScreen> {
       case 1:
         // Клубы теперь асинхронные, не используется здесь
         return [];
-      case 2:
-        return cch.coachesMarkers(context);
-      case 3:
+      // case 2:
+      //   return cch.coachesMarkers(context); // тренеры - временно закомментировано
+      // case 3:
+      // default:
+      //   return trv.travelersMarkers(context); // попутчики - временно закомментировано
       default:
-        return trv.travelersMarkers(context);
+        return [];
     }
   }
 
@@ -290,8 +292,8 @@ class _MapScreenState extends State<MapScreen> {
                 });
               },
             ),
-          if (_selectedIndex == 2) const cch.CoachesFloatingButtons(),
-          if (_selectedIndex == 3) const trv.TravelersFloatingButtons(),
+          // if (_selectedIndex == 2) const cch.CoachesFloatingButtons(), // тренеры - временно закомментировано
+          // if (_selectedIndex == 3) const trv.TravelersFloatingButtons(), // попутчики - временно закомментировано
         ],
       ),
     );
@@ -309,9 +311,9 @@ class _MapScreenState extends State<MapScreen> {
           onMapReady: () {
             // Подстраиваем zoom после инициализации карты
             // Для Событий (0) и Клубов (1) автоматическая подстройка отключена
-            if (_selectedIndex != 0 && _selectedIndex != 1) {
-              _fitBoundsToMarkers(markers);
-            }
+            // if (_selectedIndex != 0 && _selectedIndex != 1) {
+            //   _fitBoundsToMarkers(markers);
+            // }
           },
         ),
         children: [
@@ -370,21 +372,22 @@ class _MapScreenState extends State<MapScreen> {
                                   : content ??
                                         const cbs.ClubsSheetPlaceholder(),
                             );
-                          case 2:
-                            return cchbs.CoachesBottomSheet(
-                              title: title,
-                              child:
-                                  content ??
-                                  const cchbs.CoachesSheetPlaceholder(),
-                            );
-                          case 3:
+                          // case 2: // тренеры - временно закомментировано
+                          //   return cchbs.CoachesBottomSheet(
+                          //     title: title,
+                          //     child:
+                          //         content ??
+                          //         const cchbs.CoachesSheetPlaceholder(),
+                          //   );
+                          // case 3: // попутчики - временно закомментировано
                           default:
-                            return tbs.TravelersBottomSheet(
-                              title: title,
-                              child:
-                                  content ??
-                                  const tbs.TravelersSheetPlaceholder(),
-                            );
+                            return const SizedBox.shrink();
+                            // return tbs.TravelersBottomSheet(
+                            //   title: title,
+                            //   child:
+                            //       content ??
+                            //       const tbs.TravelersSheetPlaceholder(),
+                            // );
                         }
                       }();
 
@@ -457,60 +460,66 @@ class _MapScreenState extends State<MapScreen> {
   Widget _buildTabs() {
     return Positioned(
       top: MediaQuery.of(context).padding.top + 16,
-      left: 10,
-      right: 10,
+      left: 0,
+      right: 0,
       child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.shadowMedium,
-                blurRadius: 1,
-                offset: Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(tabs.length, (index) {
-              final isSelected = _selectedIndex == index;
-              return GestureDetector(
-                onTap: () {
-                  // Сбрасываем флаг инициализации при смене вкладки
-                  // Это нужно для корректной работы при переключении между вкладками
-                  if (_selectedIndex != index) {
-                    _mapInitialized = false;
-                  }
-                  setState(() => _selectedIndex = index);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.textPrimary
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                  ),
-                  child: Text(
-                    tabs[index],
-                    style: TextStyle(
-                      fontWeight: isSelected
-                          ? FontWeight.w500
-                          : FontWeight.w400,
-                      color: isSelected
-                          ? AppColors.surface
-                          : AppColors.textPrimary,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.shadowMedium,
+                  blurRadius: 1,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              children: List.generate(tabs.length, (index) {
+                final isSelected = _selectedIndex == index;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      // Сбрасываем флаг инициализации при смене вкладки
+                      // Это нужно для корректной работы при переключении между вкладками
+                      if (_selectedIndex != index) {
+                        _mapInitialized = false;
+                      }
+                      setState(() => _selectedIndex = index);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.textPrimary
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                      ),
+                      child: Text(
+                        tabs[index],
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: isSelected
+                              ? FontWeight.w500
+                              : FontWeight.w400,
+                          color: isSelected
+                              ? AppColors.surface
+                              : AppColors.textPrimary,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              );
-            }),
+                );
+              }),
+            ),
           ),
         ),
       ),
