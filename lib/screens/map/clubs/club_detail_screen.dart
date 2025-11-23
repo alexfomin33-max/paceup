@@ -274,8 +274,13 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     }
   }
 
-  Widget _vDivider() =>
-      Container(width: 1, height: 24, color: AppColors.border);
+  Widget _vDivider() => Builder(
+        builder: (context) => Container(
+          width: 1,
+          height: 24,
+          color: AppColors.getBorderColor(context),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -297,9 +302,14 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    _error ?? 'Клуб не найден',
-                    style: const TextStyle(fontSize: 16),
+                  Builder(
+                    builder: (context) => Text(
+                      _error ?? 'Клуб не найден',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -325,7 +335,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         body: SafeArea(
           top: false,
           bottom: true,
@@ -334,13 +344,16 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
             slivers: [
               // ───────── Cover + overlay-кнопки + логотип
               SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors
-                      .surface, // Цвет полоски для нижней половины логотипа
-                  padding: const EdgeInsets.only(
-                    bottom: 41,
-                  ), // Место для нижней половины логотипа с обводкой
-                  child: Stack(
+                child: Builder(
+                  builder: (context) => Container(
+                    color: AppColors
+                        .getSurfaceColor(
+                          context,
+                        ), // Цвет полоски для нижней половины логотипа
+                    padding: const EdgeInsets.only(
+                      bottom: 41,
+                    ), // Место для нижней половины логотипа с обводкой
+                    child: Stack(
                     clipBehavior: Clip
                         .none, // Разрешаем отображение элементов за пределами Stack
                     children: [
@@ -348,10 +361,12 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                       if (backgroundUrl.isNotEmpty)
                         _BackgroundImage(url: backgroundUrl)
                       else
-                        Container(
-                          width: double.infinity,
-                          height: 170,
-                          color: AppColors.border,
+                        Builder(
+                          builder: (context) => Container(
+                            width: double.infinity,
+                            height: 170,
+                            color: AppColors.getBorderColor(context),
+                          ),
                         ),
                       // Верхние кнопки
                       SafeArea(
@@ -402,44 +417,60 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                         left: 12,
                         bottom:
                             -41, // Половина логотипа с обводкой (82/2 = 41) выходит за границу фона
-                        child: Container(
-                          width:
-                              82, // 80 + 1*2 (логотип + обводка с двух сторон)
-                          height: 82,
-                          decoration: const BoxDecoration(
-                            color: AppColors.surface,
-                            shape: BoxShape.circle,
-                          ),
-                          padding: const EdgeInsets.all(1), // Толщина обводки
-                          child: ClipOval(
-                            child: logoUrl.isNotEmpty
-                                ? _HeaderLogo(url: logoUrl)
-                                : Container(
-                                    width: 80,
-                                    height: 80,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.border,
-                                      shape: BoxShape.circle,
+                        child: Builder(
+                          builder: (context) => Container(
+                            width:
+                                82, // 80 + 1*2 (логотип + обводка с двух сторон)
+                            height: 82,
+                            decoration: BoxDecoration(
+                              color: AppColors.getSurfaceColor(context),
+                              shape: BoxShape.circle,
+                            ),
+                            padding: const EdgeInsets.all(1), // Толщина обводки
+                            child: ClipOval(
+                              child: logoUrl.isNotEmpty
+                                  ? _HeaderLogo(url: logoUrl)
+                                  : Builder(
+                                      builder: (context) => Container(
+                                        width: 80,
+                                        height: 80,
+                                        decoration: BoxDecoration(
+                                          color:
+                                              AppColors.getBorderColor(context),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.group,
+                                          size: 12,
+                                          color: AppColors.getIconSecondaryColor(
+                                            context,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                    child: const Icon(Icons.group, size: 12),
-                                  ),
+                            ),
                           ),
                         ),
                       ),
                     ],
+                  ),
                   ),
                 ),
               ),
 
               // ───────── «Шапка» карточки клуба
               SliverToBoxAdapter(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border(
-                      bottom: BorderSide(color: AppColors.border, width: 1),
+                child: Builder(
+                  builder: (context) => Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurfaceColor(context),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppColors.getBorderColor(context),
+                          width: 1,
+                        ),
+                      ),
                     ),
-                  ),
                   padding: const EdgeInsets.fromLTRB(
                     12,
                     10, // Небольшой отступ от нижней половины логотипа (которая уже в полоске выше)
@@ -454,20 +485,23 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                         name,
                         style: AppTextStyles.h17w6.copyWith(
                           fontWeight: FontWeight.w700,
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                       const SizedBox(height: 8),
 
                       // Описание
                       if (description.isNotEmpty)
-                        Text(
-                          description,
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            height: 1.5,
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
+                        Builder(
+                          builder: (context) => Text(
+                            description,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 14,
+                              height: 1.5,
+                              color: AppColors.getTextSecondaryColor(context),
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       if (description.isNotEmpty) const SizedBox(height: 12),
@@ -504,19 +538,20 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                       // Кнопка действия
                       Align(
                         alignment: Alignment.center,
-                        child: ElevatedButton(
-                          onPressed: _isJoining
-                              ? null
-                              : _isMember
-                              ? _leaveClub
-                              : _joinClub,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _isMember
-                                ? AppColors.background
-                                : AppColors.brandPrimary,
-                            foregroundColor: _isMember
-                                ? AppColors.textSecondary
-                                : AppColors.surface,
+                        child: Builder(
+                          builder: (context) => ElevatedButton(
+                            onPressed: _isJoining
+                                ? null
+                                : _isMember
+                                    ? _leaveClub
+                                    : _joinClub,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _isMember
+                                  ? AppColors.getBackgroundColor(context)
+                                  : AppColors.brandPrimary,
+                              foregroundColor: _isMember
+                                  ? AppColors.getTextSecondaryColor(context)
+                                  : AppColors.getSurfaceColor(context),
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 30,
@@ -528,34 +563,45 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                               ),
                             ),
                           ),
-                          child: _isJoining
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.surface,
+                            child: _isJoining
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.getSurfaceColor(context),
+                                      ),
+                                    ),
+                                  )
+                                : Builder(
+                                    builder: (context) => Text(
+                                      _isMember
+                                          ? 'Выйти из клуба'
+                                          : _isRequest
+                                              ? 'Заявка подана'
+                                              : isOpen
+                                                  ? 'Вступить в клуб'
+                                                  : 'Подать заявку',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                        color: _isMember
+                                            ? AppColors.getTextSecondaryColor(
+                                                context,
+                                              )
+                                            : AppColors.getSurfaceColor(
+                                                context,
+                                              ),
+                                      ),
                                     ),
                                   ),
-                                )
-                              : Text(
-                                  _isMember
-                                      ? 'Выйти из клуба'
-                                      : _isRequest
-                                      ? 'Заявка подана'
-                                      : isOpen
-                                      ? 'Вступить в клуб'
-                                      : 'Подать заявку',
-                                  style: const TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                          ),
                         ),
                       ),
                     ],
+                  ),
                   ),
                 ),
               ),
@@ -564,14 +610,21 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
               // ───────── Табы + контент
               SliverToBoxAdapter(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border(
-                      top: BorderSide(color: AppColors.border, width: 1),
-                      bottom: BorderSide(color: AppColors.border, width: 1),
+                child: Builder(
+                  builder: (context) => Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurfaceColor(context),
+                      border: Border(
+                        top: BorderSide(
+                          color: AppColors.getBorderColor(context),
+                          width: 1,
+                        ),
+                        bottom: BorderSide(
+                          color: AppColors.getBorderColor(context),
+                          width: 1,
+                        ),
+                      ),
                     ),
-                  ),
                   child: Column(
                     children: [
                       SizedBox(
@@ -604,7 +657,12 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                           ],
                         ),
                       ),
-                      const Divider(height: 1, color: AppColors.border),
+                      Builder(
+                        builder: (context) => Divider(
+                          height: 1,
+                          color: AppColors.getBorderColor(context),
+                        ),
+                      ),
 
                       if (_tab == 0)
                         const Padding(
@@ -629,6 +687,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                           child: CoffeeRunVldGloryContent(),
                         ),
                     ],
+                  ),
                   ),
                 ),
               ),
@@ -670,7 +729,11 @@ class _CircleIconBtn extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 18, color: AppColors.surface),
+          child: Icon(
+            icon,
+            size: 18,
+            color: AppColors.getIconPrimaryColor(context),
+          ),
         ),
       ),
     );
@@ -691,7 +754,11 @@ class _InfoRow extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
           ),
         ),
       ],
@@ -716,11 +783,17 @@ class _HeaderLogo extends StatelessWidget {
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
-      errorWidget: (_, __, ___) => Container(
-        width: 80,
-        height: 80,
-        color: AppColors.border,
-        child: const Icon(Icons.image, size: 32),
+      errorWidget: (_, __, ___) => Builder(
+        builder: (context) => Container(
+          width: 80,
+          height: 80,
+          color: AppColors.getBorderColor(context),
+          child: Icon(
+            Icons.image,
+            size: 32,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
       ),
     );
   }
@@ -747,11 +820,17 @@ class _BackgroundImage extends StatelessWidget {
       memCacheHeight: targetH,
       maxWidthDiskCache: targetW,
       maxHeightDiskCache: targetH,
-      errorWidget: (_, __, ___) => Container(
-        width: double.infinity,
-        height: 170,
-        color: AppColors.border,
-        child: const Icon(Icons.image, size: 48),
+      errorWidget: (_, __, ___) => Builder(
+        builder: (context) => Container(
+          width: double.infinity,
+          height: 170,
+          color: AppColors.getBorderColor(context),
+          child: Icon(
+            Icons.image,
+            size: 48,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
       ),
     );
   }
@@ -770,7 +849,9 @@ class _TabBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.brandPrimary : AppColors.textPrimary;
+    final color = selected
+        ? AppColors.brandPrimary
+        : AppColors.getTextPrimaryColor(context);
     return InkWell(
       onTap: onTap,
       child: Padding(

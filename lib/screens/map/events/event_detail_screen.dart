@@ -414,14 +414,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 slivers: [
                   // ───────── Шапка без AppBar: SafeArea + кнопки у краёв + логотип по центру
                   SliverToBoxAdapter(
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: Color.fromARGB(255, 255, 255, 255),
-                        border: Border(
-                          bottom: BorderSide(color: AppColors.border, width: 1),
+                    child: Builder(
+                      builder: (context) => Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurfaceColor(context),
+                          border: Border(
+                            bottom: BorderSide(
+                              color: AppColors.getBorderColor(context),
+                              width: 1,
+                            ),
+                          ),
                         ),
-                      ),
-                      child: Column(
+                        child: Column(
                         children: [
                           SafeArea(
                             bottom: false,
@@ -476,9 +480,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                             onTap: _isTogglingBookmark
                                                 ? null
                                                 : _toggleBookmark,
-                                            color: _isBookmarked
-                                                ? AppColors.orange
-                                                : AppColors.surface,
+                                    color: _isBookmarked
+                                        ? AppColors.orange
+                                        : null,
                                           ),
                                   ],
                                 ),
@@ -554,6 +558,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           ),
                         ],
                       ),
+                      ),
                     ),
                   ),
 
@@ -561,13 +566,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
                   // ───────── Вкладки: каждая — в своей половине, центрирование текста
                   SliverToBoxAdapter(
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: AppColors.surface,
-                        border: Border(
-                          top: BorderSide(color: AppColors.border, width: 1),
+                    child: Builder(
+                      builder: (context) => Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurfaceColor(context),
+                          border: Border(
+                            top: BorderSide(
+                              color: AppColors.getBorderColor(context),
+                              width: 1,
+                            ),
+                          ),
                         ),
-                      ),
                       child: SizedBox(
                         height: 52,
                         child: Row(
@@ -595,12 +604,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           ],
                         ),
                       ),
+                      ),
                     ),
                   ),
 
                   // ───────── Разделитель
-                  const SliverToBoxAdapter(
-                    child: Divider(height: 1, color: AppColors.border),
+                  SliverToBoxAdapter(
+                    child: Builder(
+                      builder: (context) => Divider(
+                        height: 1,
+                        color: AppColors.getBorderColor(context),
+                      ),
+                    ),
                   ),
 
                   // ───────── Контент активной вкладки
@@ -608,22 +623,24 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     // Вкладка "Описание" — фиксированный контент
                     SliverFillRemaining(
                       hasScrollBody: false,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          color: AppColors.surface,
-                          border: Border(
-                            bottom: BorderSide(
-                              color: AppColors.border,
-                              width: 1,
+                      child: Builder(
+                        builder: (context) => Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.getSurfaceColor(context),
+                            border: Border(
+                              bottom: BorderSide(
+                                color: AppColors.getBorderColor(context),
+                                width: 1,
+                              ),
                             ),
                           ),
-                        ),
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                           child: EventDescriptionContent(
                             description:
                                 _eventData!['description'] as String? ?? '',
                           ),
+                        ),
                         ),
                       ),
                     )
@@ -741,7 +758,11 @@ class _CircleIconBtn extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 18, color: color ?? AppColors.surface),
+          child: Icon(
+            icon,
+            size: 18,
+            color: color ?? AppColors.getIconPrimaryColor(context),
+          ),
         ),
       ),
     );
@@ -762,7 +783,11 @@ class _InfoRow extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
           ),
         ),
       ],
@@ -787,11 +812,17 @@ class _HeaderLogo extends StatelessWidget {
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
-      errorWidget: (_, __, ___) => Container(
-        width: 100,
-        height: 100,
-        color: AppColors.border,
-        child: const Icon(Icons.image, size: 48),
+      errorWidget: (_, __, ___) => Builder(
+        builder: (context) => Container(
+          width: 100,
+          height: 100,
+          color: AppColors.getBorderColor(context),
+          child: Icon(
+            Icons.image,
+            size: 48,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
       ),
     );
   }
@@ -814,11 +845,17 @@ class _Avatar40 extends StatelessWidget {
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
-      errorWidget: (_, __, ___) => Container(
-        width: 40,
-        height: 40,
-        color: AppColors.border,
-        child: const Icon(Icons.person, size: 24),
+      errorWidget: (_, __, ___) => Builder(
+        builder: (context) => Container(
+          width: 40,
+          height: 40,
+          color: AppColors.getBorderColor(context),
+          child: Icon(
+            Icons.person,
+            size: 24,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
       ),
     );
   }
@@ -848,9 +885,15 @@ class _SquarePhoto extends StatelessWidget {
                 fadeInDuration: const Duration(milliseconds: 120),
                 memCacheWidth: target,
                 maxWidthDiskCache: target,
-                errorWidget: (_, __, ___) => Container(
-                  color: AppColors.border,
-                  child: const Icon(Icons.image, size: 48),
+                errorWidget: (_, __, ___) => Builder(
+                  builder: (context) => Container(
+                    color: AppColors.getBorderColor(context),
+                    child: Icon(
+                      Icons.image,
+                      size: 48,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
+                  ),
                 ),
               );
             },
@@ -874,7 +917,9 @@ class _HalfTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.brandPrimary : AppColors.textPrimary;
+    final color = selected
+        ? AppColors.brandPrimary
+        : AppColors.getTextPrimaryColor(context);
     return InkWell(
       onTap: onTap,
       child: Center(
@@ -915,7 +960,7 @@ class _GalleryViewerState extends State<_GalleryViewer> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.textPrimary,
+      color: AppColors.getTextPrimaryColor(context),
       child: SafeArea(
         child: Stack(
           children: [
@@ -931,9 +976,15 @@ class _GalleryViewerState extends State<_GalleryViewer> {
                       imageUrl: widget.images[i],
                       fit: BoxFit.contain,
                       fadeInDuration: const Duration(milliseconds: 120),
-                      errorWidget: (_, __, ___) => Container(
-                        color: AppColors.border,
-                        child: const Icon(Icons.image, size: 48),
+                      errorWidget: (_, __, ___) => Builder(
+                        builder: (context) => Container(
+                          color: AppColors.getBorderColor(context),
+                          child: Icon(
+                            Icons.image,
+                            size: 48,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -941,22 +992,27 @@ class _GalleryViewerState extends State<_GalleryViewer> {
               },
             ),
             Positioned(
-              top: 8,
-              right: 8,
-              child: GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Container(
+            top: 8,
+            right: 8,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Builder(
+                builder: (context) => Container(
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.surface.withValues(alpha: 0.5),
+                    color: AppColors.getSurfaceColor(context)
+                        .withValues(alpha: 0.5),
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
-                  child: const Icon(
-                    CupertinoIcons.xmark,
-                    color: AppColors.surface,
-                    size: 18,
+                  child: Builder(
+                    builder: (context) => Icon(
+                      CupertinoIcons.xmark,
+                      color: AppColors.getSurfaceColor(context),
+                      size: 18,
+                    ),
+                  ),
                   ),
                 ),
               ),
@@ -975,10 +1031,15 @@ class EventDescriptionContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const style = TextStyle(fontFamily: 'Inter', fontSize: 14, height: 1.35);
+    final style = TextStyle(
+      fontFamily: 'Inter',
+      fontSize: 14,
+      height: 1.35,
+      color: AppColors.getTextPrimaryColor(context),
+    );
 
     if (description.isEmpty) {
-      return const Align(
+      return Align(
         alignment: Alignment.topLeft,
         child: Text('Описание отсутствует', style: style),
       );
@@ -1093,14 +1154,19 @@ class _EventMembersSliverState extends State<_EventMembersSliver> {
     if (_loading && _participants.isEmpty) {
       return SliverFillRemaining(
         hasScrollBody: false,
-        child: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            border: Border(
-              bottom: BorderSide(color: AppColors.border, width: 1),
+        child: Builder(
+          builder: (context) => Container(
+            decoration: BoxDecoration(
+              color: AppColors.getSurfaceColor(context),
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
+              ),
             ),
+            child: const Center(child: CircularProgressIndicator()),
           ),
-          child: const Center(child: CircularProgressIndicator()),
         ),
       );
     }
@@ -1109,33 +1175,40 @@ class _EventMembersSliverState extends State<_EventMembersSliver> {
     if (_error != null && _participants.isEmpty) {
       return SliverFillRemaining(
         hasScrollBody: false,
-        child: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            border: Border(
-              bottom: BorderSide(color: AppColors.border, width: 1),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: SelectableText.rich(
-              TextSpan(
-                text: 'Ошибка загрузки: ',
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
+        child: Builder(
+          builder: (context) => Container(
+            decoration: BoxDecoration(
+              color: AppColors.getSurfaceColor(context),
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
                 ),
-                children: [
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Builder(
+                builder: (context) => SelectableText.rich(
                   TextSpan(
-                    text: _error,
-                    style: const TextStyle(
+                    text: 'Ошибка загрузки: ',
+                    style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 14,
-                      color: Colors.red,
+                      color: AppColors.getTextSecondaryColor(context),
                     ),
+                    children: [
+                      TextSpan(
+                        text: _error,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -1147,18 +1220,26 @@ class _EventMembersSliverState extends State<_EventMembersSliver> {
     if (_participants.isEmpty) {
       return SliverFillRemaining(
         hasScrollBody: false,
-        child: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            border: Border(
-              bottom: BorderSide(color: AppColors.border, width: 1),
+        child: Builder(
+          builder: (context) => Container(
+            decoration: BoxDecoration(
+              color: AppColors.getSurfaceColor(context),
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
+              ),
             ),
-          ),
-          child: const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'Участники отсутствуют',
-              style: TextStyle(fontSize: 14),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Участники отсутствуют',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
             ),
           ),
         ),
@@ -1172,10 +1253,12 @@ class _EventMembersSliverState extends State<_EventMembersSliver> {
         // Индикатор загрузки в конце списка
         if (index >= _participants.length) {
           if (!_loading) return const SizedBox.shrink();
-          return Container(
-            color: AppColors.surface,
-            padding: const EdgeInsets.all(16),
-            child: const Center(child: CircularProgressIndicator()),
+          return Builder(
+            builder: (context) => Container(
+              color: AppColors.getSurfaceColor(context),
+              padding: const EdgeInsets.all(16),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
           );
         }
 
@@ -1186,27 +1269,29 @@ class _EventMembersSliverState extends State<_EventMembersSliver> {
         final avatarUrl = (p['avatar_url'] as String?)?.trim() ?? '';
         final isOrganizer = p['is_organizer'] as bool? ?? false;
 
-        return Container(
-          color: AppColors.surface,
-          child: Column(
-            children: [
-              _MemberRow(
-                member: _Member(
-                  name,
-                  isOrganizer ? 'Организатор' : null,
-                  avatarUrl,
-                  roleIcon: isOrganizer
-                      ? CupertinoIcons.person_crop_circle_fill_badge_checkmark
-                      : null,
+        return Builder(
+          builder: (context) => Container(
+            color: AppColors.getSurfaceColor(context),
+            child: Column(
+              children: [
+                _MemberRow(
+                  member: _Member(
+                    name,
+                    isOrganizer ? 'Организатор' : null,
+                    avatarUrl,
+                    roleIcon: isOrganizer
+                        ? CupertinoIcons.person_crop_circle_fill_badge_checkmark
+                        : null,
+                  ),
                 ),
-              ),
-              if (index < _participants.length - 1)
-                const Divider(
-                  height: 1,
-                  thickness: 0.5,
-                  color: AppColors.border,
-                ),
-            ],
+                if (index < _participants.length - 1)
+                  Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: AppColors.getBorderColor(context),
+                  ),
+              ],
+            ),
           ),
         );
       }, childCount: _participants.length + (_loading ? 1 : 0)),
@@ -1337,7 +1422,13 @@ class _EventMembersContentState extends State<EventMembersContent> {
               ),
             ),
             if (index < _participants.length - 1)
-              const Divider(height: 1, thickness: 0.5, color: AppColors.border),
+              Builder(
+                builder: (context) => Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  color: AppColors.getBorderColor(context),
+                ),
+              ),
           ],
         );
       },
@@ -1359,13 +1450,17 @@ class _MemberRow extends StatelessWidget {
             child: member.avatar.isNotEmpty
                 ? _Avatar40(url: member.avatar)
                 : Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: AppColors.border,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.person, size: 24),
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.getBorderColor(context),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.person,
+                    size: 24,
+                    color: AppColors.getIconSecondaryColor(context),
+                  ),
                   ),
           ),
           const SizedBox(width: 12),
@@ -1378,20 +1473,21 @@ class _MemberRow extends StatelessWidget {
                 Text(
                   member.name,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
+                    color: AppColors.getTextPrimaryColor(context),
                   ),
                 ),
                 if (member.role != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     member.role!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: AppColors.getTextSecondaryColor(context),
                     ),
                   ),
                 ],

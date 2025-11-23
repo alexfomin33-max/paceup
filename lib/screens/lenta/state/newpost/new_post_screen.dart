@@ -77,7 +77,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Новый пост'),
         body: GestureDetector(
           // Скрываем клавиатуру при нажатии на пустую область
@@ -93,9 +93,13 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                   // ────────────────────────────────────────────────────────────────
                   // 📸 1. ФОТОГРАФИИ ПОСТА (горизонтальная карусель)
                   // ────────────────────────────────────────────────────────────────
-                  const Text(
+                  Text(
                     'Фотографии поста',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   _buildPhotoCarousel(),
@@ -105,9 +109,13 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                   // ────────────────────────────────────────────────────────────────
                   // 📝 2. ОПИСАНИЕ ПОСТА
                   // ────────────────────────────────────────────────────────────────
-                  const Text(
+                  Text(
                     'Описание поста',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   _buildDescriptionInput(),
@@ -117,9 +125,13 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                   // ────────────────────────────────────────────────────────────────
                   // 👁️ 3. КТО ВИДИТ ПОСТ (выпадающий список)
                   // ────────────────────────────────────────────────────────────────
-                  const Text(
+                  Text(
                     'Кто видит пост',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   _buildVisibilitySelector(),
@@ -167,21 +179,23 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
 
   /// Кнопка добавления фотографии
   Widget _buildAddPhotoButton() {
-    return GestureDetector(
-      onTap: _handleAddPhotos,
-      child: Container(
-        width: 90,
-        height: 90,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          color: AppColors.background,
-          border: Border.all(color: AppColors.border),
-        ),
-        child: const Center(
-          child: Icon(
-            CupertinoIcons.photo,
-            size: 28,
-            color: AppColors.iconTertiary,
+    return Builder(
+      builder: (context) => GestureDetector(
+        onTap: _handleAddPhotos,
+        child: Container(
+          width: 90,
+          height: 90,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            color: AppColors.getSurfaceColor(context),
+            border: Border.all(color: AppColors.getBorderColor(context)),
+          ),
+          child: Center(
+            child: Icon(
+              CupertinoIcons.photo,
+              size: 28,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
           ),
         ),
       ),
@@ -190,97 +204,112 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
 
   /// Элемент фотографии с кнопкой удаления
   Widget _buildPhotoItem(File file, int photoIndex) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        GestureDetector(
-          onTap: () async {
-            // По тапу можно заменить картинку
-            final picker = ImagePicker();
-            final XFile? pickedFile = await picker.pickImage(
-              source: ImageSource.gallery,
-            );
-            if (pickedFile != null) {
-              setState(() {
-                _images[photoIndex] = File(pickedFile.path);
-                _updatePublishState();
-              });
-            }
-          },
-          child: Container(
-            width: 90,
-            height: 90,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              color: AppColors.background,
-            ),
-            clipBehavior: Clip.hardEdge,
-            child: Image.file(
-              file,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: AppColors.background,
-                child: const Icon(
-                  CupertinoIcons.photo,
-                  size: 24,
-                  color: AppColors.iconSecondary,
+    return Builder(
+      builder: (context) => Stack(
+        clipBehavior: Clip.none,
+        children: [
+          GestureDetector(
+            onTap: () async {
+              // По тапу можно заменить картинку
+              final picker = ImagePicker();
+              final XFile? pickedFile = await picker.pickImage(
+                source: ImageSource.gallery,
+              );
+              if (pickedFile != null) {
+                setState(() {
+                  _images[photoIndex] = File(pickedFile.path);
+                  _updatePublishState();
+                });
+              }
+            },
+            child: Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                color: AppColors.getBackgroundColor(context),
+              ),
+              clipBehavior: Clip.hardEdge,
+              child: Image.file(
+                file,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: AppColors.getBackgroundColor(context),
+                  child: Icon(
+                    CupertinoIcons.photo,
+                    size: 24,
+                    color: AppColors.getIconSecondaryColor(context),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        // Кнопка удаления в правом верхнем углу
-        Positioned(
-          right: -6,
-          top: -6,
-          child: GestureDetector(
-            onTap: () => _handleDeletePhoto(file),
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: const Icon(
-                CupertinoIcons.clear_circled_solid,
-                size: 20,
-                color: AppColors.error,
+          // Кнопка удаления в правом верхнем углу
+          Positioned(
+            right: -6,
+            top: -6,
+            child: GestureDetector(
+              onTap: () => _handleDeletePhoto(file),
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.getBorderColor(context)),
+                ),
+                child: const Icon(
+                  CupertinoIcons.clear_circled_solid,
+                  size: 20,
+                  color: AppColors.error,
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   /// Поле ввода описания
   Widget _buildDescriptionInput() {
-    return TextField(
-      controller: _descriptionController,
-      focusNode: _descriptionFocusNode,
-      maxLines: 24,
-      minLines: 14,
-      textAlignVertical: TextAlignVertical.top,
-      style: AppTextStyles.h14w4,
-      decoration: InputDecoration(
-        hintText: 'Расскажите, о чём ваш пост...',
-        hintStyle: AppTextStyles.h14w4Place,
-        filled: true,
-        fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.all(12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+    return Builder(
+      builder: (context) => TextField(
+        controller: _descriptionController,
+        focusNode: _descriptionFocusNode,
+        maxLines: 24,
+        minLines: 14,
+        textAlignVertical: TextAlignVertical.top,
+        style: AppTextStyles.h14w4.copyWith(
+          color: AppColors.getTextPrimaryColor(context),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+        decoration: InputDecoration(
+          hintText: 'Расскажите, о чём ваш пост...',
+          hintStyle: AppTextStyles.h14w4Place,
+          filled: true,
+          fillColor: AppColors.getSurfaceColor(context),
+          contentPadding: const EdgeInsets.all(12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
         ),
       ),
     );
@@ -294,53 +323,71 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
       'Только Вы',
     ];
 
-    return InputDecorator(
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
-        ),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: options[_selectedVisibility],
-          isExpanded: true,
-          alignment: AlignmentDirectional.centerStart,
-          onChanged: (String? newValue) {
-            if (newValue != null) {
-              final index = options.indexOf(newValue);
-              if (index != -1) {
-                setState(() {
-                  _selectedVisibility = index;
-                });
-              }
-            }
-          },
-          dropdownColor: AppColors.surface,
-          menuMaxHeight: 300,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          icon: const Icon(
-            Icons.arrow_drop_down,
-            color: AppColors.iconSecondary,
+    return Builder(
+      builder: (context) => InputDecorator(
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.getSurfaceColor(context),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
           ),
-          style: AppTextStyles.h14w4,
-          items: options.map((option) {
-            return DropdownMenuItem<String>(
-              value: option,
-              child: Text(option, style: AppTextStyles.h14w4),
-            );
-          }).toList(),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: options[_selectedVisibility],
+            isExpanded: true,
+            alignment: AlignmentDirectional.centerStart,
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                final index = options.indexOf(newValue);
+                if (index != -1) {
+                  setState(() {
+                    _selectedVisibility = index;
+                  });
+                }
+              }
+            },
+            dropdownColor: AppColors.getSurfaceColor(context),
+            menuMaxHeight: 300,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            icon: Icon(
+              Icons.arrow_drop_down,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+            style: AppTextStyles.h14w4.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+            items: options.map((option) {
+              return DropdownMenuItem<String>(
+                value: option,
+                child: Text(
+                  option,
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );

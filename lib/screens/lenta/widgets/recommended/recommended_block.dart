@@ -141,7 +141,9 @@ class _FriendCard extends StatelessWidget {
               onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.brandPrimary,
-                foregroundColor: AppColors.getSurfaceColor(context),
+                foregroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.surface
+                    : AppColors.getSurfaceColor(context),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.xl),

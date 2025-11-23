@@ -67,6 +67,11 @@ class PrimaryButton extends StatelessWidget {
     // ── итоговая ширина
     final double? finalWidth = width ?? (expanded ? double.infinity : null);
 
+    // ── цвет текста: в светлой теме используем getSurfaceColor, в тёмной — surface
+    final textColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.surface
+        : AppColors.getSurfaceColor(context);
+
     // ── единый контент кнопки: ведущая иконка + текст + хвостовая иконка
     final Widget content = Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -89,12 +94,12 @@ class PrimaryButton extends StatelessWidget {
             textAlign: TextAlign.center,
             style:
                 textStyle ??
-                const TextStyle(
+                TextStyle(
                   // Интер по умолчанию уже задан темой, но дублируем на всякий
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.surface, // всегда белый текст
+                  color: textColor, // цвет зависит от темы
                   height: 1.0, // убираем лишнюю высоту строки
                 ),
           ),
@@ -111,7 +116,7 @@ class PrimaryButton extends StatelessWidget {
           onPressed, // всегда передаём, чтобы не было серого disabled стиля
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.brandPrimary,
-        foregroundColor: AppColors.surface,
+        foregroundColor: textColor,
         elevation: 0,
         padding: EdgeInsets.symmetric(
           horizontal: horizontalPadding,
