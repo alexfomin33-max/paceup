@@ -1059,12 +1059,16 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   Future<void> _pickDate() async {
     final today = DateUtils.dateOnly(DateTime.now());
     DateTime temp = DateUtils.dateOnly(_activityDate ?? today);
+    // Если выбранная дата в будущем, устанавливаем сегодняшнюю дату
+    if (temp.isAfter(today)) {
+      temp = today;
+    }
 
     final picker = CupertinoDatePicker(
       mode: CupertinoDatePickerMode.date,
-      minimumDate: today,
-      maximumDate: today.add(const Duration(days: 365 * 2)),
-      initialDateTime: temp.isBefore(today) ? today : temp,
+      minimumDate: today.subtract(const Duration(days: 365)),
+      maximumDate: today, // Запрещаем выбор даты из будущего
+      initialDateTime: temp,
       onDateTimeChanged: (dt) => temp = DateUtils.dateOnly(dt),
     );
 

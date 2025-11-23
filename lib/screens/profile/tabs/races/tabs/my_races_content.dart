@@ -130,18 +130,7 @@ class _RaceBlock extends StatelessWidget {
                   ),
                 ),
 
-                // │ разделитель (½ высоты строки)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: FractionallySizedBox(
-                    heightFactor: 0.5,
-                    child: VerticalDivider(
-                      width: 1,
-                      thickness: 0.5,
-                      color: AppColors.divider,
-                    ),
-                  ),
-                ),
+                const SizedBox(width: 10),
 
                 // ЯЧЕЙКА 2: дистанция
                 Expanded(

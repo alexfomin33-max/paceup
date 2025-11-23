@@ -20,10 +20,15 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
   final _brandCtrl = TextEditingController();
   final _modelCtrl = TextEditingController();
   final _kmCtrl = TextEditingController();
-  DateTime _inUseFrom = DateTime.now();
+  DateTime? _inUseFrom;
   File? _imageFile;
   final _picker = ImagePicker();
   bool _isLoading = false;
+
+  // FocusNode для полей
+  FocusNode? _brandFocusNode;
+  FocusNode? _modelFocusNode;
+  FocusNode? _kmFocusNode;
 
   // Для автодополнения
   final ApiService _api = ApiService();
@@ -33,6 +38,9 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
     _brandCtrl.dispose();
     _modelCtrl.dispose();
     _kmCtrl.dispose();
+    _brandFocusNode?.dispose();
+    _modelFocusNode?.dispose();
+    _kmFocusNode?.dispose();
     super.dispose();
   }
 
@@ -93,7 +101,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
 
   Future<void> _pickDate() async {
     // Переменная для хранения выбранной даты, объявлена вне builder
-    DateTime selectedDate = _inUseFrom;
+    DateTime selectedDate = _inUseFrom ?? DateTime.now();
 
     await showCupertinoModalPopup(
       context: context,
@@ -141,7 +149,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
               Expanded(
                 child: CupertinoDatePicker(
                   mode: CupertinoDatePickerMode.date,
-                  initialDateTime: _inUseFrom,
+                  initialDateTime: selectedDate,
                   maximumDate: DateTime.now(),
                   onDateTimeChanged: (d) {
                     // Обновляем переменную, объявленную в области видимости _pickDate
@@ -229,7 +237,9 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
         'brand': brand,
         'dist': km.toString(),
         'main': '0', // По умолчанию не на главном экране
-        'in_use_since': _formatDateForApi(_inUseFrom), // Дата в формате DD.MM.YYYY
+        'in_use_since': _formatDateForApi(
+          _inUseFrom ?? DateTime.now(),
+        ), // Дата в формате DD.MM.YYYY
       };
 
       // Добавляем изображение, если есть
@@ -283,7 +293,10 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
   }
 
   String get _dateLabel {
-    final d = _inUseFrom;
+    if (_inUseFrom == null) {
+      return 'Выберите дату';
+    }
+    final d = _inUseFrom!;
     final dd = d.day.toString().padLeft(2, '0');
     final mm = d.month.toString().padLeft(2, '0');
     final yy = d.year.toString();
@@ -382,6 +395,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
 
               _FieldRow(
                 title: 'Бренд',
+                onTap: () => _brandFocusNode?.requestFocus(),
                 child: AutocompleteTextField(
                   controller: _brandCtrl,
                   hint: 'Введите бренд',
@@ -392,10 +406,14 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
                       _modelCtrl.clear();
                     });
                   },
+                  onFocusNodeCreated: (node) {
+                    _brandFocusNode = node;
+                  },
                 ),
               ),
               _FieldRow(
                 title: 'Модель',
+                onTap: () => _modelFocusNode?.requestFocus(),
                 child: ValueListenableBuilder<TextEditingValue>(
                   valueListenable: _brandCtrl,
                   builder: (context, brandValue, child) {
@@ -404,6 +422,9 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
                       hint: 'Введите модель',
                       onSearch: _searchModels,
                       enabled: brandValue.text.trim().isNotEmpty,
+                      onFocusNodeCreated: (node) {
+                        _modelFocusNode = node;
+                      },
                     );
                   },
                 ),
@@ -418,11 +439,15 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
                     child: Text(
                       _dateLabel,
                       textAlign: TextAlign.right,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
+                        color: _inUseFrom == null
+                            ? AppColors.textPlaceholder
+                            : AppColors.textPrimary,
+                        fontWeight: _inUseFrom == null
+                            ? FontWeight.w400
+                            : FontWeight.w600,
                       ),
                     ),
                   ),
@@ -430,12 +455,16 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
               ),
               _FieldRow(
                 title: 'Добавленная дистанция, км',
+                onTap: () => _kmFocusNode?.requestFocus(),
                 child: _RightTextField(
                   controller: _kmCtrl,
                   hint: '0',
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: false,
                   ),
+                  onFocusNodeCreated: (node) {
+                    _kmFocusNode = node;
+                  },
                 ),
               ),
             ],
@@ -468,27 +497,32 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
 class _FieldRow extends StatelessWidget {
   final String title;
   final Widget child;
-  const _FieldRow({required this.title, required this.child});
+  final VoidCallback? onTap;
+  const _FieldRow({required this.title, required this.child, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: SizedBox(
-            height: 48,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: SizedBox(
+              height: 48,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(width: 180, child: child),
-              ],
+                  const SizedBox(width: 12),
+                  SizedBox(width: 180, child: child),
+                ],
+              ),
             ),
           ),
         ),
@@ -508,10 +542,12 @@ class _RightTextField extends StatefulWidget {
   final TextEditingController controller;
   final String hint;
   final TextInputType? keyboardType;
+  final void Function(FocusNode)? onFocusNodeCreated;
   const _RightTextField({
     required this.controller,
     required this.hint,
     this.keyboardType,
+    this.onFocusNodeCreated,
   });
 
   @override
@@ -519,28 +555,50 @@ class _RightTextField extends StatefulWidget {
 }
 
 class _RightTextFieldState extends State<_RightTextField> {
+  late final FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    widget.onFocusNodeCreated?.call(_focusNode);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: widget.controller,
-      textAlign: TextAlign.right,
-      keyboardType: widget.keyboardType,
-      decoration: InputDecoration(
-        isDense: true,
-        hintText: widget.hint,
-        border: InputBorder.none,
-        hintStyle: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 14,
-          color: AppColors.textPlaceholder,
-        ),
-      ),
-      style: const TextStyle(
-        fontFamily: 'Inter',
-        fontSize: 14,
-        color: AppColors.textPrimary,
-        fontWeight: FontWeight.w600,
-      ),
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: widget.controller,
+      builder: (context, value, child) {
+        final isEmpty = value.text.trim().isEmpty;
+        return TextField(
+          controller: widget.controller,
+          focusNode: _focusNode,
+          textAlign: TextAlign.right,
+          keyboardType: widget.keyboardType,
+          decoration: InputDecoration(
+            isDense: true,
+            hintText: widget.hint,
+            border: InputBorder.none,
+            hintStyle: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: AppColors.textPlaceholder,
+            ),
+          ),
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            color: isEmpty ? AppColors.textPlaceholder : AppColors.textPrimary,
+            fontWeight: isEmpty ? FontWeight.w400 : FontWeight.w600,
+          ),
+        );
+      },
     );
   }
 }

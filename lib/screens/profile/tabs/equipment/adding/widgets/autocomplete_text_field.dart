@@ -9,6 +9,7 @@ class AutocompleteTextField extends StatefulWidget {
   final Future<List<String>> Function(String) onSearch;
   final bool enabled;
   final VoidCallback? onChanged;
+  final void Function(FocusNode)? onFocusNodeCreated;
 
   const AutocompleteTextField({
     super.key,
@@ -17,6 +18,7 @@ class AutocompleteTextField extends StatefulWidget {
     required this.onSearch,
     this.enabled = true,
     this.onChanged,
+    this.onFocusNodeCreated,
   });
 
   @override
@@ -43,6 +45,9 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
             FocusNode focusNode,
             VoidCallback onFieldSubmitted,
           ) {
+            // Сохраняем FocusNode для внешнего доступа
+            widget.onFocusNodeCreated?.call(focusNode);
+
             // Синхронизируем контроллеры
             if (textEditingController.text != widget.controller.text) {
               textEditingController.text = widget.controller.text;
@@ -53,34 +58,42 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
               }
             });
 
-            return TextField(
-              controller: textEditingController,
-              focusNode: focusNode,
-              enabled: widget.enabled,
-              textAlign: TextAlign.right,
-              onChanged: (value) {
-                widget.onChanged?.call();
+            return ValueListenableBuilder<TextEditingValue>(
+              valueListenable: textEditingController,
+              builder: (context, value, child) {
+                final isEmpty = value.text.trim().isEmpty;
+                return TextField(
+                  controller: textEditingController,
+                  focusNode: focusNode,
+                  enabled: widget.enabled,
+                  textAlign: TextAlign.right,
+                  onChanged: (value) {
+                    widget.onChanged?.call();
+                  },
+                  onSubmitted: (String value) {
+                    onFieldSubmitted();
+                  },
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: widget.hint,
+                    border: InputBorder.none,
+                    hintStyle: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      color: AppColors.textPlaceholder,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    color: isEmpty
+                        ? AppColors.textPlaceholder
+                        : AppColors.textPrimary,
+                    fontWeight: isEmpty ? FontWeight.w400 : FontWeight.w600,
+                  ),
+                );
               },
-              onSubmitted: (String value) {
-                onFieldSubmitted();
-              },
-              decoration: InputDecoration(
-                isDense: true,
-                hintText: widget.hint,
-                border: InputBorder.none,
-                hintStyle: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
             );
           },
       optionsViewBuilder:
