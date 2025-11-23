@@ -19,7 +19,7 @@ import '../../../../providers/lenta/lenta_provider.dart';
 class _ExistingImage {
   final String url;
   bool keep;
-  _ExistingImage(this.url, {this.keep = true});
+  _ExistingImage(this.url, {required this.keep});
 }
 
 /// ────────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
 
   // Существующие картинки (по URL) — можно помечать keep=false
   late final List<_ExistingImage> _existing = widget.initialImageUrls
-      .map((u) => _ExistingImage(u))
+      .map((u) => _ExistingImage(u, keep: true))
       .toList();
 
   // Новые картинки, выбранные на устройстве
@@ -122,7 +122,9 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.surface
+            : AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Редактировать пост'),
         body: GestureDetector(
           // Скрываем клавиатуру при нажатии на пустую область

@@ -175,9 +175,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         _loadClub();
 
         // Инвалидируем provider клубов пользователя для обновления списка в clubs_tab.dart
-        if (userId != null) {
-          ref.invalidate(userClubsProvider(userId));
-        }
+        // userId гарантированно не null после проверки выше
+        ref.invalidate(userClubsProvider(userId));
       } else {
         final errorMessage =
             data['message'] as String? ?? 'Ошибка вступления в клуб';
@@ -247,9 +246,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         _loadClub();
 
         // Инвалидируем provider клубов пользователя для обновления списка в clubs_tab.dart
-        if (userId != null) {
-          ref.invalidate(userClubsProvider(userId));
-        }
+        // userId гарантированно не null после проверки выше
+        ref.invalidate(userClubsProvider(userId));
       } else {
         final errorMessage =
             data['message'] as String? ?? 'Ошибка выхода из клуба';
@@ -284,7 +282,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     if (_loading) {
       return InteractiveBackSwipe(
         child: Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.getBackgroundColor(context),
           body: const Center(child: CircularProgressIndicator()),
         ),
       );
@@ -293,7 +291,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     if (_error != null || _clubData == null) {
       return InteractiveBackSwipe(
         child: Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.getBackgroundColor(context),
           body: SafeArea(
             child: Center(
               child: Column(

@@ -46,7 +46,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
   @override
   Widget build(BuildContext context) {
     return PersistentTabView(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.getSurfaceColor(context),
       onTabChanged: _onTabChanged,
 
       tabs: [
@@ -104,14 +104,19 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
 
       // ⬇️ наш кастомный навбар с перехватом повтора тапа
       navBarBuilder: (navBarConfig) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          border: Border(
+            top: BorderSide(
+              color: AppColors.getBorderColor(context), 
+              width: 0.5,
+            ),
+          ),
         ),
         child: SafeArea(
           top: false,
           child: SizedBox(
-            height: 56,
+            height: 60,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(navBarConfig.items.length, (i) {

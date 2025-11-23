@@ -127,45 +127,45 @@ class _SearchFieldState extends State<_SearchField> {
         controller: widget.controller,
         focusNode: widget.focusNode,
         onChanged: widget.onChanged,
-        cursorColor: AppColors.textSecondary,
+        cursorColor: AppColors.getTextSecondaryColor(context),
         textInputAction: TextInputAction.search,
         style: const TextStyle(fontFamily: 'Inter', fontSize: 15),
         decoration: InputDecoration(
           hintText: widget.hintText,
-          hintStyle: const TextStyle(
+          hintStyle: TextStyle(
             fontFamily: 'Inter',
             fontSize: 15,
-            color: AppColors.textPlaceholder,
+            color: AppColors.getTextPlaceholderColor(context),
           ),
           isDense: true,
           filled: true,
-          fillColor: AppColors.surface,
+          fillColor: AppColors.getSurfaceColor(context),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
             vertical: 12,
           ),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             CupertinoIcons.search,
             size: 18,
-            color: AppColors.iconSecondary,
+            color: AppColors.getIconSecondaryColor(context),
           ),
           suffixIcon: hasText
               ? IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     CupertinoIcons.xmark_circle_fill,
                     size: 18,
-                    color: AppColors.iconTertiary,
+                    color: AppColors.getIconSecondaryColor(context),
                   ),
                   onPressed: widget.onClear,
                 )
               : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: const BorderSide(color: AppColors.border),
+            borderSide: BorderSide(color: AppColors.getBorderColor(context)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: const BorderSide(color: AppColors.border),
+            borderSide: BorderSide(color: AppColors.getBorderColor(context)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),

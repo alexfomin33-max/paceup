@@ -77,10 +77,10 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
                     isDense: true,
                     hintText: widget.hint,
                     border: InputBorder.none,
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 14,
-                      color: AppColors.textPlaceholder,
+                      color: AppColors.getTextPlaceholderColor(context),
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -88,8 +88,8 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     color: isEmpty
-                        ? AppColors.textPlaceholder
-                        : AppColors.textPrimary,
+                        ? AppColors.getTextPlaceholderColor(context)
+                        : AppColors.getTextPrimaryColor(context),
                     fontWeight: isEmpty ? FontWeight.w400 : FontWeight.w600,
                   ),
                 );
@@ -127,10 +127,10 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
                           ),
                           child: Text(
                             option,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 14,
-                              color: AppColors.textPrimary,
+                              color: AppColors.getTextPrimaryColor(context),
                             ),
                           ),
                         ),

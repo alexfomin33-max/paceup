@@ -20,7 +20,7 @@ class SwimTripScreen extends StatelessWidget {
               floating: false,
               expandedHeight: 130,
               elevation: 0,
-              backgroundColor: AppColors.surface,
+              backgroundColor: AppColors.getSurfaceColor(context),
               leadingWidth: 60,
               // 1) круглая полупрозрачная кнопка назад с белой стрелкой
               leading: SafeArea(

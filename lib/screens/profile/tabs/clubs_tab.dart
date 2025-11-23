@@ -40,19 +40,19 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
       data: (userId) {
         if (userId == null) {
           // Пользователь не авторизован
-          return const CustomScrollView(
-            physics: BouncingScrollPhysics(),
+          return CustomScrollView(
+            physics: const BouncingScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
                   child: Center(
                     child: Text(
                       'Необходима авторизация',
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 16,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                     ),
                   ),
@@ -78,24 +78,24 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
           ),
         ],
       ),
-      error: (err, stack) => CustomScrollView(
-        physics: const BouncingScrollPhysics(),
+      error: (err, stack) => const CustomScrollView(
+        physics: BouncingScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(24),
               child: Center(
                 child: Column(
                   children: [
-                    const Icon(
+                    Icon(
                       CupertinoIcons.exclamationmark_triangle,
                       size: 48,
                       color: AppColors.error,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       'Ошибка загрузки данных пользователя',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 16,
                         color: AppColors.error,
@@ -129,18 +129,18 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
                   child: Center(
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           CupertinoIcons.group,
                           size: 48,
-                          color: AppColors.textSecondary,
+                          color: AppColors.getTextSecondaryColor(context),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'У вас пока нет клубов',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 16,
-                            color: AppColors.textSecondary,
+                            color: AppColors.getTextSecondaryColor(context),
                           ),
                         ),
                       ],
@@ -183,9 +183,9 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
                       color: AppColors.error,
                     ),
                     const SizedBox(height: 16),
-                    Text(
+                    const Text(
                       'Ошибка загрузки клубов',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 16,
                         color: AppColors.error,
@@ -194,10 +194,10 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
                     const SizedBox(height: 8),
                     Text(
                       err.toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -250,13 +250,15 @@ class _ClubCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final card = Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: AppColors.getBorderColor(context), width: 1),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -281,11 +283,12 @@ class _ClubCard extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w600,
               height: 1.2,
+              color: AppColors.getTextPrimaryColor(context),
             ),
           ),
           const SizedBox(height: 6),
@@ -298,10 +301,11 @@ class _ClubCard extends StatelessWidget {
               children: [
                 Text(
                   'Участников: ${_formatMembers(club.membersCount)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
                     height: 1.2,
+                    color: AppColors.getTextPrimaryColor(context),
                   ),
                 ),
               ],

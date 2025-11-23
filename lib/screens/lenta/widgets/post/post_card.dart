@@ -158,11 +158,11 @@ class _PostCardState extends State<PostCard> {
 
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
         border: Border(
-          top: BorderSide(width: 0.5, color: AppColors.border),
-          bottom: BorderSide(width: 0.5, color: AppColors.border),
+          top: BorderSide(width: 0.5, color: AppColors.getBorderColor(context)),
+          bottom: BorderSide(width: 0.5, color: AppColors.getBorderColor(context)),
         ),
       ),
       child: Column(
@@ -206,9 +206,9 @@ class _PostCardState extends State<PostCard> {
               trailing: post.userId == widget.currentUserId
                   ? IconButton(
                       key: menuKey,
-                      icon: const Icon(
+                      icon: Icon(
                         CupertinoIcons.ellipsis,
-                        color: AppColors.iconPrimary,
+                        color: AppColors.getIconPrimaryColor(context),
                       ),
                       onPressed: () {
                         final items = <MoreMenuItem>[
@@ -294,7 +294,12 @@ class _PostCardState extends State<PostCard> {
                         color: AppColors.warning,
                       ),
                       const SizedBox(width: 4),
-                      Text(post.comments.toString()),
+                      Text(
+                        post.comments.toString(),
+                        style: AppTextStyles.h14w4.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -438,7 +443,12 @@ class _PostLikeBarState extends State<_PostLikeBar>
             ),
           ),
           const SizedBox(width: 4),
-          Text(likesCount.toString()),
+          Text(
+            likesCount.toString(),
+            style: AppTextStyles.h14w4.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ),
         ],
       ),
     );

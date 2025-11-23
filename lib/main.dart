@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/colors.dart';
 import 'routes.dart';
 import 'providers/services/cache_provider.dart';
+import 'providers/theme_provider.dart';
 import 'utils/db_optimizer.dart';
 import 'utils/image_cache_manager.dart';
 import 'service/onesignal_service.dart';
@@ -181,82 +182,130 @@ class _PaceUpAppState extends State<PaceUpApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Базовая тема (Material 3 + Inter + iOS-лайк цвета)
-    final ThemeData base = ThemeData(
-      useMaterial3: true,
-      scaffoldBackgroundColor: AppColors.background,
-      fontFamily: 'Inter',
-      dividerColor: AppColors.divider,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.brandPrimary,
-        primary: AppColors.brandPrimary,
-        secondary: AppColors.brandSecondary,
-        surface: AppColors.surface,
-        error: AppColors.error,
-        onSurface: AppColors.textPrimary,
-        brightness: Brightness.light,
-      ),
-      appBarTheme: const AppBarTheme(
-        elevation: 0,
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        scrolledUnderElevation: 0,
-      ),
-      dividerTheme: const DividerThemeData(
-        thickness: 0.5,
-        color: AppColors.divider,
-        space: 0,
-      ),
-      iconTheme: const IconThemeData(color: AppColors.iconPrimary),
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-        // без тени-дрожа
-      ),
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.android:
-              CupertinoPageTransitionsBuilder(), // свайп-назад
-          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-        },
-      ),
-    );
-
-    return MaterialApp(
-      title: 'PaceUp',
-      debugShowCheckedModeBanner: false,
-      theme: base,
-      navigatorKey: _navigatorKey,
-
-      initialRoute: '/splash',
-      onGenerateRoute: onGenerateRoute,
-
-      supportedLocales: const [Locale('ru'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-
-      // Глобально «светлые» Cupertino-контролы + Inter
-      builder: (context, child) {
-        // Настраиваем unified image cache после первого билда
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ImageCacheManager.configure(context);
-        });
+    // Используем Consumer для доступа к провайдеру темы
+    return Consumer(
+      builder: (context, ref, _) {
+        final themeMode = ref.watch(themeModeNotifierProvider);
         
-        return CupertinoTheme(
-          data: const CupertinoThemeData(
-            brightness: Brightness.light, // ← ключ к чёрному тексту в пикере
-            primaryColor: AppColors.brandPrimary,
-            textTheme: CupertinoTextThemeData(
-              textStyle: TextStyle(fontFamily: 'Inter'),
-              // опционально: можно ещё явно задать стиль колеса
-              // pickerTextStyle: TextStyle(fontFamily: 'Inter', fontSize: 22),
-            ),
+        // Базовая светлая тема (Material 3 + Inter + iOS-лайк цвета)
+        final ThemeData lightTheme = ThemeData(
+          useMaterial3: true,
+          scaffoldBackgroundColor: AppColors.background,
+          fontFamily: 'Inter',
+          dividerColor: AppColors.divider,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppColors.brandPrimary,
+            primary: AppColors.brandPrimary,
+            secondary: AppColors.brandSecondary,
+            surface: AppColors.surface,
+            error: AppColors.error,
+            onSurface: AppColors.textPrimary,
+            brightness: Brightness.light,
           ),
-          child: child!,
+          appBarTheme: const AppBarTheme(
+            elevation: 0,
+            backgroundColor: AppColors.surface,
+            foregroundColor: AppColors.textPrimary,
+            scrolledUnderElevation: 0,
+          ),
+          dividerTheme: const DividerThemeData(
+            thickness: 0.5,
+            color: AppColors.divider,
+            space: 0,
+          ),
+          iconTheme: const IconThemeData(color: AppColors.iconPrimary),
+          bottomSheetTheme: const BottomSheetThemeData(
+            backgroundColor: AppColors.surface,
+            surfaceTintColor: Colors.transparent,
+          ),
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {
+              TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+              TargetPlatform.android:
+                  CupertinoPageTransitionsBuilder(), // свайп-назад
+              TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+            },
+          ),
+        );
+
+        // Темная тема (iOS Dark Mode)
+        final ThemeData darkTheme = ThemeData(
+          useMaterial3: true,
+          scaffoldBackgroundColor: AppColors.darkBackground,
+          fontFamily: 'Inter',
+          dividerColor: AppColors.darkDivider,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppColors.brandPrimary,
+            primary: AppColors.brandPrimary,
+            secondary: AppColors.brandSecondary,
+            surface: AppColors.darkSurface,
+            error: AppColors.error,
+            onSurface: AppColors.darkTextPrimary,
+            brightness: Brightness.dark,
+          ),
+          appBarTheme: const AppBarTheme(
+            elevation: 0,
+            backgroundColor: AppColors.darkSurface,
+            foregroundColor: AppColors.darkTextPrimary,
+            scrolledUnderElevation: 0,
+          ),
+          dividerTheme: const DividerThemeData(
+            thickness: 0.5,
+            color: AppColors.darkDivider,
+            space: 0,
+          ),
+          iconTheme: const IconThemeData(color: AppColors.darkIconPrimary),
+          bottomSheetTheme: const BottomSheetThemeData(
+            backgroundColor: AppColors.darkSurface,
+            surfaceTintColor: Colors.transparent,
+          ),
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {
+              TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+              TargetPlatform.android:
+                  CupertinoPageTransitionsBuilder(), // свайп-назад
+              TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+            },
+          ),
+        );
+
+        return MaterialApp(
+          title: 'PaceUp',
+          debugShowCheckedModeBanner: false,
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: themeMode, // ← используем провайдер
+          navigatorKey: _navigatorKey,
+          initialRoute: '/splash',
+          onGenerateRoute: onGenerateRoute,
+          supportedLocales: const [Locale('ru'), Locale('en')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          builder: (context, child) {
+            // Настраиваем unified image cache после первого билда
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              ImageCacheManager.configure(context);
+            });
+            
+            // Обновляем CupertinoTheme в зависимости от темы
+            final brightness = themeMode == ThemeMode.dark 
+                ? Brightness.dark 
+                : Brightness.light;
+            
+            return CupertinoTheme(
+              data: CupertinoThemeData(
+                brightness: brightness,
+                primaryColor: AppColors.brandPrimary,
+                textTheme: const CupertinoTextThemeData(
+                  textStyle: TextStyle(fontFamily: 'Inter'),
+                ),
+              ),
+              child: child!,
+            );
+          },
         );
       },
     );

@@ -92,7 +92,7 @@ class _RouteCardState extends State<RouteCard> {
                   flags: InteractiveFlag.none,
                 ),
                 // Фоновый цвет карты (серый, если тайлы не загрузились)
-                backgroundColor: AppColors.surfaceMuted,
+                backgroundColor: AppColors.getSurfaceMutedColor(context),
 
                 // Приготовим «вписывание» в onMapReady, когда размер уже известен
                 onMapReady: () {

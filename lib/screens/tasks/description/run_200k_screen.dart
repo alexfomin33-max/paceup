@@ -17,7 +17,7 @@ class _Run200kScreenState extends State<Run200kScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         body: CustomScrollView(
           slivers: [
             // ─────────── Верхнее фото + кнопка "назад"
@@ -26,7 +26,7 @@ class _Run200kScreenState extends State<Run200kScreen> {
               floating: false,
               expandedHeight: 140,
               elevation: 0,
-              backgroundColor: AppColors.surface,
+              backgroundColor: AppColors.getSurfaceColor(context),
               leadingWidth: 60,
               leading: SafeArea(
                 child: Padding(

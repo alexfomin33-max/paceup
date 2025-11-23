@@ -53,7 +53,7 @@ class _SearchPrefsPageState extends State<SearchPrefsPage> {
     final bool isFriends = _index == 0;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackgroundColor(context),
 
       // ── Глобальная шапка
       appBar: const PaceAppBar(title: 'Поиск'),

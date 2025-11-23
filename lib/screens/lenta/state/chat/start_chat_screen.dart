@@ -64,7 +64,9 @@ class _StartChatScreenState extends ConsumerState<StartChatScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.surface
+            : AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Начать общение'),
         body: Column(
           children: [

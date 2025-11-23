@@ -41,7 +41,7 @@ class _CoffeeRunVldScreenState extends State<CoffeeRunVldScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackgroundColor(context),
       body: SafeArea(
         top: false,
         bottom: true,

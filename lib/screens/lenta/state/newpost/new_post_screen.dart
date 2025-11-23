@@ -265,7 +265,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
       textAlignVertical: TextAlignVertical.top,
       style: AppTextStyles.h14w4,
       decoration: InputDecoration(
-        hintText: 'Добавьте описание',
+        hintText: 'Расскажите, о чём ваш пост...',
         hintStyle: AppTextStyles.h14w4Place,
         filled: true,
         fillColor: AppColors.surface,

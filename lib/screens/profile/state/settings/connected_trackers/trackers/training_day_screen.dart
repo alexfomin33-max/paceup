@@ -40,7 +40,7 @@ class _TrainingDayTabsScreenState extends State<TrainingDayTabsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackgroundColor(context),
       appBar: const PaceAppBar(
         title: 'Детали тренировок',
         showBottomDivider: false,

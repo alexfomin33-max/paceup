@@ -160,8 +160,8 @@ class AvailableTaskCard extends StatelessWidget {
       onTap: onPressed,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border.all(color: AppColors.border),
+          color: AppColors.getSurfaceColor(context),
+          border: Border.all(color: AppColors.getBorderColor(context)),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: const [
             BoxShadow(
@@ -227,8 +227,8 @@ class AvailableExpeditionCard extends StatelessWidget {
       onTap: onPressed,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border.all(color: AppColors.border),
+          color: AppColors.getSurfaceColor(context),
+          border: Border.all(color: AppColors.getBorderColor(context)),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: const [
             BoxShadow(

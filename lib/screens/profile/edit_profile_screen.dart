@@ -580,7 +580,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         // единый фон экрана
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
 
         // глобальная шапка
         appBar: PaceAppBar(

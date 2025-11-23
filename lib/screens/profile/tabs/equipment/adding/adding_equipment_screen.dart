@@ -39,10 +39,10 @@ class _AddingEquipmentScreenState extends State<AddingEquipmentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.getSurfaceColor(context),
         centerTitle: true,
         title: const Text(
           'Добавить снаряжение',
@@ -56,15 +56,19 @@ class _AddingEquipmentScreenState extends State<AddingEquipmentScreen> {
         leading: IconButton(
           tooltip: 'Назад',
           onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(
+          icon: Icon(
             CupertinoIcons.back,
             size: 22,
-            color: AppColors.iconPrimary,
+            color: AppColors.getIconPrimaryColor(context),
           ),
         ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, thickness: 1, color: AppColors.border),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: AppColors.getBorderColor(context),
+          ),
         ),
       ),
       body: SafeArea(
@@ -139,3 +143,4 @@ class _TabScroller extends StatelessWidget {
     );
   }
 }
+

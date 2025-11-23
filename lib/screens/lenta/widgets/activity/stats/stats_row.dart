@@ -27,14 +27,34 @@ class MetricVertical extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(mainTitle, style: AppTextStyles.h11w4Ter),
+        Text(
+          mainTitle,
+          style: AppTextStyles.h11w4Ter.copyWith(
+            color: AppColors.getTextTertiaryColor(context),
+          ),
+        ),
         const SizedBox(height: 1),
-        Text(mainValue, style: AppTextStyles.h14w5),
+        Text(
+          mainValue,
+          style: AppTextStyles.h14w5.copyWith(
+            color: AppColors.getTextPrimaryColor(context),
+          ),
+        ),
         if (showSub) ...[
           const SizedBox(height: 10),
-          Text(subTitle, style: AppTextStyles.h11w4Ter),
+          Text(
+            subTitle,
+            style: AppTextStyles.h11w4Ter.copyWith(
+              color: AppColors.getTextTertiaryColor(context),
+            ),
+          ),
           const SizedBox(height: 1),
-          Text(subValue, style: AppTextStyles.h14w5),
+          Text(
+            subValue,
+            style: AppTextStyles.h14w5.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ),
         ],
       ],
     );
@@ -123,12 +143,27 @@ class StatsRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Темп', style: AppTextStyles.h11w4Ter),
+                Text(
+                  'Темп',
+                  style: AppTextStyles.h11w4Ter.copyWith(
+                    color: AppColors.getTextTertiaryColor(context),
+                  ),
+                ),
                 const SizedBox(height: 1),
-                Text(paceText, style: AppTextStyles.h14w5),
+                Text(
+                  paceText,
+                  style: AppTextStyles.h14w5.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                ),
                 if (!isManuallyAdded) ...[
                   const SizedBox(height: 10),
-                  const Text('Ср. пульс', style: AppTextStyles.h11w4Ter),
+                  Text(
+                    'Ср. пульс',
+                    style: AppTextStyles.h11w4Ter.copyWith(
+                      color: AppColors.getTextTertiaryColor(context),
+                    ),
+                  ),
                   const SizedBox(height: 1),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -139,7 +174,12 @@ class StatsRow extends StatelessWidget {
                         size: 12,
                       ),
                       const SizedBox(width: 2),
-                      Text(hrText, style: AppTextStyles.h14w5),
+                      Text(
+                        hrText,
+                        style: AppTextStyles.h14w5.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
                     ],
                   ),
                 ],

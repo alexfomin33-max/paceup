@@ -14,7 +14,7 @@ class DistancePill extends StatelessWidget {
       width: 70,
       height: 28,
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: AppColors.getBackgroundColor(context),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       alignment: Alignment.center,
@@ -99,7 +99,7 @@ class CityPill extends StatelessWidget {
       height: 28,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: AppColors.getBackgroundColor(context),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       alignment: Alignment.center,

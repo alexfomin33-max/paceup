@@ -10,28 +10,34 @@ class CombiningScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: AppColors.surface,
+          backgroundColor: AppColors.getSurfaceColor(context),
           surfaceTintColor: Colors.transparent,
           centerTitle: true,
-          title: const Text(
+          title: Text(
             'Объединение тренировки',
-            style: AppTextStyles.h17w6,
+            style: AppTextStyles.h17w6.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
           ),
           leading: IconButton(
             splashRadius: 22,
             onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(
+            icon: Icon(
               CupertinoIcons.back,
               size: 22,
-              color: AppColors.iconPrimary,
+              color: AppColors.getIconPrimaryColor(context),
             ),
           ),
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
-            child: Divider(height: 1, thickness: 1, color: AppColors.border),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Divider(
+              height: 1,
+              thickness: 1,
+              color: AppColors.getBorderColor(context),
+            ),
           ),
         ),
         body: CustomScrollView(
@@ -75,16 +81,16 @@ class CombiningScreen extends StatelessWidget {
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
             // ——— Заголовок "После объединения"
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   'После объединения',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: AppColors.getTextPrimaryColor(context),
                   ),
                 ),
               ),
@@ -120,7 +126,7 @@ class CombiningScreen extends StatelessWidget {
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.brandPrimary,
-                        foregroundColor: AppColors.surface,
+                        foregroundColor: AppColors.getSurfaceColor(context),
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(horizontal: 40),
                         shape: const StadiumBorder(),
@@ -153,18 +159,18 @@ class _InfoText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text.rich(
+    return Text.rich(
       TextSpan(
         children: [
-          TextSpan(
+          const TextSpan(
             text:
                 'Объединить возможно только тренировки, выполненные в один день.\n\n',
           ),
-          TextSpan(
+          const TextSpan(
             text:
                 'Финиш одной и старт другой тренировки должны быть с минимальным расстоянием по геолокации.\n\n',
           ),
-          TextSpan(
+          const TextSpan(
             text: 'Показаны те тренировки, которые возможно объединить.',
           ),
         ],
@@ -172,7 +178,7 @@ class _InfoText extends StatelessWidget {
           fontFamily: 'Inter',
           fontSize: 13,
           height: 1.30,
-          color: AppColors.textSecondary,
+          color: AppColors.getTextSecondaryColor(context),
         ),
       ),
       textAlign: TextAlign.center,
@@ -200,8 +206,8 @@ class _TrainingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.border),
+        color: AppColors.getSurfaceColor(context),
+        border: Border.all(color: AppColors.getBorderColor(context)),
         borderRadius: BorderRadius.circular(AppRadius.sm),
         boxShadow: [
           const BoxShadow(
@@ -218,15 +224,19 @@ class _TrainingCard extends StatelessWidget {
           // Дата
           Row(
             children: [
-              const Icon(
+              Icon(
                 CupertinoIcons.calendar,
                 size: 16,
-                color: AppColors.iconPrimary,
+                color: AppColors.getIconPrimaryColor(context),
               ),
               const SizedBox(width: 8),
               Text(
                 dateText,
-                style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
               ),
             ],
           ),
@@ -293,16 +303,16 @@ class _MetricColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const label = TextStyle(
+    final label = TextStyle(
       fontFamily: 'Inter',
       fontSize: 11,
-      color: AppColors.textSecondary,
+      color: AppColors.getTextSecondaryColor(context),
     );
-    const value = TextStyle(
+    final value = TextStyle(
       fontFamily: 'Inter',
       fontSize: 14,
       fontWeight: FontWeight.w600,
-      color: AppColors.textPrimary,
+      color: AppColors.getTextPrimaryColor(context),
     );
 
     return Column(
@@ -334,3 +344,4 @@ class _MetricColumn extends StatelessWidget {
     );
   }
 }
+

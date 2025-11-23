@@ -40,7 +40,7 @@ class RouteDescriptionScreen extends StatelessWidget {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: PaceAppBar(
           title: 'Маршрут',
           showBottomDivider: false, // ← без нижней линии

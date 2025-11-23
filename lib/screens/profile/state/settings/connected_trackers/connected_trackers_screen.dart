@@ -533,7 +533,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Подключенные трекеры'),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),

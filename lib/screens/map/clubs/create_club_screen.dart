@@ -335,7 +335,9 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.surface
+            : AppColors.getBackgroundColor(context),
         appBar: PaceAppBar(title: 'Создание клуба'),
         body: GestureDetector(
           // ── скрываем клавиатуру при нажатии на пустую область экрана

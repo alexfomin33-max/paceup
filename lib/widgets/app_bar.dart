@@ -60,11 +60,20 @@ class PaceAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Используем цвета из темы
+    final bgColor = backgroundColor ?? AppColors.getSurfaceColor(context);
+    final iconColor = AppColors.getIconPrimaryColor(context);
+    final borderColor = AppColors.getBorderColor(context);
+    final shadowColorValue = shadowColor ?? 
+        (Theme.of(context).brightness == Brightness.dark 
+            ? AppColors.darkShadowSoft 
+            : AppColors.shadowSoft);
+    
     return AppBar(
       elevation: elevation,
       scrolledUnderElevation: scrolledUnderElevation,
-      shadowColor: shadowColor ?? AppColors.shadowSoft,
-      backgroundColor: backgroundColor ?? AppColors.surface,
+      shadowColor: shadowColorValue,
+      backgroundColor: bgColor,
       surfaceTintColor: surfaceTintColor,
       centerTitle: centerTitle,
       leadingWidth: leadingWidth,
@@ -75,28 +84,34 @@ class PaceAppBar extends StatelessWidget implements PreferredSizeWidget {
           (showBack
               ? IconButton(
                   splashRadius: 22,
-                  icon: const Icon(
+                  icon: Icon(
                     CupertinoIcons.back,
                     size: 22,
-                    color: AppColors.iconPrimary,
+                    color: iconColor,
                   ),
                   onPressed: onBack ?? () => Navigator.of(context).maybePop(),
                 )
               : null),
 
       // Заголовок: свой виджет → текст
-      title: titleWidget ?? Text(title!, style: AppTextStyles.h17w6),
+      title: titleWidget ??
+          Text(
+            title!,
+            style: AppTextStyles.h17w6.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ),
 
       actions: actions,
 
       // Тонкая линия снизу, если нужно
       bottom: showBottomDivider
-          ? const PreferredSize(
-              preferredSize: Size.fromHeight(0.5),
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(0.5),
               child: Divider(
                 height: 0.5,
                 thickness: 0.5,
-                color: AppColors.border,
+                color: borderColor,
               ),
             )
           : null,

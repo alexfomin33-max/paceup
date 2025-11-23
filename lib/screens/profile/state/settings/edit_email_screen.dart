@@ -85,7 +85,7 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Почта'),
         body: GestureDetector(
           // Снимаем фокус при тапе вне поля ввода

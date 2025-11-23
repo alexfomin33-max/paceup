@@ -8,15 +8,20 @@ class RecommendedBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Text('Рекомендации для вас', style: AppTextStyles.h15w5),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'Рекомендации для вас',
+            style: AppTextStyles.h15w5.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ),
         ),
-        SizedBox(height: 12),
-        _RecommendedList(),
+        const SizedBox(height: 12),
+        const _RecommendedList(),
       ],
     );
   }
@@ -84,9 +89,12 @@ class _FriendCard extends StatelessWidget {
       width: 220,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.5,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -102,21 +110,27 @@ class _FriendCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             name,
-            style: AppTextStyles.h14w5,
+            style: AppTextStyles.h14w5.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 4),
           Text(
             desc,
-            style: AppTextStyles.h12w4Sec,
+            style: AppTextStyles.h12w4Sec.copyWith(
+              color: AppColors.getTextSecondaryColor(context),
+            ),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           const SizedBox(height: 4),
           Text(
             mutual,
-            style: AppTextStyles.h12w4Sec,
+            style: AppTextStyles.h12w4Sec.copyWith(
+              color: AppColors.getTextSecondaryColor(context),
+            ),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
@@ -127,7 +141,7 @@ class _FriendCard extends StatelessWidget {
               onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.brandPrimary,
-                foregroundColor: AppColors.surface,
+                foregroundColor: AppColors.getSurfaceColor(context),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.xl),

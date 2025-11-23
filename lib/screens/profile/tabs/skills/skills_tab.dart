@@ -136,16 +136,18 @@ class SkillCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final content = Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         border: Border.all(
-          color: AppColors.border,
+          color: AppColors.getBorderColor(context),
           width: 0.5, // тонкая рамка
         ),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -166,10 +168,11 @@ class SkillCard extends StatelessWidget {
                 Text(
                   title,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
+                    color: AppColors.getTextPrimaryColor(context),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -184,19 +187,20 @@ class SkillCard extends StatelessWidget {
                         levelText,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 13,
+                          color: AppColors.getTextSecondaryColor(context),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       '$current / $max',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.textPrimary,
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
                   ],
@@ -261,9 +265,9 @@ class _SkillProgressBar extends StatelessWidget {
             Expanded(
               child: Container(
                 height: 5,
-                decoration: const BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.all(Radius.circular(AppRadius.xs)),
+                decoration: BoxDecoration(
+                  color: AppColors.getBackgroundColor(context),
+                  borderRadius: const BorderRadius.all(Radius.circular(AppRadius.xs)),
                 ),
               ),
             ),
@@ -286,10 +290,10 @@ class _InfoNote extends StatelessWidget {
       child: Text(
         text,
         textAlign: TextAlign.center,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 13,
-          color: AppColors.textSecondary,
+          color: AppColors.getTextSecondaryColor(context),
           height: 1.5,
         ),
       ),

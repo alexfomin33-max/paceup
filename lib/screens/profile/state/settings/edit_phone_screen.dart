@@ -87,7 +87,7 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Телефон'),
         body: GestureDetector(
           // Снимаем фокус при тапе вне поля ввода

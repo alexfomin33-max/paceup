@@ -23,10 +23,10 @@ class EditingEquipmentScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.getSurfaceColor(context),
         centerTitle: true,
         title: const Text(
           'Редактирование снаряжения',

@@ -34,7 +34,7 @@ class _TogetherScreenState extends State<TogetherScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.getBackgroundColor(context),
 
       appBar: const PaceAppBar(
         title: 'Совместная тренировка',

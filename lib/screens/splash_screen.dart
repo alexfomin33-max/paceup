@@ -113,7 +113,7 @@ class SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     // 🔹 Пока идет проверка авторизации, показываем логотип с fade-in анимацией
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.getBackgroundColor(context),
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,

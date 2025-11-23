@@ -516,7 +516,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // Если userId ещё не загружен — показываем индикатор загрузки
     if (_actualUserId == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: PaceAppBar(
           titleWidget: Text.rich(
             TextSpan(
@@ -553,7 +553,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         : null;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackgroundColor(context),
 
       // новый глобальный AppBar без стекла/прозрачности
       appBar: PaceAppBar(

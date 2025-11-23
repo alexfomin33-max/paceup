@@ -622,10 +622,14 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.surface
+            : AppColors.getBackgroundColor(context),
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
-          backgroundColor: AppColors.surface,
+          backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.surface
+            : AppColors.getBackgroundColor(context),
           surfaceTintColor: Colors.transparent,
           elevation: 0.5,
           scrolledUnderElevation: 0, // ─── Убираем тень при скролле ───

@@ -121,10 +121,11 @@ class _SectionTitle extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.w600,
+            color: AppColors.getTextPrimaryColor(context),
           ),
         ),
       ),
@@ -151,16 +152,18 @@ class _MedalsMonthCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           border: Border.all(
-            color: AppColors.border,
+            color: AppColors.getBorderColor(context),
             width: 0.5,
           ), // ← тонкий бордер
           borderRadius: BorderRadius.circular(AppRadius.md),
           boxShadow: [
-            const BoxShadow(
-              color: AppColors.shadowSoft,
-              offset: Offset(0, 1),
+            BoxShadow(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkShadowSoft
+                  : AppColors.shadowSoft,
+              offset: const Offset(0, 1),
               blurRadius: 1,
               spreadRadius: 0,
             ),
@@ -213,8 +216,10 @@ class _MedalBadge extends StatelessWidget {
     final done = spec.done;
     final circle = done
         ? (spec.tint ?? AppColors.skeletonBase)
-        : AppColors.surfaceMuted;
-    final iconColor = done ? AppColors.iconPrimary : AppColors.textSecondary;
+        : AppColors.getSurfaceMutedColor(context);
+    final iconColor = done
+        ? AppColors.getIconPrimaryColor(context)
+        : AppColors.getTextSecondaryColor(context);
 
     return Center(
       child: Stack(
@@ -234,14 +239,18 @@ class _MedalBadge extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.surface,
-                border: Border.all(color: AppColors.border),
+                color: AppColors.getSurfaceColor(context),
+                border: Border.all(
+                  color: AppColors.getBorderColor(context),
+                ),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 boxShadow: [
-                  const BoxShadow(
-                    color: AppColors.shadowSoft,
+                  BoxShadow(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkShadowSoft
+                        : AppColors.shadowSoft,
                     blurRadius: 6,
-                    offset: Offset(0, 1),
+                    offset: const Offset(0, 1),
                   ),
                 ],
               ),
@@ -249,7 +258,11 @@ class _MedalBadge extends StatelessWidget {
                 spec.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontFamily: 'Inter', fontSize: 11),
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
               ),
             ),
           ),

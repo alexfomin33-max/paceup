@@ -126,7 +126,7 @@ class _AddAccScreenState extends State<AddAccScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleRegister,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.surface,
+                    backgroundColor: AppColors.getSurfaceColor(context),
                     foregroundColor: AppColors.textPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(

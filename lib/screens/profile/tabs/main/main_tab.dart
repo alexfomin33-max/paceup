@@ -341,10 +341,11 @@ class _SectionTitle extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.w600,
+            color: AppColors.getTextSecondaryColor(context),
           ),
         ),
       ),
@@ -395,13 +396,18 @@ class _ActivityCard extends StatelessWidget {
       height: 120,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border, width: 0.5),
+          border: Border.all(
+            color: AppColors.getBorderColor(context), 
+            width: 0.5,
+          ),
           boxShadow: [
-            const BoxShadow(
-              color: AppColors.shadowSoft,
-              offset: Offset(0, 1),
+            BoxShadow(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkShadowSoft
+                  : AppColors.shadowSoft,
+              offset: const Offset(0, 1),
               blurRadius: 1,
               spreadRadius: 0,
             ),
@@ -424,10 +430,12 @@ class _ActivityCard extends StatelessWidget {
                   width: double.infinity,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
-                    color: AppColors.border,
-                    child: const Icon(
+                    color: AppColors.getBorderColor(context),
+                    child: Icon(
                       CupertinoIcons.photo,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -447,11 +455,12 @@ class _ActivityCard extends StatelessWidget {
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         height: 1.0,
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -461,8 +470,10 @@ class _ActivityCard extends StatelessWidget {
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.textSecondary,
                         fontFamily: 'Inter',
                         fontSize: 11,
                         height: 1.0,
@@ -490,13 +501,18 @@ class _PRRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border, width: 0.5),
+          border: Border.all(
+            color: AppColors.getBorderColor(context), 
+            width: 0.5,
+          ),
           boxShadow: [
-            const BoxShadow(
-              color: AppColors.shadowSoft,
-              offset: Offset(0, 1),
+            BoxShadow(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkShadowSoft
+                  : AppColors.shadowSoft,
+              offset: const Offset(0, 1),
               blurRadius: 1,
               spreadRadius: 0,
             ),
@@ -528,10 +544,11 @@ class _PRBadge extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           time,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 13,
             fontWeight: FontWeight.w500,
+            color: AppColors.getTextPrimaryColor(context),
           ),
         ),
       ],
@@ -562,13 +579,18 @@ class _MetricsCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border, width: 0.5),
+          border: Border.all(
+            color: AppColors.getBorderColor(context),
+            width: 0.5,
+          ),
           boxShadow: [
-            const BoxShadow(
-              color: AppColors.shadowSoft,
-              offset: Offset(0, 1),
+            BoxShadow(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkShadowSoft
+                  : AppColors.shadowSoft,
+              offset: const Offset(0, 1),
               blurRadius: 1,
               spreadRadius: 0,
             ),
@@ -591,28 +613,30 @@ class _MetricsCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           r.$2,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 14,
+                            color: AppColors.getTextPrimaryColor(context),
                           ),
                         ),
                       ),
                       Text(
                         r.$3,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                     ],
                   ),
                 ),
                 if (i != rows.length - 1)
-                  const Divider(
+                  Divider(
                     height: 1,
                     thickness: 0.5,
-                    color: AppColors.divider,
+                    color: AppColors.getDividerColor(context),
                     indent: 40,
                     endIndent: 10,
                   ),

@@ -135,7 +135,7 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Доступ к данным'),
         body: SafeArea(
           child: _isLoading

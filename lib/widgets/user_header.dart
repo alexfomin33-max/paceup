@@ -80,7 +80,9 @@ class UserHeader extends StatelessWidget {
                           // Используем onAvatarTap как fallback для совместимости
                           child: Text(
                             userName,
-                            style: AppTextStyles.h15w5,
+                            style: AppTextStyles.h15w5.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -88,7 +90,9 @@ class UserHeader extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           dateText,
-                          style: AppTextStyles.h12w4Sec,
+                          style: AppTextStyles.h12w4Sec.copyWith(
+                            color: AppColors.getTextSecondaryColor(context),
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),

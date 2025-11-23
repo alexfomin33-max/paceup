@@ -34,7 +34,7 @@ class GoodsCard extends StatelessWidget {
           : null, // клик по карточке — раскрыть описание
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.sm),
           boxShadow: [
             const BoxShadow(
@@ -74,7 +74,8 @@ class GoodsCard extends StatelessWidget {
                       child: Icon(
                         CupertinoIcons.chevron_down,
                         size: 18,
-                        color: AppColors.iconPrimary.withValues(alpha: 0.6),
+                        color: AppColors.getIconPrimaryColor(context)
+                            .withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -112,8 +113,10 @@ class GoodsCard extends StatelessWidget {
                         clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(AppRadius.xs),
-                          color: AppColors.background,
-                          border: Border.all(color: AppColors.border),
+                          color: AppColors.getBackgroundColor(context),
+                          border: Border.all(
+                            color: AppColors.getBorderColor(context),
+                          ),
                           image: DecorationImage(
                             image: AssetImage(img),
                             fit: BoxFit.cover,
@@ -151,8 +154,8 @@ class GoodsCard extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceMuted,
-                      border: Border.all(color: AppColors.border),
+                      color: AppColors.getSurfaceMutedColor(context),
+                      border: Border.all(color: AppColors.getBorderColor(context)),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Column(
@@ -195,7 +198,7 @@ class GoodsCard extends StatelessWidget {
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.brandPrimary,
-                              foregroundColor: AppColors.surface,
+                              foregroundColor: AppColors.getSurfaceColor(context),
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,

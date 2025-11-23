@@ -67,10 +67,11 @@ class _SectionTitle extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.w600,
+            color: AppColors.getTextSecondaryColor(context),
           ),
         ),
       ),
@@ -107,13 +108,18 @@ class _YearChartCardState extends State<_YearChartCard> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border, width: 0.7),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.7,
+        ),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -132,10 +138,11 @@ class _YearChartCardState extends State<_YearChartCard> {
                 child: Text(
                   '$_year',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
+                    color: AppColors.getTextPrimaryColor(context),
                   ),
                 ),
               ),
@@ -152,6 +159,8 @@ class _YearChartCardState extends State<_YearChartCard> {
             tick: widget.tick,
             barColor: widget.color,
             height: widget.height,
+            borderColor: AppColors.getBorderColor(context),
+            textSecondaryColor: AppColors.getTextSecondaryColor(context),
           ),
         ],
       ),
@@ -171,7 +180,11 @@ class _NavIcon extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.sm),
       child: Padding(
         padding: const EdgeInsets.all(4),
-        child: Icon(icon, size: 18, color: AppColors.iconPrimary),
+        child: Icon(
+          icon,
+          size: 18,
+          color: AppColors.getIconPrimaryColor(context),
+        ),
       ),
     );
   }
@@ -185,6 +198,8 @@ class _BarsChart extends StatelessWidget {
   final double tick;
   final Color barColor;
   final double height;
+  final Color borderColor;
+  final Color textSecondaryColor;
 
   const _BarsChart({
     required this.values,
@@ -192,6 +207,8 @@ class _BarsChart extends StatelessWidget {
     required this.tick,
     required this.barColor,
     this.height = 170,
+    required this.borderColor,
+    required this.textSecondaryColor,
   });
 
   @override
@@ -207,6 +224,8 @@ class _BarsChart extends StatelessWidget {
               maxY: maxY,
               tick: tick,
               barColor: barColor,
+              borderColor: borderColor,
+              textSecondaryColor: textSecondaryColor,
             ),
           ),
         ),
@@ -253,7 +272,7 @@ class _MonthLabels extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: fontSize,
-                color: AppColors.textSecondary,
+                color: AppColors.getTextSecondaryColor(context),
               ),
             ),
           ),
@@ -268,12 +287,16 @@ class _BarsPainter extends CustomPainter {
   final double maxY;
   final double tick;
   final Color barColor;
+  final Color borderColor;
+  final Color textSecondaryColor;
 
   _BarsPainter({
     required this.values,
     required this.maxY,
     required this.tick,
     required this.barColor,
+    required this.borderColor,
+    required this.textSecondaryColor,
   });
 
   // поля графика (как было раньше)
@@ -288,7 +311,7 @@ class _BarsPainter extends CustomPainter {
     final chartH = size.height - topPad - bottomPad;
 
     final gridPaint = Paint()
-      ..color = AppColors.border
+      ..color = borderColor
       ..strokeWidth = 0.7;
 
     final tp = TextPainter(textDirection: TextDirection.ltr);
@@ -304,10 +327,10 @@ class _BarsPainter extends CustomPainter {
 
       tp.text = TextSpan(
         text: y.toInt().toString(),
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 10,
-          color: AppColors.textSecondary,
+          color: textSecondaryColor,
         ),
       );
       tp.layout();
@@ -343,5 +366,7 @@ class _BarsPainter extends CustomPainter {
       old.values != values ||
       old.maxY != maxY ||
       old.tick != tick ||
-      old.barColor != barColor;
+      old.barColor != barColor ||
+      old.borderColor != borderColor ||
+      old.textSecondaryColor != textSecondaryColor;
 }

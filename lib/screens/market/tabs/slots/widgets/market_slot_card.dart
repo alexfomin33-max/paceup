@@ -33,7 +33,7 @@ class MarketSlotCard extends StatelessWidget {
       onTap: onToggle,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.sm),
           boxShadow: [
             const BoxShadow(
@@ -77,10 +77,10 @@ class MarketSlotCard extends StatelessWidget {
                             AnimatedRotation(
                               duration: const Duration(milliseconds: 150),
                               turns: expanded ? 0.5 : 0.0,
-                              child: const Icon(
+                              child: Icon(
                                 CupertinoIcons.chevron_down,
                                 size: 14,
-                                color: AppColors.iconSecondary,
+                                color: AppColors.getIconSecondaryColor(context),
                               ),
                             ),
                             const SizedBox(width: 4),
@@ -139,8 +139,8 @@ class MarketSlotCard extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceMuted,
-                      border: Border.all(color: AppColors.border),
+                      color: AppColors.getSurfaceMutedColor(context),
+                      border: Border.all(color: AppColors.getBorderColor(context)),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: const Text(
@@ -191,7 +191,7 @@ class _Thumb extends StatelessWidget {
         height: 58,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.xs),
-          color: AppColors.background,
+          color: AppColors.getBackgroundColor(context),
           image: DecorationImage(
             image: AssetImage(imageAsset),
             fit: BoxFit.cover,
@@ -216,8 +216,12 @@ class _BuyButtonText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = enabled ? AppColors.brandPrimary : AppColors.disabledBg;
-    final fg = enabled ? AppColors.surface : AppColors.disabledText;
+    final bg = enabled
+        ? AppColors.brandPrimary
+        : AppColors.disabledBg; // disabledBg обычно не меняется
+    final fg = enabled
+        ? AppColors.getSurfaceColor(context)
+        : AppColors.disabledText; // disabledText обычно не меняется
     final icon = text == 'Бронь' ? CupertinoIcons.lock : CupertinoIcons.cart;
 
     return ConstrainedBox(

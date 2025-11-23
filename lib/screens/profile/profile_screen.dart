@@ -101,20 +101,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       data: (userId) {
         if (userId == null) {
           // Пользователь не авторизован
-          return const Scaffold(
-            backgroundColor: AppColors.background,
+          return Scaffold(
+            backgroundColor: AppColors.getBackgroundColor(context),
             appBar: PaceAppBar(
               titleWidget: Row(
                 children: [
                   Icon(
                     CupertinoIcons.sparkles,
                     size: 20,
-                    color: AppColors.iconPrimary,
+                    color: AppColors.getIconPrimaryColor(context),
                   ),
                   SizedBox(width: 8),
                   Text(
                     'AI тренер',
-                    style: TextStyle(fontFamily: 'Inter', fontSize: 16),
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
                   ),
                   SizedBox(width: 6),
                 ],
@@ -128,7 +132,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 16,
-                  color: AppColors.textSecondary,
+                  color: AppColors.getTextSecondaryColor(context),
                 ),
               ),
             ),
@@ -140,8 +144,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
         return _buildProfileContent(userId, profileState);
       },
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
+      loading: () => Scaffold(
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: PaceAppBar(
           titleWidget: Row(
             children: [
@@ -163,8 +167,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         body: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const Scaffold(
-        backgroundColor: AppColors.background,
+      error: (err, stack) => Scaffold(
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: PaceAppBar(
           titleWidget: Row(
             children: [
@@ -212,22 +216,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   /// Строит контент профиля для указанного userId
   Widget _buildProfileContent(int userId, ProfileHeaderState profileState) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackgroundColor(context),
 
       // ─────────── Верхняя шапка: обычный, плоский PaceAppBar ───────────
       appBar: PaceAppBar(
         // Тот же заголовок с иконкой «AI тренер», но без стекла/прозрачности
-        titleWidget: const Row(
+        titleWidget: Row(
           children: [
             Icon(
               CupertinoIcons.sparkles,
               size: 20,
-              color: AppColors.iconPrimary,
+              color: AppColors.getIconPrimaryColor(context),
             ),
             SizedBox(width: 8),
             Text(
               'AI тренер',
-              style: TextStyle(fontFamily: 'Inter', fontSize: 16),
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
             ),
             SizedBox(width: 6),
           ],
@@ -295,7 +303,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
 
           // Разделитель под табами
-          const Divider(height: 0.5, thickness: 0.5, color: AppColors.divider),
+          Divider(
+            height: 0.5,
+            thickness: 0.5,
+            color: AppColors.getDividerColor(context),
+          ),
 
           // Контент вкладок — скроллится внутри, шапка/табы остаются на месте
           Expanded(
@@ -339,7 +351,11 @@ class _AppIcon extends StatelessWidget {
         onPressed: onPressed ?? () {},
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(minWidth: 44.0, minHeight: 44.0),
-        icon: Icon(icon, color: AppColors.iconPrimary, size: 20.0),
+        icon: Icon(
+          icon,
+          color: AppColors.getIconPrimaryColor(context),
+          size: 20.0,
+        ),
         splashRadius: 22,
       ),
     );

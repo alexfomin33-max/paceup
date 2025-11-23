@@ -168,4 +168,110 @@ abstract class AppColors {
   static const Color accept = Color(0xFF2E7D32);
   static const Color bordercancel = Color(0xFFF6CACA);
   static const Color borderaccept = Color(0xFFD7EDCF);
+
+  // ┌───────────────────────────────────────────────────────────────────────┐
+  // │ ТЕМНАЯ ТЕМА                                                           │
+  // └───────────────────────────────────────────────────────────────────────┘
+  
+  /// Получить цвет фона в зависимости от темы
+  static Color getBackgroundColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? darkBackground 
+        : background;
+  }
+
+  /// Получить цвет поверхности в зависимости от темы
+  static Color getSurfaceColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? darkSurface 
+        : surface;
+  }
+
+  /// Получить основной цвет текста в зависимости от темы
+  static Color getTextPrimaryColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? darkTextPrimary 
+        : textPrimary;
+  }
+
+  /// Получить вторичный цвет текста в зависимости от темы
+  static Color getTextSecondaryColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? darkTextSecondary 
+        : textSecondary;
+  }
+
+  /// Получить третичный цвет текста в зависимости от темы
+  static Color getTextTertiaryColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? darkTextTertiary 
+        : textTertiary;
+  }
+
+  /// Получить цвет разделителя в зависимости от темы
+  static Color getDividerColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? darkDivider 
+        : divider;
+  }
+
+  /// Получить цвет бордера в зависимости от темы
+  static Color getBorderColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? darkBorder 
+        : border;
+  }
+
+  /// Получить приглушенный цвет поверхности в зависимости от темы
+  static Color getSurfaceMutedColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? darkSurfaceMuted 
+        : surfaceMuted;
+  }
+
+  /// Получить цвет иконки в зависимости от темы
+  static Color getIconPrimaryColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? darkIconPrimary 
+        : iconPrimary;
+  }
+
+  /// Получить вторичный цвет иконки в зависимости от темы
+  static Color getIconSecondaryColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? darkIconSecondary 
+        : iconSecondary;
+  }
+
+  /// Получить цвет плейсхолдера в зависимости от темы
+  static Color getTextPlaceholderColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark 
+        ? darkTextPlaceholder 
+        : textPlaceholder;
+  }
+
+  // Темные цвета (iOS Dark Mode)
+  static const Color darkBackground = Color(0xFF000000); // iOS black
+  static const Color darkSurface = Color(0xFF1C1C1E); // iOS dark surface
+  static const Color darkSurfaceMuted = Color(0xFF2C2C2E);
+  static const Color darkTextPrimary = Color(0xFFFFFFFF);
+  static const Color darkTextSecondary = Color(0xFF98989D);
+  static const Color darkTextTertiary = Color(0xFF6C6C70);
+  static const Color darkTextPlaceholder = Color(0xFF6C6C70); // плейсхолдер в темной теме
+  static const Color darkDivider = Color(0xFF38383A);
+  static const Color darkBorder = Color(0xFF48484A);
+  static const Color darkIconPrimary = Color(0xFFFFFFFF);
+  static const Color darkIconSecondary = Color(0xFF98989D);
+  static const Color darkShadowSoft = Color(0x40000000); // более заметная тень в темной теме
 }

@@ -48,7 +48,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: PaceAppBar(
           title: 'Тренировка',
           showBottomDivider:
@@ -56,10 +56,10 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
           actions: [
             IconButton(
               splashRadius: 22,
-              icon: const Icon(
+              icon: Icon(
                 CupertinoIcons.personalhotspot,
                 size: 20,
-                color: AppColors.iconPrimary,
+                color: AppColors.getIconPrimaryColor(context),
               ),
               onPressed: () {
                 Navigator.of(context).push(
@@ -69,10 +69,10 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
             ),
             IconButton(
               splashRadius: 22,
-              icon: const Icon(
+              icon: Icon(
                 CupertinoIcons.ellipsis,
                 size: 20,
-                color: AppColors.iconPrimary,
+                color: AppColors.getIconPrimaryColor(context),
               ),
               onPressed: () {},
             ),
@@ -86,11 +86,17 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
             SliverToBoxAdapter(
               child: Container(
                 width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
                   border: Border(
-                    top: BorderSide(width: 0.5, color: AppColors.border),
-                    bottom: BorderSide(width: 0.5, color: AppColors.border),
+                    top: BorderSide(
+                      width: 0.5,
+                      color: AppColors.getBorderColor(context),
+                    ),
+                    bottom: BorderSide(
+                      width: 0.5,
+                      color: AppColors.getBorderColor(context),
+                    ),
                   ),
                 ),
                 child: Column(
@@ -166,15 +172,20 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
             ],
 
             // ───────── «Отрезки» — таблица на всю ширину экрана
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: EdgeInsets.fromLTRB(12, 8, 12, 8),
-                    child: Text('Отрезки', style: AppTextStyles.h15w5),
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                    child: Text(
+                      'Отрезки',
+                      style: AppTextStyles.h15w5.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
                   ),
-                  _SplitsTableFull(),
+                  const _SplitsTableFull(),
                 ],
               ),
             ),
@@ -206,9 +217,12 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                 child: Container(
                   padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: AppColors.getSurfaceColor(context),
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: AppColors.border, width: 1),
+                    border: Border.all(
+                      color: AppColors.getBorderColor(context),
+                      width: 1,
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -218,10 +232,10 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                         child: _SimpleLineChart(mode: _chartTab),
                       ),
                       const SizedBox(height: 6),
-                      const Divider(
+                      Divider(
                         height: 1,
                         thickness: 0.5,
-                        color: AppColors.border,
+                        color: AppColors.getBorderColor(context),
                       ),
                       const SizedBox(height: 4),
                       const _PaceSummary(), // подписи «Самый быстрый/Средний/Самый медленный»
@@ -252,7 +266,7 @@ class _WatchPill extends StatelessWidget {
     return Container(
       height: 56,
       decoration: ShapeDecoration(
-        color: AppColors.background,
+        color: AppColors.getBackgroundColor(context),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xxl),
         ),
@@ -287,7 +301,9 @@ class _WatchPill extends StatelessWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.h13w5,
+                style: AppTextStyles.h13w5.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
               ),
             ),
           ),
@@ -350,41 +366,63 @@ class _SplitsTableFull extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
         border: Border(
-          top: BorderSide(color: AppColors.border, width: 1),
-          bottom: BorderSide(color: AppColors.border, width: 1),
+          top: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
+          bottom: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
       ),
       child: Column(
         children: [
           // ───── Заголовок столбцов
-          const Padding(
-            padding: EdgeInsets.fromLTRB(12, 10, 12, 4),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
             child: Row(
               children: [
                 SizedBox(
                   width: 28,
-                  child: Text('Км', style: AppTextStyles.h12w4),
+                  child: Text(
+                    'Км',
+                    style: AppTextStyles.h12w4.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
                 ),
                 SizedBox(
                   width: 52,
-                  child: Text('Темп', style: AppTextStyles.h12w4),
+                  child: Text(
+                    'Темп',
+                    style: AppTextStyles.h12w4.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
                 ),
-                Expanded(child: SizedBox()),
+                const Expanded(child: SizedBox()),
                 SizedBox(
                   width: 40,
                   child: Text(
                     'Пульс',
                     textAlign: TextAlign.right,
-                    style: AppTextStyles.h12w4,
+                    style: AppTextStyles.h12w4.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1, thickness: 0.5, color: AppColors.border),
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: AppColors.getBorderColor(context),
+          ),
 
           // ───── Строки данных
           ...List.generate(pace.length, (i) {
@@ -397,13 +435,20 @@ class _SplitsTableFull extends StatelessWidget {
                     children: [
                       SizedBox(
                         width: 28,
-                        child: Text('${i + 1}', style: AppTextStyles.h12w4),
+                        child: Text(
+                          '${i + 1}',
+                          style: AppTextStyles.h12w4.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                        ),
                       ),
                       SizedBox(
                         width: 40,
                         child: Text(
                           fmtPaceSec(pace[i]),
-                          style: AppTextStyles.h12w4,
+                          style: AppTextStyles.h12w4.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -440,17 +485,19 @@ class _SplitsTableFull extends StatelessWidget {
                         child: Text(
                           '${hr[i]}',
                           textAlign: TextAlign.right,
-                          style: AppTextStyles.h12w4,
+                          style: AppTextStyles.h12w4.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
                 if (i != pace.length - 1)
-                  const Divider(
+                  Divider(
                     height: 1,
                     thickness: 0.5,
-                    color: AppColors.border,
+                    color: AppColors.getBorderColor(context),
                   ),
               ],
             );
@@ -484,9 +531,12 @@ class _SegmentedPill extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
@@ -501,21 +551,27 @@ class _SegmentedPill extends StatelessWidget {
 
   Widget _seg(int idx, String text) {
     final selected = value == idx;
-    return GestureDetector(
-      onTap: () => onChanged(idx),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.textPrimary : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-        child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-              color: selected ? AppColors.surface : AppColors.textPrimary,
+    return Builder(
+      builder: (context) => GestureDetector(
+        onTap: () => onChanged(idx),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.getTextPrimaryColor(context)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
+          child: Center(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+                color: selected
+                    ? AppColors.getSurfaceColor(context)
+                    : AppColors.getTextPrimaryColor(context),
+              ),
             ),
           ),
         ),
@@ -610,7 +666,12 @@ class _SimpleLineChart extends StatelessWidget {
     final xMax = y.length;
 
     return CustomPaint(
-      painter: _LinePainter(yValues: y, paceMode: isPace, xMax: xMax),
+      painter: _LinePainter(
+        yValues: y,
+        paceMode: isPace,
+        xMax: xMax,
+        textSecondaryColor: AppColors.getTextSecondaryColor(context),
+      ),
       willChange: false,
     );
   }
@@ -620,11 +681,13 @@ class _LinePainter extends CustomPainter {
   final List<double> yValues; // для Темпа — секунды/км
   final bool paceMode; // true -> формат ММ:СС
   final int xMax; // количество км (точек), рисуем подписи 0..xMax
+  final Color textSecondaryColor; // цвет текста для подписей осей
 
   _LinePainter({
     required this.yValues,
     required this.paceMode,
     required this.xMax,
+    required this.textSecondaryColor,
   });
 
   String _fmtSecToMinSec(double sec) {
@@ -636,6 +699,7 @@ class _LinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Используем статические цвета для графика (brandPrimary и skeletonBase не зависят от темы)
     final paintGrid = Paint()
       ..color = AppColors.skeletonBase
       ..strokeWidth = 1;
@@ -664,10 +728,10 @@ class _LinePainter extends CustomPainter {
     }
 
     // Вертикальные линии + подписи X (0..xMax)
-    final tpXStyle = const TextStyle(
+    final tpXStyle = TextStyle(
       fontFamily: 'Inter',
       fontSize: 10,
-      color: AppColors.textSecondary,
+      color: textSecondaryColor,
     );
     for (int k = 0; k <= xMax; k++) {
       final x = left + w * (k / xMax);
@@ -699,10 +763,10 @@ class _LinePainter extends CustomPainter {
     canvas.drawPath(path, paintLine);
 
     // Подписи оси Y (max, mid, min) — единицу измерения НЕ рисуем
-    final tpYStyle = const TextStyle(
+    final tpYStyle = TextStyle(
       fontFamily: 'Inter',
       fontSize: 10,
-      color: AppColors.textSecondary,
+      color: textSecondaryColor,
     );
     final labels = <double>[maxY, minY + (maxY - minY) * 0.5, minY];
     for (int i = 0; i < labels.length; i++) {
@@ -720,7 +784,10 @@ class _LinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _LinePainter old) =>
-      old.yValues != yValues || old.paceMode != paceMode || old.xMax != xMax;
+      old.yValues != yValues ||
+      old.paceMode != paceMode ||
+      old.xMax != xMax ||
+      old.textSecondaryColor != textSecondaryColor;
 }
 
 /// Подписи к темпу — в одном блоке с графиком (значения как на макете)
@@ -739,14 +806,19 @@ class _PaceSummary extends StatelessWidget {
           children: [
             Text(
               name,
-              style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
             ),
             Text(
               val,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
+                color: AppColors.getTextPrimaryColor(context),
               ),
             ),
           ],

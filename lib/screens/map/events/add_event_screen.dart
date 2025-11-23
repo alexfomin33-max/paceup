@@ -541,7 +541,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.surface
+            : AppColors.getBackgroundColor(context),
         appBar: PaceAppBar(
           title: 'Добавление события',
           actions: [
@@ -932,7 +934,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                             shape: const CircleBorder(),
                             side: const BorderSide(color: AppColors.border),
                             foregroundColor: AppColors.textPrimary,
-                            backgroundColor: AppColors.surface,
+                            backgroundColor: AppColors.getSurfaceColor(context),
                             padding: EdgeInsets.zero,
                           ),
                           child: const Icon(CupertinoIcons.placemark, size: 20),

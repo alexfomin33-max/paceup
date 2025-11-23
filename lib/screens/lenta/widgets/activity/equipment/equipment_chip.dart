@@ -73,7 +73,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
       child: Container(
         height: 56,
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: AppColors.getBackgroundColor(context),
           borderRadius: BorderRadius.circular(AppRadius.xxl),
         ),
         child: Stack(
@@ -86,8 +86,8 @@ class _EquipmentChipState extends State<EquipmentChip> {
               child: Container(
                 width: 50,
                 height: 50,
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
                   shape: BoxShape.circle,
                 ),
                 child: ClipOval(
@@ -106,19 +106,19 @@ class _EquipmentChipState extends State<EquipmentChip> {
                               placeholder: (context, url) => Container(
                                 width: 50,
                                 height: 50,
-                                color: AppColors.surface,
+                                color: AppColors.getSurfaceColor(context),
                               ),
                               errorWidget: (context, url, error) => Container(
                                 width: 50,
                                 height: 50,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.surface,
+                                decoration: BoxDecoration(
+                                  color: AppColors.getSurfaceColor(context),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   CupertinoIcons.sportscourt,
                                   size: 24,
-                                  color: AppColors.iconSecondary,
+                                  color: AppColors.getIconSecondaryColor(context),
                                 ),
                               ),
                             );
@@ -127,14 +127,14 @@ class _EquipmentChipState extends State<EquipmentChip> {
                       : Container(
                           width: 50,
                           height: 50,
-                          decoration: const BoxDecoration(
-                            color: AppColors.surface,
+                          decoration: BoxDecoration(
+                            color: AppColors.getSurfaceColor(context),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             CupertinoIcons.sportscourt,
                             size: 24,
-                            color: AppColors.iconSecondary,
+                            color: AppColors.getIconSecondaryColor(context),
                           ),
                         ),
                 ),
@@ -153,18 +153,31 @@ class _EquipmentChipState extends State<EquipmentChip> {
                   children: [
                     TextSpan(
                       text: "$displayName\n",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         height: 1.8,
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
-                    const TextSpan(
+                    TextSpan(
                       text: "Пробег: ",
-                      style: AppTextStyles.h11w4Sec,
+                      style: AppTextStyles.h11w4Sec.copyWith(
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
                     ),
-                    TextSpan(text: "$mileage", style: AppTextStyles.h12w5),
-                    const TextSpan(text: " км", style: AppTextStyles.h11w4Sec),
+                    TextSpan(
+                      text: "$mileage",
+                      style: AppTextStyles.h12w5.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                    TextSpan(
+                      text: " км",
+                      style: AppTextStyles.h11w4Sec.copyWith(
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
+                    ),
                   ],
                 ),
                 maxLines: 2,
@@ -197,14 +210,14 @@ class _EquipmentChipState extends State<EquipmentChip> {
                       key: _menuKey, // ← важный ключ для позиционирования попапа
                       width: 28,
                       height: 28,
-                      decoration: const BoxDecoration(
-                        color: AppColors.surface,
+                      decoration: BoxDecoration(
+                        color: AppColors.getSurfaceColor(context),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         CupertinoIcons.ellipsis,
                         size: 16,
-                        color: AppColors.iconPrimary,
+                        color: AppColors.getIconPrimaryColor(context),
                       ),
                     ),
                   ),

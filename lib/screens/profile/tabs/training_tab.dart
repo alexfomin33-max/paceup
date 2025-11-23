@@ -151,10 +151,10 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
                       data.activities.isEmpty
                           ? 'Нет тренировок за выбранные виды спорта'
                           : 'Нет тренировок в ${_MonthToolbar._monthTitle(_month)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -184,10 +184,10 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
           child: SelectableText.rich(
             TextSpan(
               text: 'Ошибка загрузки тренировок:\n',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 14,
-                color: AppColors.textPrimary,
+                color: AppColors.getTextPrimaryColor(context),
               ),
               children: [
                 TextSpan(
@@ -236,10 +236,11 @@ class _MonthToolbar extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.w600,
+            color: AppColors.getTextPrimaryColor(context),
           ),
         ),
         const SizedBox(width: 4),
@@ -300,7 +301,11 @@ class _NavIcon extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.sm),
       child: Padding(
         padding: const EdgeInsets.all(4),
-        child: Icon(icon, size: 18, color: AppColors.iconPrimary),
+        child: Icon(
+          icon,
+          size: 18,
+          color: AppColors.getIconPrimaryColor(context),
+        ),
       ),
     );
   }
@@ -325,14 +330,21 @@ class _SportIcon extends StatelessWidget {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: selected ? AppColors.brandPrimary : AppColors.surface,
+          color: selected
+              ? AppColors.brandPrimary
+              : AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         child: Icon(
           icon,
           size: 16,
-          color: selected ? AppColors.surface : AppColors.textPrimary,
+          color: selected
+              ? AppColors.getSurfaceColor(context)
+              : AppColors.getTextPrimaryColor(context),
         ),
       ),
     );
@@ -359,13 +371,18 @@ class _CalendarCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border, width: 0.7),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.7,
+        ),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -414,7 +431,9 @@ class _Dow extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 12,
-            color: weekend ? AppColors.error : AppColors.textSecondary,
+            color: weekend
+                ? AppColors.error
+                : AppColors.getTextSecondaryColor(context),
           ),
         ),
       ),
@@ -493,7 +512,7 @@ class _MonthGrid extends StatelessWidget {
                           fontSize: 12,
                           color: isWeekend
                               ? AppColors.error
-                              : AppColors.textPrimary,
+                              : AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                     ),
@@ -511,10 +530,10 @@ class _MonthGrid extends StatelessWidget {
                           ),
                           child: Text(
                             bubble,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 11,
-                              color: AppColors.surface,
+                              color: AppColors.getSurfaceColor(context),
                             ),
                           ),
                         ),
@@ -544,16 +563,24 @@ class _WorkoutTable extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
         border: Border(
-          top: BorderSide(color: AppColors.border, width: 0.5),
-          bottom: BorderSide(color: AppColors.border, width: 0.5),
+          top: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 0.5,
+          ),
+          bottom: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 0.5,
+          ),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -567,10 +594,10 @@ class _WorkoutTable extends StatelessWidget {
             children: [
               _WorkoutRow(item: w),
               if (!last)
-                const Divider(
+                Divider(
                   height: 1,
                   thickness: 0.5,
-                  color: AppColors.divider,
+                  color: AppColors.getDividerColor(context),
                 ),
             ],
           );
@@ -643,17 +670,17 @@ class _WorkoutRow extends ConsumerWidget {
                   children: [
                     Text(
                       _fmtDate(item.when),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                     ),
                     const Spacer(),
-                    const Icon(
+                    Icon(
                       Icons.more_horiz,
                       size: 18,
-                      color: AppColors.iconSecondary,
+                      color: AppColors.getTextSecondaryColor(context),
                     ),
                   ],
                 ),
@@ -683,34 +710,37 @@ class _WorkoutRow extends ConsumerWidget {
                       const SizedBox(width: 6),
                       Expanded(
                         child: _metric(
+                          context,
                           null,
                           item.distText,
                           MainAxisAlignment.start,
                         ),
                       ),
-                      const VerticalDivider(
+                      VerticalDivider(
                         width: 1,
                         thickness: 0.5,
-                        color: AppColors.divider,
+                        color: AppColors.getDividerColor(context),
                         indent: 0,
                         endIndent: 0,
                       ),
                       Expanded(
                         child: _metric(
+                          context,
                           null,
                           item.durText,
                           MainAxisAlignment.center,
                         ),
                       ),
-                      const VerticalDivider(
+                      VerticalDivider(
                         width: 1,
                         thickness: 0.5,
-                        color: AppColors.divider,
+                        color: AppColors.getDividerColor(context),
                         indent: 0,
                         endIndent: 0,
                       ),
                       Expanded(
                         child: _metric(
+                          context,
                           null,
                           item.paceText,
                           MainAxisAlignment.center,
@@ -728,22 +758,32 @@ class _WorkoutRow extends ConsumerWidget {
     );
   }
 
-  Widget _metric(IconData? icon, String text, MainAxisAlignment alignment) {
+  Widget _metric(
+    BuildContext context,
+    IconData? icon,
+    String text,
+    MainAxisAlignment alignment,
+  ) {
     return SizedBox(
       width: double.infinity,
       child: Row(
         mainAxisAlignment: alignment,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 15, color: AppColors.iconSecondary),
+            Icon(
+              icon,
+              size: 15,
+              color: AppColors.getTextSecondaryColor(context),
+            ),
             const SizedBox(width: 6),
           ],
           Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
               fontWeight: FontWeight.w400,
+              color: AppColors.getTextPrimaryColor(context),
             ),
           ),
         ],

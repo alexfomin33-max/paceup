@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import '../../../../../theme/app_theme.dart';
 import '../models/main_tab_data.dart';
 
@@ -72,7 +73,14 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(text, style: AppTextStyles.h15w6),
+        child: Text(
+          text, 
+          style: AppTextStyles.h15w6.copyWith(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkTextSecondary
+                : AppColors.textSecondary,
+          ),
+        ),
       ),
     );
   }
@@ -265,13 +273,18 @@ class _GearCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border, width: 0.5),
+          border: Border.all(
+            color: AppColors.getBorderColor(context), 
+            width: 0.5,
+          ),
           boxShadow: [
-            const BoxShadow(
-              color: AppColors.shadowSoft,
-              offset: Offset(0, 1),
+            BoxShadow(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkShadowSoft
+                  : AppColors.shadowSoft,
+              offset: const Offset(0, 1),
               blurRadius: 1,
               spreadRadius: 0,
             ),
@@ -307,7 +320,9 @@ class _GearCard extends StatelessWidget {
                           title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.h14w5,
+                          style: AppTextStyles.h14w5.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -315,13 +330,15 @@ class _GearCard extends StatelessWidget {
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: AppColors.skeletonBase,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkSurfaceMuted
+                              : AppColors.skeletonBase,
                           borderRadius: BorderRadius.circular(AppRadius.xl),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           CupertinoIcons.pencil,
                           size: 12,
-                          color: AppColors.iconPrimary,
+                          color: AppColors.getIconPrimaryColor(context),
                         ),
                       ),
                       const SizedBox(width: 2),
@@ -354,19 +371,24 @@ class _InlineStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return RichText(
       text: TextSpan(
         style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
         children: [
           TextSpan(
             text: '$label ',
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(
+              color: isDark 
+                  ? AppColors.darkTextSecondary 
+                  : AppColors.textSecondary,
+            ),
           ),
           TextSpan(
             text: value,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
+              color: AppColors.getTextPrimaryColor(context),
             ),
           ),
         ],

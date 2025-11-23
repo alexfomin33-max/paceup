@@ -79,16 +79,21 @@ class _RaceBlock extends StatelessWidget {
                   maxLines: 1,
                   softWrap: false,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h14w5,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Text(
                 _fmt(item.date),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
-                  color: AppColors.textSecondary,
+                  color: AppColors.getTextSecondaryColor(context),
                 ),
               ),
             ],
@@ -99,16 +104,24 @@ class _RaceBlock extends StatelessWidget {
         // Табличная карточка — во всю ширину экрана
         Container(
           width: double.infinity,
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
+          decoration: BoxDecoration(
+            color: AppColors.getSurfaceColor(context),
             border: Border(
-              top: BorderSide(color: AppColors.border, width: 0.5),
-              bottom: BorderSide(color: AppColors.border, width: 0.5),
+              top: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 0.5,
+              ),
+              bottom: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 0.5,
+              ),
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.shadowSoft,
-                offset: Offset(0, 1),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkShadowSoft
+                    : AppColors.shadowSoft,
+                offset: const Offset(0, 1),
                 blurRadius: 1,
                 spreadRadius: 0,
               ),
@@ -136,43 +149,50 @@ class _RaceBlock extends StatelessWidget {
                 Expanded(
                   child: Center(
                     child: _metric(
+                      context,
                       Icons.directions_run,
                       '${item.km.toStringAsFixed(1)} км',
                     ),
                   ),
                 ),
 
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: FractionallySizedBox(
                     heightFactor: 0.5,
                     child: VerticalDivider(
                       width: 1,
                       thickness: 0.5,
-                      color: AppColors.divider,
+                      color: AppColors.getDividerColor(context),
                     ),
                   ),
                 ),
 
                 // ЯЧЕЙКА 3: время
                 Expanded(
-                  child: Center(child: _metric(Icons.access_time, item.time)),
+                  child: Center(
+                    child: _metric(context, Icons.access_time, item.time),
+                  ),
                 ),
 
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: FractionallySizedBox(
                     heightFactor: 0.5,
                     child: VerticalDivider(
                       width: 1,
                       thickness: 0.5,
-                      color: AppColors.divider,
+                      color: AppColors.getDividerColor(context),
                     ),
                   ),
                 ),
 
                 // ЯЧЕЙКА 4: темп
-                Expanded(child: Center(child: _metric(Icons.speed, item.pace))),
+                Expanded(
+                  child: Center(
+                    child: _metric(context, Icons.speed, item.pace),
+                  ),
+                ),
               ],
             ),
           ),
@@ -184,7 +204,7 @@ class _RaceBlock extends StatelessWidget {
     );
   }
 
-  static Widget _metric(IconData icon, String value) {
+  static Widget _metric(BuildContext context, IconData icon, String value) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -194,10 +214,11 @@ class _RaceBlock extends StatelessWidget {
           child: Text(
             value,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 15,
               fontWeight: FontWeight.w400,
+              color: AppColors.getTextPrimaryColor(context),
             ),
           ),
         ),

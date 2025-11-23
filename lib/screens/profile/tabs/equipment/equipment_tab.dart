@@ -236,7 +236,11 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
           children: [
             Text(
               _error!,
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: 16),
             CupertinoButton(
@@ -539,13 +543,18 @@ class _GearListCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border, width: 0.5),
+          border: Border.all(
+            color: AppColors.getBorderColor(context), 
+            width: 0.5,
+          ),
           boxShadow: [
-            const BoxShadow(
-              color: AppColors.shadowSoft,
-              offset: Offset(0, 1),
+            BoxShadow(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkShadowSoft
+                  : AppColors.shadowSoft,
+              offset: const Offset(0, 1),
               blurRadius: 1,
               spreadRadius: 0,
             ),
@@ -577,10 +586,11 @@ class _GearListCard extends StatelessWidget {
                               it.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
+                                color: AppColors.getTextPrimaryColor(context),
                               ),
                             ),
                             if (it.brand.isNotEmpty)
@@ -588,10 +598,10 @@ class _GearListCard extends StatelessWidget {
                                 it.brand,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'Inter',
                                   fontSize: 12,
-                                  color: AppColors.textPrimary,
+                                  color: AppColors.getTextPrimaryColor(context),
                                 ),
                               ),
                           ],
@@ -600,21 +610,21 @@ class _GearListCard extends StatelessWidget {
                       const SizedBox(width: 12),
                       Text(
                         it.value,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.textPrimary,
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                     ],
                   ),
                 ),
                 if (i != items.length - 1)
-                  const Divider(
+                  Divider(
                     height: 1,
                     thickness: 0.5,
-                    color: AppColors.divider,
+                    color: AppColors.getDividerColor(context),
                   ),
               ],
             );

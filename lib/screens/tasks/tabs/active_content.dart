@@ -158,8 +158,8 @@ class TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final card = Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.border),
+        color: AppColors.getSurfaceColor(context),
+        border: Border.all(color: AppColors.getBorderColor(context)),
         borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: const [
           BoxShadow(
@@ -199,18 +199,18 @@ class TaskCard extends StatelessWidget {
                   children: [
                     Text(
                       progressText,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                     ),
                     Text(
                       '${(percent * 100).toStringAsFixed(1)}%',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: AppColors.textPrimary,
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
                   ],
@@ -256,8 +256,8 @@ class ExpeditionCard extends StatelessWidget {
     final card = Container(
       padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.border),
+        color: AppColors.getSurfaceColor(context),
+        border: Border.all(color: AppColors.getBorderColor(context)),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: const [
           BoxShadow(
@@ -292,19 +292,19 @@ class ExpeditionCard extends StatelessWidget {
                   children: [
                     Text(
                       progressText,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                     ),
                     Text(
                       '${(percent * 100).toStringAsFixed(1)}%',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.textPrimary,
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
                   ],
@@ -356,9 +356,9 @@ class _ProgressBar extends StatelessWidget {
             Expanded(
               child: Container(
                 height: 5,
-                decoration: const BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: AppColors.getBackgroundColor(context),
+                  borderRadius: const BorderRadius.only(
                     topRight: Radius.circular(AppRadius.xs),
                     bottomRight: Radius.circular(AppRadius.xs),
                   ),
@@ -387,14 +387,14 @@ class _IconBadge extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Icon(icon, size: 28, color: AppColors.iconPrimary),
+          Icon(icon, size: 28, color: AppColors.getIconPrimaryColor(context)),
           Positioned(
             bottom: 0,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.surface,
-                border: Border.all(color: AppColors.border),
+                color: AppColors.getSurfaceColor(context),
+                border: Border.all(color: AppColors.getBorderColor(context)),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 boxShadow: const [
                   BoxShadow(
@@ -433,10 +433,10 @@ class _RoundImage extends StatelessWidget {
               : null,
         ),
         child: provider == null
-            ? const Icon(
+            ? Icon(
                 CupertinoIcons.photo,
                 size: 22,
-                color: AppColors.iconSecondary,
+                color: AppColors.getIconSecondaryColor(context),
               )
             : null,
       ),
@@ -459,10 +459,10 @@ class _RectImage extends StatelessWidget {
           color: AppColors.skeletonBase,
           borderRadius: BorderRadius.circular(AppRadius.xxl),
         ),
-        child: const Icon(
+        child: Icon(
           CupertinoIcons.photo,
           size: 22,
-          color: AppColors.iconSecondary,
+          color: AppColors.getIconSecondaryColor(context),
         ),
       );
     }
@@ -482,10 +482,10 @@ class _RectImage extends StatelessWidget {
                 color: AppColors.skeletonBase,
                 borderRadius: BorderRadius.circular(AppRadius.xxl),
               ),
-              child: const Icon(
+              child: Icon(
                 CupertinoIcons.photo,
                 size: 22,
-                color: AppColors.iconSecondary,
+                color: AppColors.getIconSecondaryColor(context),
               ),
             );
           },

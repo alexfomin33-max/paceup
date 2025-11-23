@@ -133,9 +133,9 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface, // фон чата — белый
+        backgroundColor: AppColors.getBackgroundColor(context), // фон чата — белый
         appBar: AppBar(
-          backgroundColor: AppColors.surface,
+          backgroundColor: AppColors.getBackgroundColor(context),
           elevation: 0.5,
           leadingWidth: 40,
           leading: Transform.translate(
@@ -182,9 +182,9 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
                       widget.itemTitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                     ),
                   ],
@@ -233,12 +233,12 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
                     );
                   }
                   if (index == 4) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Divider(
                         height: 16,
                         thickness: 1,
-                        color: AppColors.border,
+                        color: AppColors.getBorderColor(context),
                       ),
                     );
                   }
@@ -372,9 +372,9 @@ class _BubbleLeft extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: AppColors.getBackgroundColor(context),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.getBorderColor(context)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,7 +432,7 @@ class _BubbleRight extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.backgroundGreen, // мягкий зелёный
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.getBorderColor(context)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -502,13 +502,13 @@ class _BubbleImageLeft extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Text(
                         time,
-                        style: const TextStyle(
-                          color: AppColors.surface,
+                        style: TextStyle(
+                          color: AppColors.getSurfaceColor(context),
                           fontSize: 11,
                         ),
                       ),
@@ -555,13 +555,13 @@ class _BubbleImageRight extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Text(
                         time,
-                        style: const TextStyle(
-                          color: AppColors.surface,
+                        style: TextStyle(
+                          color: AppColors.getSurfaceColor(context),
                           fontSize: 11,
                         ),
                       ),
@@ -616,29 +616,31 @@ class _ComposerState extends State<_Composer> {
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          boxShadow: [
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          boxShadow: const [
             BoxShadow(
               color: AppColors.shadowSoft,
               blurRadius: 8,
               offset: Offset(0, -2),
             ),
           ],
-          border: Border(top: BorderSide(color: AppColors.border)),
+          border: Border(
+            top: BorderSide(color: AppColors.getBorderColor(context)),
+          ),
         ),
         child: Row(
           children: [
             IconButton(
               icon: const Icon(CupertinoIcons.plus_circle),
               onPressed: widget.onPickImage, // открыть галерею
-              color: AppColors.iconSecondary,
+              color: AppColors.getIconSecondaryColor(context),
             ),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
+                  color: AppColors.getSurfaceMutedColor(context),
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: TextField(
@@ -657,7 +659,9 @@ class _ComposerState extends State<_Composer> {
             IconButton(
               icon: const Icon(CupertinoIcons.paperplane_fill),
               onPressed: enabled ? widget.onSend : null,
-              color: enabled ? AppColors.brandPrimary : AppColors.iconTertiary,
+              color: enabled
+                  ? AppColors.brandPrimary
+                  : AppColors.iconTertiary, // iconTertiary обычно не меняется
             ),
           ],
         ),

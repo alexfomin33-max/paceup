@@ -10,9 +10,9 @@ class SettingsPlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackgroundColor(context),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.getSurfaceColor(context),
         elevation: 0,
         centerTitle: true,
         leading: IconButton(

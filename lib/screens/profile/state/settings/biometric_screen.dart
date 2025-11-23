@@ -246,7 +246,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Код-пароль и Face ID'),
         body: SafeArea(
           child: _isLoading

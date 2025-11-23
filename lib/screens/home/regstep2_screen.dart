@@ -154,7 +154,7 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
     return Scaffold(
       // 🔹 Отключаем автоматическую прокрутку Scaffold, используем свою
       resizeToAvoidBottomInset: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.getBackgroundColor(context),
       body: GestureDetector(
         // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
         onTap: () => FocusScope.of(context).unfocus(),

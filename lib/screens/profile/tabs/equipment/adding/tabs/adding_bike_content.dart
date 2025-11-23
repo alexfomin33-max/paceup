@@ -108,7 +108,7 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
       builder: (popupContext) {
         return Container(
           height: 280,
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           child: Column(
             children: [
               SizedBox(
@@ -138,10 +138,10 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
                   ],
                 ),
               ),
-              const Divider(
+              Divider(
                 height: 1,
                 thickness: 0.5,
-                color: AppColors.divider,
+                color: AppColors.getDividerColor(context),
                 indent: 12,
                 endIndent: 12,
               ),
@@ -317,9 +317,12 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.getSurfaceColor(context),
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.border, width: 0.5),
+            border: Border.all(
+              color: AppColors.getBorderColor(context),
+              width: 0.5,
+            ),
           ),
           child: Column(
             children: [
@@ -352,10 +355,12 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
                               _imageFile!,
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
-                                return const Center(
+                                return Center(
                                   child: Icon(
                                     Icons.error_outline,
-                                    color: AppColors.textSecondary,
+                                    color: AppColors.getTextSecondaryColor(
+                                      context,
+                                    ),
                                   ),
                                 );
                               },
@@ -368,15 +373,15 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
                       right: 70,
                       bottom: 18,
                       child: Material(
-                        color: AppColors.surface,
+                        color: AppColors.getSurfaceColor(context),
                         shape: const CircleBorder(),
                         child: IconButton(
                           tooltip: 'Добавить фото',
                           onPressed: _pickImage,
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.add_a_photo_outlined,
                             size: 28,
-                            color: AppColors.textSecondary,
+                            color: AppColors.getTextSecondaryColor(context),
                           ),
                         ),
                       ),
@@ -385,10 +390,10 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
                 ),
               ),
 
-              const Divider(
+              Divider(
                 height: 1,
                 thickness: 0.5,
-                color: AppColors.divider,
+                color: AppColors.getDividerColor(context),
                 indent: 12,
                 endIndent: 12,
               ),
@@ -443,8 +448,8 @@ class _AddingBikeContentState extends State<AddingBikeContent> {
                         fontFamily: 'Inter',
                         fontSize: 14,
                         color: _inUseFrom == null
-                            ? AppColors.textPlaceholder
-                            : AppColors.textPrimary,
+                            ? AppColors.getTextPlaceholderColor(context)
+                            : AppColors.getTextPrimaryColor(context),
                         fontWeight: _inUseFrom == null
                             ? FontWeight.w400
                             : FontWeight.w600,
@@ -526,10 +531,10 @@ class _FieldRow extends StatelessWidget {
             ),
           ),
         ),
-        const Divider(
+        Divider(
           height: 1,
           thickness: 0.5,
-          color: AppColors.divider,
+          color: AppColors.getDividerColor(context),
           indent: 12,
           endIndent: 12,
         ),
@@ -585,16 +590,18 @@ class _RightTextFieldState extends State<_RightTextField> {
             isDense: true,
             hintText: widget.hint,
             border: InputBorder.none,
-            hintStyle: const TextStyle(
+            hintStyle: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
-              color: AppColors.textPlaceholder,
+              color: AppColors.getTextPlaceholderColor(context),
             ),
           ),
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
-            color: isEmpty ? AppColors.textPlaceholder : AppColors.textPrimary,
+            color: isEmpty
+                ? AppColors.getTextPlaceholderColor(context)
+                : AppColors.getTextPrimaryColor(context),
             fontWeight: isEmpty ? FontWeight.w400 : FontWeight.w600,
           ),
         );

@@ -111,7 +111,7 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Пароль'),
         body: GestureDetector(
           // Снимаем фокус при тапе вне полей ввода

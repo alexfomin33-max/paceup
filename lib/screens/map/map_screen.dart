@@ -307,7 +307,7 @@ class _MapScreenState extends State<MapScreen> {
           initialCenter: LatLng(56.129057, 40.406635),
           initialZoom: 6.0,
           // Фоновый цвет карты (серый, если тайлы не загрузились)
-          backgroundColor: AppColors.surface,
+          backgroundColor: AppColors.getSurfaceColor(context),
           onMapReady: () {
             // Подстраиваем zoom после инициализации карты
             // Для Событий (0) и Клубов (1) автоматическая подстройка отключена

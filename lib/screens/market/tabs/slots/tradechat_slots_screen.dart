@@ -126,10 +126,10 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.getBackgroundColor(context),
         // ⛔️ никаких bottomNavigationBar — экран отдельный
         appBar: AppBar(
-          backgroundColor: AppColors.surface,
+          backgroundColor: AppColors.getBackgroundColor(context),
           elevation: 1, // как в market_screen.dart
           shadowColor: AppColors.shadowStrong, // та же маленькая тень
           leadingWidth: 40,
@@ -177,9 +177,9 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
                       widget.itemTitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                     ),
                   ],
@@ -208,7 +208,7 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
 
                   // 1..4 — инфо-строки (значение сразу после подписи)
                   if (index == 1) {
-                    return const _KVLine(
+                    return _KVLine(
                       k: 'Слот переведён в статус',
                       v: _ChipNeutral(
                         child: Row(
@@ -217,7 +217,7 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
                             Icon(
                               CupertinoIcons.lock,
                               size: 14,
-                              color: AppColors.iconSecondary,
+                              color: AppColors.getIconSecondaryColor(context),
                             ),
                             SizedBox(width: 6),
                             Text(
@@ -277,14 +277,14 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
 
                   // 8 — Divider ПОД кнопками + небольшой отступ
                   if (index == 8) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Column(
                         children: [
                           Divider(
                             height: 16,
                             thickness: 0.5,
-                            color: AppColors.divider,
+                            color: AppColors.getDividerColor(context),
                           ),
                           SizedBox(height: 6),
                         ],
@@ -372,11 +372,14 @@ class _ChipNeutral extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.background, // без рамки
+        color: AppColors.getBackgroundColor(context), // без рамки
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: DefaultTextStyle(
-        style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+        style: TextStyle(
+          fontSize: 13,
+          color: AppColors.getTextPrimaryColor(context),
+        ),
         child: child,
       ),
     );
@@ -603,9 +606,9 @@ class _BubbleLeft extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: AppColors.getBackgroundColor(context),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.getBorderColor(context)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -776,12 +779,15 @@ class _TimeBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
     decoration: BoxDecoration(
-      color: AppColors.textSecondary,
+      color: AppColors.getTextSecondaryColor(context),
       borderRadius: BorderRadius.circular(AppRadius.sm),
     ),
     child: Text(
       time,
-      style: const TextStyle(color: AppColors.surface, fontSize: 11),
+      style: TextStyle(
+        color: AppColors.getSurfaceColor(context),
+        fontSize: 11,
+      ),
     ),
   );
 }
@@ -820,29 +826,31 @@ class _ComposerState extends State<_Composer> {
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          boxShadow: [
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          boxShadow: const [
             BoxShadow(
               color: AppColors.shadowSoft,
               blurRadius: 8,
               offset: Offset(0, -2),
             ),
           ],
-          border: Border(top: BorderSide(color: AppColors.border)),
+          border: Border(
+            top: BorderSide(color: AppColors.getBorderColor(context)),
+          ),
         ),
         child: Row(
           children: [
             IconButton(
               icon: const Icon(CupertinoIcons.plus_circle),
               onPressed: widget.onPickImage,
-              color: AppColors.iconSecondary,
+              color: AppColors.getIconSecondaryColor(context),
             ),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
+                  color: AppColors.getSurfaceMutedColor(context),
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: TextField(
@@ -861,7 +869,9 @@ class _ComposerState extends State<_Composer> {
             IconButton(
               icon: const Icon(CupertinoIcons.paperplane_fill),
               onPressed: enabled ? widget.onSend : null,
-              color: enabled ? AppColors.brandPrimary : AppColors.iconTertiary,
+              color: enabled
+                  ? AppColors.brandPrimary
+                  : AppColors.iconTertiary, // iconTertiary обычно не меняется
             ),
           ],
         ),

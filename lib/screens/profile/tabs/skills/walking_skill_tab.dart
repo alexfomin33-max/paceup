@@ -17,7 +17,7 @@ class WalkingSkillScreen extends StatelessWidget {
       ),
       child: InteractiveBackSwipe(
         child: Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.getBackgroundColor(context),
           body: Column(
             children: [
               // ─────────── Неподвижный верхний блок

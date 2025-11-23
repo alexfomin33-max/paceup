@@ -67,11 +67,11 @@ class ActivityBlock extends ConsumerWidget {
     final menuKey = GlobalKey();
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
         border: Border(
-          top: BorderSide(width: 0.5, color: AppColors.border),
-          bottom: BorderSide(width: 0.5, color: AppColors.border),
+          top: BorderSide(width: 0.5, color: AppColors.getBorderColor(context)),
+          bottom: BorderSide(width: 0.5, color: AppColors.getBorderColor(context)),
         ),
       ),
       child: Column(
@@ -111,9 +111,9 @@ class ActivityBlock extends ConsumerWidget {
               trailing: updatedActivity.userId == currentUserId
                   ? IconButton(
                       key: menuKey,
-                      icon: const Icon(
+                      icon: Icon(
                         CupertinoIcons.ellipsis,
-                        color: AppColors.iconPrimary,
+                        color: AppColors.getIconPrimaryColor(context),
                       ),
                       onPressed: () {
                         final items = <MoreMenuItem>[

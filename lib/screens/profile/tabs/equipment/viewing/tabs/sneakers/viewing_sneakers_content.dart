@@ -188,7 +188,9 @@ class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
           children: [
             Text(
               _error!,
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(
+                color: AppColors.getTextSecondaryColor(context),
+              ),
             ),
             const SizedBox(height: 16),
             CupertinoButton(
@@ -201,10 +203,12 @@ class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
     }
 
     if (_sneakers.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'Нет кроссовок',
-          style: TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(
+            color: AppColors.getTextSecondaryColor(context),
+          ),
         ),
       );
     }
@@ -481,8 +485,11 @@ class _GearViewCardState extends State<GearViewCard> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.border, width: 1),
+        color: AppColors.getSurfaceColor(context),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 1,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
@@ -500,20 +507,20 @@ class _GearViewCardState extends State<GearViewCard> {
                       children: [
                         TextSpan(
                           text: '${widget.brand} ',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: AppColors.getTextPrimaryColor(context),
                           ),
                         ),
                         TextSpan(
                           text: widget.model,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.textPrimary,
+                            color: AppColors.getTextPrimaryColor(context),
                           ),
                         ),
                       ],
@@ -529,10 +536,10 @@ class _GearViewCardState extends State<GearViewCard> {
                     minWidth: 32,
                     minHeight: 32,
                   ),
-                  icon: const Icon(
+                  icon: Icon(
                     CupertinoIcons.ellipsis, // горизонтальная иконка
                     size: 18,
-                    color: AppColors.iconPrimary,
+                    color: AppColors.getIconPrimaryColor(context),
                   ),
                 ),
               ],
@@ -549,15 +556,15 @@ class _GearViewCardState extends State<GearViewCard> {
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.textPrimary,
+                  color: AppColors.getTextPrimaryColor(context),
                   borderRadius: BorderRadius.circular(AppRadius.xl), // пилюля
                 ),
                 child: Text(
                   widget.mainBadgeText!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 11,
-                    color: AppColors.surface,
+                    color: AppColors.getSurfaceColor(context),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -582,11 +589,11 @@ class _GearViewCardState extends State<GearViewCard> {
                           );
                         }
                         return Container(
-                          color: AppColors.border,
-                          child: const Center(
+                          color: AppColors.getBorderColor(context),
+                          child: Center(
                             child: Icon(
                               CupertinoIcons.photo,
-                              color: AppColors.textSecondary,
+                              color: AppColors.getTextSecondaryColor(context),
                             ),
                           ),
                         );
@@ -595,11 +602,11 @@ class _GearViewCardState extends State<GearViewCard> {
                   : widget.asset != null
                   ? Image.asset(widget.asset!, fit: BoxFit.contain)
                   : Container(
-                      color: AppColors.border,
-                      child: const Center(
+                      color: AppColors.getBorderColor(context),
+                      child: Center(
                         child: Icon(
                           CupertinoIcons.photo,
-                          color: AppColors.textSecondary,
+                          color: AppColors.getTextSecondaryColor(context),
                         ),
                       ),
                     ),
@@ -612,18 +619,18 @@ class _GearViewCardState extends State<GearViewCard> {
             child: Center(
               child: RichText(
                 text: TextSpan(
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
-                    color: AppColors.textPrimary,
+                    color: AppColors.getTextPrimaryColor(context),
                   ),
                   children: [
                     const TextSpan(text: 'Пробег '),
                     TextSpan(
                       text: '${widget.km}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
                     const TextSpan(text: ' км'),
@@ -634,10 +641,10 @@ class _GearViewCardState extends State<GearViewCard> {
           ),
 
           // ── Разделитель между пробегом и метриками
-          const Divider(
+          Divider(
             height: 1,
             thickness: 0.5,
-            color: AppColors.divider,
+            color: AppColors.getDividerColor(context),
             indent: 12,
             endIndent: 12,
           ),
@@ -659,10 +666,10 @@ class _GearViewCardState extends State<GearViewCard> {
             padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
             child: Text(
               widget.since,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
-                color: AppColors.textSecondary,
+                color: AppColors.getTextSecondaryColor(context),
               ),
             ),
           ),

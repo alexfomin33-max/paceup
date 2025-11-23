@@ -215,26 +215,29 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: AppColors.getSurfaceColor(context),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: AppColors.border, width: 0.7),
+                  border: Border.all(
+                    color: AppColors.getBorderColor(context),
+                    width: 0.7,
+                  ),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _period,
                     isDense: true,
-                    icon: const Icon(
+                    icon: Icon(
                       CupertinoIcons.chevron_down,
                       size: 14,
-                      color: AppColors.iconPrimary,
+                      color: AppColors.getIconPrimaryColor(context),
                     ),
-                    dropdownColor: AppColors.surface,
+                    dropdownColor: AppColors.getSurfaceColor(context),
                     menuMaxHeight: 300,
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 13,
-                      color: AppColors.textPrimary,
+                      color: AppColors.getTextPrimaryColor(context),
                     ),
                     onChanged: (String? newValue) {
                       if (newValue != null && newValue != _period) {
@@ -246,10 +249,10 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                         value: period,
                         child: Text(
                           period,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 13,
-                            color: AppColors.textPrimary,
+                            color: AppColors.getTextPrimaryColor(context),
                             fontWeight: FontWeight.w400,
                           ),
                         ),
@@ -326,14 +329,21 @@ class _SportIcon extends StatelessWidget {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: selected ? AppColors.brandPrimary : AppColors.surface,
+          color: selected
+              ? AppColors.brandPrimary
+              : AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         child: Icon(
           icon,
           size: 16,
-          color: selected ? AppColors.surface : AppColors.iconPrimary,
+          color: selected
+              ? AppColors.getSurfaceColor(context)
+              : AppColors.getIconPrimaryColor(context),
         ),
       ),
     );
@@ -414,6 +424,8 @@ class _YearChartCardState extends State<_YearChartCard> {
             tick: widget.tick,
             barColor: widget.color,
             height: widget.height,
+            borderColor: AppColors.getBorderColor(context),
+            textSecondaryColor: AppColors.getTextSecondaryColor(context),
           ),
         ],
       ),
@@ -433,7 +445,11 @@ class _NavIcon extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.sm),
       child: Padding(
         padding: const EdgeInsets.all(4),
-        child: Icon(icon, size: 18, color: AppColors.iconPrimary),
+        child: Icon(
+          icon,
+          size: 18,
+          color: AppColors.getIconPrimaryColor(context),
+        ),
       ),
     );
   }
@@ -448,13 +464,18 @@ class _MetricsList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border, width: 0.7),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.7,
+        ),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -463,12 +484,12 @@ class _MetricsList extends StatelessWidget {
       child: Column(
         children: List.generate(metrics.length * 2 - 1, (i) {
           if (i.isOdd) {
-            return const Divider(
+            return Divider(
               height: 1,
               thickness: 0.5,
               indent: 38,
               endIndent: 11,
-              color: AppColors.divider,
+              color: AppColors.getDividerColor(context),
             );
           }
           final r = metrics[i ~/ 2];
@@ -485,16 +506,21 @@ class _MetricsList extends StatelessWidget {
                 Expanded(
                   child: Text(
                     r.title,
-                    style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Text(
                   r.value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
+                    color: AppColors.getTextPrimaryColor(context),
                   ),
                 ),
               ],
@@ -522,6 +548,8 @@ class _BarsChart extends StatelessWidget {
   final double tick;
   final Color barColor;
   final double height;
+  final Color borderColor;
+  final Color textSecondaryColor;
 
   const _BarsChart({
     required this.values,
@@ -529,6 +557,8 @@ class _BarsChart extends StatelessWidget {
     required this.tick,
     required this.barColor,
     this.height = 170,
+    required this.borderColor,
+    required this.textSecondaryColor,
   });
 
   @override
@@ -544,6 +574,8 @@ class _BarsChart extends StatelessWidget {
               maxY: maxY,
               tick: tick,
               barColor: barColor,
+              borderColor: borderColor,
+              textSecondaryColor: textSecondaryColor,
             ),
           ),
         ),
@@ -587,7 +619,7 @@ class _MonthLabels extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: fontSize,
-                color: AppColors.textSecondary,
+                color: AppColors.getTextSecondaryColor(context),
               ),
             ),
           ),
@@ -602,12 +634,16 @@ class _BarsPainter extends CustomPainter {
   final double maxY;
   final double tick;
   final Color barColor;
+  final Color borderColor;
+  final Color textSecondaryColor;
 
   _BarsPainter({
     required this.values,
     required this.maxY,
     required this.tick,
     required this.barColor,
+    required this.borderColor,
+    required this.textSecondaryColor,
   });
 
   static const double leftPad = 28;
@@ -621,7 +657,7 @@ class _BarsPainter extends CustomPainter {
     final chartH = size.height - topPad - bottomPad;
 
     final gridPaint = Paint()
-      ..color = AppColors.border
+      ..color = borderColor
       ..strokeWidth = 0.7;
 
     // сетка и подписи по Y
@@ -637,10 +673,10 @@ class _BarsPainter extends CustomPainter {
 
       tp.text = TextSpan(
         text: y.toInt().toString(),
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 10,
-          color: AppColors.textSecondary,
+          color: textSecondaryColor,
         ),
       );
       tp.layout();
@@ -677,5 +713,7 @@ class _BarsPainter extends CustomPainter {
       old.values != values ||
       old.maxY != maxY ||
       old.tick != tick ||
-      old.barColor != barColor;
+      old.barColor != barColor ||
+      old.borderColor != borderColor ||
+      old.textSecondaryColor != textSecondaryColor;
 }

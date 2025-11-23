@@ -102,7 +102,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.surface
+            : AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Добавить тренировку'),
         body: GestureDetector(
           // Скрываем клавиатуру при нажатии на пустую область
@@ -1375,7 +1377,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               }
             }
 
-            if (createdActivity != null && mounted) {
+            // После всех проверок createdActivity гарантированно не null
+            // (если не найдена, происходит return выше)
+            if (mounted) {
               // Закрываем экран добавления
               Navigator.of(context).pop();
 

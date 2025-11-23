@@ -47,7 +47,7 @@ class _MarketScreenState extends State<MarketScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackgroundColor(context),
 
       // ─── Верхняя панель: глобальный PaceAppBar ───
       appBar: PaceAppBar(
@@ -86,10 +86,10 @@ class _MarketScreenState extends State<MarketScreen> {
                 ),
               );
             },
-            icon: const Icon(
+            icon: Icon(
               CupertinoIcons.bell,
               size: 22,
-              color: AppColors.iconPrimary,
+              color: AppColors.getIconPrimaryColor(context),
             ),
             splashRadius: 22,
           ),

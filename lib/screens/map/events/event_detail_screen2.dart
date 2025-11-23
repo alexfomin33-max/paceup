@@ -164,9 +164,9 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const InteractiveBackSwipe(
+      return InteractiveBackSwipe(
         child: Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.getBackgroundColor(context),
           body: Center(child: CircularProgressIndicator()),
         ),
       );
@@ -175,7 +175,7 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
     if (_error != null || _eventData == null) {
       return InteractiveBackSwipe(
         child: Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.getBackgroundColor(context),
           body: SafeArea(
             child: Center(
               child: Column(
@@ -271,7 +271,7 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         body: SafeArea(
           top: false,
           bottom: false,

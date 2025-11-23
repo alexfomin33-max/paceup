@@ -129,7 +129,7 @@ class _PushNotificationsScreenState
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Push-уведомления'),
         body: SafeArea(
           child: _isLoading

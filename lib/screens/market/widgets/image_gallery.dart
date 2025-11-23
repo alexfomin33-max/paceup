@@ -221,10 +221,10 @@ class _FullscreenGalleryState extends State<_FullscreenGallery>
               right: 12,
               child: IconButton(
                 onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(
+                icon: Icon(
                   CupertinoIcons.xmark_circle_fill,
                   size: 28,
-                  color: AppColors.surface,
+                  color: AppColors.getSurfaceColor(context),
                 ),
                 splashRadius: 24,
               ),
@@ -248,9 +248,9 @@ class _FullscreenGalleryState extends State<_FullscreenGallery>
                     ),
                     child: Text(
                       '${_index + 1} / ${images.length}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
-                        color: AppColors.surface,
+                        color: AppColors.getSurfaceColor(context),
                         fontWeight: FontWeight.w600,
                       ),
                     ),

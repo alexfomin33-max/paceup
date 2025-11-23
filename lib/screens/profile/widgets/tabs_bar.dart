@@ -107,7 +107,7 @@ class _TabsBarState extends State<TabsBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.surface,
+      color: AppColors.getSurfaceColor(context),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -136,7 +136,7 @@ class _TabsBarState extends State<TabsBar> {
                                 fontWeight: FontWeight.w400,
                                 color: selected
                                     ? AppColors.brandPrimary
-                                    : AppColors.textPrimary,
+                                    : AppColors.getTextPrimaryColor(context),
                               ),
                             ),
                           ),
@@ -149,7 +149,11 @@ class _TabsBarState extends State<TabsBar> {
               ),
             ),
           ),
-          const Divider(height: 0.5, thickness: 0.5, color: AppColors.divider),
+          Divider(
+            height: 0.5,
+            thickness: 0.5,
+            color: AppColors.getDividerColor(context),
+          ),
         ],
       ),
     );

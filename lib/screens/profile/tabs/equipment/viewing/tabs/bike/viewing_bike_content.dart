@@ -186,7 +186,9 @@ class _ViewingBikeContentState extends State<ViewingBikeContent> {
           children: [
             Text(
               _error!,
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(
+                color: AppColors.getTextSecondaryColor(context),
+              ),
             ),
             const SizedBox(height: 16),
             CupertinoButton(
@@ -199,10 +201,12 @@ class _ViewingBikeContentState extends State<ViewingBikeContent> {
     }
 
     if (_bikes.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'Нет велосипедов',
-          style: TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(
+            color: AppColors.getTextSecondaryColor(context),
+          ),
         ),
       );
     }

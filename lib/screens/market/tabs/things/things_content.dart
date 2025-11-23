@@ -97,19 +97,19 @@ class _CategoryDropdown extends StatelessWidget {
             value: value,
             isExpanded: true,
             onChanged: onChanged,
-            dropdownColor: AppColors.surface,
+            dropdownColor: AppColors.getSurfaceColor(context),
             menuMaxHeight: 300,
             borderRadius: BorderRadius.circular(AppRadius.md),
             // Стрелка выпадающего меню
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_drop_down,
-              color: AppColors.iconSecondary,
+              color: AppColors.getIconSecondaryColor(context),
             ),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               isDense: true,
               // Убираем фон
               filled: false,
-              contentPadding: EdgeInsets.fromLTRB(0, 6, 16, 8),
+              contentPadding: const EdgeInsets.fromLTRB(0, 6, 16, 8),
               // Только нижняя подчеркивающая линия
               border: UnderlineInputBorder(
                 borderSide: BorderSide(color: AppColors.outline),
@@ -121,10 +121,10 @@ class _CategoryDropdown extends StatelessWidget {
                 borderSide: BorderSide(color: AppColors.outline, width: 2),
               ),
             ),
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontWeight: FontWeight.w400,
-              color: AppColors.textPrimary,
+              color: AppColors.getTextPrimaryColor(context),
             ),
             items: options.map((o) {
               return DropdownMenuItem<String>(

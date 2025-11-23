@@ -12,7 +12,7 @@ class HelpInfoScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Справочная информация'),
         body: SafeArea(
           child: ListView(

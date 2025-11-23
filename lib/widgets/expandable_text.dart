@@ -44,7 +44,9 @@ class _ExpandableTextState extends State<ExpandableText> {
           children: [
             Text(
               widget.text,
-              style: widget.textStyle ?? AppTextStyles.h14w4,
+              style: (widget.textStyle ?? AppTextStyles.h14w4).copyWith(
+                color: AppColors.getTextPrimaryColor(context),
+              ),
               maxLines: _isExpanded ? null : widget.maxLines,
               overflow:
                   _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
@@ -60,7 +62,7 @@ class _ExpandableTextState extends State<ExpandableText> {
                 child: Text(
                   'Показать все',
                   style: (widget.textStyle ?? AppTextStyles.h14w4).copyWith(
-                    color: AppColors.iconSecondary,
+                    color: AppColors.getIconSecondaryColor(context),
                   ),
                 ),
               ),
@@ -76,7 +78,7 @@ class _ExpandableTextState extends State<ExpandableText> {
                 child: Text(
                   'Скрыть',
                   style: (widget.textStyle ?? AppTextStyles.h14w4).copyWith(
-                    color: AppColors.iconSecondary,
+                    color: AppColors.getIconSecondaryColor(context),
                   ),
                 ),
               ),

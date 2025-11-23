@@ -122,8 +122,8 @@ class _SmallLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
-        color: AppColors.textPrimary,
+      style: TextStyle(
+        color: AppColors.getTextPrimaryColor(context),
         fontSize: 14,
         fontWeight: FontWeight.w500,
         fontFamily: 'Inter',
@@ -163,18 +163,18 @@ class _LabeledTextField extends StatelessWidget {
             hintText: hint,
             hintStyle: _hintText,
             filled: true,
-            fillColor: AppColors.surface,
+            fillColor: AppColors.getSurfaceColor(context),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 10,
               vertical: 10,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -208,9 +208,9 @@ class _PriceField extends StatelessWidget {
                 keyboardType: TextInputType.number,
                 onChanged: onChanged,
                 style: _fieldText,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   filled: true,
-                  fillColor: AppColors.surface,
+                  fillColor: AppColors.getSurfaceColor(context),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 10,
@@ -219,13 +219,13 @@ class _PriceField extends StatelessWidget {
                     borderRadius: BorderRadius.all(
                       Radius.circular(AppRadius.sm),
                     ),
-                    borderSide: BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: AppColors.getBorderColor(context)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.all(
                       Radius.circular(AppRadius.sm),
                     ),
-                    borderSide: BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: AppColors.getBorderColor(context)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.all(
@@ -240,17 +240,17 @@ class _PriceField extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
+              decoration: BoxDecoration(
+                color: AppColors.getSurfaceColor(context),
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: const Text(
+              child: Text(
                 '₽',
                 style: TextStyle(
                   fontSize: 16,
                   fontFamily: 'Inter',
-                  color: AppColors.textPrimary,
+                  color: AppColors.getTextPrimaryColor(context),
                 ),
               ),
             ),
@@ -312,10 +312,14 @@ class _ChipsRow extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: sel ? AppColors.brandPrimary : AppColors.surface,
+              color: sel
+                  ? AppColors.brandPrimary
+                  : AppColors.getSurfaceColor(context),
               borderRadius: BorderRadius.circular(AppRadius.xl),
               border: Border.all(
-                color: sel ? AppColors.brandPrimary : AppColors.border,
+                color: sel
+                    ? AppColors.brandPrimary
+                    : AppColors.getBorderColor(context),
               ),
             ),
             child: Text(
@@ -324,7 +328,9 @@ class _ChipsRow extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
-                color: sel ? AppColors.surface : AppColors.textPrimary,
+                color: sel
+                    ? AppColors.getSurfaceColor(context)
+                    : AppColors.getTextPrimaryColor(context),
               ),
             ),
           ),
@@ -346,8 +352,12 @@ class _OvalToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = selected ? AppColors.brandPrimary : AppColors.surface;
-    final fg = selected ? AppColors.surface : AppColors.textPrimary;
+    final bg = selected
+        ? AppColors.brandPrimary
+        : AppColors.getSurfaceColor(context);
+    final fg = selected
+        ? AppColors.getSurfaceColor(context)
+        : AppColors.getTextPrimaryColor(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -356,7 +366,9 @@ class _OvalToggle extends StatelessWidget {
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
-            color: selected ? AppColors.brandPrimary : AppColors.border,
+            color: selected
+                ? AppColors.brandPrimary
+                : AppColors.getBorderColor(context),
           ),
         ),
         child: Text(

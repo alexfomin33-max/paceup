@@ -105,16 +105,21 @@ class _RaceFriendsBlock extends StatelessWidget {
                   group.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h14w5,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Text(
                 _fmt(group.date),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
-                  color: AppColors.textSecondary,
+                  color: AppColors.getTextSecondaryColor(context),
                 ),
               ),
             ],
@@ -125,16 +130,24 @@ class _RaceFriendsBlock extends StatelessWidget {
         // Таблица: верх/низ границы, внутри строки с вертикальными разделителями
         Container(
           width: double.infinity,
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
+          decoration: BoxDecoration(
+            color: AppColors.getSurfaceColor(context),
             border: Border(
-              top: BorderSide(color: AppColors.border, width: 0.5),
-              bottom: BorderSide(color: AppColors.border, width: 0.5),
+              top: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 0.5,
+              ),
+              bottom: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 0.5,
+              ),
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.shadowSoft,
-                offset: Offset(0, 1),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkShadowSoft
+                    : AppColors.shadowSoft,
+                offset: const Offset(0, 1),
                 blurRadius: 1,
                 spreadRadius: 0,
               ),
@@ -174,7 +187,12 @@ class _RaceFriendsBlock extends StatelessWidget {
                                     r.name,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.h13w4,
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.getTextPrimaryColor(context),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -182,12 +200,12 @@ class _RaceFriendsBlock extends StatelessWidget {
                           ),
 
                           // │ разделитель
-                          const FractionallySizedBox(
+                          FractionallySizedBox(
                             heightFactor: 0.5, // половина высоты строки
                             child: VerticalDivider(
                               width: 1,
                               thickness: 0.5,
-                              color: AppColors.divider,
+                              color: AppColors.getDividerColor(context),
                             ),
                           ),
 
@@ -198,17 +216,22 @@ class _RaceFriendsBlock extends StatelessWidget {
                                 '${r.km.toStringAsFixed(1)} км',
                                 softWrap: false,
                                 overflow: TextOverflow.fade,
-                                style: AppTextStyles.h12w4,
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
                               ),
                             ),
                           ),
 
-                          const FractionallySizedBox(
+                          FractionallySizedBox(
                             heightFactor: 0.5, // половина высоты строки
                             child: VerticalDivider(
                               width: 1,
                               thickness: 0.5,
-                              color: AppColors.divider,
+                              color: AppColors.getDividerColor(context),
                             ),
                           ),
 
@@ -219,17 +242,22 @@ class _RaceFriendsBlock extends StatelessWidget {
                                 r.time,
                                 softWrap: false,
                                 overflow: TextOverflow.fade,
-                                style: AppTextStyles.h12w4,
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
                               ),
                             ),
                           ),
 
-                          const FractionallySizedBox(
+                          FractionallySizedBox(
                             heightFactor: 0.5, // половина высоты строки
                             child: VerticalDivider(
                               width: 1,
                               thickness: 0.5,
-                              color: AppColors.divider,
+                              color: AppColors.getDividerColor(context),
                             ),
                           ),
 
@@ -240,7 +268,12 @@ class _RaceFriendsBlock extends StatelessWidget {
                                 r.pace,
                                 softWrap: false,
                                 overflow: TextOverflow.fade,
-                                style: AppTextStyles.h12w4,
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
                               ),
                             ),
                           ),
@@ -251,12 +284,12 @@ class _RaceFriendsBlock extends StatelessWidget {
 
                   // Горизонтальный разделитель между строками
                   if (i != group.results.length - 1)
-                    const Divider(
+                    Divider(
                       height: 1,
                       thickness: 0.5,
                       indent: 52,
                       endIndent: 14,
-                      color: AppColors.divider,
+                      color: AppColors.getDividerColor(context),
                     ),
                 ],
               );

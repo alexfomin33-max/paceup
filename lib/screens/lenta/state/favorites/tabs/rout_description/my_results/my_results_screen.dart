@@ -24,7 +24,7 @@ class MyResultsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
 
         // ─── глобальная шапка без нижнего бордера ───
         appBar: const PaceAppBar(

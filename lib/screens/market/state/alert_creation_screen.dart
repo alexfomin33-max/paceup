@@ -109,7 +109,7 @@ class _AlertCreationScreenState extends State<AlertCreationScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(
           title: 'Создание оповещения',
           showBack: true,
@@ -122,7 +122,9 @@ class _AlertCreationScreenState extends State<AlertCreationScreen> {
             children: [
               // ─── Контейнер формы с фоном surface ───
               Container(
-                decoration: const BoxDecoration(color: AppColors.surface),
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
                   child: Column(
@@ -135,7 +137,7 @@ class _AlertCreationScreenState extends State<AlertCreationScreen> {
                           'Вам придёт оповещение, если кто-то разместит слот, '
                           'соответствующий указанным критериям',
                           style: AppTextStyles.h14w4.copyWith(
-                            color: AppColors.textSecondary,
+                            color: AppColors.getTextSecondaryColor(context),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -219,11 +221,12 @@ class _AlertCreationScreenState extends State<AlertCreationScreen> {
 /// ——— Локальные UI-компоненты ———
 
 const TextStyle _fieldText = TextStyle(fontFamily: 'Inter', fontSize: 14);
-const TextStyle _hintText = TextStyle(
-  fontFamily: 'Inter',
-  fontSize: 14,
-  color: AppColors.textPlaceholder,
-);
+// _hintText теперь создается динамически с учетом темы
+TextStyle _hintText(BuildContext context) => TextStyle(
+      fontFamily: 'Inter',
+      fontSize: 14,
+      color: AppColors.getTextPlaceholderColor(context),
+    );
 
 class _SmallLabel extends StatelessWidget {
   final String text;
@@ -233,8 +236,8 @@ class _SmallLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
-        color: AppColors.textPrimary,
+      style: TextStyle(
+        color: AppColors.getTextPrimaryColor(context),
         fontSize: 14,
         fontWeight: FontWeight.w500,
         fontFamily: 'Inter',
@@ -269,20 +272,20 @@ class _LabeledTextField extends StatelessWidget {
           style: _fieldText,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: _hintText,
+            hintStyle: _hintText(context),
             filled: true,
-            fillColor: AppColors.surface,
+            fillColor: AppColors.getSurfaceColor(context),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 10,
               vertical: 10,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -346,10 +349,14 @@ class _ChipsRow extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: sel ? AppColors.brandPrimary : AppColors.surface,
+              color: sel
+                  ? AppColors.brandPrimary
+                  : AppColors.getSurfaceColor(context),
               borderRadius: BorderRadius.circular(AppRadius.xl),
               border: Border.all(
-                color: sel ? AppColors.brandPrimary : AppColors.border,
+                color: sel
+                    ? AppColors.brandPrimary
+                    : AppColors.getBorderColor(context),
               ),
             ),
             child: Text(
@@ -358,7 +365,9 @@ class _ChipsRow extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
-                color: sel ? AppColors.surface : AppColors.textPrimary,
+                color: sel
+                    ? AppColors.getSurfaceColor(context)
+                    : AppColors.getTextPrimaryColor(context),
               ),
             ),
           ),
@@ -380,8 +389,12 @@ class _OvalToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = selected ? AppColors.brandPrimary : AppColors.surface;
-    final fg = selected ? AppColors.surface : AppColors.textPrimary;
+    final bg = selected
+        ? AppColors.brandPrimary
+        : AppColors.getSurfaceColor(context);
+    final fg = selected
+        ? AppColors.getSurfaceColor(context)
+        : AppColors.getTextPrimaryColor(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -390,7 +403,9 @@ class _OvalToggle extends StatelessWidget {
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
-            color: selected ? AppColors.brandPrimary : AppColors.border,
+            color: selected
+                ? AppColors.brandPrimary
+                : AppColors.getBorderColor(context),
           ),
         ),
         child: Text(
@@ -418,7 +433,7 @@ class _AlertCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.sm),
         boxShadow: [
           const BoxShadow(
@@ -438,7 +453,7 @@ class _AlertCard extends StatelessWidget {
             height: 58,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.xs),
-              color: AppColors.background,
+              color: AppColors.getBackgroundColor(context),
               image: DecorationImage(
                 image: AssetImage(alert.imageUrl),
                 fit: BoxFit.cover,

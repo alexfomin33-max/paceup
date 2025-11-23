@@ -375,7 +375,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.getBackgroundColor(context),
         body: Stack(
           children: [
             // ────────────────────────── Карта ──────────────────────────

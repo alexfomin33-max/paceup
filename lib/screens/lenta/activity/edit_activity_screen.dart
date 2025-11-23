@@ -54,7 +54,6 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   // Состояние видимости: 0 = Все пользователи, 1 = Только подписчики, 2 = Только Вы
   int _selectedVisibility = 0;
   bool _isLoading = false;
-  bool _hasChanges = false;
 
   // Список фотографий (для отображения в карусели)
   final List<String> _imageUrls = [];
@@ -104,7 +103,9 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         !_listsEqual(_imageUrls, originalImages);
 
     setState(() {
-      _hasChanges = textChanged || visibilityChanged || imagesChanged;
+      // Отслеживаем изменения для возможного использования в будущем
+      // ignore: unused_local_variable
+      final hasChanges = textChanged || visibilityChanged || imagesChanged;
     });
   }
 
@@ -121,7 +122,9 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.surface
+            : AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Редактировать тренировку'),
         body: GestureDetector(
           // Скрываем клавиатуру при нажатии на пустую область

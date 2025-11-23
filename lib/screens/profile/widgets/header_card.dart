@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../edit_profile_screen.dart';
 import '../state/subscribe/communication_screen.dart';
@@ -25,7 +26,7 @@ class HeaderCard extends StatelessWidget {
     // ────────────────────────────────────────────────────────────────
     if (profile == null) {
       return Container(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,8 +35,10 @@ class HeaderCard extends StatelessWidget {
             Container(
               width: 64,
               height: 64,
-              decoration: const BoxDecoration(
-                color: AppColors.skeletonBase,
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkSurfaceMuted
+                    : AppColors.skeletonBase,
                 shape: BoxShape.circle,
               ),
             ),
@@ -50,7 +53,9 @@ class HeaderCard extends StatelessWidget {
                     width: double.infinity,
                     constraints: const BoxConstraints(maxWidth: 180),
                     decoration: BoxDecoration(
-                      color: AppColors.skeletonBase,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkSurfaceMuted
+                          : AppColors.skeletonBase,
                       borderRadius: BorderRadius.circular(AppRadius.xs),
                     ),
                   ),
@@ -61,7 +66,9 @@ class HeaderCard extends StatelessWidget {
                     width: double.infinity,
                     constraints: const BoxConstraints(maxWidth: 120),
                     decoration: BoxDecoration(
-                      color: AppColors.skeletonBase,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkSurfaceMuted
+                          : AppColors.skeletonBase,
                       borderRadius: BorderRadius.circular(AppRadius.xs),
                     ),
                   ),
@@ -104,7 +111,7 @@ class HeaderCard extends StatelessWidget {
     final p = profile!;
 
     return Container(
-      color: AppColors.surface,
+      color: AppColors.getSurfaceColor(context),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,7 +172,9 @@ class HeaderCard extends StatelessWidget {
                         })(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.h16w6,
+                        style: AppTextStyles.h16w6.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -185,7 +194,14 @@ class HeaderCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 0),
-                Text(_subtitleFrom(p) ?? '', style: AppTextStyles.h13w4),
+                Text(
+                  _subtitleFrom(p) ?? '', 
+                  style: AppTextStyles.h13w4.copyWith(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -292,10 +308,10 @@ class _FollowStat extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: RichText(
           text: TextSpan(
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
-              color: AppColors.textPrimary,
+              color: AppColors.getTextPrimaryColor(context),
             ),
             children: [
               TextSpan(text: '$label: '),

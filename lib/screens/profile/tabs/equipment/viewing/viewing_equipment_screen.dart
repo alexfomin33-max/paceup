@@ -41,10 +41,10 @@ class _ViewingEquipmentScreenState extends State<ViewingEquipmentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.getSurfaceColor(context),
         centerTitle: true,
         title: const Text(
           'Просмотр снаряжения',
@@ -58,10 +58,10 @@ class _ViewingEquipmentScreenState extends State<ViewingEquipmentScreen> {
         leading: IconButton(
           tooltip: 'Назад',
           onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(
+          icon: Icon(
             CupertinoIcons.back,
             size: 22,
-            color: AppColors.iconPrimary,
+            color: AppColors.getIconPrimaryColor(context),
           ),
         ),
         // если нужен разделитель снизу, раскомментируй:

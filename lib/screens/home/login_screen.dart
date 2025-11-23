@@ -129,7 +129,7 @@ class _EnterAccScreenState extends State<EnterAccScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.surface,
+                        backgroundColor: AppColors.getSurfaceColor(context),
                         foregroundColor: AppColors.textPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(

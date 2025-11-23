@@ -118,7 +118,7 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(
           title: 'Участники маршрута',
           showBottomDivider: false, // ← без нижней линии

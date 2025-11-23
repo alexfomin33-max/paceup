@@ -133,7 +133,7 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Контакты'),
         body: SafeArea(
           child: _isLoading
@@ -177,10 +177,10 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                         // Информационная карточка
                         Container(
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: AppColors.getSurfaceColor(context),
                             borderRadius: BorderRadius.circular(AppRadius.md),
                             border: Border.all(
-                              color: AppColors.border,
+                              color: AppColors.getBorderColor(context),
                               width: 1,
                             ),
                           ),

@@ -26,7 +26,9 @@ class _FavoritesScreenState extends State<FavoritesScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).brightness == Brightness.light
+          ? AppColors.surface
+          : AppColors.getBackgroundColor(context),
 
       // ── Глобальная шапка без нижнего бордера
       appBar: const PaceAppBar(title: 'Избранное', showBottomDivider: false),

@@ -588,7 +588,9 @@ class _EditClubScreenState extends State<EditClubScreen> {
   Widget build(BuildContext context) {
     if (_loadingData) {
       return Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.surface
+            : AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Редактирование клуба'),
         body: const Center(child: CircularProgressIndicator()),
       );
@@ -596,7 +598,9 @@ class _EditClubScreenState extends State<EditClubScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.surface
+            : AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Редактирование клуба'),
         body: GestureDetector(
           // ── скрываем клавиатуру при нажатии на пустую область экрана

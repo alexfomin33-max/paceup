@@ -662,7 +662,9 @@ class _EditEventScreenState extends State<EditEventScreen> {
   Widget build(BuildContext context) {
     if (_loadingData) {
       return Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.surface
+            : AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Редактирование события'),
         body: const Center(child: CircularProgressIndicator()),
       );
@@ -670,7 +672,9 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.surface
+            : AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Редактирование события'),
         body: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
@@ -920,7 +924,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                             shape: const CircleBorder(),
                             side: const BorderSide(color: AppColors.border),
                             foregroundColor: AppColors.textPrimary,
-                            backgroundColor: AppColors.surface,
+                            backgroundColor: AppColors.getSurfaceColor(context),
                             padding: EdgeInsets.zero,
                           ),
                           child: const Icon(CupertinoIcons.placemark, size: 20),

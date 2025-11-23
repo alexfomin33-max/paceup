@@ -56,7 +56,7 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
     final query = _controller.text.trim();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackgroundColor(context),
       appBar: const PaceAppBar(
         title: 'Связи',
         // дефолтная «назад», центрированный титул, нижний разделитель — уже настроены

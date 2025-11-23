@@ -5,6 +5,7 @@ import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_bar.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
 import '../../../../widgets/transparent_route.dart';
+import '../../../../providers/theme_provider.dart';
 import 'connected_trackers/connected_trackers_screen.dart';
 import 'edit_phone_screen.dart';
 import 'edit_email_screen.dart';
@@ -45,12 +46,37 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(userSettingsProvider);
+    final themeMode = ref.watch(themeModeNotifierProvider);
+    
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.getBackgroundColor(context),
 
-        // ── глобальный PaceAppBar (покажет системную «назад», если есть куда вернуться)
-        appBar: const PaceAppBar(title: 'Настройки'),
+        // ── глобальный PaceAppBar с переключателем темы справа
+        appBar: PaceAppBar(
+          title: 'Настройки',
+          actions: [
+            // Переключатель темы
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: IconButton(
+                icon: Icon(
+                  themeMode == ThemeMode.dark 
+                      ? CupertinoIcons.moon_fill 
+                      : CupertinoIcons.sun_max,
+                  size: 22,
+                  color: AppColors.brandPrimary,
+                ),
+                onPressed: () {
+                  ref.read(themeModeNotifierProvider.notifier).toggleTheme();
+                },
+                tooltip: themeMode == ThemeMode.dark 
+                    ? 'Переключить на светлую тему' 
+                    : 'Переключить на темную тему',
+              ),
+            ),
+          ],
+        ),
 
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -333,7 +359,7 @@ class _SubscriptionCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
-        decoration: _cardDecoration(),
+        decoration: _cardDecoration(context),
         padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
         child: Row(
           children: [
@@ -347,10 +373,12 @@ class _SubscriptionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text(
                 'Управление подпиской PacePro',
-                style: AppTextStyles.h14w5,
+                style: AppTextStyles.h14w5.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
               ),
             ),
             const Icon(
@@ -373,7 +401,7 @@ class _SettingsGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(context),
       child: Column(children: children),
     );
   }
@@ -403,6 +431,13 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Используем цвета из темы
+    final defaultIconColor = iconColor ?? AppColors.getIconPrimaryColor(context);
+    final defaultTextColor = trailingTextColor ?? 
+        (Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkTextTertiary
+            : AppColors.textTertiary);
+    
     return InkWell(
       onTap: onTap ?? () {},
       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -416,16 +451,23 @@ class _SettingsTile extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 20,
-                color: iconColor ?? AppColors.iconSecondary,
+                color: defaultIconColor,
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(child: Text(title, style: AppTextStyles.h14w4)),
+            Expanded(
+              child: Text(
+                title, 
+                style: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ),
             if (trailingText != null) ...[
               Text(
                 trailingText!,
                 style: TextStyle(
-                  color: trailingTextColor ?? AppColors.textTertiary,
+                  color: defaultTextColor,
                 ),
               ),
               const SizedBox(width: 6),
@@ -452,21 +494,26 @@ class _Divider extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(left: 48, right: 12),
       height: hairline,
-      color: AppColors.divider,
+      color: AppColors.getDividerColor(context),
     );
   }
 }
 
-BoxDecoration _cardDecoration() => const BoxDecoration(
-  color: AppColors.surface,
-  borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+BoxDecoration _cardDecoration(BuildContext context) => BoxDecoration(
+  color: AppColors.getSurfaceColor(context),
+  borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
   border: Border.fromBorderSide(
-    BorderSide(color: AppColors.border, width: 0.5),
+    BorderSide(
+      color: AppColors.getBorderColor(context), 
+      width: 0.5,
+    ),
   ),
   boxShadow: [
     BoxShadow(
-      color: AppColors.shadowSoft,
-      offset: Offset(0, 1),
+      color: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.darkShadowSoft
+          : AppColors.shadowSoft,
+      offset: const Offset(0, 1),
       blurRadius: 1,
       spreadRadius: 0,
     ),

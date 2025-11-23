@@ -70,14 +70,17 @@ class _SegmentedPill2 extends StatelessWidget {
     final content = Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
-          Expanded(child: _seg(0, items[0])),
-          Expanded(child: _seg(1, items[1])),
+          Expanded(child: _seg(context, 0, items[0])),
+          Expanded(child: _seg(context, 1, items[1])),
         ],
       ),
     );
@@ -86,7 +89,7 @@ class _SegmentedPill2 extends StatelessWidget {
     return SizedBox(width: width, child: content); // 👈 равные и пошире
   }
 
-  Widget _seg(int idx, String text) {
+  Widget _seg(BuildContext context, int idx, String text) {
     final selected = value == idx;
     return GestureDetector(
       onTap: () => onChanged(idx),
@@ -94,7 +97,9 @@ class _SegmentedPill2 extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.textPrimary : Colors.transparent,
+          color: selected
+              ? AppColors.getTextPrimaryColor(context)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         alignment: Alignment.center,
@@ -106,7 +111,9 @@ class _SegmentedPill2 extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 14,
             fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-            color: selected ? AppColors.surface : AppColors.textPrimary,
+            color: selected
+                ? AppColors.getSurfaceColor(context)
+                : AppColors.getTextPrimaryColor(context),
           ),
         ),
       ),

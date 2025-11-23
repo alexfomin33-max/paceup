@@ -156,7 +156,12 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
               ),
             ),
             const SizedBox(width: 0),
-            Text(likesCount.toString(), style: AppTextStyles.h14w4),
+            Text(
+              likesCount.toString(),
+              style: AppTextStyles.h14w4.copyWith(
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+            ),
             const SizedBox(width: 12),
             GestureDetector(
               onTap: widget.onOpenComments,
@@ -167,7 +172,12 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
               ),
             ),
             const SizedBox(width: 4),
-            Text(widget.commentsCount.toString(), style: AppTextStyles.h14w4),
+            Text(
+              widget.commentsCount.toString(),
+              style: AppTextStyles.h14w4.copyWith(
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+            ),
           ],
         ),
 
@@ -181,7 +191,12 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
                 color: AppColors.success,
               ),
               const SizedBox(width: 4),
-              const Text('48', style: AppTextStyles.h14w4),
+              Text(
+                '48',
+                style: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
               const SizedBox(width: 12),
               GestureDetector(
                 onTap: widget.onOpenTogether,
@@ -192,7 +207,12 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
                 ),
               ),
               const SizedBox(width: 4),
-              const Text('3', style: AppTextStyles.h14w4),
+              Text(
+                '3',
+                style: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
             ],
           ),
       ],
