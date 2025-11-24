@@ -47,10 +47,10 @@ class RouteDescriptionScreen extends StatelessWidget {
           actions: [
             IconButton(
               onPressed: () {},
-              icon: const Icon(
+              icon: Icon(
                 CupertinoIcons.ellipsis,
                 size: 18,
-                color: AppColors.iconPrimary,
+                color: AppColors.getIconPrimaryColor(context),
               ),
               tooltip: 'Ещё',
             ),
@@ -62,7 +62,7 @@ class RouteDescriptionScreen extends StatelessWidget {
             // ── Заголовок + чип — по центру
             SliverToBoxAdapter(
               child: Container(
-                color: AppColors.surface,
+                color: AppColors.getSurfaceColor(context),
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -71,10 +71,11 @@ class RouteDescriptionScreen extends StatelessWidget {
                       child: Text(
                         title,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 15, // меньше, чем было
                           fontWeight: FontWeight.w500,
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                     ),
@@ -85,7 +86,11 @@ class RouteDescriptionScreen extends StatelessWidget {
                     // Ниже можно оставить служебную инфу слева (как была)
                     Text(
                       'Создан: $createdText',
-                      style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Row(
@@ -98,7 +103,10 @@ class RouteDescriptionScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         CircleAvatar(
                           radius: 18,
-                          backgroundColor: AppColors.skeletonBase,
+                          backgroundColor: Theme.of(context).brightness ==
+                                  Brightness.dark
+                              ? AppColors.darkSurfaceMuted
+                              : AppColors.skeletonBase,
                           backgroundImage: AssetImage(authorAvatar),
                         ),
                         const SizedBox(width: 8),
@@ -107,10 +115,11 @@ class RouteDescriptionScreen extends StatelessWidget {
                             authorName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
+                              color: AppColors.getTextPrimaryColor(context),
                             ),
                           ),
                         ),
@@ -130,12 +139,14 @@ class RouteDescriptionScreen extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => Container(
                   height: 200,
-                  color: AppColors.skeletonBase,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkSurfaceMuted
+                      : AppColors.skeletonBase,
                   alignment: Alignment.center,
-                  child: const Icon(
+                  child: Icon(
                     CupertinoIcons.map,
                     size: 28,
-                    color: AppColors.textSecondary,
+                    color: AppColors.getTextSecondaryColor(context),
                   ),
                 ),
               ),
@@ -145,12 +156,18 @@ class RouteDescriptionScreen extends StatelessWidget {
             SliverToBoxAdapter(
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  border: Border.all(color: AppColors.border, width: 0.5),
+                  color: AppColors.getSurfaceColor(context),
+                  border: Border.all(
+                    color: AppColors.getBorderColor(context),
+                    width: 0.5,
+                  ),
                   boxShadow: [
-                    const BoxShadow(
-                      color: AppColors.shadowSoft,
-                      offset: Offset(0, 1),
+                    BoxShadow(
+                      // ── Тень из темы (более заметная в темной теме)
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkShadowSoft
+                          : AppColors.shadowSoft,
+                      offset: const Offset(0, 1),
                       blurRadius: 1,
                       spreadRadius: 0,
                     ),
@@ -184,12 +201,18 @@ class RouteDescriptionScreen extends StatelessWidget {
             SliverToBoxAdapter(
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  border: Border.all(color: AppColors.border, width: 0.5),
+                  color: AppColors.getSurfaceColor(context),
+                  border: Border.all(
+                    color: AppColors.getBorderColor(context),
+                    width: 0.5,
+                  ),
                   boxShadow: [
-                    const BoxShadow(
-                      color: AppColors.shadowSoft,
-                      offset: Offset(0, 1),
+                    BoxShadow(
+                      // ── Тень из темы (более заметная в темной теме)
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkShadowSoft
+                          : AppColors.shadowSoft,
+                      offset: const Offset(0, 1),
                       blurRadius: 1,
                       spreadRadius: 0,
                     ),
@@ -197,7 +220,7 @@ class RouteDescriptionScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    const _ActionRow(
+                    _ActionRow(
                       icon: CupertinoIcons.rosette,
                       title: 'Личный рекорд',
                       trailingText: '1:32:57',
@@ -335,10 +358,10 @@ class _MetricBlock extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 11,
-              color: AppColors.textSecondary,
+              color: AppColors.getTextSecondaryColor(context),
             ),
           ),
           const SizedBox(height: 2),
@@ -346,10 +369,11 @@ class _MetricBlock extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w500,
+              color: AppColors.getTextPrimaryColor(context),
             ),
           ),
         ],
@@ -396,9 +420,10 @@ class _ActionRow extends StatelessWidget {
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 13,
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                     ),
@@ -421,10 +446,11 @@ class _ActionRow extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.right,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 13,
                             fontWeight: FontWeight.w400,
+                            color: AppColors.getTextPrimaryColor(context),
                           ),
                         ),
                 ),
@@ -454,12 +480,12 @@ class _DividerLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(
+    return Divider(
       height: 1,
       thickness: 0.5,
       indent: 36,
       endIndent: 8,
-      color: AppColors.divider,
+      color: AppColors.getDividerColor(context),
     );
   }
 }

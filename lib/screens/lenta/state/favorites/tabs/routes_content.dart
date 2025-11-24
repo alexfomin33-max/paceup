@@ -91,13 +91,19 @@ class _RouteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-
-        border: Border.all(color: AppColors.border, width: 0.5),
+        // ── Цвет поверхности из темы
+        color: AppColors.getSurfaceColor(context),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.5,
+        ),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+          BoxShadow(
+            // ── Тень из темы (более заметная в темной теме)
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -132,10 +138,11 @@ class _RouteRow extends StatelessWidget {
                 height: 55,
                 color: AppColors.skeletonBase,
                 alignment: Alignment.center,
-                child: const Icon(
+                child: Icon(
                   CupertinoIcons.map,
                   size: 20,
-                  color: AppColors.textSecondary,
+                  // ── Цвет иконки из темы
+                  color: AppColors.getTextSecondaryColor(context),
                 ),
               ),
             ),
@@ -153,7 +160,10 @@ class _RouteRow extends StatelessWidget {
                         e.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.h14w5,
+                        // ── Цвет текста из темы
+                        style: AppTextStyles.h14w5.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -233,14 +243,22 @@ class _Metric extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.max,
       children: [
-        Icon(icon, size: 14, color: AppColors.textSecondary),
+        // ── Цвет иконки из темы
+        Icon(
+          icon,
+          size: 14,
+          color: AppColors.getTextSecondaryColor(context),
+        ),
         const SizedBox(width: 4),
         Expanded(
           child: Text(
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.h13w4,
+            // ── Цвет текста из темы
+            style: AppTextStyles.h13w4.copyWith(
+              color: AppColors.getTextSecondaryColor(context),
+            ),
           ),
         ),
       ],

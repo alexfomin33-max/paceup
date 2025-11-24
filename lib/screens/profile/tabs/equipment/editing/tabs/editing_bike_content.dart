@@ -176,7 +176,7 @@ class _EditingBikeContentState extends State<EditingBikeContent> {
       builder: (popupContext) {
         return Container(
           height: 280,
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           child: Column(
             children: [
               SizedBox(
@@ -205,10 +205,10 @@ class _EditingBikeContentState extends State<EditingBikeContent> {
                   ],
                 ),
               ),
-              const Divider(
+              Divider(
                 height: 1,
                 thickness: 0.5,
-                color: AppColors.divider,
+                color: AppColors.getDividerColor(context),
                 indent: 12,
                 endIndent: 12,
               ),
@@ -380,9 +380,12 @@ class _EditingBikeContentState extends State<EditingBikeContent> {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.getSurfaceColor(context),
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.border, width: 0.5),
+            border: Border.all(
+              color: AppColors.getBorderColor(context),
+              width: 0.5,
+            ),
           ),
           child: Column(
             children: [
@@ -415,10 +418,10 @@ class _EditingBikeContentState extends State<EditingBikeContent> {
                               _currentImageUrl!,
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
-                                return const Center(
+                                return Center(
                                   child: Icon(
                                     Icons.error_outline,
-                                    color: AppColors.textSecondary,
+                                    color: AppColors.getTextSecondaryColor(context),
                                   ),
                                 );
                               },
@@ -439,10 +442,10 @@ class _EditingBikeContentState extends State<EditingBikeContent> {
                               _imageFile!,
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
-                                return const Center(
+                                return Center(
                                   child: Icon(
                                     Icons.error_outline,
-                                    color: AppColors.textSecondary,
+                                    color: AppColors.getTextSecondaryColor(context),
                                   ),
                                 );
                               },
@@ -455,15 +458,15 @@ class _EditingBikeContentState extends State<EditingBikeContent> {
                       right: 70,
                       bottom: 18,
                       child: Material(
-                        color: AppColors.surface,
+                        color: AppColors.getSurfaceColor(context),
                         shape: const CircleBorder(),
                         child: IconButton(
                           tooltip: 'Добавить фото',
                           onPressed: _pickImage,
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.add_a_photo_outlined,
                             size: 28,
-                            color: AppColors.textSecondary,
+                            color: AppColors.getTextSecondaryColor(context),
                           ),
                         ),
                       ),
@@ -472,10 +475,10 @@ class _EditingBikeContentState extends State<EditingBikeContent> {
                 ),
               ),
 
-              const Divider(
+              Divider(
                 height: 1,
                 thickness: 0.5,
-                color: AppColors.divider,
+                color: AppColors.getDividerColor(context),
                 indent: 12,
                 endIndent: 12,
               ),
@@ -517,10 +520,10 @@ class _EditingBikeContentState extends State<EditingBikeContent> {
                     child: Text(
                       _dateLabel,
                       textAlign: TextAlign.right,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
-                        color: AppColors.textPrimary,
+                        color: AppColors.getTextPrimaryColor(context),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -582,7 +585,11 @@ class _FieldRow extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      color: AppColors.getTextSecondaryColor(context),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -591,10 +598,10 @@ class _FieldRow extends StatelessWidget {
             ),
           ),
         ),
-        const Divider(
+        Divider(
           height: 1,
           thickness: 0.5,
-          color: AppColors.divider,
+          color: AppColors.getDividerColor(context),
           indent: 12,
           endIndent: 12,
         ),
@@ -628,16 +635,16 @@ class _RightTextFieldState extends State<_RightTextField> {
         isDense: true,
         hintText: widget.hint,
         border: InputBorder.none,
-        hintStyle: const TextStyle(
+        hintStyle: TextStyle(
           fontFamily: 'Inter',
           fontSize: 14,
-          color: AppColors.textPlaceholder,
+          color: AppColors.getTextPlaceholderColor(context),
         ),
       ),
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'Inter',
         fontSize: 14,
-        color: AppColors.textPrimary,
+        color: AppColors.getTextPrimaryColor(context),
         fontWeight: FontWeight.w600,
       ),
     );

@@ -129,7 +129,7 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
         backgroundColor: AppColors.getBackgroundColor(context),
         // ⛔️ никаких bottomNavigationBar — экран отдельный
         appBar: AppBar(
-          backgroundColor: AppColors.getBackgroundColor(context),
+          backgroundColor: AppColors.getSurfaceColor(context),
           elevation: 1, // как в market_screen.dart
           shadowColor: AppColors.shadowStrong, // та же маленькая тень
           leadingWidth: 40,
@@ -349,7 +349,10 @@ class _KVLine extends StatelessWidget {
             fit: FlexFit.loose,
             child: Text(
               k,
-              style: const TextStyle(fontSize: 13),
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -372,12 +375,14 @@ class _ChipNeutral extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.getBackgroundColor(context), // без рамки
+        color: AppColors.getSurfaceMutedColor(context), // как у GenderPill и PricePill
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: DefaultTextStyle(
         style: TextStyle(
+          fontFamily: 'Inter',
           fontSize: 13,
+          fontWeight: FontWeight.w400,
           color: AppColors.getTextPrimaryColor(context),
         ),
         child: child,
@@ -413,8 +418,12 @@ class _ActionsWrapState extends State<_ActionsWrap> {
               Expanded(
                 child: _PillButton(
                   text: 'Слот куплен',
-                  bg: AppColors.backgroundGreen,
-                  border: AppColors.borderaccept,
+                  bg: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkSurfaceMuted
+                      : AppColors.backgroundGreen,
+                  border: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkBorder
+                      : AppColors.borderaccept,
                   fg: AppColors.success,
                   onTap: () {
                     setState(() => _status = _DealStatus.bought);
@@ -426,8 +435,12 @@ class _ActionsWrapState extends State<_ActionsWrap> {
               Expanded(
                 child: _PillButton(
                   text: 'Отменить сделку',
-                  bg: AppColors.bgfemale,
-                  border: AppColors.bordercancel,
+                  bg: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkSurfaceMuted
+                      : AppColors.bgfemale,
+                  border: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkBorder
+                      : AppColors.bordercancel,
                   fg: AppColors.error,
                   onTap: () {
                     setState(() => _status = _DealStatus.cancelled);
@@ -440,23 +453,31 @@ class _ActionsWrapState extends State<_ActionsWrap> {
         );
 
       case _DealStatus.bought:
-        return const Center(
+        return Center(
           child: _PillFinal(
             icon: CupertinoIcons.check_mark_circled,
             text: 'Слот куплен',
-            bg: AppColors.backgroundGreen,
-            border: AppColors.borderaccept,
+            bg: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkSurfaceMuted
+                : AppColors.backgroundGreen,
+            border: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkBorder
+                : AppColors.borderaccept,
             fg: AppColors.success,
           ),
         );
 
       case _DealStatus.cancelled:
-        return const Center(
+        return Center(
           child: _PillFinal(
             icon: CupertinoIcons.clear_circled,
             text: 'Сделка отменена',
-            bg: AppColors.bgfemale,
-            border: AppColors.bordercancel,
+            bg: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkSurfaceMuted
+                : AppColors.bgfemale,
+            border: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkBorder
+                : AppColors.bordercancel,
             fg: AppColors.error,
           ),
         );
@@ -514,7 +535,7 @@ class _PillFinal extends StatelessWidget {
   final Color border;
   final Color fg;
 
-  const _PillFinal({
+  _PillFinal({
     required this.icon,
     required this.text,
     required this.bg,
@@ -562,7 +583,10 @@ class _DateSeparator extends StatelessWidget {
     alignment: Alignment.center,
     child: Text(
       text,
-      style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+      style: TextStyle(
+        fontSize: 12,
+        color: AppColors.getTextTertiaryColor(context),
+      ),
     ),
   );
 }
@@ -578,7 +602,13 @@ class _ParticipantRow extends StatelessWidget {
       children: [
         CircleAvatar(radius: 14, backgroundImage: AssetImage(avatarAsset)),
         const SizedBox(width: 8),
-        Text(nameAndRole, style: const TextStyle(fontSize: 13)),
+        Text(
+          nameAndRole,
+          style: TextStyle(
+            fontSize: 13,
+            color: AppColors.getTextPrimaryColor(context),
+          ),
+        ),
       ],
     ),
   );
@@ -606,9 +636,15 @@ class _BubbleLeft extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: AppColors.getBackgroundColor(context),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkSurfaceMuted
+                    : AppColors.backgroundGreen,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.getBorderColor(context)),
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkBorder
+                      : AppColors.borderaccept,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -617,7 +653,11 @@ class _BubbleLeft extends StatelessWidget {
                     width: double.infinity,
                     child: Text(
                       text,
-                      style: const TextStyle(fontSize: 14, height: 1.35),
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.35,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
                   ),
                   Padding(
@@ -626,9 +666,9 @@ class _BubbleLeft extends StatelessWidget {
                       alignment: Alignment.bottomRight,
                       child: Text(
                         time,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textTertiary,
+                          color: AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -661,9 +701,15 @@ class _BubbleRight extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: AppColors.backgroundGreen,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkSurfaceMuted
+                    : AppColors.backgroundGreen,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.borderaccept),
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkBorder
+                      : AppColors.borderaccept,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -672,7 +718,11 @@ class _BubbleRight extends StatelessWidget {
                     width: double.infinity,
                     child: Text(
                       text,
-                      style: const TextStyle(fontSize: 14, height: 1.35),
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.35,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
                   ),
                   Padding(
@@ -681,9 +731,9 @@ class _BubbleRight extends StatelessWidget {
                       alignment: Alignment.bottomRight,
                       child: Text(
                         time,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textTertiary,
+                          color: AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -785,7 +835,7 @@ class _TimeBadge extends StatelessWidget {
     child: Text(
       time,
       style: TextStyle(
-        color: AppColors.getSurfaceColor(context),
+        color: AppColors.getTextPrimaryColor(context),
         fontSize: 11,
       ),
     ),
@@ -828,11 +878,13 @@ class _ComposerState extends State<_Composer> {
         padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: AppColors.shadowSoft,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkShadowSoft
+                  : AppColors.shadowSoft,
               blurRadius: 8,
-              offset: Offset(0, -2),
+              offset: const Offset(0, -2),
             ),
           ],
           border: Border(
@@ -857,9 +909,11 @@ class _ComposerState extends State<_Composer> {
                   controller: widget.controller,
                   minLines: 1,
                   maxLines: 4,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Сообщение...',
-                    hintStyle: TextStyle(color: AppColors.textPlaceholder),
+                    hintStyle: TextStyle(
+                      color: AppColors.getTextPlaceholderColor(context),
+                    ),
                     border: InputBorder.none,
                   ),
                 ),

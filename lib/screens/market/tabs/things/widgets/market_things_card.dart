@@ -37,10 +37,13 @@ class GoodsCard extends StatelessWidget {
           color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.sm),
           boxShadow: [
-            const BoxShadow(
-              color: AppColors.shadowSoft,
+            BoxShadow(
+              // ── Тень из темы (более заметная в темной теме)
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkShadowSoft
+                  : AppColors.shadowSoft,
               blurRadius: 1,
-              offset: Offset(0, 1),
+              offset: const Offset(0, 1),
             ),
           ],
         ),
@@ -58,11 +61,12 @@ class GoodsCard extends StatelessWidget {
                       item.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         height: 1.2,
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
                   ),
@@ -74,8 +78,9 @@ class GoodsCard extends StatelessWidget {
                       child: Icon(
                         CupertinoIcons.chevron_down,
                         size: 18,
-                        color: AppColors.getIconPrimaryColor(context)
-                            .withValues(alpha: 0.6),
+                        color: AppColors.getIconPrimaryColor(
+                          context,
+                        ).withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -155,7 +160,9 @@ class GoodsCard extends StatelessWidget {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: AppColors.getSurfaceMutedColor(context),
-                      border: Border.all(color: AppColors.getBorderColor(context)),
+                      border: Border.all(
+                        color: AppColors.getBorderColor(context),
+                      ),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Column(
@@ -163,11 +170,11 @@ class GoodsCard extends StatelessWidget {
                       children: [
                         Text(
                           item.description!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 13,
-
                             height: 1.35,
+                            color: AppColors.getTextPrimaryColor(context),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -198,7 +205,8 @@ class GoodsCard extends StatelessWidget {
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.brandPrimary,
-                              foregroundColor: AppColors.getSurfaceColor(context),
+                              foregroundColor: Colors
+                                  .white, // белый цвет для иконки и текста на синем фоне
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,

@@ -372,6 +372,24 @@ class _InlineStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // Разделяем значение на числовую часть и единицы измерения
+    // Паттерны: "582 км", "4:18 /км", "35,7 км/ч"
+    String numberPart = value;
+    String unitPart = '';
+    
+    // Проверяем наличие единиц измерения в конце строки
+    if (value.endsWith(' км')) {
+      numberPart = value.substring(0, value.length - 3);
+      unitPart = ' км';
+    } else if (value.endsWith(' /км')) {
+      numberPart = value.substring(0, value.length - 4);
+      unitPart = ' /км';
+    } else if (value.endsWith(' км/ч')) {
+      numberPart = value.substring(0, value.length - 5);
+      unitPart = ' км/ч';
+    }
+    
     return RichText(
       text: TextSpan(
         style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
@@ -385,12 +403,22 @@ class _InlineStat extends StatelessWidget {
             ),
           ),
           TextSpan(
-            text: value,
+            text: numberPart,
             style: TextStyle(
               fontWeight: FontWeight.w500,
               color: AppColors.getTextPrimaryColor(context),
             ),
           ),
+          if (unitPart.isNotEmpty)
+            TextSpan(
+              text: unitPart,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: isDark 
+                    ? AppColors.darkTextSecondary 
+                    : AppColors.textSecondary,
+              ),
+            ),
         ],
       ),
     );

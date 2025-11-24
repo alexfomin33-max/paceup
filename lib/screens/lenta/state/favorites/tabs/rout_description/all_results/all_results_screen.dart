@@ -44,7 +44,7 @@ class _AllResultsScreenState extends State<AllResultsScreen>
           children: [
             // ── подшапка в стиле my_results_screen.dart
             Container(
-              color: AppColors.surface,
+              color: AppColors.getSurfaceColor(context),
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -53,10 +53,11 @@ class _AllResultsScreenState extends State<AllResultsScreen>
                     child: Text(
                       widget.routeTitle,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
                   ),
@@ -72,12 +73,12 @@ class _AllResultsScreenState extends State<AllResultsScreen>
 
             // ── слайдер «Все / Друзья» как в favorites_screen.dart
             Container(
-              color: AppColors.surface,
+              color: AppColors.getSurfaceColor(context),
               child: TabBar(
                 controller: _tab,
                 isScrollable: false,
                 labelColor: AppColors.brandPrimary,
-                unselectedLabelColor: AppColors.textPrimary,
+                unselectedLabelColor: AppColors.getTextPrimaryColor(context),
                 indicatorColor: AppColors.brandPrimary,
                 indicatorWeight: 1,
                 labelPadding: const EdgeInsets.symmetric(horizontal: 8),
@@ -142,16 +143,25 @@ class _ResultsList extends StatelessWidget {
           ), // ← по 4 px слева/справа
           sliver: SliverToBoxAdapter(
             child: Container(
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
+              decoration: BoxDecoration(
+                color: AppColors.getSurfaceColor(context),
                 border: Border(
-                  top: BorderSide(color: AppColors.border, width: 0.5),
-                  bottom: BorderSide(color: AppColors.border, width: 0.5),
+                  top: BorderSide(
+                    color: AppColors.getBorderColor(context),
+                    width: 0.5,
+                  ),
+                  bottom: BorderSide(
+                    color: AppColors.getBorderColor(context),
+                    width: 0.5,
+                  ),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.shadowSoft,
-                    offset: Offset(0, 1),
+                    // ── Тень из темы (более заметная в темной теме)
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkShadowSoft
+                        : AppColors.shadowSoft,
+                    offset: const Offset(0, 1),
                     blurRadius: 1,
                     spreadRadius: 0,
                   ),
@@ -189,14 +199,20 @@ class _LeaderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.5,
+        ),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
+          BoxShadow(
+            // ── Тень из темы (более заметная в темной теме)
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
             blurRadius: 1,
-            offset: Offset(0, 1),
+            offset: const Offset(0, 1),
           ),
         ],
       ),
@@ -219,10 +235,10 @@ class _LeaderCard extends StatelessWidget {
             top: 0,
             child: Text(
               item.dateText,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
-                color: AppColors.textSecondary,
+                color: AppColors.getTextSecondaryColor(context),
               ),
             ),
           ),
@@ -292,10 +308,11 @@ class _LeaderCard extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
+                  color: AppColors.getTextPrimaryColor(context),
                 ),
               ),
 
@@ -342,7 +359,11 @@ class _MetricCenter extends StatelessWidget {
       children: [
         if (resolved != null) const SizedBox(width: 2), // чуть воздуха слева
         if (resolved != null)
-          Icon(resolved, size: 14, color: AppColors.textSecondary),
+          Icon(
+            resolved,
+            size: 14,
+            color: AppColors.getTextSecondaryColor(context),
+          ),
         if (resolved != null) const SizedBox(width: 4),
         Flexible(
           child: Text(
@@ -350,7 +371,11 @@ class _MetricCenter extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 13,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
           ),
         ),
         if (resolved != null) const SizedBox(width: 2),
@@ -385,7 +410,9 @@ class _ResultRow extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
-                color: highlight ? AppColors.success : AppColors.textPrimary,
+                color: highlight
+                    ? AppColors.success
+                    : AppColors.getTextPrimaryColor(context),
               ),
             ),
           ),
@@ -409,17 +436,21 @@ class _ResultRow extends StatelessWidget {
                   item.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   item.dateText,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: AppColors.getTextSecondaryColor(context),
                   ),
                 ),
               ],
@@ -432,10 +463,10 @@ class _ResultRow extends StatelessWidget {
               mainAxisAlignment:
                   MainAxisAlignment.start, // ← влево внутри колонки
               children: [
-                const Icon(
+                Icon(
                   CupertinoIcons.time,
                   size: 14,
-                  color: AppColors.textSecondary,
+                  color: AppColors.getTextSecondaryColor(context),
                 ),
                 const SizedBox(width: 4),
                 Flexible(
@@ -450,7 +481,7 @@ class _ResultRow extends StatelessWidget {
                       fontWeight: FontWeight.w400,
                       color: highlight
                           ? AppColors.success
-                          : AppColors.textPrimary,
+                          : AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                 ),
@@ -465,7 +496,11 @@ class _ResultRow extends StatelessWidget {
       children: [
         row,
         if (!isLast)
-          const Divider(height: 1, thickness: 0.5, color: AppColors.divider),
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: AppColors.getDividerColor(context),
+          ),
       ],
     );
   }
@@ -480,10 +515,11 @@ class _TabLabel extends StatelessWidget {
     return Text(
       text,
       overflow: TextOverflow.ellipsis,
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'Inter',
         fontSize: 13,
         fontWeight: FontWeight.w500,
+        color: AppColors.getTextPrimaryColor(context),
       ),
     );
   }

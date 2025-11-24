@@ -19,7 +19,8 @@ class _MyEventsContentState extends ConsumerState<MyEventsContent> {
   // Текущий месяц (по умолчанию текущий месяц)
   late DateTime month;
   int? selectedDay; // выделенный день
-  bool _monthInitialized = false; // флаг, что месяц уже инициализирован из событий
+  bool _monthInitialized =
+      false; // флаг, что месяц уже инициализирован из событий
 
   @override
   void initState() {
@@ -108,16 +109,19 @@ class _MyEventsContentState extends ConsumerState<MyEventsContent> {
       data: (userId) {
         if (userId == null) {
           // Пользователь не авторизован
-          return const CustomScrollView(
-            physics: BouncingScrollPhysics(),
+          return CustomScrollView(
+            physics: const BouncingScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
                   child: Center(
                     child: Text(
                       'Необходима авторизация',
-                      style: AppTextStyles.h14w4,
+                      // ── Цвет текста из темы
+                      style: AppTextStyles.h14w4.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
                   ),
                 ),
@@ -162,7 +166,10 @@ class _MyEventsContentState extends ConsumerState<MyEventsContent> {
                         child: Center(
                           child: Text(
                             _monthTitle(month),
-                            style: AppTextStyles.h15w5,
+                            // ── Цвет текста из темы
+                            style: AppTextStyles.h15w5.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
                           ),
                         ),
                       ),
@@ -197,9 +204,7 @@ class _MyEventsContentState extends ConsumerState<MyEventsContent> {
                 const SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.all(24),
-                    child: Center(
-                      child: CupertinoActivityIndicator(),
-                    ),
+                    child: Center(child: CupertinoActivityIndicator()),
                   ),
                 )
               else if (eventsState.error != null && eventsState.events.isEmpty)
@@ -212,7 +217,10 @@ class _MyEventsContentState extends ConsumerState<MyEventsContent> {
                         children: [
                           Text(
                             'Ошибка: ${eventsState.error}',
-                            style: AppTextStyles.h14w4,
+                            // ── Цвет текста из темы
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 12),
@@ -230,13 +238,16 @@ class _MyEventsContentState extends ConsumerState<MyEventsContent> {
                   ),
                 )
               else if (eventsState.events.isEmpty)
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(24),
                     child: Center(
                       child: Text(
                         'У вас пока нет событий',
-                        style: AppTextStyles.h14w4,
+                        // ── Цвет текста из темы
+                        style: AppTextStyles.h14w4.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
                       ),
                     ),
                   ),
@@ -278,7 +289,10 @@ class _MyEventsContentState extends ConsumerState<MyEventsContent> {
               child: Center(
                 child: Text(
                   'Ошибка: $err',
-                  style: AppTextStyles.h14w4,
+                  // ── Цвет текста из темы
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -298,13 +312,19 @@ class _EventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        // ── Цвет поверхности из темы
+        color: AppColors.getSurfaceColor(context),
         // стиль карточки такой же, как в других вкладках
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.5,
+        ),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -326,7 +346,12 @@ class _MonthButton extends StatelessWidget {
       padding: const EdgeInsets.all(6),
       minimumSize: const Size(28, 28),
       onPressed: onTap,
-      child: Icon(icon, size: 18, color: AppColors.iconPrimary),
+      // ── Цвет иконки из темы
+      child: Icon(
+        icon,
+        size: 18,
+        color: AppColors.getIconPrimaryColor(context),
+      ),
     );
   }
 }
@@ -360,24 +385,26 @@ class _EventRow extends StatelessWidget {
                         memCacheHeight: targetH,
                         maxWidthDiskCache: targetW,
                         maxHeightDiskCache: targetH,
-                    errorWidget: (_, __, ___) => Container(
-                      width: 80,
-                      height: 55,
-                      color: AppColors.skeletonBase,
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        CupertinoIcons.photo,
-                        size: 20,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    placeholder: (_, __) => Container(
-                      width: 80,
-                      height: 55,
-                      color: AppColors.skeletonBase,
-                      alignment: Alignment.center,
-                      child: const CupertinoActivityIndicator(),
-                    ),
+                        errorWidget: (_, __, ___) => Container(
+                          width: 80,
+                          height: 55,
+                          // ── Цвет скелетона (можно оставить константу, т.к. это декоративный элемент)
+                          color: AppColors.skeletonBase,
+                          alignment: Alignment.center,
+                          child: Icon(
+                            CupertinoIcons.photo,
+                            size: 20,
+                            // ── Цвет иконки из темы
+                            color: AppColors.getTextSecondaryColor(context),
+                          ),
+                        ),
+                        placeholder: (_, __) => Container(
+                          width: 80,
+                          height: 55,
+                          color: AppColors.skeletonBase,
+                          alignment: Alignment.center,
+                          child: const CupertinoActivityIndicator(),
+                        ),
                       );
                     },
                   )
@@ -386,10 +413,11 @@ class _EventRow extends StatelessWidget {
                     height: 55,
                     color: AppColors.skeletonBase,
                     alignment: Alignment.center,
-                    child: const Icon(
+                    child: Icon(
                       CupertinoIcons.photo,
                       size: 20,
-                      color: AppColors.textSecondary,
+                      // ── Цвет иконки из темы
+                      color: AppColors.getTextSecondaryColor(context),
                     ),
                   ),
           ),
@@ -402,14 +430,20 @@ class _EventRow extends StatelessWidget {
                   event.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h14w6,
+                  // ── Цвет текста из темы
+                  style: AppTextStyles.h14w6.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   '${event.dateFormatted}  ·  Участников: ${_fmt(event.participantsCount)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h13w4,
+                  // ── Цвет текста из темы
+                  style: AppTextStyles.h13w4.copyWith(
+                    color: AppColors.getTextSecondaryColor(context),
+                  ),
                 ),
               ],
             ),
@@ -443,13 +477,20 @@ class _InlineCalendar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        // ── Цвет поверхности из темы
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.5,
+        ),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+          BoxShadow(
+            // ── Тень из темы (более заметная в темной теме)
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -532,7 +573,10 @@ class _InlineCalendar extends StatelessWidget {
                                         : FontWeight.w400,
                                     color: (c >= 5)
                                         ? AppColors.error
-                                        : AppColors.textPrimary,
+                                        // ── Цвет текста из темы
+                                        : AppColors.getTextPrimaryColor(
+                                            context,
+                                          ),
                                   ),
                                 ),
                               ),
@@ -567,7 +611,10 @@ class _D extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: weekend ? AppColors.error : AppColors.textSecondary,
+            color: weekend
+                ? AppColors.error
+                // ── Цвет текста из темы
+                : AppColors.getTextSecondaryColor(context),
           ),
         ),
       ),
@@ -604,4 +651,3 @@ String _monthTitle(DateTime m) {
   final s = '${months[m.month - 1]} ${m.year}';
   return '${s[0].toUpperCase()}${s.substring(1)}';
 }
-

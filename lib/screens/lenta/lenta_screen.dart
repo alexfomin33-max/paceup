@@ -524,6 +524,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                 TextSpan(
                   text: 'PACE',
                   style: AppTextStyles.h17w6.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.0,
                   ),
@@ -563,6 +564,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               TextSpan(
                 text: 'PACE',
                 style: AppTextStyles.h17w6.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.0,
                 ),

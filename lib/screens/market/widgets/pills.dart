@@ -3,18 +3,24 @@
 import 'package:flutter/material.dart';
 import '../../../../../theme/app_theme.dart';
 
-/// Пилюля с дистанцией (фикс. ширина, серый фон)
+/// Пилюля с дистанцией (фикс. ширина, background фон в светлой теме)
 class DistancePill extends StatelessWidget {
   final String text;
   const DistancePill({super.key, required this.text});
 
   @override
   Widget build(BuildContext context) {
+    // ── В светлой теме используем background, в темной — серый
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final bgColor = isLight
+        ? AppColors.background
+        : AppColors.getSurfaceMutedColor(context);
+
     return Container(
       width: 70,
       height: 28,
       decoration: BoxDecoration(
-        color: AppColors.getBackgroundColor(context),
+        color: bgColor,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       alignment: Alignment.center,
@@ -22,7 +28,9 @@ class DistancePill extends StatelessWidget {
         text,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: AppTextStyles.h13w4,
+        style: AppTextStyles.h13w4.copyWith(
+          color: AppColors.getTextPrimaryColor(context),
+        ),
       ),
     );
   }
@@ -37,13 +45,19 @@ class GenderPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ── В светлой теме используем цветные фоны и тексты, в темной — серые
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final bgColor = isLight
+        ? (female ? AppColors.bgfemale : AppColors.bgmale)
+        : AppColors.getSurfaceMutedColor(context);
+    final textColor = isLight
+        ? (female ? AppColors.female : AppColors.male)
+        : AppColors.getTextPrimaryColor(context);
+
     return Container(
       width: 28,
       height: 28,
-      decoration: BoxDecoration(
-        color: female ? AppColors.bgfemale : AppColors.bgmale,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
       alignment: Alignment.center,
       child: Text(
         female ? 'Ж' : 'М',
@@ -51,7 +65,7 @@ class GenderPill extends StatelessWidget {
           fontFamily: 'Inter',
           fontSize: 13,
           fontWeight: FontWeight.w400,
-          color: female ? AppColors.female : AppColors.male,
+          color: textColor,
         ),
       ),
     );
@@ -65,11 +79,20 @@ class PricePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ── В светлой теме используем желтый фон и коричневый текст, в темной — серые
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final bgColor = isLight
+        ? AppColors.backgroundYellow
+        : AppColors.getSurfaceMutedColor(context);
+    final textColor = isLight
+        ? AppColors.price
+        : AppColors.getTextPrimaryColor(context);
+
     return Container(
       width: 76,
       height: 28,
       decoration: BoxDecoration(
-        color: AppColors.backgroundYellow,
+        color: bgColor,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       alignment: Alignment.center,
@@ -77,35 +100,45 @@ class PricePill extends StatelessWidget {
         text,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 13,
           fontWeight: FontWeight.w400,
-          color: AppColors.price,
+          color: textColor,
         ),
       ),
     );
   }
 }
 
-/// Пилюля города (серый фон, эластичная по ширине).
+/// Пилюля города (background фон в светлой теме, эластичная по ширине).
 class CityPill extends StatelessWidget {
   final String text;
   const CityPill({super.key, required this.text});
 
   @override
   Widget build(BuildContext context) {
+    // ── В светлой теме используем background, в темной — серый
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final bgColor = isLight
+        ? AppColors.background
+        : AppColors.getSurfaceMutedColor(context);
+
     return Container(
       height: 28,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.getBackgroundColor(context),
+        color: bgColor,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       alignment: Alignment.center,
       child: Text(
         text,
-        style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+        style: TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 13,
+          color: AppColors.getTextPrimaryColor(context),
+        ),
       ),
     );
   }

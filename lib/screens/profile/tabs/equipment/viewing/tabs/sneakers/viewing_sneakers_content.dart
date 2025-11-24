@@ -188,9 +188,7 @@ class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
           children: [
             Text(
               _error!,
-              style: TextStyle(
-                color: AppColors.getTextSecondaryColor(context),
-              ),
+              style: TextStyle(color: AppColors.getTextSecondaryColor(context)),
             ),
             const SizedBox(height: 16),
             CupertinoButton(
@@ -206,9 +204,7 @@ class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
       return Center(
         child: Text(
           'Нет кроссовок',
-          style: TextStyle(
-            color: AppColors.getTextSecondaryColor(context),
-          ),
+          style: TextStyle(color: AppColors.getTextSecondaryColor(context)),
         ),
       );
     }
@@ -292,7 +288,7 @@ class GearViewCard extends StatefulWidget {
     this.mainBadgeText,
     this.onUpdate,
   }) : thirdValue = speed,
-       thirdLabel = 'Скорость',
+       thirdLabel = 'Скорость, км/ч',
        equipmentType = 'bike';
 
   @override
@@ -486,10 +482,7 @@ class _GearViewCardState extends State<GearViewCard> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        border: Border.all(
-          color: AppColors.getBorderColor(context),
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.getBorderColor(context), width: 1),
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
@@ -574,42 +567,70 @@ class _GearViewCardState extends State<GearViewCard> {
           // ── Изображение (из базы данных или локальный asset)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: AspectRatio(
-              aspectRatio: 16 / 7.8,
-              child: widget.imageUrl != null && widget.imageUrl!.isNotEmpty
-                  ? Image.network(
-                      widget.imageUrl!,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        // При ошибке загрузки показываем дефолтное изображение
-                        if (widget.asset != null) {
-                          return Image.asset(
-                            widget.asset!,
+            child: Center(
+              child: SizedBox(
+                width: 220,
+                height: 150,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                    color: AppColors.surface,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                    child:
+                        widget.imageUrl != null && widget.imageUrl!.isNotEmpty
+                        ? Image.network(
+                            widget.imageUrl!,
+                            width: 220,
+                            height: 150,
                             fit: BoxFit.contain,
-                          );
-                        }
-                        return Container(
-                          color: AppColors.getBorderColor(context),
-                          child: Center(
-                            child: Icon(
-                              CupertinoIcons.photo,
-                              color: AppColors.getTextSecondaryColor(context),
+                            errorBuilder: (context, error, stackTrace) {
+                              // При ошибке загрузки показываем дефолтное изображение
+                              if (widget.asset != null) {
+                                return Image.asset(
+                                  widget.asset!,
+                                  width: 220,
+                                  height: 150,
+                                  fit: BoxFit.contain,
+                                );
+                              }
+                              return Container(
+                                width: 220,
+                                height: 150,
+                                color: Colors.white,
+                                child: Center(
+                                  child: Icon(
+                                    CupertinoIcons.photo,
+                                    color: AppColors.getTextSecondaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          )
+                        : widget.asset != null
+                        ? Image.asset(
+                            widget.asset!,
+                            width: 220,
+                            height: 150,
+                            fit: BoxFit.contain,
+                          )
+                        : Container(
+                            width: 220,
+                            height: 150,
+                            color: Colors.white,
+                            child: Center(
+                              child: Icon(
+                                CupertinoIcons.photo,
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
                             ),
                           ),
-                        );
-                      },
-                    )
-                  : widget.asset != null
-                  ? Image.asset(widget.asset!, fit: BoxFit.contain)
-                  : Container(
-                      color: AppColors.getBorderColor(context),
-                      child: Center(
-                        child: Icon(
-                          CupertinoIcons.photo,
-                          color: AppColors.getTextSecondaryColor(context),
-                        ),
-                      ),
-                    ),
+                  ),
+                ),
+              ),
             ),
           ),
 
@@ -625,7 +646,12 @@ class _GearViewCardState extends State<GearViewCard> {
                     color: AppColors.getTextPrimaryColor(context),
                   ),
                   children: [
-                    const TextSpan(text: 'Пробег '),
+                    TextSpan(
+                      text: 'Пробег ',
+                      style: TextStyle(
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
+                    ),
                     TextSpan(
                       text: '${widget.km}',
                       style: TextStyle(
@@ -633,7 +659,12 @@ class _GearViewCardState extends State<GearViewCard> {
                         color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
-                    const TextSpan(text: ' км'),
+                    TextSpan(
+                      text: ' км',
+                      style: TextStyle(
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -655,7 +686,7 @@ class _GearViewCardState extends State<GearViewCard> {
             child: Row(
               children: [
                 _metric('Тренировок', '${widget.workouts}'),
-                _metric('Время', '${widget.hours} ч'),
+                _metric('Время, ч', '${widget.hours}'),
                 _metric(widget.thirdLabel, widget.thirdValue),
               ],
             ),
@@ -679,24 +710,78 @@ class _GearViewCardState extends State<GearViewCard> {
   }
 
   Widget _metric(String label, String value) {
+    // Разделяем значение на числовую часть и единицы измерения
+    String numberPart = value;
+    String unitPart = '';
+
+    // Проверяем наличие единиц измерения в конце строки
+    if (value.endsWith(' ч')) {
+      numberPart = value.substring(0, value.length - 2);
+      unitPart = ' ч';
+    } else if (value.endsWith(' км/ч')) {
+      numberPart = value.substring(0, value.length - 5);
+      // Для "Скорость, км/ч" не показываем "км/ч"
+      if (label != 'Скорость, км/ч') {
+        unitPart = ' км/ч';
+      }
+    } else if (value.endsWith(' /км')) {
+      numberPart = value.substring(0, value.length - 4);
+      // Для "Средний темп" не показываем "/км"
+      if (label != 'Средний темп') {
+        unitPart = ' /км';
+      }
+    } else if (value.endsWith(' /100м')) {
+      numberPart = value.substring(0, value.length - 6);
+      unitPart = ' /100м';
+    }
+
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start, // ← левое выравнивание
         children: [
           Text(
             label,
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            textAlign: TextAlign.left, // ← на всякий случай
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: AppColors.getTextSecondaryColor(context),
             ),
           ),
+          const SizedBox(height: 2),
+          unitPart.isNotEmpty
+              ? RichText(
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: numberPart,
+                        style: TextStyle(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+                      TextSpan(
+                        text: unitPart,
+                        style: TextStyle(
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Text(
+                  numberPart,
+                  textAlign: TextAlign.left, // ← на всякий случай
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                ),
         ],
       ),
     );

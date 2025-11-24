@@ -38,12 +38,15 @@ class MyResultsScreen extends StatelessWidget {
             // — подшапка как в rout_description_screen.dart
             SliverToBoxAdapter(
               child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.shadowSoft,
-                      offset: Offset(0, 1),
+                      // ── Тень из темы (более заметная в темной теме)
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkShadowSoft
+                          : AppColors.shadowSoft,
+                      offset: const Offset(0, 1),
                       blurRadius: 1,
                       spreadRadius: 0,
                     ),
@@ -57,10 +60,11 @@ class MyResultsScreen extends StatelessWidget {
                       child: Text(
                         routeTitle,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                     ),
@@ -136,13 +140,19 @@ class _ResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(0), // как в routes_content.dart
-        border: Border.all(color: AppColors.border, width: 0.5),
-        boxShadow: const [
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.5,
+        ),
+        boxShadow: [
           BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+            // ── Тень из темы (более заметная в темной теме)
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -175,12 +185,14 @@ class _ResultRow extends StatelessWidget {
               errorBuilder: (_, _, _) => Container(
                 width: 90,
                 height: 60,
-                color: AppColors.skeletonBase,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkSurfaceMuted
+                    : AppColors.skeletonBase,
                 alignment: Alignment.center,
-                child: const Icon(
+                child: Icon(
                   CupertinoIcons.map,
                   size: 20,
-                  color: AppColors.textSecondary,
+                  color: AppColors.getTextSecondaryColor(context),
                 ),
               ),
             ),
@@ -197,11 +209,11 @@ class _ResultRow extends StatelessWidget {
                   e.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
+                    color: AppColors.getTextSecondaryColor(context),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -272,7 +284,11 @@ class _MetricAligned extends StatelessWidget {
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: align,
       children: [
-        Icon(icon, size: 14, color: iconColor ?? AppColors.textSecondary),
+        Icon(
+          icon,
+          size: 14,
+          color: iconColor ?? AppColors.getTextSecondaryColor(context),
+        ),
         const SizedBox(width: 4),
         // Flexible, чтобы корректно ужиматься при правом/центральном выравнивании
         Flexible(
@@ -281,7 +297,11 @@ class _MetricAligned extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: textAlign,
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 12),
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
           ),
         ),
       ],

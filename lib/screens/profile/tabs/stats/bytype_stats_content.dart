@@ -379,13 +379,18 @@ class _YearChartCardState extends State<_YearChartCard> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border, width: 0.7),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.7,
+        ),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -404,10 +409,11 @@ class _YearChartCardState extends State<_YearChartCard> {
                 child: Text(
                   '$_year',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
+                    color: AppColors.getTextPrimaryColor(context),
                   ),
                 ),
               ),

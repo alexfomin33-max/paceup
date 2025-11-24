@@ -262,7 +262,7 @@ abstract class AppColors {
   }
 
   // Темные цвета (iOS Dark Mode)
-  static const Color darkBackground = Color(0xFF000000); // iOS black
+  static const Color darkBackground = Color(0xFF121212); // темно-серый фон
   static const Color darkSurface = Color(0xFF1C1C1E); // iOS dark surface
   static const Color darkSurfaceMuted = Color(0xFF2C2C2E);
   static const Color darkTextPrimary = Color(0xFFFFFFFF);

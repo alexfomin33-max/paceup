@@ -135,7 +135,7 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context), // фон чата — белый
         appBar: AppBar(
-          backgroundColor: AppColors.getBackgroundColor(context),
+          backgroundColor: AppColors.getSurfaceColor(context),
           elevation: 0.5,
           leadingWidth: 40,
           leading: Transform.translate(
@@ -296,7 +296,10 @@ class _KVLine extends StatelessWidget {
             fit: FlexFit.loose,
             child: Text(
               k,
-              style: const TextStyle(fontSize: 13),
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -320,7 +323,10 @@ class _DateSeparator extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         text,
-        style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+        style: TextStyle(
+          fontSize: 12,
+          color: AppColors.getTextTertiaryColor(context),
+        ),
       ),
     );
   }
@@ -340,7 +346,13 @@ class _ParticipantRow extends StatelessWidget {
         children: [
           CircleAvatar(radius: 14, backgroundImage: AssetImage(avatarAsset)),
           const SizedBox(width: 8),
-          Text(nameAndRole, style: const TextStyle(fontSize: 13)),
+          Text(
+            nameAndRole,
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ),
         ],
       ),
     );
@@ -372,9 +384,15 @@ class _BubbleLeft extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: AppColors.getBackgroundColor(context),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkSurfaceMuted
+                    : AppColors.backgroundGreen,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.getBorderColor(context)),
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkBorder
+                      : AppColors.borderaccept,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,7 +401,11 @@ class _BubbleLeft extends StatelessWidget {
                     width: double.infinity,
                     child: Text(
                       text,
-                      style: const TextStyle(fontSize: 14, height: 1.35),
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.35,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
                   ),
                   Padding(
@@ -392,9 +414,9 @@ class _BubbleLeft extends StatelessWidget {
                       alignment: Alignment.bottomRight,
                       child: Text(
                         time,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textTertiary,
+                          color: AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -430,7 +452,9 @@ class _BubbleRight extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               decoration: BoxDecoration(
-                color: AppColors.backgroundGreen, // мягкий зелёный
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkSurfaceMuted
+                    : AppColors.backgroundGreen, // мягкий зелёный
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 border: Border.all(color: AppColors.getBorderColor(context)),
               ),
@@ -441,7 +465,11 @@ class _BubbleRight extends StatelessWidget {
                     width: double.infinity,
                     child: Text(
                       text,
-                      style: const TextStyle(fontSize: 14, height: 1.35),
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.35,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
                   ),
                   Padding(
@@ -450,9 +478,9 @@ class _BubbleRight extends StatelessWidget {
                       alignment: Alignment.bottomRight,
                       child: Text(
                         time,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textTertiary,
+                          color: AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -508,7 +536,7 @@ class _BubbleImageLeft extends StatelessWidget {
                       child: Text(
                         time,
                         style: TextStyle(
-                          color: AppColors.getSurfaceColor(context),
+                          color: AppColors.getTextPrimaryColor(context),
                           fontSize: 11,
                         ),
                       ),
@@ -618,11 +646,13 @@ class _ComposerState extends State<_Composer> {
         padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: AppColors.shadowSoft,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkShadowSoft
+                  : AppColors.shadowSoft,
               blurRadius: 8,
-              offset: Offset(0, -2),
+              offset: const Offset(0, -2),
             ),
           ],
           border: Border(
@@ -647,9 +677,11 @@ class _ComposerState extends State<_Composer> {
                   controller: widget.controller,
                   minLines: 1,
                   maxLines: 4,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Сообщение...',
-                    hintStyle: TextStyle(color: AppColors.textPlaceholder),
+                    hintStyle: TextStyle(
+                      color: AppColors.getTextPlaceholderColor(context),
+                    ),
                     border: InputBorder.none,
                   ),
                 ),

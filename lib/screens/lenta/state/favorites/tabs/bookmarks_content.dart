@@ -29,16 +29,19 @@ class _BookmarksContentState extends ConsumerState<BookmarksContent> {
       data: (userId) {
         if (userId == null) {
           // Пользователь не авторизован
-          return const CustomScrollView(
-            physics: BouncingScrollPhysics(),
+          return CustomScrollView(
+            physics: const BouncingScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
                   child: Center(
                     child: Text(
                       'Необходима авторизация',
-                      style: AppTextStyles.h14w4,
+                      // ── Цвет текста из темы
+                      style: AppTextStyles.h14w4.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
                   ),
                 ),
@@ -79,7 +82,10 @@ class _BookmarksContentState extends ConsumerState<BookmarksContent> {
                         children: [
                           Text(
                             'Ошибка: ${eventsState.error}',
-                            style: AppTextStyles.h14w4,
+                            // ── Цвет текста из темы
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 12),
@@ -99,13 +105,16 @@ class _BookmarksContentState extends ConsumerState<BookmarksContent> {
                   ),
                 )
               else if (eventsState.events.isEmpty)
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(24),
                     child: Center(
                       child: Text(
                         'У вас пока нет закладок',
-                        style: AppTextStyles.h14w4,
+                        // ── Цвет текста из темы
+                        style: AppTextStyles.h14w4.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
                       ),
                     ),
                   ),
@@ -173,7 +182,10 @@ class _BookmarksContentState extends ConsumerState<BookmarksContent> {
               child: Center(
                 child: Text(
                   'Ошибка: $err',
-                  style: AppTextStyles.h14w4,
+                  // ── Цвет текста из темы
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -193,12 +205,19 @@ class _BookmarkCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.border, width: 0.5),
+        // ── Цвет поверхности из темы
+        color: AppColors.getSurfaceColor(context),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.5,
+        ),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+          BoxShadow(
+            // ── Тень из темы (более заметная в темной теме)
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -317,10 +336,11 @@ class _BookmarkRow extends ConsumerWidget {
                           height: 55,
                           color: AppColors.skeletonBase,
                           alignment: Alignment.center,
-                          child: const Icon(
+                          child: Icon(
                             CupertinoIcons.photo,
                             size: 20,
-                            color: AppColors.textSecondary,
+                            // ── Цвет иконки из темы
+                            color: AppColors.getTextSecondaryColor(context),
                           ),
                         ),
                         placeholder: (_, __) => Container(
@@ -338,10 +358,11 @@ class _BookmarkRow extends ConsumerWidget {
                     height: 55,
                     color: AppColors.skeletonBase,
                     alignment: Alignment.center,
-                    child: const Icon(
+                    child: Icon(
                       CupertinoIcons.photo,
                       size: 20,
-                      color: AppColors.textSecondary,
+                      // ── Цвет иконки из темы
+                      color: AppColors.getTextSecondaryColor(context),
                     ),
                   ),
           ),
@@ -360,7 +381,10 @@ class _BookmarkRow extends ConsumerWidget {
                         event.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.h14w6,
+                        // ── Цвет текста из темы
+                        style: AppTextStyles.h14w6.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
                       ),
                     ),
                     _RemoveButton(
@@ -376,7 +400,10 @@ class _BookmarkRow extends ConsumerWidget {
                   '${event.dateFormatted}  ·  Участников: ${_fmt(event.participantsCount)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h13w4,
+                  // ── Цвет текста из темы
+                  style: AppTextStyles.h13w4.copyWith(
+                    color: AppColors.getTextSecondaryColor(context),
+                  ),
                 ),
               ],
             ),

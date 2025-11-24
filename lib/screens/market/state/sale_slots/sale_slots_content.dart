@@ -209,6 +209,8 @@ class _PriceField extends StatelessWidget {
                 onChanged: onChanged,
                 style: _fieldText,
                 decoration: InputDecoration(
+                  hintText: '0',
+                  hintStyle: _hintText,
                   filled: true,
                   fillColor: AppColors.getSurfaceColor(context),
                   contentPadding: EdgeInsets.symmetric(
@@ -329,7 +331,9 @@ class _ChipsRow extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 color: sel
-                    ? AppColors.getSurfaceColor(context)
+                    ? (Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.surface
+                        : AppColors.getSurfaceColor(context))
                     : AppColors.getTextPrimaryColor(context),
               ),
             ),
@@ -355,8 +359,11 @@ class _OvalToggle extends StatelessWidget {
     final bg = selected
         ? AppColors.brandPrimary
         : AppColors.getSurfaceColor(context);
+    // Используем ту же логику, что и в alert_creation_screen.dart
     final fg = selected
-        ? AppColors.getSurfaceColor(context)
+        ? (Theme.of(context).brightness == Brightness.dark
+            ? AppColors.surface
+            : AppColors.getSurfaceColor(context))
         : AppColors.getTextPrimaryColor(context);
     return GestureDetector(
       onTap: onTap,

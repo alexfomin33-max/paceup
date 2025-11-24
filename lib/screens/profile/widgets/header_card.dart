@@ -282,10 +282,12 @@ class _SmallIconBtn extends StatelessWidget {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: AppColors.skeletonBase,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkSurfaceMuted
+              : AppColors.skeletonBase,
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
-        child: Icon(icon, size: 16, color: AppColors.iconPrimary),
+        child: Icon(icon, size: 16, color: AppColors.getIconPrimaryColor(context)),
       ),
     );
   }
@@ -311,16 +313,25 @@ class _FollowStat extends StatelessWidget {
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
-              color: AppColors.getTextPrimaryColor(context),
             ),
             children: [
-              TextSpan(text: '$label: '),
+              TextSpan(
+                text: '$label: ',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.textSecondary,
+                ),
+              ),
               const TextSpan(
                 text: '\u200B',
               ), // микропробел для ровного переноса
               TextSpan(
                 text: value,
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
               ),
             ],
           ),

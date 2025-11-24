@@ -36,10 +36,13 @@ class MarketSlotCard extends StatelessWidget {
           color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.sm),
           boxShadow: [
-            const BoxShadow(
-              color: AppColors.shadowSoft,
+            BoxShadow(
+              // ── Тень из темы (более заметная в темной теме)
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkShadowSoft
+                  : AppColors.shadowSoft,
               blurRadius: 1,
-              offset: Offset(0, 1),
+              offset: const Offset(0, 1),
             ),
           ],
         ),
@@ -69,7 +72,9 @@ class MarketSlotCard extends StatelessWidget {
                               item.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.h14w5,
+                              style: AppTextStyles.h14w5.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
                             ),
                           ),
                           if (_hasDetails) ...[
@@ -143,10 +148,14 @@ class MarketSlotCard extends StatelessWidget {
                       border: Border.all(color: AppColors.getBorderColor(context)),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Имя: Илья. Время: 3:01 - 3:15. '
                       'Передача по доверенности в Москве, либо в СПб на экспо.',
-                      style: TextStyle(fontFamily: 'Inter', fontSize: 13),
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
                   ),
                 ),
@@ -220,7 +229,7 @@ class _BuyButtonText extends StatelessWidget {
         ? AppColors.brandPrimary
         : AppColors.disabledBg; // disabledBg обычно не меняется
     final fg = enabled
-        ? AppColors.getSurfaceColor(context)
+        ? Colors.white // белый цвет для иконки и текста на синем фоне
         : AppColors.disabledText; // disabledText обычно не меняется
     final icon = text == 'Бронь' ? CupertinoIcons.lock : CupertinoIcons.cart;
 
@@ -243,10 +252,11 @@ class _BuyButtonText extends StatelessWidget {
           icon: Icon(icon, size: 14),
           label: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
               fontWeight: FontWeight.w400,
+              color: fg, // уже адаптивный через fg
             ),
           ),
         ),

@@ -53,9 +53,9 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
         child: Material(
           color: Colors.transparent,
           child: Container(
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.vertical(
+            decoration: BoxDecoration(
+              color: AppColors.getSurfaceColor(context),
+              borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(AppRadius.lg),
               ),
             ),
@@ -68,7 +68,7 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: AppColors.getBorderColor(context),
                     borderRadius: BorderRadius.circular(AppRadius.xs),
                   ),
                 ),
@@ -78,9 +78,12 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
                 Container(
                   height: 40,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     border: Border(
-                      bottom: BorderSide(color: AppColors.border, width: 1),
+                      bottom: BorderSide(
+                        color: AppColors.getBorderColor(context),
+                        width: 1,
+                      ),
                     ),
                   ),
                   child: Row(
@@ -130,7 +133,7 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
             // Подшапка: название + чип сложности + поле даты
             SliverToBoxAdapter(
               child: Container(
-                color: AppColors.surface,
+                color: AppColors.getSurfaceColor(context),
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -139,10 +142,11 @@ class _MembersRouteScreenState extends State<MembersRouteScreen> {
                       child: Text(
                         widget.routeTitle,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                     ),
@@ -220,43 +224,49 @@ class _LabeledDateField extends StatelessWidget {
       readOnly: true,
       onTap: onTap,
       controller: TextEditingController(text: text),
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'Inter',
         fontSize: 14,
-        color: AppColors.textSecondary,
+        color: AppColors.getTextSecondaryColor(context),
       ),
       decoration: InputDecoration(
         labelText: label,
         floatingLabelBehavior: FloatingLabelBehavior.always,
-        labelStyle: const TextStyle(
-          color: AppColors.textSecondary,
+        labelStyle: TextStyle(
+          color: AppColors.getTextSecondaryColor(context),
           fontSize: 13,
           fontWeight: FontWeight.w500,
         ),
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: AppColors.getSurfaceColor(context),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 12,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+          ),
         ),
-        suffixIcon: const Padding(
-          padding: EdgeInsets.only(right: 8),
+        suffixIcon: Padding(
+          padding: const EdgeInsets.only(right: 8),
           child: Icon(
             Icons.calendar_today_rounded,
             size: 16,
-            color: AppColors.textSecondary,
+            color: AppColors.getTextSecondaryColor(context),
           ),
         ),
         suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
@@ -276,14 +286,14 @@ class _HalfVDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
+    return SizedBox(
       width: _kVDivW,
       child: FractionallySizedBox(
         heightFactor: 0.5, // ← половина высоты строки
         child: VerticalDivider(
           width: _kVDivW,
           thickness: 0.5,
-          color: AppColors.divider,
+          color: AppColors.getDividerColor(context),
         ),
       ),
     );
@@ -298,16 +308,25 @@ class _MembersTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
         border: Border(
-          top: BorderSide(color: AppColors.border, width: 0.5),
-          bottom: BorderSide(color: AppColors.border, width: 0.5),
+          top: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 0.5,
+          ),
+          bottom: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 0.5,
+          ),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+            // ── Тень из темы (более заметная в темной теме)
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -346,9 +365,12 @@ class _MembersTable extends StatelessWidget {
                                     r.name,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontFamily: 'Inter',
                                       fontSize: 13,
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -369,10 +391,11 @@ class _MembersTable extends StatelessWidget {
                             _kmText(r.km),
                             softWrap: false,
                             overflow: TextOverflow.fade,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12,
                               fontWeight: FontWeight.w400,
+                              color: AppColors.getTextPrimaryColor(context),
                             ),
                           ),
                         ),
@@ -393,10 +416,13 @@ class _MembersTable extends StatelessWidget {
                                   r.time,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 12,
                                     fontWeight: FontWeight.w400,
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -426,10 +452,13 @@ class _MembersTable extends StatelessWidget {
                                   '${r.hr}',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 12,
                                     fontWeight: FontWeight.w400,
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -443,11 +472,11 @@ class _MembersTable extends StatelessWidget {
               ),
 
               if (i != rows.length - 1)
-                const Divider(
+                Divider(
                   height: 1,
                   thickness: 0.5,
                   indent: 52,
-                  color: AppColors.divider,
+                  color: AppColors.getDividerColor(context),
                 ),
             ],
           );
@@ -471,15 +500,15 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.background,
+      color: AppColors.getBackgroundColor(context),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary,
+          color: AppColors.getTextSecondaryColor(context),
         ),
       ),
     );

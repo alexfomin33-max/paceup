@@ -223,10 +223,10 @@ class _AlertCreationScreenState extends State<AlertCreationScreen> {
 const TextStyle _fieldText = TextStyle(fontFamily: 'Inter', fontSize: 14);
 // _hintText теперь создается динамически с учетом темы
 TextStyle _hintText(BuildContext context) => TextStyle(
-      fontFamily: 'Inter',
-      fontSize: 14,
-      color: AppColors.getTextPlaceholderColor(context),
-    );
+  fontFamily: 'Inter',
+  fontSize: 14,
+  color: AppColors.getTextPlaceholderColor(context),
+);
 
 class _SmallLabel extends StatelessWidget {
   final String text;
@@ -366,7 +366,9 @@ class _ChipsRow extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 color: sel
-                    ? AppColors.getSurfaceColor(context)
+                    ? (Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.surface
+                          : AppColors.getSurfaceColor(context))
                     : AppColors.getTextPrimaryColor(context),
               ),
             ),
@@ -392,8 +394,11 @@ class _OvalToggle extends StatelessWidget {
     final bg = selected
         ? AppColors.brandPrimary
         : AppColors.getSurfaceColor(context);
+    // Используем ту же логику, что и в PrimaryButton
     final fg = selected
-        ? AppColors.getSurfaceColor(context)
+        ? (Theme.of(context).brightness == Brightness.dark
+              ? AppColors.surface
+              : AppColors.getSurfaceColor(context))
         : AppColors.getTextPrimaryColor(context);
     return GestureDetector(
       onTap: onTap,
@@ -436,10 +441,12 @@ class _AlertCard extends StatelessWidget {
         color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.sm),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
             blurRadius: 1,
-            offset: Offset(0, 1),
+            offset: const Offset(0, 1),
           ),
         ],
       ),
@@ -473,7 +480,9 @@ class _AlertCard extends StatelessWidget {
                   alert.eventName,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h14w4,
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -512,7 +521,9 @@ class _DeleteButton extends StatelessWidget {
         child: ElevatedButton(
           onPressed: onPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.redBg,
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.getSurfaceMutedColor(context)
+                : AppColors.redBg,
             foregroundColor: AppColors.red,
             elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 8),

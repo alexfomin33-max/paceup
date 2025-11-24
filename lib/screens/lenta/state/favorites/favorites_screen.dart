@@ -26,9 +26,8 @@ class _FavoritesScreenState extends State<FavoritesScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.light
-          ? AppColors.surface
-          : AppColors.getBackgroundColor(context),
+      // ── Фон из темы: в светлой теме — surface, в темной — из темы
+      backgroundColor: AppColors.getBackgroundColor(context),
 
       // ── Глобальная шапка без нижнего бордера
       appBar: const PaceAppBar(title: 'Избранное', showBottomDivider: false),
@@ -37,12 +36,15 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         children: [
           // ── Вкладки: иконка + текст (наш дефолтный паттерн TabBar + TabBarView)
           Container(
-            color: AppColors.surface,
+            // ── Цвет контейнера вкладок из темы
+            color: AppColors.getSurfaceColor(context),
             child: TabBar(
               controller: _tab,
               isScrollable: false,
+              // ── Активная вкладка: всегда brandPrimary (одинаковый в светлой/темной)
               labelColor: AppColors.brandPrimary,
-              unselectedLabelColor: AppColors.textPrimary,
+              // ── Неактивные вкладки: вторичный текст из темы
+              unselectedLabelColor: AppColors.getTextSecondaryColor(context),
               indicatorColor: AppColors.brandPrimary,
               indicatorWeight: 1,
               labelPadding: const EdgeInsets.symmetric(horizontal: 8),
@@ -89,12 +91,19 @@ class _TabLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ── TabBar автоматически применяет labelColor/unselectedLabelColor
+    // ── через DefaultTextStyle, получаем цвет для иконки и текста
+    final textStyle = DefaultTextStyle.of(context).style;
+    final iconColor = textStyle.color;
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16),
+        // ── Иконка использует тот же цвет, что и текст (из DefaultTextStyle TabBar)
+        Icon(icon, size: 16, color: iconColor),
         const SizedBox(width: 6),
+        // ── Текст наследует цвет из DefaultTextStyle
         Text(text, overflow: TextOverflow.ellipsis),
       ],
     );
