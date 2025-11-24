@@ -11,8 +11,7 @@ class SwimTripScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor:
-            AppColors.background, // фоновый серый как на tasks_screen
+        backgroundColor: AppColors.getBackgroundColor(context),
         body: CustomScrollView(
           slivers: [
             SliverAppBar(
@@ -76,33 +75,37 @@ class SwimTripScreen extends StatelessWidget {
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
                   boxShadow: [
                     // 1px тень вниз
                     BoxShadow(
-                      color: AppColors.shadowSoft,
-                      offset: Offset(0, 1),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkShadowSoft
+                          : AppColors.shadowSoft,
+                      offset: const Offset(0, 1),
                       blurRadius: 0,
                     ),
                   ],
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
                       'Плавательное путешествие',
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.h17w6,
+                      style: AppTextStyles.h17w6.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
                       'Проплывите все самые интересные маршруты\nнашей планеты',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                         height: 1.25,
                       ),
                     ),
@@ -180,14 +183,16 @@ class _StraitCard extends StatelessWidget {
     return Container(
       // стили карточек как в tasks_screen.dart
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.border),
+        color: AppColors.getSurfaceColor(context),
+        border: Border.all(color: AppColors.getBorderColor(context)),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
             blurRadius: 8,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -212,10 +217,11 @@ class _StraitCard extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
+                    color: AppColors.getTextPrimaryColor(context),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -226,18 +232,18 @@ class _StraitCard extends StatelessWidget {
                   children: [
                     Text(
                       '0 из ${_km(distanceKm)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                     ),
                     Text(
                       '${(percent * 100).toStringAsFixed(0)}%',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                     ),
                   ],
@@ -283,9 +289,9 @@ class _ProgressBar extends StatelessWidget {
             Expanded(
               child: Container(
                 height: 6,
-                decoration: const BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.all(Radius.circular(AppRadius.xs)),
+                decoration: BoxDecoration(
+                  color: AppColors.getBackgroundColor(context),
+                  borderRadius: const BorderRadius.all(Radius.circular(AppRadius.xs)),
                 ),
               ),
             ),

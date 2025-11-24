@@ -102,9 +102,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: Theme.of(context).brightness == Brightness.light
-            ? AppColors.surface
-            : AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Добавить тренировку'),
         body: GestureDetector(
           // Скрываем клавиатуру при нажатии на пустую область
@@ -259,10 +257,13 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                               visualDensity: VisualDensity.compact,
                               activeColor:
                                   AppColors.brandPrimary, // Цвет при выборе
-                              checkColor: AppColors.surface, // Цвет галочки
-                              side: const BorderSide(
-                                color: AppColors
-                                    .iconSecondary, // Более светлый цвет границы
+                              checkColor: AppColors.getSurfaceColor(
+                                context,
+                              ), // Цвет галочки
+                              side: BorderSide(
+                                color: AppColors.getIconSecondaryColor(
+                                  context,
+                                ), // Более светлый цвет границы
                                 width: 1.5,
                               ),
                               onChanged: (value) {
@@ -356,14 +357,16 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         height: 90,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          color: AppColors.background,
-          border: Border.all(color: AppColors.border),
+          color: AppColors.getSurfaceColor(context),
+          border: Border.all(
+            color: AppColors.getBorderColor(context),
+          ),
         ),
-        child: const Center(
+        child: Center(
           child: Icon(
             CupertinoIcons.photo,
             size: 28,
-            color: AppColors.iconTertiary,
+            color: AppColors.getIconSecondaryColor(context),
           ),
         ),
       ),
@@ -435,13 +438,13 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                 height: 90,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  color: AppColors.background,
-                  border: Border.all(
-                    color: isDragging
-                        ? AppColors.brandPrimary
-                        : AppColors.border,
-                    width: isDragging ? 2 : 1,
-                  ),
+                  color: AppColors.getBackgroundColor(context),
+                  border: isDragging
+                      ? Border.all(
+                          color: AppColors.brandPrimary,
+                          width: 2,
+                        )
+                      : null,
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: image is File
@@ -451,11 +454,11 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                         width: 90,
                         height: 90,
                         errorBuilder: (context, error, stackTrace) => Container(
-                          color: AppColors.background,
-                          child: const Icon(
+                          color: AppColors.getBackgroundColor(context),
+                          child: Icon(
                             CupertinoIcons.photo,
                             size: 24,
-                            color: AppColors.iconSecondary,
+                            color: AppColors.getIconSecondaryColor(context),
                           ),
                         ),
                       )
@@ -465,17 +468,17 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                         memCacheWidth: w,
                         maxWidthDiskCache: w,
                         placeholder: (context, url) => Container(
-                          color: AppColors.background,
+                          color: AppColors.getBackgroundColor(context),
                           child: const Center(
                             child: CupertinoActivityIndicator(),
                           ),
                         ),
                         errorWidget: (context, url, error) => Container(
-                          color: AppColors.background,
-                          child: const Icon(
+                          color: AppColors.getBackgroundColor(context),
+                          child: Icon(
                             CupertinoIcons.photo,
                             size: 24,
-                            color: AppColors.iconSecondary,
+                            color: AppColors.getIconSecondaryColor(context),
                           ),
                         ),
                       ),
@@ -490,9 +493,11 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: AppColors.getSurfaceColor(context),
                       borderRadius: BorderRadius.circular(AppRadius.md),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(
+                        color: AppColors.getBorderColor(context),
+                      ),
                     ),
                     child: const Icon(
                       CupertinoIcons.clear_circled_solid,
@@ -514,19 +519,28 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     return InputDecorator(
       decoration: InputDecoration(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: AppColors.getSurfaceColor(context),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
       ),
       child: DropdownButtonHideUnderline(
@@ -552,12 +566,12 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               });
             }
           },
-          dropdownColor: AppColors.surface,
+          dropdownColor: AppColors.getSurfaceColor(context),
           menuMaxHeight: 300,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_drop_down,
-            color: AppColors.iconSecondary,
+            color: AppColors.getIconSecondaryColor(context),
           ),
           style: AppTextStyles.h14w4,
           items: _activityTypes.map((option) {
@@ -579,17 +593,17 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         child: InputDecorator(
           decoration: InputDecoration(
             filled: true,
-            fillColor: AppColors.surface,
+            fillColor: AppColors.getSurfaceColor(context),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 18,
             ),
-            prefixIcon: const Padding(
-              padding: EdgeInsets.only(left: 12, right: 6),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 6),
               child: Icon(
                 CupertinoIcons.calendar,
                 size: 18,
-                color: AppColors.iconPrimary,
+                color: AppColors.getIconPrimaryColor(context),
               ),
             ),
             prefixIconConstraints: const BoxConstraints(
@@ -598,15 +612,24 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border, width: 1),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border, width: 1),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border, width: 1),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
           ),
           child: Text(
@@ -630,17 +653,17 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         child: InputDecorator(
           decoration: InputDecoration(
             filled: true,
-            fillColor: AppColors.surface,
+            fillColor: AppColors.getSurfaceColor(context),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 18,
             ),
-            prefixIcon: const Padding(
-              padding: EdgeInsets.only(left: 12, right: 6),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 6),
               child: Icon(
                 CupertinoIcons.time,
                 size: 18,
-                color: AppColors.iconPrimary,
+                color: AppColors.getIconPrimaryColor(context),
               ),
             ),
             prefixIconConstraints: const BoxConstraints(
@@ -649,15 +672,24 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border, width: 1),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border, width: 1),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border, width: 1),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
           ),
           child: Text(
@@ -682,17 +714,17 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         hintText: '0.0',
         hintStyle: AppTextStyles.h14w4Place,
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: AppColors.getSurfaceColor(context),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 17,
         ),
-        prefixIcon: const Padding(
-          padding: EdgeInsets.only(left: 12, right: 6),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.only(left: 12, right: 6),
           child: Icon(
             CupertinoIcons.location,
             size: 18,
-            color: AppColors.iconPrimary,
+            color: AppColors.getIconPrimaryColor(context),
           ),
         ),
         prefixIconConstraints: const BoxConstraints(
@@ -701,15 +733,24 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
       ),
     );
@@ -723,17 +764,17 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         child: InputDecorator(
           decoration: InputDecoration(
             filled: true,
-            fillColor: AppColors.surface,
+            fillColor: AppColors.getSurfaceColor(context),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 18,
             ),
-            prefixIcon: const Padding(
-              padding: EdgeInsets.only(left: 12, right: 6),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 6),
               child: Icon(
                 CupertinoIcons.timer,
                 size: 18,
-                color: AppColors.iconPrimary,
+                color: AppColors.getIconPrimaryColor(context),
               ),
             ),
             prefixIconConstraints: const BoxConstraints(
@@ -742,15 +783,24 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border, width: 1),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border, width: 1),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.border, width: 1),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
           ),
           child: Text(
@@ -772,24 +822,37 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       maxLines: 12,
       minLines: 7,
       textAlignVertical: TextAlignVertical.top,
-      style: AppTextStyles.h14w4,
+      style: AppTextStyles.h14w4.copyWith(
+        color: AppColors.getTextPrimaryColor(context),
+      ),
       decoration: InputDecoration(
         hintText: 'Введите описание тренировки',
-        hintStyle: AppTextStyles.h14w4Place,
+        hintStyle: AppTextStyles.h14w4Place.copyWith(
+          color: AppColors.getTextPlaceholderColor(context),
+        ),
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: AppColors.getSurfaceColor(context),
         contentPadding: const EdgeInsets.all(12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
       ),
     );
@@ -811,7 +874,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
           'Нет доступной экипировки для выбранного типа тренировки',
-          style: AppTextStyles.h14w4.copyWith(color: AppColors.textSecondary),
+          style: AppTextStyles.h14w4.copyWith(
+            color: AppColors.getTextSecondaryColor(context),
+          ),
         ),
       );
     }
@@ -836,19 +901,28 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     return InputDecorator(
       decoration: InputDecoration(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: AppColors.getSurfaceColor(context),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
       ),
       child: DropdownButtonHideUnderline(
@@ -861,12 +935,12 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               _selectedEquipment = newValue;
             });
           },
-          dropdownColor: AppColors.surface,
+          dropdownColor: AppColors.getSurfaceColor(context),
           menuMaxHeight: 300,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_drop_down,
-            color: AppColors.iconSecondary,
+            color: AppColors.getIconSecondaryColor(context),
           ),
           items: _availableEquipment.map((equipment) {
             final displayName = equipment.brand.isNotEmpty
@@ -893,19 +967,28 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     return InputDecorator(
       decoration: InputDecoration(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: AppColors.getSurfaceColor(context),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
       ),
       child: DropdownButtonHideUnderline(
@@ -922,18 +1005,25 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               }
             }
           },
-          dropdownColor: AppColors.surface,
+          dropdownColor: AppColors.getSurfaceColor(context),
           menuMaxHeight: 300,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_drop_down,
-            color: AppColors.iconSecondary,
+            color: AppColors.getIconSecondaryColor(context),
           ),
-          style: AppTextStyles.h14w4,
+          style: AppTextStyles.h14w4.copyWith(
+            color: AppColors.getTextPrimaryColor(context),
+          ),
           items: options.map((option) {
             return DropdownMenuItem<String>(
               value: option,
-              child: Text(option, style: AppTextStyles.h14w4),
+              child: Text(
+                option,
+                style: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
             );
           }).toList(),
         ),
@@ -1146,9 +1236,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         child: Material(
           color: Colors.transparent,
           child: Container(
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.vertical(
+            decoration: BoxDecoration(
+              color: AppColors.getSurfaceColor(context),
+              borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(AppRadius.lg),
               ),
             ),
@@ -1161,7 +1251,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: AppColors.getBorderColor(context),
                     borderRadius: BorderRadius.circular(AppRadius.xs),
                   ),
                 ),
@@ -1170,9 +1260,12 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                 Container(
                   height: 40,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     border: Border(
-                      bottom: BorderSide(color: AppColors.border, width: 1),
+                      bottom: BorderSide(
+                        color: AppColors.getBorderColor(context),
+                        width: 1,
+                      ),
                     ),
                   ),
                   child: Row(
@@ -1608,10 +1701,10 @@ class _DurationPickerState extends State<_DurationPicker> {
                 (i) => Center(
                   child: Text(
                     '$i',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 21,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textPrimary,
+                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                 ),
@@ -1622,10 +1715,10 @@ class _DurationPickerState extends State<_DurationPicker> {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               'ч',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.w400,
-                color: AppColors.textPrimary,
+                color: AppColors.getTextPrimaryColor(context),
               ),
             ),
           ),
@@ -1645,10 +1738,10 @@ class _DurationPickerState extends State<_DurationPicker> {
                 (i) => Center(
                   child: Text(
                     i.toString().padLeft(2, '0'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 21,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textPrimary,
+                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                 ),
@@ -1659,10 +1752,10 @@ class _DurationPickerState extends State<_DurationPicker> {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               'мин',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.w400,
-                color: AppColors.textPrimary,
+                color: AppColors.getTextPrimaryColor(context),
               ),
             ),
           ),
@@ -1682,10 +1775,10 @@ class _DurationPickerState extends State<_DurationPicker> {
                 (i) => Center(
                   child: Text(
                     i.toString().padLeft(2, '0'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 21,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textPrimary,
+                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                 ),
@@ -1696,10 +1789,10 @@ class _DurationPickerState extends State<_DurationPicker> {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               'сек',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.w400,
-                color: AppColors.textPrimary,
+                color: AppColors.getTextPrimaryColor(context),
               ),
             ),
           ),

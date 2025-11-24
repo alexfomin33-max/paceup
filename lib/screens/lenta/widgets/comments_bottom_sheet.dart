@@ -277,9 +277,9 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.6,
           ),
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(
+          decoration: BoxDecoration(
+            color: AppColors.getSurfaceColor(context),
+            borderRadius: const BorderRadius.vertical(
               top: Radius.circular(AppRadius.xl),
             ),
           ),
@@ -296,27 +296,32 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 10, top: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: AppColors.getBorderColor(context),
                     borderRadius: BorderRadius.circular(AppRadius.xs),
                   ),
                 ),
 
                 // ──── Заголовок ────
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Center(
-                    child: Text('Комментарии', style: AppTextStyles.h17w6),
+                    child: Text(
+                      'Комментарии',
+                      style: AppTextStyles.h17w6.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
 
                 // ──── Разделительная линия ────
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Divider(
                     height: 1,
                     thickness: 1,
-                    color: AppColors.border,
+                    color: AppColors.getBorderColor(context),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -324,9 +329,12 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                 // Список комментариев (Flexible как в образце)
                 Flexible(child: _buildBody()),
                 // Разделитель бледно-серого цвета
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Divider(height: 1, color: AppColors.border),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Divider(
+                    height: 1,
+                    color: AppColors.getBorderColor(context),
+                  ),
                 ),
                 // Поле ввода — как в примере
                 _ComposerBar(
@@ -381,13 +389,17 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         return ListTile(
           leading: CircleAvatar(
             radius: 20,
+            backgroundColor: AppColors.getSurfaceMutedColor(context),
             backgroundImage: (c.userAvatar != null && c.userAvatar!.isNotEmpty)
                 ? NetworkImage(c.userAvatar!)
                 : null,
             child: (c.userAvatar == null || c.userAvatar!.isEmpty)
                 ? Text(
                     c.userName.isNotEmpty ? c.userName.characters.first : '?',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
                   )
                 : null,
           ),
@@ -399,18 +411,31 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                 Flexible(
                   child: Text(
                     c.userName,
-                    style: AppTextStyles.h14w6.copyWith(letterSpacing: 0),
+                    style: AppTextStyles.h14w6.copyWith(
+                      letterSpacing: 0,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 6),
-                Text('· $humanDate', style: AppTextStyles.h12w4Ter),
+                Text(
+                  '· $humanDate',
+                  style: AppTextStyles.h12w4Ter.copyWith(
+                    color: AppColors.getTextTertiaryColor(context),
+                  ),
+                ),
               ],
             ),
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 0),
-            child: Text(c.text, style: AppTextStyles.h13w4),
+            child: Text(
+              c.text,
+              style: AppTextStyles.h13w4.copyWith(
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+            ),
           ),
         );
       },
@@ -555,7 +580,9 @@ class _ComposerBar extends StatelessWidget {
                   keyboardType: TextInputType.multiline,
                   decoration: InputDecoration(
                     hintText: "Написать комментарий...",
-                    hintStyle: AppTextStyles.h14w4Place,
+                    hintStyle: AppTextStyles.h14w4Place.copyWith(
+                      color: AppColors.getTextPlaceholderColor(context),
+                    ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 6,
@@ -565,7 +592,7 @@ class _ComposerBar extends StatelessWidget {
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
-                    fillColor: AppColors.softBg,
+                    fillColor: AppColors.getSurfaceMutedColor(context),
                   ),
                 ),
               ),
@@ -605,7 +632,7 @@ class _ComposerBar extends StatelessWidget {
                         size: 22,
                         color: isEnabled
                             ? AppColors.brandPrimary
-                            : AppColors.textPlaceholder,
+                            : AppColors.getTextPlaceholderColor(context),
                       ),
               ),
             ],
@@ -621,19 +648,21 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             CupertinoIcons.chat_bubble_text,
             size: 28,
-            color: AppColors.iconTertiary,
+            color: AppColors.getIconSecondaryColor(context),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Пока нет комментариев',
-            style: TextStyle(color: AppColors.textTertiary),
+            style: TextStyle(
+              color: AppColors.getTextTertiaryColor(context),
+            ),
           ),
         ],
       ),
@@ -663,7 +692,9 @@ class _ErrorState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textTertiary),
+              style: TextStyle(
+                color: AppColors.getTextTertiaryColor(context),
+              ),
             ),
             const SizedBox(height: 12),
             FilledButton.tonal(

@@ -30,7 +30,7 @@ class MainTab extends StatefulWidget {
 
   @override
   State<MainTab> createState() => _MainTabState();
-  
+
   /// Публичный метод для принудительной проверки кэша (можно вызвать извне через GlobalKey)
   static void checkCache(GlobalKey<MainTabState>? key) {
     key?.currentState?.checkCache();
@@ -43,24 +43,26 @@ abstract class MainTabState extends State<MainTab> {
   void checkCache();
 }
 
-class _MainTabState extends MainTabState with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
+class _MainTabState extends MainTabState
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   // Храним будущий результат загрузки, чтобы не перезагружать при каждом build
   Future<MainTabData>? _future;
-  bool _isCheckingCache = false; // Флаг для предотвращения параллельных проверок
-  
+  bool _isCheckingCache =
+      false; // Флаг для предотвращения параллельных проверок
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _future = _load(); // первая загрузка при открытии вкладки
   }
-  
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
-  
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // При возврате приложения из фона обновляем данные
@@ -68,23 +70,23 @@ class _MainTabState extends MainTabState with AutomaticKeepAliveClientMixin, Wid
       _checkAndReload();
     }
   }
-  
+
   @override
   void checkCache() {
     _checkAndReload();
   }
-  
+
   /// Проверяет, нужно ли обновить данные (если кэш был очищен)
   /// Возвращает true, если данные были обновлены
   Future<bool> _checkAndReload() async {
     if (!mounted || _isCheckingCache) return false;
-    
+
     _isCheckingCache = true;
     try {
       final prefs = await SharedPreferences.getInstance();
       final cacheKey = 'main_tab_${widget.userId}';
       final cachedJson = prefs.getString(cacheKey);
-      
+
       // Если кэш был очищен, принудительно обновляем данные
       if (cachedJson == null) {
         // Проверяем, что Future уже завершен (чтобы не перезагружать во время загрузки)
@@ -136,7 +138,6 @@ class _MainTabState extends MainTabState with AutomaticKeepAliveClientMixin, Wid
     }
   }
 
-
   @override
   void didUpdateWidget(covariant MainTab oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -158,7 +159,6 @@ class _MainTabState extends MainTabState with AutomaticKeepAliveClientMixin, Wid
       widget.onTabActivated?.call();
     }
   }
-  
 
   // Запрос к API с offline-first кэшированием
   Future<MainTabData> _load({bool forceRefresh = false}) async {
@@ -345,7 +345,9 @@ class _SectionTitle extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: AppColors.getTextSecondaryColor(context),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkTextSecondary
+                : AppColors.getTextPrimaryColor(context),
           ),
         ),
       ),
@@ -399,7 +401,7 @@ class _ActivityCard extends StatelessWidget {
           color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: AppColors.getBorderColor(context), 
+            color: AppColors.getBorderColor(context),
             width: 0.5,
           ),
           boxShadow: [
@@ -504,7 +506,7 @@ class _PRRow extends StatelessWidget {
           color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: AppColors.getBorderColor(context), 
+            color: AppColors.getBorderColor(context),
             width: 0.5,
           ),
           boxShadow: [
@@ -616,7 +618,11 @@ class _MetricsCard extends StatelessWidget {
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 14,
-                            color: AppColors.getTextPrimaryColor(context),
+                            // В темной теме используем цвет возраста и города из хэдера
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.getTextPrimaryColor(context),
                           ),
                         ),
                       ),

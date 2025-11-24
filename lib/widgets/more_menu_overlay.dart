@@ -111,6 +111,30 @@ class MoreMenuOverlay {
       if (top < horizontalInset) top = horizontalInset;
     }
 
+    // ── Получаем цвета в зависимости от темы
+    final brightness = Theme.of(context).brightness;
+    // ────────────────────────────────────────────────────────────────
+    // 🌓 ТЕМНАЯ ТЕМА: фон меню такой же, как у попапа экипировки
+    // ────────────────────────────────────────────────────────────────
+    // Если backgroundColor равен дефолтному AppColors.surface,
+    // используем адаптивный цвет (darkSurfaceMuted в темной теме)
+    final bgColor = backgroundColor == AppColors.surface
+        ? (brightness == Brightness.dark
+            ? AppColors.darkSurfaceMuted
+            : AppColors.getSurfaceColor(context))
+        : backgroundColor;
+    // Для темной темы используем более заметную тень
+    final shadowColor = brightness == Brightness.dark
+        ? AppColors.darkShadowSoft
+        : AppColors.scrim20;
+    final shadowList = [
+      BoxShadow(
+        color: shadowColor,
+        blurRadius: 4,
+        offset: const Offset(0, 1),
+      ),
+    ];
+
     _entry = OverlayEntry(
       builder: (ctx) => Stack(
         children: [
@@ -125,9 +149,9 @@ class MoreMenuOverlay {
               color: Colors.transparent,
               child: Container(
                 decoration: BoxDecoration(
-                  color: backgroundColor,
+                  color: bgColor,
                   borderRadius: borderRadius,
-                  boxShadow: boxShadow,
+                  boxShadow: shadowList,
                 ),
                 padding: innerPadding,
                 child: _buildList(ctx),
@@ -146,6 +170,13 @@ class MoreMenuOverlay {
   Widget _buildList(BuildContext ctx) {
     final children = <Widget>[];
 
+    // ── Получаем цвета в зависимости от темы
+    final textColor = AppColors.getTextPrimaryColor(ctx);
+    final iconColor = AppColors.getIconPrimaryColor(ctx);
+    final divColor = dividerColor == AppColors.divider
+        ? AppColors.getDividerColor(ctx)
+        : dividerColor;
+
     for (int i = 0; i < items.length; i++) {
       final it = items[i];
 
@@ -163,14 +194,15 @@ class MoreMenuOverlay {
                 Expanded(
                   child: Text(
                     it.text,
-                    style: it.textStyle ?? AppTextStyles.h14w4,
+                    style: it.textStyle ??
+                        AppTextStyles.h14w4.copyWith(color: textColor),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Icon(
                   it.icon,
                   size: 18,
-                  color: it.iconColor ?? AppColors.iconPrimary,
+                  color: it.iconColor ?? iconColor,
                 ),
               ],
             ),
@@ -183,7 +215,7 @@ class MoreMenuOverlay {
         children.add(
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Divider(height: 8, thickness: 0.5, color: dividerColor),
+            child: Divider(height: 8, thickness: 0.5, color: divColor),
           ),
         );
       }

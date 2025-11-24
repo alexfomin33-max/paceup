@@ -169,7 +169,9 @@ class _MapScreenState extends State<MapScreen> {
                         });
                         return _buildMap([], markerColor);
                       }
-                      return Container(color: AppColors.surface);
+                      return Container(
+                        color: AppColors.getSurfaceColor(context),
+                      );
                     },
                   );
                 }
@@ -458,6 +460,12 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildTabs() {
+    // ── определяем цвета в зависимости от темы
+    final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+    // ── в темной теме убираем тень, чтобы фон был идентичен нижнему меню
+    final shadowColor = isDark ? null : AppColors.shadowMedium;
+
     return Positioned(
       top: MediaQuery.of(context).padding.top + 16,
       left: 0,
@@ -468,15 +476,17 @@ class _MapScreenState extends State<MapScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.getSurfaceColor(context),
               borderRadius: BorderRadius.circular(AppRadius.xl),
-              boxShadow: const [
-                BoxShadow(
-                  color: AppColors.shadowMedium,
-                  blurRadius: 1,
-                  offset: Offset(0, 1),
-                ),
-              ],
+              boxShadow: shadowColor != null
+                  ? [
+                      BoxShadow(
+                        color: shadowColor,
+                        blurRadius: 1,
+                        offset: const Offset(0, 1),
+                      ),
+                    ]
+                  : null,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.max,
@@ -499,7 +509,7 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.textPrimary
+                            ? AppColors.getTextPrimaryColor(context)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(AppRadius.xl),
                       ),
@@ -511,8 +521,8 @@ class _MapScreenState extends State<MapScreen> {
                               ? FontWeight.w500
                               : FontWeight.w400,
                           color: isSelected
-                              ? AppColors.surface
-                              : AppColors.textPrimary,
+                              ? AppColors.getSurfaceColor(context)
+                              : AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                     ),

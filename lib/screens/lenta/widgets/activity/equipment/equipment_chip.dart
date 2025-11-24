@@ -1,5 +1,6 @@
 // lib/screens/lenta/widgets/activity/equipment/equipment_chip.dart
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../models/activity_lenta.dart' as al;
 import 'equipment_popup.dart';
@@ -73,7 +74,14 @@ class _EquipmentChipState extends State<EquipmentChip> {
       child: Container(
         height: 56,
         decoration: BoxDecoration(
-          color: AppColors.getBackgroundColor(context),
+          // ────────────────────────────────────────────────────────────────
+          // 🌓 ТЕМНАЯ ТЕМА: плашка экипировки светлее карточки тренировки
+          // ────────────────────────────────────────────────────────────────
+          // В темной теме используем darkSurfaceMuted (светлее darkSurface карточки)
+          // В светлой теме оставляем getBackgroundColor (как было)
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkSurfaceMuted
+              : AppColors.getBackgroundColor(context),
           borderRadius: BorderRadius.circular(AppRadius.xxl),
         ),
         child: Stack(
@@ -87,7 +95,14 @@ class _EquipmentChipState extends State<EquipmentChip> {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: AppColors.getSurfaceColor(context),
+                  // ────────────────────────────────────────────────────────────────
+                  // 🌓 ТЕМНАЯ ТЕМА: светлый фон круга за картинкой
+                  // ────────────────────────────────────────────────────────────────
+                  // В темной теме используем белый цвет для контраста
+                  // В светлой теме оставляем getSurfaceColor (как было)
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.surface
+                      : AppColors.getSurfaceColor(context),
                   shape: BoxShape.circle,
                 ),
                 child: ClipOval(
@@ -106,13 +121,23 @@ class _EquipmentChipState extends State<EquipmentChip> {
                               placeholder: (context, url) => Container(
                                 width: 50,
                                 height: 50,
-                                color: AppColors.getSurfaceColor(context),
+                                // ────────────────────────────────────────────────────────────────
+                                // 🌓 ТЕМНАЯ ТЕМА: светлый фон placeholder
+                                // ────────────────────────────────────────────────────────────────
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? AppColors.surface
+                                    : AppColors.getSurfaceColor(context),
                               ),
                               errorWidget: (context, url, error) => Container(
                                 width: 50,
                                 height: 50,
                                 decoration: BoxDecoration(
-                                  color: AppColors.getSurfaceColor(context),
+                                  // ────────────────────────────────────────────────────────────────
+                                  // 🌓 ТЕМНАЯ ТЕМА: светлый фон error widget
+                                  // ────────────────────────────────────────────────────────────────
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? AppColors.surface
+                                      : AppColors.getSurfaceColor(context),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
@@ -128,7 +153,12 @@ class _EquipmentChipState extends State<EquipmentChip> {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: AppColors.getSurfaceColor(context),
+                            // ────────────────────────────────────────────────────────────────
+                            // 🌓 ТЕМНАЯ ТЕМА: светлый фон заглушки
+                            // ────────────────────────────────────────────────────────────────
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.surface
+                                : AppColors.getSurfaceColor(context),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -211,7 +241,14 @@ class _EquipmentChipState extends State<EquipmentChip> {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: AppColors.getSurfaceColor(context),
+                        // ────────────────────────────────────────────────────────────────
+                        // 🌓 ТЕМНАЯ ТЕМА: фон кружка такой же, как карточка тренировки
+                        // ────────────────────────────────────────────────────────────────
+                        // В темной теме используем darkSurface (как карточка тренировки)
+                        // В светлой теме оставляем getSurfaceColor (как было)
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkSurface
+                            : AppColors.getSurfaceColor(context),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(

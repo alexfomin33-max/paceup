@@ -188,17 +188,19 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Row(
+                              Row(
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     CupertinoIcons.info,
                                     size: 20,
                                     color: AppColors.brandPrimary,
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Text(
                                     'Что это?',
-                                    style: AppTextStyles.h14w6,
+                                    style: AppTextStyles.h14w6.copyWith(
+                                      color: AppColors.getTextPrimaryColor(context),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -206,7 +208,7 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                               Text(
                                 'Разрешение на доступ к контактам позволяет приложению искать друзей по номеру телефона из вашей телефонной книги. Мы не сохраняем и не передаём ваши контакты третьим лицам.',
                                 style: AppTextStyles.h14w4.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.getTextSecondaryColor(context),
                                 ),
                               ),
                             ],
@@ -276,15 +278,17 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.surfaceMuted,
+                            color: AppColors.getSurfaceMutedColor(context),
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Как предоставить доступ:',
-                                style: AppTextStyles.h14w6,
+                                style: AppTextStyles.h14w6.copyWith(
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Text(
@@ -292,7 +296,7 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                                     ? '1. Нажмите "Запросить доступ"\n2. В системном диалоге разрешите доступ к контактам\n3. Приложение сможет искать друзей по номерам из вашей телефонной книги'
                                     : '1. Нажмите "Запросить доступ"\n2. В системном диалоге разрешите доступ к контактам\n3. Приложение сможет искать друзей по номерам из вашей телефонной книги',
                                 style: AppTextStyles.h14w4.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.getTextSecondaryColor(context),
                                 ),
                               ),
                             ],

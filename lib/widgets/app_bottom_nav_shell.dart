@@ -23,7 +23,16 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
 
   // Цвета для активного/неактивного состояний
   static const Color _active = AppColors.brandPrimary;
-  static const Color _inactive = AppColors.textSecondary;
+
+  // ── получаем цвет неактивной кнопки в зависимости от темы
+  Color _getInactiveColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    if (brightness == Brightness.dark) {
+      // ── в темной теме используем более светлый цвет для неактивных кнопок
+      return const Color(0xFFB5B5BA); // более светлый, чем darkTextSecondary
+    }
+    return AppColors.textSecondary;
+  }
 
   // отдельные стеки навигации для каждой вкладки
   final _navKeys = List.generate(5, (_) => GlobalKey<NavigatorState>());
@@ -57,7 +66,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
             title: "Лента",
             textStyle: tabTextStyle,
             activeForegroundColor: _active,
-            inactiveForegroundColor: _inactive,
+            inactiveForegroundColor: _getInactiveColor(context),
           ),
         ),
         PersistentTabConfig(
@@ -67,7 +76,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
             title: "Карта",
             textStyle: tabTextStyle,
             activeForegroundColor: _active,
-            inactiveForegroundColor: _inactive,
+            inactiveForegroundColor: _getInactiveColor(context),
           ),
         ),
         PersistentTabConfig(
@@ -77,7 +86,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
             title: "Маркет",
             textStyle: tabTextStyle,
             activeForegroundColor: _active,
-            inactiveForegroundColor: _inactive,
+            inactiveForegroundColor: _getInactiveColor(context),
           ),
         ),
         PersistentTabConfig(
@@ -87,7 +96,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
             title: "Задачи",
             textStyle: tabTextStyle,
             activeForegroundColor: _active,
-            inactiveForegroundColor: _inactive,
+            inactiveForegroundColor: _getInactiveColor(context),
           ),
         ),
         PersistentTabConfig(
@@ -97,7 +106,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
             title: "Профиль",
             textStyle: tabTextStyle,
             activeForegroundColor: _active,
-            inactiveForegroundColor: _inactive,
+            inactiveForegroundColor: _getInactiveColor(context),
           ),
         ),
       ],

@@ -76,10 +76,10 @@ class _ClubsFiltersBottomSheetState extends State<ClubsFiltersBottomSheet> {
     return SafeArea(
       top: false,
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.lg),
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
           ),
         ),
         padding: const EdgeInsets.all(6),
@@ -92,7 +92,7 @@ class _ClubsFiltersBottomSheetState extends State<ClubsFiltersBottomSheet> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 10, top: 4),
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: AppColors.getBorderColor(context),
                 borderRadius: BorderRadius.circular(AppRadius.xs),
               ),
             ),
@@ -100,12 +100,23 @@ class _ClubsFiltersBottomSheetState extends State<ClubsFiltersBottomSheet> {
             // ──── Заголовок ────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(child: Text('Фильтры', style: AppTextStyles.h17w6)),
+              child: Center(
+                child: Text(
+                  'Фильтры',
+                  style: AppTextStyles.h17w6.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 16),
 
             // ──── Разделительная линия ────
-            Divider(height: 1, thickness: 1, color: AppColors.border),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: AppColors.getBorderColor(context),
+            ),
             const SizedBox(height: 16),
 
             // ──── Контент ────
@@ -200,7 +211,12 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(title, style: AppTextStyles.h14w6);
+    return Text(
+      title,
+      style: AppTextStyles.h14w6.copyWith(
+        color: AppColors.getTextPrimaryColor(context),
+      ),
+    );
   }
 }
 
@@ -218,9 +234,15 @@ class _SportPillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isSelected ? AppColors.brandPrimary : AppColors.surface;
-    final textColor = isSelected ? AppColors.surface : AppColors.textPrimary;
-    final borderColor = isSelected ? AppColors.brandPrimary : AppColors.border;
+    final bg = isSelected
+        ? AppColors.brandPrimary
+        : AppColors.getSurfaceColor(context);
+    final textColor = isSelected
+        ? AppColors.surface
+        : AppColors.getTextPrimaryColor(context);
+    final borderColor = isSelected
+        ? AppColors.brandPrimary
+        : AppColors.getBorderColor(context);
 
     return Material(
       color: Colors.transparent,
@@ -265,9 +287,15 @@ class _ClubTypePillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isSelected ? AppColors.brandPrimary : AppColors.surface;
-    final textColor = isSelected ? AppColors.surface : AppColors.textPrimary;
-    final borderColor = isSelected ? AppColors.brandPrimary : AppColors.border;
+    final bg = isSelected
+        ? AppColors.brandPrimary
+        : AppColors.getSurfaceColor(context);
+    final textColor = isSelected
+        ? AppColors.surface
+        : AppColors.getTextPrimaryColor(context);
+    final borderColor = isSelected
+        ? AppColors.brandPrimary
+        : AppColors.getBorderColor(context);
 
     return Material(
       color: Colors.transparent,

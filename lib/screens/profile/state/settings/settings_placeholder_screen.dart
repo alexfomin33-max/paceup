@@ -16,23 +16,27 @@ class SettingsPlaceholderScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: AppColors.iconPrimary),
+          icon: Icon(
+            CupertinoIcons.back,
+            color: AppColors.getIconPrimaryColor(context),
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
           splashRadius: 18,
         ),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 17,
             fontWeight: FontWeight.w600,
+            color: AppColors.getTextPrimaryColor(context),
           ),
         ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(0.5),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(0.5),
           child: SizedBox(
             height: 0.5,
-            child: ColoredBox(color: AppColors.divider),
+            child: ColoredBox(color: AppColors.getDividerColor(context)),
           ),
         ),
       ),
@@ -51,10 +55,11 @@ class SettingsPlaceholderScreen extends StatelessWidget {
               Text(
                 '$title (в разработке)',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
+                  color: AppColors.getTextPrimaryColor(context),
                 ),
               ),
               if (note != null) ...[
@@ -62,10 +67,10 @@ class SettingsPlaceholderScreen extends StatelessWidget {
                 Text(
                   note!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
-                    color: AppColors.textSecondary,
+                    color: AppColors.getTextSecondaryColor(context),
                   ),
                 ),
               ],

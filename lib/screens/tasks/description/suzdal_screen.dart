@@ -63,22 +63,29 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
             // ─────────── Белый блок: заголовок + описание + прогресс
             SliverToBoxAdapter(
               child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
                   boxShadow: [
                     // тонкая тень вниз ~1px
                     BoxShadow(
-                      color: AppColors.shadowSoft,
-                      offset: Offset(0, 1),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkShadowSoft
+                          : AppColors.shadowSoft,
+                      offset: const Offset(0, 1),
                       blurRadius: 0,
                     ),
                   ],
                 ),
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-                child: const Column(
+                child: Column(
                   children: [
-                    Text('Суздаль', style: AppTextStyles.h17w6),
-                    SizedBox(height: 6),
+                    Text(
+                      'Суздаль',
+                      style: AppTextStyles.h17w6.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     Text(
                       'Это маленький, но очень уютный городок. '
                       'Музей деревянного зодчества погружает в эпоху XIX века. '
@@ -87,11 +94,11 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                         height: 1.3,
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
                     // Узкий прогресс-бар по центру
                     Center(
@@ -100,31 +107,31 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                         child: _MiniProgress(percent: percent),
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Text.rich(
                       TextSpan(
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: AppColors.getTextSecondaryColor(context),
                         ),
                         children: [
                           TextSpan(
                             text: '21 784',
                             style: TextStyle(
                               fontWeight: FontWeight.w400,
-                              color: AppColors.textPrimary,
+                              color: AppColors.getTextPrimaryColor(context),
                             ),
                           ),
-                          TextSpan(text: ' / '),
+                          const TextSpan(text: ' / '),
                           TextSpan(
                             text: '110 033',
                             style: TextStyle(
                               fontWeight: FontWeight.w400,
-                              color: AppColors.textPrimary,
+                              color: AppColors.getTextPrimaryColor(context),
                             ),
                           ),
-                          TextSpan(text: ' шагов'),
+                          const TextSpan(text: ' шагов'),
                         ],
                       ),
                     ),
@@ -145,11 +152,17 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                     child: _SectionTitle('Прогресс друзей'),
                   ),
                   Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.surface,
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurfaceColor(context),
                       border: Border(
-                        top: BorderSide(color: AppColors.border, width: 0.5),
-                        bottom: BorderSide(color: AppColors.border, width: 0.5),
+                        top: BorderSide(
+                          color: AppColors.getBorderColor(context),
+                          width: 0.5,
+                        ),
+                        bottom: BorderSide(
+                          color: AppColors.getBorderColor(context),
+                          width: 0.5,
+                        ),
                       ),
                     ),
                     child: Column(
@@ -205,9 +218,9 @@ class _MiniProgress extends StatelessWidget {
             Expanded(
               child: Container(
                 height: 5,
-                decoration: const BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: AppColors.getBackgroundColor(context),
+                  borderRadius: const BorderRadius.only(
                     topRight: Radius.circular(AppRadius.xs),
                     bottomRight: Radius.circular(AppRadius.xs),
                   ),
@@ -227,12 +240,16 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'Inter',
         fontSize: 15,
         fontWeight: FontWeight.w600,
+        color: isDark
+            ? AppColors.getTextSecondaryColor(context)
+            : AppColors.getTextPrimaryColor(context),
       ),
     );
   }
@@ -270,7 +287,9 @@ class _FriendRow extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
-                color: highlight ? AppColors.success : AppColors.textPrimary,
+                color: highlight
+                    ? AppColors.success
+                    : AppColors.getTextPrimaryColor(context),
               ),
             ),
           ),
@@ -288,7 +307,11 @@ class _FriendRow extends StatelessWidget {
             child: Text(
               name,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -298,7 +321,9 @@ class _FriendRow extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 13,
               fontWeight: FontWeight.w400,
-              color: highlight ? AppColors.success : AppColors.textPrimary,
+              color: highlight
+                  ? AppColors.success
+                  : AppColors.getTextPrimaryColor(context),
             ),
           ),
         ],
@@ -309,10 +334,10 @@ class _FriendRow extends StatelessWidget {
       children: [
         row,
         if (!isLast)
-          const Divider(
+          Divider(
             height: 1,
             thickness: 0.5,
-            color: AppColors.divider,
+            color: AppColors.getDividerColor(context),
             indent: 80,
             endIndent: 10,
           ),

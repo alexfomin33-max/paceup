@@ -311,15 +311,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   await _loadInitial();
                 }
               },
-              child: const SizedBox(
+              child: SizedBox(
                 width: 48,
                 height: 48,
                 child: Padding(
-                  padding: EdgeInsets.only(right: 6),
+                  padding: const EdgeInsets.only(right: 6),
                   child: Icon(
                     CupertinoIcons.add_circled,
                     size: 22,
-                    color: AppColors.iconPrimary,
+                    color: AppColors.getIconPrimaryColor(context),
                   ),
                 ),
               ),
@@ -373,11 +373,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 parent: AlwaysScrollableScrollPhysics(),
               ),
               itemCount: _chats.length + (_isLoadingMore ? 1 : 0),
-              separatorBuilder: (_, _) => const Divider(
+              separatorBuilder: (_, _) => Divider(
                 height: 1,
                 thickness: 0.5,
-                color: AppColors.border,
-                indent: 8,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.getBorderColor(context)
+                    : AppColors.border,
+                indent: 62,
                 endIndent: 8,
               ),
               itemBuilder: (context, i) {
@@ -459,15 +461,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     // ─── Жирный стиль для непрочитанных сообщений ───
-                                    style: chat.unread
-                                        ? AppTextStyles.h14w5
-                                        : AppTextStyles.h14w5,
+                                    style: AppTextStyles.h14w5.copyWith(
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   _formatWhen(chat.lastMessageAt),
-                                  style: AppTextStyles.h11w4Ter,
+                                  style: AppTextStyles.h11w4Ter.copyWith(
+                                    color: AppColors.getTextTertiaryColor(
+                                      context,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -484,9 +492,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                     // ─── Жирный стиль для непрочитанных сообщений ───
                                     style: chat.unread
                                         ? AppTextStyles.h13w6.copyWith(
-                                            color: AppColors.textPrimary,
+                                            color:
+                                                AppColors.getTextPrimaryColor(
+                                                  context,
+                                                ),
                                           )
-                                        : AppTextStyles.h13w4Sec,
+                                        : AppTextStyles.h13w4Sec.copyWith(
+                                            color:
+                                                AppColors.getTextSecondaryColor(
+                                                  context,
+                                                ),
+                                          ),
                                   ),
                                 ),
                                 if (chat.unread)
@@ -539,10 +555,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       item,
-                      const Divider(
+                      Divider(
                         height: 1,
                         thickness: 0.5,
-                        color: AppColors.border,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.getBorderColor(context)
+                            : AppColors.border,
                       ),
                     ],
                   );

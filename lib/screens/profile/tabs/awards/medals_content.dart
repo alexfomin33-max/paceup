@@ -125,7 +125,9 @@ class _SectionTitle extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: AppColors.getTextPrimaryColor(context),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkTextSecondary
+                : AppColors.getTextPrimaryColor(context),
           ),
         ),
       ),
@@ -214,8 +216,12 @@ class _MedalBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final done = spec.done;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // В темной теме для выполненных медалей используем светло-серый вместо цветного фона
     final circle = done
-        ? (spec.tint ?? AppColors.skeletonBase)
+        ? (isDark
+            ? AppColors.textTertiary
+            : (spec.tint ?? AppColors.skeletonBase))
         : AppColors.getSurfaceMutedColor(context);
     final iconColor = done
         ? AppColors.getIconPrimaryColor(context)

@@ -133,7 +133,9 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context), // фон чата — белый
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.getSurfaceColor(context)
+            : AppColors.getBackgroundColor(context),
         appBar: AppBar(
           backgroundColor: AppColors.getSurfaceColor(context),
           elevation: 0.5,
@@ -298,7 +300,9 @@ class _KVLine extends StatelessWidget {
               k,
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.getTextPrimaryColor(context),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.getTextPrimaryColor(context),
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -340,17 +344,38 @@ class _ParticipantRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Разделяем имя и роль
+    final parts = nameAndRole.split(' - ');
+    final name = parts.isNotEmpty ? parts[0] : nameAndRole;
+    final role = parts.length > 1 ? ' - ${parts[1]}' : '';
+    
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
       child: Row(
         children: [
           CircleAvatar(radius: 14, backgroundImage: AssetImage(avatarAsset)),
           const SizedBox(width: 8),
-          Text(
-            nameAndRole,
-            style: TextStyle(
-              fontSize: 13,
-              color: AppColors.getTextPrimaryColor(context),
+          Text.rich(
+            TextSpan(
+              text: name,
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.getTextPrimaryColor(context),
+              ),
+              children: [
+                if (role.isNotEmpty)
+                  TextSpan(
+                    text: role,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
@@ -382,17 +407,12 @@ class _BubbleLeft extends StatelessWidget {
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: max),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark
                     ? AppColors.darkSurfaceMuted
-                    : AppColors.backgroundGreen,
+                    : AppColors.softBg,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.darkBorder
-                      : AppColors.borderaccept,
-                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,14 +429,16 @@ class _BubbleLeft extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: 0),
                     child: Align(
                       alignment: Alignment.bottomRight,
                       child: Text(
                         time,
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.getTextTertiaryColor(context),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -450,13 +472,12 @@ class _BubbleRight extends StatelessWidget {
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: max),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkSurfaceMuted
-                    : AppColors.backgroundGreen, // мягкий зелёный
+                    ? AppColors.green.withValues(alpha: 0.15)
+                    : AppColors.greenBg,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.getBorderColor(context)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -473,14 +494,16 @@ class _BubbleRight extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: 0),
                     child: Align(
                       alignment: Alignment.bottomRight,
                       child: Text(
                         time,
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.getTextTertiaryColor(context),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -536,7 +559,9 @@ class _BubbleImageLeft extends StatelessWidget {
                       child: Text(
                         time,
                         style: TextStyle(
-                          color: AppColors.getTextPrimaryColor(context),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.getTextPrimaryColor(context),
                           fontSize: 11,
                         ),
                       ),
@@ -605,8 +630,8 @@ class _BubbleImageRight extends StatelessWidget {
   }
 }
 
-/// Компонент ввода: радиус 20, серый плейсхолдер, плюс — выбор фото
-class _Composer extends StatefulWidget {
+/// ─── Компонент ввода сообщений (в стиле comments_bottom_sheet) ───
+class _Composer extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
   final VoidCallback onPickImage;
@@ -618,84 +643,77 @@ class _Composer extends StatefulWidget {
   });
 
   @override
-  State<_Composer> createState() => _ComposerState();
-}
-
-class _ComposerState extends State<_Composer> {
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_onChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_onChanged);
-    super.dispose();
-  }
-
-  void _onChanged() => setState(() {});
-
-  @override
   Widget build(BuildContext context) {
-    final enabled = widget.controller.text.trim().isNotEmpty;
-
     return SafeArea(
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkShadowSoft
-                  : AppColors.shadowSoft,
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
           border: Border(
-            top: BorderSide(color: AppColors.getBorderColor(context)),
+            top: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 0.5,
+            ),
           ),
         ),
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(CupertinoIcons.plus_circle),
-              onPressed: widget.onPickImage, // открыть галерею
-              color: AppColors.getIconSecondaryColor(context),
-            ),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.getSurfaceMutedColor(context),
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
+        child: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder: (context, value, _) {
+            final hasText = value.text.trim().isNotEmpty;
+            final isEnabled = hasText;
+
+            return Row(
+              children: [
+                IconButton(
+                  icon: const Icon(CupertinoIcons.plus_circle),
+                  onPressed: onPickImage,
+                  color: AppColors.getIconSecondaryColor(context),
                 ),
-                child: TextField(
-                  controller: widget.controller,
-                  minLines: 1,
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    hintText: 'Сообщение...',
-                    hintStyle: TextStyle(
-                      color: AppColors.getTextPlaceholderColor(context),
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    minLines: 1,
+                    maxLines: 5,
+                    textInputAction: TextInputAction.newline,
+                    keyboardType: TextInputType.multiline,
+                    style: TextStyle(
+                      color: AppColors.getTextPrimaryColor(context),
                     ),
-                    border: InputBorder.none,
+                    decoration: InputDecoration(
+                      hintText: 'Сообщение...',
+                      hintStyle: AppTextStyles.h14w4Place.copyWith(
+                        color: AppColors.getTextPlaceholderColor(context),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.xxl),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.getSurfaceMutedColor(context),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 6),
-            IconButton(
-              icon: const Icon(CupertinoIcons.paperplane_fill),
-              onPressed: enabled ? widget.onSend : null,
-              color: enabled
-                  ? AppColors.brandPrimary
-                  : AppColors.iconTertiary, // iconTertiary обычно не меняется
-            ),
-          ],
+                const SizedBox(width: 4),
+                IconButton(
+                  onPressed: isEnabled ? onSend : null,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: Icon(
+                    Icons.send,
+                    size: 22,
+                    color: isEnabled
+                        ? AppColors.brandPrimary
+                        : AppColors.getTextPlaceholderColor(context),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

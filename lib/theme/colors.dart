@@ -172,92 +172,72 @@ abstract class AppColors {
   // ┌───────────────────────────────────────────────────────────────────────┐
   // │ ТЕМНАЯ ТЕМА                                                           │
   // └───────────────────────────────────────────────────────────────────────┘
-  
+
   /// Получить цвет фона в зависимости от темы
   static Color getBackgroundColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark 
-        ? darkBackground 
-        : background;
+    return brightness == Brightness.dark ? darkBackground : background;
   }
 
   /// Получить цвет поверхности в зависимости от темы
   static Color getSurfaceColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark 
-        ? darkSurface 
-        : surface;
+    return brightness == Brightness.dark ? darkSurface : surface;
   }
 
   /// Получить основной цвет текста в зависимости от темы
   static Color getTextPrimaryColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark 
-        ? darkTextPrimary 
-        : textPrimary;
+    return brightness == Brightness.dark ? darkTextPrimary : textPrimary;
   }
 
   /// Получить вторичный цвет текста в зависимости от темы
   static Color getTextSecondaryColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark 
-        ? darkTextSecondary 
-        : textSecondary;
+    return brightness == Brightness.dark ? darkTextSecondary : textSecondary;
   }
 
   /// Получить третичный цвет текста в зависимости от темы
   static Color getTextTertiaryColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark 
-        ? darkTextTertiary 
-        : textTertiary;
+    return brightness == Brightness.dark ? darkTextTertiary : textTertiary;
   }
 
   /// Получить цвет разделителя в зависимости от темы
   static Color getDividerColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark 
-        ? darkDivider 
-        : divider;
+    return brightness == Brightness.dark ? darkDivider : divider;
   }
 
   /// Получить цвет бордера в зависимости от темы
   static Color getBorderColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark 
-        ? darkBorder 
-        : border;
+    return brightness == Brightness.dark ? darkBorder : border;
   }
 
   /// Получить приглушенный цвет поверхности в зависимости от темы
   static Color getSurfaceMutedColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark 
-        ? darkSurfaceMuted 
-        : surfaceMuted;
+    return brightness == Brightness.dark ? darkSurfaceMuted : surfaceMuted;
   }
 
   /// Получить цвет иконки в зависимости от темы
   static Color getIconPrimaryColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark 
-        ? darkIconPrimary 
-        : iconPrimary;
+    return brightness == Brightness.dark ? darkIconPrimary : iconPrimary;
   }
 
   /// Получить вторичный цвет иконки в зависимости от темы
   static Color getIconSecondaryColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark 
-        ? darkIconSecondary 
-        : iconSecondary;
+    return brightness == Brightness.dark ? darkIconSecondary : iconSecondary;
   }
 
   /// Получить цвет плейсхолдера в зависимости от темы
   static Color getTextPlaceholderColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark 
-        ? darkTextPlaceholder 
+    return brightness == Brightness.dark
+        ? darkTextPlaceholder
         : textPlaceholder;
   }
 
@@ -265,13 +245,17 @@ abstract class AppColors {
   static const Color darkBackground = Color(0xFF121212); // темно-серый фон
   static const Color darkSurface = Color(0xFF1C1C1E); // iOS dark surface
   static const Color darkSurfaceMuted = Color(0xFF2C2C2E);
-  static const Color darkTextPrimary = Color(0xFFFFFFFF);
+  static const Color darkTextPrimary = Color(0xFFE9E9E9);
   static const Color darkTextSecondary = Color(0xFF98989D);
   static const Color darkTextTertiary = Color(0xFF6C6C70);
-  static const Color darkTextPlaceholder = Color(0xFF6C6C70); // плейсхолдер в темной теме
+  static const Color darkTextPlaceholder = Color(
+    0xFF6C6C70,
+  ); // плейсхолдер в темной теме
   static const Color darkDivider = Color(0xFF38383A);
   static const Color darkBorder = Color(0xFF48484A);
-  static const Color darkIconPrimary = Color(0xFFFFFFFF);
+  static const Color darkIconPrimary = Color(0xFFE9E9E9);
   static const Color darkIconSecondary = Color(0xFF98989D);
-  static const Color darkShadowSoft = Color(0x40000000); // более заметная тень в темной теме
+  static const Color darkShadowSoft = Color(
+    0x40000000,
+  ); // более заметная тень в темной теме
 }

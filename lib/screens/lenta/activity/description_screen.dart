@@ -266,7 +266,14 @@ class _WatchPill extends StatelessWidget {
     return Container(
       height: 56,
       decoration: ShapeDecoration(
-        color: AppColors.getBackgroundColor(context),
+        // ────────────────────────────────────────────────────────────────
+        // 🌓 ТЕМНАЯ ТЕМА: фон плашки часов такой же, как у плашки кроссовок
+        // ────────────────────────────────────────────────────────────────
+        // В темной теме используем darkSurfaceMuted (как у плашки кроссовок)
+        // В светлой теме оставляем getBackgroundColor (не трогаем)
+        color: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkSurfaceMuted
+            : AppColors.getBackgroundColor(context),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xxl),
         ),

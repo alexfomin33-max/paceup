@@ -87,10 +87,10 @@ class StatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final distanceKm = (distanceMeters ?? 0) / 1000.0;
     final distanceText = distanceMeters != null
-        ? '${distanceKm.toStringAsFixed(2)} км'
+        ? '${distanceKm.toStringAsFixed(2)}'
         : '—';
     final elevationText = elevationGainM != null
-        ? '${elevationGainM!.toStringAsFixed(0)} м'
+        ? '${elevationGainM!.toStringAsFixed(0)}'
         : '—';
     final durationText = durationSec != null
         ? formatDuration(durationSec)
@@ -118,9 +118,9 @@ class StatsRow extends StatelessWidget {
           SizedBox(
             width: 120,
             child: MetricVertical(
-              mainTitle: 'Расстояние',
+              mainTitle: 'Расстояние, км',
               mainValue: distanceText,
-              subTitle: isManuallyAdded ? '' : 'Набор высоты',
+              subTitle: isManuallyAdded ? '' : 'Набор высоты, м',
               subValue: isManuallyAdded ? '' : elevationText,
             ),
           ),
@@ -144,7 +144,7 @@ class StatsRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Темп',
+                  'Темп, мин/км',
                   style: AppTextStyles.h11w4Ter.copyWith(
                     color: AppColors.getTextTertiaryColor(context),
                   ),
@@ -168,17 +168,17 @@ class StatsRow extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        CupertinoIcons.heart_fill,
-                        color: AppColors.error,
-                        size: 12,
-                      ),
-                      const SizedBox(width: 2),
                       Text(
                         hrText,
                         style: AppTextStyles.h14w5.copyWith(
                           color: AppColors.getTextPrimaryColor(context),
                         ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(
+                        CupertinoIcons.heart_fill,
+                        color: AppColors.error,
+                        size: 11,
                       ),
                     ],
                   ),

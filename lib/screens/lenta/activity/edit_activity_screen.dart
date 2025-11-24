@@ -122,9 +122,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: Theme.of(context).brightness == Brightness.light
-            ? AppColors.surface
-            : AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Редактировать тренировку'),
         body: GestureDetector(
           // Скрываем клавиатуру при нажатии на пустую область
@@ -254,14 +252,16 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         height: 90,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          color: AppColors.background,
-          border: Border.all(color: AppColors.border),
+          color: AppColors.getSurfaceColor(context),
+          border: Border.all(
+            color: AppColors.getBorderColor(context),
+          ),
         ),
-        child: const Center(
+        child: Center(
           child: Icon(
             CupertinoIcons.photo,
             size: 28,
-            color: AppColors.iconTertiary,
+            color: AppColors.getIconSecondaryColor(context),
           ),
         ),
       ),
@@ -275,18 +275,20 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       height: 90,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        color: AppColors.background,
-        border: Border.all(color: AppColors.border),
+        color: AppColors.getBackgroundColor(context),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+        ),
       ),
       clipBehavior: Clip.antiAlias,
       child: points.isEmpty
           ? Container(
-              color: AppColors.background,
-              child: const Center(
+              color: AppColors.getBackgroundColor(context),
+              child: Center(
                 child: Icon(
                   CupertinoIcons.map,
                   size: 24,
-                  color: AppColors.iconSecondary,
+                  color: AppColors.getIconSecondaryColor(context),
                 ),
               ),
             )
@@ -360,13 +362,13 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                 height: 90,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  color: AppColors.background,
-                  border: Border.all(
-                    color: isDragging
-                        ? AppColors.brandPrimary
-                        : AppColors.border,
-                    width: isDragging ? 2 : 1,
-                  ),
+                  color: AppColors.getBackgroundColor(context),
+                  border: isDragging
+                      ? Border.all(
+                          color: AppColors.brandPrimary,
+                          width: 2,
+                        )
+                      : null,
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: CachedNetworkImage(
@@ -375,15 +377,15 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                   memCacheWidth: w,
                   maxWidthDiskCache: w,
                   placeholder: (context, url) => Container(
-                    color: AppColors.background,
+                    color: AppColors.getBackgroundColor(context),
                     child: const Center(child: CupertinoActivityIndicator()),
                   ),
                   errorWidget: (context, url, error) => Container(
-                    color: AppColors.background,
-                    child: const Icon(
+                    color: AppColors.getBackgroundColor(context),
+                    child: Icon(
                       CupertinoIcons.photo,
                       size: 24,
-                      color: AppColors.iconSecondary,
+                      color: AppColors.getIconSecondaryColor(context),
                     ),
                   ),
                 ),
@@ -398,9 +400,11 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: AppColors.getSurfaceColor(context),
                       borderRadius: BorderRadius.circular(AppRadius.md),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(
+                        color: AppColors.getBorderColor(context),
+                      ),
                     ),
                     child: const Icon(
                       CupertinoIcons.clear_circled_solid,
@@ -425,24 +429,37 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       maxLines: 12,
       minLines: 7,
       textAlignVertical: TextAlignVertical.top,
-      style: AppTextStyles.h14w4,
+      style: AppTextStyles.h14w4.copyWith(
+        color: AppColors.getTextPrimaryColor(context),
+      ),
       decoration: InputDecoration(
         hintText: 'Введите описание тренировки',
-        hintStyle: AppTextStyles.h14w4Place,
+        hintStyle: AppTextStyles.h14w4Place.copyWith(
+          color: AppColors.getTextPlaceholderColor(context),
+        ),
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: AppColors.getSurfaceColor(context),
         contentPadding: const EdgeInsets.all(12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
       ),
     );
@@ -488,19 +505,28 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     return InputDecorator(
       decoration: InputDecoration(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: AppColors.getSurfaceColor(context),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
       ),
       child: DropdownButtonHideUnderline(
@@ -518,18 +544,25 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
               }
             }
           },
-          dropdownColor: AppColors.surface,
+          dropdownColor: AppColors.getSurfaceColor(context),
           menuMaxHeight: 300,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_drop_down,
-            color: AppColors.iconSecondary,
+            color: AppColors.getIconSecondaryColor(context),
           ),
-          style: AppTextStyles.h14w4,
+          style: AppTextStyles.h14w4.copyWith(
+            color: AppColors.getTextPrimaryColor(context),
+          ),
           items: options.map((option) {
             return DropdownMenuItem<String>(
               value: option,
-              child: Text(option, style: AppTextStyles.h14w4),
+              child: Text(
+                option,
+                style: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
             );
           }).toList(),
         ),

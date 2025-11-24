@@ -78,7 +78,7 @@ class _SectionTitle extends StatelessWidget {
           style: AppTextStyles.h15w6.copyWith(
             color: Theme.of(context).brightness == Brightness.dark
                 ? AppColors.darkTextSecondary
-                : AppColors.textSecondary,
+                : AppColors.getTextPrimaryColor(context),
           ),
         ),
       ),

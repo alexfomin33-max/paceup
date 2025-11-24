@@ -270,7 +270,7 @@ class GearViewCard extends StatefulWidget {
     this.mainBadgeText,
     this.onUpdate,
   }) : thirdValue = pace,
-       thirdLabel = 'Средний темп',
+       thirdLabel = 'Темп, мин/км',
        equipmentType = 'boots';
 
   const GearViewCard.bike({
@@ -541,24 +541,37 @@ class _GearViewCardState extends State<GearViewCard> {
 
           // ── Чип «Основные/Основной» сразу под названием
           if (widget.mainBadgeText != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 12, bottom: 6),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.getTextPrimaryColor(context),
-                  borderRadius: BorderRadius.circular(AppRadius.xl), // пилюля
-                ),
-                child: Text(
-                  widget.mainBadgeText!,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 11,
-                    color: AppColors.getSurfaceColor(context),
-                    fontWeight: FontWeight.w600,
+            Transform.translate(
+              offset: const Offset(0, -6),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 12, bottom: 6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    // ────────────────────────────────────────────────────────────────
+                    // 🌓 ТЕМНАЯ ТЕМА: темно-серый фон для плашки "Основные"
+                    // ────────────────────────────────────────────────────────────────
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkDivider
+                        : AppColors.getTextPrimaryColor(context),
+                    borderRadius: BorderRadius.circular(AppRadius.xl), // пилюля
+                  ),
+                  child: Text(
+                    widget.mainBadgeText!,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 11,
+                      // ────────────────────────────────────────────────────────────────
+                      // 🌓 ТЕМНАЯ ТЕМА: светлый текст на сером фоне
+                      // ────────────────────────────────────────────────────────────────
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.getSurfaceColor(context),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
@@ -726,8 +739,8 @@ class _GearViewCardState extends State<GearViewCard> {
       }
     } else if (value.endsWith(' /км')) {
       numberPart = value.substring(0, value.length - 4);
-      // Для "Средний темп" не показываем "/км"
-      if (label != 'Средний темп') {
+      // Для "Темп, мин/км" не показываем "/км"
+      if (label != 'Темп, мин/км') {
         unitPart = ' /км';
       }
     } else if (value.endsWith(' /100м')) {

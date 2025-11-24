@@ -302,7 +302,13 @@ class _NotificationSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: _cardDecoration,
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
+        border: Border.fromBorderSide(
+          BorderSide(color: AppColors.getBorderColor(context), width: 1),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -311,7 +317,7 @@ class _NotificationSection extends StatelessWidget {
             child: Text(
               title,
               style: AppTextStyles.h12w5.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.getTextSecondaryColor(context),
               ),
             ),
           ),
@@ -359,7 +365,9 @@ class _NotificationTile extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: AppTextStyles.h14w4,
+                style: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
               ),
             ),
             CupertinoSwitch(
@@ -384,16 +392,8 @@ class _Divider extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(left: 48, right: 12),
       height: hairline,
-      color: AppColors.divider,
+      color: AppColors.getDividerColor(context),
     );
   }
 }
-
-const _cardDecoration = BoxDecoration(
-  color: AppColors.surface,
-  borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
-  border: Border.fromBorderSide(
-    BorderSide(color: AppColors.border, width: 1),
-  ),
-);
 

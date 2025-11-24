@@ -26,10 +26,10 @@ class ClubsBottomSheet extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.lg),
+        decoration: BoxDecoration(
+          color: AppColors.getBackgroundColor(context),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
           ),
         ),
         padding: const EdgeInsets.all(6),
@@ -44,7 +44,7 @@ class ClubsBottomSheet extends StatelessWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 10, top: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.outline,
+                  color: AppColors.getBorderColor(context),
                   borderRadius: BorderRadius.circular(AppRadius.xs),
                 ),
               ),
@@ -52,7 +52,14 @@ class ClubsBottomSheet extends StatelessWidget {
               // заголовок
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Center(child: Text(title, style: AppTextStyles.h17w6)),
+                child: Center(
+                  child: Text(
+                    title,
+                    style: AppTextStyles.h17w6.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
 
@@ -79,9 +86,15 @@ class ClubsSheetPlaceholder extends StatelessWidget {
   const ClubsSheetPlaceholder({super.key});
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.only(bottom: 40),
-      child: Text('Здесь будет контент…', style: TextStyle(fontSize: 14)),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 40),
+      child: Text(
+        'Здесь будет контент…',
+        style: TextStyle(
+          fontSize: 14,
+          color: AppColors.getTextSecondaryColor(context),
+        ),
+      ),
     );
   }
 }
@@ -93,7 +106,13 @@ class ClubsSheetText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: const TextStyle(fontSize: 14));
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 14,
+        color: AppColors.getTextPrimaryColor(context),
+      ),
+    );
   }
 }
 
@@ -113,9 +132,15 @@ class ClubsListFromApi extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (clubs.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.only(bottom: 40),
-        child: Text('Клубы не найдены', style: TextStyle(fontSize: 14)),
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 40),
+        child: Text(
+          'Клубы не найдены',
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.getTextSecondaryColor(context),
+          ),
+        ),
       );
     }
 
@@ -171,24 +196,24 @@ class ClubsListFromApi extends StatelessWidget {
                 errorWidget: (_, __, ___) => Container(
                   width: 80,
                   height: 55,
-                  color: AppColors.skeletonBase,
+                  color: AppColors.getSurfaceMutedColor(context),
                   alignment: Alignment.center,
-                  child: const Icon(
+                  child: Icon(
                     CupertinoIcons.photo,
                     size: 20,
-                    color: AppColors.textSecondary,
+                    color: AppColors.getIconSecondaryColor(context),
                   ),
                 ),
               )
             : Container(
                 width: 80,
                 height: 55,
-                color: AppColors.skeletonBase,
+                color: AppColors.getSurfaceMutedColor(context),
                 alignment: Alignment.center,
-                child: const Icon(
+                child: Icon(
                   CupertinoIcons.photo,
                   size: 20,
-                  color: AppColors.textSecondary,
+                  color: AppColors.getIconSecondaryColor(context),
                 ),
               ),
       );
@@ -208,14 +233,18 @@ class ClubsListFromApi extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.h14w6,
+                    style: AppTextStyles.h14w6.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.h13w4,
+                    style: AppTextStyles.h13w4.copyWith(
+                      color: AppColors.getTextSecondaryColor(context),
+                    ),
                   ),
                 ],
               ),
@@ -224,15 +253,24 @@ class ClubsListFromApi extends StatelessWidget {
         ),
       );
 
+      // ── определяем цвет тени в зависимости от темы
+      final brightness = Theme.of(context).brightness;
+      final shadowColor = brightness == Brightness.dark
+          ? AppColors.darkShadowSoft
+          : AppColors.shadowSoft;
+
       final card = Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: AppColors.border, width: 0.5),
-          boxShadow: const [
+          border: Border.all(
+            color: AppColors.getBorderColor(context),
+            width: 0.5,
+          ),
+          boxShadow: [
             BoxShadow(
-              color: AppColors.shadowSoft,
-              offset: Offset(0, 1),
+              color: shadowColor,
+              offset: const Offset(0, 1),
               blurRadius: 1,
               spreadRadius: 0,
             ),

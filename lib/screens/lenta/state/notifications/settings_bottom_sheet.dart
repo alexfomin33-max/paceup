@@ -45,7 +45,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
                     top: Radius.circular(AppRadius.xl), // только верхние углы
                   ),
                   child: Material(
-                    color: AppColors.surface,
+                    color: AppColors.getSurfaceColor(context),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -54,7 +54,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
                           width: 40,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: AppColors.border,
+                            color: AppColors.getBorderColor(context),
                             borderRadius: BorderRadius.circular(AppRadius.xs),
                           ),
                         ),
@@ -128,17 +128,17 @@ class _ToggleList extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             for (int i = 0; i < children.length; i++) ...[
               children[i],
               if (i != children.length - 1)
-                const Divider(
+                Divider(
                   height: 1,
                   thickness: 0.5,
-                  color: AppColors.border,
+                  color: AppColors.getBorderColor(context),
                 ),
             ],
           ],
@@ -169,7 +169,10 @@ class _ToggleRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(fontSize: 13),
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
               maxLines: 2, // если подпись длинная
               overflow: TextOverflow.ellipsis,
             ),
@@ -189,12 +192,17 @@ class _ToggleRow extends StatelessWidget {
                 if (states.contains(WidgetState.selected)) {
                   return AppColors.brandPrimary;
                 }
-                return AppColors.scrim20;
+                // В темной теме используем более светлый цвет для неактивного трека
+                return Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.getBorderColor(context).withOpacity(0.3)
+                    : AppColors.scrim20;
               }),
               trackOutlineColor: WidgetStateProperty.all<Color>(
                 Colors.transparent,
               ),
-              thumbColor: WidgetStateProperty.all<Color>(AppColors.surface),
+              thumbColor: WidgetStateProperty.all<Color>(
+                AppColors.getSurfaceColor(context),
+              ),
             ),
           ),
         ],

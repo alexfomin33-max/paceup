@@ -106,10 +106,13 @@ class _MonthLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'Inter',
         fontSize: 15,
         fontWeight: FontWeight.w500,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkTextSecondary
+            : null,
       ),
     );
   }
@@ -123,10 +126,13 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'Inter',
         fontSize: 15,
         fontWeight: FontWeight.w500,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkTextSecondary
+            : null,
       ),
     );
   }

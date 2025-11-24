@@ -1,7 +1,7 @@
 // lib/widgets/segmented_pill.dart
 // ─────────────────────────────────────────────────────────────────────────────
 //                ГЛОБАЛЬНЫЙ ВИДЖЕТ: ДВУХСЕГМЕНТНАЯ «ПИЛЮЛЯ» ДЛЯ ТАБОВ
-//  • Внешний вид как в проекте: светлый трек, тёмный "thumb", белый активный текст
+//  • Внешний вид адаптируется к теме: цвета автоматически меняются для светлой/темной темы
 //  • Анимация "капсулы" (thumb) через AnimatedAlign (+ плавная кривая)
 //  • API совместим с вашим локальным _SegmentedPill: left/right, value, onChanged
 //  • Параметры настраиваются: размеры, цвета, длительность, кривая, haptics
@@ -75,12 +75,18 @@ class SegmentedPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ── Значения по умолчанию из ваших дизайн-токенов
-    final Color track = trackColor ?? AppColors.surface;
-    final Color border = borderColor ?? AppColors.border;
-    final Color thumb = thumbColor ?? AppColors.textPrimary;
-    final Color textActive = activeTextColor ?? AppColors.surface;
-    final Color textInactive = inactiveTextColor ?? AppColors.textPrimary;
+    // ── Значения по умолчанию из ваших дизайн-токенов (адаптируются к теме)
+    final Color track = trackColor ?? AppColors.getSurfaceColor(context);
+    final Color border = borderColor ?? AppColors.getBorderColor(context);
+    final Color thumb = thumbColor ?? AppColors.getTextPrimaryColor(context);
+    // Активный текст: контрастный к капсуле (в светлой теме белый, в темной — темный)
+    final Color textActive = activeTextColor ?? 
+        (Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkSurface
+            : AppColors.surface);
+    // Неактивный текст: основной цвет текста темы
+    final Color textInactive = inactiveTextColor ?? 
+        AppColors.getTextPrimaryColor(context);
 
     // ── Корпус виджета
     final pill = SizedBox(

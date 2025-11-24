@@ -249,32 +249,34 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
       validator: validator,
       decoration: InputDecoration(
         labelText: dynamicLabelText,
-        labelStyle: AppTextStyles.h14w4Sec,
-        floatingLabelStyle: TextStyle(color: AppColors.textSecondary),
+        labelStyle: AppTextStyles.h14w4Sec.copyWith(
+          color: AppColors.getTextSecondaryColor(context),
+        ),
+        floatingLabelStyle: TextStyle(color: AppColors.getTextSecondaryColor(context)),
         floatingLabelBehavior: FloatingLabelBehavior.auto,
         alignLabelWithHint: true,
         errorText: errorText,
         filled: true,
-        fillColor: AppColors.background,
+        fillColor: AppColors.getBackgroundColor(context),
         suffixIcon: IconButton(
           icon: Icon(
             obscureText ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
             size: 18,
-            color: AppColors.iconSecondary,
+            color: AppColors.getIconSecondaryColor(context),
           ),
           onPressed: onToggleObscure,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.getBorderColor(context)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.getBorderColor(context)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.getBorderColor(context)),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),

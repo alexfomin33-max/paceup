@@ -258,8 +258,14 @@ class _SolidPillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ── определяем цвета в зависимости от темы
+    final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+    // ── в темной теме убираем тень, чтобы фон был идентичен нижнему меню
+    final shadowColor = isDark ? null : AppColors.shadowMedium;
+
     return Material(
-      color: AppColors.surface,
+      color: AppColors.getSurfaceColor(context),
       borderRadius: BorderRadius.circular(AppRadius.xl),
       elevation: 0,
       child: InkWell(
@@ -268,25 +274,32 @@ class _SolidPillButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.getSurfaceColor(context),
             borderRadius: BorderRadius.circular(AppRadius.xl),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.shadowMedium,
-                blurRadius: 1,
-                offset: Offset(0, 1),
-              ),
-            ],
+            boxShadow: shadowColor != null
+                ? [
+                    BoxShadow(
+                      color: shadowColor,
+                      blurRadius: 1,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
           ),
           child: Row(
             children: [
-              Icon(icon, size: 20, color: AppColors.iconPrimary),
+              Icon(
+                icon,
+                size: 20,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
               const SizedBox(width: 8),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
+                  color: AppColors.getTextPrimaryColor(context),
                 ),
               ),
             ],

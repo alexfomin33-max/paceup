@@ -210,12 +210,12 @@ class _FormPane extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          const Text(
+          Text(
             'Параметры',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: AppColors.getTextSecondaryColor(context),
             ),
           ),
           const SizedBox(height: 8),
@@ -244,11 +244,14 @@ class _FormPane extends StatelessWidget {
           ),
 
           const SizedBox(height: 12),
-          const Center(
+          Center(
             child: Text(
               'Данные необходимы для расчёта калорий, нагрузки, зон темпа и мощности.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: AppColors.textPlaceholder),
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.getTextPlaceholderColor(context),
+              ),
             ),
           ),
         ],
@@ -463,7 +466,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         final bottom = MediaQuery.viewPaddingOf(ctx).bottom;
         return Container(
           height: 260 + bottom,
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           child: SafeArea(
             top: false,
             child: CupertinoDatePicker(
@@ -696,15 +699,18 @@ class _AvatarEditable extends ConsumerWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: AppColors.getSurfaceColor(context),
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.border, width: 1),
+                border: Border.all(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
               ),
               alignment: Alignment.center,
-              child: const Icon(
+              child: Icon(
                 CupertinoIcons.camera,
                 size: 16,
-                color: AppColors.iconPrimary,
+                color: AppColors.getIconPrimaryColor(context),
               ),
             ),
           ),
@@ -766,8 +772,13 @@ class _AvatarEditable extends ConsumerWidget {
         fit: BoxFit.cover,
         memCacheWidth: w,
         maxWidthDiskCache: w,
-        placeholder: (context, url) =>
-            Container(width: size, height: size, color: AppColors.skeletonBase),
+        placeholder: (context, url) => Container(
+          width: size,
+          height: size,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkSurfaceMuted
+              : AppColors.skeletonBase,
+        ),
         errorWidget: (context, url, error) => Image.asset(
           'assets/avatar_0.png',
           width: size,
@@ -804,13 +815,18 @@ class _NameBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.5,
+        ),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -831,10 +847,10 @@ class _NameBlock extends StatelessWidget {
               ),
             ),
           ),
-          const Divider(
+          Divider(
             height: 1,
             thickness: 0.5,
-            color: AppColors.divider,
+            color: AppColors.getDividerColor(context),
             indent: 10,
             endIndent: 10,
           ),
@@ -866,13 +882,18 @@ class _GroupBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.5,
+        ),
         boxShadow: [
-          const BoxShadow(
-            color: AppColors.shadowSoft,
-            offset: Offset(0, 1),
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
           ),
@@ -882,10 +903,10 @@ class _GroupBlock extends StatelessWidget {
         children: [
           for (int i = 0; i < children.length; i++) ...[
             if (i > 0)
-              const Divider(
+              Divider(
                 height: 1,
                 thickness: 0.5,
-                color: AppColors.divider,
+                color: AppColors.getDividerColor(context),
                 indent: 10,
                 endIndent: 10,
               ),
@@ -971,7 +992,7 @@ class _FieldRow extends StatelessWidget {
 
   final _FieldRowType type;
 
-  Widget _buildFieldContent() {
+  Widget _buildFieldContent(BuildContext context) {
     switch (type) {
       case _FieldRowType.input:
         return TextField(
@@ -1000,15 +1021,14 @@ class _FieldRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     color: (value ?? '').isEmpty
-                        ? AppColors.textTertiary
-                        : AppColors.textPrimary,
+                        ? AppColors.getTextTertiaryColor(context)
+                        : AppColors.getTextPrimaryColor(context),
                   ),
                 ),
               ),
-              const Icon(
-                CupertinoIcons.chevron_down,
-                size: 18,
-                color: AppColors.iconTertiary,
+              Icon(
+                Icons.arrow_drop_down,
+                color: AppColors.getIconSecondaryColor(context),
               ),
             ],
           ),
@@ -1019,24 +1039,24 @@ class _FieldRow extends StatelessWidget {
           child: DropdownButton<String>(
             value: value,
             isExpanded: true,
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_drop_down,
-              color: AppColors.iconSecondary,
+              color: AppColors.getIconSecondaryColor(context),
             ),
-            dropdownColor: AppColors.surface,
+            dropdownColor: AppColors.getSurfaceColor(context),
             menuMaxHeight: 300,
             borderRadius: BorderRadius.circular(AppRadius.md),
             style: TextStyle(
               color: value == null || value!.isEmpty
-                  ? AppColors.textTertiary
-                  : AppColors.textPrimary,
+                  ? AppColors.getTextTertiaryColor(context)
+                  : AppColors.getTextPrimaryColor(context),
               fontFamily: 'Inter',
               fontSize: 14,
             ),
-            hint: const Text(
+            hint: Text(
               'Выбрать',
               style: TextStyle(
-                color: AppColors.textTertiary,
+                color: AppColors.getTextTertiaryColor(context),
                 fontFamily: 'Inter',
                 fontSize: 14,
               ),
@@ -1051,8 +1071,8 @@ class _FieldRow extends StatelessWidget {
                 value: item,
                 child: Text(
                   item,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: AppColors.getTextPrimaryColor(context),
                     fontFamily: 'Inter',
                     fontWeight: FontWeight.w400,
                   ),
@@ -1066,9 +1086,9 @@ class _FieldRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const labelStyle = TextStyle(
+    final labelStyle = TextStyle(
       fontSize: 13,
-      color: AppColors.textSecondary,
+      color: AppColors.getTextSecondaryColor(context),
       fontWeight: FontWeight.w500,
     );
 
@@ -1081,7 +1101,7 @@ class _FieldRow extends StatelessWidget {
             child: Text(label, style: labelStyle),
           ),
           const SizedBox(width: 8),
-          Expanded(child: _buildFieldContent()),
+          Expanded(child: _buildFieldContent(context)),
         ],
       ),
     );
@@ -1125,12 +1145,19 @@ class _CircleIconBtn extends StatelessWidget {
         width: kQrBtnSize,
         height: kQrBtnSize,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.border, width: 0.5),
+          border: Border.all(
+            color: AppColors.getBorderColor(context),
+            width: 0.5,
+          ),
         ),
         alignment: Alignment.center,
-        child: Icon(icon, size: kQrIconSize, color: AppColors.iconPrimary),
+        child: Icon(
+          icon,
+          size: kQrIconSize,
+          color: AppColors.getIconPrimaryColor(context),
+        ),
       ),
     );
   }

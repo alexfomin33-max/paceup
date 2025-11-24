@@ -46,7 +46,7 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
   @override
   void initState() {
     super.initState();
-    
+
     // Восстанавливаем параметры из initialParams, если они есть
     if (widget.initialParams != null) {
       _selectedSports = widget.initialParams!.sports.toSet();
@@ -55,15 +55,8 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
       _endDate = widget.initialParams!.endDate;
     } else {
       // Устанавливаем дефолтные значения
-      _selectedSports = {
-        SportType.run,
-        SportType.bike,
-        SportType.swim,
-      };
-      _selectedEventTypes = {
-        EventType.official,
-        EventType.amateur,
-      };
+      _selectedSports = {SportType.run, SportType.bike, SportType.swim};
+      _selectedEventTypes = {EventType.official, EventType.amateur};
       // Устанавливаем дефолтные даты: сегодня и сегодня + 1 год
       final today = DateTime.now();
       _startDate = DateTime(today.year, today.month, today.day);
@@ -168,10 +161,10 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
     return SafeArea(
       top: false,
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.lg),
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
           ),
         ),
         padding: const EdgeInsets.all(6),
@@ -184,7 +177,7 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 10, top: 4),
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: AppColors.getBorderColor(context),
                 borderRadius: BorderRadius.circular(AppRadius.xs),
               ),
             ),
@@ -192,12 +185,23 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
             // ──── Заголовок ────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(child: Text('Фильтры', style: AppTextStyles.h17w6)),
+              child: Center(
+                child: Text(
+                  'Фильтры',
+                  style: AppTextStyles.h17w6.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 16),
 
             // ──── Разделительная линия ────
-            Divider(height: 1, thickness: 1, color: AppColors.border),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: AppColors.getBorderColor(context),
+            ),
             const SizedBox(height: 16),
 
             // ──── Контент ────
@@ -276,11 +280,13 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        '—',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: AppColors.textSecondary,
+                      Builder(
+                        builder: (context) => Text(
+                          '—',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.getTextSecondaryColor(context),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -322,7 +328,12 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(title, style: AppTextStyles.h14w6);
+    return Text(
+      title,
+      style: AppTextStyles.h14w6.copyWith(
+        color: AppColors.getTextPrimaryColor(context),
+      ),
+    );
   }
 }
 
@@ -340,9 +351,15 @@ class _SportPillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isSelected ? AppColors.brandPrimary : AppColors.surface;
-    final textColor = isSelected ? AppColors.surface : AppColors.textPrimary;
-    final borderColor = isSelected ? AppColors.brandPrimary : AppColors.border;
+    final bg = isSelected
+        ? AppColors.brandPrimary
+        : AppColors.getSurfaceColor(context);
+    final textColor = isSelected
+        ? AppColors.surface
+        : AppColors.getTextPrimaryColor(context);
+    final borderColor = isSelected
+        ? AppColors.brandPrimary
+        : AppColors.getBorderColor(context);
 
     return Material(
       color: Colors.transparent,
@@ -387,9 +404,15 @@ class _EventTypePillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isSelected ? AppColors.brandPrimary : AppColors.surface;
-    final textColor = isSelected ? AppColors.surface : AppColors.textPrimary;
-    final borderColor = isSelected ? AppColors.brandPrimary : AppColors.border;
+    final bg = isSelected
+        ? AppColors.brandPrimary
+        : AppColors.getSurfaceColor(context);
+    final textColor = isSelected
+        ? AppColors.surface
+        : AppColors.getTextPrimaryColor(context);
+    final borderColor = isSelected
+        ? AppColors.brandPrimary
+        : AppColors.getBorderColor(context);
 
     return Material(
       color: Colors.transparent,
@@ -437,16 +460,19 @@ class _DatePickerButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.getSurfaceColor(context),
             borderRadius: BorderRadius.circular(AppRadius.xxl),
-            border: Border.all(color: AppColors.border, width: 1),
+            border: Border.all(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
           ),
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 CupertinoIcons.calendar,
                 size: 16,
-                color: AppColors.iconSecondary,
+                color: AppColors.getIconSecondaryColor(context),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -454,7 +480,9 @@ class _DatePickerButton extends StatelessWidget {
                   label.isEmpty ? 'Дата' : label,
                   style: label.isEmpty
                       ? AppTextStyles.h14w4Place
-                      : AppTextStyles.h14w4,
+                      : AppTextStyles.h14w4.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
                 ),
               ),
             ],

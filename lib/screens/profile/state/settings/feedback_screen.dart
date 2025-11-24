@@ -106,17 +106,19 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                             color: AppColors.success,
                           ),
                           const SizedBox(height: 24),
-                          const Text(
+                          Text(
                             'Спасибо за ваше предложение!',
                             textAlign: TextAlign.center,
-                            style: AppTextStyles.h17w6,
+                            style: AppTextStyles.h17w6.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Мы рассмотрим ваше предложение и учтём его при разработке новых функций.',
                             textAlign: TextAlign.center,
                             style: AppTextStyles.h14w4.copyWith(
-                              color: AppColors.textSecondary,
+                              color: AppColors.getTextSecondaryColor(context),
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -140,25 +142,27 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                       // Информационная карточка
                       Container(
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
+                          color: AppColors.getSurfaceColor(context),
                           borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(color: AppColors.border, width: 1),
+                          border: Border.all(color: AppColors.getBorderColor(context), width: 1),
                         ),
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Row(
+                            Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   CupertinoIcons.info,
                                   size: 20,
                                   color: AppColors.brandPrimary,
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text(
                                   'Ваше мнение важно для нас',
-                                  style: AppTextStyles.h14w6,
+                                  style: AppTextStyles.h14w6.copyWith(
+                                    color: AppColors.getTextPrimaryColor(context),
+                                  ),
                                 ),
                               ],
                             ),
@@ -166,7 +170,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                             Text(
                               'Поделитесь своими идеями по улучшению приложения. Мы внимательно рассмотрим каждое предложение.',
                               style: AppTextStyles.h14w4.copyWith(
-                                color: AppColors.textSecondary,
+                                color: AppColors.getTextSecondaryColor(context),
                               ),
                             ),
                           ],
@@ -185,19 +189,25 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                         textCapitalization: TextCapitalization.sentences,
                         decoration: InputDecoration(
                           labelText: 'Ваше предложение',
+                          labelStyle: AppTextStyles.h14w4Sec.copyWith(
+                            color: AppColors.getTextSecondaryColor(context),
+                          ),
                           hintText:
                               'Опишите, что бы вы хотели улучшить или добавить в приложение...',
+                          hintStyle: TextStyle(
+                            color: AppColors.getTextPlaceholderColor(context),
+                          ),
                           errorText: _error,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadius.md),
-                            borderSide: const BorderSide(
-                              color: AppColors.border,
+                            borderSide: BorderSide(
+                              color: AppColors.getBorderColor(context),
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadius.md),
-                            borderSide: const BorderSide(
-                              color: AppColors.border,
+                            borderSide: BorderSide(
+                              color: AppColors.getBorderColor(context),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -214,7 +224,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                             ),
                           ),
                           filled: true,
-                          fillColor: AppColors.surface,
+                          fillColor: AppColors.getSurfaceColor(context),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {

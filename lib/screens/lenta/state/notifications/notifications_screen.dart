@@ -64,10 +64,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             IconButton(
               padding: const EdgeInsets.only(right: 12),
               splashRadius: 22,
-              icon: const Icon(
+              icon: Icon(
                 CupertinoIcons.slider_horizontal_3,
                 size: 20,
-                color: AppColors.iconPrimary,
+                color: AppColors.getIconPrimaryColor(context),
               ),
               onPressed: _openSettingsSheet,
             ),
@@ -79,10 +79,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           itemCount: _items.length,
-          separatorBuilder: (_, _) => const Divider(
+          separatorBuilder: (_, _) => Divider(
             height: 1,
             thickness: 0.5,
-            color: AppColors.border,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.getBorderColor(context)
+                : AppColors.border,
             indent: 57,
             endIndent: 8,
           ),
@@ -136,10 +138,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   item,
-                  const Divider(
+                  Divider(
                     height: 1,
                     thickness: 0.5,
-                    color: AppColors.border,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.getBorderColor(context)
+                        : AppColors.border,
                   ),
                 ],
               );

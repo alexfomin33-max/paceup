@@ -83,7 +83,9 @@ class _RaceBlock extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.getTextPrimaryColor(context),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.getTextPrimaryColor(context),
                   ),
                 ),
               ),

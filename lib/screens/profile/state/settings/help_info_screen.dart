@@ -145,10 +145,10 @@ class _InfoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: AppColors.border,
+          color: AppColors.getBorderColor(context),
           width: 1,
         ),
       ),
@@ -159,7 +159,9 @@ class _InfoSection extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Text(
               title,
-              style: AppTextStyles.h16w6,
+              style: AppTextStyles.h16w6.copyWith(
+                color: AppColors.getTextPrimaryColor(context),
+              ),
             ),
           ),
           ...children,
@@ -187,13 +189,15 @@ class _InfoItem extends StatelessWidget {
         children: [
           Text(
             title,
-            style: AppTextStyles.h14w6,
+            style: AppTextStyles.h14w6.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             content,
             style: AppTextStyles.h14w4.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.getTextSecondaryColor(context),
             ),
           ),
         ],

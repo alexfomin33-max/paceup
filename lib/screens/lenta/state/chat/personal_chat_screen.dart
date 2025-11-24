@@ -622,14 +622,12 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: Theme.of(context).brightness == Brightness.light
-            ? AppColors.surface
-            : AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.getBackgroundColor(context),
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
-          backgroundColor: Theme.of(context).brightness == Brightness.light
-            ? AppColors.surface
-            : AppColors.getBackgroundColor(context),
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.getSurfaceColor(context)
+              : AppColors.surface,
           surfaceTintColor: Colors.transparent,
           elevation: 0.5,
           scrolledUnderElevation: 0, // ─── Убираем тень при скролле ───
@@ -681,10 +679,11 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
                             return Container(
                               width: 36,
                               height: 36,
-                              color: AppColors.surfaceMuted,
-                              child: const Icon(
+                              color: AppColors.getSurfaceMutedColor(context),
+                              child: Icon(
                                 CupertinoIcons.person,
                                 size: 20,
+                                color: AppColors.getIconSecondaryColor(context),
                               ),
                             );
                           },
@@ -702,10 +701,10 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
                   children: [
                     Text(
                       widget.userName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
                     if (widget.lastSeen != null) ...[
@@ -714,9 +713,9 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
                         widget.lastSeen!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: AppColors.getTextSecondaryColor(context),
                         ),
                       ),
                     ],
@@ -726,12 +725,12 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
             ],
           ),
           // ─── Нижняя граница под AppBar ───
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(0.5),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(0.5),
             child: Divider(
               height: 0.5,
               thickness: 0.5,
-              color: AppColors.border,
+              color: AppColors.getBorderColor(context),
             ),
           ),
         ),
@@ -890,8 +889,12 @@ class _BubbleLeft extends StatelessWidget {
                   errorWidget: (_, __, ___) => Container(
                     width: 28,
                     height: 28,
-                    color: AppColors.surfaceMuted,
-                    child: const Icon(CupertinoIcons.person, size: 16),
+                    color: AppColors.getSurfaceMutedColor(context),
+                    child: Icon(
+                      CupertinoIcons.person,
+                      size: 16,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
                   ),
                 );
               },
@@ -901,9 +904,11 @@ class _BubbleLeft extends StatelessWidget {
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: max),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
               decoration: BoxDecoration(
-                color: AppColors.softBg,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkSurfaceMuted
+                    : AppColors.softBg,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Column(
@@ -913,18 +918,22 @@ class _BubbleLeft extends StatelessWidget {
                     width: double.infinity,
                     child: Text(
                       text,
-                      style: const TextStyle(fontSize: 14, height: 1.35),
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.35,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: 0),
                     child: Align(
                       alignment: Alignment.bottomRight,
                       child: Text(
                         time,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textTertiary,
+                          color: AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -959,9 +968,11 @@ class _BubbleRight extends StatelessWidget {
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: max),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
               decoration: BoxDecoration(
-                color: AppColors.greenBg,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.green.withValues(alpha: 0.15)
+                    : AppColors.greenBg,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Column(
@@ -971,18 +982,22 @@ class _BubbleRight extends StatelessWidget {
                     width: double.infinity,
                     child: Text(
                       text,
-                      style: const TextStyle(fontSize: 14, height: 1.35),
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.35,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: 0),
                     child: Align(
                       alignment: Alignment.bottomRight,
                       child: Text(
                         time,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textTertiary,
+                          color: AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -997,7 +1012,7 @@ class _BubbleRight extends StatelessWidget {
   }
 }
 
-/// Компонент ввода сообщений
+/// ─── Компонент ввода сообщений (в стиле comments_bottom_sheet) ───
 class _Composer extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
@@ -1021,19 +1036,15 @@ class _ComposerState extends State<_Composer> {
   @override
   void initState() {
     super.initState();
-    widget.controller.addListener(_onChanged);
     _focusNode.addListener(_onFocusChange);
   }
 
   @override
   void dispose() {
-    widget.controller.removeListener(_onChanged);
     _focusNode.removeListener(_onFocusChange);
     _focusNode.dispose();
     super.dispose();
   }
-
-  void _onChanged() => setState(() {});
 
   void _onFocusChange() {
     // ─── Вызываем колбэк при получении фокуса ───
@@ -1044,52 +1055,81 @@ class _ComposerState extends State<_Composer> {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = widget.controller.text.trim().isNotEmpty;
-
     return SafeArea(
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
           // ─── Нижняя граница, как у AppBar ───
-          border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
+          border: Border(
+            top: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 0.5,
+            ),
+          ),
         ),
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(CupertinoIcons.plus_circle),
-              onPressed: widget.onPickImage,
-              color: AppColors.iconSecondary,
-            ),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.softBg,
-                  borderRadius: BorderRadius.circular(AppRadius.xxl),
+        child: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: widget.controller,
+          builder: (context, value, _) {
+            final hasText = value.text.trim().isNotEmpty;
+            final isEnabled = hasText;
+
+            return Row(
+              children: [
+                IconButton(
+                  icon: const Icon(CupertinoIcons.plus_circle),
+                  onPressed: widget.onPickImage,
+                  color: AppColors.getIconSecondaryColor(context),
                 ),
-                child: TextField(
-                  controller: widget.controller,
-                  focusNode: _focusNode,
-                  minLines: 1,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    hintText: 'Сообщение...',
-                    hintStyle: TextStyle(color: AppColors.textPlaceholder),
-                    border: InputBorder.none,
+                Expanded(
+                  child: TextField(
+                    controller: widget.controller,
+                    focusNode: _focusNode,
+                    minLines: 1,
+                    maxLines: 5,
+                    textInputAction: TextInputAction.newline,
+                    keyboardType: TextInputType.multiline,
+                    style: TextStyle(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Сообщение...',
+                      hintStyle: AppTextStyles.h14w4Place.copyWith(
+                        color: AppColors.getTextPlaceholderColor(context),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.xxl),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkSurfaceMuted
+                          : AppColors.softBg,
+                    ),
+                    onSubmitted: (_) => widget.onSend(),
                   ),
-                  onSubmitted: (_) => widget.onSend(),
                 ),
-              ),
-            ),
-            const SizedBox(width: 6),
-            IconButton(
-              icon: const Icon(CupertinoIcons.paperplane_fill),
-              onPressed: enabled ? widget.onSend : null,
-              color: enabled ? AppColors.brandPrimary : AppColors.iconTertiary,
-            ),
-          ],
+                const SizedBox(width: 4),
+                IconButton(
+                  onPressed: isEnabled ? widget.onSend : null,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: Icon(
+                    Icons.send,
+                    size: 22,
+                    color: isEnabled
+                        ? AppColors.brandPrimary
+                        : AppColors.getTextPlaceholderColor(context),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

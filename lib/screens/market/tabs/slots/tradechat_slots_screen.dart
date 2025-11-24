@@ -126,7 +126,9 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.getSurfaceColor(context)
+            : AppColors.getBackgroundColor(context),
         // ⛔️ никаких bottomNavigationBar — экран отдельный
         appBar: AppBar(
           backgroundColor: AppColors.getSurfaceColor(context),
@@ -196,116 +198,123 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
             children: [
               Expanded(
                 child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
-                itemCount: headerCount + _messages.length,
-                itemBuilder: (_, index) {
-                  // 0 — дата
-                  if (index == 0) {
-                    return _DateSeparator(
-                      text: '${_today()}, автоматическое создание чата',
-                    );
-                  }
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+                  itemCount: headerCount + _messages.length,
+                  itemBuilder: (_, index) {
+                    // 0 — дата
+                    if (index == 0) {
+                      return _DateSeparator(
+                        text: '${_today()}, автоматическое создание чата',
+                      );
+                    }
 
-                  // 1..4 — инфо-строки (значение сразу после подписи)
-                  if (index == 1) {
-                    return _KVLine(
-                      k: 'Слот переведён в статус',
-                      v: _ChipNeutral(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                    // 1..4 — инфо-строки (значение сразу после подписи)
+                    if (index == 1) {
+                      return _KVLine(
+                        k: 'Слот переведён в статус',
+                        v: _ChipNeutral(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                CupertinoIcons.lock,
+                                size: 14,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'Бронь',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color:
+                                      Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.getTextPrimaryColor(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+                    if (index == 2) {
+                      return _KVLine(
+                        k: 'Дистанция',
+                        v: _ChipNeutral(child: Text(widget.distance)),
+                      );
+                    }
+                    if (index == 3) {
+                      return _KVLine(
+                        k: 'Пол',
+                        v: widget.gender == Gender.male
+                            ? const GenderPill.male()
+                            : const GenderPill.female(),
+                      );
+                    }
+                    if (index == 4) {
+                      return _KVLine(
+                        k: 'Стоимость',
+                        v: PricePill(text: _formatPrice(widget.price)),
+                      );
+                    }
+
+                    // 5..6 — участники
+                    if (index == 5) {
+                      return const _ParticipantRow(
+                        avatarAsset: 'assets/avatar_4.png',
+                        nameAndRole: 'Екатерина Виноградова - продавец',
+                      );
+                    }
+                    if (index == 6) {
+                      return const _ParticipantRow(
+                        avatarAsset: 'assets/avatar_9.png',
+                        nameAndRole: 'Анастасия Бутузова - покупатель',
+                      );
+                    }
+
+                    // 7 — Кнопки действий (ширина по контенту)
+                    if (index == 7) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        child: _ActionsWrap(),
+                      );
+                    }
+
+                    // 8 — Divider ПОД кнопками + небольшой отступ
+                    if (index == 8) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Column(
                           children: [
-                            Icon(
-                              CupertinoIcons.lock,
-                              size: 14,
-                              color: AppColors.getIconSecondaryColor(context),
+                            Divider(
+                              height: 16,
+                              thickness: 0.5,
+                              color: AppColors.getDividerColor(context),
                             ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Бронь',
-                              style: TextStyle(fontWeight: FontWeight.w500),
-                            ),
+                            SizedBox(height: 6),
                           ],
                         ),
-                      ),
-                    );
-                  }
-                  if (index == 2) {
-                    return _KVLine(
-                      k: 'Дистанция',
-                      v: _ChipNeutral(child: Text(widget.distance)),
-                    );
-                  }
-                  if (index == 3) {
-                    return _KVLine(
-                      k: 'Пол',
-                      v: widget.gender == Gender.male
-                          ? const GenderPill.male()
-                          : const GenderPill.female(),
-                    );
-                  }
-                  if (index == 4) {
-                    return _KVLine(
-                      k: 'Стоимость',
-                      v: PricePill(text: _formatPrice(widget.price)),
-                    );
-                  }
+                      );
+                    }
 
-                  // 5..6 — участники
-                  if (index == 5) {
-                    return const _ParticipantRow(
-                      avatarAsset: 'assets/avatar_4.png',
-                      nameAndRole: 'Екатерина Виноградова - продавец',
-                    );
-                  }
-                  if (index == 6) {
-                    return const _ParticipantRow(
-                      avatarAsset: 'assets/avatar_9.png',
-                      nameAndRole: 'Анастасия Бутузова - покупатель',
-                    );
-                  }
-
-                  // 7 — Кнопки действий (ширина по контенту)
-                  if (index == 7) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      child: _ActionsWrap(),
-                    );
-                  }
-
-                  // 8 — Divider ПОД кнопками + небольшой отступ
-                  if (index == 8) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Column(
-                        children: [
-                          Divider(
-                            height: 16,
-                            thickness: 0.5,
-                            color: AppColors.getDividerColor(context),
-                          ),
-                          SizedBox(height: 6),
-                        ],
-                      ),
-                    );
-                  }
-
-                  // дальше — сообщения
-                  final m = _messages[index - headerCount];
-                  if (m.kind == _MsgKind.image) {
-                    return m.side == _MsgSide.right
-                        ? _BubbleImageRight(file: m.imageFile!, time: m.time)
-                        : _BubbleImageLeft(file: m.imageFile!, time: m.time);
-                  } else {
-                    return m.side == _MsgSide.right
-                        ? _BubbleRight(text: m.text!, time: m.time)
-                        : _BubbleLeft(text: m.text!, time: m.time);
-                  }
-                },
+                    // дальше — сообщения
+                    final m = _messages[index - headerCount];
+                    if (m.kind == _MsgKind.image) {
+                      return m.side == _MsgSide.right
+                          ? _BubbleImageRight(file: m.imageFile!, time: m.time)
+                          : _BubbleImageLeft(file: m.imageFile!, time: m.time);
+                    } else {
+                      return m.side == _MsgSide.right
+                          ? _BubbleRight(text: m.text!, time: m.time)
+                          : _BubbleLeft(text: m.text!, time: m.time);
+                    }
+                  },
+                ),
               ),
-            ),
 
               // Composer (фиксирован внизу)
               _Composer(
@@ -351,7 +360,9 @@ class _KVLine extends StatelessWidget {
               k,
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.getTextPrimaryColor(context),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.getTextPrimaryColor(context),
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -375,7 +386,9 @@ class _ChipNeutral extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.getSurfaceMutedColor(context), // как у GenderPill и PricePill
+        color: AppColors.getSurfaceMutedColor(
+          context,
+        ), // как у GenderPill и PricePill
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: DefaultTextStyle(
@@ -596,22 +609,45 @@ class _ParticipantRow extends StatelessWidget {
   final String nameAndRole;
   const _ParticipantRow({required this.avatarAsset, required this.nameAndRole});
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-    child: Row(
-      children: [
-        CircleAvatar(radius: 14, backgroundImage: AssetImage(avatarAsset)),
-        const SizedBox(width: 8),
-        Text(
-          nameAndRole,
-          style: TextStyle(
-            fontSize: 13,
-            color: AppColors.getTextPrimaryColor(context),
+  Widget build(BuildContext context) {
+    // Разделяем имя и роль
+    final parts = nameAndRole.split(' - ');
+    final name = parts.isNotEmpty ? parts[0] : nameAndRole;
+    final role = parts.length > 1 ? ' - ${parts[1]}' : '';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+      child: Row(
+        children: [
+          CircleAvatar(radius: 14, backgroundImage: AssetImage(avatarAsset)),
+          const SizedBox(width: 8),
+          Text.rich(
+            TextSpan(
+              text: name,
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.getTextPrimaryColor(context),
+              ),
+              children: [
+                if (role.isNotEmpty)
+                  TextSpan(
+                    text: role,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 class _BubbleLeft extends StatelessWidget {
@@ -634,17 +670,12 @@ class _BubbleLeft extends StatelessWidget {
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: max),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark
                     ? AppColors.darkSurfaceMuted
-                    : AppColors.backgroundGreen,
+                    : AppColors.softBg,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.darkBorder
-                      : AppColors.borderaccept,
-                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -661,14 +692,16 @@ class _BubbleLeft extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: 0),
                     child: Align(
                       alignment: Alignment.bottomRight,
                       child: Text(
                         time,
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.getTextTertiaryColor(context),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -699,17 +732,12 @@ class _BubbleRight extends StatelessWidget {
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: max),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkSurfaceMuted
-                    : AppColors.backgroundGreen,
+                    ? AppColors.green.withValues(alpha: 0.15)
+                    : AppColors.greenBg,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.darkBorder
-                      : AppColors.borderaccept,
-                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -726,14 +754,16 @@ class _BubbleRight extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: 0),
                     child: Align(
                       alignment: Alignment.bottomRight,
                       child: Text(
                         time,
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.getTextTertiaryColor(context),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -835,99 +865,99 @@ class _TimeBadge extends StatelessWidget {
     child: Text(
       time,
       style: TextStyle(
-        color: AppColors.getTextPrimaryColor(context),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkTextSecondary
+            : AppColors.getTextPrimaryColor(context),
         fontSize: 11,
       ),
     ),
   );
 }
 
-class _Composer extends StatefulWidget {
+/// ─── Компонент ввода сообщений (в стиле comments_bottom_sheet) ───
+class _Composer extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
   final VoidCallback onPickImage;
+
   const _Composer({
     required this.controller,
     required this.onSend,
     required this.onPickImage,
   });
-  @override
-  State<_Composer> createState() => _ComposerState();
-}
 
-class _ComposerState extends State<_Composer> {
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_onChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_onChanged);
-    super.dispose();
-  }
-
-  void _onChanged() => setState(() {});
   @override
   Widget build(BuildContext context) {
-    final enabled = widget.controller.text.trim().isNotEmpty;
     return SafeArea(
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkShadowSoft
-                  : AppColors.shadowSoft,
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
           border: Border(
-            top: BorderSide(color: AppColors.getBorderColor(context)),
+            top: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 0.5,
+            ),
           ),
         ),
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(CupertinoIcons.plus_circle),
-              onPressed: widget.onPickImage,
-              color: AppColors.getIconSecondaryColor(context),
-            ),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.getSurfaceMutedColor(context),
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
+        child: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder: (context, value, _) {
+            final hasText = value.text.trim().isNotEmpty;
+            final isEnabled = hasText;
+
+            return Row(
+              children: [
+                IconButton(
+                  icon: const Icon(CupertinoIcons.plus_circle),
+                  onPressed: onPickImage,
+                  color: AppColors.getIconSecondaryColor(context),
                 ),
-                child: TextField(
-                  controller: widget.controller,
-                  minLines: 1,
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    hintText: 'Сообщение...',
-                    hintStyle: TextStyle(
-                      color: AppColors.getTextPlaceholderColor(context),
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    minLines: 1,
+                    maxLines: 5,
+                    textInputAction: TextInputAction.newline,
+                    keyboardType: TextInputType.multiline,
+                    style: TextStyle(
+                      color: AppColors.getTextPrimaryColor(context),
                     ),
-                    border: InputBorder.none,
+                    decoration: InputDecoration(
+                      hintText: 'Сообщение...',
+                      hintStyle: AppTextStyles.h14w4Place.copyWith(
+                        color: AppColors.getTextPlaceholderColor(context),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.xxl),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.getSurfaceMutedColor(context),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 6),
-            IconButton(
-              icon: const Icon(CupertinoIcons.paperplane_fill),
-              onPressed: enabled ? widget.onSend : null,
-              color: enabled
-                  ? AppColors.brandPrimary
-                  : AppColors.iconTertiary, // iconTertiary обычно не меняется
-            ),
-          ],
+                const SizedBox(width: 4),
+                IconButton(
+                  onPressed: isEnabled ? onSend : null,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: Icon(
+                    Icons.send,
+                    size: 22,
+                    color: isEnabled
+                        ? AppColors.brandPrimary
+                        : AppColors.getTextPlaceholderColor(context),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

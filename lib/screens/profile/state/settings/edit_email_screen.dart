@@ -109,28 +109,30 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
                     autocorrect: false,
                     decoration: InputDecoration(
                       labelText: 'E-mail',
-                      labelStyle: AppTextStyles.h14w4Sec,
+                      labelStyle: AppTextStyles.h14w4Sec.copyWith(
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
                       floatingLabelStyle: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                       floatingLabelBehavior: FloatingLabelBehavior.auto,
                       alignLabelWithHint: true,
                       hintText: 'example@mail.ru',
-                      hintStyle: TextStyle(color: AppColors.textPlaceholder),
+                      hintStyle: TextStyle(color: AppColors.getTextPlaceholderColor(context)),
                       errorText: _error,
                       filled: true,
-                      fillColor: AppColors.background,
+                      fillColor: AppColors.getBackgroundColor(context),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: const BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.getBorderColor(context)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: const BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.getBorderColor(context)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: const BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.getBorderColor(context)),
                       ),
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.sm),

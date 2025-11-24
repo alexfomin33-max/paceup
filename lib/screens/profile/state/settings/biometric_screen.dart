@@ -1,4 +1,4 @@
-/*import 'dart:io';
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -290,10 +290,10 @@ class _BiometricScreenState extends State<BiometricScreen> {
                         // Информационная карточка
                         Container(
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: AppColors.getSurfaceColor(context),
                             borderRadius: BorderRadius.circular(AppRadius.md),
                             border: Border.all(
-                              color: AppColors.border,
+                              color: AppColors.getBorderColor(context),
                               width: 1,
                             ),
                           ),
@@ -301,17 +301,19 @@ class _BiometricScreenState extends State<BiometricScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Row(
+                              Row(
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     CupertinoIcons.info,
                                     size: 20,
                                     color: AppColors.brandPrimary,
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Text(
                                     'Что это?',
-                                    style: AppTextStyles.h14w6,
+                                    style: AppTextStyles.h14w6.copyWith(
+                                      color: AppColors.getTextPrimaryColor(context),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -319,7 +321,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
                               Text(
                                 'Биометрическая защита позволяет использовать Face ID, Touch ID или код-пароль для быстрого входа в приложение. Ваши данные защищены системной аутентификацией устройства.',
                                 style: AppTextStyles.h14w4.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.getTextSecondaryColor(context),
                                 ),
                               ),
                             ],
@@ -366,10 +368,10 @@ class _BiometricScreenState extends State<BiometricScreen> {
                           // Доступные типы биометрии
                           Container(
                             decoration: BoxDecoration(
-                              color: AppColors.surface,
+                              color: AppColors.getSurfaceColor(context),
                               borderRadius: BorderRadius.circular(AppRadius.md),
                               border: Border.all(
-                                color: AppColors.border,
+                                color: AppColors.getBorderColor(context),
                                 width: 1,
                               ),
                             ),
@@ -377,9 +379,11 @@ class _BiometricScreenState extends State<BiometricScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Доступные методы:',
-                                  style: AppTextStyles.h14w6,
+                                  style: AppTextStyles.h14w6.copyWith(
+                                    color: AppColors.getTextPrimaryColor(context),
+                                  ),
                                 ),
                                 const SizedBox(height: 12),
                                 ..._availableBiometrics.map((type) => Padding(
@@ -396,7 +400,9 @@ class _BiometricScreenState extends State<BiometricScreen> {
                                           const SizedBox(width: 8),
                                           Text(
                                             _getBiometricTypeName(type),
-                                            style: AppTextStyles.h14w4,
+                                            style: AppTextStyles.h14w4.copyWith(
+                                              color: AppColors.getTextPrimaryColor(context),
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -410,10 +416,10 @@ class _BiometricScreenState extends State<BiometricScreen> {
                           // Переключатель
                           Container(
                             decoration: BoxDecoration(
-                              color: AppColors.surface,
+                              color: AppColors.getSurfaceColor(context),
                               borderRadius: BorderRadius.circular(AppRadius.md),
                               border: Border.all(
-                                color: AppColors.border,
+                                color: AppColors.getBorderColor(context),
                                 width: 1,
                               ),
                             ),
@@ -427,9 +433,11 @@ class _BiometricScreenState extends State<BiometricScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
+                                      Text(
                                         'Биометрическая защита',
-                                        style: AppTextStyles.h14w6,
+                                        style: AppTextStyles.h14w6.copyWith(
+                                          color: AppColors.getTextPrimaryColor(context),
+                                        ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
@@ -437,7 +445,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
                                             ? 'Включена'
                                             : 'Выключена',
                                         style: AppTextStyles.h13w4.copyWith(
-                                          color: AppColors.textSecondary,
+                                          color: AppColors.getTextSecondaryColor(context),
                                         ),
                                       ),
                                     ],
@@ -461,4 +469,3 @@ class _BiometricScreenState extends State<BiometricScreen> {
     );
   }
 }
-*/

@@ -179,9 +179,9 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                     // Информационная карточка
                     Container(
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: AppColors.getSurfaceColor(context),
                         borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: AppColors.border, width: 1),
+                        border: Border.all(color: AppColors.getBorderColor(context), width: 1),
                       ),
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -195,14 +195,19 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                                 color: AppColors.brandPrimary,
                               ),
                               const SizedBox(width: 8),
-                              Text('Что это?', style: AppTextStyles.h14w6),
+                              Text(
+                                'Что это?',
+                                style: AppTextStyles.h14w6.copyWith(
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
                           Text(
                             'Разрешение на доступ к данным о здоровье позволяет приложению импортировать ваши тренировки, шаги, пульс и калории из системных приложений Health (iOS) или Health Connect (Android).',
                             style: AppTextStyles.h14w4.copyWith(
-                              color: AppColors.textSecondary,
+                              color: AppColors.getTextSecondaryColor(context),
                             ),
                           ),
                         ],
@@ -272,7 +277,7 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceMuted,
+                        color: AppColors.getSurfaceMutedColor(context),
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Column(
@@ -280,7 +285,9 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                         children: [
                           Text(
                             'Как предоставить доступ:',
-                            style: AppTextStyles.h14w6,
+                            style: AppTextStyles.h14w6.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -288,7 +295,7 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                                 ? '1. Нажмите "Запросить доступ"\n2. В системном диалоге выберите типы данных\n3. Разрешите доступ к выбранным данным'
                                 : '1. Нажмите "Запросить доступ"\n2. Откроется Health Connect\n3. Выберите типы данных и разрешите доступ',
                             style: AppTextStyles.h14w4.copyWith(
-                              color: AppColors.textSecondary,
+                              color: AppColors.getTextSecondaryColor(context),
                             ),
                           ),
                         ],

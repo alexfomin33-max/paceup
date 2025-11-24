@@ -67,34 +67,41 @@ class _Run200kScreenState extends State<Run200kScreen> {
                 children: [
                   // Белый блок с заголовком, подписью и узким прогресс-баром
                   Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.surface,
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurfaceColor(context),
                       boxShadow: [
                         // тонкая тень вниз ~1px
                         BoxShadow(
-                          color: AppColors.shadowSoft,
-                          offset: Offset(0, 1),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkShadowSoft
+                              : AppColors.shadowSoft,
+                          offset: const Offset(0, 1),
                           blurRadius: 0,
                         ),
                       ],
                     ),
                     // добавили +36 сверху, чтобы нижняя половина круга не перекрывала текст
                     padding: const EdgeInsets.fromLTRB(16, 16 + 36, 16, 16),
-                    child: const Column(
+                    child: Column(
                       children: [
-                        Text('200 км бега', style: AppTextStyles.h17w6),
-                        SizedBox(height: 6),
+                        Text(
+                          '200 км бега',
+                          style: AppTextStyles.h17w6.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
                         Text(
                           'Пробегите за месяц суммарно 200 километров.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: AppColors.getTextSecondaryColor(context),
                             height: 1.25,
                           ),
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
 
                         // узкий прогресс-бар по центру
                         Center(
@@ -103,13 +110,13 @@ class _Run200kScreenState extends State<Run200kScreen> {
                             child: _MiniProgress(percent: 145.8 / 200.0),
                           ),
                         ),
-                        SizedBox(height: 6),
+                        const SizedBox(height: 6),
                         Text(
                           '145,8 из 200 км',
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: AppColors.getTextSecondaryColor(context),
                           ),
                         ),
                       ],
@@ -130,22 +137,24 @@ class _Run200kScreenState extends State<Run200kScreen> {
                           color: AppColors.gold,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: AppColors.surface,
+                            color: AppColors.getSurfaceColor(context),
                             width: 2,
                           ), // белая рамка 2px
                           boxShadow: [
-                            const BoxShadow(
-                              color: AppColors.shadowSoft,
+                            BoxShadow(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? AppColors.darkShadowSoft
+                                  : AppColors.shadowSoft,
                               blurRadius: 10,
-                              offset: Offset(0, 2),
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Icon(
                             Icons.directions_run,
                             size: 34,
-                            color: AppColors.surface,
+                            color: AppColors.getSurfaceColor(context),
                           ),
                         ),
                       ),
@@ -181,11 +190,17 @@ class _Run200kScreenState extends State<Run200kScreen> {
                   ),
 
                   Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.surface,
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurfaceColor(context),
                       border: Border(
-                        top: BorderSide(color: AppColors.border, width: 0.5),
-                        bottom: BorderSide(color: AppColors.border, width: 0.5),
+                        top: BorderSide(
+                          color: AppColors.getBorderColor(context),
+                          width: 0.5,
+                        ),
+                        bottom: BorderSide(
+                          color: AppColors.getBorderColor(context),
+                          width: 0.5,
+                        ),
                       ),
                     ),
                     child: Column(
@@ -240,9 +255,9 @@ class _MiniProgress extends StatelessWidget {
             Expanded(
               child: Container(
                 height: 4,
-                decoration: const BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: AppColors.getBorderColor(context),
+                  borderRadius: const BorderRadius.only(
                     topRight: Radius.circular(AppRadius.xs),
                     bottomRight: Radius.circular(AppRadius.xs),
                   ),
@@ -276,22 +291,25 @@ class _SegmentedPill extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
         ),
 
         child: Row(
           children: [
-            Expanded(child: _seg(0, left)),
-            Expanded(child: _seg(1, right)),
+            Expanded(child: _seg(context, 0, left)),
+            Expanded(child: _seg(context, 1, right)),
           ],
         ),
       ),
     );
   }
 
-  Widget _seg(int idx, String text) {
+  Widget _seg(BuildContext context, int idx, String text) {
     final selected = value == idx;
     return GestureDetector(
       onTap: () => onChanged(idx),
@@ -299,7 +317,9 @@ class _SegmentedPill extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.textPrimary : Colors.transparent,
+          color: selected
+              ? AppColors.getTextPrimaryColor(context)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Center(
@@ -309,7 +329,9 @@ class _SegmentedPill extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              color: selected ? AppColors.surface : AppColors.textPrimary,
+              color: selected
+                  ? AppColors.getSurfaceColor(context)
+                  : AppColors.getTextPrimaryColor(context),
             ),
           ),
         ),
@@ -324,12 +346,16 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'Inter',
         fontSize: 15,
         fontWeight: FontWeight.w600,
+        color: isDark
+            ? AppColors.getTextSecondaryColor(context)
+            : AppColors.getTextPrimaryColor(context),
       ),
     );
   }
@@ -367,7 +393,9 @@ class _FriendRow extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: highlight ? AppColors.accentMint : AppColors.textPrimary,
+                color: highlight
+                    ? AppColors.accentMint
+                    : AppColors.getTextPrimaryColor(context),
               ),
             ),
           ),
@@ -385,7 +413,11 @@ class _FriendRow extends StatelessWidget {
             child: Text(
               name,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -395,7 +427,9 @@ class _FriendRow extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: highlight ? AppColors.accentMint : AppColors.textPrimary,
+              color: highlight
+                  ? AppColors.accentMint
+                  : AppColors.getTextPrimaryColor(context),
             ),
           ),
         ],
@@ -406,7 +440,11 @@ class _FriendRow extends StatelessWidget {
       children: [
         row,
         if (!isLast)
-          const Divider(height: 1, thickness: 0.5, color: AppColors.divider),
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: AppColors.getDividerColor(context),
+          ),
       ],
     );
   }

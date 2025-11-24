@@ -18,12 +18,12 @@ String formatDuration(num? seconds) {
   return h > 0 ? '$h:$m:$s' : '$m:$s';
 }
 
-/// avgPace (мин/км): 5.3 → 5:18 / км
+/// avgPace (мин/км): 5.3 → 5:18
 String formatPace(double paceMinPerKm) {
   final minutes = paceMinPerKm.floor();
   final seconds = ((paceMinPerKm - minutes) * 60).round().toString().padLeft(
     2,
     '0',
   );
-  return '$minutes:$seconds / км';
+  return '$minutes:$seconds';
 }

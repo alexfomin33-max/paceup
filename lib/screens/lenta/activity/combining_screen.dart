@@ -61,16 +61,16 @@ class CombiningScreen extends StatelessWidget {
                 children: const [
                   _TrainingCard(
                     dateText: '7 июня 2025, в 16:40',
-                    distance: '16,08 км',
-                    pace: '5:24 /км',
+                    distance: '16,08',
+                    pace: '5:24',
                     time: '1:26:34',
                     hr: '148',
                   ),
                   SizedBox(height: 12),
                   _TrainingCard(
                     dateText: '7 июня 2025, в 18:24',
-                    distance: '5,12 км',
-                    pace: '5:47 /км',
+                    distance: '5,12',
+                    pace: '5:47',
                     time: '45:18',
                     hr: '154',
                   ),
@@ -104,8 +104,8 @@ class CombiningScreen extends StatelessWidget {
                 children: const [
                   _TrainingCard(
                     dateText: '7 июня 2025, в 16:40',
-                    distance: '21,20 км',
-                    pace: '5:32 /км',
+                    distance: '21,20',
+                    pace: '5:32',
                     time: '2:11:52',
                     hr: '150',
                   ),
@@ -126,7 +126,10 @@ class CombiningScreen extends StatelessWidget {
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.brandPrimary,
-                        foregroundColor: AppColors.getSurfaceColor(context),
+                        foregroundColor:
+                            Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.surface
+                            : AppColors.getSurfaceColor(context),
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(horizontal: 40),
                         shape: const StadiumBorder(),
@@ -263,9 +266,9 @@ class _TrainingCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _MetricColumn(
-                        topTitle: 'Расстояние',
+                        topTitle: 'Расстояние, км',
                         topValue: distance,
-                        bottomTitle: 'Темп',
+                        bottomTitle: 'Темп, мин/км',
                         bottomValue: pace,
                       ),
                     ),
@@ -324,19 +327,19 @@ class _MetricColumn extends StatelessWidget {
         const SizedBox(height: 10),
         Text(bottomTitle, style: label),
         const SizedBox(height: 1),
-        // Для "Ср. пульс" добавляем красное сердечко перед числом
+        // Для "Ср. пульс" добавляем красное сердечко после числа
         bottomTitle == 'Ср. пульс'
             ? Row(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  Text(bottomValue, style: value),
+                  const SizedBox(width: 4),
                   const Icon(
                     CupertinoIcons.heart_fill,
-                    size: 12,
+                    size: 11,
                     color: AppColors.error,
                   ),
-                  const SizedBox(width: 4),
-                  Text(bottomValue, style: value),
                 ],
               )
             : Text(bottomValue, style: value),
@@ -344,4 +347,3 @@ class _MetricColumn extends StatelessWidget {
     );
   }
 }
-

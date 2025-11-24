@@ -64,9 +64,7 @@ class _StartChatScreenState extends ConsumerState<StartChatScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: Theme.of(context).brightness == Brightness.light
-            ? AppColors.surface
-            : AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Начать общение'),
         body: Column(
           children: [
@@ -118,34 +116,49 @@ class _SearchField extends StatelessWidget {
       height: 44,
       child: TextField(
         controller: controller,
-        cursorColor: AppColors.textPrimary,
-        style: const TextStyle(fontFamily: 'Inter', fontSize: 16),
+        cursorColor: AppColors.getTextPrimaryColor(context),
+        style: TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 16,
+          color: AppColors.getTextPrimaryColor(context),
+        ),
         decoration: InputDecoration(
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             CupertinoIcons.search,
             size: 18,
-            color: AppColors.textSecondary,
+            color: AppColors.getIconSecondaryColor(context),
           ),
           isDense: true,
           filled: true,
-          fillColor: AppColors.surfaceMuted,
+          fillColor: AppColors.getSurfaceMutedColor(context),
           hintText: hintText,
-          hintStyle: const TextStyle(
+          hintStyle: TextStyle(
             fontFamily: 'Inter',
             fontSize: 15,
-            color: AppColors.textPlaceholder,
+            color: AppColors.getTextPlaceholderColor(context),
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.border, width: 0.7),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 0.7,
+            ),
             borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.border, width: 0.7),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 0.7,
+            ),
             borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.outline, width: 1),
+            borderSide: BorderSide(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkBorder
+                  : AppColors.outline,
+              width: 1,
+            ),
             borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
         ),
@@ -180,10 +193,10 @@ class _PeopleList extends StatelessWidget {
           child: SelectableText.rich(
             TextSpan(
               text: 'Ошибка загрузки: ',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 14,
-                color: AppColors.textSecondary,
+                color: AppColors.getTextSecondaryColor(context),
               ),
               children: [
                 TextSpan(
@@ -191,7 +204,7 @@ class _PeopleList extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
-                    color: Colors.red,
+                    color: AppColors.error,
                   ),
                 ),
               ],
@@ -203,15 +216,15 @@ class _PeopleList extends StatelessWidget {
 
     // Показываем пустое состояние если нет пользователей
     if (!isLoading && users.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Text(
             'Пользователи не найдены',
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: AppColors.getTextSecondaryColor(context),
             ),
           ),
         ),
@@ -226,11 +239,17 @@ class _PeopleList extends StatelessWidget {
         // Табличный блок
         SliverToBoxAdapter(
           child: Container(
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
+            decoration: BoxDecoration(
+              color: AppColors.getSurfaceColor(context),
               border: Border(
-                top: BorderSide(color: AppColors.border, width: 0.5),
-                bottom: BorderSide(color: AppColors.border, width: 0.5),
+                top: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 0.5,
+                ),
+                bottom: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 0.5,
+                ),
               ),
             ),
             child: Column(
@@ -339,12 +358,14 @@ class _RowTile extends StatelessWidget {
                       return Container(
                         width: 44,
                         height: 44,
-                        color: AppColors.skeletonBase,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkSurfaceMuted
+                            : AppColors.skeletonBase,
                         alignment: Alignment.center,
-                        child: const Icon(
+                        child: Icon(
                           CupertinoIcons.person,
                           size: 20,
-                          color: AppColors.textSecondary,
+                          color: AppColors.getIconSecondaryColor(context),
                         ),
                       );
                     },
@@ -361,10 +382,11 @@ class _RowTile extends StatelessWidget {
                     user.fullName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
+                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -372,10 +394,10 @@ class _RowTile extends StatelessWidget {
                     '${user.age} лет, ${user.city}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 13,
-                      color: AppColors.textSecondary,
+                      color: AppColors.getTextSecondaryColor(context),
                     ),
                   ),
                 ],

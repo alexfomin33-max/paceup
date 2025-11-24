@@ -364,16 +364,25 @@ class _SectionHeaderWithToggle extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkTextSecondary
+                    : null,
               ),
             ),
           ),
-          const Text(
+          Text(
             'На главном экране',
-            style: TextStyle(fontFamily: 'Inter', fontSize: 13),
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 13,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkTextSecondary
+                  : null,
+            ),
           ),
           const SizedBox(width: 8),
           CupertinoSwitch(
