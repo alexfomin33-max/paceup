@@ -333,6 +333,7 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
           nameCtrl.text = template['name'] as String? ?? '';
           placeCtrl.text = template['place'] as String? ?? '';
           descCtrl.text = template['description'] as String? ?? '';
+          linkCtrl.text = template['event_link'] as String? ?? '';
           activity = template['activity'] as String?;
 
           // Парсим дату
@@ -383,7 +384,7 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
           }
           _distanceControllers.clear();
 
-          // Парсим дистанции из шаблона (формат: "5 км, 10 км" или просто строка)
+          // Парсим дистанции из шаблона (формат: "5000, 10000, 21100" - все в метрах)
           final distanceStr = template['distance'] as String?;
           if (distanceStr != null && distanceStr.isNotEmpty) {
             // Разделяем по запятой и очищаем пробелы
@@ -473,33 +474,52 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
       fields['event_date'] = _fmtDate(date!);
       fields['event_time'] = _fmtTime(time!);
       fields['description'] = descCtrl.text.trim();
-      // ── собираем введённые дистанции (только непустые, через запятую)
+      // ── собираем введённые дистанции (только непустые, все в метрах)
       final distanceValues = _distanceControllers
           .map((ctrl) => ctrl.text.trim())
-          .where((value) => value.isNotEmpty)
+          .where((value) => value.isNotEmpty && value.isNotEmpty)
           .toList();
+      // ── отправляем дистанции как массив (все в метрах)
       if (distanceValues.isNotEmpty) {
-        fields['distance'] = distanceValues.join(', ');
+        // Для multipart нужно отправлять как массив
+        for (int i = 0; i < distanceValues.length; i++) {
+          fields['distance[$i]'] = distanceValues[i];
+        }
       }
       // Добавляем ссылку на страницу мероприятия
       if (linkCtrl.text.trim().isNotEmpty) {
         fields['event_link'] = linkCtrl.text.trim();
       }
-      // Помечаем событие как платное
-      fields['is_official'] = '1';
       if (saveTemplate && templateCtrl.text.trim().isNotEmpty) {
         fields['template_name'] = templateCtrl.text.trim();
       }
 
-      // Отправляем запрос
+      // Отправляем запрос в API для официальных событий
       Map<String, dynamic> data;
       if (files.isEmpty) {
         // JSON запрос без файлов
-        data = await api.post('/create_event.php', body: fields);
+        // Для JSON нужно отправлять массивы правильно
+        final jsonBody = <String, dynamic>{
+          'user_id': fields['user_id'],
+          'name': fields['name'],
+          'activity': fields['activity'],
+          'place': fields['place'],
+          'latitude': fields['latitude'],
+          'longitude': fields['longitude'],
+          'event_date': fields['event_date'],
+          'event_time': fields['event_time'],
+          'description': fields['description'],
+          'event_link': fields['event_link'] ?? '',
+          'template_name': fields['template_name'] ?? '',
+        };
+        if (distanceValues.isNotEmpty) {
+          jsonBody['distance'] = distanceValues;
+        }
+        data = await api.post('/create_official_event.php', body: jsonBody);
       } else {
         // Multipart запрос с файлами
         data = await api.postMultipart(
-          '/create_event.php',
+          '/create_official_event.php',
           files: files,
           fields: fields,
           timeout: const Duration(seconds: 60),
