@@ -444,7 +444,6 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
 
       if (uploadResponse['success'] == true) {
         final imagePath = uploadResponse['image_path'] as String;
-        final imageUrl = uploadResponse['image_url'] as String;
 
         // Отправляем сообщение с изображением
         final response = await _api.post(
@@ -459,30 +458,18 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
 
         if (response['success'] == true) {
           final messageId = response['message_id'] as int;
-          final createdAt = DateTime.parse(response['created_at'] as String);
 
-          // Добавляем сообщение в список
+          // Обновляем last_message_id - polling сам добавит сообщение
+          // Это предотвращает дублирование сообщений
           setState(() {
-            _messages.add(ChatMessage(
-              id: messageId,
-              senderId: _currentUserId!,
-              text: '',
-              image: imageUrl,
-              createdAt: createdAt,
-              isMine: true,
-              isRead: false,
-            ));
             _lastMessageId = messageId;
           });
 
-          // Прокрутка вниз
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_scrollController.hasClients) {
-              _scrollController.animateTo(
-                _scrollController.position.maxScrollExtent,
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOut,
-              );
+          // Небольшая задержка перед проверкой новых сообщений
+          // чтобы сервер успел обработать запрос
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              _checkNewMessages();
             }
           });
         } else {
@@ -690,38 +677,47 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
               .map((m) => m.id)
               .reduce((a, b) => a > b ? a : b);
 
-          setState(() {
-            _messages.addAll(newMessages);
-            // Всегда обновляем на максимальный ID, если он больше текущего
-            if (maxNewId > (lastId)) {
-              _lastMessageId = maxNewId;
+          // ─── Защита от дубликатов: проверяем ID перед добавлением ───
+          final existingIds = _messages.map((m) => m.id).toSet();
+          final uniqueNewMessages = newMessages
+              .where((m) => !existingIds.contains(m.id))
+              .toList();
+
+          if (uniqueNewMessages.isNotEmpty) {
+            setState(() {
+              _messages.addAll(uniqueNewMessages);
+              // Всегда обновляем на максимальный ID, если он больше текущего
+              if (maxNewId > (lastId)) {
+                _lastMessageId = maxNewId;
+              }
+            });
+
+            // Отмечаем новые сообщения как прочитанные, если они от другого пользователя
+            // и пользователь находится в чате (экран открыт)
+            final hasIncomingMessages =
+                uniqueNewMessages.any((msg) => !msg.isMine);
+            if (hasIncomingMessages) {
+              _markMessagesAsRead();
             }
-          });
 
-          // Отмечаем новые сообщения как прочитанные, если они от другого пользователя
-          // и пользователь находится в чате (экран открыт)
-          final hasIncomingMessages = newMessages.any((msg) => !msg.isMine);
-          if (hasIncomingMessages) {
-            _markMessagesAsRead();
-          }
+            // Прокрутка вниз при получении новых сообщений
+            // Только если пользователь уже находится внизу списка
+            if (_scrollController.hasClients) {
+              final isNearBottom =
+                  _scrollController.position.pixels >=
+                  _scrollController.position.maxScrollExtent - 100;
 
-          // Прокрутка вниз при получении новых сообщений
-          // Только если пользователь уже находится внизу списка
-          if (_scrollController.hasClients) {
-            final isNearBottom =
-                _scrollController.position.pixels >=
-                _scrollController.position.maxScrollExtent - 100;
-
-            if (isNearBottom) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (_scrollController.hasClients && mounted) {
-                  _scrollController.animateTo(
-                    _scrollController.position.maxScrollExtent,
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOut,
-                  );
-                }
-              });
+              if (isNearBottom) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (_scrollController.hasClients && mounted) {
+                    _scrollController.animateTo(
+                      _scrollController.position.maxScrollExtent,
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOut,
+                    );
+                  }
+                });
+              }
             }
           }
         }
@@ -1051,34 +1047,44 @@ class _BubbleLeft extends StatelessWidget {
                 children: [
                   // ─── Изображение (если есть) ───
                   if (image != null && image!.isNotEmpty) ...[
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Builder(
-                        builder: (context) {
-                          final dpr = MediaQuery.of(context).devicePixelRatio;
-                          final maxW = max * 0.9;
-                          final w = (maxW * dpr).round();
-                          return CachedNetworkImage(
-                            imageUrl: image!,
-                            width: maxW,
-                            fit: BoxFit.cover,
-                            fadeInDuration: const Duration(milliseconds: 200),
-                            memCacheWidth: w,
-                            maxWidthDiskCache: w,
-                            errorWidget: (_, __, ___) {
-                              return Container(
-                                width: maxW,
-                                height: 200,
-                                color: AppColors.getSurfaceMutedColor(context),
-                                child: Icon(
-                                  CupertinoIcons.photo,
-                                  size: 40,
-                                  color: AppColors.getIconSecondaryColor(context),
-                                ),
-                              );
-                            },
-                          );
-                        },
+                    GestureDetector(
+                      onTap: () {
+                        // ─── Открываем изображение в полный размер ───
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => _FullscreenImageView(imageUrl: image!),
+                          ),
+                        );
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Builder(
+                          builder: (context) {
+                            final dpr = MediaQuery.of(context).devicePixelRatio;
+                            final maxW = max * 0.9;
+                            final w = (maxW * dpr).round();
+                            return CachedNetworkImage(
+                              imageUrl: image!,
+                              width: maxW,
+                              fit: BoxFit.cover,
+                              fadeInDuration: const Duration(milliseconds: 200),
+                              memCacheWidth: w,
+                              maxWidthDiskCache: w,
+                              errorWidget: (_, __, ___) {
+                                return Container(
+                                  width: maxW,
+                                  height: 200,
+                                  color: AppColors.getSurfaceMutedColor(context),
+                                  child: Icon(
+                                    CupertinoIcons.photo,
+                                    size: 40,
+                                    color: AppColors.getIconSecondaryColor(context),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
                       ),
                     ),
                     if (text.isNotEmpty) const SizedBox(height: 8),
@@ -1157,34 +1163,44 @@ class _BubbleRight extends StatelessWidget {
                 children: [
                   // ─── Изображение (если есть) ───
                   if (image != null && image!.isNotEmpty) ...[
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Builder(
-                        builder: (context) {
-                          final dpr = MediaQuery.of(context).devicePixelRatio;
-                          final maxW = max * 0.9;
-                          final w = (maxW * dpr).round();
-                          return CachedNetworkImage(
-                            imageUrl: image!,
-                            width: maxW,
-                            fit: BoxFit.cover,
-                            fadeInDuration: const Duration(milliseconds: 200),
-                            memCacheWidth: w,
-                            maxWidthDiskCache: w,
-                            errorWidget: (_, __, ___) {
-                              return Container(
-                                width: maxW,
-                                height: 200,
-                                color: AppColors.getSurfaceMutedColor(context),
-                                child: Icon(
-                                  CupertinoIcons.photo,
-                                  size: 40,
-                                  color: AppColors.getIconSecondaryColor(context),
-                                ),
-                              );
-                            },
-                          );
-                        },
+                    GestureDetector(
+                      onTap: () {
+                        // ─── Открываем изображение в полный размер ───
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => _FullscreenImageView(imageUrl: image!),
+                          ),
+                        );
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Builder(
+                          builder: (context) {
+                            final dpr = MediaQuery.of(context).devicePixelRatio;
+                            final maxW = max * 0.9;
+                            final w = (maxW * dpr).round();
+                            return CachedNetworkImage(
+                              imageUrl: image!,
+                              width: maxW,
+                              fit: BoxFit.cover,
+                              fadeInDuration: const Duration(milliseconds: 200),
+                              memCacheWidth: w,
+                              maxWidthDiskCache: w,
+                              errorWidget: (_, __, ___) {
+                                return Container(
+                                  width: maxW,
+                                  height: 200,
+                                  color: AppColors.getSurfaceMutedColor(context),
+                                  child: Icon(
+                                    CupertinoIcons.photo,
+                                    size: 40,
+                                    color: AppColors.getIconSecondaryColor(context),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
                       ),
                     ),
                     if (text.isNotEmpty) const SizedBox(height: 8),
@@ -1345,6 +1361,72 @@ class _ComposerState extends State<_Composer> {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// ────────────────────────────────────────────────────────────────────────
+/// Полноэкранный просмотр изображения
+/// ────────────────────────────────────────────────────────────────────────
+class _FullscreenImageView extends StatelessWidget {
+  final String imageUrl;
+
+  const _FullscreenImageView({required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.textPrimary, // Чёрный фон
+      body: Stack(
+        children: [
+          // ─── Изображение с возможностью зума ───
+          Center(
+            child: InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
+                fit: BoxFit.contain,
+                fadeInDuration: const Duration(milliseconds: 200),
+                errorWidget: (_, __, ___) {
+                  return Container(
+                    color: AppColors.getSurfaceMutedColor(context),
+                    child: Icon(
+                      CupertinoIcons.photo,
+                      size: 64,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+
+          // ─── Кнопка закрытия (крестик) в верхнем левом углу ───
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface.withValues(alpha: 0.7),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.xmark,
+                    color: AppColors.surface,
+                    size: 20,
+                  ),
+                ),
+                splashRadius: 24,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
