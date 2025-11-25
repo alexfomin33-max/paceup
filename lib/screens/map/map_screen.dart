@@ -33,7 +33,10 @@ class _MapScreenState extends State<MapScreen> {
   /// Контроллер карты для управления zoom и центром
   MapboxMap? _mapboxMap;
 
-  final tabs = const ["События", "Клубы"]; // "Тренеры", "Попутчики" - временно закомментировано
+  final tabs = const [
+    "События",
+    "Клубы",
+  ]; // "Тренеры", "Попутчики" - временно закомментировано
 
   /// Параметры фильтра событий (для обновления карты при применении фильтров)
   EventsFilterParams? _eventsFilterParams;
@@ -56,6 +59,13 @@ class _MapScreenState extends State<MapScreen> {
 
   /// Данные маркеров для обработки кликов
   final Map<String, Map<String, dynamic>> _markerData = {};
+
+  /// Флаг обновления маркеров (защита от одновременных обновлений)
+  bool _isUpdatingMarkers = false;
+
+  /// Последние установленные маркеры (для отслеживания изменений)
+  List<Map<String, dynamic>>? _lastMarkers;
+  Color? _lastMarkerColor;
 
   /// Цвета маркеров по вкладкам
   final markerColors = const {
@@ -126,20 +136,11 @@ class _MapScreenState extends State<MapScreen> {
     // Создаём bounds и подстраиваем карту с отступами
     final camera = await _mapboxMap!.cameraForCoordinateBounds(
       CoordinateBounds(
-        southwest: Point(
-          coordinates: Position(minLng, minLat),
-        ),
-        northeast: Point(
-          coordinates: Position(maxLng, maxLat),
-        ),
+        southwest: Point(coordinates: Position(minLng, minLat)),
+        northeast: Point(coordinates: Position(maxLng, maxLat)),
         infiniteBounds: false,
       ),
-      MbxEdgeInsets(
-        left: 30,
-        right: 30,
-        top: 160,
-        bottom: 130,
-      ),
+      MbxEdgeInsets(left: 30, right: 30, top: 160, bottom: 130),
       null,
       null,
       null,
@@ -150,7 +151,7 @@ class _MapScreenState extends State<MapScreen> {
 
   /// Создание изображения маркера с текстом
   Future<Uint8List> _createMarkerImage(Color color, String text) async {
-    const size = 28.0;
+    const size = 64.0; // Увеличиваем размер маркера еще больше
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     final paint = Paint()..color = color;
@@ -160,11 +161,7 @@ class _MapScreenState extends State<MapScreen> {
       ..strokeWidth = 1;
 
     // Рисуем круг
-    canvas.drawCircle(
-      const Offset(size / 2, size / 2),
-      size / 2 - 0.5,
-      paint,
-    );
+    canvas.drawCircle(const Offset(size / 2, size / 2), size / 2 - 0.5, paint);
     canvas.drawCircle(
       const Offset(size / 2, size / 2),
       size / 2 - 0.5,
@@ -177,8 +174,8 @@ class _MapScreenState extends State<MapScreen> {
         text: text,
         style: const TextStyle(
           color: AppColors.surface,
-          fontWeight: FontWeight.w500,
-          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          fontSize: 36, // Увеличиваем размер текста пропорционально
         ),
       ),
       textAlign: TextAlign.center,
@@ -187,10 +184,7 @@ class _MapScreenState extends State<MapScreen> {
     textPainter.layout();
     textPainter.paint(
       canvas,
-      Offset(
-        (size - textPainter.width) / 2,
-        (size - textPainter.height) / 2,
-      ),
+      Offset((size - textPainter.width) / 2, (size - textPainter.height) / 2),
     );
 
     final picture = recorder.endRecording();
@@ -204,23 +198,28 @@ class _MapScreenState extends State<MapScreen> {
     List<Map<String, dynamic>> markers,
     Color markerColor,
   ) async {
-    if (_mapboxMap == null) return;
+    if (_mapboxMap == null || !mounted || _isUpdatingMarkers) return;
 
+    _isUpdatingMarkers = true;
     try {
-      // Удаляем старые маркеры
-      if (_pointAnnotationManager != null) {
-        await _pointAnnotationManager!.deleteAll();
+      // Создаем менеджер аннотаций, если его нет
+      if (_pointAnnotationManager == null) {
+        _pointAnnotationManager = await _mapboxMap!.annotations
+            .createPointAnnotationManager();
       }
 
-      // Создаем менеджер аннотаций, если его нет
-      _pointAnnotationManager ??= await _mapboxMap!.annotations
-          .createPointAnnotationManager();
+      // Проверяем, что менеджер готов
+      if (_pointAnnotationManager == null || !mounted) return;
 
-      _markerData.clear();
+      if (markers.isEmpty) {
+        // Если маркеров нет, просто очищаем
+        await _pointAnnotationManager!.deleteAll();
+        _markerData.clear();
+        return;
+      }
 
-      if (markers.isEmpty) return;
-
-      // Создаем изображения маркеров
+      // Сначала создаем новые маркеры, затем удаляем старые
+      // Это предотвращает мигание маркеров
       final imageMap = <String, Uint8List>{};
       for (final marker in markers) {
         try {
@@ -239,15 +238,22 @@ class _MapScreenState extends State<MapScreen> {
 
       // Создаем аннотации
       final annotations = <PointAnnotationOptions>[];
+      final newMarkerData = <String, Map<String, dynamic>>{};
+
       for (final marker in markers) {
         try {
           final point = marker['point'] as latlong.LatLng;
           final count = marker['count'] as int;
           final imageKey = 'marker_${markerColor.value}_$count';
-          final imageBytes = imageMap[imageKey]!;
+          final imageBytes = imageMap[imageKey];
+
+          if (imageBytes == null) {
+            debugPrint('Изображение маркера не найдено: $imageKey');
+            continue;
+          }
 
           final annotationId = '${point.latitude}_${point.longitude}_$count';
-          _markerData[annotationId] = marker;
+          newMarkerData[annotationId] = marker;
 
           annotations.add(
             PointAnnotationOptions(
@@ -255,6 +261,7 @@ class _MapScreenState extends State<MapScreen> {
                 coordinates: Position(point.longitude, point.latitude),
               ),
               image: imageBytes,
+              iconSize: 1.2, // Увеличиваем размер иконки на 20%
             ),
           );
         } catch (e) {
@@ -262,11 +269,69 @@ class _MapScreenState extends State<MapScreen> {
         }
       }
 
+      // Проверяем, что мы все еще mounted и карта готова
+      if (!mounted || _mapboxMap == null || _pointAnnotationManager == null) {
+        return;
+      }
+
+      // Удаляем старые маркеры только после создания новых
+      await _pointAnnotationManager!.deleteAll();
+
+      // Обновляем данные маркеров
+      _markerData.clear();
+      _markerData.addAll(newMarkerData);
+
+      // Создаем новые маркеры
       if (annotations.isNotEmpty) {
         await _pointAnnotationManager!.createMulti(annotations);
       }
     } catch (e) {
       debugPrint('Ошибка настройки маркеров: $e');
+    } finally {
+      _isUpdatingMarkers = false;
+    }
+  }
+
+  /// Обновление маркеров с повторными попытками
+  Future<void> _updateMarkersWhenReady(
+    List<Map<String, dynamic>> markers,
+    Color markerColor,
+  ) async {
+    // Делаем несколько попыток с задержкой
+    for (int attempt = 0; attempt < 3; attempt++) {
+      if (!mounted || _mapboxMap == null) return;
+
+      // Если менеджер еще не создан, создаем его
+      if (_pointAnnotationManager == null) {
+        try {
+          _pointAnnotationManager = await _mapboxMap!.annotations
+              .createPointAnnotationManager();
+          // Подписываемся на клики по маркерам
+          _pointAnnotationManager?.tapEvents(
+            onTap: (annotation) {
+              _onMarkerTap(annotation);
+            },
+          );
+        } catch (e) {
+          debugPrint('Ошибка создания менеджера аннотаций: $e');
+          if (attempt < 2) {
+            await Future.delayed(Duration(milliseconds: 100 * (attempt + 1)));
+            continue;
+          }
+          return;
+        }
+      }
+
+      // Обновляем маркеры
+      if (mounted && _pointAnnotationManager != null) {
+        await _setupMarkers(markers, markerColor);
+        return; // Успешно обновили
+      }
+
+      // Если не удалось, ждем и пробуем снова
+      if (attempt < 2) {
+        await Future.delayed(Duration(milliseconds: 100 * (attempt + 1)));
+      }
     }
   }
 
@@ -405,6 +470,17 @@ class _MapScreenState extends State<MapScreen> {
                 // Автоматическая подстройка zoom отключена для Событий и Клубов
                 // Пользователь может самостоятельно управлять масштабом карты
 
+                // Помечаем карту как инициализированную после получения данных
+                if (!_mapInitialized && snapshot.hasData) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      setState(() {
+                        _mapInitialized = true;
+                      });
+                    }
+                  });
+                }
+
                 return _buildMap(markers, markerColor);
               },
             ),
@@ -517,33 +593,56 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildMap(List<Map<String, dynamic>> markers, Color markerColor) {
-    // Обновляем маркеры при изменении данных
-    if (_mapboxMap != null && _pointAnnotationManager != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _setupMarkers(markers, markerColor);
+    // Проверяем, изменились ли маркеры
+    // Сравниваем по содержимому, а не по ссылке
+    final markersChanged =
+        _lastMarkers?.length != markers.length ||
+        _lastMarkerColor != markerColor ||
+        (_lastMarkers != null &&
+            markers.isNotEmpty &&
+            _lastMarkers!.first['point'] != markers.first['point']);
+
+    // Обновляем маркеры при изменении данных или смене вкладки
+    // Используем addPostFrameCallback для обновления маркеров после отрисовки
+    // Это гарантирует, что маркеры обновятся даже если карта уже создана
+    if (markersChanged) {
+      _lastMarkers = List.from(markers);
+      _lastMarkerColor = markerColor;
+
+      // Используем несколько попыток для гарантии обновления
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _updateMarkersWhenReady(markers, markerColor);
       });
     }
 
     return SizedBox.expand(
       child: MapWidget(
-        key: ValueKey('map_screen_${_selectedIndex}_${_mapInitialized}'),
+        // Используем стабильный ключ, чтобы карта не пересоздавалась при смене вкладки
+        key: const ValueKey('map_screen'),
         onMapCreated: (MapboxMap mapboxMap) async {
           _mapboxMap = mapboxMap;
-          
-          // Подписываемся на клики по маркерам
+
+          // Создаем менеджер аннотаций
           _pointAnnotationManager = await mapboxMap.annotations
               .createPointAnnotationManager();
-          _pointAnnotationManager!.tapEvents(onTap: (annotation) {
-            _onMarkerTap(annotation);
-          });
+          _pointAnnotationManager!.tapEvents(
+            onTap: (annotation) {
+              _onMarkerTap(annotation);
+            },
+          );
 
           // Настраиваем маркеры после создания карты
-          await _setupMarkers(markers, markerColor);
+          // Используем небольшую задержку для гарантии, что карта полностью готова
+          await Future.delayed(const Duration(milliseconds: 150));
+          if (mounted &&
+              _mapboxMap != null &&
+              _pointAnnotationManager != null) {
+            // Используем актуальные маркеры из текущего состояния
+            await _setupMarkers(markers, markerColor);
+          }
         },
         cameraOptions: CameraOptions(
-          center: Point(
-            coordinates: Position(40.406635, 56.129057),
-          ),
+          center: Point(coordinates: Position(40.406635, 56.129057)),
           zoom: 6.0,
         ),
         styleUri: MapboxStyles.MAPBOX_STREETS,
@@ -587,11 +686,8 @@ class _MapScreenState extends State<MapScreen> {
                 return Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      // Сбрасываем флаг инициализации при смене вкладки
-                      // Это нужно для корректной работы при переключении между вкладками
-                      if (_selectedIndex != index) {
-                        _mapInitialized = false;
-                      }
+                      // Не сбрасываем флаг инициализации при смене вкладки
+                      // Карта остается инициализированной, только обновляются маркеры
                       setState(() => _selectedIndex = index);
                     },
                     child: Container(
