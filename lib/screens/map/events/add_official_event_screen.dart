@@ -504,7 +504,7 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
         appBar: PaceAppBar(
-          title: 'Платное событие',
+          title: 'Официальное событие',
           actions: [
             GestureDetector(
               onTap: () {

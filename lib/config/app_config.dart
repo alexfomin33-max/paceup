@@ -22,6 +22,14 @@ class AppConfig {
   static const String mapTilesUrl =
       'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={apiKey}';
 
+  // ────────────────────────── MapBox ──────────────────────────
+
+  /// MapBox Access Token для отображения карт
+  /// ⚠️ ВАЖНО: Получите токен на https://account.mapbox.com/access-tokens/
+  /// ⚠️ Замените этот токен на ваш реальный токен из аккаунта MapBox
+  static const String mapboxAccessToken =
+      'pk.eyJ1IjoiZXVnZW5lMzMiLCJhIjoiY21pZWJrdm52MDB5ejNkcjEwZXpkZGUzNyJ9.aoqNzvDocd0EVOBp20rBBQ';
+
   // ────────────────────────── Network Settings ──────────────────────────
 
   /// Таймаут по умолчанию для HTTP-запросов
