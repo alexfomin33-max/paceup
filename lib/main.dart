@@ -4,9 +4,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import 'theme/colors.dart';
 import 'routes.dart';
+import 'config/app_config.dart';
 import 'providers/services/cache_provider.dart';
 import 'providers/theme_provider.dart';
 import 'utils/db_optimizer.dart';
@@ -14,6 +16,9 @@ import 'utils/image_cache_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ────────────────────────── MapBox инициализация ──────────────────────────
+  MapboxOptions.setAccessToken(AppConfig.mapboxAccessToken);
 
   // Логи ошибок: в дебаге — консоль; в релизе — не падаем.
   FlutterError.onError = (details) {

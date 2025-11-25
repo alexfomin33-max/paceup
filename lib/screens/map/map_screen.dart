@@ -1,9 +1,10 @@
+import 'dart:ui' as ui;
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:latlong2/latlong.dart' as latlong;
 import '../../theme/app_theme.dart';
-import '../../config/app_config.dart';
 
 // контент вкладок
 import 'events/events_screen.dart' as ev;
@@ -30,7 +31,7 @@ class _MapScreenState extends State<MapScreen> {
   int _selectedIndex = 0;
 
   /// Контроллер карты для управления zoom и центром
-  final MapController _mapController = MapController();
+  MapboxMap? _mapboxMap;
 
   final tabs = const ["События", "Клубы"]; // "Тренеры", "Попутчики" - временно закомментировано
 
@@ -49,6 +50,12 @@ class _MapScreenState extends State<MapScreen> {
   /// Флаг инициализации карты для вкладок События и Клубы
   /// Предотвращает мерцание - карта создается один раз
   bool _mapInitialized = false;
+
+  /// Менеджер аннотаций для маркеров
+  PointAnnotationManager? _pointAnnotationManager;
+
+  /// Данные маркеров для обработки кликов
+  final Map<String, Map<String, dynamic>> _markerData = {};
 
   /// Цвета маркеров по вкладкам
   final markerColors = const {
@@ -75,22 +82,30 @@ class _MapScreenState extends State<MapScreen> {
 
   /// ──────────── Автоматическая подстройка zoom под маркеры ────────────
   /// Вычисляет границы всех маркеров и подстраивает карту
-  void _fitBoundsToMarkers(List<Map<String, dynamic>> markers) {
-    if (markers.isEmpty) return;
+  Future<void> _fitBoundsToMarkers(List<Map<String, dynamic>> markers) async {
+    if (markers.isEmpty || _mapboxMap == null) return;
 
     // Извлекаем точки из маркеров
     final points = markers
-        .map((m) => m['point'] as LatLng?)
-        .whereType<LatLng>()
+        .map((m) => m['point'] as latlong.LatLng?)
+        .whereType<latlong.LatLng>()
         .toList();
 
     if (points.isEmpty) return;
 
     // Если маркер один, устанавливаем центр и разумный zoom
     if (points.length == 1) {
-      _mapController.move(
-        points.first,
-        12.0, // Zoom для одного маркера
+      await _mapboxMap!.flyTo(
+        CameraOptions(
+          center: Point(
+            coordinates: Position(
+              points.first.longitude,
+              points.first.latitude,
+            ),
+          ),
+          zoom: 12.0,
+        ),
+        MapAnimationOptions(duration: 500, startDelay: 0),
       );
       return;
     }
@@ -109,24 +124,224 @@ class _MapScreenState extends State<MapScreen> {
     }
 
     // Создаём bounds и подстраиваем карту с отступами
-    final bounds = LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng));
+    final camera = await _mapboxMap!.cameraForCoordinateBounds(
+      CoordinateBounds(
+        southwest: Point(
+          coordinates: Position(minLng, minLat),
+        ),
+        northeast: Point(
+          coordinates: Position(maxLng, maxLat),
+        ),
+        infiniteBounds: false,
+      ),
+      MbxEdgeInsets(
+        left: 30,
+        right: 30,
+        top: 160,
+        bottom: 130,
+      ),
+      null,
+      null,
+      null,
+      null,
+    );
+    await _mapboxMap!.setCamera(camera);
+  }
 
-    _mapController.fitCamera(
-      CameraFit.bounds(
-        bounds: bounds,
-        padding: const EdgeInsets.only(
-          left: 30,
-          right: 30,
-          top: 160,
-          bottom: 130,
-        ), // Отступы: 50px по бокам, 150px сверху/снизу
+  /// Создание изображения маркера с текстом
+  Future<Uint8List> _createMarkerImage(Color color, String text) async {
+    const size = 28.0;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final paint = Paint()..color = color;
+    final borderPaint = Paint()
+      ..color = AppColors.border
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    // Рисуем круг
+    canvas.drawCircle(
+      const Offset(size / 2, size / 2),
+      size / 2 - 0.5,
+      paint,
+    );
+    canvas.drawCircle(
+      const Offset(size / 2, size / 2),
+      size / 2 - 0.5,
+      borderPaint,
+    );
+
+    // Рисуем текст
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(
+          color: AppColors.surface,
+          fontWeight: FontWeight.w500,
+          fontSize: 14,
+        ),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(
+        (size - textPainter.width) / 2,
+        (size - textPainter.height) / 2,
       ),
     );
+
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(size.toInt(), size.toInt());
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    return byteData!.buffer.asUint8List();
+  }
+
+  /// Настройка маркеров на карте
+  Future<void> _setupMarkers(
+    List<Map<String, dynamic>> markers,
+    Color markerColor,
+  ) async {
+    if (_mapboxMap == null) return;
+
+    try {
+      // Удаляем старые маркеры
+      if (_pointAnnotationManager != null) {
+        await _pointAnnotationManager!.deleteAll();
+      }
+
+      // Создаем менеджер аннотаций, если его нет
+      _pointAnnotationManager ??= await _mapboxMap!.annotations
+          .createPointAnnotationManager();
+
+      _markerData.clear();
+
+      if (markers.isEmpty) return;
+
+      // Создаем изображения маркеров
+      final imageMap = <String, Uint8List>{};
+      for (final marker in markers) {
+        try {
+          final count = marker['count'] as int;
+          final imageKey = 'marker_${markerColor.value}_$count';
+          if (!imageMap.containsKey(imageKey)) {
+            imageMap[imageKey] = await _createMarkerImage(
+              markerColor,
+              '$count',
+            );
+          }
+        } catch (e) {
+          debugPrint('Ошибка создания изображения маркера: $e');
+        }
+      }
+
+      // Создаем аннотации
+      final annotations = <PointAnnotationOptions>[];
+      for (final marker in markers) {
+        try {
+          final point = marker['point'] as latlong.LatLng;
+          final count = marker['count'] as int;
+          final imageKey = 'marker_${markerColor.value}_$count';
+          final imageBytes = imageMap[imageKey]!;
+
+          final annotationId = '${point.latitude}_${point.longitude}_$count';
+          _markerData[annotationId] = marker;
+
+          annotations.add(
+            PointAnnotationOptions(
+              geometry: Point(
+                coordinates: Position(point.longitude, point.latitude),
+              ),
+              image: imageBytes,
+            ),
+          );
+        } catch (e) {
+          debugPrint('Ошибка создания аннотации: $e');
+        }
+      }
+
+      if (annotations.isNotEmpty) {
+        await _pointAnnotationManager!.createMulti(annotations);
+      }
+    } catch (e) {
+      debugPrint('Ошибка настройки маркеров: $e');
+    }
+  }
+
+  /// Обработка клика по маркеру
+  void _onMarkerTap(PointAnnotation annotation) {
+    final annotationId = annotation.id;
+    final marker = _markerData[annotationId];
+    if (marker == null) return;
+
+    final title = marker['title'] as String;
+    final dynamic events = marker['events'];
+    final Widget? content = marker['content'] as Widget?;
+
+    final Widget sheet = () {
+      switch (_selectedIndex) {
+        case 0:
+          // Для событий создаём виджет со списком событий из API
+          return ebs.EventsBottomSheet(
+            title: title,
+            child: events != null && events is List
+                ? ebs.EventsListFromApi(
+                    events: events,
+                    latitude: marker['latitude'] as double?,
+                    longitude: marker['longitude'] as double?,
+                  )
+                : content ?? const ebs.EventsSheetPlaceholder(),
+          );
+        case 1:
+          // Для клубов создаём виджет со списком клубов из API
+          return cbs.ClubsBottomSheet(
+            title: title,
+            child: marker['clubs'] != null && marker['clubs'] is List
+                ? cbs.ClubsListFromApi(
+                    clubs: marker['clubs'] as List<dynamic>,
+                    latitude: marker['latitude'] as double?,
+                    longitude: marker['longitude'] as double?,
+                  )
+                : content ?? const cbs.ClubsSheetPlaceholder(),
+          );
+        default:
+          return const SizedBox.shrink();
+      }
+    }();
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => sheet,
+    ).then((result) {
+      // Если событие было удалено, обновляем маркеры на карте
+      if (result == 'event_deleted' && mounted) {
+        setState(() {
+          _mapInitialized = false;
+          _eventsMarkersKey = ValueKey(
+            'events_markers_${DateTime.now().millisecondsSinceEpoch}',
+          );
+        });
+      }
+      // Если клуб был удалён, обновляем маркеры на карте
+      if (result == 'club_deleted' && mounted) {
+        setState(() {
+          _mapInitialized = false;
+          _clubsMarkersKey = ValueKey(
+            'clubs_markers_${DateTime.now().millisecondsSinceEpoch}',
+          );
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
-    _mapController.dispose();
+    _mapboxMap = null;
     super.dispose();
   }
 
@@ -148,7 +363,7 @@ class _MapScreenState extends State<MapScreen> {
                   : clb.clubsMarkers(context, filterParams: _clubsFilterParams),
               builder: (context, snapshot) {
                 // Показываем карту даже во время загрузки (с пустыми маркерами)
-                // ⚠️ ВАЖНО: Откладываем создание FlutterMap до следующего кадра,
+                // ⚠️ ВАЖНО: Откладываем создание MapWidget до следующего кадра,
                 // чтобы не блокировать UI поток во время выполнения запроса
                 if (snapshot.connectionState == ConnectionState.waiting &&
                     !_mapInitialized) {
@@ -302,159 +517,36 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildMap(List<Map<String, dynamic>> markers, Color markerColor) {
+    // Обновляем маркеры при изменении данных
+    if (_mapboxMap != null && _pointAnnotationManager != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _setupMarkers(markers, markerColor);
+      });
+    }
+
     return SizedBox.expand(
-      child: FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          initialCenter: LatLng(56.129057, 40.406635),
-          initialZoom: 6.0,
-          // Фоновый цвет карты (серый, если тайлы не загрузились)
-          backgroundColor: AppColors.getSurfaceColor(context),
-          onMapReady: () {
-            // Подстраиваем zoom после инициализации карты
-            // Для Событий (0) и Клубов (1) автоматическая подстройка отключена
-            // if (_selectedIndex != 0 && _selectedIndex != 1) {
-            //   _fitBoundsToMarkers(markers);
-            // }
-          },
+      child: MapWidget(
+        key: ValueKey('map_screen_${_selectedIndex}_${_mapInitialized}'),
+        onMapCreated: (MapboxMap mapboxMap) async {
+          _mapboxMap = mapboxMap;
+          
+          // Подписываемся на клики по маркерам
+          _pointAnnotationManager = await mapboxMap.annotations
+              .createPointAnnotationManager();
+          _pointAnnotationManager!.tapEvents(onTap: (annotation) {
+            _onMarkerTap(annotation);
+          });
+
+          // Настраиваем маркеры после создания карты
+          await _setupMarkers(markers, markerColor);
+        },
+        cameraOptions: CameraOptions(
+          center: Point(
+            coordinates: Position(40.406635, 56.129057),
+          ),
+          zoom: 6.0,
         ),
-        children: [
-          TileLayer(
-            urlTemplate: AppConfig.mapTilesUrl,
-            additionalOptions: {'apiKey': AppConfig.mapTilerApiKey},
-            userAgentPackageName: 'paceup.ru',
-            maxZoom: 19,
-            minZoom: 3,
-            keepBuffer: 1,
-            retinaMode: false,
-          ),
-          const RichAttributionWidget(
-            attributions: [TextSourceAttribution('MapTiler © OpenStreetMap')],
-          ),
-          MarkerLayer(
-            markers: markers.map((m) {
-              try {
-                final LatLng point = m['point'] as LatLng;
-                final String title = m['title'] as String;
-                final int count = m['count'] as int;
-                final dynamic events = m['events'];
-                final Widget? content = m['content'] as Widget?;
-
-                return Marker(
-                  point: point,
-                  width: 28,
-                  height: 28,
-                  child: GestureDetector(
-                    onTap: () {
-                      final Widget sheet = () {
-                        switch (_selectedIndex) {
-                          case 0:
-                            // Для событий создаём виджет со списком событий из API
-                            return ebs.EventsBottomSheet(
-                              title: title,
-                              child: events != null && events is List
-                                  ? ebs.EventsListFromApi(
-                                      events: events,
-                                      latitude: m['latitude'] as double?,
-                                      longitude: m['longitude'] as double?,
-                                    )
-                                  : content ??
-                                        const ebs.EventsSheetPlaceholder(),
-                            );
-                          case 1:
-                            // Для клубов создаём виджет со списком клубов из API
-                            return cbs.ClubsBottomSheet(
-                              title: title,
-                              child: m['clubs'] != null && m['clubs'] is List
-                                  ? cbs.ClubsListFromApi(
-                                      clubs: m['clubs'] as List<dynamic>,
-                                      latitude: m['latitude'] as double?,
-                                      longitude: m['longitude'] as double?,
-                                    )
-                                  : content ??
-                                        const cbs.ClubsSheetPlaceholder(),
-                            );
-                          // case 2: // тренеры - временно закомментировано
-                          //   return cchbs.CoachesBottomSheet(
-                          //     title: title,
-                          //     child:
-                          //         content ??
-                          //         const cchbs.CoachesSheetPlaceholder(),
-                          //   );
-                          // case 3: // попутчики - временно закомментировано
-                          default:
-                            return const SizedBox.shrink();
-                            // return tbs.TravelersBottomSheet(
-                            //   title: title,
-                            //   child:
-                            //       content ??
-                            //       const tbs.TravelersSheetPlaceholder(),
-                            // );
-                        }
-                      }();
-
-                      showModalBottomSheet(
-                        context: context,
-                        useRootNavigator: true,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) => sheet,
-                      ).then((result) {
-                        // Если событие было удалено, обновляем маркеры на карте
-                        if (result == 'event_deleted' && mounted) {
-                          setState(() {
-                            // Сбрасываем флаг инициализации при обновлении данных
-                            _mapInitialized = false;
-                            _eventsMarkersKey = ValueKey(
-                              'events_markers_${DateTime.now().millisecondsSinceEpoch}',
-                            );
-                          });
-                        }
-                        // Если клуб был удалён, обновляем маркеры на карте
-                        if (result == 'club_deleted' && mounted) {
-                          setState(() {
-                            // Сбрасываем флаг инициализации при обновлении данных
-                            _mapInitialized = false;
-                            _clubsMarkersKey = ValueKey(
-                              'clubs_markers_${DateTime.now().millisecondsSinceEpoch}',
-                            );
-                          });
-                        }
-                      });
-                    },
-
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: markerColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.border, width: 1),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '$count',
-                        style: const TextStyle(
-                          color: AppColors.surface,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              } catch (e) {
-                // Возвращаем пустой маркер, чтобы не сломать отрисовку
-                return Marker(
-                  point: LatLng(0, 0),
-                  width: 0,
-                  height: 0,
-                  child: const SizedBox.shrink(),
-                );
-              }
-            }).toList(),
-          ),
-        ],
+        styleUri: MapboxStyles.MAPBOX_STREETS,
       ),
     );
   }
