@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
 import 'add_event_screen.dart';
+import 'add_official_event_screen.dart';
 import 'events_filters_bottom_sheet.dart';
 import '../../../../../theme/app_theme.dart';
 import '../../../widgets/transparent_route.dart';
@@ -266,8 +267,17 @@ class EventsFloatingButtons extends ConsumerWidget {
                     _SolidPillButton(
                       icon: Icons.attach_money,
                       label: 'Платные',
-                      onTap: () {
-                        // Функционал добавим позже
+                      onTap: () async {
+                        final result = await Navigator.push(
+                          context,
+                          TransparentPageRoute(
+                            builder: (_) => const AddOfficialEventScreen(),
+                          ),
+                        );
+                        // Если событие было создано, вызываем callback для обновления данных на карте
+                        if (result == 'created' && context.mounted) {
+                          onEventCreated?.call();
+                        }
                       },
                     ),
                     const SizedBox(height: 8),
