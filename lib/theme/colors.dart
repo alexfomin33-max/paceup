@@ -241,6 +241,18 @@ abstract class AppColors {
         : textPlaceholder;
   }
 
+  /// Получить цвет скелетона в зависимости от темы
+  static Color getSkeletonBaseColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark ? darkSkeletonBase : skeletonBase;
+  }
+
+  /// Получить цвет outline в зависимости от темы
+  static Color getOutlineColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark ? darkOutline : outline;
+  }
+
   // Темные цвета (iOS Dark Mode)
   static const Color darkBackground = Color(0xFF121212); // темно-серый фон
   static const Color darkSurface = Color(0xFF1C1C1E); // iOS dark surface
@@ -253,8 +265,14 @@ abstract class AppColors {
   ); // плейсхолдер в темной теме
   static const Color darkDivider = Color(0xFF38383A);
   static const Color darkBorder = Color(0xFF48484A);
+  static const Color darkOutline = Color(
+    0xFF545458,
+  ); // более заметный бордер для фокуса в темной теме
   static const Color darkIconPrimary = Color(0xFFE9E9E9);
   static const Color darkIconSecondary = Color(0xFF98989D);
+  static const Color darkSkeletonBase = Color(
+    0xFF2C2C2E,
+  ); // темный цвет для скелетона
   static const Color darkShadowSoft = Color(
     0x40000000,
   ); // более заметная тень в темной теме

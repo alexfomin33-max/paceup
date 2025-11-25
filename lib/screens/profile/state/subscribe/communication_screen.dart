@@ -178,34 +178,34 @@ class _SearchField extends StatelessWidget {
         textCapitalization: TextCapitalization.words,
         keyboardType: TextInputType.name,
         textInputAction: TextInputAction.search,
-        cursorColor: AppColors.textSecondary,
+        cursorColor: AppColors.getTextSecondaryColor(context),
         style: const TextStyle(fontFamily: 'Inter', fontSize: 15),
         decoration: InputDecoration(
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             CupertinoIcons.search,
             size: 18,
-            color: AppColors.textSecondary,
+            color: AppColors.getTextSecondaryColor(context),
           ),
           isDense: true,
           filled: true,
-          fillColor: AppColors.surface,
+          fillColor: AppColors.getSurfaceColor(context),
           hintText: hintText,
-          hintStyle: const TextStyle(
+          hintStyle: TextStyle(
             fontFamily: 'Inter',
             fontSize: 15,
-            color: AppColors.textSecondary,
+            color: AppColors.getTextSecondaryColor(context),
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.border),
+            borderSide: BorderSide(color: AppColors.getBorderColor(context)),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.border),
+            borderSide: BorderSide(color: AppColors.getBorderColor(context)),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.outline),
+            borderSide: BorderSide(color: AppColors.getOutlineColor(context)),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
         ),

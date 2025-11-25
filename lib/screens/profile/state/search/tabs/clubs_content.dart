@@ -41,10 +41,10 @@ class SearchClubsContent extends ConsumerWidget {
                       isSearching
                           ? 'Клубы не найдены'
                           : 'Рекомендованные клубы отсутствуют',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                     ),
                   ),
@@ -54,11 +54,17 @@ class SearchClubsContent extends ConsumerWidget {
 
             return SliverToBoxAdapter(
               child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
                   border: Border(
-                    top: BorderSide(color: AppColors.border, width: 0.5),
-                    bottom: BorderSide(color: AppColors.border, width: 0.5),
+                    top: BorderSide(
+                      color: AppColors.getBorderColor(context),
+                      width: 0.5,
+                    ),
+                    bottom: BorderSide(
+                      color: AppColors.getBorderColor(context),
+                      width: 0.5,
+                    ),
                   ),
                 ),
                 child: Column(
@@ -68,10 +74,10 @@ class SearchClubsContent extends ConsumerWidget {
                       children: [
                         _ClubRow(club: club),
                         if (i != clubs.length - 1)
-                          const Divider(
+                          Divider(
                             height: 1,
                             thickness: 0.5,
-                            color: AppColors.divider,
+                            color: AppColors.getDividerColor(context),
                           ),
                       ],
                     );
@@ -98,29 +104,29 @@ class SearchClubsContent extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         CupertinoIcons.exclamationmark_circle,
                         size: 48,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'Ошибка загрузки',
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.textPrimary,
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         error.toString(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: AppColors.getTextSecondaryColor(context),
                         ),
                       ),
                     ],
@@ -167,19 +173,19 @@ class _ClubRow extends StatelessWidget {
                 placeholder: (context, url) => Container(
                   width: 80,
                   height: 55,
-                  color: AppColors.skeletonBase,
+                  color: AppColors.getSkeletonBaseColor(context),
                   alignment: Alignment.center,
                   child: const CupertinoActivityIndicator(),
                 ),
                 errorWidget: (context, url, error) => Container(
                   width: 80,
                   height: 55,
-                  color: AppColors.skeletonBase,
+                  color: AppColors.getSkeletonBaseColor(context),
                   alignment: Alignment.center,
-                  child: const Icon(
+                  child: Icon(
                     CupertinoIcons.photo,
                     size: 20,
-                    color: AppColors.textSecondary,
+                    color: AppColors.getTextSecondaryColor(context),
                   ),
                 ),
               ),
@@ -195,14 +201,18 @@ class _ClubRow extends StatelessWidget {
                     club.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.h14w6,
+                    style: AppTextStyles.h14w6.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     '${club.city}  ·  Участников: ${_fmt(club.membersCount)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.h13w4,
+                    style: AppTextStyles.h13w4.copyWith(
+                      color: AppColors.getTextSecondaryColor(context),
+                    ),
                   ),
                 ],
               ),
@@ -224,10 +234,11 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 14,
           fontWeight: FontWeight.w600,
+          color: AppColors.getTextPrimaryColor(context),
         ),
       ),
     );

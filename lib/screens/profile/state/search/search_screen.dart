@@ -171,34 +171,43 @@ class _SearchField extends StatelessWidget {
         controller: controller,
         focusNode: focusNode,
         onChanged: onChanged,
-        cursorColor: AppColors.textSecondary,
+        cursorColor: AppColors.getTextSecondaryColor(context),
         style: const TextStyle(fontFamily: 'Inter', fontSize: 16),
         decoration: InputDecoration(
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             CupertinoIcons.search,
             size: 18,
-            color: AppColors.textSecondary,
+            color: AppColors.getTextSecondaryColor(context),
           ),
           isDense: true,
           filled: true,
-          fillColor: AppColors.surface,
+          fillColor: AppColors.getSurfaceColor(context),
           hintText: hintText,
-          hintStyle: const TextStyle(
+          hintStyle: TextStyle(
             fontFamily: 'Inter',
             fontSize: 15,
-            color: AppColors.textPlaceholder,
+            color: AppColors.getTextPlaceholderColor(context),
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.border, width: 0.7),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 0.7,
+            ),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.border, width: 0.7),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 0.7,
+            ),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.outline, width: 1),
+            borderSide: BorderSide(
+              color: AppColors.getOutlineColor(context),
+              width: 1,
+            ),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
         ),

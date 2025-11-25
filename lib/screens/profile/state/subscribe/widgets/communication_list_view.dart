@@ -113,10 +113,10 @@ class _ErrorSection extends StatelessWidget {
             children: [
               TextSpan(
                 text: message,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: AppColors.getTextSecondaryColor(context),
                 ),
               ),
             ],
@@ -146,13 +146,17 @@ class _EmptySection extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: AppTextStyles.h15w6,
+              style: AppTextStyles.h15w6.copyWith(
+                color: AppColors.getTextPrimaryColor(context),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: AppTextStyles.h13w4Sec,
+              style: AppTextStyles.h13w4Sec.copyWith(
+                color: AppColors.getTextSecondaryColor(context),
+              ),
             ),
           ],
         ),
@@ -184,10 +188,10 @@ class _HintError extends StatelessWidget {
             children: [
               TextSpan(
                 text: message,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: AppColors.getTextSecondaryColor(context),
                 ),
               ),
             ],
@@ -221,14 +225,14 @@ class _UsersSliver extends StatelessWidget {
 
           return DecoratedBox(
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.getSurfaceColor(context),
               border: Border(
                 top: BorderSide(
-                  color: AppColors.border,
+                  color: AppColors.getBorderColor(context),
                   width: isFirst ? 0.5 : 0,
                 ),
                 bottom: BorderSide(
-                  color: AppColors.border,
+                  color: AppColors.getBorderColor(context),
                   width: isLast ? 0.5 : 0,
                 ),
               ),
@@ -241,10 +245,10 @@ class _UsersSliver extends StatelessWidget {
                   onToggle: () => notifier.toggleSubscription(user.id),
                 ),
                 if (!isLast)
-                  const Divider(
+                  Divider(
                     height: 1,
                     thickness: 0.5,
-                    color: AppColors.divider,
+                    color: AppColors.getDividerColor(context),
                   ),
               ],
             ),
@@ -293,14 +297,18 @@ class _CommunicationUserTile extends StatelessWidget {
                       user.fullName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.h15w5,
+                      style: AppTextStyles.h15w5.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       _subtitle(user),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.h13w4Sec,
+                      style: AppTextStyles.h13w4Sec.copyWith(
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
                     ),
                   ],
                 ),
@@ -355,19 +363,19 @@ class _Avatar extends StatelessWidget {
         placeholder: (context, _) => Container(
           width: 44,
           height: 44,
-          color: AppColors.skeletonBase,
+          color: AppColors.getSkeletonBaseColor(context),
           alignment: Alignment.center,
           child: const CupertinoActivityIndicator(),
         ),
         errorWidget: (context, url, error) => Container(
           width: 44,
           height: 44,
-          color: AppColors.skeletonBase,
+          color: AppColors.getSkeletonBaseColor(context),
           alignment: Alignment.center,
-          child: const Icon(
+          child: Icon(
             CupertinoIcons.person,
             size: 20,
-            color: AppColors.textSecondary,
+            color: AppColors.getTextSecondaryColor(context),
           ),
         ),
       ),
