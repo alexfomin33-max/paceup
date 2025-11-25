@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
 import 'add_event_screen.dart';
@@ -6,6 +7,7 @@ import 'events_filters_bottom_sheet.dart';
 import '../../../../../theme/app_theme.dart';
 import '../../../widgets/transparent_route.dart';
 import '../../../service/api_service.dart';
+import '../../../providers/services/auth_provider.dart';
 
 /// Склоняет название города в предложный падеж для фразы "События в/во [город]"
 /// Возвращает строку с правильным предлогом и склонённым названием города
@@ -110,7 +112,7 @@ String _declineCityName(String cityName) {
 
 /// Возвращает маркеры для вкладки «События».
 /// Загружает данные через API и группирует события по локациям
-/// 
+///
 /// [filterParams] - параметры фильтра (опционально)
 Future<List<Map<String, dynamic>>> eventsMarkers(
   BuildContext context, {
@@ -120,9 +122,7 @@ Future<List<Map<String, dynamic>>> eventsMarkers(
     final api = ApiService();
 
     // Формируем параметры запроса
-    final queryParams = <String, String>{
-      'detail': 'false',
-    };
+    final queryParams = <String, String>{'detail': 'false'};
 
     // Добавляем фильтры по видам спорта
     if (filterParams != null && filterParams.sports.isNotEmpty) {
@@ -132,8 +132,9 @@ Future<List<Map<String, dynamic>>> eventsMarkers(
 
     // Добавляем фильтры по типам событий
     if (filterParams != null && filterParams.eventTypes.isNotEmpty) {
-      final eventTypes =
-          filterParams.eventTypes.map((t) => t.apiValue).toList();
+      final eventTypes = filterParams.eventTypes
+          .map((t) => t.apiValue)
+          .toList();
       queryParams['event_types'] = eventTypes.join(',');
     }
 
@@ -141,32 +142,32 @@ Future<List<Map<String, dynamic>>> eventsMarkers(
     // По умолчанию показываем события начиная с сегодняшней даты
     final today = DateTime.now();
     final defaultStartDate = DateTime(today.year, today.month, today.day);
-    
+
     if (filterParams != null && filterParams.startDate != null) {
       // Если фильтры установлены, используем дату из фильтров
-      queryParams['start_date'] =
-          DateFormat('yyyy-MM-dd').format(filterParams.startDate!);
+      queryParams['start_date'] = DateFormat(
+        'yyyy-MM-dd',
+      ).format(filterParams.startDate!);
     } else {
       // Если фильтры не установлены, используем дефолтную дату (сегодня)
-      queryParams['start_date'] =
-          DateFormat('yyyy-MM-dd').format(defaultStartDate);
+      queryParams['start_date'] = DateFormat(
+        'yyyy-MM-dd',
+      ).format(defaultStartDate);
     }
-    
+
     // Дата окончания передаем только если она явно установлена пользователем
     if (filterParams != null && filterParams.endDate != null) {
       final defaultEndDate = DateTime(today.year + 1, today.month, today.day);
       // Передаем дату окончания только если она отличается от дефолтной
       if (filterParams.endDate != defaultEndDate) {
-        queryParams['end_date'] =
-            DateFormat('yyyy-MM-dd').format(filterParams.endDate!);
+        queryParams['end_date'] = DateFormat(
+          'yyyy-MM-dd',
+        ).format(filterParams.endDate!);
       }
     }
 
     // Загружаем маркеры с группировкой по локациям
-    final data = await api.get(
-      '/get_events.php',
-      queryParams: queryParams,
-    );
+    final data = await api.get('/get_events.php', queryParams: queryParams);
 
     if (data['success'] != true) {
       return [];
@@ -207,7 +208,7 @@ Future<List<Map<String, dynamic>>> eventsMarkers(
 }
 
 /// ——— Кнопки снизу для вкладки «События» ———
-class EventsFloatingButtons extends StatelessWidget {
+class EventsFloatingButtons extends ConsumerWidget {
   /// Callback для применения фильтров
   final Function(EventsFilterParams)? onApplyFilters;
 
@@ -225,13 +226,17 @@ class EventsFloatingButtons extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Получаем ID текущего пользователя
+    final userIdAsync = ref.watch(currentUserIdProvider);
+
     return Positioned(
       left: 12,
       right: 12,
       bottom: kBottomNavigationBarHeight - 40,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           _SolidPillButton(
             icon: Icons.tune,
@@ -249,19 +254,89 @@ class EventsFloatingButtons extends StatelessWidget {
               );
             },
           ),
-          _SolidPillButton(
-            icon: Icons.add_circle_outline,
-            label: 'Добавить',
-            onTap: () async {
-              final result = await Navigator.push(
-                context,
-                TransparentPageRoute(builder: (_) => const AddEventScreen()),
-              );
-              // Если событие было создано, вызываем callback для обновления данных на карте
-              if (result == 'created' && context.mounted) {
-                onEventCreated?.call();
+          // Правая сторона: кнопка "Official" (если ID=1) и кнопка "Добавить"
+          userIdAsync.when(
+            data: (userId) {
+              // Если ID пользователя равен 1, показываем обе кнопки в Column
+              if (userId == 1) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _SolidPillButton(
+                      icon: Icons.attach_money,
+                      label: 'Платные',
+                      onTap: () {
+                        // Функционал добавим позже
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    _SolidPillButton(
+                      icon: Icons.add_circle_outline,
+                      label: 'Добавить',
+                      onTap: () async {
+                        final result = await Navigator.push(
+                          context,
+                          TransparentPageRoute(
+                            builder: (_) => const AddEventScreen(),
+                          ),
+                        );
+                        // Если событие было создано, вызываем callback для обновления данных на карте
+                        if (result == 'created' && context.mounted) {
+                          onEventCreated?.call();
+                        }
+                      },
+                    ),
+                  ],
+                );
+              } else {
+                // Если ID не равен 1, показываем только кнопку "Добавить"
+                return _SolidPillButton(
+                  icon: Icons.add_circle_outline,
+                  label: 'Добавить',
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      TransparentPageRoute(
+                        builder: (_) => const AddEventScreen(),
+                      ),
+                    );
+                    // Если событие было создано, вызываем callback для обновления данных на карте
+                    if (result == 'created' && context.mounted) {
+                      onEventCreated?.call();
+                    }
+                  },
+                );
               }
             },
+            loading: () => _SolidPillButton(
+              icon: Icons.add_circle_outline,
+              label: 'Добавить',
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  TransparentPageRoute(builder: (_) => const AddEventScreen()),
+                );
+                // Если событие было создано, вызываем callback для обновления данных на карте
+                if (result == 'created' && context.mounted) {
+                  onEventCreated?.call();
+                }
+              },
+            ),
+            error: (_, __) => _SolidPillButton(
+              icon: Icons.add_circle_outline,
+              label: 'Добавить',
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  TransparentPageRoute(builder: (_) => const AddEventScreen()),
+                );
+                // Если событие было создано, вызываем callback для обновления данных на карте
+                if (result == 'created' && context.mounted) {
+                  onEventCreated?.call();
+                }
+              },
+            ),
           ),
         ],
       ),
