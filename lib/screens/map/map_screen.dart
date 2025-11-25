@@ -233,8 +233,11 @@ class _MapScreenState extends State<MapScreen> {
           final imageKey = 'marker_${markerColor.value}_$count';
           final imageBytes = imageMap[imageKey]!;
 
-          final annotationId = '${point.latitude}_${point.longitude}_$count';
-          _markerData[annotationId] = marker;
+          // Сохраняем данные маркера по координатам для поиска при клике
+          // Используем строку с координатами как ключ (округление до 6 знаков для точности)
+          final markerKey =
+              '${point.latitude.toStringAsFixed(6)}_${point.longitude.toStringAsFixed(6)}';
+          _markerData[markerKey] = marker;
 
           annotations.add(
             PointAnnotationOptions(
@@ -260,9 +263,24 @@ class _MapScreenState extends State<MapScreen> {
 
   /// Обработка клика по маркеру
   void _onMarkerTap(PointAnnotation annotation) {
-    final annotationId = annotation.id;
-    final marker = _markerData[annotationId];
-    if (marker == null) return;
+    // Получаем координаты из геометрии аннотации
+    final geometry = annotation.geometry;
+    final coordinates = geometry.coordinates;
+
+    if (coordinates.length < 2) return;
+
+    // В Mapbox координаты хранятся как [longitude, latitude]
+    final lng = coordinates[0] as double;
+    final lat = coordinates[1] as double;
+
+    // Ищем маркер по координатам (округление до 6 знаков для точности)
+    final markerKey = '${lat.toStringAsFixed(6)}_${lng.toStringAsFixed(6)}';
+    final marker = _markerData[markerKey];
+
+    if (marker == null) {
+      debugPrint('Маркер не найден для координат: $lat, $lng');
+      return;
+    }
 
     final title = marker['title'] as String;
     final dynamic events = marker['events'];
