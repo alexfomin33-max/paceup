@@ -176,10 +176,10 @@ class _BiometricScreenState extends State<BiometricScreen> {
     try {
       final authenticated = await _localAuth.authenticate(
         localizedReason: 'Подтвердите включение биометрии для защиты приложения',
-        options: const AuthenticationOptions(
+        /*options: const AuthenticationOptions(
           biometricOnly: false,
           stickyAuth: true,
-        ),
+        ),*/
       );
 
       if (!mounted) return;

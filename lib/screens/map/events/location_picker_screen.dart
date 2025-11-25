@@ -13,16 +13,19 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:http/http.dart' as http;
 import '../../../theme/app_theme.dart';
-import '../../../config/app_config.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
+import '../../../config/app_config.dart';
 
 // ────────────────────────── Результат выбора места ──────────────────────────
 /// Класс для передачи координат и адреса выбранного места
@@ -46,7 +49,13 @@ class LocationPickerScreen extends StatefulWidget {
 class _LocationPickerScreenState extends State<LocationPickerScreen> {
   // ────────────────────────── Контроллер карты ──────────────────────────
   /// Контроллер для управления картой и отслеживания позиции
-  late final MapController _mapController;
+  MapboxMap? _mapboxMap;
+
+  /// Менеджер аннотаций для центрального маркера
+  PointAnnotationManager? _pointAnnotationManager;
+
+  /// Контроллер flutter_map для macOS
+  final flutter_map.MapController _flutterMapController = flutter_map.MapController();
 
   /// Текущие выбранные координаты (обновляются при движении карты)
   LatLng _selectedLocation = const LatLng(56.129057, 40.406635);
@@ -72,30 +81,12 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   @override
   void initState() {
     super.initState();
-    _mapController = MapController();
     _addressController = TextEditingController();
 
     // Устанавливаем начальную позицию
     if (widget.initialPosition != null) {
       _selectedLocation = widget.initialPosition!;
     }
-
-    // Инициализируем позицию карты после первой отрисовки
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        if (widget.initialPosition != null) {
-          _mapController.move(
-            widget.initialPosition!,
-            _mapController.camera.zoom,
-          );
-          setState(() {
-            _selectedLocation = widget.initialPosition!;
-          });
-        }
-        // Загружаем адрес для текущей позиции (начальной или заданной)
-        _updateAddressDebounced(_selectedLocation);
-      }
-    });
   }
 
   @override
@@ -103,7 +94,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     _geocodeTimer?.cancel();
     _forwardGeocodeTimer?.cancel();
     _addressController.dispose();
-    _mapController.dispose();
     super.dispose();
   }
 
@@ -330,7 +320,22 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
       if (coordinates != null) {
         // Перемещаем карту к найденным координатам
-        _mapController.move(coordinates, _mapController.camera.zoom);
+        if (Platform.isMacOS) {
+          _flutterMapController.move(coordinates, 14.0);
+        } else {
+          await _mapboxMap?.flyTo(
+            CameraOptions(
+              center: Point(
+                coordinates: Position(
+                  coordinates.longitude,
+                  coordinates.latitude,
+                ),
+              ),
+            ),
+            MapAnimationOptions(duration: 500, startDelay: 0),
+          );
+          await _updateMarker();
+        }
         setState(() {
           _selectedLocation = coordinates;
           _currentAddress = value;
@@ -344,6 +349,73 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         });
       }
     });
+  }
+
+  /// Создание изображения центрального маркера
+  Future<Uint8List> _createMarkerImage() async {
+    const size = 32.0;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final paint = Paint()..color = AppColors.brandPrimary;
+    final borderPaint = Paint()
+      ..color = AppColors.surface
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+
+    // Рисуем круг
+    canvas.drawCircle(
+      const Offset(size / 2, size / 2),
+      size / 2 - 1.5,
+      paint,
+    );
+    canvas.drawCircle(
+      const Offset(size / 2, size / 2),
+      size / 2 - 1.5,
+      borderPaint,
+    );
+
+    // Рисуем иконку
+    final iconPaint = Paint()..color = AppColors.surface;
+    final iconPath = ui.Path()
+      ..moveTo(size / 2, size / 2 - 6)
+      ..lineTo(size / 2 - 4, size / 2 + 2)
+      ..lineTo(size / 2, size / 2)
+      ..lineTo(size / 2 + 4, size / 2 + 2)
+      ..close();
+    canvas.drawPath(iconPath, iconPaint);
+
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(size.toInt(), size.toInt());
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    return byteData!.buffer.asUint8List();
+  }
+
+  /// Обновление центрального маркера
+  Future<void> _updateMarker() async {
+    if (_mapboxMap == null || _pointAnnotationManager == null) return;
+
+    try {
+      // Удаляем старый маркер
+      await _pointAnnotationManager!.deleteAll();
+
+      // Создаем изображение маркера
+      final imageBytes = await _createMarkerImage();
+
+      // Создаем новый маркер
+      await _pointAnnotationManager!.create(
+        PointAnnotationOptions(
+          geometry: Point(
+            coordinates: Position(
+              _selectedLocation.longitude,
+              _selectedLocation.latitude,
+            ),
+          ),
+          image: imageBytes,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Ошибка обновления маркера: $e');
+    }
   }
 
   // ────────────────────────── Обработка выбора ──────────────────────────
@@ -379,98 +451,112 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         body: Stack(
           children: [
             // ────────────────────────── Карта ──────────────────────────
-            FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: _selectedLocation,
-                initialZoom: 14.0, // Ближе для удобного выбора места
-                minZoom: 3.0,
-                maxZoom: 19.0,
-                interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+            // Используем flutter_map для macOS
+            if (Platform.isMacOS)
+              flutter_map.FlutterMap(
+                mapController: _flutterMapController,
+                options: flutter_map.MapOptions(
+                  initialCenter: _selectedLocation,
+                  initialZoom: 14.0,
+                  minZoom: 3.0,
+                  maxZoom: 18.0,
+                  onMapEvent: (event) {
+                    if (event is flutter_map.MapEventMoveEnd) {
+                      final newLocation = _flutterMapController.camera.center;
+                      setState(() {
+                        _selectedLocation = newLocation;
+                        _currentAddress = null;
+                      });
+                      _updateAddressDebounced(newLocation);
+                    }
+                  },
                 ),
-                // ⚡️ Обновляем координаты при движении карты в реальном времени
-                onPositionChanged: (MapCamera position, bool hasGesture) {
-                  if (hasGesture && mounted) {
-                    setState(() {
-                      _selectedLocation = position.center;
-                      // Сбрасываем адрес при движении (будет обновлён через debounce)
-                      _currentAddress = null;
-                    });
-                    // Обновляем адрес с задержкой для оптимизации
-                    _updateAddressDebounced(position.center);
-                  }
-                },
-              ),
-              children: [
-                // Тайлы карты MapTiler
-                TileLayer(
-                  urlTemplate: AppConfig.mapTilesUrl,
-                  additionalOptions: {'apiKey': AppConfig.mapTilerApiKey},
-                  userAgentPackageName: 'paceup.ru',
-                  maxZoom: 19,
-                  minZoom: 3,
-                  keepBuffer: 1,
-                  retinaMode: false,
-                ),
-
-                // Атрибуция
-                const RichAttributionWidget(
-                  attributions: [
-                    TextSourceAttribution('MapTiler © OpenStreetMap'),
-                  ],
-                ),
-
-                // 📌 Центральный маркер (показывается в текущей позиции)
-                // ⚠️ Важно: маркер привязан к координатам, но всегда будет виден,
-                // так как при движении карты мы обновляем _selectedLocation
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: _selectedLocation,
-                      width: 32,
-                      height: 48,
-                      alignment: Alignment.topCenter,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Иконка маркера
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: AppColors.brandPrimary,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.surface,
-                                width: 3,
-                              ),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: AppColors.shadowMedium,
-                                  blurRadius: 8,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              CupertinoIcons.placemark_fill,
-                              size: 18,
+                children: [
+                  flutter_map.TileLayer(
+                    urlTemplate: AppConfig.mapTilesUrl.replaceAll('{apiKey}', AppConfig.mapTilerApiKey),
+                    userAgentPackageName: 'com.example.paceup',
+                  ),
+                  flutter_map.MarkerLayer(
+                    markers: [
+                      flutter_map.Marker(
+                        point: _selectedLocation,
+                        width: 32,
+                        height: 32,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.brandPrimary,
+                            shape: BoxShape.circle,
+                            border: Border.all(
                               color: AppColors.surface,
+                              width: 3,
                             ),
                           ),
-                          // Треугольник под маркером
-                          CustomPaint(
-                            size: const Size(16, 10),
-                            painter: _MarkerTrianglePainter(),
-                          ),
-                        ],
+                        ),
                       ),
+                    ],
+                  ),
+                ],
+              )
+            else
+              MapWidget(
+                onMapIdleListener: (MapIdleEventData data) async {
+                  if (!mounted || _mapboxMap == null) return;
+                  final cameraState = await _mapboxMap!.getCameraState();
+                  final center = cameraState.center;
+                  final newLocation = LatLng(
+                    center.coordinates.lat.toDouble(),
+                    center.coordinates.lng.toDouble(),
+                  );
+                  setState(() {
+                    _selectedLocation = newLocation;
+                    _currentAddress = null;
+                  });
+                  await _updateMarker();
+                  _updateAddressDebounced(newLocation);
+                },
+                onMapCreated: (MapboxMap mapboxMap) async {
+                  _mapboxMap = mapboxMap;
+
+                  // Создаем менеджер аннотаций
+                  _pointAnnotationManager = await mapboxMap.annotations
+                      .createPointAnnotationManager();
+
+                  // Устанавливаем начальную позицию
+                  if (widget.initialPosition != null) {
+                    await mapboxMap.flyTo(
+                      CameraOptions(
+                        center: Point(
+                          coordinates: Position(
+                            widget.initialPosition!.longitude,
+                            widget.initialPosition!.latitude,
+                          ),
+                        ),
+                        zoom: 14.0,
+                      ),
+                      MapAnimationOptions(duration: 0, startDelay: 0),
+                    );
+                    setState(() {
+                      _selectedLocation = widget.initialPosition!;
+                    });
+                  }
+
+                  // Создаем центральный маркер
+                  await _updateMarker();
+
+                  // Загружаем адрес для текущей позиции
+                  _updateAddressDebounced(_selectedLocation);
+                },
+                cameraOptions: CameraOptions(
+                  center: Point(
+                    coordinates: Position(
+                      _selectedLocation.longitude,
+                      _selectedLocation.latitude,
                     ),
-                  ],
+                  ),
+                  zoom: 14.0,
                 ),
-              ],
-            ),
+                styleUri: MapboxStyles.MAPBOX_STREETS,
+              ),
 
             // ────────────────────────── Поле ввода адреса сверху ──────────────────────────
             Positioned(
@@ -580,32 +666,4 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       ),
     );
   }
-}
-
-// ────────────────────────── Кастомный painter для треугольника маркера ──────────────────────────
-class _MarkerTrianglePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.brandPrimary
-      ..style = PaintingStyle.fill;
-
-    final path = ui.Path()
-      ..moveTo(size.width / 2, size.height) // нижняя точка (центр)
-      ..lineTo(0, 0) // левая верхняя точка
-      ..lineTo(size.width, 0) // правая верхняя точка
-      ..close();
-
-    canvas.drawPath(path, paint);
-
-    // Обводка треугольника
-    final strokePaint = Paint()
-      ..color = AppColors.surface
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawPath(path, strokePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

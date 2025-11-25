@@ -1,7 +1,9 @@
 // lib/widgets/route_card.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import '../theme/app_theme.dart';
 import '../config/app_config.dart';
 
@@ -24,19 +26,7 @@ class RouteCard extends StatefulWidget {
 }
 
 class _RouteCardState extends State<RouteCard> {
-  late final MapController _mapController;
-
-  @override
-  void initState() {
-    super.initState();
-    _mapController = MapController();
-  }
-
-  @override
-  void dispose() {
-    _mapController.dispose();
-    super.dispose();
-  }
+  PolylineAnnotationManager? _polylineAnnotationManager;
 
   @override
   Widget build(BuildContext context) {
@@ -52,12 +42,6 @@ class _RouteCardState extends State<RouteCard> {
 
     final center = _centerFromPoints(points);
     final bounds = _boundsFromPoints(points);
-
-    // Формируем финальный URL с подставленным API ключом
-    final finalUrlTemplate = AppConfig.mapTilesUrl.replaceAll(
-      '{apiKey}',
-      AppConfig.mapTilerApiKey,
-    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -75,68 +59,26 @@ class _RouteCardState extends State<RouteCard> {
           );
         }
 
-        return SizedBox(
-          width: double.infinity,
-          height: widget.height,
-          // Полностью отключаем взаимодействие — это "картинка", а не интерактивная карта
-          child: IgnorePointer(
-            ignoring: true,
-            child: FlutterMap(
-              key: ValueKey('route_card_${points.length}'),
-              mapController: _mapController,
-              options: MapOptions(
+        // Используем flutter_map для macOS
+        if (Platform.isMacOS) {
+          return SizedBox(
+            width: double.infinity,
+            height: widget.height,
+            child: flutter_map.FlutterMap(
+              options: flutter_map.MapOptions(
                 initialCenter: center,
-                initialZoom: 12,
-                // Жесты отключены (дублируем через InteractionOptions на всякий случай)
-                interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.none,
-                ),
-                // Фоновый цвет карты (серый, если тайлы не загрузились)
-                backgroundColor: AppColors.getSurfaceMutedColor(context),
-
-                // Приготовим «вписывание» в onMapReady, когда размер уже известен
-                onMapReady: () {
-                  // Небольшая задержка перед fitCamera для гарантии, что карта полностью инициализирована
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (!mounted) return;
-                    final fit = CameraFit.bounds(
-                      bounds: bounds,
-                      padding: const EdgeInsets.all(12),
-                    );
-                    _mapController.fitCamera(fit);
-                  });
-                },
+                initialZoom: 12.0,
+                minZoom: 3.0,
+                maxZoom: 18.0,
               ),
-
-              // Слои карты (тайлы + трек)
               children: [
-                // Тайл-слой MapTiler Streets
-                // Используем финальный URL с подставленным ключом
-                TileLayer(
-                  urlTemplate: finalUrlTemplate,
-                  keepBuffer: 1,
-                  retinaMode: true,
-                  maxZoom: 18,
-                  minZoom: 3,
-                  userAgentPackageName: 'paceup.ru',
-
-                  // Обработка ошибок загрузки тайлов (тихо игнорируем)
-                  errorTileCallback: (tile, error, stackTrace) {
-                    // Ошибки загрузки тайлов логируются только в debug режиме
-                  },
+                flutter_map.TileLayer(
+                  urlTemplate: AppConfig.mapTilesUrl.replaceAll('{apiKey}', AppConfig.mapTilerApiKey),
+                  userAgentPackageName: 'com.example.paceup',
                 ),
-
-                // Атрибуция — корректно показываем источник данных
-                const RichAttributionWidget(
-                  attributions: [
-                    TextSourceAttribution('MapTiler © OpenStreetMap'),
-                  ],
-                ),
-
-                // Линия трека
-                PolylineLayer(
+                flutter_map.PolylineLayer(
                   polylines: [
-                    Polyline(
+                    flutter_map.Polyline(
                       points: points,
                       strokeWidth: 3.0,
                       color: AppColors.brandPrimary,
@@ -144,6 +86,70 @@ class _RouteCardState extends State<RouteCard> {
                   ],
                 ),
               ],
+            ),
+          );
+        }
+
+        return SizedBox(
+          width: double.infinity,
+          height: widget.height,
+          // Полностью отключаем взаимодействие — это "картинка", а не интерактивная карта
+          child: IgnorePointer(
+            ignoring: true,
+            child: MapWidget(
+              key: ValueKey('route_card_${points.length}'),
+              onMapCreated: (MapboxMap mapboxMap) async {
+
+                // Создаем менеджер полилиний
+                _polylineAnnotationManager = await mapboxMap.annotations
+                    .createPolylineAnnotationManager();
+
+                // Создаем полилинию из точек
+                final coordinates = points.map((p) => Position(
+                      p.longitude,
+                      p.latitude,
+                    )).toList();
+
+                await _polylineAnnotationManager!.create(
+                  PolylineAnnotationOptions(
+                    geometry: LineString(coordinates: coordinates),
+                    lineColor: AppColors.brandPrimary.value,
+                    lineWidth: 3.0,
+                  ),
+                );
+
+                // Подстраиваем камеру под границы
+                final camera = await mapboxMap.cameraForCoordinateBounds(
+                  CoordinateBounds(
+                    southwest: Point(
+                      coordinates: Position(
+                        bounds.southwest.longitude,
+                        bounds.southwest.latitude,
+                      ),
+                    ),
+                    northeast: Point(
+                      coordinates: Position(
+                        bounds.northeast.longitude,
+                        bounds.northeast.latitude,
+                      ),
+                    ),
+                    infiniteBounds: false,
+                  ),
+                  MbxEdgeInsets(top: 12, left: 12, bottom: 12, right: 12),
+                  null,
+                  null,
+                  null,
+                  null,
+                );
+                await mapboxMap.setCamera(camera);
+              },
+              cameraOptions: CameraOptions(
+                center: Point(
+                  coordinates: Position(center.longitude, center.latitude),
+                ),
+                zoom: 12,
+              ),
+              styleUri: MapboxStyles.MAPBOX_STREETS,
             ),
           ),
         );
@@ -176,4 +182,12 @@ class _RouteCardState extends State<RouteCard> {
     }
     return LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng));
   }
+}
+
+/// Вспомогательный класс для границ (аналог LatLngBounds из flutter_map)
+class LatLngBounds {
+  final LatLng southwest;
+  final LatLng northeast;
+
+  LatLngBounds(this.southwest, this.northeast);
 }

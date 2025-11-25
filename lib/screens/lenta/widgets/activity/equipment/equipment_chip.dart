@@ -20,6 +20,7 @@ class EquipmentChip extends StatefulWidget {
   final double activityDistance; // дистанция активности в километрах
   final VoidCallback? onEquipmentChanged; // callback после замены эквипа
   final bool showMenuButton; // показывать ли кнопку меню с тремя точками
+  final Function(al.Equipment)? onEquipmentSelected; // callback для выбора экипировки (для экрана добавления)
 
   const EquipmentChip({
     super.key,
@@ -30,6 +31,7 @@ class EquipmentChip extends StatefulWidget {
     this.activityDistance = 0.0,
     this.onEquipmentChanged,
     this.showMenuButton = true, // по умолчанию показываем кнопку для обратной совместимости
+    this.onEquipmentSelected,
   });
 
   @override
@@ -235,6 +237,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                       activityId: widget.activityId,
                       activityDistance: widget.activityDistance,
                       onEquipmentChanged: widget.onEquipmentChanged,
+                      onEquipmentSelected: widget.onEquipmentSelected,
                     ),
                     child: Container(
                       key: _menuKey, // ← важный ключ для позиционирования попапа

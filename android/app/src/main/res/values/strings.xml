@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- MapBox Access Token -->
+    <!-- ⚠️ ВАЖНО: Замените YOUR_MAPBOX_ACCESS_TOKEN_HERE на ваш реальный токен из аккаунта MapBox -->
+    <!-- Получить токен: https://account.mapbox.com/access-tokens/ -->
+    <string name="mapbox_access_token">pk.eyJ1IjoiZXVnZW5lMzMiLCJhIjoiY21pZWJrdm52MDB5ejNkcjEwZXpkZGUzNyJ9.aoqNzvDocd0EVOBp20rBBQ</string>
+</resources>

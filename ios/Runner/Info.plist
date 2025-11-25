@@ -47,5 +47,7 @@
 	<true/>
 	<key>NSContactsUsageDescription</key>
 	<string>Приложению нужен доступ к контактам для поиска друзей по номеру телефона из вашей телефонной книги.</string>
+	<key>MGLMapboxAccessToken</key>
+	<string>pk.eyJ1IjoiZXVnZW5lMzMiLCJhIjoiY21pZWJrdm52MDB5ejNkcjEwZXpkZGUzNyJ9.aoqNzvDocd0EVOBp20rBBQ</string>
 </dict>
 </plist>

@@ -5,6 +5,8 @@ import '../../../../../theme/app_theme.dart';
 import '../../../../../models/event.dart';
 import '../../../../../providers/events/my_events_provider.dart';
 import '../../../../../providers/services/auth_provider.dart';
+import '../../../../../widgets/transparent_route.dart';
+import '../../../../map/events/event_detail_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 /// Вкладка «Мои события» — карточный список с зазором 2 px
@@ -259,8 +261,30 @@ class _MyEventsContentState extends ConsumerState<MyEventsContent> {
                   sliver: SliverList.separated(
                     itemCount: eventsState.events.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 2),
-                    itemBuilder: (context, i) =>
-                        _EventCard(event: eventsState.events[i]),
+                    itemBuilder: (context, i) {
+                      final event = eventsState.events[i];
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () async {
+                          final result = await Navigator.of(context)
+                              .push<dynamic>(
+                                TransparentPageRoute(
+                                  builder: (_) =>
+                                      EventDetailScreen(eventId: event.id),
+                                ),
+                              );
+                          // Если событие было удалено или обновлено, обновляем список
+                          if (result == true || result == 'deleted') {
+                            if (mounted) {
+                              await ref
+                                  .read(myEventsProvider(userId).notifier)
+                                  .refresh();
+                            }
+                          }
+                        },
+                        child: _EventCard(event: event),
+                      );
+                    },
                   ),
                 ),
 

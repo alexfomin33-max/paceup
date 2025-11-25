@@ -13,7 +13,7 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
-import '../../../models/activity_lenta.dart';
+import '../../../models/activity_lenta.dart' as al;
 import '../../../service/api_service.dart';
 import '../../../service/auth_service.dart';
 import '../../../providers/lenta/lenta_provider.dart';
@@ -70,8 +70,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
   // Экипировка
   bool _showEquipment = false;
-  List<Equipment> _availableEquipment = [];
-  Equipment? _selectedEquipment;
+  List<al.Equipment> _availableEquipment = [];
+  al.Equipment? _selectedEquipment;
   bool _isLoadingEquipment = false;
 
   bool _isLoading = false;
@@ -894,6 +894,15 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           // После изменения экипировки обновляем список
           _loadEquipment();
         },
+        onEquipmentSelected: (al.Equipment newEquipment) {
+          // ────────────────────────────────────────────────────────────────
+          // 🔹 ОБНОВЛЕНИЕ ВЫБРАННОЙ ЭКИПИРОВКИ
+          // ────────────────────────────────────────────────────────────────
+          // При выборе новой экипировки во всплывающем окне обновляем состояние
+          setState(() {
+            _selectedEquipment = newEquipment;
+          });
+        },
       );
     }
 
@@ -926,11 +935,11 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         ),
       ),
       child: DropdownButtonHideUnderline(
-        child: DropdownButton<Equipment>(
+        child: DropdownButton<al.Equipment>(
           value: _selectedEquipment,
           isExpanded: true,
           hint: const Text('Выберите экипировку', style: AppTextStyles.h14w4),
-          onChanged: (Equipment? newValue) {
+          onChanged: (al.Equipment? newValue) {
             setState(() {
               _selectedEquipment = newValue;
             });
@@ -946,7 +955,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             final displayName = equipment.brand.isNotEmpty
                 ? '${equipment.brand} ${equipment.name}'
                 : equipment.name;
-            return DropdownMenuItem<Equipment>(
+            return DropdownMenuItem<al.Equipment>(
               value: equipment,
               child: Text(displayName, style: AppTextStyles.h14w4),
             );
@@ -1077,9 +1086,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             : data['bikes'] ?? [];
 
         // Преобразуем в модель Equipment
-        final List<Equipment> allEquipment = equipmentList
+        final List<al.Equipment> allEquipment = equipmentList
             .map(
-              (item) => Equipment.fromJson({
+              (item) => al.Equipment.fromJson({
                 'name': item['name'] ?? '',
                 'brand': item['brand'] ?? '',
                 'mileage': item['dist'] ?? 0,
@@ -1445,7 +1454,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           if (mounted) {
             // Получаем созданную активность из обновленного провайдера
             final lentaState = ref.read(lentaProvider(widget.currentUserId));
-            Activity? createdActivity;
+            al.Activity? createdActivity;
 
             try {
               createdActivity = lentaState.items.firstWhere(

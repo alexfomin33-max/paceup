@@ -42,18 +42,3 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }
 
-/*
-  В Kotlin DSL обычно 'buildscript' и classpath выносят в settings.gradle(.kts)/root build.gradle(.kts).
-  Если у тебя это уже настроено Flutter-плагином, нижний блок можно удалить.
-  Оставляю как было, но он не обязателен в модульном build.gradle.kts.
-*/
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath("com.android.tools.build:gradle:8.3.2")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.23")
-    }
-}

@@ -50,7 +50,6 @@ class _ClubsFiltersBottomSheetState extends State<ClubsFiltersBottomSheet> {
         SportType.run,
         SportType.bike,
         SportType.swim,
-        SportType.multi,
       };
       _selectedClubTypes = {ClubType.open, ClubType.closed};
     }
@@ -348,7 +347,7 @@ class ClubsFilterParams {
 }
 
 /// Виды спорта для фильтра
-enum SportType { run, bike, swim, multi }
+enum SportType { run, bike, swim }
 
 extension SportTypeExtension on SportType {
   String get label {
@@ -359,8 +358,6 @@ extension SportTypeExtension on SportType {
         return 'Велосипед';
       case SportType.swim:
         return 'Плавание';
-      case SportType.multi:
-        return 'Мультиспортивный';
     }
   }
 
@@ -373,8 +370,6 @@ extension SportTypeExtension on SportType {
         return 'Велосипед';
       case SportType.swim:
         return 'Плавание';
-      case SportType.multi:
-        return 'Мультиспортивный';
     }
   }
 
@@ -386,8 +381,6 @@ extension SportTypeExtension on SportType {
         return Icons.directions_bike;
       case SportType.swim:
         return Icons.pool;
-      case SportType.multi:
-        return Icons.emoji_events_outlined; // трофей
     }
   }
 }
