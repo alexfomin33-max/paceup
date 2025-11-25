@@ -1,8 +1,11 @@
 // lib/widgets/route_card.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import '../theme/app_theme.dart';
+import '../config/app_config.dart';
 
 /// Карточка маршрута.
 /// - Рендерит статичную карту с треком (без интерактива).
@@ -52,6 +55,37 @@ class _RouteCardState extends State<RouteCard> {
             height: widget.height,
             child: const Center(
               child: CircularProgressIndicator(color: AppColors.brandPrimary),
+            ),
+          );
+        }
+
+        // Используем flutter_map для macOS
+        if (Platform.isMacOS) {
+          return SizedBox(
+            width: double.infinity,
+            height: widget.height,
+            child: flutter_map.FlutterMap(
+              options: flutter_map.MapOptions(
+                initialCenter: center,
+                initialZoom: 12.0,
+                minZoom: 3.0,
+                maxZoom: 18.0,
+              ),
+              children: [
+                flutter_map.TileLayer(
+                  urlTemplate: AppConfig.mapTilesUrl.replaceAll('{apiKey}', AppConfig.mapTilerApiKey),
+                  userAgentPackageName: 'com.example.paceup',
+                ),
+                flutter_map.PolylineLayer(
+                  polylines: [
+                    flutter_map.Polyline(
+                      points: points,
+                      strokeWidth: 3.0,
+                      color: AppColors.brandPrimary,
+                    ),
+                  ],
+                ),
+              ],
             ),
           );
         }

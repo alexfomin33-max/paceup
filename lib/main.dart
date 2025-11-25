@@ -1,4 +1,5 @@
 // ========================= main.dart (патч) ===============================
+import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +19,16 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ────────────────────────── MapBox инициализация ──────────────────────────
-  MapboxOptions.setAccessToken(AppConfig.mapboxAccessToken);
+  // Mapbox не поддерживает macOS, поэтому инициализируем только для поддерживаемых платформ
+  if (!Platform.isMacOS) {
+    try {
+      MapboxOptions.setAccessToken(AppConfig.mapboxAccessToken);
+    } catch (e) {
+      debugPrint('⚠️ Ошибка инициализации Mapbox: $e');
+    }
+  } else {
+    debugPrint('⚠️ Mapbox не поддерживается на macOS');
+  }
 
   // Логи ошибок: в дебаге — консоль; в релизе — не падаем.
   FlutterError.onError = (details) {
