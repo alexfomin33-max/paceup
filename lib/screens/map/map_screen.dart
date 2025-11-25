@@ -1,10 +1,13 @@
+import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:latlong2/latlong.dart' as latlong;
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import '../../theme/app_theme.dart';
+import '../../config/app_config.dart';
 
 // контент вкладок
 import 'events/events_screen.dart' as ev;
@@ -32,6 +35,9 @@ class _MapScreenState extends State<MapScreen> {
 
   /// Контроллер карты для управления zoom и центром
   MapboxMap? _mapboxMap;
+
+  /// Контроллер flutter_map для macOS
+  final flutter_map.MapController _flutterMapController = flutter_map.MapController();
 
   final tabs = const [
     "События",
@@ -261,7 +267,7 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  /// Обработка клика по маркеру
+  /// Обработка клика по маркеру (для Mapbox)
   void _onMarkerTap(PointAnnotation annotation) {
     // Получаем координаты из геометрии аннотации
     final geometry = annotation.geometry;
@@ -282,6 +288,16 @@ class _MapScreenState extends State<MapScreen> {
       return;
     }
 
+    _showMarkerBottomSheet(marker);
+  }
+
+  /// Обработка клика по маркеру (для flutter_map на macOS)
+  void _onFlutterMapMarkerTap(Map<String, dynamic> marker) {
+    _showMarkerBottomSheet(marker);
+  }
+
+  /// Показать bottom sheet для маркера
+  void _showMarkerBottomSheet(Map<String, dynamic> marker) {
     final title = marker['title'] as String;
     final dynamic events = marker['events'];
     final Widget? content = marker['content'] as Widget?;
@@ -343,6 +359,133 @@ class _MapScreenState extends State<MapScreen> {
         });
       }
     });
+  }
+
+  /// Построение карты с flutter_map для macOS
+  Widget _buildFlutterMap(List<Map<String, dynamic>> markers, Color markerColor) {
+    // Вычисляем центр карты
+    latlong.LatLng center = const latlong.LatLng(56.129057, 40.406635);
+    double zoom = 6.0;
+
+    if (markers.isNotEmpty) {
+      final points = markers
+          .map((m) => m['point'] as latlong.LatLng?)
+          .whereType<latlong.LatLng>()
+          .toList();
+
+      if (points.isNotEmpty) {
+        if (points.length == 1) {
+          center = points.first;
+          zoom = 12.0;
+        } else {
+          // Вычисляем центр всех точек
+          double sumLat = 0, sumLng = 0;
+          for (final point in points) {
+            sumLat += point.latitude;
+            sumLng += point.longitude;
+          }
+          center = latlong.LatLng(sumLat / points.length, sumLng / points.length);
+          zoom = 10.0;
+        }
+      }
+    }
+
+    // Подстраиваем камеру при первом отображении
+    if (!_mapInitialized && markers.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final points = markers
+            .map((m) => m['point'] as latlong.LatLng?)
+            .whereType<latlong.LatLng>()
+            .toList();
+        if (points.length > 1) {
+          double minLat = points.first.latitude;
+          double maxLat = points.first.latitude;
+          double minLng = points.first.longitude;
+          double maxLng = points.first.longitude;
+          for (final point in points) {
+            minLat = minLat < point.latitude ? minLat : point.latitude;
+            maxLat = maxLat > point.latitude ? maxLat : point.latitude;
+            minLng = minLng < point.longitude ? minLng : point.longitude;
+            maxLng = maxLng > point.longitude ? maxLng : point.longitude;
+          }
+          _flutterMapController.fitCamera(
+            flutter_map.CameraFit.bounds(
+              bounds: flutter_map.LatLngBounds(
+                latlong.LatLng(minLat, minLng),
+                latlong.LatLng(maxLat, maxLng),
+              ),
+              padding: const EdgeInsets.all(30),
+            ),
+          );
+        } else if (points.length == 1) {
+          _flutterMapController.move(points.first, 12.0);
+        }
+      });
+    }
+
+    return SizedBox.expand(
+      child: flutter_map.FlutterMap(
+        mapController: _flutterMapController,
+        options: flutter_map.MapOptions(
+          initialCenter: center,
+          initialZoom: zoom,
+          minZoom: 3.0,
+          maxZoom: 18.0,
+        ),
+        children: [
+          flutter_map.TileLayer(
+            urlTemplate: AppConfig.mapTilesUrl.replaceAll('{apiKey}', AppConfig.mapTilerApiKey),
+            userAgentPackageName: 'com.example.paceup',
+          ),
+          flutter_map.MarkerLayer(
+            markers: markers.map((marker) {
+              final point = marker['point'] as latlong.LatLng?;
+              if (point == null) {
+                return flutter_map.Marker(
+                  point: const latlong.LatLng(0, 0),
+                  width: 0,
+                  height: 0,
+                  child: const SizedBox.shrink(),
+                );
+              }
+
+              final count = marker['count'] as int? ?? 0;
+
+              return flutter_map.Marker(
+                point: point,
+                width: 64,
+                height: 64,
+                child: GestureDetector(
+                  onTap: () => _onFlutterMapMarkerTap(marker),
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: markerColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.border,
+                        width: 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$count',
+                        style: const TextStyle(
+                          color: AppColors.surface,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -523,6 +666,11 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildMap(List<Map<String, dynamic>> markers, Color markerColor) {
+    // Проверяем поддержку платформы - используем flutter_map для macOS
+    if (Platform.isMacOS) {
+      return _buildFlutterMap(markers, markerColor);
+    }
+
     // Обновляем маркеры при изменении данных
     if (_mapboxMap != null && _pointAnnotationManager != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

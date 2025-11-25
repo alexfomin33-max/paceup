@@ -13,16 +13,19 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:http/http.dart' as http;
 import '../../../theme/app_theme.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
+import '../../../config/app_config.dart';
 
 // ────────────────────────── Результат выбора места ──────────────────────────
 /// Класс для передачи координат и адреса выбранного места
@@ -50,6 +53,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
   /// Менеджер аннотаций для центрального маркера
   PointAnnotationManager? _pointAnnotationManager;
+
+  /// Контроллер flutter_map для macOS
+  final flutter_map.MapController _flutterMapController = flutter_map.MapController();
 
   /// Текущие выбранные координаты (обновляются при движении карты)
   LatLng _selectedLocation = const LatLng(56.129057, 40.406635);
@@ -314,23 +320,27 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
       if (coordinates != null) {
         // Перемещаем карту к найденным координатам
-        await _mapboxMap?.flyTo(
-          CameraOptions(
-            center: Point(
-              coordinates: Position(
-                coordinates.longitude,
-                coordinates.latitude,
+        if (Platform.isMacOS) {
+          _flutterMapController.move(coordinates, 14.0);
+        } else {
+          await _mapboxMap?.flyTo(
+            CameraOptions(
+              center: Point(
+                coordinates: Position(
+                  coordinates.longitude,
+                  coordinates.latitude,
+                ),
               ),
             ),
-          ),
-          MapAnimationOptions(duration: 500, startDelay: 0),
-        );
+            MapAnimationOptions(duration: 500, startDelay: 0),
+          );
+          await _updateMarker();
+        }
         setState(() {
           _selectedLocation = coordinates;
           _currentAddress = value;
           _isGeocoding = false;
         });
-        await _updateMarker();
       } else {
         // Адрес не найден, но оставляем введённый текст
         setState(() {
@@ -441,65 +451,112 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         body: Stack(
           children: [
             // ────────────────────────── Карта ──────────────────────────
-            MapWidget(
-              onMapIdleListener: (MapIdleEventData data) async {
-                if (!mounted || _mapboxMap == null) return;
-                final cameraState = await _mapboxMap!.getCameraState();
-                final center = cameraState.center;
-                final newLocation = LatLng(
-                  center.coordinates.lat.toDouble(),
-                  center.coordinates.lng.toDouble(),
-                );
-                setState(() {
-                  _selectedLocation = newLocation;
-                  _currentAddress = null;
-                });
-                await _updateMarker();
-                _updateAddressDebounced(newLocation);
-              },
-              onMapCreated: (MapboxMap mapboxMap) async {
-                _mapboxMap = mapboxMap;
-
-                // Создаем менеджер аннотаций
-                _pointAnnotationManager = await mapboxMap.annotations
-                    .createPointAnnotationManager();
-
-                // Устанавливаем начальную позицию
-                if (widget.initialPosition != null) {
-                  await mapboxMap.flyTo(
-                    CameraOptions(
-                      center: Point(
-                        coordinates: Position(
-                          widget.initialPosition!.longitude,
-                          widget.initialPosition!.latitude,
+            // Используем flutter_map для macOS
+            if (Platform.isMacOS)
+              flutter_map.FlutterMap(
+                mapController: _flutterMapController,
+                options: flutter_map.MapOptions(
+                  initialCenter: _selectedLocation,
+                  initialZoom: 14.0,
+                  minZoom: 3.0,
+                  maxZoom: 18.0,
+                  onMapEvent: (event) {
+                    if (event is flutter_map.MapEventMoveEnd) {
+                      final newLocation = _flutterMapController.camera.center;
+                      setState(() {
+                        _selectedLocation = newLocation;
+                        _currentAddress = null;
+                      });
+                      _updateAddressDebounced(newLocation);
+                    }
+                  },
+                ),
+                children: [
+                  flutter_map.TileLayer(
+                    urlTemplate: AppConfig.mapTilesUrl.replaceAll('{apiKey}', AppConfig.mapTilerApiKey),
+                    userAgentPackageName: 'com.example.paceup',
+                  ),
+                  flutter_map.MarkerLayer(
+                    markers: [
+                      flutter_map.Marker(
+                        point: _selectedLocation,
+                        width: 32,
+                        height: 32,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.brandPrimary,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.surface,
+                              width: 3,
+                            ),
+                          ),
                         ),
                       ),
-                      zoom: 14.0,
-                    ),
-                    MapAnimationOptions(duration: 0, startDelay: 0),
+                    ],
+                  ),
+                ],
+              )
+            else
+              MapWidget(
+                onMapIdleListener: (MapIdleEventData data) async {
+                  if (!mounted || _mapboxMap == null) return;
+                  final cameraState = await _mapboxMap!.getCameraState();
+                  final center = cameraState.center;
+                  final newLocation = LatLng(
+                    center.coordinates.lat.toDouble(),
+                    center.coordinates.lng.toDouble(),
                   );
                   setState(() {
-                    _selectedLocation = widget.initialPosition!;
+                    _selectedLocation = newLocation;
+                    _currentAddress = null;
                   });
-                }
+                  await _updateMarker();
+                  _updateAddressDebounced(newLocation);
+                },
+                onMapCreated: (MapboxMap mapboxMap) async {
+                  _mapboxMap = mapboxMap;
 
-                // Создаем центральный маркер
-                await _updateMarker();
+                  // Создаем менеджер аннотаций
+                  _pointAnnotationManager = await mapboxMap.annotations
+                      .createPointAnnotationManager();
 
-                // Загружаем адрес для текущей позиции
-                _updateAddressDebounced(_selectedLocation);
-              },
-              cameraOptions: CameraOptions(
-                center: Point(
-                  coordinates: Position(
-                    _selectedLocation.longitude,
-                    _selectedLocation.latitude,
+                  // Устанавливаем начальную позицию
+                  if (widget.initialPosition != null) {
+                    await mapboxMap.flyTo(
+                      CameraOptions(
+                        center: Point(
+                          coordinates: Position(
+                            widget.initialPosition!.longitude,
+                            widget.initialPosition!.latitude,
+                          ),
+                        ),
+                        zoom: 14.0,
+                      ),
+                      MapAnimationOptions(duration: 0, startDelay: 0),
+                    );
+                    setState(() {
+                      _selectedLocation = widget.initialPosition!;
+                    });
+                  }
+
+                  // Создаем центральный маркер
+                  await _updateMarker();
+
+                  // Загружаем адрес для текущей позиции
+                  _updateAddressDebounced(_selectedLocation);
+                },
+                cameraOptions: CameraOptions(
+                  center: Point(
+                    coordinates: Position(
+                      _selectedLocation.longitude,
+                      _selectedLocation.latitude,
+                    ),
                   ),
+                  zoom: 14.0,
                 ),
-                zoom: 14.0,
+                styleUri: MapboxStyles.MAPBOX_STREETS,
               ),
-              styleUri: MapboxStyles.MAPBOX_STREETS,
-            ),
 
             // ────────────────────────── Поле ввода адреса сверху ──────────────────────────
             Positioned(
