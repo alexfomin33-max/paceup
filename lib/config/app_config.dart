@@ -84,12 +84,4 @@ class AppConfig {
 
   /// Режим отладки (показывать подробные логи)
   static const bool debugMode = false;
-
-  // ────────────────────────── OneSignal Push Notifications ──────────────────────────
-
-  /// OneSignal App ID для push-уведомлений
-  /// 
-  /// ⚠️ ВАЖНО: Замените на ваш реальный App ID из OneSignal Dashboard
-  /// Получить App ID: https://app.onesignal.com/apps -> Settings -> Keys & IDs
-  static const String oneSignalAppId = 'ec7a2202-bf02-49cd-8eac-4851c04bbde4';
 }
