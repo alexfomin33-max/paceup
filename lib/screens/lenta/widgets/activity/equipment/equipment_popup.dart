@@ -26,6 +26,7 @@ class EquipmentPopup {
     required int activityId,
     required double activityDistance,
     VoidCallback? onEquipmentChanged,
+    Function(al.Equipment)? onEquipmentSelected, // callback для выбора экипировки (для экрана добавления)
   }) {
     final overlay = Overlay.of(context, rootOverlay: true);
     final anchorContext = anchorKey.currentContext;
@@ -76,6 +77,7 @@ class EquipmentPopup {
         activityId: activityId,
         activityDistance: activityDistance,
         onEquipmentChanged: onEquipmentChanged,
+        onEquipmentSelected: onEquipmentSelected,
       ),
     );
 
@@ -96,6 +98,7 @@ class _AnimatedPopup extends StatefulWidget {
   final int activityId;
   final double activityDistance;
   final VoidCallback? onEquipmentChanged;
+  final Function(al.Equipment)? onEquipmentSelected;
 
   const _AnimatedPopup({
     required this.left,
@@ -110,6 +113,7 @@ class _AnimatedPopup extends StatefulWidget {
     required this.activityId,
     required this.activityDistance,
     this.onEquipmentChanged,
+    this.onEquipmentSelected,
   });
 
   @override
@@ -218,6 +222,8 @@ class _AnimatedPopupState extends State<_AnimatedPopup>
                           widget.onEquipmentChanged
                               ?.call(); // вызываем callback
                         },
+                        onEquipmentSelected: widget.onEquipmentSelected,
+                        onDismiss: widget.onDismiss,
                       ),
                     ),
                   ),
@@ -243,6 +249,8 @@ class _PopupContent extends StatefulWidget {
   final int activityId;
   final double activityDistance;
   final VoidCallback? onEquipmentChanged;
+  final Function(al.Equipment)? onEquipmentSelected;
+  final VoidCallback? onDismiss;
 
   const _PopupContent({
     required this.items,
@@ -251,6 +259,8 @@ class _PopupContent extends StatefulWidget {
     required this.activityId,
     required this.activityDistance,
     this.onEquipmentChanged,
+    this.onEquipmentSelected,
+    this.onDismiss,
   });
 
   @override
@@ -366,7 +376,18 @@ class _PopupContentState extends State<_PopupContent> {
   }
 
   /// Заменяет эквип в активности: обновляет activities.equip_id и пересчитывает дистанцию
+  /// Если activityId == 0 (активность еще не создана), просто вызывает onEquipmentSelected
   Future<void> _replaceEquipment(al.Equipment newEquipment) async {
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ОСОБЫЙ СЛУЧАЙ: если активность еще не создана (activityId == 0)
+    // ────────────────────────────────────────────────────────────────
+    // Используем callback для выбора экипировки без вызова API
+    if (widget.activityId == 0) {
+      widget.onEquipmentSelected?.call(newEquipment);
+      widget.onDismiss?.call(); // закрываем попап
+      return;
+    }
+
     if (newEquipment.equipUserId == null) {
       // Если нет equip_user_id — не можем заменить
       return;
