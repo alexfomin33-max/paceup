@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../theme/app_theme.dart';
@@ -30,13 +31,8 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
   String? activity;
   DateTime? date;
   TimeOfDay? time;
-  Set<int> _selectedDistances = {};
-  final List<String> _distances = const [
-    '5 км',
-    '10,5 км',
-    '21,1 км',
-    '42,2 км',
-  ];
+  // ── контроллеры для полей ввода дистанций
+  final List<TextEditingController> _distanceControllers = [];
 
   // чекбоксы
   bool saveTemplate = false;
@@ -71,6 +67,9 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
     nameCtrl.addListener(() => _refresh());
     placeCtrl.addListener(() => _refresh());
     linkCtrl.addListener(() => _refresh());
+    // ── создаём первое поле для ввода дистанции
+    _distanceControllers.add(TextEditingController());
+    _distanceControllers.last.addListener(() => _refresh());
   }
 
   @override
@@ -80,10 +79,23 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
     descCtrl.dispose();
     linkCtrl.dispose();
     templateCtrl.dispose();
+    // ── освобождаем все контроллеры дистанций
+    for (final controller in _distanceControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   void _refresh() => setState(() {});
+
+  // ── добавление нового поля для ввода дистанции
+  void _addDistanceField() {
+    setState(() {
+      final newController = TextEditingController();
+      newController.addListener(() => _refresh());
+      _distanceControllers.add(newController);
+    });
+  }
 
   Future<void> _pickLogo() async {
     final x = await picker.pickImage(source: ImageSource.gallery);
@@ -363,6 +375,39 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
             selectedLocation = LatLng(lat, lng);
           }
 
+          // ── обработка дистанций из шаблона
+          // Очищаем существующие контроллеры (кроме первого, если он пустой)
+          for (final controller in _distanceControllers) {
+            controller.removeListener(() => _refresh());
+            controller.dispose();
+          }
+          _distanceControllers.clear();
+
+          // Парсим дистанции из шаблона (формат: "5 км, 10 км" или просто строка)
+          final distanceStr = template['distance'] as String?;
+          if (distanceStr != null && distanceStr.isNotEmpty) {
+            // Разделяем по запятой и очищаем пробелы
+            final distances = distanceStr
+                .split(',')
+                .map((d) => d.trim())
+                .where((d) => d.isNotEmpty)
+                .toList();
+
+            // Создаём контроллеры для каждой дистанции
+            for (final dist in distances) {
+              final controller = TextEditingController(text: dist);
+              controller.addListener(() => _refresh());
+              _distanceControllers.add(controller);
+            }
+          }
+
+          // Если дистанций нет, создаём одно пустое поле
+          if (_distanceControllers.isEmpty) {
+            final controller = TextEditingController();
+            controller.addListener(() => _refresh());
+            _distanceControllers.add(controller);
+          }
+
           templateCtrl.text = templateName;
         });
       } else {
@@ -428,12 +473,13 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
       fields['event_date'] = _fmtDate(date!);
       fields['event_time'] = _fmtTime(time!);
       fields['description'] = descCtrl.text.trim();
-      // Добавляем выбранные дистанции (через запятую)
-      if (_selectedDistances.isNotEmpty) {
-        final selectedDistanceValues = _selectedDistances
-            .map((index) => _distances[index])
-            .toList();
-        fields['distance'] = selectedDistanceValues.join(', ');
+      // ── собираем введённые дистанции (только непустые, через запятую)
+      final distanceValues = _distanceControllers
+          .map((ctrl) => ctrl.text.trim())
+          .where((value) => value.isNotEmpty)
+          .toList();
+      if (distanceValues.isNotEmpty) {
+        fields['distance'] = distanceValues.join(', ');
       }
       // Добавляем ссылку на страницу мероприятия
       if (linkCtrl.text.trim().isNotEmpty) {
@@ -1221,7 +1267,7 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
 
                   // ---------- Дистанция ----------
                   Text(
-                    'Дистанция',
+                    'Дистанция (в метрах)',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -1229,18 +1275,83 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  _ChipsRow(
-                    items: _distances,
-                    selectedIndices: _selectedDistances,
-                    onSelected: (i) {
-                      setState(() {
-                        if (_selectedDistances.contains(i)) {
-                          _selectedDistances.remove(i);
-                        } else {
-                          _selectedDistances.add(i);
-                        }
-                      });
-                    },
+                  // ── динамические поля для ввода дистанций
+                  ...List.generate(_distanceControllers.length, (index) {
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        bottom: index < _distanceControllers.length - 1
+                            ? 12
+                            : 0,
+                      ),
+                      child: Builder(
+                        builder: (context) => TextField(
+                          controller: _distanceControllers[index],
+                          keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.next,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          style: AppTextStyles.h14w4.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Введите дистанцию',
+                            hintStyle: AppTextStyles.h14w4Place,
+                            filled: true,
+                            fillColor: AppColors.getSurfaceColor(context),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 17,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              borderSide: BorderSide(
+                                color: AppColors.getBorderColor(context),
+                                width: 1,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              borderSide: BorderSide(
+                                color: AppColors.getBorderColor(context),
+                                width: 1,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              borderSide: BorderSide(
+                                color: AppColors.getBorderColor(context),
+                                width: 1,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 12),
+                  // ── кнопка "добавить ещё"
+                  GestureDetector(
+                    onTap: _addDistanceField,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.add_circled,
+                          size: 20,
+                          color: AppColors.brandPrimary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'добавить ещё',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.brandPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -1499,59 +1610,6 @@ class _MediaTile extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// ——— Виджет для выбора дистанции (чипсы) ———
-class _ChipsRow extends StatelessWidget {
-  final List<String> items;
-  final Set<int> selectedIndices;
-  final ValueChanged<int> onSelected;
-  const _ChipsRow({
-    required this.items,
-    required this.selectedIndices,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: List.generate(items.length, (i) {
-        final sel = selectedIndices.contains(i);
-        return GestureDetector(
-          onTap: () => onSelected(i),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: sel
-                  ? AppColors.brandPrimary
-                  : AppColors.getSurfaceColor(context),
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(
-                color: sel
-                    ? AppColors.brandPrimary
-                    : AppColors.getBorderColor(context),
-              ),
-            ),
-            child: Text(
-              items[i],
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: sel
-                    ? (Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.surface
-                          : AppColors.getSurfaceColor(context))
-                    : AppColors.getTextPrimaryColor(context),
-              ),
-            ),
-          ),
-        );
-      }),
     );
   }
 }
