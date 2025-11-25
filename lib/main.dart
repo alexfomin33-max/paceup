@@ -11,9 +11,6 @@ import 'providers/services/cache_provider.dart';
 import 'providers/theme_provider.dart';
 import 'utils/db_optimizer.dart';
 import 'utils/image_cache_manager.dart';
-import 'service/onesignal_service.dart';
-import 'screens/lenta/state/chat/personal_chat_screen.dart';
-import 'widgets/transparent_route.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -67,55 +64,6 @@ void main() async {
     debugPrint('❌ Ошибка инициализации Drift Database: $e');
   }
 
-  // ────────────────────────── OneSignal Push Notifications ──────────────────────────
-  // Инициализируем OneSignal для push-уведомлений
-  debugPrint('🔔 Инициализация OneSignal для push-уведомлений...');
-  
-  final onesignal = OneSignalService();
-  onesignal.initialize(
-    onNotificationOpened: (additionalData) {
-      // Обрабатываем открытие уведомления о новом сообщении
-      debugPrint('🔔 Уведомление открыто с данными: $additionalData');
-      
-      // Если это уведомление о сообщении в чате
-      if (additionalData['type'] == 'chat_message') {
-        final chatId = additionalData['chat_id'];
-        final userId = additionalData['user_id'];
-        final userName = additionalData['user_name'] as String? ?? 'Пользователь';
-        final userAvatar = additionalData['user_avatar'] as String? ?? '';
-        
-        // Преобразуем в int, если пришли как строки
-        final chatIdInt = chatId is int ? chatId : (chatId is String ? int.tryParse(chatId) : null);
-        final userIdInt = userId is int ? userId : (userId is String ? int.tryParse(userId) : null);
-        
-        if (chatIdInt != null && userIdInt != null) {
-          // Если приложение уже запущено, выполняем навигацию сразу
-          if (_globalNavigatorKey?.currentState != null) {
-            _globalNavigatorKey!.currentState!.push(
-              TransparentPageRoute(
-                builder: (_) => PersonalChatScreen(
-                  chatId: chatIdInt,
-                  userId: userIdInt,
-                  userName: userName,
-                  userAvatar: userAvatar,
-                ),
-              ),
-            );
-          } else {
-            // Иначе сохраняем данные для навигации после инициализации
-            _pendingChatNavigation = {
-              'chatId': chatIdInt,
-              'userId': userIdInt,
-              'userName': userName,
-              'userAvatar': userAvatar,
-            };
-          }
-        }
-      }
-    },
-  ).catchError((e) {
-    debugPrint('❌ Ошибка инициализации OneSignal: $e');
-  });
 
   // ────────────────────────── Riverpod ──────────────────────────
   // ProviderScope обеспечивает доступ к провайдерам во всём приложении
@@ -124,13 +72,6 @@ void main() async {
   );
 }
 
-// ────────────────────────── Глобальные переменные для навигации из уведомлений ──────────────────────────
-/// Данные для навигации к чату из push-уведомления
-/// Используется когда уведомление открывается до полной инициализации приложения
-Map<String, dynamic>? _pendingChatNavigation;
-
-/// Глобальный ключ навигатора для обработки уведомлений, когда приложение уже запущено
-GlobalKey<NavigatorState>? _globalNavigatorKey;
 
 class PaceUpApp extends StatefulWidget {
   const PaceUpApp({super.key});
@@ -145,39 +86,6 @@ class _PaceUpAppState extends State<PaceUpApp> {
   @override
   void initState() {
     super.initState();
-    
-    // Сохраняем глобальный ключ навигатора для обработки уведомлений
-    _globalNavigatorKey = _navigatorKey;
-    
-    // ────────── Обработка отложенной навигации из push-уведомления ──────────
-    // Если уведомление было открыто до инициализации приложения,
-    // выполняем навигацию после первого кадра
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_pendingChatNavigation != null && mounted) {
-        final chatId = _pendingChatNavigation!['chatId'] as int;
-        final userId = _pendingChatNavigation!['userId'] as int;
-        final userName = _pendingChatNavigation!['userName'] as String;
-        final userAvatar = _pendingChatNavigation!['userAvatar'] as String;
-        
-        // Используем Future.microtask для навигации после полной инициализации
-        Future.microtask(() {
-          if (mounted && _navigatorKey.currentState != null) {
-            _navigatorKey.currentState?.push(
-              TransparentPageRoute(
-                builder: (_) => PersonalChatScreen(
-                  chatId: chatId,
-                  userId: userId,
-                  userName: userName,
-                  userAvatar: userAvatar,
-                ),
-              ),
-            );
-          }
-        });
-        
-        _pendingChatNavigation = null;
-      }
-    });
   }
 
   @override
