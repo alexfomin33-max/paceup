@@ -8,7 +8,7 @@ import '../../../service/api_service.dart';
 import '../../../service/auth_service.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/transparent_route.dart';
-import 'edit_event_screen.dart';
+import 'edit_official_event_screen.dart';
 
 /// Детальная страница официального события (топ события)
 class OfficialEventDetailScreen extends StatefulWidget {
@@ -148,7 +148,7 @@ class _OfficialEventDetailScreenState
 
     final result = await Navigator.of(context).push<dynamic>(
       TransparentPageRoute(
-        builder: (_) => EditEventScreen(eventId: widget.eventId),
+        builder: (_) => EditOfficialEventScreen(eventId: widget.eventId),
       ),
     );
 
