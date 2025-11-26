@@ -39,6 +39,7 @@ class EditPostScreen extends ConsumerStatefulWidget {
   /// Текст и изображения поста на момент открытия экрана
   final String initialText;
   final List<String> initialImageUrls;
+  final int initialVisibility;
 
   const EditPostScreen({
     super.key,
@@ -46,6 +47,7 @@ class EditPostScreen extends ConsumerStatefulWidget {
     required this.postId,
     required this.initialText,
     required this.initialImageUrls,
+    this.initialVisibility = 0,
   });
 
   @override
@@ -74,6 +76,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
   bool _canSave = false;
 
   // Состояние видимости: 0 = Все пользователи, 1 = Только подписчики, 2 = Только Вы
+  late final int _initialVisibility;
   int _selectedVisibility = 0;
 
   @override
@@ -81,6 +84,8 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     super.initState();
     _descriptionController = TextEditingController(text: widget.initialText);
     _descriptionFocusNode = FocusNode();
+    _initialVisibility = widget.initialVisibility.clamp(0, 2);
+    _selectedVisibility = _initialVisibility;
     _descriptionController.addListener(_updateSaveState);
     _descriptionFocusNode.addListener(_updateSaveState);
     _updateSaveState();
@@ -111,7 +116,10 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
 
     final newFilesAdded = _newImages.isNotEmpty;
 
-    return textChanged || !sameExisting || newFilesAdded;
+    // Проверяем изменение видимости поста
+    final visibilityChanged = _selectedVisibility != _initialVisibility;
+
+    return textChanged || !sameExisting || newFilesAdded || visibilityChanged;
   }
 
   /// Обновляет состояние доступности кнопки сохранения
@@ -521,6 +529,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                 if (index != -1) {
                   setState(() {
                     _selectedVisibility = index;
+                    _updateSaveState();
                   });
                 }
               }

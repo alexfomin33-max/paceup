@@ -1,5 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../theme/text_styles.dart';
 import '../../../../models/market_models.dart' show Gender;
 import '../../../../widgets/primary_button.dart';
 
@@ -14,8 +16,8 @@ class SaleThingsContent extends StatefulWidget {
 class _SaleThingsContentState extends State<SaleThingsContent> {
   final titleCtrl = TextEditingController();
   final priceCtrl = TextEditingController();
-  final cityFromCtrl = TextEditingController();
-  final cityToCtrl = TextEditingController();
+  // ── контроллеры для полей ввода городов передачи
+  final List<TextEditingController> _cityControllers = [];
   final descCtrl = TextEditingController();
 
   final List<String> _categories = const [
@@ -33,13 +35,32 @@ class _SaleThingsContentState extends State<SaleThingsContent> {
       titleCtrl.text.trim().isNotEmpty && priceCtrl.text.trim().isNotEmpty;
 
   @override
+  void initState() {
+    super.initState();
+    // ── создаём первое поле для ввода города передачи
+    _cityControllers.add(TextEditingController());
+    _cityControllers.last.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     titleCtrl.dispose();
     priceCtrl.dispose();
-    cityFromCtrl.dispose();
-    cityToCtrl.dispose();
+    // ── освобождаем все контроллеры городов
+    for (final controller in _cityControllers) {
+      controller.dispose();
+    }
     descCtrl.dispose();
     super.dispose();
+  }
+
+  // ── добавление нового поля для ввода города передачи
+  void _addCityField() {
+    setState(() {
+      final newController = TextEditingController();
+      newController.addListener(() => setState(() {}));
+      _cityControllers.add(newController);
+    });
   }
 
   void _submit() {
@@ -94,24 +115,81 @@ class _SaleThingsContentState extends State<SaleThingsContent> {
           _PriceField(controller: priceCtrl, onChanged: (_) => setState(() {})),
           const SizedBox(height: 20),
 
-          Row(
-            children: [
-              Expanded(
-                child: _LabeledTextField(
-                  label: 'Город передачи',
-                  hint: 'Населенный пункт',
-                  controller: cityFromCtrl,
+          // ── динамические поля для ввода городов передачи (в два столбца)
+          const _SmallLabel('Город передачи'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: List.generate(_cityControllers.length, (index) {
+              return SizedBox(
+                width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
+                child: TextFormField(
+                  controller: _cityControllers[index],
+                  onChanged: (_) => setState(() {}),
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Населенный пункт',
+                    hintStyle: AppTextStyles.h14w4Place.copyWith(
+                      color: AppColors.getTextPlaceholderColor(context),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.getSurfaceColor(context),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 17,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      borderSide: BorderSide(
+                        color: AppColors.getBorderColor(context),
+                        width: 1,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      borderSide: BorderSide(
+                        color: AppColors.getBorderColor(context),
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      borderSide: BorderSide(
+                        color: AppColors.getBorderColor(context),
+                        width: 1,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _LabeledTextField(
-                  label: 'Город передачи',
-                  hint: 'Населенный пункт',
-                  controller: cityToCtrl,
+              );
+            }),
+          ),
+          const SizedBox(height: 12),
+          // ── кнопка "добавить ещё"
+          GestureDetector(
+            onTap: _addCityField,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  CupertinoIcons.add_circled,
+                  size: 20,
+                  color: AppColors.brandPrimary,
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Text(
+                  'добавить ещё',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.brandPrimary,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
 
@@ -138,13 +216,6 @@ class _SaleThingsContentState extends State<SaleThingsContent> {
 
 /// ——— Локальные UI-компоненты ———
 
-const TextStyle _fieldText = TextStyle(fontFamily: 'Inter', fontSize: 14);
-const TextStyle _hintText = TextStyle(
-  fontFamily: 'Inter',
-  fontSize: 14,
-  color: AppColors.textPlaceholder,
-);
-
 class _SmallLabel extends StatelessWidget {
   final String text;
   const _SmallLabel(this.text);
@@ -153,11 +224,9 @@ class _SmallLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: TextStyle(
-        color: AppColors.getTextPrimaryColor(context),
-        fontSize: 14,
+      style: const TextStyle(
+        fontSize: 15,
         fontWeight: FontWeight.w500,
-        fontFamily: 'Inter',
       ),
     );
   }
@@ -183,33 +252,48 @@ class _LabeledTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SmallLabel(label),
-        const SizedBox(height: 8),
+        if (label.isNotEmpty) ...[
+          _SmallLabel(label),
+          const SizedBox(height: 8),
+        ],
         TextFormField(
           controller: controller,
           maxLines: maxLines,
           onChanged: onChanged,
-          style: _fieldText,
+          style: AppTextStyles.h14w4.copyWith(
+            color: AppColors.getTextPrimaryColor(context),
+          ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: _hintText,
+            hintStyle: AppTextStyles.h14w4Place.copyWith(
+              color: AppColors.getTextPlaceholderColor(context),
+            ),
             filled: true,
             fillColor: AppColors.getSurfaceColor(context),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 10,
+              horizontal: 12,
+              vertical: 17,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.outline),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
           ),
         ),
@@ -238,45 +322,62 @@ class _DropdownField extends StatelessWidget {
       children: [
         _SmallLabel(label),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: value,
-          isExpanded: true,
-          onChanged: onChanged,
-          style: _fieldText,
-            dropdownColor: AppColors.getSurfaceColor(context),
-          menuMaxHeight: 300,
-          borderRadius: BorderRadius.circular(AppRadius.md),
+        InputDecorator(
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.getSurfaceColor(context),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 10,
+              horizontal: 12,
+              vertical: 4,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.outline),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
           ),
-          items: items.map((o) {
-            return DropdownMenuItem<String>(
-              value: o,
-              child: Text(
-                o,
-                style: _fieldText.copyWith(
-                  fontWeight: FontWeight.w400,
-                ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              onChanged: onChanged,
+              dropdownColor: AppColors.getSurfaceColor(context),
+              menuMaxHeight: 300,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              icon: Icon(
+                Icons.arrow_drop_down,
+                color: AppColors.getIconSecondaryColor(context),
               ),
-            );
-          }).toList(),
+              style: AppTextStyles.h14w4.copyWith(
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+              items: items.map((o) {
+                return DropdownMenuItem<String>(
+                  value: o,
+                  child: Text(
+                    o,
+                    style: AppTextStyles.h14w4,
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
         ),
       ],
     );
@@ -303,33 +404,40 @@ class _PriceField extends StatelessWidget {
                 controller: controller,
                 keyboardType: TextInputType.number,
                 onChanged: onChanged,
-                style: _fieldText,
+                style: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
                 decoration: InputDecoration(
                   hintText: '0',
-                  hintStyle: _hintText,
+                  hintStyle: AppTextStyles.h14w4Place.copyWith(
+                    color: AppColors.getTextPlaceholderColor(context),
+                  ),
                   filled: true,
                   fillColor: AppColors.getSurfaceColor(context),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 10,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 17,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(AppRadius.sm),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderSide: BorderSide(
+                      color: AppColors.getBorderColor(context),
+                      width: 1,
                     ),
-                    borderSide: BorderSide(color: AppColors.getBorderColor(context)),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(AppRadius.sm),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderSide: BorderSide(
+                      color: AppColors.getBorderColor(context),
+                      width: 1,
                     ),
-                    borderSide: BorderSide(color: AppColors.getBorderColor(context)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(AppRadius.sm),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderSide: BorderSide(
+                      color: AppColors.getBorderColor(context),
+                      width: 1,
                     ),
-                    borderSide: BorderSide(color: AppColors.outline),
                   ),
                 ),
               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../theme/text_styles.dart';
 import '../../../../models/market_models.dart' show Gender;
 import '../../../../widgets/primary_button.dart';
 
@@ -107,13 +108,6 @@ class _SaleSlotsContentState extends State<SaleSlotsContent> {
 
 /// ——— Локальные UI-компоненты ———
 
-const TextStyle _fieldText = TextStyle(fontFamily: 'Inter', fontSize: 14);
-const TextStyle _hintText = TextStyle(
-  fontFamily: 'Inter',
-  fontSize: 14,
-  color: AppColors.textPlaceholder,
-);
-
 class _SmallLabel extends StatelessWidget {
   final String text;
   const _SmallLabel(this.text);
@@ -122,11 +116,9 @@ class _SmallLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: TextStyle(
-        color: AppColors.getTextPrimaryColor(context),
-        fontSize: 14,
+      style: const TextStyle(
+        fontSize: 15,
         fontWeight: FontWeight.w500,
-        fontFamily: 'Inter',
       ),
     );
   }
@@ -158,27 +150,40 @@ class _LabeledTextField extends StatelessWidget {
           controller: controller,
           maxLines: maxLines,
           onChanged: onChanged,
-          style: _fieldText,
+          style: AppTextStyles.h14w4.copyWith(
+            color: AppColors.getTextPrimaryColor(context),
+          ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: _hintText,
+            hintStyle: AppTextStyles.h14w4Place.copyWith(
+              color: AppColors.getTextPlaceholderColor(context),
+            ),
             filled: true,
             fillColor: AppColors.getSurfaceColor(context),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 10,
+              horizontal: 12,
+              vertical: 17,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.outline),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
             ),
           ),
         ),
@@ -207,33 +212,40 @@ class _PriceField extends StatelessWidget {
                 controller: controller,
                 keyboardType: TextInputType.number,
                 onChanged: onChanged,
-                style: _fieldText,
+                style: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
                 decoration: InputDecoration(
                   hintText: '0',
-                  hintStyle: _hintText,
+                  hintStyle: AppTextStyles.h14w4Place.copyWith(
+                    color: AppColors.getTextPlaceholderColor(context),
+                  ),
                   filled: true,
                   fillColor: AppColors.getSurfaceColor(context),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 10,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 17,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(AppRadius.sm),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderSide: BorderSide(
+                      color: AppColors.getBorderColor(context),
+                      width: 1,
                     ),
-                    borderSide: BorderSide(color: AppColors.getBorderColor(context)),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(AppRadius.sm),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderSide: BorderSide(
+                      color: AppColors.getBorderColor(context),
+                      width: 1,
                     ),
-                    borderSide: BorderSide(color: AppColors.getBorderColor(context)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(AppRadius.sm),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderSide: BorderSide(
+                      color: AppColors.getBorderColor(context),
+                      width: 1,
                     ),
-                    borderSide: BorderSide(color: AppColors.outline),
                   ),
                 ),
               ),

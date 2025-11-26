@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../theme/text_styles.dart';
 import '../../../../widgets/segmented_pill.dart';
 import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
 
@@ -100,7 +101,7 @@ class _SearchPrefsPageState extends State<SearchPrefsPage> {
 
             // Поисковое поле
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: _SearchField(
                 controller: _controller,
                 focusNode: _focus,
@@ -165,50 +166,51 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 44,
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        onChanged: onChanged,
-        cursorColor: AppColors.getTextSecondaryColor(context),
-        style: const TextStyle(fontFamily: 'Inter', fontSize: 16),
-        decoration: InputDecoration(
-          prefixIcon: Icon(
-            CupertinoIcons.search,
-            size: 18,
-            color: AppColors.getTextSecondaryColor(context),
+    return TextField(
+      controller: controller,
+      focusNode: focusNode,
+      onChanged: onChanged,
+      cursorColor: AppColors.getTextSecondaryColor(context),
+      textInputAction: TextInputAction.search,
+      style: AppTextStyles.h14w4.copyWith(
+        color: AppColors.getTextPrimaryColor(context),
+      ),
+      decoration: InputDecoration(
+        prefixIcon: Icon(
+          CupertinoIcons.search,
+          size: 18,
+          color: AppColors.getIconSecondaryColor(context),
+        ),
+        isDense: true,
+        filled: true,
+        fillColor: AppColors.getSurfaceColor(context),
+        hintText: hintText,
+        hintStyle: AppTextStyles.h14w4Place.copyWith(
+          color: AppColors.getTextPlaceholderColor(context),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 17,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
           ),
-          isDense: true,
-          filled: true,
-          fillColor: AppColors.getSurfaceColor(context),
-          hintText: hintText,
-          hintStyle: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 15,
-            color: AppColors.getTextPlaceholderColor(context),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-          border: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 0.7,
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 0.7,
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: AppColors.getOutlineColor(context),
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
           ),
         ),
       ),

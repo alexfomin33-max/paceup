@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../models/chat_user.dart';
 import '../../../../providers/chat/users_search_provider.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../theme/text_styles.dart';
 import '../../../../widgets/app_bar.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
 import '../../../../widgets/transparent_route.dart';
@@ -47,7 +48,7 @@ class _StartChatScreenState extends ConsumerState<StartChatScreen> {
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
       final query = _searchController.text.trim();
       final notifier = ref.read(usersSearchProvider.notifier);
-      
+
       if (query.isEmpty) {
         // Если запрос пустой, загружаем подписчиков
         notifier.loadSubscribedUsers();
@@ -70,7 +71,7 @@ class _StartChatScreenState extends ConsumerState<StartChatScreen> {
           children: [
             // ─── Поле поиска ───
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+              padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
               child: _SearchField(
                 controller: _searchController,
                 hintText: 'Поиск пользователей',
@@ -87,7 +88,7 @@ class _StartChatScreenState extends ConsumerState<StartChatScreen> {
                 onLoadMore: () {
                   final query = _searchController.text.trim();
                   final notifier = ref.read(usersSearchProvider.notifier);
-                  
+
                   if (query.isEmpty) {
                     notifier.loadMoreSubscribedUsers();
                   } else {
@@ -112,54 +113,49 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 44,
-      child: TextField(
-        controller: controller,
-        cursorColor: AppColors.getTextPrimaryColor(context),
-        style: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 16,
-          color: AppColors.getTextPrimaryColor(context),
+    return TextField(
+      controller: controller,
+      cursorColor: AppColors.getTextSecondaryColor(context),
+      textInputAction: TextInputAction.search,
+      style: AppTextStyles.h14w4.copyWith(
+        color: AppColors.getTextPrimaryColor(context),
+      ),
+      decoration: InputDecoration(
+        prefixIcon: Icon(
+          CupertinoIcons.search,
+          size: 18,
+          color: AppColors.getIconSecondaryColor(context),
         ),
-        decoration: InputDecoration(
-          prefixIcon: Icon(
-            CupertinoIcons.search,
-            size: 18,
-            color: AppColors.getIconSecondaryColor(context),
+        isDense: true,
+        filled: true,
+        fillColor: AppColors.getSurfaceColor(context),
+        hintText: hintText,
+        hintStyle: AppTextStyles.h14w4Place.copyWith(
+          color: AppColors.getTextPlaceholderColor(context),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 17,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
           ),
-          isDense: true,
-          filled: true,
-          fillColor: AppColors.getSurfaceMutedColor(context),
-          hintText: hintText,
-          hintStyle: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 15,
-            color: AppColors.getTextPlaceholderColor(context),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-          border: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 0.7,
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 0.7,
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkBorder
-                  : AppColors.outline,
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.xs),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
           ),
         ),
       ),
@@ -263,9 +259,7 @@ class _PeopleList extends StatelessWidget {
           const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(16),
-              child: Center(
-                child: CupertinoActivityIndicator(),
-              ),
+              child: Center(child: CupertinoActivityIndicator()),
             ),
           )
         else if (hasMore && users.isNotEmpty)
@@ -317,10 +311,7 @@ class _RowTile extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: () async {
         // Открываем персональный чат
-        final result = await Navigator.of(
-          context,
-          rootNavigator: true,
-        ).push(
+        final result = await Navigator.of(context, rootNavigator: true).push(
           TransparentPageRoute(
             builder: (_) => PersonalChatScreen(
               chatId: 0, // Новый чат, будет создан на сервере
@@ -412,19 +403,17 @@ class _RowTile extends StatelessWidget {
                 color: AppColors.brandPrimary,
               ),
               onPressed: () async {
-                final result = await Navigator.of(
-                  context,
-                  rootNavigator: true,
-                ).push(
-                  TransparentPageRoute(
-                    builder: (_) => PersonalChatScreen(
-                      chatId: 0,
-                      userId: user.id,
-                      userName: user.fullName,
-                      userAvatar: user.avatar,
-                    ),
-                  ),
-                );
+                final result = await Navigator.of(context, rootNavigator: true)
+                    .push(
+                      TransparentPageRoute(
+                        builder: (_) => PersonalChatScreen(
+                          chatId: 0,
+                          userId: user.id,
+                          userName: user.fullName,
+                          userAvatar: user.avatar,
+                        ),
+                      ),
+                    );
                 if (result == true && context.mounted) {
                   Navigator.of(context).pop(true);
                 }
