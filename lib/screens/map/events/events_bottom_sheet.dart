@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/transparent_route.dart';
 import 'event_detail_screen.dart';
+import 'official_event_detail_screen.dart';
 
 /// Каркас bottom sheet для вкладки «События».
 class EventsBottomSheet extends StatelessWidget {
@@ -305,6 +306,9 @@ class EventsListFromApi extends StatelessWidget {
         final date = event['date'] as String? ?? '';
         final participantsCount = event['participants_count'] as int? ?? 0;
         final subtitle = '$date  ·  Участников: $participantsCount';
+        // Проверяем, является ли событие официальным (топ событием)
+        final registrationLink = event['registration_link'] as String? ?? '';
+        final isOfficialEvent = registrationLink.isNotEmpty;
 
         return eventCard(
           logoUrl: logoUrl,
@@ -314,7 +318,9 @@ class EventsListFromApi extends StatelessWidget {
               ? () async {
                   final result = await Navigator.of(context).push<dynamic>(
                     TransparentPageRoute(
-                      builder: (_) => EventDetailScreen(eventId: eventId),
+                      builder: (_) => isOfficialEvent
+                          ? OfficialEventDetailScreen(eventId: eventId)
+                          : EventDetailScreen(eventId: eventId),
                     ),
                   );
                   // Если событие было удалено, закрываем bottom sheet с результатом
