@@ -665,6 +665,8 @@ class _EditClubScreenState extends State<EditClubScreen> {
                               logoUrl = null;
                               logoFilename = null;
                             }),
+                            width: 90,
+                            height: 90,
                           ),
                         ],
                       ),
@@ -682,18 +684,17 @@ class _EditClubScreenState extends State<EditClubScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            SizedBox(
+                            _MediaTile(
+                              file: backgroundFile,
+                              url: backgroundUrl,
+                              onPick: _pickBackground,
+                              onRemove: () => setState(() {
+                                backgroundFile = null;
+                                backgroundUrl = null;
+                                backgroundFilename = null;
+                              }),
+                              width: 207, // Ширина для соотношения 2.3:1 (90 * 2.3)
                               height: 90,
-                              child: _MediaTile(
-                                file: backgroundFile,
-                                url: backgroundUrl,
-                                onPick: _pickBackground,
-                                onRemove: () => setState(() {
-                                  backgroundFile = null;
-                                  backgroundUrl = null;
-                                  backgroundFilename = null;
-                                }),
-                              ),
                             ),
                           ],
                         ),
@@ -1238,12 +1239,16 @@ class _MediaTile extends StatelessWidget {
   final String? url;
   final VoidCallback onPick;
   final VoidCallback onRemove;
+  final double width;
+  final double height;
 
   const _MediaTile({
     required this.file,
     this.url,
     required this.onPick,
     required this.onRemove,
+    required this.width,
+    required this.height,
   });
 
   @override
@@ -1260,11 +1265,11 @@ class _MediaTile extends StatelessWidget {
               child: Image.file(
                 file!,
                 fit: BoxFit.cover,
-                width: 90,
-                height: 90,
+                width: width,
+                height: height,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  width: 90,
-                  height: 90,
+                  width: width,
+                  height: height,
                   color: AppColors.getBackgroundColor(context),
                   child: Icon(
                     CupertinoIcons.photo,
@@ -1316,18 +1321,18 @@ class _MediaTile extends StatelessWidget {
               child: Builder(
                 builder: (context) {
                   final dpr = MediaQuery.of(context).devicePixelRatio;
-                  final side = (90 * dpr).round();
+                  final side = (width * dpr).round();
                   return CachedNetworkImage(
                     imageUrl: url!,
-                    width: 90,
-                    height: 90,
+                    width: width,
+                    height: height,
                     fit: BoxFit.cover,
                     fadeInDuration: const Duration(milliseconds: 120),
                     memCacheWidth: side,
                     maxWidthDiskCache: side,
                     errorWidget: (_, __, ___) => Container(
-                      width: 90,
-                      height: 90,
+                      width: width,
+                      height: height,
                       color: AppColors.getBackgroundColor(context),
                       child: Icon(
                         CupertinoIcons.photo,
@@ -1374,8 +1379,8 @@ class _MediaTile extends StatelessWidget {
       builder: (context) => GestureDetector(
         onTap: onPick,
         child: Container(
-          width: 90,
-          height: 90,
+          width: width,
+          height: height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             color: AppColors.getSurfaceColor(context),

@@ -99,23 +99,25 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     if (_clubData == null) return;
     final dpr = MediaQuery.of(context).devicePixelRatio;
 
-    // Логотип в шапке: 80×80
+    // Логотип в шапке: 90×90
     final logoUrl = _clubData!['logo_url'] as String?;
     if (logoUrl != null && logoUrl.isNotEmpty) {
-      final w = (80 * dpr).round();
-      final h = (80 * dpr).round();
+      final w = (90 * dpr).round();
+      final h = (90 * dpr).round();
       precacheImage(
         CachedNetworkImageProvider(logoUrl, maxWidth: w, maxHeight: h),
         context,
       );
     }
 
-    // Фоновая картинка (cover 170px)
+    // Фоновая картинка (соотношение сторон 2.3:1)
     final backgroundUrl = _clubData!['background_url'] as String?;
     if (backgroundUrl != null && backgroundUrl.isNotEmpty) {
       final screenW = MediaQuery.of(context).size.width;
+      final calculatedHeight =
+          screenW / 2.3; // Вычисляем высоту по соотношению 2.3:1
       final targetW = (screenW * dpr).round();
-      final targetH = (170 * dpr).round();
+      final targetH = (calculatedHeight * dpr).round();
       precacheImage(
         CachedNetworkImageProvider(
           backgroundUrl,
@@ -275,12 +277,12 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
   }
 
   Widget _vDivider() => Builder(
-        builder: (context) => Container(
-          width: 1,
-          height: 24,
-          color: AppColors.getBorderColor(context),
-        ),
-      );
+    builder: (context) => Container(
+      width: 1,
+      height: 24,
+      color: AppColors.getBorderColor(context),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -346,114 +348,123 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
               SliverToBoxAdapter(
                 child: Builder(
                   builder: (context) => Container(
-                    color: AppColors
-                        .getSurfaceColor(
-                          context,
-                        ), // Цвет полоски для нижней половины логотипа
+                    color: AppColors.getSurfaceColor(
+                      context,
+                    ), // Цвет полоски для нижней половины логотипа
                     padding: const EdgeInsets.only(
-                      bottom: 41,
+                      bottom: 46,
                     ), // Место для нижней половины логотипа с обводкой
                     child: Stack(
-                    clipBehavior: Clip
-                        .none, // Разрешаем отображение элементов за пределами Stack
-                    children: [
-                      // Cover изображение (если есть)
-                      if (backgroundUrl.isNotEmpty)
-                        _BackgroundImage(url: backgroundUrl)
-                      else
-                        Builder(
-                          builder: (context) => Container(
-                            width: double.infinity,
-                            height: 170,
-                            color: AppColors.getBorderColor(context),
+                      clipBehavior: Clip
+                          .none, // Разрешаем отображение элементов за пределами Stack
+                      children: [
+                        // Cover изображение (если есть)
+                        if (backgroundUrl.isNotEmpty)
+                          _BackgroundImage(url: backgroundUrl)
+                        else
+                          Builder(
+                            builder: (context) {
+                              final screenW = MediaQuery.of(context).size.width;
+                              final calculatedHeight =
+                                  screenW /
+                                  2.3; // Вычисляем высоту по соотношению 2.3:1
+                              return Container(
+                                width: double.infinity,
+                                height: calculatedHeight,
+                                color: AppColors.getBorderColor(context),
+                              );
+                            },
                           ),
-                        ),
-                      // Верхние кнопки
-                      SafeArea(
-                        bottom: false,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          child: Row(
-                            children: [
-                              _CircleIconBtn(
-                                icon: CupertinoIcons.back,
-                                semantic: 'Назад',
-                                onTap: () => Navigator.of(context).maybePop(),
-                              ),
-                              const Spacer(),
-                              if (_canEdit)
-                                _CircleIconBtn(
-                                  icon: CupertinoIcons.pencil,
-                                  semantic: 'Редактировать',
-                                  onTap: () async {
-                                    // Переходим на экран редактирования клуба
-                                    final result = await Navigator.of(context)
-                                        .push(
-                                          TransparentPageRoute(
-                                            builder: (_) => EditClubScreen(
-                                              clubId: widget.clubId,
-                                            ),
-                                          ),
-                                        );
-                                    // Если редактирование прошло успешно, обновляем данные
-                                    if (result == true && mounted) {
-                                      _loadClub();
-                                    }
-                                    // Если клуб был удалён, возвращаемся назад с результатом
-                                    if (result == 'deleted' && mounted) {
-                                      Navigator.of(context).pop('deleted');
-                                    }
-                                  },
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      // Логотип наполовину на фоне (позиционирован внизу фона)
-                      Positioned(
-                        left: 12,
-                        bottom:
-                            -41, // Половина логотипа с обводкой (82/2 = 41) выходит за границу фона
-                        child: Builder(
-                          builder: (context) => Container(
-                            width:
-                                82, // 80 + 1*2 (логотип + обводка с двух сторон)
-                            height: 82,
-                            decoration: BoxDecoration(
-                              color: AppColors.getSurfaceColor(context),
-                              shape: BoxShape.circle,
+                        // Верхние кнопки
+                        SafeArea(
+                          bottom: false,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
                             ),
-                            padding: const EdgeInsets.all(1), // Толщина обводки
-                            child: ClipOval(
-                              child: logoUrl.isNotEmpty
-                                  ? _HeaderLogo(url: logoUrl)
-                                  : Builder(
-                                      builder: (context) => Container(
-                                        width: 80,
-                                        height: 80,
-                                        decoration: BoxDecoration(
-                                          color:
-                                              AppColors.getBorderColor(context),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          Icons.group,
-                                          size: 12,
-                                          color: AppColors.getIconSecondaryColor(
-                                            context,
+                            child: Row(
+                              children: [
+                                _CircleIconBtn(
+                                  icon: CupertinoIcons.back,
+                                  semantic: 'Назад',
+                                  onTap: () => Navigator.of(context).maybePop(),
+                                ),
+                                const Spacer(),
+                                if (_canEdit)
+                                  _CircleIconBtn(
+                                    icon: CupertinoIcons.pencil,
+                                    semantic: 'Редактировать',
+                                    onTap: () async {
+                                      // Переходим на экран редактирования клуба
+                                      final result = await Navigator.of(context)
+                                          .push(
+                                            TransparentPageRoute(
+                                              builder: (_) => EditClubScreen(
+                                                clubId: widget.clubId,
+                                              ),
+                                            ),
+                                          );
+                                      // Если редактирование прошло успешно, обновляем данные
+                                      if (result == true && mounted) {
+                                        _loadClub();
+                                      }
+                                      // Если клуб был удалён, возвращаемся назад с результатом
+                                      if (result == 'deleted' && mounted) {
+                                        Navigator.of(context).pop('deleted');
+                                      }
+                                    },
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Логотип наполовину на фоне (позиционирован внизу фона)
+                        Positioned(
+                          left: 12,
+                          bottom:
+                              -46, // Половина логотипа с обводкой (92/2 = 46) выходит за границу фона
+                          child: Builder(
+                            builder: (context) => Container(
+                              width:
+                                  92, // 90 + 1*2 (логотип + обводка с двух сторон)
+                              height: 92,
+                              decoration: BoxDecoration(
+                                color: AppColors.getSurfaceColor(context),
+                                shape: BoxShape.circle,
+                              ),
+                              padding: const EdgeInsets.all(
+                                1,
+                              ), // Толщина обводки
+                              child: ClipOval(
+                                child: logoUrl.isNotEmpty
+                                    ? _HeaderLogo(url: logoUrl)
+                                    : Builder(
+                                        builder: (context) => Container(
+                                          width: 90,
+                                          height: 90,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.getBorderColor(
+                                              context,
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.group,
+                                            size: 12,
+                                            color:
+                                                AppColors.getIconSecondaryColor(
+                                                  context,
+                                                ),
                                           ),
                                         ),
                                       ),
-                                    ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -471,137 +482,140 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                         ),
                       ),
                     ),
-                  padding: const EdgeInsets.fromLTRB(
-                    12,
-                    10, // Небольшой отступ от нижней половины логотипа (которая уже в полоске выше)
-                    12,
-                    12,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Имя клуба (логотип теперь в Stack выше)
-                      Text(
-                        name,
-                        style: AppTextStyles.h17w6.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.getTextPrimaryColor(context),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Описание
-                      if (description.isNotEmpty)
-                        Builder(
-                          builder: (context) => Text(
-                            description,
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 14,
-                              height: 1.5,
-                              color: AppColors.getTextSecondaryColor(context),
-                              fontWeight: FontWeight.w500,
-                            ),
+                    padding: const EdgeInsets.fromLTRB(
+                      12,
+                      10, // Небольшой отступ от нижней половины логотипа (которая уже в полоске выше)
+                      12,
+                      12,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Имя клуба (логотип теперь в Stack выше)
+                        Text(
+                          name,
+                          style: AppTextStyles.h17w6.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.getTextPrimaryColor(context),
                           ),
                         ),
-                      if (description.isNotEmpty) const SizedBox(height: 12),
+                        const SizedBox(height: 8),
 
-                      // Инфо-блок
-                      Column(
-                        children: [
-                          // Статус открытости клуба
-                          _InfoRow(
-                            icon: isOpen
-                                ? CupertinoIcons.lock_open
-                                : CupertinoIcons.lock_fill,
-                            text: isOpen
-                                ? 'Открытое беговое сообщество'
-                                : 'Закрытое беговое сообщество',
-                          ),
-                          const SizedBox(height: 6),
-                          if (dateFormatted.isNotEmpty) ...[
-                            _InfoRow(
-                              icon: CupertinoIcons.calendar_today,
-                              text: 'Основан: $dateFormatted',
-                            ),
-                            const SizedBox(height: 6),
-                          ],
-                          // Количество участников
-                          _InfoRow(
-                            icon: CupertinoIcons.person_2_fill,
-                            text: 'Участников: $membersCount',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Кнопка действия
-                      Align(
-                        alignment: Alignment.center,
-                        child: Builder(
-                          builder: (context) => ElevatedButton(
-                            onPressed: _isJoining
-                                ? null
-                                : _isMember
-                                    ? _leaveClub
-                                    : _joinClub,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _isMember
-                                  ? AppColors.getBackgroundColor(context)
-                                  : AppColors.brandPrimary,
-                              foregroundColor: _isMember
-                                  ? AppColors.getTextSecondaryColor(context)
-                                  : AppColors.getSurfaceColor(context),
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 30,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.xxl,
+                        // Описание
+                        if (description.isNotEmpty)
+                          Builder(
+                            builder: (context) => Text(
+                              description,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 14,
+                                height: 1.5,
+                                color: AppColors.getTextSecondaryColor(context),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
-                            child: _isJoining
-                                ? SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        AppColors.getSurfaceColor(context),
-                                      ),
-                                    ),
-                                  )
-                                : Builder(
-                                    builder: (context) => Text(
-                                      _isMember
-                                          ? 'Выйти из клуба'
-                                          : _isRequest
-                                              ? 'Заявка подана'
-                                              : isOpen
-                                                  ? 'Вступить в клуб'
-                                                  : 'Подать заявку',
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                        color: _isMember
-                                            ? AppColors.getTextSecondaryColor(
-                                                context,
-                                              )
-                                            : AppColors.getSurfaceColor(
+                        if (description.isNotEmpty) const SizedBox(height: 12),
+
+                        // Инфо-блок
+                        Column(
+                          children: [
+                            // Статус открытости клуба
+                            _InfoRow(
+                              icon: isOpen
+                                  ? CupertinoIcons.lock_open
+                                  : CupertinoIcons.lock_fill,
+                              text: isOpen
+                                  ? 'Открытое беговое сообщество'
+                                  : 'Закрытое беговое сообщество',
+                            ),
+                            const SizedBox(height: 6),
+                            if (dateFormatted.isNotEmpty) ...[
+                              _InfoRow(
+                                icon: CupertinoIcons.calendar_today,
+                                text: 'Основан: $dateFormatted',
+                              ),
+                              const SizedBox(height: 6),
+                            ],
+                            // Количество участников
+                            _InfoRow(
+                              icon: CupertinoIcons.person_2_fill,
+                              text: 'Участников: $membersCount',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Кнопка действия
+                        Align(
+                          alignment: Alignment.center,
+                          child: Builder(
+                            builder: (context) => ElevatedButton(
+                              onPressed: _isJoining
+                                  ? null
+                                  : _isMember
+                                  ? _leaveClub
+                                  : _joinClub,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _isMember
+                                    ? AppColors.getBackgroundColor(context)
+                                    : AppColors.brandPrimary,
+                                foregroundColor: _isMember
+                                    ? AppColors.getTextSecondaryColor(context)
+                                    : AppColors.getSurfaceColor(context),
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 30,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.xxl,
+                                  ),
+                                ),
+                              ),
+                              child: _isJoining
+                                  ? SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              AppColors.getSurfaceColor(
                                                 context,
                                               ),
+                                            ),
+                                      ),
+                                    )
+                                  : Builder(
+                                      builder: (context) => Text(
+                                        _isMember
+                                            ? 'Выйти из клуба'
+                                            : _isRequest
+                                            ? 'Заявка подана'
+                                            : isOpen
+                                            ? 'Вступить в клуб'
+                                            : 'Подать заявку',
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                          color: _isMember
+                                              ? AppColors.getTextSecondaryColor(
+                                                  context,
+                                                )
+                                              : AppColors.getSurfaceColor(
+                                                  context,
+                                                ),
+                                        ),
                                       ),
                                     ),
-                                  ),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -625,69 +639,69 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                         ),
                       ),
                     ),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 48,
-                        child: Row(
-                          children: [
-                            _TabBtn(
-                              text: 'Фото',
-                              selected: _tab == 0,
-                              onTap: () => setState(() => _tab = 0),
-                            ),
-                            _vDivider(),
-                            _TabBtn(
-                              text: 'Участники',
-                              selected: _tab == 1,
-                              onTap: () => setState(() => _tab = 1),
-                            ),
-                            _vDivider(),
-                            _TabBtn(
-                              text: 'Статистика',
-                              selected: _tab == 2,
-                              onTap: () => setState(() => _tab = 2),
-                            ),
-                            _vDivider(),
-                            _TabBtn(
-                              text: 'Зал славы',
-                              selected: _tab == 3,
-                              onTap: () => setState(() => _tab = 3),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Builder(
-                        builder: (context) => Divider(
-                          height: 1,
-                          color: AppColors.getBorderColor(context),
-                        ),
-                      ),
-
-                      if (_tab == 0)
-                        const Padding(
-                          padding: EdgeInsets.all(2),
-                          child: CoffeeRunVldPhotoContent(),
-                        )
-                      else if (_tab == 1)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 0, bottom: 0),
-                          child: CoffeeRunVldMembersContent(
-                            clubId: widget.clubId,
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 48,
+                          child: Row(
+                            children: [
+                              _TabBtn(
+                                text: 'Фото',
+                                selected: _tab == 0,
+                                onTap: () => setState(() => _tab = 0),
+                              ),
+                              _vDivider(),
+                              _TabBtn(
+                                text: 'Участники',
+                                selected: _tab == 1,
+                                onTap: () => setState(() => _tab = 1),
+                              ),
+                              _vDivider(),
+                              _TabBtn(
+                                text: 'Статистика',
+                                selected: _tab == 2,
+                                onTap: () => setState(() => _tab = 2),
+                              ),
+                              _vDivider(),
+                              _TabBtn(
+                                text: 'Зал славы',
+                                selected: _tab == 3,
+                                onTap: () => setState(() => _tab = 3),
+                              ),
+                            ],
                           ),
-                        )
-                      else if (_tab == 2)
-                        const Padding(
-                          padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
-                          child: CoffeeRunVldStatsContent(),
-                        )
-                      else
-                        const Padding(
-                          padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
-                          child: CoffeeRunVldGloryContent(),
                         ),
-                    ],
-                  ),
+                        Builder(
+                          builder: (context) => Divider(
+                            height: 1,
+                            color: AppColors.getBorderColor(context),
+                          ),
+                        ),
+
+                        if (_tab == 0)
+                          const Padding(
+                            padding: EdgeInsets.all(2),
+                            child: CoffeeRunVldPhotoContent(),
+                          )
+                        else if (_tab == 1)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 0, bottom: 0),
+                            child: CoffeeRunVldMembersContent(
+                              clubId: widget.clubId,
+                            ),
+                          )
+                        else if (_tab == 2)
+                          const Padding(
+                            padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
+                            child: CoffeeRunVldStatsContent(),
+                          )
+                        else
+                          const Padding(
+                            padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
+                            child: CoffeeRunVldGloryContent(),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -716,6 +730,12 @@ class _CircleIconBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // В светлой теме иконки светлые (белые), в темной — как обычно
+    final brightness = Theme.of(context).brightness;
+    final iconColor = brightness == Brightness.light
+        ? Colors.white
+        : AppColors.getIconPrimaryColor(context);
+
     return Semantics(
       label: semantic,
       button: true,
@@ -729,11 +749,7 @@ class _CircleIconBtn extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(
-            icon,
-            size: 18,
-            color: AppColors.getIconPrimaryColor(context),
-          ),
+          child: Icon(icon, size: 18, color: iconColor),
         ),
       ),
     );
@@ -766,7 +782,7 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-/// Круглый логотип 80×80 с кэшем
+/// Круглый логотип 90×90 с кэшем
 class _HeaderLogo extends StatelessWidget {
   final String url;
   const _HeaderLogo({required this.url});
@@ -774,19 +790,19 @@ class _HeaderLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dpr = MediaQuery.of(context).devicePixelRatio;
-    final w = (80 * dpr).round();
+    final w = (90 * dpr).round();
     return CachedNetworkImage(
       imageUrl: url,
-      width: 80,
-      height: 80,
+      width: 90,
+      height: 90,
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
       errorWidget: (_, __, ___) => Builder(
         builder: (context) => Container(
-          width: 80,
-          height: 80,
+          width: 90,
+          height: 90,
           color: AppColors.getBorderColor(context),
           child: Icon(
             Icons.image,
@@ -799,21 +815,23 @@ class _HeaderLogo extends StatelessWidget {
   }
 }
 
-/// Фоновая картинка клуба (cover 170px высота)
+/// Фоновая картинка клуба (соотношение сторон 2.3:1)
 class _BackgroundImage extends StatelessWidget {
   final String url;
   const _BackgroundImage({required this.url});
 
   @override
   Widget build(BuildContext context) {
-    final dpr = MediaQuery.of(context).devicePixelRatio;
     final screenW = MediaQuery.of(context).size.width;
+    final calculatedHeight =
+        screenW / 2.3; // Вычисляем высоту по соотношению 2.3:1
+    final dpr = MediaQuery.of(context).devicePixelRatio;
     final targetW = (screenW * dpr).round();
-    final targetH = (170 * dpr).round();
+    final targetH = (calculatedHeight * dpr).round();
     return CachedNetworkImage(
       imageUrl: url,
       width: double.infinity,
-      height: 170,
+      height: calculatedHeight,
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: targetW,
@@ -823,7 +841,7 @@ class _BackgroundImage extends StatelessWidget {
       errorWidget: (_, __, ___) => Builder(
         builder: (context) => Container(
           width: double.infinity,
-          height: 170,
+          height: calculatedHeight,
           color: AppColors.getBorderColor(context),
           child: Icon(
             Icons.image,

@@ -69,12 +69,16 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
   Future<void> _loadCities() async {
     try {
       final api = ApiService();
-      final data = await api.get('/get_cities.php').timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          throw TimeoutException('Превышено время ожидания загрузки городов');
-        },
-      );
+      final data = await api
+          .get('/get_cities.php')
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              throw TimeoutException(
+                'Превышено время ожидания загрузки городов',
+              );
+            },
+          );
 
       if (data['success'] == true && data['cities'] != null) {
         final cities = data['cities'] as List<dynamic>? ?? [];
@@ -403,6 +407,8 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                             file: logoFile,
                             onPick: _pickLogo,
                             onRemove: () => setState(() => logoFile = null),
+                            width: 90,
+                            height: 90,
                           ),
                         ],
                       ),
@@ -420,14 +426,14 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            SizedBox(
+                            _MediaTile(
+                              file: backgroundFile,
+                              onPick: _pickBackground,
+                              onRemove: () =>
+                                  setState(() => backgroundFile = null),
+                              width:
+                                  207, // Ширина для соотношения 2.3:1 (90 * 2.3)
                               height: 90,
-                              child: _MediaTile(
-                                file: backgroundFile,
-                                onPick: _pickBackground,
-                                onRemove: () =>
-                                    setState(() => backgroundFile = null),
-                              ),
                             ),
                           ],
                         ),
@@ -538,51 +544,53 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                           ),
                         ),
                       ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: activity,
-                        isExpanded: true,
-                        hint: Text(
-                          'Выберите вид активности',
-                          style: AppTextStyles.h14w4Place,
-                        ),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              activity = newValue;
-                              _clearFieldError('activity');
-                            });
-                          }
-                        },
-                        dropdownColor: AppColors.getSurfaceColor(context),
-                        menuMaxHeight: 300,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        icon: Icon(
-                          Icons.arrow_drop_down,
-                          color: AppColors.getIconSecondaryColor(context),
-                        ),
-                        style: AppTextStyles.h14w4.copyWith(
-                          color: AppColors.getTextPrimaryColor(context),
-                        ),
-                        items: const ['Бег', 'Велосипед', 'Плавание'].map((
-                          option,
-                        ) {
-                          return DropdownMenuItem<String>(
-                            value: option,
-                            child: Builder(
-                              builder: (context) => Text(
-                                option,
-                                style: AppTextStyles.h14w4.copyWith(
-                                  color: AppColors.getTextPrimaryColor(context),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: activity,
+                          isExpanded: true,
+                          hint: Text(
+                            'Выберите вид активности',
+                            style: AppTextStyles.h14w4Place,
+                          ),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                activity = newValue;
+                                _clearFieldError('activity');
+                              });
+                            }
+                          },
+                          dropdownColor: AppColors.getSurfaceColor(context),
+                          menuMaxHeight: 300,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          icon: Icon(
+                            Icons.arrow_drop_down,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
+                          style: AppTextStyles.h14w4.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                          items: const ['Бег', 'Велосипед', 'Плавание'].map((
+                            option,
+                          ) {
+                            return DropdownMenuItem<String>(
+                              value: option,
+                              child: Builder(
+                                builder: (context) => Text(
+                                  option,
+                                  style: AppTextStyles.h14w4.copyWith(
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        }).toList(),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ),
-                ),
                   const SizedBox(height: 24),
 
                   // ---------- Радиокнопки: Открытое/Закрытое сообщество ----------
@@ -725,7 +733,9 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                                 : 'Выберите дату',
                             style: foundationDate != null
                                 ? AppTextStyles.h14w4.copyWith(
-                                    color: AppColors.getTextPrimaryColor(context),
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
                                   )
                                 : AppTextStyles.h14w4Place,
                           ),
@@ -950,11 +960,15 @@ class _MediaTile extends StatelessWidget {
   final File? file;
   final VoidCallback onPick;
   final VoidCallback onRemove;
+  final double width;
+  final double height;
 
   const _MediaTile({
     required this.file,
     required this.onPick,
     required this.onRemove,
+    required this.width,
+    required this.height,
   });
 
   @override
@@ -964,8 +978,8 @@ class _MediaTile extends StatelessWidget {
       return GestureDetector(
         onTap: onPick,
         child: Container(
-          width: 90,
-          height: 90,
+          width: width,
+          height: height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             color: AppColors.getSurfaceColor(context),
@@ -993,11 +1007,11 @@ class _MediaTile extends StatelessWidget {
             child: Image.file(
               file!,
               fit: BoxFit.cover,
-              width: 90,
-              height: 90,
+              width: width,
+              height: height,
               errorBuilder: (context, error, stackTrace) => Container(
-                width: 90,
-                height: 90,
+                width: width,
+                height: height,
                 color: AppColors.getBackgroundColor(context),
                 child: Icon(
                   CupertinoIcons.photo,
