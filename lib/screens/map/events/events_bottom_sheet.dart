@@ -149,7 +149,7 @@ class EventsListFromApi extends StatelessWidget {
     // для ускорения первого кадра и плавного скролла.
     () {
       final dpr = MediaQuery.of(context).devicePixelRatio;
-      final targetW = (80 * dpr).round();
+      final targetW = (55 * dpr).round();
       final targetH = (55 * dpr).round();
       final int limit = events.length < 8 ? events.length : 8;
       for (var i = 0; i < limit; i++) {
@@ -177,7 +177,7 @@ class EventsListFromApi extends StatelessWidget {
       VoidCallback? onTap,
     }) {
       final dpr = MediaQuery.of(context).devicePixelRatio;
-      final targetW = (80 * dpr).round();
+      final targetW = (55 * dpr).round();
       final targetH = (55 * dpr).round();
 
       final imageWidget = ClipRRect(
@@ -185,7 +185,7 @@ class EventsListFromApi extends StatelessWidget {
         child: logoUrl != null && logoUrl.isNotEmpty
             ? CachedNetworkImage(
                 imageUrl: logoUrl,
-                width: 80,
+                width: 55,
                 height: 55,
                 fit: BoxFit.cover,
                 fadeInDuration: const Duration(milliseconds: 120),
@@ -194,7 +194,7 @@ class EventsListFromApi extends StatelessWidget {
                 maxWidthDiskCache: targetW,
                 maxHeightDiskCache: targetH,
                 errorWidget: (_, __, ___) => Container(
-                  width: 80,
+                  width: 55,
                   height: 55,
                   color: AppColors.getSurfaceMutedColor(context),
                   alignment: Alignment.center,
@@ -206,7 +206,7 @@ class EventsListFromApi extends StatelessWidget {
                 ),
               )
             : Container(
-                width: 80,
+                width: 55,
                 height: 55,
                 color: AppColors.getSurfaceMutedColor(context),
                 alignment: Alignment.center,

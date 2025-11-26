@@ -20,6 +20,7 @@ import 'clubs/clubs_filters_bottom_sheet.dart';
 // нижние выезжающие окна
 import 'events/events_bottom_sheet.dart' as ebs;
 import 'clubs/clubs_bottom_sheet.dart' as cbs;
+import 'clubs/club_popup.dart' as cpopup;
 // import 'coaches/coaches_bottom_sheet.dart' as cchbs; // тренеры - временно закомментировано
 // import 'travelers/travelers_bottom_sheet.dart' as tbs; // попутчики - временно закомментировано
 
@@ -269,7 +270,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   /// Обработка клика по маркеру (для Mapbox)
-  void _onMarkerTap(PointAnnotation annotation) {
+  Future<void> _onMarkerTap(PointAnnotation annotation) async {
     // Получаем координаты из геометрии аннотации
     final geometry = annotation.geometry;
     final coordinates = geometry.coordinates;
@@ -289,7 +290,27 @@ class _MapScreenState extends State<MapScreen> {
       return;
     }
 
-    _showMarkerBottomSheet(marker);
+    Offset? screenPosition;
+    if (_mapboxMap != null) {
+      try {
+        final screenCoordinate = await _mapboxMap!.pixelForCoordinate(
+          Point(
+            coordinates: Position(lng, lat),
+          ),
+        );
+        screenPosition = Offset(
+          screenCoordinate.x.toDouble(),
+          screenCoordinate.y.toDouble(),
+        );
+      } catch (e) {
+        debugPrint('Ошибка вычисления позиции маркера: $e');
+      }
+    }
+
+    _showMarkerBottomSheet(
+      marker,
+      screenPosition: screenPosition,
+    );
   }
 
   /// Обработка клика по маркеру (для flutter_map на macOS)
@@ -298,10 +319,66 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   /// Показать bottom sheet для маркера
-  void _showMarkerBottomSheet(Map<String, dynamic> marker) {
+  void _showMarkerBottomSheet(
+    Map<String, dynamic> marker, {
+    Offset? screenPosition,
+  }) {
     final title = marker['title'] as String;
     final dynamic events = marker['events'];
     final Widget? content = marker['content'] as Widget?;
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ОСОБЫЙ СЛУЧАЙ ДЛЯ КЛУБОВ: если count == 1, показываем попап
+    // ────────────────────────────────────────────────────────────────
+    if (_selectedIndex == 1) {
+      final count = marker['count'] as int? ?? 0;
+      final clubs = marker['clubs'] as List<dynamic>? ?? [];
+      
+      // Если клуб один — показываем попап
+      if (count == 1 && clubs.isNotEmpty) {
+        final club = clubs.first as Map<String, dynamic>;
+        cpopup.ClubPopup.show(
+          context,
+          club: club,
+          screenX: screenPosition?.dx,
+          screenY: screenPosition?.dy,
+        );
+        return;
+      }
+      
+      // Если клубов больше одного — показываем bottom sheet
+      if (count > 1) {
+        final Widget sheet = cbs.ClubsBottomSheet(
+          title: title,
+          child: clubs.isNotEmpty
+              ? cbs.ClubsListFromApi(
+                  clubs: clubs,
+                  latitude: marker['latitude'] as double?,
+                  longitude: marker['longitude'] as double?,
+                )
+              : content ?? const cbs.ClubsSheetPlaceholder(),
+        );
+
+        showModalBottomSheet(
+          context: context,
+          useRootNavigator: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => sheet,
+        ).then((result) {
+          // Если клуб был удалён, обновляем маркеры на карте
+          if (result == 'club_deleted' && mounted) {
+            setState(() {
+              _mapInitialized = false;
+              _clubsMarkersKey = ValueKey(
+                'clubs_markers_${DateTime.now().millisecondsSinceEpoch}',
+              );
+            });
+          }
+        });
+        return;
+      }
+    }
 
     final Widget sheet = () {
       switch (_selectedIndex) {
@@ -318,7 +395,7 @@ class _MapScreenState extends State<MapScreen> {
                 : content ?? const ebs.EventsSheetPlaceholder(),
           );
         case 1:
-          // Для клубов создаём виджет со списком клубов из API
+          // Для клубов создаём виджет со списком клубов из API (fallback)
           return cbs.ClubsBottomSheet(
             title: title,
             child: marker['clubs'] != null && marker['clubs'] is List

@@ -398,11 +398,11 @@ class _EventRow extends StatelessWidget {
                 ? Builder(
                     builder: (context) {
                       final dpr = MediaQuery.of(context).devicePixelRatio;
-                      final targetW = (80 * dpr).round();
+                      final targetW = (55 * dpr).round();
                       final targetH = (55 * dpr).round();
                       return CachedNetworkImage(
                         imageUrl: event.logoUrl!,
-                        width: 80,
+                        width: 55,
                         height: 55,
                         fit: BoxFit.cover,
                         memCacheWidth: targetW,
@@ -410,7 +410,7 @@ class _EventRow extends StatelessWidget {
                         maxWidthDiskCache: targetW,
                         maxHeightDiskCache: targetH,
                         errorWidget: (_, __, ___) => Container(
-                          width: 80,
+                          width: 55,
                           height: 55,
                           // ── Цвет скелетона (можно оставить константу, т.к. это декоративный элемент)
                           color: AppColors.skeletonBase,
@@ -423,7 +423,7 @@ class _EventRow extends StatelessWidget {
                           ),
                         ),
                         placeholder: (_, __) => Container(
-                          width: 80,
+                          width: 55,
                           height: 55,
                           color: AppColors.skeletonBase,
                           alignment: Alignment.center,
@@ -433,7 +433,7 @@ class _EventRow extends StatelessWidget {
                     },
                   )
                 : Container(
-                    width: 80,
+                    width: 55,
                     height: 55,
                     color: AppColors.skeletonBase,
                     alignment: Alignment.center,

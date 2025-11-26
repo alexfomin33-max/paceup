@@ -145,7 +145,9 @@ class MarketSlotCard extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                     decoration: BoxDecoration(
                       color: AppColors.getSurfaceMutedColor(context),
-                      border: Border.all(color: AppColors.getBorderColor(context)),
+                      border: Border.all(
+                        color: AppColors.getBorderColor(context),
+                      ),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Text(
@@ -196,8 +198,8 @@ class _Thumb extends StatelessWidget {
     return Hero(
       tag: Object.hash(heroGroup ?? imageAsset, 0),
       child: Container(
-        width: 58,
-        height: 58,
+        width: 60,
+        height: 60,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.xs),
           color: AppColors.getBackgroundColor(context),
@@ -229,7 +231,8 @@ class _BuyButtonText extends StatelessWidget {
         ? AppColors.brandPrimary
         : AppColors.disabledBg; // disabledBg обычно не меняется
     final fg = enabled
-        ? Colors.white // белый цвет для иконки и текста на синем фоне
+        ? Colors
+              .white // белый цвет для иконки и текста на синем фоне
         : AppColors.disabledText; // disabledText обычно не меняется
     final icon = text == 'Бронь' ? CupertinoIcons.lock : CupertinoIcons.cart;
 
