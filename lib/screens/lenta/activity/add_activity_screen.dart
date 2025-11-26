@@ -890,6 +890,20 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         activityId: 0, // Временный ID, будет заменен после создания активности
         activityDistance: 0.0,
         showMenuButton: true,
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 ФОН ПЛАШКИ: в светлой теме используем surface вместо background
+        // ────────────────────────────────────────────────────────────────
+        // Только для светлой темы на этой странице
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.getSurfaceColor(context)
+            : null, // В темной теме используем дефолтное поведение
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 ФОН КНОПКИ МЕНЮ: в светлой теме используем background вместо surface
+        // ────────────────────────────────────────────────────────────────
+        // Только для светлой темы на этой странице
+        menuButtonColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.getBackgroundColor(context)
+            : null, // В темной теме используем дефолтное поведение
         onEquipmentChanged: () {
           // После изменения экипировки обновляем список
           _loadEquipment();

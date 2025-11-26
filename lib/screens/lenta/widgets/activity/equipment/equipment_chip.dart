@@ -21,6 +21,8 @@ class EquipmentChip extends StatefulWidget {
   final VoidCallback? onEquipmentChanged; // callback после замены эквипа
   final bool showMenuButton; // показывать ли кнопку меню с тремя точками
   final Function(al.Equipment)? onEquipmentSelected; // callback для выбора экипировки (для экрана добавления)
+  final Color? backgroundColor; // опциональный цвет фона плашки (для переопределения на конкретных экранах)
+  final Color? menuButtonColor; // опциональный цвет фона кнопки меню (для переопределения на конкретных экранах)
 
   const EquipmentChip({
     super.key,
@@ -32,6 +34,8 @@ class EquipmentChip extends StatefulWidget {
     this.onEquipmentChanged,
     this.showMenuButton = true, // по умолчанию показываем кнопку для обратной совместимости
     this.onEquipmentSelected,
+    this.backgroundColor,
+    this.menuButtonColor,
   });
 
   @override
@@ -81,9 +85,11 @@ class _EquipmentChipState extends State<EquipmentChip> {
           // ────────────────────────────────────────────────────────────────
           // В темной теме используем darkSurfaceMuted (светлее darkSurface карточки)
           // В светлой теме оставляем getBackgroundColor (как было)
-          color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.darkSurfaceMuted
-              : AppColors.getBackgroundColor(context),
+          // Если передан backgroundColor, используем его (для переопределения на конкретных экранах)
+          color: widget.backgroundColor ??
+              (Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkSurfaceMuted
+                  : AppColors.getBackgroundColor(context)),
           borderRadius: BorderRadius.circular(AppRadius.xxl),
         ),
         child: Stack(
@@ -249,9 +255,11 @@ class _EquipmentChipState extends State<EquipmentChip> {
                         // ────────────────────────────────────────────────────────────────
                         // В темной теме используем darkSurface (как карточка тренировки)
                         // В светлой теме оставляем getSurfaceColor (как было)
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.darkSurface
-                            : AppColors.getSurfaceColor(context),
+                        // Если передан menuButtonColor, используем его (для переопределения на конкретных экранах)
+                        color: widget.menuButtonColor ??
+                            (Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.darkSurface
+                                : AppColors.getSurfaceColor(context)),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(

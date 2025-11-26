@@ -27,31 +27,43 @@ class MetricVertical extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ──────────────────────────────────────────────────────────────
+        // ЗАГОЛОВОК СВЕРХУ: сначала отображаем заголовок
+        // ──────────────────────────────────────────────────────────────
         Text(
           mainTitle,
-          style: AppTextStyles.h11w4Ter.copyWith(
-            color: AppColors.getTextTertiaryColor(context),
+          style: AppTextStyles.h11w4Sec.copyWith(
+            color: AppColors.getTextSecondaryColor(context),
           ),
         ),
         const SizedBox(height: 1),
+        // ──────────────────────────────────────────────────────────────
+        // ЗНАЧЕНИЕ СНИЗУ: затем отображаем значение
+        // ──────────────────────────────────────────────────────────────
         Text(
           mainValue,
-          style: AppTextStyles.h14w5.copyWith(
+          style: AppTextStyles.h14w6.copyWith(
             color: AppColors.getTextPrimaryColor(context),
           ),
         ),
         if (showSub) ...[
           const SizedBox(height: 10),
+          // ──────────────────────────────────────────────────────────────
+          // ПОДЗАГОЛОВОК СВЕРХУ: сначала отображаем подзаголовок
+          // ──────────────────────────────────────────────────────────────
           Text(
             subTitle,
-            style: AppTextStyles.h11w4Ter.copyWith(
-              color: AppColors.getTextTertiaryColor(context),
+            style: AppTextStyles.h11w4Sec.copyWith(
+              color: AppColors.getTextSecondaryColor(context),
             ),
           ),
           const SizedBox(height: 1),
+          // ──────────────────────────────────────────────────────────────
+          // ПОДЗНАЧЕНИЕ СНИЗУ: затем отображаем подзначение
+          // ──────────────────────────────────────────────────────────────
           Text(
             subValue,
-            style: AppTextStyles.h14w5.copyWith(
+            style: AppTextStyles.h14w6.copyWith(
               color: AppColors.getTextPrimaryColor(context),
             ),
           ),
@@ -143,34 +155,46 @@ class StatsRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ──────────────────────────────────────────────────────────────
+                // ЗАГОЛОВОК ТЕМПА СВЕРХУ: сначала отображаем заголовок
+                // ──────────────────────────────────────────────────────────────
                 Text(
                   'Темп, мин/км',
-                  style: AppTextStyles.h11w4Ter.copyWith(
-                    color: AppColors.getTextTertiaryColor(context),
+                  style: AppTextStyles.h11w4Sec.copyWith(
+                    color: AppColors.getTextSecondaryColor(context),
                   ),
                 ),
                 const SizedBox(height: 1),
+                // ──────────────────────────────────────────────────────────────
+                // ЗНАЧЕНИЕ ТЕМПА СНИЗУ: затем отображаем значение
+                // ──────────────────────────────────────────────────────────────
                 Text(
                   paceText,
-                  style: AppTextStyles.h14w5.copyWith(
+                  style: AppTextStyles.h14w6.copyWith(
                     color: AppColors.getTextPrimaryColor(context),
                   ),
                 ),
                 if (!isManuallyAdded) ...[
                   const SizedBox(height: 10),
+                  // ──────────────────────────────────────────────────────────────
+                  // ЗАГОЛОВОК ПУЛЬСА СВЕРХУ: сначала отображаем заголовок
+                  // ──────────────────────────────────────────────────────────────
                   Text(
                     'Ср. пульс',
-                    style: AppTextStyles.h11w4Ter.copyWith(
-                      color: AppColors.getTextTertiaryColor(context),
+                    style: AppTextStyles.h11w4Sec.copyWith(
+                      color: AppColors.getTextSecondaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 1),
+                  // ──────────────────────────────────────────────────────────────
+                  // ЗНАЧЕНИЕ ПУЛЬСА СНИЗУ: затем отображаем значение с иконкой
+                  // ──────────────────────────────────────────────────────────────
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         hrText,
-                        style: AppTextStyles.h14w5.copyWith(
+                        style: AppTextStyles.h14w6.copyWith(
                           color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),

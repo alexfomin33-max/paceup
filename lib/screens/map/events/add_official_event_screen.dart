@@ -1295,60 +1295,60 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // ── динамические поля для ввода дистанций
-                  ...List.generate(_distanceControllers.length, (index) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom: index < _distanceControllers.length - 1
-                            ? 12
-                            : 0,
-                      ),
-                      child: Builder(
-                        builder: (context) => TextField(
-                          controller: _distanceControllers[index],
-                          keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.next,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          style: AppTextStyles.h14w4.copyWith(
-                            color: AppColors.getTextPrimaryColor(context),
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Введите дистанцию',
-                            hintStyle: AppTextStyles.h14w4Place,
-                            filled: true,
-                            fillColor: AppColors.getSurfaceColor(context),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 17,
+                  // ── динамические поля для ввода дистанций (в два столбца)
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 12,
+                    children: List.generate(_distanceControllers.length, (index) {
+                      return SizedBox(
+                        width: (MediaQuery.of(context).size.width - 32 - 16) / 2,
+                        child: Builder(
+                          builder: (context) => TextField(
+                            controller: _distanceControllers[index],
+                            keyboardType: TextInputType.number,
+                            textInputAction: TextInputAction.next,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
                             ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              borderSide: BorderSide(
-                                color: AppColors.getBorderColor(context),
-                                width: 1,
+                            decoration: InputDecoration(
+                              hintText: 'Введите дистанцию',
+                              hintStyle: AppTextStyles.h14w4Place,
+                              filled: true,
+                              fillColor: AppColors.getSurfaceColor(context),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 17,
                               ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              borderSide: BorderSide(
-                                color: AppColors.getBorderColor(context),
-                                width: 1,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                borderSide: BorderSide(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
                               ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              borderSide: BorderSide(
-                                color: AppColors.getBorderColor(context),
-                                width: 1,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                borderSide: BorderSide(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                borderSide: BorderSide(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
+                  ),
                   const SizedBox(height: 12),
                   // ── кнопка "добавить ещё"
                   GestureDetector(

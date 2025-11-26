@@ -37,7 +37,8 @@ class _MapScreenState extends State<MapScreen> {
   MapboxMap? _mapboxMap;
 
   /// Контроллер flutter_map для macOS
-  final flutter_map.MapController _flutterMapController = flutter_map.MapController();
+  final flutter_map.MapController _flutterMapController =
+      flutter_map.MapController();
 
   final tabs = const [
     "События",
@@ -362,7 +363,10 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   /// Построение карты с flutter_map для macOS
-  Widget _buildFlutterMap(List<Map<String, dynamic>> markers, Color markerColor) {
+  Widget _buildFlutterMap(
+    List<Map<String, dynamic>> markers,
+    Color markerColor,
+  ) {
     // Вычисляем центр карты
     latlong.LatLng center = const latlong.LatLng(56.129057, 40.406635);
     double zoom = 6.0;
@@ -384,7 +388,10 @@ class _MapScreenState extends State<MapScreen> {
             sumLat += point.latitude;
             sumLng += point.longitude;
           }
-          center = latlong.LatLng(sumLat / points.length, sumLng / points.length);
+          center = latlong.LatLng(
+            sumLat / points.length,
+            sumLng / points.length,
+          );
           zoom = 10.0;
         }
       }
@@ -434,7 +441,10 @@ class _MapScreenState extends State<MapScreen> {
         ),
         children: [
           flutter_map.TileLayer(
-            urlTemplate: AppConfig.mapTilesUrl.replaceAll('{apiKey}', AppConfig.mapTilerApiKey),
+            urlTemplate: AppConfig.mapTilesUrl.replaceAll(
+              '{apiKey}',
+              AppConfig.mapTilerApiKey,
+            ),
             userAgentPackageName: 'com.example.paceup',
           ),
           flutter_map.MarkerLayer(
@@ -463,10 +473,7 @@ class _MapScreenState extends State<MapScreen> {
                     decoration: BoxDecoration(
                       color: markerColor,
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.border,
-                        width: 1,
-                      ),
+                      border: Border.all(color: AppColors.border, width: 1),
                     ),
                     child: Center(
                       child: Text(
