@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../utils/local_image_compressor.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
 import '../../../../service/api_service.dart';
 import '../../../../service/auth_service.dart';
@@ -369,10 +370,14 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 85, // Сжатие на клиенте
       );
       if (pickedFile != null && _currentUserId != null) {
-        await _sendImage(File(pickedFile.path));
+        final compressed = await compressLocalImage(
+          sourceFile: File(pickedFile.path),
+          maxSide: 1600,
+          jpegQuality: 80,
+        );
+        await _sendImage(compressed);
       }
     } catch (e) {
       if (mounted) {
@@ -477,8 +482,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  response['message'] as String? ??
-                      'Ошибка отправки сообщения',
+                  response['message'] as String? ?? 'Ошибка отправки сообщения',
                 ),
                 duration: const Duration(seconds: 2),
               ),
@@ -694,8 +698,9 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
 
             // Отмечаем новые сообщения как прочитанные, если они от другого пользователя
             // и пользователь находится в чате (экран открыт)
-            final hasIncomingMessages =
-                uniqueNewMessages.any((msg) => !msg.isMine);
+            final hasIncomingMessages = uniqueNewMessages.any(
+              (msg) => !msg.isMine,
+            );
             if (hasIncomingMessages) {
               _markMessagesAsRead();
             }
@@ -1052,7 +1057,8 @@ class _BubbleLeft extends StatelessWidget {
                         // ─── Открываем изображение в полный размер ───
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => _FullscreenImageView(imageUrl: image!),
+                            builder: (_) =>
+                                _FullscreenImageView(imageUrl: image!),
                           ),
                         );
                       },
@@ -1074,11 +1080,15 @@ class _BubbleLeft extends StatelessWidget {
                                 return Container(
                                   width: maxW,
                                   height: 200,
-                                  color: AppColors.getSurfaceMutedColor(context),
+                                  color: AppColors.getSurfaceMutedColor(
+                                    context,
+                                  ),
                                   child: Icon(
                                     CupertinoIcons.photo,
                                     size: 40,
-                                    color: AppColors.getIconSecondaryColor(context),
+                                    color: AppColors.getIconSecondaryColor(
+                                      context,
+                                    ),
                                   ),
                                 );
                               },
@@ -1132,11 +1142,7 @@ class _BubbleRight extends StatelessWidget {
   final String? image;
   final String time;
 
-  const _BubbleRight({
-    required this.text,
-    this.image,
-    required this.time,
-  });
+  const _BubbleRight({required this.text, this.image, required this.time});
 
   @override
   Widget build(BuildContext context) {
@@ -1168,7 +1174,8 @@ class _BubbleRight extends StatelessWidget {
                         // ─── Открываем изображение в полный размер ───
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => _FullscreenImageView(imageUrl: image!),
+                            builder: (_) =>
+                                _FullscreenImageView(imageUrl: image!),
                           ),
                         );
                       },
@@ -1190,11 +1197,15 @@ class _BubbleRight extends StatelessWidget {
                                 return Container(
                                   width: maxW,
                                   height: 200,
-                                  color: AppColors.getSurfaceMutedColor(context),
+                                  color: AppColors.getSurfaceMutedColor(
+                                    context,
+                                  ),
                                   child: Icon(
                                     CupertinoIcons.photo,
                                     size: 40,
-                                    color: AppColors.getIconSecondaryColor(context),
+                                    color: AppColors.getIconSecondaryColor(
+                                      context,
+                                    ),
                                   ),
                                 );
                               },

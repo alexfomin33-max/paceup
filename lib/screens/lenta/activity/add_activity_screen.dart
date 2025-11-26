@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../utils/local_image_compressor.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
@@ -1611,10 +1612,20 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       final pickedFiles = await picker.pickMultiImage();
       if (pickedFiles.isEmpty) return;
 
-      // Сохраняем выбранные файлы локально
-      final files = pickedFiles.map((file) => File(file.path)).toList();
+      // ── сжимаем каждую выбранную фотографию перед сохранением
+      final compressedFiles = <File>[];
+      for (final file in pickedFiles) {
+        final compressed = await compressLocalImage(
+          sourceFile: File(file.path),
+          maxSide: 1600,
+          jpegQuality: 80,
+        );
+        compressedFiles.add(compressed);
+      }
+
+      if (!mounted) return;
       setState(() {
-        _images.addAll(files);
+        _images.addAll(compressedFiles);
       });
     } on PlatformException catch (e) {
       if (mounted) {

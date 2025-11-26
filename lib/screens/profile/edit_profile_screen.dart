@@ -1,5 +1,6 @@
 // lib/screens/profile/edit_profile_screen.dart
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/avatar_version_provider.dart';
 import '../../providers/profile/profile_header_provider.dart';
+import '../../utils/local_image_compressor.dart';
 import '../../widgets/app_bar.dart'; // наш глобальный AppBar
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../service/api_service.dart';
@@ -451,10 +453,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       maxWidth: 2048,
       maxHeight:
           2048, // ВАЖНО: задаём одинаковые ограничения для сохранения пропорций
-      imageQuality: 98,
     );
     if (file == null) return;
-    final bytes = await file.readAsBytes();
+    final compressed = await compressLocalImage(
+      sourceFile: File(file.path),
+      maxSide: 1600,
+      jpegQuality: 85,
+    );
+    final bytes = await compressed.readAsBytes();
     setState(() => _avatarBytes = bytes);
   }
 

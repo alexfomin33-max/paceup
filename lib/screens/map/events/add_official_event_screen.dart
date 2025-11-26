@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/local_image_compressor.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
@@ -40,6 +41,7 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
   // медиа
   final picker = ImagePicker();
   File? logoFile;
+  File? backgroundFile;
 
   // координаты выбранного места
   LatLng? selectedLocation;
@@ -98,8 +100,33 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
   }
 
   Future<void> _pickLogo() async {
-    final x = await picker.pickImage(source: ImageSource.gallery);
-    if (x != null) setState(() => logoFile = File(x.path));
+    // ── выбираем логотип и сразу сжимаем, чтобы не перегружать сеть
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    final compressed = await compressLocalImage(
+      sourceFile: File(picked.path),
+      maxSide: 900,
+      jpegQuality: 85,
+    );
+    if (!mounted) return;
+
+    setState(() => logoFile = compressed);
+  }
+
+  Future<void> _pickBackground() async {
+    // ── выбираем фоновую картинку, потом уменьшаем размер перед отправкой
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    final compressed = await compressLocalImage(
+      sourceFile: File(picked.path),
+      maxSide: 1600,
+      jpegQuality: 80,
+    );
+    if (!mounted) return;
+
+    setState(() => backgroundFile = compressed);
   }
 
   /// Открыть экран выбора места на карте
@@ -451,6 +478,10 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
       if (logoFile != null) {
         files['logo'] = logoFile!;
       }
+      // ── прикрепляем фоновую картинку, если пользователь её выбрал
+      if (backgroundFile != null) {
+        files['background'] = backgroundFile!;
+      }
 
       // Добавляем поля формы
       final userId = await authService.getUserId();
@@ -755,23 +786,55 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                     const SizedBox(height: 24),
                   ],
 
-                  // ---------- Медиа: только логотип ----------
-                  Column(
+                  // ---------- Медиа: логотип + фоновая картинка ----------
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Логотип',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.getTextPrimaryColor(context),
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Логотип',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _MediaTile(
+                            file: logoFile,
+                            onPick: _pickLogo,
+                            onRemove: () => setState(() => logoFile = null),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      _MediaTile(
-                        file: logoFile,
-                        onPick: _pickLogo,
-                        onRemove: () => setState(() => logoFile = null),
+                      const SizedBox(width: 40),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Фоновая картинка',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              height: 90,
+                              child: _MediaTile(
+                                file: backgroundFile,
+                                onPick: _pickBackground,
+                                onRemove: () => setState(
+                                  () => backgroundFile = null,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

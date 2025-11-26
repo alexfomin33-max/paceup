@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/local_image_compressor.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
@@ -277,24 +278,40 @@ class _EditEventScreenState extends State<EditEventScreen> {
   }
 
   Future<void> _pickLogo() async {
-    final x = await picker.pickImage(source: ImageSource.gallery);
-    if (x != null) {
-      setState(() {
-        logoFile = File(x.path);
-        logoUrl = null; // Сбрасываем URL, так как выбран новый файл
-      });
-    }
+    // ── выбираем новый логотип события и сжимаем его перед загрузкой
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    final compressed = await compressLocalImage(
+      sourceFile: File(picked.path),
+      maxSide: 900,
+      jpegQuality: 85,
+    );
+    if (!mounted) return;
+
+    setState(() {
+      logoFile = compressed;
+      logoUrl = null; // Сбрасываем URL, так как выбран новый файл
+    });
   }
 
   Future<void> _pickPhoto(int i) async {
-    final x = await picker.pickImage(source: ImageSource.gallery);
-    if (x != null) {
-      setState(() {
-        photos[i] = File(x.path);
-        photoUrls[i] = ''; // Сбрасываем URL, так как выбран новый файл
-        photoFilenames[i] = '';
-      });
-    }
+    // ── выбираем новое фото и уменьшаем размер для ускорения загрузки
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    final compressed = await compressLocalImage(
+      sourceFile: File(picked.path),
+      maxSide: 1600,
+      jpegQuality: 80,
+    );
+    if (!mounted) return;
+
+    setState(() {
+      photos[i] = compressed;
+      photoUrls[i] = ''; // Сбрасываем URL, так как выбран новый файл
+      photoFilenames[i] = '';
+    });
   }
 
   /// Открыть экран выбора места на карте

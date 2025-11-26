@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/local_image_compressor.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
@@ -106,13 +107,33 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
   }
 
   Future<void> _pickLogo() async {
-    final x = await picker.pickImage(source: ImageSource.gallery);
-    if (x != null) setState(() => logoFile = File(x.path));
+    // ── выбираем логотип клуба и сжимаем для экономии трафика
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    final compressed = await compressLocalImage(
+      sourceFile: File(picked.path),
+      maxSide: 900,
+      jpegQuality: 85,
+    );
+    if (!mounted) return;
+
+    setState(() => logoFile = compressed);
   }
 
   Future<void> _pickBackground() async {
-    final x = await picker.pickImage(source: ImageSource.gallery);
-    if (x != null) setState(() => backgroundFile = File(x.path));
+    // ── подбираем фоновое фото, затем уменьшаем его до разумного размера
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    final compressed = await compressLocalImage(
+      sourceFile: File(picked.path),
+      maxSide: 1600,
+      jpegQuality: 80,
+    );
+    if (!mounted) return;
+
+    setState(() => backgroundFile = compressed);
   }
 
   Future<void> _pickDateCupertino() async {

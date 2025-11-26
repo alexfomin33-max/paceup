@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/local_image_compressor.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
@@ -241,23 +242,39 @@ class _EditClubScreenState extends State<EditClubScreen> {
   }
 
   Future<void> _pickLogo() async {
-    final x = await picker.pickImage(source: ImageSource.gallery);
-    if (x != null) {
-      setState(() {
-        logoFile = File(x.path);
-        logoUrl = null; // Сбрасываем URL, так как выбран новый файл
-      });
-    }
+    // ── заменяем логотип и уменьшаем его размер для экономии трафика
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    final compressed = await compressLocalImage(
+      sourceFile: File(picked.path),
+      maxSide: 900,
+      jpegQuality: 85,
+    );
+    if (!mounted) return;
+
+    setState(() {
+      logoFile = compressed;
+      logoUrl = null; // Сбрасываем URL, так как выбран новый файл
+    });
   }
 
   Future<void> _pickBackground() async {
-    final x = await picker.pickImage(source: ImageSource.gallery);
-    if (x != null) {
-      setState(() {
-        backgroundFile = File(x.path);
-        backgroundUrl = null; // Сбрасываем URL, так как выбран новый файл
-      });
-    }
+    // ── обновляем фоновую картинку и сразу сжимаем файл
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    final compressed = await compressLocalImage(
+      sourceFile: File(picked.path),
+      maxSide: 1600,
+      jpegQuality: 80,
+    );
+    if (!mounted) return;
+
+    setState(() {
+      backgroundFile = compressed;
+      backgroundUrl = null; // Сбрасываем URL, так как выбран новый файл
+    });
   }
 
   Future<void> _pickDateCupertino() async {

@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../utils/local_image_compressor.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
@@ -694,7 +695,12 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       for (var i = 0; i < pickedFiles.length; i++) {
         final path = pickedFiles[i].path;
         if (path.isEmpty) continue;
-        filesForUpload['file$i'] = File(path);
+        final compressed = await compressLocalImage(
+          sourceFile: File(path),
+          maxSide: 1600,
+          jpegQuality: 80,
+        );
+        filesForUpload['file$i'] = compressed;
       }
 
       if (filesForUpload.isEmpty) {

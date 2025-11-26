@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../theme/app_theme.dart';
+import '../../../../utils/local_image_compressor.dart';
 import '../../../../widgets/app_bar.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
 import '../../../../widgets/primary_button.dart';
@@ -265,13 +266,21 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
               final XFile? picked = await picker.pickImage(
                 source: ImageSource.gallery,
               );
-              if (picked != null) {
-                setState(() {
-                  existing.keep = false;
-                  _newImages.add(File(picked.path));
-                  _updateSaveState();
-                });
-              }
+              if (picked == null) return;
+
+              // ── уменьшаем выбранное изображение перед добавлением в пост
+              final compressed = await compressLocalImage(
+                sourceFile: File(picked.path),
+                maxSide: 1600,
+                jpegQuality: 80,
+              );
+              if (!mounted) return;
+
+              setState(() {
+                existing.keep = false;
+                _newImages.add(compressed);
+                _updateSaveState();
+              });
             },
             child: Opacity(
               opacity: existing.keep ? 1.0 : 0.35,
@@ -357,12 +366,20 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
               final XFile? pickedFile = await picker.pickImage(
                 source: ImageSource.gallery,
               );
-              if (pickedFile != null) {
-                setState(() {
-                  _newImages[photoIndex] = File(pickedFile.path);
-                  _updateSaveState();
-                });
-              }
+              if (pickedFile == null) return;
+
+              // ── сжимаем выбранное фото перед заменой в локальном списке
+              final compressed = await compressLocalImage(
+                sourceFile: File(pickedFile.path),
+                maxSide: 1600,
+                jpegQuality: 80,
+              );
+              if (!mounted) return;
+
+              setState(() {
+                _newImages[photoIndex] = compressed;
+                _updateSaveState();
+              });
             },
             child: Container(
               width: 90,
@@ -673,10 +690,20 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
       final pickedFiles = await picker.pickMultiImage();
       if (pickedFiles.isEmpty) return;
 
-      // Сохраняем выбранные файлы локально
-      final files = pickedFiles.map((file) => File(file.path)).toList();
+      // ── конвертируем и сжимаем все выбранные изображения
+      final compressedFiles = <File>[];
+      for (final file in pickedFiles) {
+        final compressed = await compressLocalImage(
+          sourceFile: File(file.path),
+          maxSide: 1600,
+          jpegQuality: 80,
+        );
+        compressedFiles.add(compressed);
+      }
+
+      if (!mounted) return;
       setState(() {
-        _newImages.addAll(files);
+        _newImages.addAll(compressedFiles);
         _updateSaveState();
       });
     } on PlatformException catch (e) {

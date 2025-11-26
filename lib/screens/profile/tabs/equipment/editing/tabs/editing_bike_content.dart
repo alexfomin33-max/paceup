@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../../../../theme/app_theme.dart';
+import '../../../../../../../utils/local_image_compressor.dart';
 import '../../../../../../../widgets/primary_button.dart';
 import '../../../../../../../service/api_service.dart';
 import '../../../../../../../service/auth_service.dart';
@@ -233,13 +234,21 @@ class _EditingBikeContentState extends State<EditingBikeContent> {
   //                           ВЫБОР ИЗОБРАЖЕНИЯ
   // ─────────────────────────────────────────────────────────────────────
   Future<void> _pickImage() async {
-    final x = await _picker.pickImage(source: ImageSource.gallery);
-    if (x != null && mounted) {
-      setState(() {
-        _imageFile = File(x.path);
-        _currentImageUrl = null;
-      });
-    }
+    final picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    // ── уменьшаем изображение велосипеда перед повторной загрузкой
+    final compressed = await compressLocalImage(
+      sourceFile: File(picked.path),
+      maxSide: 1600,
+      jpegQuality: 80,
+    );
+    if (!mounted) return;
+
+    setState(() {
+      _imageFile = compressed;
+      _currentImageUrl = null;
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────

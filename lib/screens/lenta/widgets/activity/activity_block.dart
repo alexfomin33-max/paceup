@@ -29,6 +29,7 @@ import '../../activity/edit_activity_screen.dart';
 import '../../../../providers/lenta/lenta_provider.dart';
 import '../../../../service/api_service.dart';
 import '../../../../service/auth_service.dart';
+import '../../../../utils/local_image_compressor.dart';
 
 // Меню с тремя точками
 import '../../../../widgets/more_menu_overlay.dart';
@@ -367,7 +368,12 @@ Future<void> _handleAddPhotos({
     for (var i = 0; i < pickedFiles.length; i++) {
       final path = pickedFiles[i].path;
       if (path.isEmpty) continue;
-      filesForUpload['file$i'] = File(path);
+      final compressed = await compressLocalImage(
+        sourceFile: File(path),
+        maxSide: 1600,
+        jpegQuality: 80,
+      );
+      filesForUpload['file$i'] = compressed;
     }
 
     if (filesForUpload.isEmpty) {
