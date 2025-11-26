@@ -1,15 +1,10 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:crop_your_image/crop_your_image.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import '../../../theme/app_theme.dart';
-import '../../../utils/local_image_compressor.dart';
+import '../../../utils/image_picker_helper.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
@@ -43,13 +38,12 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
   bool saveTemplate = false;
 
   // медиа
-  final picker = ImagePicker();
   File? logoFile;
   File? backgroundFile;
 
   // ──────────── фиксированные пропорции для обрезки медиа ────────────
   static const double _logoAspectRatio = 1;
-  static const double _backgroundAspectRatio = 16 / 9;
+  static const double _backgroundAspectRatio = 2.3;
 
   // координаты выбранного места
   LatLng? selectedLocation;
@@ -107,85 +101,14 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
     });
   }
 
-  // ────────────── общий выбор + обрезка + сжатие изображения ──────────────
-  Future<File?> _pickAndProcessImage({
-    required double aspectRatio,
-    required int maxSide,
-    required int jpegQuality,
-  }) async {
-    // ── выбираем файл из галереи
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return null;
-
-    // ── открываем экран обрезки с нужными пропорциями
-    final cropped = await _cropPickedImage(
-      source: picked,
-      aspectRatio: aspectRatio,
-    );
-    if (cropped == null) return null;
-
-    // ── сжимаем результат, чтобы не перегружать сеть при загрузке
-    final compressed = await compressLocalImage(
-      sourceFile: cropped,
-      maxSide: maxSide,
-      jpegQuality: jpegQuality,
-    );
-
-    // ── удаляем временный файл обрезки, если компрессор создал другой файл
-    if (cropped.path != compressed.path) {
-      try {
-        await cropped.delete();
-      } catch (_) {
-        // ── подавляем ошибку удаления, чтобы не мешать сценарию пользователя
-      }
-    }
-
-    return compressed;
-  }
-
-  // ────────────── открытие полного экрана обрезки изображения ──────────────
-  Future<File?> _cropPickedImage({
-    required XFile source,
-    required double aspectRatio,
-  }) async {
-    // ── читаем байты выбранного изображения
-    final imageBytes = await source.readAsBytes();
-    if (!mounted) return null;
-
-    // ── запускаем экран обрезки и ждём результат от пользователя
-    final croppedBytes = await Navigator.of(context).push<Uint8List>(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => _CropImageScreen(
-          imageBytes: imageBytes,
-          aspectRatio: aspectRatio,
-          title: aspectRatio == _logoAspectRatio
-              ? 'Обрезка логотипа'
-              : 'Обрезка фонового фото',
-        ),
-      ),
-    );
-    if (croppedBytes == null) return null;
-
-    // ── сохраняем результат во временный файл, чтобы прокинуть в компрессор
-    final tempDir = await getTemporaryDirectory();
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final baseName = p.basename(source.path);
-    final fileName = 'crop_${timestamp}_$baseName';
-    final outputPath = p.join(tempDir.path, fileName);
-    final croppedFile = await File(
-      outputPath,
-    ).writeAsBytes(croppedBytes, flush: true);
-
-    return croppedFile;
-  }
-
   Future<void> _pickLogo() async {
     // ── выбираем логотип с обрезкой в фиксированную пропорцию 1:1
-    final processed = await _pickAndProcessImage(
+    final processed = await ImagePickerHelper.pickAndProcessImage(
+      context: context,
       aspectRatio: _logoAspectRatio,
       maxSide: 900,
       jpegQuality: 85,
+      cropTitle: 'Обрезка логотипа',
     );
     if (processed == null || !mounted) return;
 
@@ -194,10 +117,12 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
 
   Future<void> _pickBackground() async {
     // ── выбираем фон с обрезкой 16:9 и сжатием до оптимального размера
-    final processed = await _pickAndProcessImage(
+    final processed = await ImagePickerHelper.pickAndProcessImage(
+      context: context,
       aspectRatio: _backgroundAspectRatio,
       maxSide: 1600,
       jpegQuality: 80,
+      cropTitle: 'Обрезка фонового фото',
     );
     if (processed == null || !mounted) return;
 
@@ -1783,118 +1708,5 @@ class _MediaTile extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-//
-// --------------------------- ЭКРАН ОБРЕЗКИ ФОТО ---------------------------
-//
-
-class _CropImageScreen extends StatefulWidget {
-  final Uint8List imageBytes;
-  final double aspectRatio;
-  final String title;
-
-  const _CropImageScreen({
-    required this.imageBytes,
-    required this.aspectRatio,
-    required this.title,
-  });
-
-  @override
-  State<_CropImageScreen> createState() => _CropImageScreenState();
-}
-
-class _CropImageScreenState extends State<_CropImageScreen> {
-  final CropController _controller = CropController();
-
-  bool _cropping = false;
-
-  @override
-  Widget build(BuildContext context) {
-    // ── общие цвета экрана обрезки
-    final backgroundColor = AppColors.getBackgroundColor(context);
-    final surfaceColor = AppColors.getSurfaceColor(context);
-    final borderColor = AppColors.getBorderColor(context);
-
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: PaceAppBar(title: widget.title),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ── рабочая область обрезки
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: surfaceColor,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: borderColor),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    child: Crop(
-                      controller: _controller,
-                      image: widget.imageBytes,
-                      aspectRatio: widget.aspectRatio,
-                      onCropped: _handleCroppedResult,
-                      progressIndicator: const Center(
-                        child: CupertinoActivityIndicator(radius: 12),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // ── кнопка подтверждения обрезки
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              child: PrimaryButton(
-                text: 'Готово',
-                onPressed: () => _onCropPressed(),
-                expanded: true,
-                isLoading: _cropping,
-                enabled: !_cropping,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── инициируем обрезку и показываем индикатор загрузки
-  void _onCropPressed() {
-    setState(() => _cropping = true);
-    try {
-      _controller.crop();
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _cropping = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Ошибка обрезки: $error')));
-    }
-  }
-
-  // ── обрабатываем результат: возвращаем байты наверх или показываем ошибку
-  void _handleCroppedResult(CropResult result) {
-    if (result is CropSuccess) {
-      if (!mounted) return;
-      setState(() => _cropping = false);
-      Navigator.of(context).pop(result.croppedImage);
-      return;
-    }
-
-    if (result is CropFailure) {
-      if (!mounted) return;
-      setState(() => _cropping = false);
-      final cause = result.cause;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Ошибка обрезки: $cause')));
-    }
   }
 }

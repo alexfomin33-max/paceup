@@ -2,9 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../theme/app_theme.dart';
-import '../../../utils/local_image_compressor.dart';
+import '../../../utils/image_picker_helper.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
@@ -34,9 +33,12 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
   List<String> _cities = [];
 
   // ── медиа
-  final picker = ImagePicker();
   File? logoFile;
   File? backgroundFile;
+
+  // ──────────── фиксированные пропорции для обрезки медиа ────────────
+  static const double _logoAspectRatio = 1;
+  static const double _backgroundAspectRatio = 2.3;
 
   // ── состояние ошибок валидации
   final Set<String> _errorFields = {};
@@ -111,33 +113,31 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
   }
 
   Future<void> _pickLogo() async {
-    // ── выбираем логотип клуба и сжимаем для экономии трафика
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-
-    final compressed = await compressLocalImage(
-      sourceFile: File(picked.path),
+    // ── выбираем логотип с обрезкой в фиксированную пропорцию 1:1
+    final processed = await ImagePickerHelper.pickAndProcessImage(
+      context: context,
+      aspectRatio: _logoAspectRatio,
       maxSide: 900,
       jpegQuality: 85,
+      cropTitle: 'Обрезка логотипа',
     );
-    if (!mounted) return;
+    if (processed == null || !mounted) return;
 
-    setState(() => logoFile = compressed);
+    setState(() => logoFile = processed);
   }
 
   Future<void> _pickBackground() async {
-    // ── подбираем фоновое фото, затем уменьшаем его до разумного размера
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-
-    final compressed = await compressLocalImage(
-      sourceFile: File(picked.path),
+    // ── выбираем фон с обрезкой 2.3:1 и сжатием до оптимального размера
+    final processed = await ImagePickerHelper.pickAndProcessImage(
+      context: context,
+      aspectRatio: _backgroundAspectRatio,
       maxSide: 1600,
       jpegQuality: 80,
+      cropTitle: 'Обрезка фонового фото',
     );
-    if (!mounted) return;
+    if (processed == null || !mounted) return;
 
-    setState(() => backgroundFile = compressed);
+    setState(() => backgroundFile = processed);
   }
 
   Future<void> _pickDateCupertino() async {

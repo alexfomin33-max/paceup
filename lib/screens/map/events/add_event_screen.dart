@@ -1,10 +1,9 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../theme/app_theme.dart';
-import '../../../utils/local_image_compressor.dart';
+import '../../../utils/image_picker_helper.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
@@ -41,9 +40,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
   bool saveTemplate = false;
 
   // медиа
-  final picker = ImagePicker();
   File? logoFile;
   final List<File?> photos = [null, null, null];
+
+  // ──────────── фиксированные пропорции для обрезки логотипа ────────────
+  static const double _logoAspectRatio = 1;
 
   // координаты выбранного места
   LatLng? selectedLocation;
@@ -86,31 +87,26 @@ class _AddEventScreenState extends State<AddEventScreen> {
   void _refresh() => setState(() {});
 
   Future<void> _pickLogo() async {
-    // ── выбираем логотип клуба и сразу уменьшаем файл, чтобы сократить трафик
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-
-    final compressed = await compressLocalImage(
-      sourceFile: File(picked.path),
+    // ── выбираем логотип с обрезкой в фиксированную пропорцию 1:1
+    final processed = await ImagePickerHelper.pickAndProcessImage(
+      context: context,
+      aspectRatio: _logoAspectRatio,
       maxSide: 900,
       jpegQuality: 85,
+      cropTitle: 'Обрезка логотипа',
     );
-    if (!mounted) return;
+    if (processed == null || !mounted) return;
 
-    setState(() => logoFile = compressed);
+    setState(() => logoFile = processed);
   }
 
   Future<void> _pickPhoto(int i) async {
-    // ── забираем фото события и сжимаем его перед загрузкой
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-
-    final compressed = await compressLocalImage(
-      sourceFile: File(picked.path),
+    // ── забираем фото события и сжимаем его перед загрузкой (без обрезки)
+    final compressed = await ImagePickerHelper.pickImageWithoutCrop(
       maxSide: 1600,
       jpegQuality: 80,
     );
-    if (!mounted) return;
+    if (compressed == null || !mounted) return;
 
     setState(() => photos[i] = compressed);
   }
