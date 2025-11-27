@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/image_picker_helper.dart';
 import '../../../core/widgets/app_bar.dart';
@@ -11,20 +12,22 @@ import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/providers/form_state_provider.dart';
+import '../../../core/widgets/form_error_display.dart';
 import 'location_picker_screen.dart';
 
 /// Экран редактирования официального события
-class EditOfficialEventScreen extends StatefulWidget {
+class EditOfficialEventScreen extends ConsumerStatefulWidget {
   final int eventId;
 
   const EditOfficialEventScreen({super.key, required this.eventId});
 
   @override
-  State<EditOfficialEventScreen> createState() =>
+  ConsumerState<EditOfficialEventScreen> createState() =>
       _EditOfficialEventScreenState();
 }
 
-class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
+class _EditOfficialEventScreenState extends ConsumerState<EditOfficialEventScreen> {
   // контроллеры
   final nameCtrl = TextEditingController();
   final placeCtrl = TextEditingController();
@@ -57,11 +60,6 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
 
   // координаты выбранного места
   LatLng? selectedLocation;
-
-  // ── состояние загрузки
-  bool _loading = false;
-  bool _loadingData = true;
-  bool _deleting = false; // ── состояние удаления
 
   bool get isFormValid =>
       (nameCtrl.text.trim().isNotEmpty) &&
@@ -107,30 +105,27 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
 
   /// Загрузка данных события для редактирования
   Future<void> _loadEventData() async {
-    try {
-      final api = ApiService();
-      final authService = AuthService();
-      final userId = await authService.getUserId();
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ApiService();
+    final authService = AuthService();
 
-      if (userId == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Ошибка авторизации')));
-          Navigator.of(context).pop();
+    await formNotifier.submitWithLoading(
+      () async {
+        final userId = await authService.getUserId();
+
+        if (userId == null) {
+          throw Exception('Ошибка авторизации');
         }
-        return;
-      }
 
-      final data = await api.get(
-        '/update_event.php',
-        queryParams: {
-          'event_id': widget.eventId.toString(),
-          'user_id': userId.toString(),
-        },
-      );
+        final data = await api.get(
+          '/update_event.php',
+          queryParams: {
+            'event_id': widget.eventId.toString(),
+            'user_id': userId.toString(),
+          },
+        );
 
-      if (data['success'] == true && data['event'] != null) {
+        if (data['success'] == true && data['event'] != null) {
         final event = data['event'] as Map<String, dynamic>;
 
         // Заполняем текстовые поля
@@ -233,30 +228,28 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
           _distanceControllers.add(controller);
         }
 
-        setState(() {
-          _loadingData = false;
-        });
+        if (!mounted) return;
+        setState(() {});
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                data['message'] as String? ??
-                    'Не удалось загрузить данные события',
-              ),
-            ),
-          );
-          Navigator.of(context).pop();
-        }
+        throw Exception(
+          data['message'] as String? ??
+              'Не удалось загрузить данные события',
+        );
       }
-    } catch (e) {
-      if (mounted) {
+      },
+      onError: (error) {
+        if (!mounted) return;
+        final formState = ref.read(formStateProvider);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка загрузки: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              formState.error ?? 'Ошибка загрузки: ${error.toString()}',
+            ),
+          ),
         );
         Navigator.of(context).pop();
-      }
-    }
+      },
+    );
   }
 
   Future<void> _pickLogo() async {
@@ -479,70 +472,52 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
     final confirmed = await _confirmDelete();
     if (!confirmed) return;
 
-    // ── защита от повторных нажатий
-    if (_deleting) return;
-    setState(() => _deleting = true);
-
+    final formNotifier = ref.read(formStateProvider.notifier);
     final api = ApiService();
     final authService = AuthService();
 
-    try {
-      final userId = await authService.getUserId();
-      if (userId == null) {
-        if (!mounted) return;
-        setState(() => _deleting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ошибка: Пользователь не авторизован'),
-            backgroundColor: Colors.red,
-          ),
+    await formNotifier.submit(
+      () async {
+        final userId = await authService.getUserId();
+        if (userId == null) {
+          throw Exception('Ошибка: Пользователь не авторизован');
+        }
+
+        // Отправляем запрос на удаление
+        final data = await api.post(
+          '/delete_event.php',
+          body: {'event_id': widget.eventId, 'user_id': userId},
         );
-        return;
-      }
 
-      // Отправляем запрос на удаление
-      final data = await api.post(
-        '/delete_event.php',
-        body: {'event_id': widget.eventId, 'user_id': userId},
-      );
-
-      // Проверяем ответ
-      bool success = false;
-      String? errorMessage;
-
-      if (data['success'] == true) {
-        success = true;
-      } else if (data['success'] == false) {
-        errorMessage = data['message'] ?? 'Ошибка при удалении события';
-      } else {
-        errorMessage = 'Неожиданный формат ответа сервера';
-      }
-
-      if (success) {
+        // Проверяем ответ
+        if (data['success'] == true) {
+          // Успешно удалено
+        } else if (data['success'] == false) {
+          throw Exception(
+            data['message'] ?? 'Ошибка при удалении события',
+          );
+        } else {
+          throw Exception('Неожиданный формат ответа сервера');
+        }
+      },
+      onSuccess: () {
         if (!mounted) return;
-
         // Возвращаемся на предыдущий экран с результатом удаления
         Navigator.of(context).pop('deleted');
-      } else {
+      },
+      onError: (error) {
         if (!mounted) return;
-        setState(() => _deleting = false);
+        final formState = ref.read(formStateProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage ?? 'Ошибка при удалении события'),
+            content: Text(
+              formState.error ?? 'Ошибка при удалении события',
+            ),
             backgroundColor: Colors.red,
           ),
         );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _deleting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ошибка сети: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+      },
+    );
   }
 
   Future<void> _submit() async {
@@ -551,12 +526,12 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
       return;
     }
 
-    setState(() => _loading = true);
-
+    final formNotifier = ref.read(formStateProvider.notifier);
     final api = ApiService();
     final authService = AuthService();
 
-    try {
+    await formNotifier.submit(
+      () async {
       final files = <String, File>{};
       final fields = <String, String>{};
 
@@ -573,15 +548,7 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
       // Добавляем поля формы
       final userId = await authService.getUserId();
       if (userId == null) {
-        if (!mounted) return;
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ошибка авторизации. Необходимо войти в систему'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-        return;
+        throw Exception('Ошибка авторизации. Необходимо войти в систему');
       }
       fields['event_id'] = widget.eventId.toString();
       fields['user_id'] = userId.toString();
@@ -665,45 +632,44 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
         );
       }
 
-      bool success = false;
-      String? errorMessage;
+        bool success = false;
+        String? errorMessage;
 
-      if (data['success'] == true) {
-        success = true;
-      } else if (data['success'] == false) {
-        errorMessage = data['message'] ?? 'Ошибка при обновлении события';
-      } else {
-        errorMessage = 'Неожиданный формат ответа сервера';
-      }
+        if (data['success'] == true) {
+          success = true;
+        } else if (data['success'] == false) {
+          errorMessage = data['message'] ?? 'Ошибка при обновлении события';
+        } else {
+          errorMessage = 'Неожиданный формат ответа сервера';
+        }
 
-      if (success) {
+        if (!success) {
+          throw Exception(errorMessage ?? 'Ошибка при обновлении события');
+        }
+      },
+      onSuccess: () {
         if (!mounted) return;
-
         // Возвращаемся на экран детализации с обновленными данными
         Navigator.of(context).pop(true);
-      } else {
+      },
+      onError: (error) {
         if (!mounted) return;
+        final formState = ref.read(formStateProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage ?? 'Ошибка при обновлении события'),
+            content: Text(
+              formState.error ?? 'Ошибка при обновлении события',
+            ),
           ),
         );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Ошибка сети: ${e.toString()}')));
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loadingData) {
+    final formState = ref.watch(formStateProvider);
+    if (formState.isLoading) {
       return Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Редактирование события'),
@@ -1435,6 +1401,11 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                   ),
 
                   const SizedBox(height: 25),
+                  // ── Отображение ошибок
+                  if (formState.hasErrors) ...[
+                    FormErrorDisplay(formState: formState),
+                    const SizedBox(height: 16),
+                  ],
                   // ── Кнопки: Сохранить и Удалить событие
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1443,16 +1414,20 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                         child: PrimaryButton(
                           text: 'Сохранить',
                           onPressed: () {
-                            if (!_loading && !_deleting) _submit();
+                            if (!formState.isSubmitting && !formState.isLoading) {
+                              _submit();
+                            }
                           },
                           expanded: true,
-                          isLoading: _loading,
-                          enabled: isFormValid,
+                          isLoading: formState.isSubmitting,
+                          enabled: isFormValid && !formState.isSubmitting,
                         ),
                       ),
                       const SizedBox(width: 16),
                       TextButton(
-                        onPressed: _deleting || _loading ? null : _deleteEvent,
+                        onPressed: formState.isSubmitting || formState.isLoading
+                            ? null
+                            : _deleteEvent,
                         child: const Text(
                           'Удалить событие',
                           style: TextStyle(

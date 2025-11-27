@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_shell.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../providers/services/api_provider.dart';
-import '../../core/services/api_service.dart' show ApiException;
+import '../../core/providers/form_state_provider.dart';
 import '../../core/widgets/auth/sms_code_input.dart';
 import '../../core/widgets/auth/resend_code_button.dart';
+import '../../core/widgets/form_error_display.dart';
 
 //import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -27,15 +28,6 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
   /// 🔹 Ключ для доступа к виджету ResendCodeButton (для перезапуска таймера)
   final GlobalKey<ResendCodeButtonState> _resendButtonKey = GlobalKey();
 
-  /// 🔹 Флаг загрузки (блокирует повторные отправки)
-  bool _isLoading = false;
-
-  /// 🔹 Флаг отправки кода (блокирует ввод во время проверки)
-  bool _isSubmitting = false;
-
-  /// 🔹 Сообщение об ошибке (если есть)
-  String? _errorMessage;
-
   @override
   void initState() {
     super.initState();
@@ -45,115 +37,107 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
 
   /// 🔹 Метод для первоначальной отправки запроса входа пользователя
   Future<void> fetchApiData() async {
-    if (_isLoading) return;
+    final formState = ref.read(formStateProvider);
+    if (formState.isLoading) return;
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ref.read(apiServiceProvider);
 
-    try {
-      final api = ref.read(apiServiceProvider);
-      final data = await api.post(
-        '/login_user.php',
-        body: {'phone': widget.phone},
-      );
-      debugPrint('fetchApiData response: $data');
-    } on ApiException catch (e) {
+    await formNotifier.submitWithLoading(
+      () async {
+        final data = await api.post(
+          '/login_user.php',
+          body: {'phone': widget.phone},
+        );
+        debugPrint('fetchApiData response: $data');
+      },
       // 🔹 Ошибки отправки кода только логируем, не показываем пользователю
-      debugPrint("fetchApiData error: $e");
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+      onError: (error) {
+        debugPrint("fetchApiData error: $error");
+        // Очищаем ошибку, чтобы не показывать пользователю
+        formNotifier.clearGeneralError();
+      },
+    );
   }
 
   /// 🔹 Метод для повторной отправки кода на номер
   Future<void> resendCode() async {
-    if (_isLoading) return;
+    final formState = ref.read(formStateProvider);
+    if (formState.isLoading) return;
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ref.read(apiServiceProvider);
 
-    try {
-      final api = ref.read(apiServiceProvider);
-      final data = await api.post(
-        '/resendlgn_code.php',
-        body: {'phone': widget.phone},
-      );
-      debugPrint('resendCode response: $data');
-      // 🔹 После успешной отправки перезапускаем таймер
-      _resendButtonKey.currentState?.resetTimer();
-    } on ApiException catch (e) {
+    await formNotifier.submitWithLoading(
+      () async {
+        final data = await api.post(
+          '/resendlgn_code.php',
+          body: {'phone': widget.phone},
+        );
+        debugPrint('resendCode response: $data');
+      },
+      onSuccess: () {
+        // 🔹 После успешной отправки перезапускаем таймер
+        _resendButtonKey.currentState?.resetTimer();
+      },
       // 🔹 Ошибки повторной отправки кода только логируем, не показываем пользователю
-      debugPrint("resendCode error: $e");
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+      onError: (error) {
+        debugPrint("resendCode error: $error");
+        formNotifier.clearGeneralError();
+      },
+    );
   }
 
   /// 🔹 Метод для проверки введённого кода
   Future<void> enterCode(String userCode) async {
-    if (_isSubmitting) return;
+    final formState = ref.read(formStateProvider);
+    if (formState.isSubmitting) return;
 
-    setState(() {
-      _isSubmitting = true;
-      _errorMessage = null;
-    });
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ref.read(apiServiceProvider);
 
-    try {
-      final api = ref.read(apiServiceProvider);
-      final data = await api.post(
-        '/enterlgn_code.php',
-        body: {'code': userCode, 'phone': widget.phone},
-      );
-
-      // ApiService уже распарсил JSON
-      final codeValue = int.tryParse(data['code'].toString()) ?? 0;
-
-      // 🔹 Если код валиден и виджет всё ещё в дереве
-      if (codeValue > 0 && mounted) {
-        //await storage.write(key: "access_token", value: data["access_token"]);
-        //await storage.write(key: "refresh_token", value: data["refresh_token"]);
-        //await storage.write(key: "user_id", value: data['code']);
-        Navigator.pushReplacementNamed(
-          context,
-          '/lenta',
-          arguments: {
-            'userId': codeValue,
-          }, // передаём userId на следующий экран
+    await formNotifier.submit(
+      () async {
+        final data = await api.post(
+          '/enterlgn_code.php',
+          body: {'code': userCode, 'phone': widget.phone},
         );
-      } else {
-        // 🔹 Неверный код — показываем ошибку и очищаем поля
+
+        // ApiService уже распарсил JSON
+        final codeValue = int.tryParse(data['code'].toString()) ?? 0;
+
+        // 🔹 Если код валиден и виджет всё ещё в дереве
+        if (codeValue > 0 && mounted) {
+          Navigator.pushReplacementNamed(
+            context,
+            '/lenta',
+            arguments: {
+              'userId': codeValue,
+            }, // передаём userId на следующий экран
+          );
+        } else {
+          // 🔹 Неверный код — показываем ошибку и очищаем поля
+          if (mounted) {
+            formNotifier.setError('Неверный код. Попробуйте ещё раз.');
+            _smsCodeInputKey.currentState?.clear();
+          }
+          throw Exception('Неверный код');
+        }
+      },
+      onError: (error) {
         if (mounted) {
-          setState(() {
-            _errorMessage = 'Неверный код. Попробуйте ещё раз.';
-          });
           _smsCodeInputKey.currentState?.clear();
         }
-      }
-    } on ApiException catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Ошибка проверки кода: ${e.message}';
-        });
-        _smsCodeInputKey.currentState?.clear();
-      }
-      debugPrint("enterCode error: $e");
-    } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-      }
-    }
+        debugPrint("enterCode error: $error");
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // 🔹 Получаем состояние формы
+    final formState = ref.watch(formStateProvider);
+
     // 🔹 Получаем высоту клавиатуры для адаптации контента
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     // 🔹 Базовый отступ снизу, который уменьшается при появлении клавиатуры
@@ -192,28 +176,19 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
                 // 🔹 Используем общий виджет для ввода SMS-кода
                 SmsCodeInput(
                   key: _smsCodeInputKey,
-                  onCodeComplete: _isSubmitting ? null : enterCode,
-                  enabled: !_isSubmitting,
+                  onCodeComplete: formState.isSubmitting ? null : enterCode,
+                  enabled: !formState.isSubmitting,
                 ),
                 // 🔹 Показываем ошибку, если есть
-                if (_errorMessage != null) ...[
+                if (formState.error != null) ...[
                   const SizedBox(height: 12),
-                  SelectableText.rich(
-                    TextSpan(
-                      text: _errorMessage!,
-                      style: const TextStyle(
-                        color: AppColors.error,
-                        fontSize: 14,
-                        fontFamily: 'Inter',
-                      ),
-                    ),
-                  ),
+                  FormErrorDisplay(formState: formState),
                 ],
                 const SizedBox(height: 15),
                 // 🔹 Используем общий виджет для кнопки повторной отправки
                 ResendCodeButton(
                   key: _resendButtonKey,
-                  onPressed: _isLoading ? null : resendCode,
+                  onPressed: formState.isLoading ? null : resendCode,
                   initialSeconds: 60,
                 ),
               ],

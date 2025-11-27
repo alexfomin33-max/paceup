@@ -6,6 +6,8 @@ import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../core/widgets/primary_button.dart';
+import '../../../../../core/providers/form_state_provider.dart';
+import '../../../../../core/widgets/form_error_display.dart';
 import 'package:mask_input_formatter/mask_input_formatter.dart';
 
 /// Экран редактирования телефона
@@ -22,16 +24,15 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
   final _phoneController = TextEditingController();
   final _focusNode = FocusNode();
   final _maskFormatter = MaskInputFormatter(mask: '+# (###) ###-##-##');
-  bool _isLoading = false;
-  String? _error;
 
   @override
   void initState() {
     super.initState();
     _phoneController.text = widget.currentPhone;
-    _phoneController.addListener(() {
-      setState(() {
-        _error = null;
+    Future.microtask(() {
+      final formNotifier = ref.read(formStateProvider.notifier);
+      _phoneController.addListener(() {
+        formNotifier.clearGeneralError();
       });
     });
     _focusNode.addListener(() => setState(() {}));
@@ -53,38 +54,34 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
   Future<void> _savePhone() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final authService = AuthService();
-      final userId = await authService.getUserId();
-      if (userId == null) {
-        throw Exception('Пользователь не авторизован');
-      }
-
-      final api = ApiService();
-      await api.post(
-        '/update_user_settings.php',
-        body: {'user_id': userId, 'phone': _phoneController.text},
-      );
-
-      if (!mounted) return;
-
-      Navigator.of(context).pop(_phoneController.text);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString().replaceAll('ApiException: ', '');
-        _isLoading = false;
-      });
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final authService = AuthService();
+    final userId = await authService.getUserId();
+    if (userId == null) {
+      formNotifier.setError('Пользователь не авторизован');
+      return;
     }
+
+    final api = ApiService();
+
+    await formNotifier.submit(
+      () async {
+        await api.post(
+          '/update_user_settings.php',
+          body: {'user_id': userId, 'phone': _phoneController.text},
+        );
+      },
+      onSuccess: () {
+        if (!mounted) return;
+        Navigator.of(context).pop(_phoneController.text);
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final formState = ref.watch(formStateProvider);
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
@@ -123,7 +120,7 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
                       hintStyle: TextStyle(
                         color: AppColors.getTextPlaceholderColor(context),
                       ),
-                      errorText: _error,
+                      errorText: formState.error,
                       filled: true,
                       fillColor: AppColors.getBackgroundColor(context),
                       border: OutlineInputBorder(
@@ -165,13 +162,16 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
 
                   const SizedBox(height: 30),
 
+                  // Показываем ошибку, если есть
+                  FormErrorDisplay(formState: formState),
+
                   // Кнопка сохранения
                   Center(
                     child: PrimaryButton(
                       text: 'Сохранить',
                       onPressed: _savePhone,
-                      isLoading: _isLoading,
-                      enabled: _isFormValid,
+                      isLoading: formState.isSubmitting,
+                      enabled: _isFormValid && !formState.isSubmitting,
                       horizontalPadding: 68,
                     ),
                   ),

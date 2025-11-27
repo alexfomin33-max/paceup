@@ -7,6 +7,8 @@ import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../core/widgets/primary_button.dart';
+import '../../../../../core/providers/form_state_provider.dart';
+import '../../../../../core/widgets/form_error_display.dart';
 
 /// Экран предложений по улучшению
 class FeedbackScreen extends ConsumerStatefulWidget {
@@ -20,9 +22,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   final _formKey = GlobalKey<FormState>();
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
-  bool _isLoading = false;
   bool _isSubmitted = false;
-  String? _error;
 
   @override
   void dispose() {
@@ -35,34 +35,30 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   Future<void> _submitFeedback() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final authService = AuthService();
+    final userId = await authService.getUserId();
+    if (userId == null) {
+      formNotifier.setError('Пользователь не авторизован');
+      return;
+    }
 
-    try {
-      final authService = AuthService();
-      final userId = await authService.getUserId();
-      if (userId == null) {
-        throw Exception('Пользователь не авторизован');
-      }
+    final api = ApiService();
 
-      final api = ApiService();
-      await api.post(
-        '/submit_feedback.php',
-        body: {'user_id': userId, 'text': _textController.text.trim()},
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        _isSubmitted = true;
-        _isLoading = false;
-        _textController.clear();
-      });
-
-      // Показываем сообщение об успехе
-      if (mounted) {
+    await formNotifier.submit(
+      () async {
+        await api.post(
+          '/submit_feedback.php',
+          body: {'user_id': userId, 'text': _textController.text.trim()},
+        );
+      },
+      onSuccess: () {
+        if (!mounted) return;
+        setState(() {
+          _isSubmitted = true;
+          _textController.clear();
+        });
+        // Показываем сообщение об успехе
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Спасибо за ваше предложение!'),
@@ -70,18 +66,14 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString().replaceAll('ApiException: ', '');
-        _isLoading = false;
-      });
-    }
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final formState = ref.watch(formStateProvider);
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
@@ -204,7 +196,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                             hintStyle: TextStyle(
                               color: AppColors.getTextPlaceholderColor(context),
                             ),
-                            errorText: _error,
+                            errorText: formState.error,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.md),
                               borderSide: BorderSide(
@@ -246,12 +238,15 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
 
                         const SizedBox(height: 30),
 
+                        // Показываем ошибку, если есть
+                        FormErrorDisplay(formState: formState),
+
                         // Кнопка отправки
                         Center(
                           child: PrimaryButton(
                             text: 'Отправить',
                             onPressed: _submitFeedback,
-                            isLoading: _isLoading,
+                            isLoading: formState.isSubmitting,
                             horizontalPadding: 60,
                           ),
                         ),

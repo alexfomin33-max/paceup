@@ -2,24 +2,27 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../core/theme/app_theme.dart';
 import '../../../../../../../core/utils/local_image_compressor.dart';
 import '../../../../../../../core/widgets/primary_button.dart';
 import '../../../../../../../core/services/api_service.dart';
 import '../../../../../../../core/services/auth_service.dart';
+import '../../../../../../../core/providers/form_state_provider.dart';
+import '../../../../../../../core/widgets/form_error_display.dart';
 import '../../adding/widgets/autocomplete_text_field.dart';
 
 /// Контент для редактирования кроссовок
-class EditingSneakersContent extends StatefulWidget {
+class EditingSneakersContent extends ConsumerStatefulWidget {
   final int equipUserId; // ID записи в equip_user
 
   const EditingSneakersContent({super.key, required this.equipUserId});
 
   @override
-  State<EditingSneakersContent> createState() => _EditingSneakersContentState();
+  ConsumerState<EditingSneakersContent> createState() => _EditingSneakersContentState();
 }
 
-class _EditingSneakersContentState extends State<EditingSneakersContent> {
+class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent> {
   // ─────────────────────────────────────────────────────────────────────
   //                             КОНТРОЛЛЕРЫ
   // ─────────────────────────────────────────────────────────────────────
@@ -30,8 +33,6 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
   File? _imageFile;
   String? _currentImageUrl; // URL текущего изображения из базы
   final _picker = ImagePicker();
-  bool _isLoading = false;
-  bool _isLoadingData = true; // Загрузка данных для редактирования
 
   // Для автодополнения
   final ApiService _api = ApiService();
@@ -52,68 +53,60 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
 
   /// Загрузка данных снаряжения для редактирования
   Future<void> _loadEquipmentData() async {
-    setState(() {
-      _isLoadingData = true;
-    });
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final authService = AuthService();
 
-    try {
-      final authService = AuthService();
-      final userId = await authService.getUserId();
+    await formNotifier.submitWithLoading(
+      () async {
+        final userId = await authService.getUserId();
 
-      if (userId == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Пользователь не авторизован')),
-          );
-          Navigator.of(context).pop();
+        if (userId == null) {
+          throw Exception('Пользователь не авторизован');
         }
-        return;
-      }
 
-      final data = await _api.post(
-        '/get_equipment_item.php',
-        body: {
-          'user_id': userId.toString(),
-          'equip_user_id': widget.equipUserId.toString(),
-        },
-      );
+        final data = await _api.post(
+          '/get_equipment_item.php',
+          body: {
+            'user_id': userId.toString(),
+            'equip_user_id': widget.equipUserId.toString(),
+          },
+        );
 
-      if (data['success'] == true) {
-        setState(() {
-          _brandCtrl.text = data['brand'] ?? '';
-          _modelCtrl.text = data['name'] ?? '';
-          _kmCtrl.text = data['dist']?.toString() ?? '0';
-          _currentImageUrl = data['image'] as String?;
-          // Загружаем дату из базы
-          final inUseSinceStr = data['in_use_since'] as String?;
-          if (inUseSinceStr != null && inUseSinceStr.isNotEmpty) {
-            try {
-              _inUseFrom = DateTime.parse(inUseSinceStr);
-            } catch (e) {
-              // Если не удалось распарсить, оставляем текущую дату
-              _inUseFrom = DateTime.now();
+        if (data['success'] == true) {
+          if (!mounted) return;
+          setState(() {
+            _brandCtrl.text = data['brand'] ?? '';
+            _modelCtrl.text = data['name'] ?? '';
+            _kmCtrl.text = data['dist']?.toString() ?? '0';
+            _currentImageUrl = data['image'] as String?;
+            // Загружаем дату из базы
+            final inUseSinceStr = data['in_use_since'] as String?;
+            if (inUseSinceStr != null && inUseSinceStr.isNotEmpty) {
+              try {
+                _inUseFrom = DateTime.parse(inUseSinceStr);
+              } catch (e) {
+                // Если не удалось распарсить, оставляем текущую дату
+                _inUseFrom = DateTime.now();
+              }
             }
-          }
-          _isLoadingData = false;
-        });
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(data['message'] ?? 'Ошибка при загрузке данных'),
-            ),
-          );
-          Navigator.of(context).pop();
+          });
+        } else {
+          throw Exception(data['message'] ?? 'Ошибка при загрузке данных');
         }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
+      },
+      onError: (error) {
+        if (!mounted) return;
+        final formState = ref.read(formStateProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              formState.error ?? 'Ошибка при загрузке данных',
+            ),
+          ),
+        );
         Navigator.of(context).pop();
-      }
-    }
+      },
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -197,7 +190,8 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
   //                           ОТПРАВКА ДАННЫХ
   // ─────────────────────────────────────────────────────────────────────
   Future<void> _saveEquipment() async {
-    if (_isLoading) return;
+    final formState = ref.read(formStateProvider);
+    if (formState.isSubmitting) return;
 
     // Валидация
     final brand = _brandCtrl.text.trim();
@@ -205,16 +199,12 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
     final kmStr = _kmCtrl.text.trim();
 
     if (brand.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Введите бренд')));
+      ref.read(formStateProvider.notifier).setError('Введите бренд');
       return;
     }
 
     if (model.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Введите модель')));
+      ref.read(formStateProvider.notifier).setError('Введите модель');
       return;
     }
 
@@ -223,90 +213,77 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
     if (kmStr.isNotEmpty) {
       final parsedKm = int.tryParse(kmStr);
       if (parsedKm == null || parsedKm < 0) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Некорректная дистанция')));
+        ref.read(formStateProvider.notifier).setError('Некорректная дистанция');
         return;
       }
       km = parsedKm;
     }
 
-    setState(() => _isLoading = true);
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ApiService();
+    final authService = AuthService();
 
-    try {
-      final api = ApiService();
-      final authService = AuthService();
-      final userId = await authService.getUserId();
+    await formNotifier.submit(
+      () async {
+        final userId = await authService.getUserId();
 
-      if (userId == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Пользователь не авторизован')),
+        if (userId == null) {
+          throw Exception('Пользователь не авторизован');
+        }
+
+        // Формируем данные
+        final files = <String, File>{};
+        final fields = <String, String>{
+          'user_id': userId.toString(),
+          'equip_user_id': widget.equipUserId.toString(),
+          'name': model,
+          'brand': brand,
+          'dist': km.toString(),
+          'in_use_since': _formatDateForApi(
+            _inUseFrom,
+          ), // Дата в формате DD.MM.YYYY
+        };
+
+        // Добавляем изображение, если выбрано новое
+        if (_imageFile != null) {
+          files['image'] = _imageFile!;
+        }
+
+        // Отправляем запрос
+        Map<String, dynamic> data;
+        if (files.isEmpty) {
+          // JSON запрос без файлов
+          data = await api.post('/update_equipment.php', body: fields);
+        } else {
+          // Multipart запрос с файлами
+          data = await api.postMultipart(
+            '/update_equipment.php',
+            files: files,
+            fields: fields,
+            timeout: const Duration(seconds: 60),
           );
         }
-        return;
-      }
 
-      // Формируем данные
-      final files = <String, File>{};
-      final fields = <String, String>{
-        'user_id': userId.toString(),
-        'equip_user_id': widget.equipUserId.toString(),
-        'name': model,
-        'brand': brand,
-        'dist': km.toString(),
-        'in_use_since': _formatDateForApi(
-          _inUseFrom,
-        ), // Дата в формате DD.MM.YYYY
-      };
-
-      // Добавляем изображение, если выбрано новое
-      if (_imageFile != null) {
-        files['image'] = _imageFile!;
-      }
-
-      // Отправляем запрос
-      Map<String, dynamic> data;
-      if (files.isEmpty) {
-        // JSON запрос без файлов
-        data = await api.post('/update_equipment.php', body: fields);
-      } else {
-        // Multipart запрос с файлами
-        data = await api.postMultipart(
-          '/update_equipment.php',
-          files: files,
-          fields: fields,
-          timeout: const Duration(seconds: 60),
+        // Проверяем ответ
+        if (data['success'] != true) {
+          throw Exception(data['message'] ?? 'Ошибка при сохранении');
+        }
+      },
+      onSuccess: () {
+        if (!mounted) return;
+        // Закрываем экран после успешного сохранения
+        Navigator.of(context).pop(true); // Возвращаем true для обновления списка
+      },
+      onError: (error) {
+        if (!mounted) return;
+        final formState = ref.read(formStateProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(formState.error ?? 'Ошибка при сохранении'),
+          ),
         );
-      }
-
-      // Проверяем ответ
-      if (data['success'] == true) {
-        if (mounted) {
-          // Закрываем экран после успешного сохранения
-          Navigator.of(
-            context,
-          ).pop(true); // Возвращаем true для обновления списка
-        }
-      } else {
-        final errorMsg = data['message'] ?? 'Ошибка при сохранении';
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(errorMsg)));
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+      },
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -397,7 +374,8 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
   // ─────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    if (_isLoadingData) {
+    final formState = ref.watch(formStateProvider);
+    if (formState.isLoading) {
       return const Center(child: CupertinoActivityIndicator(radius: 16));
     }
 
@@ -578,17 +556,37 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
 
         const SizedBox(height: 25),
 
+        // ─────────────────── Отображение ошибок ───────────────────
+        Builder(
+          builder: (context) {
+            final formState = ref.watch(formStateProvider);
+            if (formState.hasErrors) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: FormErrorDisplay(formState: formState),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+
         // ─────────────────── Кнопка «Сохранить» ───────────────────
         Center(
-          child: ValueListenableBuilder<TextEditingValue>(
-            valueListenable: _brandCtrl,
-            builder: (context, brandValue, child) {
-              return PrimaryButton(
-                text: 'Сохранить',
-                onPressed: _saveEquipment,
-                isLoading: _isLoading,
-                enabled: brandValue.text.trim().isNotEmpty,
-                width: 220,
+          child: Builder(
+            builder: (context) {
+              final formState = ref.watch(formStateProvider);
+              return ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _brandCtrl,
+                builder: (context, brandValue, child) {
+                  return PrimaryButton(
+                    text: 'Сохранить',
+                    onPressed: _saveEquipment,
+                    isLoading: formState.isSubmitting,
+                    enabled: brandValue.text.trim().isNotEmpty &&
+                        !formState.isSubmitting,
+                    width: 220,
+                  );
+                },
               );
             },
           ),

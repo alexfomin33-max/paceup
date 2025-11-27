@@ -16,6 +16,7 @@ import '../../core/utils/local_image_compressor.dart';
 import '../../core/widgets/app_bar.dart'; // наш глобальный AppBar
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../core/services/api_service.dart';
+import '../../core/providers/form_state_provider.dart';
 
 const double kAvatarSize = 88.0;
 const double kQrBtnSize = 44.0;
@@ -266,9 +267,7 @@ class _FormPane extends StatelessWidget {
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   // загрузка/ошибка/сохранение
-  bool _loadingProfile = false;
   String? _loadError;
-  bool _saving = false;
 
   // аватар
   String? _avatarUrl;
@@ -385,65 +384,60 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   // ── HTTP: загрузка профиля
   Future<void> _loadProfile() async {
     if (!mounted) return;
-    setState(() {
-      _loadingProfile = true;
-      _loadError = null;
-    });
 
-    try {
-      final api = ApiService();
-      final map = await api.post(
-        '/user_profile_edit.php',
-        body: {
-          'user_id': '${widget.userId}',
-          'load': true,
-          'edit': false,
-        }, // 🔹 PHP ожидает строки
-        timeout: const Duration(seconds: 12),
-      );
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ApiService();
 
-      final dynamic raw = map['profile'] ?? map['data'] ?? map;
-      if (raw is! Map) {
-        throw const FormatException('Bad payload: not a JSON object');
-      }
-      final j = Map<String, dynamic>.from(raw);
+    await formNotifier.submitWithLoading(
+      () async {
+        final map = await api.post(
+          '/user_profile_edit.php',
+          body: {
+            'user_id': '${widget.userId}',
+            'load': true,
+            'edit': false,
+          }, // 🔹 PHP ожидает строки
+          timeout: const Duration(seconds: 12),
+        );
 
-      _firstName.text = _s(j['name']) ?? _firstName.text;
-      _lastName.text = _s(j['surname']) ?? _lastName.text;
-      _nickname.text = _s(j['username']) ?? _nickname.text;
-      _city.text = _s(j['city']) ?? _city.text;
+        final dynamic raw = map['profile'] ?? map['data'] ?? map;
+        if (raw is! Map) {
+          throw const FormatException('Bad payload: not a JSON object');
+        }
+        final j = Map<String, dynamic>.from(raw);
 
-      final height = _i(j['height']);
-      final weight = _i(j['weight']);
-      final hrMax = _i(j['pulse']);
+        _firstName.text = _s(j['name']) ?? _firstName.text;
+        _lastName.text = _s(j['surname']) ?? _lastName.text;
+        _nickname.text = _s(j['username']) ?? _nickname.text;
+        _city.text = _s(j['city']) ?? _city.text;
 
-      if (height != null) _height.text = '$height';
-      if (weight != null) _weight.text = '$weight';
-      if (hrMax != null) _hrMax.text = '$hrMax';
+        final height = _i(j['height']);
+        final weight = _i(j['weight']);
+        final hrMax = _i(j['pulse']);
 
-      final bd = _date(j['dateage']);
-      final g = _mapGender(j['gender']);
-      final sp = _mapSport(j['sport']);
-      final avatar = _s(j['avatar']);
+        if (height != null) _height.text = '$height';
+        if (weight != null) _weight.text = '$weight';
+        if (hrMax != null) _hrMax.text = '$hrMax';
 
-      if (!mounted) return;
-      setState(() {
-        if (bd != null) _birthDate = bd;
-        if (g != null) _gender = g;
-        if (sp != null) _mainSport = sp;
-        if (avatar != null && avatar.isNotEmpty) _avatarUrl = avatar;
-      });
-    } catch (e, st) {
-      debugPrint('❌ [EditProfile] error: $e\n$st');
-      if (mounted) {
-        setState(() => _loadError = e.toString());
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Ошибка загрузки профиля: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _loadingProfile = false);
-    }
+        final bd = _date(j['dateage']);
+        final g = _mapGender(j['gender']);
+        final sp = _mapSport(j['sport']);
+        final avatar = _s(j['avatar']);
+
+        if (!mounted) return;
+        setState(() {
+          if (bd != null) _birthDate = bd;
+          if (g != null) _gender = g;
+          if (sp != null) _mainSport = sp;
+          if (avatar != null && avatar.isNotEmpty) _avatarUrl = avatar;
+        });
+      },
+      onError: (error) {
+        if (!mounted) return;
+        final formState = ref.read(formStateProvider);
+        setState(() => _loadError = formState.error ?? error.toString());
+      },
+    );
   }
 
   // ── Пикеры/утилиты
@@ -545,42 +539,49 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _onSave() async {
-    if (_saving) return;
+    final formState = ref.read(formStateProvider);
+    if (formState.isSubmitting) return;
     FocusScope.of(context).unfocus();
 
     final payload = _buildSavePayload();
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ApiService();
 
-    setState(() => _saving = true);
-    try {
-      final api = ApiService();
-      final map = await api.post(
-        '/user_profile_edit.php',
-        body: payload,
-        timeout: const Duration(seconds: 15),
-      );
+    await formNotifier.submit(
+      () async {
+        final map = await api.post(
+          '/user_profile_edit.php',
+          body: payload,
+          timeout: const Duration(seconds: 15),
+        );
 
-      final ok =
-          map['ok'] == true || map['status'] == 'ok' || map['success'] == true;
+        final ok =
+            map['ok'] == true || map['status'] == 'ok' || map['success'] == true;
 
-      if (!ok && map.containsKey('error')) {
-        throw Exception(map['error'].toString());
-      }
+        if (!ok && map.containsKey('error')) {
+          throw Exception(map['error'].toString());
+        }
+      },
+      onSuccess: () {
+        if (!mounted) return;
 
-      if (!mounted) return;
+        // Обновляем данные профиля в шапке сразу после сохранения
+        ref.read(profileHeaderProvider(widget.userId).notifier).reload();
 
-      // Обновляем данные профиля в шапке сразу после сохранения
-      ref.read(profileHeaderProvider(widget.userId).notifier).reload();
-
-      Navigator.of(context).maybePop(true);
-    } catch (e, st) {
-      debugPrint('❌ [EditProfile] SAVE error: $e\n$st');
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Не удалось сохранить: $e')));
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+        Navigator.of(context).maybePop(true);
+      },
+      onError: (error) {
+        if (!mounted) return;
+        final formState = ref.read(formStateProvider);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(
+          SnackBar(
+            content: Text('Не удалось сохранить: ${formState.error ?? error}'),
+          ),
+        );
+      },
+    );
   }
 
   /// ── UI ──
@@ -595,16 +596,23 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         appBar: PaceAppBar(
           title: 'Профиль',
           actions: [
-            TextButton(
-              onPressed: (_saving || _loadingProfile) ? null : _onSave,
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.brandPrimary,
-                minimumSize: const Size(44, 44),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-              ),
-              child: _saving
-                  ? const CupertinoActivityIndicator(radius: 8)
-                  : const Text('Сохранить'),
+            Builder(
+              builder: (context) {
+                final formState = ref.watch(formStateProvider);
+                return TextButton(
+                  onPressed: formState.isSubmitting || formState.isLoading
+                      ? null
+                      : _onSave,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.brandPrimary,
+                    minimumSize: const Size(44, 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  child: formState.isSubmitting
+                      ? const CupertinoActivityIndicator(radius: 8)
+                      : const Text('Сохранить'),
+                );
+              },
             ),
           ],
         ),
@@ -627,15 +635,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ],
               );
             },
-            child: _loadingProfile
-                ? const _LoadingPane(key: ValueKey('loading'))
-                : (_loadError != null)
-                ? _ErrorPane(
+            child: Builder(
+              builder: (context) {
+                final formState = ref.watch(formStateProvider);
+                if (formState.isLoading) {
+                  return const _LoadingPane(key: ValueKey('loading'));
+                }
+                if (_loadError != null) {
+                  return _ErrorPane(
                     key: const ValueKey('error'),
                     message: _loadError!,
                     onRetry: _loadProfile,
-                  )
-                : _FormPane(
+                  );
+                }
+                return _FormPane(
                     key: const ValueKey('form'),
                     avatarUrl: _avatarUrl,
                     avatarBytes: _avatarBytes,
@@ -654,7 +667,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     setGender: (g) => setState(() => _gender = g),
                     setSport: (s) => setState(() => _mainSport = s),
                     pickBirthDate: _pickBirthDate,
-                  ),
+                  );
+              },
+            ),
           ),
         ),
       ),

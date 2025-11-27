@@ -14,6 +14,8 @@ import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../providers/lenta/lenta_provider.dart';
+import '../../../../core/providers/form_state_provider.dart';
+import '../../../../core/widgets/form_error_display.dart';
 
 /// ────────────────────────────────────────────────────────────────
 /// 🔹 ЭКРАН СОЗДАНИЯ НОВОГО ПОСТА
@@ -40,9 +42,6 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
 
   // Список выбранных фотографий
   final List<File> _images = [];
-
-  // Состояние загрузки
-  bool _isLoading = false;
 
   // Доступность кнопки публикации
   bool _canPublish = false;
@@ -138,6 +137,20 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                   _buildVisibilitySelector(),
 
                   const SizedBox(height: 32),
+
+                  // Показываем ошибки, если есть
+                  Builder(
+                    builder: (context) {
+                      final formState = ref.watch(formStateProvider);
+                      if (formState.hasErrors) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: FormErrorDisplay(formState: formState),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
 
                   // ────────────────────────────────────────────────────────────────
                   // 💾 КНОПКА ПУБЛИКАЦИИ
@@ -404,94 +417,101 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
 
   /// Кнопка публикации
   Widget _buildPublishButton() {
+    final formState = ref.watch(formStateProvider);
     return PrimaryButton(
       text: 'Опубликовать',
-      onPressed: !_isLoading ? _submitPost : () {},
+      onPressed: !formState.isSubmitting ? _submitPost : () {},
       width: 190,
-      isLoading: _isLoading,
-      enabled: _canPublish,
+      isLoading: formState.isSubmitting,
+      enabled: _canPublish && !formState.isSubmitting,
     );
   }
 
   /// Сохраняет пост на сервер
   Future<void> _submitPost() async {
-    if (_isLoading || !_canPublish) return;
+    final formState = ref.read(formStateProvider);
+    if (formState.isSubmitting || !_canPublish) return;
 
     final text = _descriptionController.text.trim();
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ApiService();
 
-    setState(() => _isLoading = true);
+    await formNotifier.submit(
+      () async {
+        Map<String, dynamic> data;
 
-    try {
-      final api = ApiService();
-      Map<String, dynamic> data;
+        if (_images.isEmpty) {
+          // JSON-запрос (без файлов)
+          data = await api.post(
+            '/create_post.php',
+            body: {
+              'user_id': widget.userId.toString(),
+              'text': text,
+              'privacy': _selectedVisibility.toString(),
+            },
+          );
+        } else {
+          // Multipart-запрос (с файлами)
+          final files = <String, File>{};
+          for (int i = 0; i < _images.length; i++) {
+            files['images[$i]'] = _images[i];
+          }
 
-      if (_images.isEmpty) {
-        // JSON-запрос (без файлов)
-        data = await api.post(
-          '/create_post.php',
-          body: {
-            'user_id': widget.userId.toString(),
-            'text': text,
-            'privacy': _selectedVisibility.toString(),
-          },
-        );
-      } else {
-        // Multipart-запрос (с файлами)
-        final files = <String, File>{};
-        for (int i = 0; i < _images.length; i++) {
-          files['images[$i]'] = _images[i];
+          data = await api.postMultipart(
+            '/create_post.php',
+            files: files,
+            fields: {
+              'user_id': widget.userId.toString(),
+              'text': text,
+              'privacy': _selectedVisibility.toString(),
+            },
+            timeout: const Duration(seconds: 60),
+          );
         }
 
-        data = await api.postMultipart(
-          '/create_post.php',
-          files: files,
-          fields: {
-            'user_id': widget.userId.toString(),
-            'text': text,
-            'privacy': _selectedVisibility.toString(),
-          },
-          timeout: const Duration(seconds: 60),
-        );
-      }
+        // Проверяем разные форматы ответа API
+        bool success = false;
+        String? errorMessage;
 
-      // Проверяем разные форматы ответа API
-      bool success = false;
-      String? errorMessage;
-
-      // Формат 1: прямой success в корне
-      if (data['success'] == true) {
-        success = true;
-      }
-      // Формат 2: success в data массиве
-      else if (data['data'] is List && (data['data'] as List).isNotEmpty) {
-        final firstItem = (data['data'] as List)[0];
-        if (firstItem is Map<String, dynamic>) {
-          if (firstItem['success'] == true) {
-            success = true;
-          } else {
-            errorMessage = firstItem['message']?.toString();
+        // Формат 1: прямой success в корне
+        if (data['success'] == true) {
+          success = true;
+        }
+        // Формат 2: success в data массиве
+        else if (data['data'] is List && (data['data'] as List).isNotEmpty) {
+          final firstItem = (data['data'] as List)[0];
+          if (firstItem is Map<String, dynamic>) {
+            if (firstItem['success'] == true) {
+              success = true;
+            } else {
+              errorMessage = firstItem['message']?.toString();
+            }
           }
         }
-      }
-      // Формат 3: success в data объекте
-      else if (data['data'] is Map<String, dynamic>) {
-        final dataObj = data['data'] as Map<String, dynamic>;
-        if (dataObj['success'] == true) {
-          success = true;
-        } else {
-          errorMessage = dataObj['message']?.toString();
+        // Формат 3: success в data объекте
+        else if (data['data'] is Map<String, dynamic>) {
+          final dataObj = data['data'] as Map<String, dynamic>;
+          if (dataObj['success'] == true) {
+            success = true;
+          } else {
+            errorMessage = dataObj['message']?.toString();
+          }
         }
-      }
-      // Формат 4: error или message в корне
-      else if (data['error'] != null || data['message'] != null) {
-        errorMessage = (data['error'] ?? data['message']).toString();
-      }
-      // Неизвестный формат
-      else {
-        errorMessage = 'Неизвестный формат ответа сервера';
-      }
+        // Формат 4: error или message в корне
+        else if (data['error'] != null || data['message'] != null) {
+          errorMessage = (data['error'] ?? data['message']).toString();
+        }
+        // Неизвестный формат
+        else {
+          errorMessage = 'Неизвестный формат ответа сервера';
+        }
 
-      if (success) {
+        if (!success) {
+          final msg = errorMessage ?? 'Ошибка сервера';
+          throw Exception(msg);
+        }
+      },
+      onSuccess: () async {
         // Очищаем форму
         _descriptionController.clear();
         setState(() {
@@ -507,22 +527,13 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
 
         if (!mounted) return;
         Navigator.pop(context, true);
-      } else {
+      },
+      onError: (error) {
         if (!mounted) return;
-        final msg = errorMessage ?? 'Ошибка сервера';
-        _showError(msg);
-      }
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      _showError('Ошибка: $e');
-    } catch (e) {
-      if (!mounted) return;
-      _showError('Ошибка при создании поста: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+        final formState = ref.read(formStateProvider);
+        _showError(formState.error ?? 'Ошибка при создании поста');
+      },
+    );
   }
 
   /// Обработчик добавления фотографий к посту

@@ -7,6 +7,8 @@ import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../core/widgets/primary_button.dart';
+import '../../../../../core/providers/form_state_provider.dart';
+import '../../../../../core/widgets/form_error_display.dart';
 
 /// Экран редактирования пароля
 class EditPasswordScreen extends ConsumerStatefulWidget {
@@ -25,11 +27,9 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
   final _oldPasswordFocusNode = FocusNode();
   final _newPasswordFocusNode = FocusNode();
   final _confirmPasswordFocusNode = FocusNode();
-  bool _isLoading = false;
   bool _obscureOldPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
-  String? _error;
 
   @override
   void initState() {
@@ -73,42 +73,38 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
   Future<void> _savePassword() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final authService = AuthService();
-      final userId = await authService.getUserId();
-      if (userId == null) {
-        throw Exception('Пользователь не авторизован');
-      }
-
-      final api = ApiService();
-      await api.post(
-        '/update_user_settings.php',
-        body: {
-          'user_id': userId,
-          'password': _newPasswordController.text,
-          if (widget.hasPassword) 'old_password': _oldPasswordController.text,
-        },
-      );
-
-      if (!mounted) return;
-
-      Navigator.of(context).pop(true);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString().replaceAll('ApiException: ', '');
-        _isLoading = false;
-      });
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final authService = AuthService();
+    final userId = await authService.getUserId();
+    if (userId == null) {
+      formNotifier.setError('Пользователь не авторизован');
+      return;
     }
+
+    final api = ApiService();
+
+    await formNotifier.submit(
+      () async {
+        await api.post(
+          '/update_user_settings.php',
+          body: {
+            'user_id': userId,
+            'password': _newPasswordController.text,
+            if (widget.hasPassword) 'old_password': _oldPasswordController.text,
+          },
+        );
+      },
+      onSuccess: () {
+        if (!mounted) return;
+        Navigator.of(context).pop(true);
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final formState = ref.watch(formStateProvider);
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
@@ -137,7 +133,7 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                           _obscureOldPassword = !_obscureOldPassword;
                         });
                       },
-                      errorText: _error,
+                      errorText: formState.error,
                       textInputAction: TextInputAction.next,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -200,13 +196,16 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
 
                   const SizedBox(height: 30),
 
+                  // Показываем ошибку, если есть
+                  FormErrorDisplay(formState: formState),
+
                   // Кнопка сохранения
                   Center(
                     child: PrimaryButton(
                       text: 'Сохранить',
                       onPressed: _savePassword,
-                      isLoading: _isLoading,
-                      enabled: _isFormValid,
+                      isLoading: formState.isSubmitting,
+                      enabled: _isFormValid && !formState.isSubmitting,
                       horizontalPadding: 68,
                     ),
                   ),

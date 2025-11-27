@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/services/api_provider.dart';
-import '../../core/services/api_service.dart' show ApiService, ApiException;
+import '../../core/services/api_service.dart' show ApiService;
+import '../../core/providers/form_state_provider.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../core/widgets/auth/custom_text_field.dart';
+import '../../core/widgets/form_error_display.dart';
 
 /// 🔹 Экран регистрации — шаг 2
 /// Принимает [userId] для продолжения регистрации
@@ -24,30 +26,21 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
   final TextEditingController weightController = TextEditingController();
   final TextEditingController maxPulseController = TextEditingController();
 
-  /// 🔹 Флаг загрузки (блокирует повторные нажатия)
-  bool _isLoading = false;
-
-  /// 🔹 Сообщение об ошибке (если есть)
-  String? _errorMessage;
-
   @override
   void initState() {
     super.initState();
     // 🔹 Очищаем ошибку при изменении полей
-    heightController.addListener(() {
-      if (_errorMessage != null) {
-        setState(() => _errorMessage = null);
-      }
-    });
-    weightController.addListener(() {
-      if (_errorMessage != null) {
-        setState(() => _errorMessage = null);
-      }
-    });
-    maxPulseController.addListener(() {
-      if (_errorMessage != null) {
-        setState(() => _errorMessage = null);
-      }
+    Future.microtask(() {
+      final formNotifier = ref.read(formStateProvider.notifier);
+      heightController.addListener(() {
+        formNotifier.clearGeneralError();
+      });
+      weightController.addListener(() {
+        formNotifier.clearGeneralError();
+      });
+      maxPulseController.addListener(() {
+        formNotifier.clearGeneralError();
+      });
     });
   }
 
@@ -97,55 +90,48 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
 
   /// 🔹 Обработка завершения регистрации
   Future<void> _handleFinish() async {
-    if (_isLoading) return;
+    final formState = ref.read(formStateProvider);
+    if (formState.isSubmitting) return;
 
     // 🔹 Проверяем валидность полей
     if (!_areFieldsValid) {
-      setState(() {
-        _errorMessage =
-            'Проверьте корректность введённых данных (рост: 50-250 см, вес: 20-300 кг, пульс: 100-250 уд/мин)';
-      });
+      ref
+          .read(formStateProvider.notifier)
+          .setError(
+            'Проверьте корректность введённых данных (рост: 50-250 см, вес: 20-300 кг, пульс: 100-250 уд/мин)',
+          );
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ref.read(apiServiceProvider);
 
-    try {
-      final api = ref.read(apiServiceProvider);
-      await saveForm(
-        api,
-        widget.userId,
-        heightController,
-        weightController,
-        maxPulseController,
-      );
-
-      if (!mounted) return;
-
-      Navigator.pushReplacementNamed(
-        context,
-        '/lenta',
-        arguments: {'userId': widget.userId},
-      );
-    } on ApiException catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Ошибка сохранения данных: ${e.message}';
-        });
-      }
-      debugPrint('Ошибка при сохранении данных: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+    await formNotifier.submit(
+      () async {
+        await saveForm(
+          api,
+          widget.userId,
+          heightController,
+          weightController,
+          maxPulseController,
+        );
+      },
+      onSuccess: () {
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(
+          context,
+          '/lenta',
+          arguments: {'userId': widget.userId},
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // 🔹 Получаем состояние формы
+    final formState = ref.watch(formStateProvider);
+
     // 🔹 Получаем высоту клавиатуры для адаптации контента
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     // 🔹 Базовый отступ снизу, который уменьшается при появлении клавиатуры
@@ -239,27 +225,14 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
                   const SizedBox(height: 50),
 
                   // 🔹 Показываем ошибку, если есть
-                  if (_errorMessage != null) ...[
-                    SelectableText.rich(
-                      TextSpan(
-                        text: _errorMessage!,
-                        style: const TextStyle(
-                          color: AppColors.error,
-                          fontSize: 14,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                  FormErrorDisplay(formState: formState),
 
                   // 🔹 Кнопка "Завершить" с переходом на ленту
                   Center(
                     child: PrimaryButton(
                       text: 'Завершить',
                       onPressed: _handleFinish,
-                      isLoading: _isLoading,
+                      isLoading: formState.isSubmitting,
                       width: MediaQuery.of(context).size.width / 2,
                     ),
                   ),
@@ -314,6 +287,8 @@ Future<void> saveForm(
   dynamic weight,
   dynamic pulse,
 ) async {
+  // 🔹 Игнорируем ошибки сохранения (регистрация необязательна, есть кнопка "Пропустить")
+  // Пользователь может продолжить работу в приложении даже при сбое сохранения
   try {
     await api.post(
       '/save_reg_form2.php',
@@ -324,8 +299,8 @@ Future<void> saveForm(
         'pulse': pulse.text,
       },
     );
-  } on ApiException {
-    // 🔹 Игнорируем ошибку сохранения (регистрация необязательна, есть кнопка "Пропустить")
-    // Пользователь может продолжить работу в приложении даже при сбое сохранения
+  } catch (e) {
+    // 🔹 Игнорируем все ошибки сохранения
+    debugPrint('Ошибка сохранения данных формы (игнорируется): $e');
   }
 }

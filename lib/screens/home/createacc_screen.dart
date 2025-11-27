@@ -1,7 +1,10 @@
 import "package:flutter/material.dart";
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import 'auth_shell.dart';
 import '../../core/widgets/auth/phone_input_field.dart';
+import '../../core/providers/form_state_provider.dart';
+import '../../core/widgets/form_error_display.dart';
 
 /// 🔹 Обёртка для экрана создания аккаунта
 /// Используется для маршрутизации и возможного расширения функционала
@@ -16,25 +19,19 @@ class CreateaccScreen extends StatelessWidget {
 }
 
 /// 🔹 Основной экран регистрации с вводом телефона
-class AddAccScreen extends StatefulWidget {
+class AddAccScreen extends ConsumerStatefulWidget {
   const AddAccScreen({super.key});
 
   @override
-  State<AddAccScreen> createState() => _AddAccScreenState();
+  ConsumerState<AddAccScreen> createState() => _AddAccScreenState();
 }
 
-class _AddAccScreenState extends State<AddAccScreen> {
+class _AddAccScreenState extends ConsumerState<AddAccScreen> {
   /// 🔹 Контроллер для поля ввода телефона
   final TextEditingController phoneController = TextEditingController();
 
   /// 🔹 Флаг валидности телефона
   bool _isPhoneValid = false;
-
-  /// 🔹 Флаг загрузки (блокирует повторные нажатия)
-  bool _isLoading = false;
-
-  /// 🔹 Сообщение об ошибке (если есть)
-  String? _errorMessage;
 
   @override
   void dispose() {
@@ -45,21 +42,14 @@ class _AddAccScreenState extends State<AddAccScreen> {
 
   /// 🔹 Обработка нажатия кнопки "Зарегистрироваться"
   void _handleRegister() {
+    final formState = ref.read(formStateProvider);
+    if (formState.isSubmitting) return;
+
     // 🔹 Проверяем валидность телефона
     if (!_isPhoneValid) {
-      setState(() {
-        _errorMessage = 'Введите корректный номер телефона';
-      });
+      ref.read(formStateProvider.notifier).setError('Введите корректный номер телефона');
       return;
     }
-
-    // 🔹 Блокируем повторные нажатия
-    if (_isLoading) return;
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
 
     // 🔹 Переходим на экран ввода SMS-кода
     Navigator.pushReplacementNamed(
@@ -101,59 +91,65 @@ class _AddAccScreenState extends State<AddAccScreen> {
                 onValidationChanged: (isValid) {
                   setState(() {
                     _isPhoneValid = isValid;
-                    // 🔹 Очищаем ошибку при изменении валидности
-                    if (isValid) _errorMessage = null;
                   });
+                  // 🔹 Очищаем ошибку при изменении валидности
+                  if (isValid) {
+                    ref.read(formStateProvider.notifier).clearErrors();
+                  }
                 },
               ),
-              // 🔹 Показываем ошибку, если есть
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 12),
-                SelectableText.rich(
-                  TextSpan(
-                    text: _errorMessage!,
-                    style: const TextStyle(
-                      color: AppColors.error,
-                      fontSize: 14,
-                      fontFamily: 'Inter',
-                    ),
-                  ),
-                ),
-              ],
+              // 🔹 Показываем ошибки, если есть
+              Builder(
+                builder: (context) {
+                  final formState = ref.watch(formStateProvider);
+                  if (formState.hasErrors) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: FormErrorDisplay(formState: formState),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
               const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleRegister,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.getSurfaceColor(context),
-                    foregroundColor: AppColors.textPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.textPrimary,
-                            ),
-                          ),
-                        )
-                      : const Text(
-                          "Зарегистрироваться",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          textAlign: TextAlign.center,
+              Builder(
+                builder: (context) {
+                  final formState = ref.watch(formStateProvider);
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: formState.isSubmitting ? null : _handleRegister,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.getSurfaceColor(context),
+                        foregroundColor: AppColors.textPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
                         ),
-                ),
+                        elevation: 0,
+                      ),
+                      child: formState.isSubmitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.textPrimary,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              "Зарегистрироваться",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 15),
               const SizedBox(
@@ -165,26 +161,31 @@ class _AddAccScreenState extends State<AddAccScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              SizedBox(
-                width: 100,
-                height: 36,
-                child: TextButton(
-                  onPressed: _isLoading
-                      ? null
-                      : () => Navigator.pushReplacementNamed(context, '/home'),
-                  style: const ButtonStyle(
-                    overlayColor: WidgetStatePropertyAll(Colors.transparent),
-                    animationDuration: Duration(milliseconds: 0),
-                  ),
-                  child: const Text(
-                    "<-- Назад",
-                    style: TextStyle(
-                      color: AppColors.surface,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+              Builder(
+                builder: (context) {
+                  final formState = ref.watch(formStateProvider);
+                  return SizedBox(
+                    width: 100,
+                    height: 36,
+                    child: TextButton(
+                      onPressed: formState.isSubmitting
+                          ? null
+                          : () => Navigator.pushReplacementNamed(context, '/home'),
+                      style: const ButtonStyle(
+                        overlayColor: WidgetStatePropertyAll(Colors.transparent),
+                        animationDuration: Duration(milliseconds: 0),
+                      ),
+                      child: const Text(
+                        "<-- Назад",
+                        style: TextStyle(
+                          color: AppColors.surface,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
             ],
             ),

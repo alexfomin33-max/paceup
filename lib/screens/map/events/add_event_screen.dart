@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/image_picker_helper.dart';
@@ -9,16 +10,18 @@ import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/providers/form_state_provider.dart';
+import '../../../core/widgets/form_error_display.dart';
 import 'location_picker_screen.dart';
 
-class AddEventScreen extends StatefulWidget {
+class AddEventScreen extends ConsumerStatefulWidget {
   const AddEventScreen({super.key});
 
   @override
-  State<AddEventScreen> createState() => _AddEventScreenState();
+  ConsumerState<AddEventScreen> createState() => _AddEventScreenState();
 }
 
-class _AddEventScreenState extends State<AddEventScreen> {
+class _AddEventScreenState extends ConsumerState<AddEventScreen> {
   // контроллеры
   final nameCtrl = TextEditingController();
   final placeCtrl = TextEditingController();
@@ -48,9 +51,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   // координаты выбранного места
   LatLng? selectedLocation;
-
-  // ── состояние загрузки
-  bool _loading = false;
 
   // ── состояние блока загрузки шаблона
   bool _showTemplateBlock = false;
@@ -354,31 +354,35 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   // ── загрузка данных выбранного шаблона
   Future<void> _loadTemplateData(String templateName) async {
-    setState(() => _loading = true);
+    final formNotifier = ref.read(formStateProvider.notifier);
 
-    try {
-      final api = ApiService();
-      final authService = AuthService();
-      final userId = await authService.getUserId();
+    await formNotifier.submitWithLoading(
+      () async {
+        final api = ApiService();
+        final authService = AuthService();
+        final userId = await authService.getUserId();
 
-      if (userId == null) {
-        setState(() => _loading = false);
-        return;
-      }
+        if (userId == null) {
+          throw Exception('Пользователь не авторизован');
+        }
 
-      final data = await api.get(
-        '/get_template.php',
-        queryParams: {
-          'template_name': templateName,
-          'user_id': userId.toString(),
-        },
-      );
+        final templateData = await api.get(
+          '/get_template.php',
+          queryParams: {
+            'template_name': templateName,
+            'user_id': userId.toString(),
+          },
+        );
 
-      if (data['success'] == true && data['template'] != null) {
-        final template = data['template'] as Map<String, dynamic>;
+        if (templateData['success'] != true || templateData['template'] == null) {
+          throw Exception('Шаблон не найден');
+        }
+
+        final template = templateData['template'] as Map<String, dynamic>;
 
         // Заполняем форму данными из шаблона
-        setState(() {
+        if (mounted) {
+          setState(() {
           nameCtrl.text = template['name'] as String? ?? '';
           placeCtrl.text = template['place'] as String? ?? '';
           descCtrl.text = template['description'] as String? ?? '';
@@ -437,25 +441,21 @@ class _AddEventScreenState extends State<AddEventScreen> {
             selectedClub = clubs.isNotEmpty ? clubs.first : null;
           }
 
-          templateCtrl.text = templateName;
-        });
-      } else {
-        // Если шаблон не найден, показываем сообщение
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Шаблон не найден')));
+            templateCtrl.text = templateName;
+          });
         }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка загрузки шаблона: ${e.toString()}')),
-        );
-      }
-    } finally {
-      setState(() => _loading = false);
-    }
+      },
+      onError: (error) {
+        if (mounted) {
+          final formState = ref.read(formStateProvider);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ошибка загрузки шаблона: ${formState.error ?? error.toString()}'),
+            ),
+          );
+        }
+      },
+    );
   }
 
   Future<void> _submit() async {
@@ -465,12 +465,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
     }
 
     // ── форма валидна — отправляем на сервер
-    setState(() => _loading = true);
-
+    final formNotifier = ref.read(formStateProvider.notifier);
     final api = ApiService();
     final authService = AuthService();
 
-    try {
+    await formNotifier.submit(
+      () async {
       // Формируем данные
       final files = <String, File>{};
       final fields = <String, String>{};
@@ -487,19 +487,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
         }
       }
 
-      // Добавляем поля формы
-      final userId = await authService.getUserId();
-      if (userId == null) {
-        if (!mounted) return;
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ошибка авторизации. Необходимо войти в систему'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-        return;
-      }
+        // Добавляем поля формы
+        final userId = await authService.getUserId();
+        if (userId == null) {
+          throw Exception('Ошибка авторизации. Необходимо войти в систему');
+        }
       fields['user_id'] = userId.toString();
       fields['name'] = nameCtrl.text.trim();
       fields['activity'] = activity!;
@@ -516,61 +508,39 @@ class _AddEventScreenState extends State<AddEventScreen> {
         fields['template_name'] = templateCtrl.text.trim();
       }
 
-      // Отправляем запрос
-      Map<String, dynamic> data;
-      if (files.isEmpty) {
-        // JSON запрос без файлов
-        data = await api.post('/create_event.php', body: fields);
-      } else {
-        // Multipart запрос с файлами
-        data = await api.postMultipart(
-          '/create_event.php',
-          files: files,
-          fields: fields,
-          timeout: const Duration(seconds: 60),
-        );
-      }
+        // Отправляем запрос
+        Map<String, dynamic> data;
+        if (files.isEmpty) {
+          // JSON запрос без файлов
+          data = await api.post('/create_event.php', body: fields);
+        } else {
+          // Multipart запрос с файлами
+          data = await api.postMultipart(
+            '/create_event.php',
+            files: files,
+            fields: fields,
+            timeout: const Duration(seconds: 60),
+          );
+        }
 
-      // Проверяем ответ
-      bool success = false;
-      String? errorMessage;
-
-      if (data['success'] == true) {
-        success = true;
-      } else if (data['success'] == false) {
-        errorMessage = data['message'] ?? 'Ошибка при создании события';
-      } else {
-        errorMessage = 'Неожиданный формат ответа сервера';
-      }
-
-      if (success) {
+        // Проверяем ответ
+        if (data['success'] != true) {
+          final errorMessage = data['message'] ?? 'Ошибка при создании события';
+          throw Exception(errorMessage);
+        }
+      },
+      onSuccess: () {
         if (!mounted) return;
-
         // Закрываем экран создания события и возвращаемся на карту с результатом
-        // Экран создания события открывается с карты, поэтому возвращаем результат для обновления данных
         Navigator.of(context).pop('created');
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage ?? 'Ошибка при создании события'),
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Ошибка сети: ${e.toString()}')));
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final formState = ref.watch(formStateProvider);
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
@@ -1550,16 +1520,23 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   ],
 
                   const SizedBox(height: 25),
+
+                  // Показываем ошибки, если есть
+                  if (formState.hasErrors) ...[
+                    FormErrorDisplay(formState: formState),
+                    const SizedBox(height: 16),
+                  ],
+
                   Align(
                     alignment: Alignment.center,
                     child: PrimaryButton(
                       text: 'Создать мероприятие',
                       onPressed: () {
-                        if (!_loading) _submit();
+                        if (!formState.isSubmitting) _submit();
                       },
                       expanded: false,
-                      isLoading: _loading,
-                      enabled: isFormValid,
+                      isLoading: formState.isSubmitting,
+                      enabled: isFormValid && !formState.isSubmitting,
                     ),
                   ),
                 ],

@@ -19,6 +19,8 @@ import '../../../core/services/api_service.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../providers/lenta/lenta_provider.dart';
 import '../../../core/widgets/transparent_route.dart';
+import '../../../core/providers/form_state_provider.dart';
+import '../../../core/widgets/form_error_display.dart';
 
 import '../widgets/activity/equipment/equipment_chip.dart';
 import 'description_screen.dart';
@@ -74,8 +76,6 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   List<al.Equipment> _availableEquipment = [];
   al.Equipment? _selectedEquipment;
   bool _isLoadingEquipment = false;
-
-  bool _isLoading = false;
 
   // Список фотографий (для отображения в карусели)
   // Может содержать как локальные файлы (File), так и URL (String)
@@ -1052,12 +1052,13 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
   /// Кнопка сохранения
   Widget _buildSaveButton() {
+    final formState = ref.watch(formStateProvider);
     return PrimaryButton(
       text: 'Сохранить',
-      onPressed: !_isLoading ? _saveActivity : () {},
+      onPressed: !formState.isSubmitting ? _saveActivity : () {},
       width: 190,
-      isLoading: _isLoading,
-      enabled: true,
+      isLoading: formState.isSubmitting,
+      enabled: !formState.isSubmitting,
     );
   }
 
@@ -1326,205 +1327,198 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
   /// Сохраняет активность на сервер
   Future<void> _saveActivity() async {
-    if (_isLoading) return;
+    final formState = ref.read(formStateProvider);
+    if (formState.isSubmitting) return;
 
     // Валидация
     if (_selectedActivityType == null) {
-      _showError('Выберите вид тренировки');
+      ref.read(formStateProvider.notifier).setError('Выберите вид тренировки');
       return;
     }
 
-    setState(() => _isLoading = true);
+    final formNotifier = ref.read(formStateProvider.notifier);
 
-    try {
-      final auth = AuthService();
-      final userId = await auth.getUserId();
-      if (userId == null) {
-        if (mounted) {
-          _showError('Не удалось определить пользователя');
+    await formNotifier.submit(
+      () async {
+        final auth = AuthService();
+        final userId = await auth.getUserId();
+        if (userId == null) {
+          throw Exception('Не удалось определить пользователя');
         }
-        return;
-      }
 
-      // Форматируем даты в формат MySQL (используем текущее время)
-      String formatDateTime(DateTime dt) {
-        return '${dt.year}-'
-            '${dt.month.toString().padLeft(2, '0')}-'
-            '${dt.day.toString().padLeft(2, '0')} '
-            '${dt.hour.toString().padLeft(2, '0')}:'
-            '${dt.minute.toString().padLeft(2, '0')}:'
-            '${dt.second.toString().padLeft(2, '0')}';
-      }
+        // Форматируем даты в формат MySQL (используем текущее время)
+        String formatDateTime(DateTime dt) {
+          return '${dt.year}-'
+              '${dt.month.toString().padLeft(2, '0')}-'
+              '${dt.day.toString().padLeft(2, '0')} '
+              '${dt.hour.toString().padLeft(2, '0')}:'
+              '${dt.minute.toString().padLeft(2, '0')}:'
+              '${dt.second.toString().padLeft(2, '0')}';
+        }
 
-      // Используем выбранные дату и время, или текущее время по умолчанию
-      DateTime dateStart;
-      DateTime dateEnd;
+        // Используем выбранные дату и время, или текущее время по умолчанию
+        DateTime dateStart;
+        DateTime dateEnd;
 
-      // Если длительность не выбрана, используем 1 час по умолчанию
-      final duration = _duration ?? const Duration(hours: 1);
+        // Если длительность не выбрана, используем 1 час по умолчанию
+        final duration = _duration ?? const Duration(hours: 1);
 
-      if (_activityDate != null && _startTime != null) {
-        dateStart = DateTime(
-          _activityDate!.year,
-          _activityDate!.month,
-          _activityDate!.day,
-          _startTime!.hour,
-          _startTime!.minute,
-        );
-        dateEnd = dateStart.add(duration);
-      } else {
-        // Если дата/время не выбраны, используем текущее время
-        final now = DateTime.now();
-        dateStart = now;
-        dateEnd = now.add(duration);
-      }
+        if (_activityDate != null && _startTime != null) {
+          dateStart = DateTime(
+            _activityDate!.year,
+            _activityDate!.month,
+            _activityDate!.day,
+            _startTime!.hour,
+            _startTime!.minute,
+          );
+          dateEnd = dateStart.add(duration);
+        } else {
+          // Если дата/время не выбраны, используем текущее время
+          final now = DateTime.now();
+          dateStart = now;
+          dateEnd = now.add(duration);
+        }
 
-      final dateStartStr = formatDateTime(dateStart);
-      final dateEndStr = formatDateTime(dateEnd);
+        final dateStartStr = formatDateTime(dateStart);
+        final dateEndStr = formatDateTime(dateEnd);
 
-      // Получаем дистанцию из поля ввода (в километрах)
-      final distanceKm =
-          double.tryParse(
-            _distanceController.text.trim().replaceAll(',', '.'),
-          ) ??
-          0.0;
-      final distanceMeters = (distanceKm * 1000).round();
+        // Получаем дистанцию из поля ввода (в километрах)
+        final distanceKm =
+            double.tryParse(
+              _distanceController.text.trim().replaceAll(',', '.'),
+            ) ??
+            0.0;
+        final distanceMeters = (distanceKm * 1000).round();
 
-      // Рассчитываем темп (минуты на километр)
-      double avgPace = 0.0;
-      if (distanceKm > 0 && duration.inSeconds > 0) {
-        // Темп = (время в секундах / дистанция в км) / 60 (чтобы получить минуты)
-        avgPace = (duration.inSeconds / distanceKm) / 60.0;
-      }
+        // Рассчитываем темп (минуты на километр)
+        double avgPace = 0.0;
+        if (distanceKm > 0 && duration.inSeconds > 0) {
+          // Темп = (время в секундах / дистанция в км) / 60 (чтобы получить минуты)
+          avgPace = (duration.inSeconds / distanceKm) / 60.0;
+        }
 
-      // Рассчитываем среднюю скорость (км/ч)
-      double avgSpeed = 0.0;
-      if (distanceKm > 0 && duration.inSeconds > 0) {
-        avgSpeed = (distanceKm / duration.inSeconds) * 3600.0;
-      }
+        // Рассчитываем среднюю скорость (км/ч)
+        double avgSpeed = 0.0;
+        if (distanceKm > 0 && duration.inSeconds > 0) {
+          avgSpeed = (distanceKm / duration.inSeconds) * 3600.0;
+        }
 
-      // Формируем params с рассчитанными значениями
-      final params = jsonEncode([
-        {
-          'stats': {
-            'distance': distanceMeters.toDouble(),
-            'realDistance': distanceMeters.toDouble(),
-            'avgSpeed': avgSpeed,
-            'avgPace': avgPace,
-            'duration': duration.inSeconds,
+        // Формируем params с рассчитанными значениями
+        final params = jsonEncode([
+          {
+            'stats': {
+              'distance': distanceMeters.toDouble(),
+              'realDistance': distanceMeters.toDouble(),
+              'avgSpeed': avgSpeed,
+              'avgPace': avgPace,
+              'duration': duration.inSeconds,
+            },
           },
-        },
-      ]);
+        ]);
 
-      // Формируем points (пустой массив)
-      final points = jsonEncode([]);
+        // Формируем points (пустой массив)
+        final points = jsonEncode([]);
 
-      // Получаем equip_user_id из выбранной экипировки
-      int equipUserId = 0;
-      if (_showEquipment && _selectedEquipment != null) {
-        equipUserId = _selectedEquipment!.equipUserId ?? 0;
-      }
+        // Получаем equip_user_id из выбранной экипировки
+        int equipUserId = 0;
+        if (_showEquipment && _selectedEquipment != null) {
+          equipUserId = _selectedEquipment!.equipUserId ?? 0;
+        }
 
-      // Создаем активность через новый API endpoint
-      final api = ApiService();
-      final response = await api.post(
-        '/create_activity_from_form.php',
-        body: {
-          'user_id': userId.toString(),
-          'type': _activityTypeMap[_selectedActivityType] ?? 'run',
-          'date_start': dateStartStr,
-          'date_end': dateEndStr,
-          'params': params,
-          'points': points,
-          'privacy': _selectedVisibility.toString(),
-          'equip_user_id': equipUserId.toString(),
-          'distance_km': distanceKm.toString(),
-          'content': _descriptionController.text.trim(),
-        },
-      );
+        // Создаем активность через новый API endpoint
+        final api = ApiService();
+        final response = await api.post(
+          '/create_activity_from_form.php',
+          body: {
+            'user_id': userId.toString(),
+            'type': _activityTypeMap[_selectedActivityType] ?? 'run',
+            'date_start': dateStartStr,
+            'date_end': dateEndStr,
+            'params': params,
+            'points': points,
+            'privacy': _selectedVisibility.toString(),
+            'equip_user_id': equipUserId.toString(),
+            'distance_km': distanceKm.toString(),
+            'content': _descriptionController.text.trim(),
+          },
+        );
 
-      if (response['success'] == true) {
+        if (response['success'] != true) {
+          final message =
+              response['message']?.toString() ?? 'Не удалось создать тренировку';
+          throw Exception(message);
+        }
+
         final activityId = response['activity_id'] as int?;
         final lentaId = response['lenta_id'] as int?;
 
-        if (activityId != null) {
-          // Загружаем фотографии, если они есть
-          if (_images.isNotEmpty) {
-            await _uploadPhotos(activityId, userId);
-          }
+        if (activityId == null) {
+          throw Exception('Не удалось получить ID созданной тренировки');
+        }
 
-          // Обновляем ленту
-          await ref
-              .read(lentaProvider(widget.currentUserId).notifier)
-              .forceRefresh();
+        // Загружаем фотографии, если они есть
+        if (_images.isNotEmpty) {
+          await _uploadPhotos(activityId, userId);
+        }
 
-          // Небольшая задержка для гарантии обновления данных на сервере
-          await Future.delayed(const Duration(milliseconds: 500));
+        // Обновляем ленту
+        await ref
+            .read(lentaProvider(widget.currentUserId).notifier)
+            .forceRefresh();
 
-          if (mounted) {
-            // Получаем созданную активность из обновленного провайдера
-            final lentaState = ref.read(lentaProvider(widget.currentUserId));
-            al.Activity? createdActivity;
+        // Небольшая задержка для гарантии обновления данных на сервере
+        await Future.delayed(const Duration(milliseconds: 500));
 
-            try {
-              createdActivity = lentaState.items.firstWhere(
-                (a) => a.id == activityId || a.lentaId == (lentaId ?? 0),
-              );
-            } catch (e) {
-              // Если активность не найдена, пробуем еще раз после небольшой задержки
-              await Future.delayed(const Duration(milliseconds: 300));
-              final updatedState = ref.read(
-                lentaProvider(widget.currentUserId),
-              );
-              try {
-                createdActivity = updatedState.items.firstWhere(
-                  (a) => a.id == activityId || a.lentaId == (lentaId ?? 0),
-                );
-              } catch (e2) {
-                // Если все еще не найдена, просто закрываем экран
-                if (!mounted) return;
-                Navigator.of(context).pop(true);
-                return;
-              }
-            }
+        if (!mounted) return;
 
-            // После всех проверок createdActivity гарантированно не null
-            // (если не найдена, происходит return выше)
-            if (!mounted) return;
-            // Закрываем экран добавления
-            Navigator.of(context).pop();
+        // Получаем созданную активность из обновленного провайдера
+        final lentaState = ref.read(lentaProvider(widget.currentUserId));
+        al.Activity? createdActivity;
 
-            // Открываем экран описания тренировки
-            Navigator.of(context).push(
-              TransparentPageRoute(
-                builder: (_) => ActivityDescriptionPage(
-                  activity: createdActivity!,
-                  currentUserId: widget.currentUserId,
-                ),
-              ),
+        try {
+          createdActivity = lentaState.items.firstWhere(
+            (a) => a.id == activityId || a.lentaId == (lentaId ?? 0),
+          );
+        } catch (e) {
+          // Если активность не найдена, пробуем еще раз после небольшой задержки
+          await Future.delayed(const Duration(milliseconds: 300));
+          final updatedState = ref.read(
+            lentaProvider(widget.currentUserId),
+          );
+          try {
+            createdActivity = updatedState.items.firstWhere(
+              (a) => a.id == activityId || a.lentaId == (lentaId ?? 0),
             );
-          }
-        } else {
-          if (mounted) {
-            _showError('Не удалось получить ID созданной тренировки');
+          } catch (e2) {
+            // Если все еще не найдена, просто закрываем экран
+            if (!mounted) return;
+            Navigator.of(context).pop(true);
+            return;
           }
         }
-      } else {
-        final message =
-            response['message']?.toString() ?? 'Не удалось создать тренировку';
-        if (mounted) {
-          _showError(message);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        _showError('Ошибка при создании тренировки: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+
+        // После всех проверок createdActivity гарантированно не null
+        // (если не найдена, происходит return выше)
+        if (!mounted) return;
+        // Закрываем экран добавления
+        Navigator.of(context).pop();
+
+        // Открываем экран описания тренировки
+        Navigator.of(context).push(
+          TransparentPageRoute(
+            builder: (_) => ActivityDescriptionPage(
+              activity: createdActivity!,
+              currentUserId: widget.currentUserId,
+            ),
+          ),
+        );
+      },
+      onError: (error) {
+        if (!mounted) return;
+        final formState = ref.read(formStateProvider);
+        _showError(formState.error ?? 'Ошибка при создании тренировки');
+      },
+    );
   }
 
   /// Загружает фотографии для активности

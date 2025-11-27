@@ -15,6 +15,8 @@ import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../providers/lenta/lenta_provider.dart';
+import '../../../../core/providers/form_state_provider.dart';
+import '../../../../core/widgets/form_error_display.dart';
 
 /// Модель «существующего» изображения, пришедшего с бэка
 class _ExistingImage {
@@ -69,9 +71,6 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
   // Новые картинки, выбранные на устройстве
   final List<File> _newImages = [];
 
-  // Состояние загрузки
-  bool _isLoading = false;
-
   // Доступность кнопки сохранения
   bool _canSave = false;
 
@@ -124,7 +123,8 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
 
   /// Обновляет состояние доступности кнопки сохранения
   void _updateSaveState() {
-    setState(() => _canSave = _hasChanges() && !_isLoading);
+    final formState = ref.read(formStateProvider);
+    setState(() => _canSave = _hasChanges() && !formState.isSubmitting);
   }
 
   @override
@@ -191,6 +191,20 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                   _buildVisibilitySelector(),
 
                   const SizedBox(height: 32),
+
+                  // Показываем ошибки, если есть
+                  Builder(
+                    builder: (context) {
+                      final formState = ref.watch(formStateProvider);
+                      if (formState.hasErrors) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: FormErrorDisplay(formState: formState),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
 
                   // ────────────────────────────────────────────────────────────────
                   // 💾 КНОПКА СОХРАНЕНИЯ
@@ -563,130 +577,133 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
 
   /// Кнопка сохранения
   Widget _buildSaveButton() {
+    final formState = ref.watch(formStateProvider);
     return PrimaryButton(
       text: 'Сохранить',
-      onPressed: !_isLoading ? _submitEdit : () {},
+      onPressed: !formState.isSubmitting ? _submitEdit : () {},
       width: 190,
-      isLoading: _isLoading,
-      enabled: _canSave,
+      isLoading: formState.isSubmitting,
+      enabled: _canSave && !formState.isSubmitting,
     );
   }
 
   /// Сохраняет изменения поста на сервер
   Future<void> _submitEdit() async {
-    if (_isLoading || !_canSave) return;
+    final formState = ref.read(formStateProvider);
+    if (formState.isSubmitting || !_canSave) return;
 
     final text = _descriptionController.text.trim();
     final keepUrls = _existing.where((e) => e.keep).map((e) => e.url).toList();
     final hasNewFiles = _newImages.isNotEmpty;
 
-    setState(() => _isLoading = true);
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ApiService();
 
-    try {
-      final api = ApiService();
-      Map<String, dynamic> data;
+    await formNotifier.submit(
+      () async {
+        Map<String, dynamic> data;
 
-      if (!hasNewFiles) {
-        // JSON-запрос: только текст/состав существующих картинок
-        data = await api.post(
-          '/update_post.php',
-          body: {
-            'post_id': widget.postId.toString(),
-            'user_id': widget.userId.toString(),
-            'text': text,
-            'privacy': _selectedVisibility.toString(),
-            'keep_images': keepUrls,
-          },
-        );
-      } else {
-        // Multipart-запрос: добавились новые файлы
-        final files = <String, File>{};
-        for (int i = 0; i < _newImages.length; i++) {
-          files['images[$i]'] = _newImages[i];
+        if (!hasNewFiles) {
+          // JSON-запрос: только текст/состав существующих картинок
+          data = await api.post(
+            '/update_post.php',
+            body: {
+              'post_id': widget.postId.toString(),
+              'user_id': widget.userId.toString(),
+              'text': text,
+              'privacy': _selectedVisibility.toString(),
+              'keep_images': keepUrls,
+            },
+          );
+        } else {
+          // Multipart-запрос: добавились новые файлы
+          final files = <String, File>{};
+          for (int i = 0; i < _newImages.length; i++) {
+            files['images[$i]'] = _newImages[i];
+          }
+
+          data = await api.postMultipart(
+            '/update_post.php',
+            files: files,
+            fields: {
+              'post_id': widget.postId.toString(),
+              'user_id': widget.userId.toString(),
+              'text': text,
+              'privacy': _selectedVisibility.toString(),
+              'keep_images': keepUrls.toString(),
+            },
+            timeout: const Duration(seconds: 60),
+          );
         }
 
-        data = await api.postMultipart(
-          '/update_post.php',
-          files: files,
-          fields: {
-            'post_id': widget.postId.toString(),
-            'user_id': widget.userId.toString(),
-            'text': text,
-            'privacy': _selectedVisibility.toString(),
-            'keep_images': keepUrls.toString(),
-          },
-          timeout: const Duration(seconds: 60),
-        );
-      }
+        // Проверяем разные форматы ответа API
+        bool success = false;
+        String? errorMessage;
 
-      // Проверяем разные форматы ответа API
-      bool success = false;
-      String? errorMessage;
+        // Сервер может возвращать массив внутри 'data'
+        final actualData =
+            data['data'] is List && (data['data'] as List).isNotEmpty
+            ? (data['data'] as List)[0] as Map<String, dynamic>
+            : data;
 
-      // Сервер может возвращать массив внутри 'data'
-      final actualData =
-          data['data'] is List && (data['data'] as List).isNotEmpty
-          ? (data['data'] as List)[0] as Map<String, dynamic>
-          : data;
-
-      // Формат 1: прямой success в корне
-      if (actualData['success'] == true) {
-        success = true;
-      }
-      // Формат 2: success в data массиве
-      else if (data['data'] is List && (data['data'] as List).isNotEmpty) {
-        final firstItem = (data['data'] as List)[0];
-        if (firstItem is Map<String, dynamic>) {
-          if (firstItem['success'] == true) {
-            success = true;
-          } else {
-            errorMessage = firstItem['message']?.toString();
+        // Формат 1: прямой success в корне
+        if (actualData['success'] == true) {
+          success = true;
+        }
+        // Формат 2: success в data массиве
+        else if (data['data'] is List && (data['data'] as List).isNotEmpty) {
+          final firstItem = (data['data'] as List)[0];
+          if (firstItem is Map<String, dynamic>) {
+            if (firstItem['success'] == true) {
+              success = true;
+            } else {
+              errorMessage = firstItem['message']?.toString();
+            }
           }
         }
-      }
-      // Формат 3: success в data объекте
-      else if (data['data'] is Map<String, dynamic>) {
-        final dataObj = data['data'] as Map<String, dynamic>;
-        if (dataObj['success'] == true) {
-          success = true;
-        } else {
-          errorMessage = dataObj['message']?.toString();
+        // Формат 3: success в data объекте
+        else if (data['data'] is Map<String, dynamic>) {
+          final dataObj = data['data'] as Map<String, dynamic>;
+          if (dataObj['success'] == true) {
+            success = true;
+          } else {
+            errorMessage = dataObj['message']?.toString();
+          }
         }
-      }
-      // Формат 4: error или message в корне
-      else if (data['error'] != null || data['message'] != null) {
-        errorMessage = (data['error'] ?? data['message']).toString();
-      }
-      // Неизвестный формат
-      else {
-        errorMessage = 'Неизвестный формат ответа сервера';
-      }
+        // Формат 4: error или message в корне
+        else if (data['error'] != null || data['message'] != null) {
+          errorMessage = (data['error'] ?? data['message']).toString();
+        }
+        // Неизвестный формат
+        else {
+          errorMessage = 'Неизвестный формат ответа сервера';
+        }
 
-      if (success) {
+        if (!success) {
+          final msg = errorMessage ?? 'Ошибка сервера';
+          throw Exception(msg);
+        }
+
         // Обновляем ленту
         await ref.read(lentaProvider(widget.userId).notifier).forceRefresh();
 
         // Небольшая задержка для гарантии обновления данных на сервере
         await Future.delayed(const Duration(milliseconds: 500));
-
+      },
+      onSuccess: () {
         if (!mounted) return;
         Navigator.pop(context, true);
-      } else {
+      },
+      onError: (error) {
         if (!mounted) return;
-        final msg = errorMessage ?? 'Ошибка сервера';
-        _showError(msg);
-      }
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      _showError('Ошибка: $e');
-    } catch (e) {
-      if (!mounted) return;
-      _showError('Ошибка при сохранении поста: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _updateSaveState();
-      }
+        final formState = ref.read(formStateProvider);
+        _showError(formState.error ?? 'Ошибка при сохранении поста');
+      },
+    );
+
+    // Обновляем состояние кнопки после завершения
+    if (mounted) {
+      _updateSaveState();
     }
   }
 

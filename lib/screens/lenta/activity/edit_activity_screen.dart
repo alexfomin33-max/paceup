@@ -19,6 +19,8 @@ import '../../../core/models/activity_lenta.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../providers/lenta/lenta_provider.dart';
+import '../../../core/providers/form_state_provider.dart';
+import '../../../core/widgets/form_error_display.dart';
 
 import '../widgets/activity/equipment/equipment_chip.dart';
 
@@ -54,7 +56,6 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
   // Состояние видимости: 0 = Все пользователи, 1 = Только подписчики, 2 = Только Вы
   int _selectedVisibility = 0;
-  bool _isLoading = false;
 
   // Список фотографий (для отображения в карусели)
   final List<String> _imageUrls = [];
@@ -183,6 +184,20 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                   _buildVisibilitySelector(),
 
                   const SizedBox(height: 32),
+
+                  // Показываем ошибки, если есть
+                  Builder(
+                    builder: (context) {
+                      final formState = ref.watch(formStateProvider);
+                      if (formState.hasErrors) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: FormErrorDisplay(formState: formState),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
 
                   // ────────────────────────────────────────────────────────────────
                   // 💾 КНОПКА СОХРАНЕНИЯ
@@ -566,68 +581,64 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
   /// Кнопка сохранения
   Widget _buildSaveButton() {
+    final formState = ref.watch(formStateProvider);
     return PrimaryButton(
       text: 'Сохранить',
-      onPressed: !_isLoading ? _saveChanges : () {},
+      onPressed: !formState.isSubmitting ? _saveChanges : () {},
       width: 190,
-      isLoading: _isLoading,
-      enabled: true,
+      isLoading: formState.isSubmitting,
+      enabled: !formState.isSubmitting,
     );
   }
 
   /// Сохраняет изменения на сервер
   Future<void> _saveChanges() async {
-    if (_isLoading) return;
+    final formState = ref.read(formStateProvider);
+    if (formState.isSubmitting) return;
 
-    setState(() => _isLoading = true);
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final auth = AuthService();
+    final api = ApiService();
 
-    try {
-      final auth = AuthService();
-      final userId = await auth.getUserId();
-      if (userId == null) {
-        if (mounted) {
-          _showError('Не удалось определить пользователя');
+    await formNotifier.submit(
+      () async {
+        final userId = await auth.getUserId();
+        if (userId == null) {
+          throw Exception('Не удалось определить пользователя');
         }
-        return;
-      }
 
-      final api = ApiService();
-      final response = await api.post(
-        '/update_activity.php',
-        body: {
-          'user_id': userId.toString(),
-          'activity_id': widget.activity.id.toString(),
-          'content': _descriptionController.text.trim(),
-          'user_group': _selectedVisibility.toString(),
-          'media_images': _imageUrls, // Отправляем новый порядок фотографий
-        },
-      );
+        final response = await api.post(
+          '/update_activity.php',
+          body: {
+            'user_id': userId.toString(),
+            'activity_id': widget.activity.id.toString(),
+            'content': _descriptionController.text.trim(),
+            'user_group': _selectedVisibility.toString(),
+            'media_images': _imageUrls, // Отправляем новый порядок фотографий
+          },
+        );
 
-      if (response['success'] == true) {
+        if (response['success'] != true) {
+          final message =
+              response['message']?.toString() ?? 'Не удалось сохранить изменения';
+          throw Exception(message);
+        }
+
         // Обновляем ленту
         await ref
             .read(lentaProvider(widget.currentUserId).notifier)
             .forceRefresh();
-
-        if (mounted) {
-          Navigator.of(context).pop(true); // Возвращаемся с флагом успеха
-        }
-      } else {
-        final message =
-            response['message']?.toString() ?? 'Не удалось сохранить изменения';
-        if (mounted) {
-          _showError(message);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        _showError('Ошибка при сохранении: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+      },
+      onSuccess: () {
+        if (!mounted) return;
+        Navigator.of(context).pop(true); // Возвращаемся с флагом успеха
+      },
+      onError: (error) {
+        if (!mounted) return;
+        final formState = ref.read(formStateProvider);
+        _showError(formState.error ?? 'Ошибка при сохранении');
+      },
+    );
   }
 
   /// Показывает ошибку

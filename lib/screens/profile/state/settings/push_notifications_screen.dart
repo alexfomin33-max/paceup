@@ -7,6 +7,8 @@ import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../core/widgets/primary_button.dart';
+import '../../../../../core/providers/form_state_provider.dart';
+import '../../../../../core/widgets/form_error_display.dart';
 
 /// Экран настроек Push-уведомлений
 class PushNotificationsScreen extends ConsumerStatefulWidget {
@@ -19,9 +21,6 @@ class PushNotificationsScreen extends ConsumerStatefulWidget {
 
 class _PushNotificationsScreenState
     extends ConsumerState<PushNotificationsScreen> {
-  bool _isLoading = true;
-  String? _error;
-
   // Настройки уведомлений
   bool _newFollowers = true;
   bool _newLikes = true;
@@ -39,43 +38,35 @@ class _PushNotificationsScreenState
 
   /// Загрузка настроек уведомлений
   Future<void> _loadSettings() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    final formNotifier = ref.read(formStateProvider.notifier);
 
-    try {
-      final authService = AuthService();
-      final userId = await authService.getUserId();
-      if (userId == null) {
-        throw Exception('Пользователь не авторизован');
-      }
+    await formNotifier.submitWithLoading(
+      () async {
+        final authService = AuthService();
+        final userId = await authService.getUserId();
+        if (userId == null) {
+          throw Exception('Пользователь не авторизован');
+        }
 
-      final api = ApiService();
-      final data = await api.post(
-        '/get_push_settings.php',
-        body: {'user_id': userId},
-      );
+        final api = ApiService();
+        final data = await api.post(
+          '/get_push_settings.php',
+          body: {'user_id': userId},
+        );
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      setState(() {
-        _newFollowers = data['new_followers'] ?? true;
-        _newLikes = data['new_likes'] ?? true;
-        _newComments = data['new_comments'] ?? true;
-        _newMessages = data['new_messages'] ?? true;
-        _eventReminders = data['event_reminders'] ?? true;
-        _achievements = data['achievements'] ?? true;
-        _weeklyStats = data['weekly_stats'] ?? false;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString().replaceAll('ApiException: ', '');
-        _isLoading = false;
-      });
-    }
+        setState(() {
+          _newFollowers = data['new_followers'] ?? true;
+          _newLikes = data['new_likes'] ?? true;
+          _newComments = data['new_comments'] ?? true;
+          _newMessages = data['new_messages'] ?? true;
+          _eventReminders = data['event_reminders'] ?? true;
+          _achievements = data['achievements'] ?? true;
+          _weeklyStats = data['weekly_stats'] ?? false;
+        });
+      },
+    );
   }
 
   /// Сохранение настройки уведомления
@@ -124,18 +115,19 @@ class _PushNotificationsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final formState = ref.watch(formStateProvider);
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Push-уведомления'),
         body: SafeArea(
-          child: _isLoading
+          child: formState.isLoading
               ? const Center(
                   child: CircularProgressIndicator(
                     color: AppColors.brandPrimary,
                   ),
                 )
-              : _error != null
+              : formState.hasErrors
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -148,17 +140,11 @@ class _PushNotificationsScreenState
                           color: AppColors.error,
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          _error!,
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.h14w4.copyWith(
-                            color: AppColors.error,
-                          ),
-                        ),
+                        FormErrorDisplay(formState: formState),
                         const SizedBox(height: 24),
                         PrimaryButton(
                           text: 'Повторить',
-                          onPressed: _loadSettings,
+                          onPressed: () => _loadSettings(),
                         ),
                       ],
                     ),

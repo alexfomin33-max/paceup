@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/image_picker_helper.dart';
 import '../../../core/widgets/app_bar.dart';
@@ -9,15 +10,17 @@ import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/providers/form_state_provider.dart';
+import '../../../core/widgets/form_error_display.dart';
 
-class CreateClubScreen extends StatefulWidget {
+class CreateClubScreen extends ConsumerStatefulWidget {
   const CreateClubScreen({super.key});
 
   @override
-  State<CreateClubScreen> createState() => _CreateClubScreenState();
+  ConsumerState<CreateClubScreen> createState() => _CreateClubScreenState();
 }
 
-class _CreateClubScreenState extends State<CreateClubScreen> {
+class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
   // ── контроллеры
   final nameCtrl = TextEditingController();
   final cityCtrl = TextEditingController();
@@ -40,11 +43,6 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
   static const double _logoAspectRatio = 1;
   static const double _backgroundAspectRatio = 2.3;
 
-  // ── состояние ошибок валидации
-  final Set<String> _errorFields = {};
-
-  // ── состояние загрузки
-  bool _loading = false;
 
   bool get isFormValid =>
       nameCtrl.text.trim().isNotEmpty &&
@@ -107,9 +105,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
 
   // ── очистка ошибки для конкретного поля при взаимодействии
   void _clearFieldError(String fieldName) {
-    if (_errorFields.contains(fieldName)) {
-      setState(() => _errorFields.remove(fieldName));
-    }
+    ref.read(formStateProvider.notifier).clearFieldError(fieldName);
   }
 
   Future<void> _pickLogo() async {
@@ -251,39 +247,36 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
   }
 
   Future<void> _submit() async {
+    final formNotifier = ref.read(formStateProvider.notifier);
+    
     // ── проверяем все обязательные поля и подсвечиваем незаполненные
-    final Set<String> newErrors = {};
+    final Map<String, String> newErrors = {};
 
     if (nameCtrl.text.trim().isEmpty) {
-      newErrors.add('name');
+      newErrors['name'] = 'Введите название клуба';
     }
     if (cityCtrl.text.trim().isEmpty) {
-      newErrors.add('city');
+      newErrors['city'] = 'Введите город';
     }
     if (activity == null) {
-      newErrors.add('activity');
+      newErrors['activity'] = 'Выберите вид активности';
     }
     if (foundationDate == null) {
-      newErrors.add('foundationDate');
+      newErrors['foundationDate'] = 'Выберите дату основания';
     }
-
-    setState(() {
-      _errorFields.clear();
-      _errorFields.addAll(newErrors);
-    });
 
     // ── если есть ошибки — не отправляем форму
     if (newErrors.isNotEmpty) {
+      formNotifier.setFieldErrors(newErrors);
       return;
     }
 
     // ── форма валидна — отправляем на сервер
-    setState(() => _loading = true);
-
     final api = ApiService();
     final authService = AuthService();
 
-    try {
+    await formNotifier.submit(
+      () async {
       // Формируем данные
       final files = <String, File>{};
       final fields = <String, String>{};
@@ -298,19 +291,11 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
         files['background'] = backgroundFile!;
       }
 
-      // Добавляем поля формы
-      final userId = await authService.getUserId();
-      if (userId == null) {
-        if (!mounted) return;
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ошибка авторизации. Необходимо войти в систему'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-        return;
-      }
+        // Добавляем поля формы
+        final userId = await authService.getUserId();
+        if (userId == null) {
+          throw Exception('Ошибка авторизации. Необходимо войти в систему');
+        }
       fields['user_id'] = userId.toString();
       fields['name'] = nameCtrl.text.trim();
       fields['city'] = cityCtrl.text.trim();
@@ -320,59 +305,39 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
       fields['foundation_date'] = _fmtDate(foundationDate!);
       // Координаты не обязательны - будут получены по городу на сервере
 
-      // Отправляем запрос
-      Map<String, dynamic> data;
-      if (files.isEmpty) {
-        // JSON запрос без файлов
-        data = await api.post('/create_club.php', body: fields);
-      } else {
-        // Multipart запрос с файлами
-        data = await api.postMultipart(
-          '/create_club.php',
-          files: files,
-          fields: fields,
-          timeout: const Duration(seconds: 60),
-        );
-      }
+        // Отправляем запрос
+        Map<String, dynamic> data;
+        if (files.isEmpty) {
+          // JSON запрос без файлов
+          data = await api.post('/create_club.php', body: fields);
+        } else {
+          // Multipart запрос с файлами
+          data = await api.postMultipart(
+            '/create_club.php',
+            files: files,
+            fields: fields,
+            timeout: const Duration(seconds: 60),
+          );
+        }
 
-      // Проверяем ответ
-      bool success = false;
-      String? errorMessage;
-
-      if (data['success'] == true) {
-        success = true;
-      } else if (data['success'] == false) {
-        errorMessage = data['message'] ?? 'Ошибка при создании клуба';
-      } else {
-        errorMessage = 'Неожиданный формат ответа сервера';
-      }
-
-      if (success) {
+        // Проверяем ответ
+        if (data['success'] != true) {
+          final errorMessage = data['message'] ?? 'Ошибка при создании клуба';
+          throw Exception(errorMessage);
+        }
+      },
+      onSuccess: () {
         if (!mounted) return;
-
         // Закрываем экран создания клуба и возвращаемся на карту с результатом
-        // Экран создания клуба открывается с карты, поэтому возвращаем результат для обновления данных
         Navigator.of(context).pop('created');
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage ?? 'Ошибка при создании клуба')),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Ошибка сети: ${e.toString()}')));
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final formState = ref.watch(formStateProvider);
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
@@ -469,7 +434,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         borderSide: BorderSide(
-                          color: _errorFields.contains('name')
+                          color: formState.fieldErrors.containsKey('name')
                               ? AppColors.error
                               : AppColors.getBorderColor(context),
                           width: 1,
@@ -478,7 +443,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         borderSide: BorderSide(
-                          color: _errorFields.contains('name')
+                          color: formState.fieldErrors.containsKey('name')
                               ? AppColors.error
                               : AppColors.getBorderColor(context),
                           width: 1,
@@ -487,7 +452,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         borderSide: BorderSide(
-                          color: _errorFields.contains('name')
+                          color: formState.fieldErrors.containsKey('name')
                               ? AppColors.error
                               : AppColors.getBorderColor(context),
                           width: 1,
@@ -519,7 +484,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: _errorFields.contains('activity')
+                            color: formState.fieldErrors.containsKey('activity')
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -528,7 +493,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: _errorFields.contains('activity')
+                            color: formState.fieldErrors.containsKey('activity')
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -537,7 +502,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: _errorFields.contains('activity')
+                            color: formState.fieldErrors.containsKey('activity')
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -658,7 +623,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                   _CityAutocompleteField(
                     controller: cityCtrl,
                     suggestions: _cities,
-                    hasError: _errorFields.contains('city'),
+                    hasError: formState.fieldErrors.containsKey('city'),
                     onSelected: (city) {
                       cityCtrl.text = city;
                       _clearFieldError('city');
@@ -706,7 +671,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
-                                color: _errorFields.contains('foundationDate')
+                                color: formState.fieldErrors.containsKey('foundationDate')
                                     ? AppColors.error
                                     : AppColors.getBorderColor(context),
                                 width: 1,
@@ -715,7 +680,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
-                                color: _errorFields.contains('foundationDate')
+                                color: formState.fieldErrors.containsKey('foundationDate')
                                     ? AppColors.error
                                     : AppColors.getBorderColor(context),
                                 width: 1,
@@ -724,7 +689,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
-                                color: _errorFields.contains('foundationDate')
+                                color: formState.fieldErrors.containsKey('foundationDate')
                                     ? AppColors.error
                                     : AppColors.getBorderColor(context),
                                 width: 1,
@@ -799,16 +764,23 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
+
+                  // Показываем ошибки, если есть
+                  if (formState.hasErrors) ...[
+                    FormErrorDisplay(formState: formState),
+                    const SizedBox(height: 16),
+                  ],
+
                   Align(
                     alignment: Alignment.center,
                     child: PrimaryButton(
                       text: 'Создать сообщество',
                       onPressed: () {
-                        if (!_loading) _submit();
+                        if (!formState.isSubmitting) _submit();
                       },
                       expanded: false,
-                      isLoading: _loading,
-                      enabled: isFormValid,
+                      isLoading: formState.isSubmitting,
+                      enabled: isFormValid && !formState.isSubmitting,
                     ),
                   ),
                 ],

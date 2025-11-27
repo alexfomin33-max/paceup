@@ -2,23 +2,24 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../core/widgets/primary_button.dart';
+import '../../../../../core/providers/form_state_provider.dart';
+import '../../../../../core/widgets/form_error_display.dart';
 
 /// Экран доступа к контактам
-class ContactsAccessScreen extends StatefulWidget {
+class ContactsAccessScreen extends ConsumerStatefulWidget {
   const ContactsAccessScreen({super.key});
 
   @override
-  State<ContactsAccessScreen> createState() => _ContactsAccessScreenState();
+  ConsumerState<ContactsAccessScreen> createState() => _ContactsAccessScreenState();
 }
 
-class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
-  bool _isLoading = false;
+class _ContactsAccessScreenState extends ConsumerState<ContactsAccessScreen> {
   bool _hasAccess = false;
-  String? _error;
 
   @override
   void initState() {
@@ -28,122 +29,106 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
 
   /// Проверка текущего статуса разрешения
   Future<void> _checkPermission() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    final formNotifier = ref.read(formStateProvider.notifier);
 
-    try {
-      final status = await ph.Permission.contacts.status;
+    await formNotifier.submitWithLoading(
+      () async {
+        final status = await ph.Permission.contacts.status;
 
-      if (!mounted) return;
-
-      setState(() {
-        _hasAccess = status.isGranted;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      // Если плагин недоступен, показываем дружелюбное сообщение
-      final errorMsg = e.toString();
-      if (errorMsg.contains('MissingPluginException') ||
-          errorMsg.contains('No implementation found')) {
+        if (!mounted) return;
         setState(() {
-          _error = 'Плагин разрешений недоступен. Перезапустите приложение.';
-          _isLoading = false;
+          _hasAccess = status.isGranted;
         });
-      } else {
-        setState(() {
-          _error = errorMsg;
-          _isLoading = false;
-        });
-      }
-    }
+      },
+      onError: (error) {
+        if (!mounted) return;
+        final formState = ref.read(formStateProvider);
+        final errorMsg = formState.error ?? error.toString();
+        if (errorMsg.contains('MissingPluginException') ||
+            errorMsg.contains('No implementation found')) {
+          ref.read(formStateProvider.notifier).setError(
+                'Плагин разрешений недоступен. Перезапустите приложение.',
+              );
+        }
+      },
+    );
   }
 
   /// Запрос разрешения на доступ к контактам
   Future<void> _requestPermission() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    final formNotifier = ref.read(formStateProvider.notifier);
 
-    try {
-      final status = await ph.Permission.contacts.request();
+    await formNotifier.submit(
+      () async {
+        final status = await ph.Permission.contacts.request();
 
-      if (!mounted) return;
+        if (!mounted) return;
+        setState(() {
+          _hasAccess = status.isGranted;
+        });
 
-      setState(() {
-        _hasAccess = status.isGranted;
-        _isLoading = false;
-      });
-
-      if (!status.isGranted) {
-        // Показываем диалог с инструкциями
-        if (mounted) {
-          await showDialog(
-            context: context,
-            builder: (_) => AlertDialog(
-              title: const Text('Нужен доступ к контактам'),
-              content: Text(
-                Platform.isIOS
-                    ? 'Разрешите доступ к контактам в настройках iPhone:\n\nНастройки → Конфиденциальность → Контакты → PaceUp'
-                    : 'Разрешите доступ к контактам в настройках Android:\n\nНастройки → Приложения → PaceUp → Разрешения → Контакты',
-              ),
-              actions: [
-                PrimaryButton(
-                  text: 'Понятно',
-                  onPressed: () => Navigator.of(context).pop(),
+        if (!status.isGranted) {
+          // Показываем диалог с инструкциями
+          if (mounted) {
+            await showDialog(
+              context: context,
+              builder: (dialogContext) => AlertDialog(
+                title: const Text('Нужен доступ к контактам'),
+                content: Text(
+                  Platform.isIOS
+                      ? 'Разрешите доступ к контактам в настройках iPhone:\n\nНастройки → Конфиденциальность → Контакты → PaceUp'
+                      : 'Разрешите доступ к контактам в настройках Android:\n\nНастройки → Приложения → PaceUp → Разрешения → Контакты',
                 ),
-                if (status.isPermanentlyDenied) ...[
-                  const SizedBox(width: 8),
+                actions: [
                   PrimaryButton(
-                    text: 'Открыть настройки',
-                    onPressed: () {
-                      ph.openAppSettings();
-                      Navigator.of(context).pop();
-                    },
+                    text: 'Понятно',
+                    onPressed: () => Navigator.of(dialogContext).pop(),
                   ),
+                  if (status.isPermanentlyDenied) ...[
+                    const SizedBox(width: 8),
+                    PrimaryButton(
+                      text: 'Открыть настройки',
+                      onPressed: () {
+                        ph.openAppSettings();
+                        Navigator.of(dialogContext).pop();
+                      },
+                    ),
+                  ],
                 ],
-              ],
-            ),
-          );
+              ),
+            );
+          }
         }
-      }
-    } catch (e) {
-      if (!mounted) return;
-      // Если плагин недоступен, показываем дружелюбное сообщение
-      final errorMsg = e.toString();
-      if (errorMsg.contains('MissingPluginException') ||
-          errorMsg.contains('No implementation found')) {
-        setState(() {
-          _error =
-              'Плагин разрешений недоступен. Перезапустите приложение после установки пакетов.';
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _error = errorMsg;
-          _isLoading = false;
-        });
-      }
-    }
+      },
+      onError: (error) {
+        if (!mounted) return;
+        final formState = ref.read(formStateProvider);
+        final errorMsg = formState.error ?? error.toString();
+        if (errorMsg.contains('MissingPluginException') ||
+            errorMsg.contains('No implementation found')) {
+          ref.read(formStateProvider.notifier).setError(
+                'Плагин разрешений недоступен. Перезапустите приложение после установки пакетов.',
+              );
+        }
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final formState = ref.watch(formStateProvider);
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Контакты'),
         body: SafeArea(
-          child: _isLoading
+          child: formState.isLoading
               ? const Center(
                   child: CircularProgressIndicator(
                     color: AppColors.brandPrimary,
                   ),
                 )
-              : _error != null
+              : formState.hasErrors
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -156,13 +141,7 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                           color: AppColors.error,
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          _error!,
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.h14w4.copyWith(
-                            color: AppColors.error,
-                          ),
-                        ),
+                        FormErrorDisplay(formState: formState),
                         const SizedBox(height: 24),
                         PrimaryButton(
                           text: 'Повторить',
@@ -264,13 +243,20 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                     const SizedBox(height: 24),
 
                     // Кнопка запроса разрешений
-                    Center(
-                      child: PrimaryButton(
-                        text: _hasAccess
-                            ? 'Обновить разрешения'
-                            : 'Запросить доступ',
-                        onPressed: _requestPermission,
-                      ),
+                    Builder(
+                      builder: (context) {
+                        final formState = ref.watch(formStateProvider);
+                        return Center(
+                          child: PrimaryButton(
+                            text: _hasAccess
+                                ? 'Обновить разрешения'
+                                : 'Запросить доступ',
+                            onPressed: () => _requestPermission(),
+                            isLoading: formState.isSubmitting,
+                            enabled: !formState.isSubmitting,
+                          ),
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 16),

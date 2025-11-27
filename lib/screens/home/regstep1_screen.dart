@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/services/api_provider.dart';
-import '../../core/services/api_service.dart' show ApiException;
+import '../../core/providers/form_state_provider.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../core/widgets/auth/custom_text_field.dart';
+import '../../core/widgets/form_error_display.dart';
 
 /// 🔹 Первый экран регистрации — ввод базовых данных спортсмена
 class Regstep1Screen extends ConsumerStatefulWidget {
@@ -34,12 +35,6 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
   final List<String> genders = ['Муж', 'Жен'];
   final List<String> sports = ['Бег', 'Велосипед', 'Плавание'];
 
-  /// 🔹 Флаг загрузки (блокирует повторные нажатия)
-  bool _isLoading = false;
-
-  /// 🔹 Сообщение об ошибке (если есть)
-  String? _errorMessage;
-
   /// 🔹 Проверка корректности заполнения формы
   bool get isFormValid {
     return nameController.text.trim().isNotEmpty &&
@@ -52,49 +47,37 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
 
   /// 🔹 Метод сохранения введённых данных на сервере
   Future<void> saveForm() async {
-    if (_isLoading) return;
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ref.read(apiServiceProvider);
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final api = ref.read(apiServiceProvider);
-      await api.post(
-        '/save_reg_form1.php',
-        body: {
-          'user_id': '${widget.userId}', // 🔹 PHP ожидает строки
-          'name': nameController.text.trim(),
-          'surname': surnameController.text.trim(),
-          'dateage': dobController.text,
-          'city': cityController.text.trim(),
-          'gender': selectedGender!,
-          'sport': selectedSport!,
-        },
-      );
-    } on ApiException catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Ошибка сохранения данных: ${e.message}';
-        });
-      }
-      debugPrint('Ошибка при отправке данных: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+    await formNotifier.submit(
+      () async {
+        await api.post(
+          '/save_reg_form1.php',
+          body: {
+            'user_id': '${widget.userId}', // 🔹 PHP ожидает строки
+            'name': nameController.text.trim(),
+            'surname': surnameController.text.trim(),
+            'dateage': dobController.text,
+            'city': cityController.text.trim(),
+            'gender': selectedGender!,
+            'sport': selectedSport!,
+          },
+        );
+      },
+    );
   }
 
   /// 🔹 Метод проверки валидности формы и перехода на следующий экран
   Future<void> _checkAndContinue() async {
-    if (!isFormValid || _isLoading) return;
+    final formState = ref.read(formStateProvider);
+    if (!isFormValid || formState.isSubmitting) return;
 
     await saveForm();
 
     // 🔹 Если была ошибка, не переходим дальше
-    if (_errorMessage != null) return;
+    final updatedState = ref.read(formStateProvider);
+    if (updatedState.hasErrors) return;
 
     // Проверка, что виджет ещё монтирован перед использованием context
     if (!mounted) return;
@@ -110,26 +93,21 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
   void initState() {
     super.initState();
 
-    // 🔹 Обновление состояния при изменении текста в полях
-    nameController.addListener(() {
-      setState(() {
-        // 🔹 Очищаем ошибку при изменении полей
-        if (_errorMessage != null) _errorMessage = null;
+    // 🔹 Очищаем ошибку при изменении полей
+    // Используем Future.microtask, так как ref.read недоступен в initState
+    Future.microtask(() {
+      final formNotifier = ref.read(formStateProvider.notifier);
+      nameController.addListener(() {
+        formNotifier.clearGeneralError();
       });
-    });
-    surnameController.addListener(() {
-      setState(() {
-        if (_errorMessage != null) _errorMessage = null;
+      surnameController.addListener(() {
+        formNotifier.clearGeneralError();
       });
-    });
-    dobController.addListener(() {
-      setState(() {
-        if (_errorMessage != null) _errorMessage = null;
+      dobController.addListener(() {
+        formNotifier.clearGeneralError();
       });
-    });
-    cityController.addListener(() {
-      setState(() {
-        if (_errorMessage != null) _errorMessage = null;
+      cityController.addListener(() {
+        formNotifier.clearGeneralError();
       });
     });
   }
@@ -146,6 +124,9 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔹 Получаем состояние формы
+    final formState = ref.watch(formStateProvider);
+
     // 🔹 Получаем высоту клавиатуры для адаптации контента
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     // 🔹 Базовый отступ снизу, который уменьшается при появлении клавиатуры
@@ -204,8 +185,8 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
                     onChanged: (value) {
                       setState(() {
                         selectedGender = value;
-                        if (_errorMessage != null) _errorMessage = null;
                       });
+                      ref.read(formStateProvider.notifier).clearGeneralError();
                     },
                   ),
                   const SizedBox(height: 22),
@@ -222,35 +203,22 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
                     onChanged: (value) {
                       setState(() {
                         selectedSport = value;
-                        if (_errorMessage != null) _errorMessage = null;
                       });
+                      ref.read(formStateProvider.notifier).clearGeneralError();
                     },
                   ),
                   const SizedBox(height: 50),
 
                   // 🔹 Показываем ошибку, если есть
-                  if (_errorMessage != null) ...[
-                    SelectableText.rich(
-                      TextSpan(
-                        text: _errorMessage!,
-                        style: const TextStyle(
-                          color: AppColors.error,
-                          fontSize: 14,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                  FormErrorDisplay(formState: formState),
 
                   // 🔹 Кнопка продолжения
                   Center(
                     child: PrimaryButton(
                       text: 'Продолжить',
                       onPressed: _checkAndContinue,
-                      enabled: isFormValid && !_isLoading,
-                      isLoading: _isLoading,
+                      enabled: isFormValid && !formState.isSubmitting,
+                      isLoading: formState.isSubmitting,
                       width: MediaQuery.of(context).size.width / 2,
                     ),
                   ),
