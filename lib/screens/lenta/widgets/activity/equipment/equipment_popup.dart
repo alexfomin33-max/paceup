@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/models/activity_lenta.dart' as al;
-import '../../../../../core/services/api_service.dart';
-import '../../../../../core/services/auth_service.dart';
+import '../../../../../providers/services/api_provider.dart';
+import '../../../../../providers/services/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Попап экипировки, якорящийся к кнопке справа от чипа.
 /// Поведение и размеры совпадают с исходным вариантом:
@@ -242,7 +243,7 @@ class _AnimatedPopupState extends State<_AnimatedPopup>
 /// 📦 ИСПОЛЬЗОВАНИЕ ДАННЫХ ИЗ БД: загружает весь эквип пользователя того же типа
 /// и показывает его (кроме уже отображаемого в блоке тренировки)
 /// ────────────────────────────────────────────────────────────────
-class _PopupContent extends StatefulWidget {
+class _PopupContent extends ConsumerStatefulWidget {
   final List<al.Equipment> items; // уже показанный эквип из блока тренировки
   final int userId;
   final String activityType;
@@ -264,10 +265,10 @@ class _PopupContent extends StatefulWidget {
   });
 
   @override
-  State<_PopupContent> createState() => _PopupContentState();
+  ConsumerState<_PopupContent> createState() => _PopupContentState();
 }
 
-class _PopupContentState extends State<_PopupContent> {
+class _PopupContentState extends ConsumerState<_PopupContent> {
   List<al.Equipment> _allEquipment = [];
   bool _isLoading = true;
   String? _error;
@@ -303,7 +304,7 @@ class _PopupContentState extends State<_PopupContent> {
       }
 
       // Загружаем весь эквип пользователя через API
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/get_equipment.php',
         body: {'user_id': widget.userId.toString()},
@@ -404,12 +405,12 @@ class _PopupContentState extends State<_PopupContent> {
 
     try {
       // Получаем userId из AuthService
-      final auth = AuthService();
+      final auth = ref.read(authServiceProvider);
       final userId = await auth.getUserId();
       if (userId == null) return;
 
       // Вызываем API для замены эквипа
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       await api.post(
         '/replace_activity_equipment.php',
         body: {

@@ -1,16 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 
-class Run200kScreen extends StatefulWidget {
+class Run200kScreen extends ConsumerStatefulWidget {
   const Run200kScreen({super.key});
 
   @override
-  State<Run200kScreen> createState() => _Run200kScreenState();
+  ConsumerState<Run200kScreen> createState() => _Run200kScreenState();
 }
 
-class _Run200kScreenState extends State<Run200kScreen> {
+class _Run200kScreenState extends ConsumerState<Run200kScreen> {
   int _segment = 0; // 0 — Все, 1 — Друзья
 
   @override

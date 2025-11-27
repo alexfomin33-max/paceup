@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'createacc_screen.dart'; // 🔹 Можно раскомментировать, если понадобится экран создания аккаунта
 import '../../core/theme/app_theme.dart';
 // ✅ ДОБАВЛЕНО: утилита безопасной предзагрузки изображений (1 раз на путь)
@@ -18,16 +19,16 @@ class HomeScreen extends StatelessWidget {
 
 /// 🔹 Экран приветствия / Welcome Screen
 /// Показывается при первом запуске приложения с логотипом и кнопками входа/регистрации
-// ⬇ изменено: был StatelessWidget → стал StatefulWidget,
+// ⬇ изменено: был StatelessWidget → стал ConsumerStatefulWidget,
 // чтобы корректно предзагружать фон через didChangeDependencies()
-class WelcomeScreen extends StatefulWidget {
+class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
 
   @override
-  State<WelcomeScreen> createState() => _WelcomeScreenState();
+  ConsumerState<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> {
+class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -27,8 +27,9 @@ import '../../activity/edit_activity_screen.dart';
 
 // Провайдеры
 import '../../../../providers/lenta/lenta_provider.dart';
-import '../../../../core/services/api_service.dart';
-import '../../../../core/services/auth_service.dart';
+import '../../../../providers/services/api_provider.dart';
+import '../../../../providers/services/auth_provider.dart';
+import '../../../../core/services/api_service.dart'; // для ApiException
 import '../../../../core/utils/local_image_compressor.dart';
 
 // Меню с тремя точками
@@ -341,7 +342,8 @@ Future<void> _handleAddPhotos({
   required int currentUserId,
 }) async {
   final picker = ImagePicker();
-  final auth = AuthService();
+  final container = ProviderScope.containerOf(context);
+  final auth = container.read(authServiceProvider);
   final navigator = Navigator.of(context, rootNavigator: true);
   var loaderShown = false;
 
@@ -394,7 +396,7 @@ Future<void> _handleAddPhotos({
     _showBlockingLoader(context, message: 'Загружаем фотографии…');
     loaderShown = true;
 
-    final api = ApiService();
+    final api = ref.read(apiServiceProvider);
     final response = await api.postMultipart(
       '/upload_activity_photos.php',
       files: filesForUpload,
@@ -491,6 +493,7 @@ Future<void> _handleDeleteActivity({
   _showBlockingLoader(context);
 
   final success = await _sendDeleteActivityRequest(
+    context: context,
     userId: currentUserId,
     activityId: activity.id,
   );
@@ -598,11 +601,13 @@ Future<void> _showErrorDialog({
 /// - Простая проверка success — быстрая валидация ответа
 /// - Обработка ApiException — корректная обработка сетевых ошибок
 Future<bool> _sendDeleteActivityRequest({
+  required BuildContext context,
   required int userId,
   required int activityId,
 }) async {
   try {
-    final api = ApiService();
+    final container = ProviderScope.containerOf(context);
+    final api = container.read(apiServiceProvider);
     final response = await api.post(
       '/delete_activity.php',
       body: {'userId': '$userId', 'activityId': '$activityId'},

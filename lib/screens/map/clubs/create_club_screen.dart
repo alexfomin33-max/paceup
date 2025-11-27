@@ -8,8 +8,8 @@ import '../../../core/utils/image_picker_helper.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
-import '../../../core/services/api_service.dart';
-import '../../../core/services/auth_service.dart';
+import '../../../providers/services/api_provider.dart';
+import '../../../providers/services/auth_provider.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
 
@@ -68,7 +68,7 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
   /// Загрузка списка городов из БД через API
   Future<void> _loadCities() async {
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api
           .get('/get_cities.php')
           .timeout(
@@ -272,8 +272,8 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
     }
 
     // ── форма валидна — отправляем на сервер
-    final api = ApiService();
-    final authService = AuthService();
+    final api = ref.read(apiServiceProvider);
+    final authService = ref.read(authServiceProvider);
 
     await formNotifier.submit(
       () async {

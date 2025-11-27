@@ -1,20 +1,22 @@
 // lib/screens/.../adding_equipment_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/segmented_pill.dart'; // глобальная пилюля
 import 'tabs/adding_bike_content.dart';
 import 'tabs/adding_sneakers_content.dart';
 
 /// Экран «Добавить снаряжение»
-class AddingEquipmentScreen extends StatefulWidget {
+class AddingEquipmentScreen extends ConsumerStatefulWidget {
   const AddingEquipmentScreen({super.key});
 
   @override
-  State<AddingEquipmentScreen> createState() => _AddingEquipmentScreenState();
+  ConsumerState<AddingEquipmentScreen> createState() =>
+      _AddingEquipmentScreenState();
 }
 
-class _AddingEquipmentScreenState extends State<AddingEquipmentScreen> {
+class _AddingEquipmentScreenState extends ConsumerState<AddingEquipmentScreen> {
   // motion-токены для табов (локально, чтобы не ловить undefined)
   static const Duration _kTabAnim = Duration(milliseconds: 300);
   static const Curve _kTabCurve = Curves.easeOutCubic;

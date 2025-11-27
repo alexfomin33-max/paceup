@@ -3,23 +3,25 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/services/api_service.dart';
-import '../../../core/services/auth_service.dart';
+import '../../../providers/services/api_provider.dart';
+import '../../../providers/services/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/widgets/transparent_route.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import 'edit_event_screen.dart';
 
 /// Детальная страница события (на основе coffeerun_screen.dart)
-class EventDetailScreen2 extends StatefulWidget {
+class EventDetailScreen2 extends ConsumerStatefulWidget {
   final int eventId;
 
   const EventDetailScreen2({super.key, required this.eventId});
 
   @override
-  State<EventDetailScreen2> createState() => _EventDetailScreen2State();
+  ConsumerState<EventDetailScreen2> createState() =>
+      _EventDetailScreen2State();
 }
 
-class _EventDetailScreen2State extends State<EventDetailScreen2> {
+class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
   Map<String, dynamic>? _eventData;
   bool _loading = true;
   String? _error;
@@ -35,8 +37,8 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
   /// Загрузка данных события через API
   Future<void> _loadEvent() async {
     try {
-      final api = ApiService();
-      final authService = AuthService();
+      final api = ref.read(apiServiceProvider);
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
 
       final data = await api.get(

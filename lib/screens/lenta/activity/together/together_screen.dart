@@ -1,5 +1,6 @@
 // lib/screens/lenta/activity/together/together_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 
 // 🔹 глобальные виджеты
@@ -10,14 +11,14 @@ import '../../../../core/widgets/segmented_pill.dart';
 import 'tabs/members/member_content.dart';
 import 'tabs/adding/adding_content.dart';
 
-class TogetherScreen extends StatefulWidget {
+class TogetherScreen extends ConsumerStatefulWidget {
   const TogetherScreen({super.key});
 
   @override
-  State<TogetherScreen> createState() => _TogetherScreenState();
+  ConsumerState<TogetherScreen> createState() => _TogetherScreenState();
 }
 
-class _TogetherScreenState extends State<TogetherScreen> {
+class _TogetherScreenState extends ConsumerState<TogetherScreen> {
   int _index = 0; // 0 — Участники, 1 — Добавить
   late final PageController _page = PageController(initialPage: _index);
 

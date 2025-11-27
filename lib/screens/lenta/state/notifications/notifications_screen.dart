@@ -1,6 +1,7 @@
 // lib/screens/notifications_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_bar.dart'; // ← наш глобальный AppBar
@@ -9,14 +10,15 @@ import '../../../../core/widgets/interactive_back_swipe.dart';
 // ⬇️ наш полноэкранный шит с настройками уведомлений
 import 'settings_bottom_sheet.dart';
 
-class NotificationsScreen extends StatefulWidget {
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   late final List<_Notif> _items;
 
   @override

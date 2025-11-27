@@ -2,20 +2,21 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/services/api_service.dart';
+import '../../../../../providers/services/api_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// ──────────────────────── Контент участников клуба из API с пагинацией ────────────────────────
-class CoffeeRunVldMembersContent extends StatefulWidget {
+class CoffeeRunVldMembersContent extends ConsumerStatefulWidget {
   final int clubId;
   const CoffeeRunVldMembersContent({super.key, required this.clubId});
 
   @override
-  State<CoffeeRunVldMembersContent> createState() =>
+  ConsumerState<CoffeeRunVldMembersContent> createState() =>
       _CoffeeRunVldMembersContentState();
 }
 
 class _CoffeeRunVldMembersContentState
-    extends State<CoffeeRunVldMembersContent> {
+    extends ConsumerState<CoffeeRunVldMembersContent> {
   final List<Map<String, dynamic>> _members = [];
   final ScrollController _scrollController = ScrollController();
   bool _loading = false;
@@ -56,7 +57,7 @@ class _CoffeeRunVldMembersContentState
     });
 
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.get(
         '/get_club_members.php',
         queryParams: {

@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/services/api_service.dart';
-import '../../../../../core/services/auth_service.dart';
+import '../../../../../providers/services/api_provider.dart';
+import '../../../../../providers/services/auth_provider.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
@@ -42,13 +42,13 @@ class _PushNotificationsScreenState
 
     await formNotifier.submitWithLoading(
       () async {
-        final authService = AuthService();
+        final authService = ref.read(authServiceProvider);
         final userId = await authService.getUserId();
         if (userId == null) {
           throw Exception('Пользователь не авторизован');
         }
 
-        final api = ApiService();
+        final api = ref.read(apiServiceProvider);
         final data = await api.post(
           '/get_push_settings.php',
           body: {'user_id': userId},
@@ -72,11 +72,11 @@ class _PushNotificationsScreenState
   /// Сохранение настройки уведомления
   Future<void> _saveSetting(String key, bool value) async {
     try {
-      final authService = AuthService();
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
       if (userId == null) return;
 
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       await api.post(
         '/update_push_settings.php',
         body: {'user_id': userId, key: value ? 1 : 0},

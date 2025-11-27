@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/services/api_service.dart';
-import '../../../core/services/auth_service.dart';
+import '../../../providers/services/api_provider.dart';
+import '../../../providers/services/auth_provider.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import 'coffeerun_vld/tabs/photo_content.dart';
 import 'coffeerun_vld/tabs/members_content.dart';
@@ -43,8 +43,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
   /// Загрузка данных клуба через API
   Future<void> _loadClub() async {
     try {
-      final api = ApiService();
-      final authService = AuthService();
+      final api = ref.read(apiServiceProvider);
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
 
       final data = await api.get(
@@ -138,8 +138,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     try {
       setState(() => _isJoining = true);
 
-      final api = ApiService();
-      final authService = AuthService();
+      final api = ref.read(apiServiceProvider);
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
 
       if (userId == null) {
@@ -212,8 +212,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     try {
       setState(() => _isJoining = true);
 
-      final api = ApiService();
-      final authService = AuthService();
+      final api = ref.read(apiServiceProvider);
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
 
       if (userId == null) {

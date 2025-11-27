@@ -16,20 +16,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../equipment/viewing/viewing_equipment_screen.dart';
-import '../../../../core/services/api_service.dart';
+import '../../../../providers/services/api_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // 🔹 Модели и парсинг данных
 import 'models/main_tab_data.dart';
 // 🔹 Виджет-секция "Снаряжение" как один sliver
 import 'widgets/gear_section_sliver.dart';
 
-class MainTab extends StatefulWidget {
+class MainTab extends ConsumerStatefulWidget {
   final int userId; // ID пользователя, для которого показываем вкладку
   final VoidCallback? onTabActivated; // Callback при активации вкладки
   const MainTab({super.key, required this.userId, this.onTabActivated});
 
   @override
-  State<MainTab> createState() => _MainTabState();
+  ConsumerState<MainTab> createState() => _MainTabState();
 
   /// Публичный метод для принудительной проверки кэша (можно вызвать извне через GlobalKey)
   static void checkCache(GlobalKey<MainTabState>? key) {
@@ -38,7 +39,7 @@ class MainTab extends StatefulWidget {
 }
 
 /// Публичный класс состояния для доступа извне
-abstract class MainTabState extends State<MainTab> {
+abstract class MainTabState extends ConsumerState<MainTab> {
   /// Публичный метод для принудительной проверки кэша
   void checkCache();
 }
@@ -166,7 +167,7 @@ class _MainTabState extends MainTabState
 
     try {
       // Попытка загрузить с сервера
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final jsonMap = await api.post(
         '/user_profile_maintab.php',
         body: {'userId': widget.userId.toString()},

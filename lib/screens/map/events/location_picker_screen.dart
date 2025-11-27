@@ -18,6 +18,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart' as flutter_map;
@@ -36,17 +37,19 @@ class LocationResult {
   const LocationResult({required this.coordinates, this.address});
 }
 
-class LocationPickerScreen extends StatefulWidget {
+class LocationPickerScreen extends ConsumerStatefulWidget {
   /// Начальная позиция на карте (если не указана — центр России)
   final LatLng? initialPosition;
 
   const LocationPickerScreen({super.key, this.initialPosition});
 
   @override
-  State<LocationPickerScreen> createState() => _LocationPickerScreenState();
+  ConsumerState<LocationPickerScreen> createState() =>
+      _LocationPickerScreenState();
 }
 
-class _LocationPickerScreenState extends State<LocationPickerScreen> {
+class _LocationPickerScreenState
+    extends ConsumerState<LocationPickerScreen> {
   // ────────────────────────── Контроллер карты ──────────────────────────
   /// Контроллер для управления картой и отслеживания позиции
   MapboxMap? _mapboxMap;

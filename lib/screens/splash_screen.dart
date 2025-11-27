@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../core/services/auth_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/app_theme.dart';
+import '../providers/services/auth_provider.dart';
 
 /// 🔹 SplashScreen — стартовый экран приложения, отображается при запуске
 /// Используется для проверки авторизации пользователя и перенаправления
@@ -11,20 +12,18 @@ import '../core/theme/app_theme.dart';
 /// - Немедленный переход без дополнительных задержек
 /// - Предзагрузка данных происходит в самих экранах (offline-first подход)
 /// - Плавная fade-in анимация логотипа (800ms) для профессионального вида
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  SplashScreenState createState() => SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
 /// 🔹 State для SplashScreen
 /// Содержит логику проверки авторизации и навигации
 /// SingleTickerProviderStateMixin — для анимации fade-in логотипа
-class SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
-  // 🔹 Сервис для работы с авторизацией (проверка токена, получение userId)
-  final AuthService auth = AuthService();
 
   // ────────────────────────── Анимация ──────────────────────────
   /// 🔹 Контроллер анимации для fade-in эффекта логотипа
@@ -74,6 +73,9 @@ class SplashScreenState extends State<SplashScreen>
   /// - Параллельная проверка авторизации и минимального времени показа
   /// - Предотвращает визуальный микролаг между splash и загруженной лентой
   Future<void> _checkAuth() async {
+    // Получаем AuthService через провайдер
+    final auth = ref.read(authServiceProvider);
+    
     // Запускаем проверку авторизации и минимальное время показа параллельно
     final results = await Future.wait([
       auth.isAuthorized(),

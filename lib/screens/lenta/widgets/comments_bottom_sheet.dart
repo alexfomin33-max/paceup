@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/services/api_service.dart';
+import '../../../providers/services/api_provider.dart';
 
 // ——— Аккуратный показ SnackBar (чтобы не падать без ScaffoldMessenger) ———
 void showSnack(BuildContext context, String message) {
@@ -67,7 +68,7 @@ class CommentItem {
 }
 
 /// Нижний лист с комментариями (верстка как в примере)
-class CommentsBottomSheet extends StatefulWidget {
+class CommentsBottomSheet extends ConsumerStatefulWidget {
   final String itemType; // 'post' | 'activity'
   final int itemId;
   final int currentUserId;
@@ -85,10 +86,11 @@ class CommentsBottomSheet extends StatefulWidget {
   });
 
   @override
-  State<CommentsBottomSheet> createState() => _CommentsBottomSheetState();
+  ConsumerState<CommentsBottomSheet> createState() =>
+      _CommentsBottomSheetState();
 }
 
-class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
+class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
   final List<CommentItem> _comments = [];
 
   // загрузка
@@ -145,7 +147,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     setState(() => _pageLoading = true);
 
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/comments_list.php',
         body: {
@@ -194,7 +196,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     setState(() => _sending = true);
 
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/comments_add.php',
         body: {

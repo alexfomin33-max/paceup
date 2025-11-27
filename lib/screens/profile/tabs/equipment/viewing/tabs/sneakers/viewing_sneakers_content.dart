@@ -4,8 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../../../core/theme/app_theme.dart';
 import '../../../../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../../../../core/widgets/transparent_route.dart';
-import '../../../../../../../core/services/api_service.dart';
-import '../../../../../../../core/services/auth_service.dart';
+import '../../../../../../../providers/services/api_provider.dart';
+import '../../../../../../../providers/services/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../core/utils/equipment_date_format.dart';
 import '../../../editing/editing_equipment_screen.dart';
 
@@ -38,14 +39,16 @@ class _SneakerItem {
   });
 }
 
-class ViewingSneakersContent extends StatefulWidget {
+class ViewingSneakersContent extends ConsumerStatefulWidget {
   const ViewingSneakersContent({super.key});
 
   @override
-  State<ViewingSneakersContent> createState() => _ViewingSneakersContentState();
+  ConsumerState<ViewingSneakersContent> createState() =>
+      _ViewingSneakersContentState();
 }
 
-class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
+class _ViewingSneakersContentState
+    extends ConsumerState<ViewingSneakersContent> {
   List<_SneakerItem> _sneakers = [];
   bool _isLoading = true;
   String? _error;
@@ -98,7 +101,7 @@ class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
     });
 
     try {
-      final authService = AuthService();
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
 
       if (userId == null) {
@@ -109,7 +112,7 @@ class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
         return;
       }
 
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/get_equipment.php',
         body: {'user_id': userId.toString()},
@@ -239,7 +242,7 @@ class _ViewingSneakersContentState extends State<ViewingSneakersContent> {
 }
 
 /// Публичная карточка для «Просмотра снаряжения»
-class GearViewCard extends StatefulWidget {
+class GearViewCard extends ConsumerStatefulWidget {
   final int? equipUserId; // ID записи в equip_user для API запросов
   final String brand;
   final String model;
@@ -292,10 +295,10 @@ class GearViewCard extends StatefulWidget {
        equipmentType = 'bike';
 
   @override
-  State<GearViewCard> createState() => _GearViewCardState();
+  ConsumerState<GearViewCard> createState() => _GearViewCardState();
 }
 
-class _GearViewCardState extends State<GearViewCard> {
+class _GearViewCardState extends ConsumerState<GearViewCard> {
   /// Ключ для привязки всплывающего меню к кнопке "три точки"
   final GlobalKey _menuKey = GlobalKey();
 
@@ -339,7 +342,7 @@ class _GearViewCardState extends State<GearViewCard> {
     if (widget.equipUserId == null) return;
 
     try {
-      final authService = AuthService();
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
       if (userId == null) {
         if (!context.mounted) return;
@@ -349,7 +352,7 @@ class _GearViewCardState extends State<GearViewCard> {
         return;
       }
 
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final isCurrentlyMain = widget.mainBadgeText != null;
       final data = await api.post(
         '/set_main_equipment.php',
@@ -429,7 +432,7 @@ class _GearViewCardState extends State<GearViewCard> {
     if (!mounted) return;
 
     try {
-      final authService = AuthService();
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
       if (userId == null) {
         if (!context.mounted) return;
@@ -439,7 +442,7 @@ class _GearViewCardState extends State<GearViewCard> {
         return;
       }
 
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/delete_equipment.php',
         body: {

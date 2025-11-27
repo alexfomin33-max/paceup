@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bar.dart';
@@ -11,14 +12,14 @@ const _kTabAnim = Duration(milliseconds: 300);
 const _kTabCurve = Curves.easeOut;
 
 /// Экран продажи: каркас + пилюля + PageView со свайпом
-class SaleScreen extends StatefulWidget {
+class SaleScreen extends ConsumerStatefulWidget {
   const SaleScreen({super.key});
 
   @override
-  State<SaleScreen> createState() => _SaleScreenState();
+  ConsumerState<SaleScreen> createState() => _SaleScreenState();
 }
 
-class _SaleScreenState extends State<SaleScreen> {
+class _SaleScreenState extends ConsumerState<SaleScreen> {
   int _index = 0; // 0 — Продажа слота, 1 — Продажа вещи
   late final PageController _page = PageController(initialPage: _index);
 

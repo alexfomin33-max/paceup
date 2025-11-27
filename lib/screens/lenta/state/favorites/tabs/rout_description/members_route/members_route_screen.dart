@@ -1,10 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../../core/theme/app_theme.dart';
 import '../../../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../../core/widgets/interactive_back_swipe.dart';
 
-class MembersRouteScreen extends StatefulWidget {
+class MembersRouteScreen extends ConsumerStatefulWidget {
   final int routeId;
   final String routeTitle;
   final String? difficultyText; // например: "Сложный маршрут"
@@ -17,10 +18,11 @@ class MembersRouteScreen extends StatefulWidget {
   });
 
   @override
-  State<MembersRouteScreen> createState() => _MembersRouteScreenState();
+  ConsumerState<MembersRouteScreen> createState() =>
+      _MembersRouteScreenState();
 }
 
-class _MembersRouteScreenState extends State<MembersRouteScreen> {
+class _MembersRouteScreenState extends ConsumerState<MembersRouteScreen> {
   DateTime? _date;
 
   // ── выбор даты через Cupertino-календарь (как в add_event_screen)

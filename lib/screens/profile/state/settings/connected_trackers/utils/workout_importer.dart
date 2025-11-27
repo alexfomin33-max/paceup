@@ -11,8 +11,9 @@ import 'package:health/health.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../../../core/services/api_service.dart';
-import '../../../../../../core/services/auth_service.dart';
+import '../../../../../../providers/services/api_provider.dart';
+import '../../../../../../providers/services/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
 /// ИМПОРТ ОДНОЙ ТРЕНИРОВКИ В БД
@@ -23,6 +24,7 @@ import '../../../../../../core/services/auth_service.dart';
 Future<ImportResult> importWorkout(
   HealthDataPoint workout,
   Health health,
+  WidgetRef ref,
 ) async {
   try {
     final wStart = workout.dateFrom;
@@ -85,13 +87,11 @@ Future<ImportResult> importWorkout(
         final routeStart = wStart.subtract(const Duration(minutes: 5));
         final routeEnd = wEnd.add(const Duration(minutes: 5));
         const channel = MethodChannel('paceup/route');
-        final res = await channel.invokeMethod<List<dynamic>>(
-          'getExerciseRoute',
-          <String, dynamic>{
-            'start': routeStart.millisecondsSinceEpoch,
-            'end': routeEnd.millisecondsSinceEpoch,
-          },
-        );
+        final res = await channel
+            .invokeMethod<List<dynamic>>('getExerciseRoute', <String, dynamic>{
+              'start': routeStart.millisecondsSinceEpoch,
+              'end': routeEnd.millisecondsSinceEpoch,
+            });
 
         if (res != null && res.isNotEmpty) {
           routeData = res.map((e) {
@@ -142,9 +142,12 @@ Future<ImportResult> importWorkout(
       stats.addAll(altitudeStats);
     }
 
-    final params = jsonEncode([{'stats': stats}]);
-    final pointsList =
-        route.map((p) => 'LatLng(${p.latitude}, ${p.longitude})').toList();
+    final params = jsonEncode([
+      {'stats': stats},
+    ]);
+    final pointsList = route
+        .map((p) => 'LatLng(${p.latitude}, ${p.longitude})')
+        .toList();
     final points = jsonEncode(pointsList);
 
     // ─── Форматируем даты ───
@@ -158,7 +161,7 @@ Future<ImportResult> importWorkout(
     }
 
     // ─── Получаем ID пользователя ───
-    final authService = AuthService();
+    final authService = ref.read(authServiceProvider);
     final userId = await authService.getUserId();
     if (userId == null) {
       return const ImportResult(
@@ -180,7 +183,7 @@ Future<ImportResult> importWorkout(
       'media': '',
     };
 
-    final api = ApiService();
+    final api = ref.read(apiServiceProvider);
     final response = await api.post('/create_activity.php', body: body);
 
     if (response['success'] == true) {
@@ -195,10 +198,7 @@ Future<ImportResult> importWorkout(
       );
     }
   } catch (e) {
-    return ImportResult(
-      success: false,
-      message: 'Ошибка импорта: $e',
-    );
+    return ImportResult(success: false, message: 'Ошибка импорта: $e');
   }
 }
 
@@ -209,10 +209,7 @@ class ImportResult {
   final bool success;
   final String message;
 
-  const ImportResult({
-    required this.success,
-    required this.message,
-  });
+  const ImportResult({required this.success, required this.message});
 }
 
 /// ─────────────────────────────────────────────────────────────────────────
@@ -314,13 +311,12 @@ Map<String, dynamic> _calculateAltitudeStats(
       final alt = (validPoints[i]['alt'] as num).toDouble();
       currentKmAlts.add(alt);
 
-      if (currentKmAlts.length >= pointsPerKm ||
-          i == validPoints.length - 1) {
+      if (currentKmAlts.length >= pointsPerKm || i == validPoints.length - 1) {
         if (currentKmAlts.isNotEmpty) {
           final avgAlt =
               currentKmAlts.reduce((a, b) => a + b) / currentKmAlts.length;
-          final kmKey = i == validPoints.length - 1 &&
-                  (totalKm - kmIndex + 1) < 1.0
+          final kmKey =
+              i == validPoints.length - 1 && (totalKm - kmIndex + 1) < 1.0
               ? 'km_${kmIndex}_partial'
               : 'km_$kmIndex';
           altPerKm[kmKey] = avgAlt;
@@ -334,4 +330,3 @@ Map<String, dynamic> _calculateAltitudeStats(
   result['altPerKm'] = altPerKm;
   return result;
 }
-

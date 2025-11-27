@@ -2,26 +2,28 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/services/api_service.dart';
-import '../../../core/services/auth_service.dart';
+import '../../../providers/services/api_provider.dart';
+import '../../../providers/services/auth_provider.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/transparent_route.dart';
 import 'edit_official_event_screen.dart';
 
 /// Детальная страница официального события (топ события)
-class OfficialEventDetailScreen extends StatefulWidget {
+class OfficialEventDetailScreen extends ConsumerStatefulWidget {
   final int eventId;
 
   const OfficialEventDetailScreen({super.key, required this.eventId});
 
   @override
-  State<OfficialEventDetailScreen> createState() =>
+  ConsumerState<OfficialEventDetailScreen> createState() =>
       _OfficialEventDetailScreenState();
 }
 
-class _OfficialEventDetailScreenState extends State<OfficialEventDetailScreen> {
+class _OfficialEventDetailScreenState
+    extends ConsumerState<OfficialEventDetailScreen> {
   Map<String, dynamic>? _eventData;
   bool _loading = true;
   String? _error;
@@ -61,8 +63,8 @@ class _OfficialEventDetailScreenState extends State<OfficialEventDetailScreen> {
   /// Загрузка данных события через API
   Future<void> _loadEvent() async {
     try {
-      final api = ApiService();
-      final authService = AuthService();
+      final api = ref.read(apiServiceProvider);
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
 
       final data = await api.get(
@@ -169,7 +171,7 @@ class _OfficialEventDetailScreenState extends State<OfficialEventDetailScreen> {
     if (_isTogglingBookmark || _eventData == null) return;
 
     // Проверяем, что userId доступен
-    final authService = AuthService();
+    final authService = ref.read(authServiceProvider);
     final userId = await authService.getUserId();
     if (userId == null) {
       if (!mounted) return;
@@ -187,7 +189,7 @@ class _OfficialEventDetailScreenState extends State<OfficialEventDetailScreen> {
     });
 
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/toggle_event_bookmark.php',
         body: {'event_id': widget.eventId},
@@ -950,15 +952,17 @@ class EventDescriptionContent extends StatelessWidget {
 }
 
 /// Sliver для участников события с пагинацией (используется в CustomScrollView)
-class _EventMembersSliver extends StatefulWidget {
+class _EventMembersSliver extends ConsumerStatefulWidget {
   final int eventId;
   const _EventMembersSliver({super.key, required this.eventId});
 
   @override
-  State<_EventMembersSliver> createState() => _EventMembersSliverState();
+  ConsumerState<_EventMembersSliver> createState() =>
+      _EventMembersSliverState();
 }
 
-class _EventMembersSliverState extends State<_EventMembersSliver> {
+class _EventMembersSliverState
+    extends ConsumerState<_EventMembersSliver> {
   final List<Map<String, dynamic>> _participants = [];
   bool _loading = false;
   bool _hasMore = true;
@@ -1000,7 +1004,7 @@ class _EventMembersSliverState extends State<_EventMembersSliver> {
     });
 
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.get(
         '/get_event_participants.php',
         queryParams: {

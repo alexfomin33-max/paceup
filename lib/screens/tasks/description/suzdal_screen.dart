@@ -1,16 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 
-class SuzdalScreen extends StatefulWidget {
+class SuzdalScreen extends ConsumerStatefulWidget {
   const SuzdalScreen({super.key});
 
   @override
-  State<SuzdalScreen> createState() => _SuzdalScreenState();
+  ConsumerState<SuzdalScreen> createState() => _SuzdalScreenState();
 }
 
-class _SuzdalScreenState extends State<SuzdalScreen> {
+class _SuzdalScreenState extends ConsumerState<SuzdalScreen> {
   @override
   Widget build(BuildContext context) {
     const double percent = 21784 / 110033; // ≈ 0.198

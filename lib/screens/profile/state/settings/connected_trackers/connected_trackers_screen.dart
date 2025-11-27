@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
 
 import '../../../../../core/theme/app_theme.dart';
@@ -22,15 +23,16 @@ import '../../../../../core/widgets/primary_button.dart';
 import 'trackers/training_day_screen.dart'; // новый экран с вкладками
 import 'utils/workout_importer.dart'; // утилита для импорта тренировок
 
-class ConnectedTrackersScreen extends StatefulWidget {
+class ConnectedTrackersScreen extends ConsumerStatefulWidget {
   const ConnectedTrackersScreen({super.key});
 
   @override
-  State<ConnectedTrackersScreen> createState() =>
+  ConsumerState<ConnectedTrackersScreen> createState() =>
       _ConnectedTrackersScreenState();
 }
 
-class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
+class _ConnectedTrackersScreenState
+    extends ConsumerState<ConnectedTrackersScreen> {
   // Плагин Health (Health Connect/HealthKit)
   final Health _health = Health();
 
@@ -476,7 +478,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
           _status = 'Импорт тренировки ${i + 1} из ${workouts.length}…';
         });
 
-        final result = await importWorkout(workout, _health);
+        final result = await importWorkout(workout, _health, ref);
 
         if (result.success) {
           _importedCount++;

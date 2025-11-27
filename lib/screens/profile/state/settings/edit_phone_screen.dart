@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/services/api_service.dart';
-import '../../../../../core/services/auth_service.dart';
+import '../../../../../providers/services/api_provider.dart';
+import '../../../../../providers/services/auth_provider.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
@@ -55,14 +55,14 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final formNotifier = ref.read(formStateProvider.notifier);
-    final authService = AuthService();
+    final authService = ref.read(authServiceProvider);
     final userId = await authService.getUserId();
     if (userId == null) {
       formNotifier.setError('Пользователь не авторизован');
       return;
     }
 
-    final api = ApiService();
+    final api = ref.read(apiServiceProvider);
 
     await formNotifier.submit(
       () async {

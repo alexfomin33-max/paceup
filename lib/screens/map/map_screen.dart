@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:latlong2/latlong.dart' as latlong;
 import 'package:flutter_map/flutter_map.dart' as flutter_map;
@@ -23,14 +24,14 @@ import 'clubs/club_popup.dart' as cpopup;
 // import 'coaches/coaches_bottom_sheet.dart' as cchbs; // тренеры - временно закомментировано
 // import 'travelers/travelers_bottom_sheet.dart' as tbs; // попутчики - временно закомментировано
 
-class MapScreen extends StatefulWidget {
+class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
 
   @override
-  State<MapScreen> createState() => _MapScreenState();
+  ConsumerState<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> {
+class _MapScreenState extends ConsumerState<MapScreen> {
   int _selectedIndex = 0;
 
   /// Контроллер карты для управления zoom и центром

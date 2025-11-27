@@ -8,8 +8,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/services/api_service.dart';
-import '../../../../core/services/auth_service.dart';
+import '../../../../providers/services/api_provider.dart';
+import '../../../../providers/services/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'adding/adding_equipment_screen.dart';
 import 'viewing/viewing_equipment_screen.dart';
 import '../../../../core/widgets/primary_button.dart';
@@ -39,13 +40,14 @@ class _GearItem {
   String get value => '$dist км';
 }
 
-class GearTab extends StatefulWidget {
+class GearTab extends ConsumerStatefulWidget {
   const GearTab({super.key});
   @override
-  State<GearTab> createState() => _GearTabState();
+  ConsumerState<GearTab> createState() => _GearTabState();
 }
 
-class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
+class _GearTabState extends ConsumerState<GearTab>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -73,7 +75,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
     });
 
     try {
-      final authService = AuthService();
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
 
       if (userId == null) {
@@ -85,7 +87,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
       }
 
       _currentUserId = userId;
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/get_equipment.php',
         body: {'user_id': userId.toString()},
@@ -166,7 +168,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
 
     // Обновляем флаг для всех элементов этого типа
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       for (final item in items) {
         await api.post(
           '/update_equipment_show_on_main.php',

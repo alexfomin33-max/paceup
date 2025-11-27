@@ -7,7 +7,7 @@ import 'add_official_event_screen.dart';
 import 'events_filters_bottom_sheet.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../core/widgets/transparent_route.dart';
-import '../../../core/services/api_service.dart';
+import '../../../providers/services/api_provider.dart';
 import '../../../providers/services/auth_provider.dart';
 
 /// Склоняет название города в предложный падеж для фразы "События в/во [город]"
@@ -120,7 +120,8 @@ Future<List<Map<String, dynamic>>> eventsMarkers(
   EventsFilterParams? filterParams,
 }) async {
   try {
-    final api = ApiService();
+    final container = ProviderScope.containerOf(context);
+    final api = container.read(apiServiceProvider);
 
     // Формируем параметры запроса
     final queryParams = <String, String>{'detail': 'false'};

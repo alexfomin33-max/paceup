@@ -3,11 +3,12 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../../../../core/services/api_service.dart';
-import '../../../../../../core/services/auth_service.dart';
+import '../../../../../../providers/services/api_provider.dart';
+import '../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/route_card.dart';
@@ -17,14 +18,16 @@ import 'package:flutter/services.dart';
 ///  ЭКРАН «ДЕТАЛИ ТРЕНИРОВОК» С ВКЛАДКАМИ ПО ДАТАМ
 ///  Загружает и отображает данные тренировок за указанные даты.
 /// ─────────────────────────────────────────────────────────────────────────
-class TrainingDayTabsScreen extends StatefulWidget {
+class TrainingDayTabsScreen extends ConsumerStatefulWidget {
   const TrainingDayTabsScreen({super.key});
 
   @override
-  State<TrainingDayTabsScreen> createState() => _TrainingDayTabsScreenState();
+  ConsumerState<TrainingDayTabsScreen> createState() =>
+      _TrainingDayTabsScreenState();
 }
 
-class _TrainingDayTabsScreenState extends State<TrainingDayTabsScreen> {
+class _TrainingDayTabsScreenState
+    extends ConsumerState<TrainingDayTabsScreen> {
   // Даты для вкладок: 08.11, 14.11, 15.11 (2025 год)
   final List<DateTime> _dates = [
     DateTime(2025, 11, 8),
@@ -98,16 +101,17 @@ class _TrainingDayTabsScreenState extends State<TrainingDayTabsScreen> {
 ///  КОНТЕНТ ЭКРАНА: грузим Workout/Distance/HR за день, считаем метрики,
 ///  показываем карту маршрута (Android/Health Connect).
 /// ─────────────────────────────────────────────────────────────────────────
-class _TrainingTabContent extends StatefulWidget {
+class _TrainingTabContent extends ConsumerStatefulWidget {
   const _TrainingTabContent({super.key, required this.date});
 
   final DateTime date;
 
   @override
-  State<_TrainingTabContent> createState() => _TrainingTabContentState();
+  ConsumerState<_TrainingTabContent> createState() =>
+      _TrainingTabContentState();
 }
 
-class _TrainingTabContentState extends State<_TrainingTabContent>
+class _TrainingTabContentState extends ConsumerState<_TrainingTabContent>
     with AutomaticKeepAliveClientMixin {
   final Health _health = Health();
 
@@ -366,7 +370,7 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
 
     try {
       // Получаем ID пользователя
-      final authService = AuthService();
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
       if (userId == null) {
         if (!mounted) return;
@@ -456,7 +460,7 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
       };
 
       // ─── Отправляем на сервер ───
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final response = await api.post('/create_activity.php', body: body);
 
       if (response['success'] == true) {

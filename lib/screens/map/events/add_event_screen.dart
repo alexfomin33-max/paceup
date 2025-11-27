@@ -8,8 +8,8 @@ import '../../../core/utils/image_picker_helper.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
-import '../../../core/services/api_service.dart';
-import '../../../core/services/auth_service.dart';
+import '../../../providers/services/api_provider.dart';
+import '../../../providers/services/auth_provider.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
 import 'location_picker_screen.dart';
@@ -274,8 +274,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
   // ── загрузка списка клубов пользователя
   Future<void> _loadUserClubs() async {
     try {
-      final api = ApiService();
-      final authService = AuthService();
+      final api = ref.read(apiServiceProvider);
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
 
       if (userId == null) {
@@ -316,8 +316,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     setState(() => _loadingTemplates = true);
 
     try {
-      final api = ApiService();
-      final authService = AuthService();
+      final api = ref.read(apiServiceProvider);
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
 
       if (userId == null) {
@@ -358,8 +358,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
 
     await formNotifier.submitWithLoading(
       () async {
-        final api = ApiService();
-        final authService = AuthService();
+        final api = ref.read(apiServiceProvider);
+        final authService = ref.read(authServiceProvider);
         final userId = await authService.getUserId();
 
         if (userId == null) {
@@ -466,8 +466,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
 
     // ── форма валидна — отправляем на сервер
     final formNotifier = ref.read(formStateProvider.notifier);
-    final api = ApiService();
-    final authService = AuthService();
+        final api = ref.read(apiServiceProvider);
+        final authService = ref.read(authServiceProvider);
 
     await formNotifier.submit(
       () async {

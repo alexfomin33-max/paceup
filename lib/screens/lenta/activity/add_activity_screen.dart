@@ -15,12 +15,11 @@ import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/models/activity_lenta.dart' as al;
-import '../../../core/services/api_service.dart';
-import '../../../core/services/auth_service.dart';
+import '../../../providers/services/api_provider.dart';
+import '../../../providers/services/auth_provider.dart';
 import '../../../providers/lenta/lenta_provider.dart';
 import '../../../core/widgets/transparent_route.dart';
 import '../../../core/providers/form_state_provider.dart';
-import '../../../core/widgets/form_error_display.dart';
 
 import '../widgets/activity/equipment/equipment_chip.dart';
 import 'description_screen.dart';
@@ -1071,7 +1070,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     });
 
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/get_equipment.php',
         body: {'user_id': widget.currentUserId.toString()},
@@ -1340,7 +1339,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
     await formNotifier.submit(
       () async {
-        final auth = AuthService();
+        final auth = ref.read(authServiceProvider);
         final userId = await auth.getUserId();
         if (userId == null) {
           throw Exception('Не удалось определить пользователя');
@@ -1426,7 +1425,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         }
 
         // Создаем активность через новый API endpoint
-        final api = ApiService();
+        final api = ref.read(apiServiceProvider);
         final response = await api.post(
           '/create_activity_from_form.php',
           body: {
@@ -1539,7 +1538,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         filesForUpload['file$i'] = filesToUpload[i];
       }
 
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final response = await api.postMultipart(
         '/upload_activity_photos.php',
         files: filesForUpload,

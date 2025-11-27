@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../core/theme/app_theme.dart';
 import '../../../../../../../core/utils/local_image_compressor.dart';
 import '../../../../../../../core/widgets/primary_button.dart';
-import '../../../../../../../core/services/api_service.dart';
-import '../../../../../../../core/services/auth_service.dart';
+import '../../../../../../../providers/services/api_provider.dart';
+import '../../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../../core/providers/form_state_provider.dart';
 import '../../../../../../../core/widgets/form_error_display.dart';
 import '../../adding/widgets/autocomplete_text_field.dart';
@@ -34,8 +34,7 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
   String? _currentImageUrl; // URL текущего изображения из базы
   final _picker = ImagePicker();
 
-  // Для автодополнения
-  final ApiService _api = ApiService();
+  // Для автодополнения - используем провайдер
 
   @override
   void initState() {
@@ -54,7 +53,7 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
   /// Загрузка данных снаряжения для редактирования
   Future<void> _loadEquipmentData() async {
     final formNotifier = ref.read(formStateProvider.notifier);
-    final authService = AuthService();
+    final authService = ref.read(authServiceProvider);
 
     await formNotifier.submitWithLoading(
       () async {
@@ -64,7 +63,8 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
           throw Exception('Пользователь не авторизован');
         }
 
-        final data = await _api.post(
+        final api = ref.read(apiServiceProvider);
+        final data = await api.post(
           '/get_equipment_item.php',
           body: {
             'user_id': userId.toString(),
@@ -118,7 +118,8 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
     }
 
     try {
-      final data = await _api.post(
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
         '/search_equipment_brands.php',
         body: {'query': query, 'type': 'boots'},
       );
@@ -146,7 +147,8 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
     }
 
     try {
-      final data = await _api.post(
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
         '/search_equipment_models.php',
         body: {'brand': brand, 'query': query, 'type': 'boots'},
       );
@@ -220,8 +222,8 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
     }
 
     final formNotifier = ref.read(formStateProvider.notifier);
-    final api = ApiService();
-    final authService = AuthService();
+    final api = ref.read(apiServiceProvider);
+    final authService = ref.read(authServiceProvider);
 
     await formNotifier.submit(
       () async {

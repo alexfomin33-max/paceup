@@ -1,5 +1,6 @@
 // lib/screens/tasks_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/segmented_pill.dart';
 import '../../core/widgets/app_bar.dart'; // ← глобальная шапка
@@ -8,14 +9,14 @@ import '../../core/widgets/app_bar.dart'; // ← глобальная шапка
 import 'tabs/active_content.dart';
 import 'tabs/available_content.dart';
 
-class TasksScreen extends StatefulWidget {
+class TasksScreen extends ConsumerStatefulWidget {
   const TasksScreen({super.key});
 
   @override
-  State<TasksScreen> createState() => _TasksScreenState();
+  ConsumerState<TasksScreen> createState() => _TasksScreenState();
 }
 
-class _TasksScreenState extends State<TasksScreen> {
+class _TasksScreenState extends ConsumerState<TasksScreen> {
   static const Duration _kTabAnim = Duration(milliseconds: 300);
   static const Curve _kTabCurve = Curves.easeOutCubic;
 

@@ -15,7 +15,7 @@ import '../../providers/profile/profile_header_provider.dart';
 import '../../core/utils/local_image_compressor.dart';
 import '../../core/widgets/app_bar.dart'; // наш глобальный AppBar
 import '../../../core/widgets/interactive_back_swipe.dart';
-import '../../core/services/api_service.dart';
+import '../../providers/services/api_provider.dart';
 import '../../core/providers/form_state_provider.dart';
 
 const double kAvatarSize = 88.0;
@@ -386,7 +386,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (!mounted) return;
 
     final formNotifier = ref.read(formStateProvider.notifier);
-    final api = ApiService();
+    final api = ref.read(apiServiceProvider);
 
     await formNotifier.submitWithLoading(
       () async {
@@ -545,7 +545,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     final payload = _buildSavePayload();
     final formNotifier = ref.read(formStateProvider.notifier);
-    final api = ApiService();
+    final api = ref.read(apiServiceProvider);
 
     await formNotifier.submit(
       () async {

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/services/api_service.dart';
-import '../../../../../core/services/auth_service.dart';
+import '../../../../../providers/services/api_provider.dart';
+import '../../../../../providers/services/auth_provider.dart';
 
 /// Модель настроек пользователя
 class UserSettings {
@@ -25,13 +25,13 @@ class UserSettings {
 
 /// Провайдер для получения настроек пользователя
 final userSettingsProvider = FutureProvider<UserSettings>((ref) async {
-  final authService = AuthService();
+  final authService = ref.read(authServiceProvider);
   final userId = await authService.getUserId();
   if (userId == null) {
     throw Exception('Пользователь не авторизован');
   }
 
-  final api = ApiService();
+  final api = ref.read(apiServiceProvider);
   final data = await api.post(
     '/get_user_settings.php',
     body: {'user_id': userId},

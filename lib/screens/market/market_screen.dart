@@ -6,6 +6,7 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_bar.dart';
@@ -21,14 +22,14 @@ import '../../core/widgets/transparent_route.dart';
 const _kTabAnim = Duration(milliseconds: 300);
 const _kTabCurve = Curves.easeOut;
 
-class MarketScreen extends StatefulWidget {
+class MarketScreen extends ConsumerStatefulWidget {
   const MarketScreen({super.key});
 
   @override
-  State<MarketScreen> createState() => _MarketScreenState();
+  ConsumerState<MarketScreen> createState() => _MarketScreenState();
 }
 
-class _MarketScreenState extends State<MarketScreen> {
+class _MarketScreenState extends ConsumerState<MarketScreen> {
   int _index = 0; // 0 — «Слоты», 1 — «Вещи»
   late final PageController _page = PageController(initialPage: _index);
 

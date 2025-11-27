@@ -10,8 +10,8 @@ import '../../../core/utils/image_picker_helper.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
-import '../../../core/services/api_service.dart';
-import '../../../core/services/auth_service.dart';
+import '../../../providers/services/api_provider.dart';
+import '../../../providers/services/auth_provider.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
 import 'location_picker_screen.dart';
@@ -27,7 +27,8 @@ class EditOfficialEventScreen extends ConsumerStatefulWidget {
       _EditOfficialEventScreenState();
 }
 
-class _EditOfficialEventScreenState extends ConsumerState<EditOfficialEventScreen> {
+class _EditOfficialEventScreenState
+    extends ConsumerState<EditOfficialEventScreen> {
   // контроллеры
   final nameCtrl = TextEditingController();
   final placeCtrl = TextEditingController();
@@ -106,8 +107,8 @@ class _EditOfficialEventScreenState extends ConsumerState<EditOfficialEventScree
   /// Загрузка данных события для редактирования
   Future<void> _loadEventData() async {
     final formNotifier = ref.read(formStateProvider.notifier);
-    final api = ApiService();
-    final authService = AuthService();
+    final api = ref.read(apiServiceProvider);
+    final authService = ref.read(authServiceProvider);
 
     await formNotifier.submitWithLoading(
       () async {
@@ -126,116 +127,115 @@ class _EditOfficialEventScreenState extends ConsumerState<EditOfficialEventScree
         );
 
         if (data['success'] == true && data['event'] != null) {
-        final event = data['event'] as Map<String, dynamic>;
+          final event = data['event'] as Map<String, dynamic>;
 
-        // Заполняем текстовые поля
-        nameCtrl.text = event['name'] as String? ?? '';
-        final placeText = event['place'] as String? ?? '';
-        placeCtrl.text = placeText;
-        descCtrl.text = event['description'] as String? ?? '';
-        linkCtrl.text = event['registration_link'] as String? ?? '';
-        templateCtrl.text = event['template_name'] as String? ?? '';
+          // Заполняем текстовые поля
+          nameCtrl.text = event['name'] as String? ?? '';
+          final placeText = event['place'] as String? ?? '';
+          placeCtrl.text = placeText;
+          descCtrl.text = event['description'] as String? ?? '';
+          linkCtrl.text = event['registration_link'] as String? ?? '';
+          templateCtrl.text = event['template_name'] as String? ?? '';
 
-        // Заполняем выборы
-        final activityStr = event['activity'] as String?;
-        // Проверяем, что значение активности входит в список допустимых
-        const allowedActivities = ['Бег', 'Велосипед', 'Плавание'];
-        if (activityStr != null && allowedActivities.contains(activityStr)) {
-          activity = activityStr;
-        } else {
-          activity = null; // Если значение не валидно, оставляем null
-        }
-
-        saveTemplate = (event['template_name'] as String? ?? '').isNotEmpty;
-
-        // Заполняем дату и время
-        final eventDateStr = event['event_date'] as String? ?? '';
-        if (eventDateStr.isNotEmpty) {
-          try {
-            final parts = eventDateStr.split('.');
-            if (parts.length == 3) {
-              date = DateTime(
-                int.parse(parts[2]),
-                int.parse(parts[1]),
-                int.parse(parts[0]),
-              );
-            }
-          } catch (e) {
-            // Игнорируем ошибку парсинга
+          // Заполняем выборы
+          final activityStr = event['activity'] as String?;
+          // Проверяем, что значение активности входит в список допустимых
+          const allowedActivities = ['Бег', 'Велосипед', 'Плавание'];
+          if (activityStr != null && allowedActivities.contains(activityStr)) {
+            activity = activityStr;
+          } else {
+            activity = null; // Если значение не валидно, оставляем null
           }
-        }
 
-        final eventTimeStr = event['event_time'] as String? ?? '';
-        if (eventTimeStr.isNotEmpty) {
-          try {
-            final parts = eventTimeStr.split(':');
-            if (parts.length >= 2) {
-              time = TimeOfDay(
-                hour: int.parse(parts[0]),
-                minute: int.parse(parts[1]),
-              );
+          saveTemplate = (event['template_name'] as String? ?? '').isNotEmpty;
+
+          // Заполняем дату и время
+          final eventDateStr = event['event_date'] as String? ?? '';
+          if (eventDateStr.isNotEmpty) {
+            try {
+              final parts = eventDateStr.split('.');
+              if (parts.length == 3) {
+                date = DateTime(
+                  int.parse(parts[2]),
+                  int.parse(parts[1]),
+                  int.parse(parts[0]),
+                );
+              }
+            } catch (e) {
+              // Игнорируем ошибку парсинга
             }
-          } catch (e) {
-            // Игнорируем ошибку парсинга
           }
-        }
 
-        // Координаты
-        final lat = event['latitude'] as num?;
-        final lng = event['longitude'] as num?;
-        if (lat != null && lng != null) {
-          selectedLocation = LatLng(lat.toDouble(), lng.toDouble());
-        }
+          final eventTimeStr = event['event_time'] as String? ?? '';
+          if (eventTimeStr.isNotEmpty) {
+            try {
+              final parts = eventTimeStr.split(':');
+              if (parts.length >= 2) {
+                time = TimeOfDay(
+                  hour: int.parse(parts[0]),
+                  minute: int.parse(parts[1]),
+                );
+              }
+            } catch (e) {
+              // Игнорируем ошибку парсинга
+            }
+          }
 
-        // Логотип
-        logoUrl = event['logo_url'] as String?;
-        logoFilename = event['logo_filename'] as String?;
+          // Координаты
+          final lat = event['latitude'] as num?;
+          final lng = event['longitude'] as num?;
+          if (lat != null && lng != null) {
+            selectedLocation = LatLng(lat.toDouble(), lng.toDouble());
+          }
 
-        // Фоновая картинка
-        backgroundUrl = event['background_url'] as String?;
-        backgroundFilename = event['background_filename'] as String?;
+          // Логотип
+          logoUrl = event['logo_url'] as String?;
+          logoFilename = event['logo_filename'] as String?;
 
-        // ── обработка дистанций из события
-        // Очищаем существующие контроллеры
-        for (final controller in _distanceControllers) {
-          controller.removeListener(() => _refresh());
-          controller.dispose();
-        }
-        _distanceControllers.clear();
+          // Фоновая картинка
+          backgroundUrl = event['background_url'] as String?;
+          backgroundFilename = event['background_filename'] as String?;
 
-        // Парсим дистанции из события (формат: "5000, 10000, 21100" - все в метрах)
-        final distanceStr = event['distance'] as String?;
-        if (distanceStr != null && distanceStr.isNotEmpty) {
-          // Разделяем по запятой и очищаем пробелы
-          final distances = distanceStr
-              .split(',')
-              .map((d) => d.trim())
-              .where((d) => d.isNotEmpty)
-              .toList();
+          // ── обработка дистанций из события
+          // Очищаем существующие контроллеры
+          for (final controller in _distanceControllers) {
+            controller.removeListener(() => _refresh());
+            controller.dispose();
+          }
+          _distanceControllers.clear();
 
-          // Создаём контроллеры для каждой дистанции
-          for (final dist in distances) {
-            final controller = TextEditingController(text: dist);
+          // Парсим дистанции из события (формат: "5000, 10000, 21100" - все в метрах)
+          final distanceStr = event['distance'] as String?;
+          if (distanceStr != null && distanceStr.isNotEmpty) {
+            // Разделяем по запятой и очищаем пробелы
+            final distances = distanceStr
+                .split(',')
+                .map((d) => d.trim())
+                .where((d) => d.isNotEmpty)
+                .toList();
+
+            // Создаём контроллеры для каждой дистанции
+            for (final dist in distances) {
+              final controller = TextEditingController(text: dist);
+              controller.addListener(() => _refresh());
+              _distanceControllers.add(controller);
+            }
+          }
+
+          // Если дистанций нет, создаём одно пустое поле
+          if (_distanceControllers.isEmpty) {
+            final controller = TextEditingController();
             controller.addListener(() => _refresh());
             _distanceControllers.add(controller);
           }
-        }
 
-        // Если дистанций нет, создаём одно пустое поле
-        if (_distanceControllers.isEmpty) {
-          final controller = TextEditingController();
-          controller.addListener(() => _refresh());
-          _distanceControllers.add(controller);
+          if (!mounted) return;
+          setState(() {});
+        } else {
+          throw Exception(
+            data['message'] as String? ?? 'Не удалось загрузить данные события',
+          );
         }
-
-        if (!mounted) return;
-        setState(() {});
-      } else {
-        throw Exception(
-          data['message'] as String? ??
-              'Не удалось загрузить данные события',
-        );
-      }
       },
       onError: (error) {
         if (!mounted) return;
@@ -473,8 +473,8 @@ class _EditOfficialEventScreenState extends ConsumerState<EditOfficialEventScree
     if (!confirmed) return;
 
     final formNotifier = ref.read(formStateProvider.notifier);
-    final api = ApiService();
-    final authService = AuthService();
+    final api = ref.read(apiServiceProvider);
+    final authService = ref.read(authServiceProvider);
 
     await formNotifier.submit(
       () async {
@@ -493,9 +493,7 @@ class _EditOfficialEventScreenState extends ConsumerState<EditOfficialEventScree
         if (data['success'] == true) {
           // Успешно удалено
         } else if (data['success'] == false) {
-          throw Exception(
-            data['message'] ?? 'Ошибка при удалении события',
-          );
+          throw Exception(data['message'] ?? 'Ошибка при удалении события');
         } else {
           throw Exception('Неожиданный формат ответа сервера');
         }
@@ -510,9 +508,7 @@ class _EditOfficialEventScreenState extends ConsumerState<EditOfficialEventScree
         final formState = ref.read(formStateProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              formState.error ?? 'Ошибка при удалении события',
-            ),
+            content: Text(formState.error ?? 'Ошибка при удалении события'),
             backgroundColor: Colors.red,
           ),
         );
@@ -527,110 +523,110 @@ class _EditOfficialEventScreenState extends ConsumerState<EditOfficialEventScree
     }
 
     final formNotifier = ref.read(formStateProvider.notifier);
-    final api = ApiService();
-    final authService = AuthService();
+    final api = ref.read(apiServiceProvider);
+    final authService = ref.read(authServiceProvider);
 
     await formNotifier.submit(
       () async {
-      final files = <String, File>{};
-      final fields = <String, String>{};
+        final files = <String, File>{};
+        final fields = <String, String>{};
 
-      // Добавляем логотип (если выбран новый)
-      if (logoFile != null) {
-        files['logo'] = logoFile!;
-      }
-
-      // Добавляем фоновую картинку (если выбран новый)
-      if (backgroundFile != null) {
-        files['background'] = backgroundFile!;
-      }
-
-      // Добавляем поля формы
-      final userId = await authService.getUserId();
-      if (userId == null) {
-        throw Exception('Ошибка авторизации. Необходимо войти в систему');
-      }
-      fields['event_id'] = widget.eventId.toString();
-      fields['user_id'] = userId.toString();
-      fields['name'] = nameCtrl.text.trim();
-      fields['activity'] = activity!;
-      fields['place'] = placeCtrl.text.trim();
-      fields['latitude'] = selectedLocation!.latitude.toString();
-      fields['longitude'] = selectedLocation!.longitude.toString();
-      fields['event_date'] = _fmtDate(date!);
-      fields['event_time'] = _fmtTime(time!);
-      fields['description'] = descCtrl.text.trim();
-
-      // Флаги для сохранения существующих изображений
-      if (logoUrl != null && logoFile == null && logoFilename != null) {
-        fields['keep_logo'] = 'true';
-      }
-
-      if (backgroundUrl != null &&
-          backgroundFile == null &&
-          backgroundFilename != null) {
-        fields['keep_background'] = 'true';
-      }
-
-      // ── собираем введённые дистанции (только непустые, все в метрах)
-      final distanceValues = _distanceControllers
-          .map((ctrl) => ctrl.text.trim())
-          .where((value) => value.isNotEmpty)
-          .toList();
-
-      // Добавляем ссылку на страницу мероприятия
-      if (linkCtrl.text.trim().isNotEmpty) {
-        fields['event_link'] = linkCtrl.text.trim();
-      }
-
-      if (saveTemplate && templateCtrl.text.trim().isNotEmpty) {
-        fields['template_name'] = templateCtrl.text.trim();
-      }
-
-      // Отправляем запрос
-      Map<String, dynamic> data;
-      if (files.isEmpty) {
-        // JSON запрос без файлов
-        final jsonBody = <String, dynamic>{
-          'event_id': fields['event_id'],
-          'user_id': fields['user_id'],
-          'name': fields['name'],
-          'activity': fields['activity'],
-          'place': fields['place'],
-          'latitude': fields['latitude'],
-          'longitude': fields['longitude'],
-          'event_date': fields['event_date'],
-          'event_time': fields['event_time'],
-          'description': fields['description'],
-          'event_link': fields['event_link'] ?? '',
-          'template_name': fields['template_name'] ?? '',
-        };
-        if (distanceValues.isNotEmpty) {
-          jsonBody['distance'] = distanceValues;
+        // Добавляем логотип (если выбран новый)
+        if (logoFile != null) {
+          files['logo'] = logoFile!;
         }
-        if (fields.containsKey('keep_logo')) {
-          jsonBody['keep_logo'] = 'true';
+
+        // Добавляем фоновую картинку (если выбран новый)
+        if (backgroundFile != null) {
+          files['background'] = backgroundFile!;
         }
-        if (fields.containsKey('keep_background')) {
-          jsonBody['keep_background'] = 'true';
+
+        // Добавляем поля формы
+        final userId = await authService.getUserId();
+        if (userId == null) {
+          throw Exception('Ошибка авторизации. Необходимо войти в систему');
         }
-        data = await api.post('/update_official_event.php', body: jsonBody);
-      } else {
-        // Multipart запрос с файлами
-        // ── отправляем дистанции как массив (все в метрах)
-        if (distanceValues.isNotEmpty) {
-          // Для multipart нужно отправлять как массив
-          for (int i = 0; i < distanceValues.length; i++) {
-            fields['distance[$i]'] = distanceValues[i];
+        fields['event_id'] = widget.eventId.toString();
+        fields['user_id'] = userId.toString();
+        fields['name'] = nameCtrl.text.trim();
+        fields['activity'] = activity!;
+        fields['place'] = placeCtrl.text.trim();
+        fields['latitude'] = selectedLocation!.latitude.toString();
+        fields['longitude'] = selectedLocation!.longitude.toString();
+        fields['event_date'] = _fmtDate(date!);
+        fields['event_time'] = _fmtTime(time!);
+        fields['description'] = descCtrl.text.trim();
+
+        // Флаги для сохранения существующих изображений
+        if (logoUrl != null && logoFile == null && logoFilename != null) {
+          fields['keep_logo'] = 'true';
+        }
+
+        if (backgroundUrl != null &&
+            backgroundFile == null &&
+            backgroundFilename != null) {
+          fields['keep_background'] = 'true';
+        }
+
+        // ── собираем введённые дистанции (только непустые, все в метрах)
+        final distanceValues = _distanceControllers
+            .map((ctrl) => ctrl.text.trim())
+            .where((value) => value.isNotEmpty)
+            .toList();
+
+        // Добавляем ссылку на страницу мероприятия
+        if (linkCtrl.text.trim().isNotEmpty) {
+          fields['event_link'] = linkCtrl.text.trim();
+        }
+
+        if (saveTemplate && templateCtrl.text.trim().isNotEmpty) {
+          fields['template_name'] = templateCtrl.text.trim();
+        }
+
+        // Отправляем запрос
+        Map<String, dynamic> data;
+        if (files.isEmpty) {
+          // JSON запрос без файлов
+          final jsonBody = <String, dynamic>{
+            'event_id': fields['event_id'],
+            'user_id': fields['user_id'],
+            'name': fields['name'],
+            'activity': fields['activity'],
+            'place': fields['place'],
+            'latitude': fields['latitude'],
+            'longitude': fields['longitude'],
+            'event_date': fields['event_date'],
+            'event_time': fields['event_time'],
+            'description': fields['description'],
+            'event_link': fields['event_link'] ?? '',
+            'template_name': fields['template_name'] ?? '',
+          };
+          if (distanceValues.isNotEmpty) {
+            jsonBody['distance'] = distanceValues;
           }
+          if (fields.containsKey('keep_logo')) {
+            jsonBody['keep_logo'] = 'true';
+          }
+          if (fields.containsKey('keep_background')) {
+            jsonBody['keep_background'] = 'true';
+          }
+          data = await api.post('/update_official_event.php', body: jsonBody);
+        } else {
+          // Multipart запрос с файлами
+          // ── отправляем дистанции как массив (все в метрах)
+          if (distanceValues.isNotEmpty) {
+            // Для multipart нужно отправлять как массив
+            for (int i = 0; i < distanceValues.length; i++) {
+              fields['distance[$i]'] = distanceValues[i];
+            }
+          }
+          data = await api.postMultipart(
+            '/update_official_event.php',
+            files: files,
+            fields: fields,
+            timeout: const Duration(seconds: 60),
+          );
         }
-        data = await api.postMultipart(
-          '/update_official_event.php',
-          files: files,
-          fields: fields,
-          timeout: const Duration(seconds: 60),
-        );
-      }
 
         bool success = false;
         String? errorMessage;
@@ -657,9 +653,7 @@ class _EditOfficialEventScreenState extends ConsumerState<EditOfficialEventScree
         final formState = ref.read(formStateProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              formState.error ?? 'Ошибка при обновлении события',
-            ),
+            content: Text(formState.error ?? 'Ошибка при обновлении события'),
           ),
         );
       },
@@ -1414,7 +1408,8 @@ class _EditOfficialEventScreenState extends ConsumerState<EditOfficialEventScree
                         child: PrimaryButton(
                           text: 'Сохранить',
                           onPressed: () {
-                            if (!formState.isSubmitting && !formState.isLoading) {
+                            if (!formState.isSubmitting &&
+                                !formState.isLoading) {
                               _submit();
                             }
                           },

@@ -12,7 +12,7 @@ import '../../../../core/utils/local_image_compressor.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/primary_button.dart';
-import '../../../../core/services/api_service.dart';
+import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/lenta/lenta_provider.dart';
 import '../../../../core/providers/form_state_provider.dart';
 import '../../../../core/widgets/form_error_display.dart';
@@ -434,7 +434,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
 
     final text = _descriptionController.text.trim();
     final formNotifier = ref.read(formStateProvider.notifier);
-    final api = ApiService();
+    final api = ref.read(apiServiceProvider);
 
     await formNotifier.submit(
       () async {

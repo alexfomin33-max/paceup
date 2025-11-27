@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 
 import 'tabs/photo_content.dart';
@@ -7,14 +8,15 @@ import 'tabs/members_content.dart';
 import 'tabs/stats_content.dart';
 import 'tabs/glory_content.dart';
 
-class CoffeeRunVldScreen extends StatefulWidget {
+class CoffeeRunVldScreen extends ConsumerStatefulWidget {
   const CoffeeRunVldScreen({super.key});
 
   @override
-  State<CoffeeRunVldScreen> createState() => _CoffeeRunVldScreenState();
+  ConsumerState<CoffeeRunVldScreen> createState() =>
+      _CoffeeRunVldScreenState();
 }
 
-class _CoffeeRunVldScreenState extends State<CoffeeRunVldScreen> {
+class _CoffeeRunVldScreenState extends ConsumerState<CoffeeRunVldScreen> {
   int _tab = 0; // 0 Фото, 1 Участники, 2 Статистика, 3 Зал славы
 
   @override

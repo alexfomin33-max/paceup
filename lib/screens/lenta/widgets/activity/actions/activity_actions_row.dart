@@ -3,12 +3,14 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/services/api_service.dart';
+import '../../../../../providers/services/api_provider.dart';
+import '../../../../../core/services/api_service.dart'; // для ApiException
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Панель действий: лайк/комменты/совместно.
 /// Здесь локальная анимация лайка + вызов API лайка.
 /// Комментарии/совместно — пробрасываются наружу колбэками.
-class ActivityActionsRow extends StatefulWidget {
+class ActivityActionsRow extends ConsumerStatefulWidget {
   final int activityId;
   final int currentUserId;
   final int initialLikes;
@@ -32,10 +34,11 @@ class ActivityActionsRow extends StatefulWidget {
   });
 
   @override
-  State<ActivityActionsRow> createState() => _ActivityActionsRowState();
+  ConsumerState<ActivityActionsRow> createState() =>
+      _ActivityActionsRowState();
 }
 
-class _ActivityActionsRowState extends State<ActivityActionsRow>
+class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
     with SingleTickerProviderStateMixin {
   late bool isLiked;
   late int likesCount;
@@ -98,7 +101,7 @@ class _ActivityActionsRowState extends State<ActivityActionsRow>
     required bool isLikedNow,
   }) async {
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/activity_likes_toggle.php',
         body: {

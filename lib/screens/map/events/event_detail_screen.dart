@@ -1,26 +1,27 @@
 // lib/screens/map/events/event_detail_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/services/api_service.dart';
-import '../../../core/services/auth_service.dart';
+import '../../../providers/services/api_provider.dart';
+import '../../../providers/services/auth_provider.dart';
 
 import '../../../core/widgets/transparent_route.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import 'edit_event_screen.dart';
 
 /// Детальная страница события (на основе coffeerun_screen.dart)
-class EventDetailScreen extends StatefulWidget {
+class EventDetailScreen extends ConsumerStatefulWidget {
   final int eventId;
 
   const EventDetailScreen({super.key, required this.eventId});
 
   @override
-  State<EventDetailScreen> createState() => _EventDetailScreenState();
+  ConsumerState<EventDetailScreen> createState() => _EventDetailScreenState();
 }
 
-class _EventDetailScreenState extends State<EventDetailScreen> {
+class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   Map<String, dynamic>? _eventData;
   bool _loading = true;
   String? _error;
@@ -62,8 +63,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   /// Загрузка данных события через API
   Future<void> _loadEvent() async {
     try {
-      final api = ApiService();
-      final authService = AuthService();
+      final api = ref.read(apiServiceProvider);
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
 
       final data = await api.get(
@@ -185,7 +186,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     if (_isTogglingBookmark || _eventData == null) return;
 
     // Проверяем, что userId доступен
-    final authService = AuthService();
+    final authService = ref.read(authServiceProvider);
     final userId = await authService.getUserId();
     if (userId == null) {
       if (!mounted) return;
@@ -203,7 +204,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     });
 
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/toggle_event_bookmark.php',
         body: {'event_id': widget.eventId},
@@ -253,7 +254,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     if (_isTogglingParticipation || _eventData == null) return;
 
     // Проверяем, что userId доступен
-    final authService = AuthService();
+    final authService = ref.read(authServiceProvider);
     final userId = await authService.getUserId();
     if (userId == null) {
       if (!mounted) return;
@@ -271,7 +272,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     });
 
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final action = _isParticipant ? 'leave' : 'join';
 
       final data = await api.post(
@@ -1053,15 +1054,17 @@ class EventDescriptionContent extends StatelessWidget {
 }
 
 /// Sliver для участников события с пагинацией (используется в CustomScrollView)
-class _EventMembersSliver extends StatefulWidget {
+class _EventMembersSliver extends ConsumerStatefulWidget {
   final int eventId;
   const _EventMembersSliver({super.key, required this.eventId});
 
   @override
-  State<_EventMembersSliver> createState() => _EventMembersSliverState();
+  ConsumerState<_EventMembersSliver> createState() =>
+      _EventMembersSliverState();
 }
 
-class _EventMembersSliverState extends State<_EventMembersSliver> {
+class _EventMembersSliverState
+    extends ConsumerState<_EventMembersSliver> {
   final List<Map<String, dynamic>> _participants = [];
   bool _loading = false;
   bool _hasMore = true;
@@ -1104,7 +1107,7 @@ class _EventMembersSliverState extends State<_EventMembersSliver> {
     });
 
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.get(
         '/get_event_participants.php',
         queryParams: {
@@ -1300,15 +1303,16 @@ class _EventMembersSliverState extends State<_EventMembersSliver> {
 }
 
 /// Контент участников события из API с пагинацией (для использования вне CustomScrollView)
-class EventMembersContent extends StatefulWidget {
+class EventMembersContent extends ConsumerStatefulWidget {
   final int eventId;
   const EventMembersContent({super.key, required this.eventId});
 
   @override
-  State<EventMembersContent> createState() => _EventMembersContentState();
+  ConsumerState<EventMembersContent> createState() =>
+      _EventMembersContentState();
 }
 
-class _EventMembersContentState extends State<EventMembersContent> {
+class _EventMembersContentState extends ConsumerState<EventMembersContent> {
   final List<Map<String, dynamic>> _participants = [];
   final ScrollController _scrollController = ScrollController();
   bool _loading = false;
@@ -1348,7 +1352,7 @@ class _EventMembersContentState extends State<EventMembersContent> {
     });
 
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.get(
         '/get_event_participants.php',
         queryParams: {

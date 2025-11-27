@@ -5,7 +5,8 @@ import 'create_club_screen.dart';
 import 'clubs_filters_bottom_sheet.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/transparent_route.dart';
-import '../../../core/services/api_service.dart';
+import '../../../providers/services/api_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Склоняет название города в предложный падеж для фразы "Клубы в/во [город]"
 /// Возвращает строку с правильным предлогом и склонённым названием города
@@ -117,7 +118,8 @@ Future<List<Map<String, dynamic>>> clubsMarkers(
   ClubsFilterParams? filterParams,
 }) async {
   try {
-    final api = ApiService();
+    final container = ProviderScope.containerOf(context);
+    final api = container.read(apiServiceProvider);
 
     // Формируем параметры запроса
     final queryParams = <String, String>{'detail': 'false'};

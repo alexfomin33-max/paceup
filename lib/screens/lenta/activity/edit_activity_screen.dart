@@ -16,7 +16,8 @@ import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/route_card.dart';
 import '../../../core/models/activity_lenta.dart';
-import '../../../core/services/api_service.dart';
+import '../../../providers/services/api_provider.dart';
+import '../../../core/services/api_service.dart'; // для ApiException
 import '../../../core/services/auth_service.dart';
 import '../../../providers/lenta/lenta_provider.dart';
 import '../../../core/providers/form_state_provider.dart';
@@ -598,7 +599,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
     final formNotifier = ref.read(formStateProvider.notifier);
     final auth = AuthService();
-    final api = ApiService();
+    final api = ref.read(apiServiceProvider);
 
     await formNotifier.submit(
       () async {
@@ -717,7 +718,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       _showBlockingLoader('Загружаем фотографии…');
       loaderShown = true;
 
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final response = await api.postMultipart(
         '/upload_activity_photos.php',
         files: filesForUpload,
@@ -877,7 +878,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       });
 
       // Вызываем API для удаления фотографии с сервера
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final response = await api.post(
         '/delete_activity_photo.php',
         body: {

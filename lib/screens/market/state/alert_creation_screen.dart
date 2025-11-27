@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/models/market_models.dart' show Gender;
 import '../../../core/widgets/app_bar.dart';
@@ -31,14 +32,15 @@ class AlertItem {
 }
 
 /// Экран создания оповещений
-class AlertCreationScreen extends StatefulWidget {
+class AlertCreationScreen extends ConsumerStatefulWidget {
   const AlertCreationScreen({super.key});
 
   @override
-  State<AlertCreationScreen> createState() => _AlertCreationScreenState();
+  ConsumerState<AlertCreationScreen> createState() =>
+      _AlertCreationScreenState();
 }
 
-class _AlertCreationScreenState extends State<AlertCreationScreen> {
+class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
   final nameCtrl = TextEditingController();
 
   Gender _gender = Gender.male;

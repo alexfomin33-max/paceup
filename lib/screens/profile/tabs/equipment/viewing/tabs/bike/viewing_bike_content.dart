@@ -2,8 +2,9 @@ import 'package:flutter/cupertino.dart';
 import '../../../../../../../core/theme/app_theme.dart';
 import '../sneakers/viewing_sneakers_content.dart'
     show GearViewCard; // теперь публичный класс
-import '../../../../../../../core/services/api_service.dart';
-import '../../../../../../../core/services/auth_service.dart';
+import '../../../../../../../providers/services/api_provider.dart';
+import '../../../../../../../providers/services/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../core/utils/equipment_date_format.dart';
 
 /// Модель элемента велосипеда для просмотра
@@ -35,14 +36,15 @@ class _BikeItem {
   });
 }
 
-class ViewingBikeContent extends StatefulWidget {
+class ViewingBikeContent extends ConsumerStatefulWidget {
   const ViewingBikeContent({super.key});
 
   @override
-  State<ViewingBikeContent> createState() => _ViewingBikeContentState();
+  ConsumerState<ViewingBikeContent> createState() =>
+      _ViewingBikeContentState();
 }
 
-class _ViewingBikeContentState extends State<ViewingBikeContent> {
+class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
   List<_BikeItem> _bikes = [];
   bool _isLoading = true;
   String? _error;
@@ -95,7 +97,7 @@ class _ViewingBikeContentState extends State<ViewingBikeContent> {
     });
 
     try {
-      final authService = AuthService();
+      final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
 
       if (userId == null) {
@@ -106,7 +108,7 @@ class _ViewingBikeContentState extends State<ViewingBikeContent> {
         return;
       }
 
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/get_equipment.php',
         body: {'user_id': userId.toString()},

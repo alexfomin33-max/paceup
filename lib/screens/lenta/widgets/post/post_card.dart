@@ -2,13 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/models/activity_lenta.dart';
 import 'post_media_carousel.dart';
 import '../../../../core/widgets/user_header.dart';
 import '../../../../core/widgets/expandable_text.dart';
-import '../../../../core/services/api_service.dart';
+import '../../../../providers/services/api_provider.dart';
+import '../../../../core/services/api_service.dart'; // для ApiException
 import '../../../../core/utils/feed_date.dart';
 
 // ✅ универсальное всплывающее меню (уже вынесено в lib/widgets)
@@ -22,7 +24,7 @@ import '../../../profile/profile_screen.dart';
 ///   { userId, postId } и при успешном ответе скрыть карточку без рефреша.
 ///   Визуальные стили/верстку/анимации — не меняем.
 /// ─────────────────────────────────────────────────────────────────────────────
-class PostCard extends StatefulWidget {
+class PostCard extends ConsumerStatefulWidget {
   /// Модель поста (id, автор, даты, медиа, текст, лайки, комменты)
   final Activity post;
 
@@ -45,10 +47,10 @@ class PostCard extends StatefulWidget {
   });
 
   @override
-  State<PostCard> createState() => _PostCardState();
+  ConsumerState<PostCard> createState() => _PostCardState();
 }
 
-class _PostCardState extends State<PostCard> {
+class _PostCardState extends ConsumerState<PostCard> {
   /// Локально скрываем карточку после успешного ответа сервера.
   bool _visible = true;
 
@@ -61,7 +63,7 @@ class _PostCardState extends State<PostCard> {
     required int postId,
   }) async {
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/post_delete.php',
         body: {
@@ -317,17 +319,17 @@ class _PostCardState extends State<PostCard> {
 
 /// Лайк-бар для поста: анимация сердца + вызов API.
 /// Приватен для PostCard, чтобы экран ленты был проще.
-class _PostLikeBar extends StatefulWidget {
+class _PostLikeBar extends ConsumerStatefulWidget {
   final Activity post;
   final int currentUserId;
 
   const _PostLikeBar({required this.post, required this.currentUserId});
 
   @override
-  State<_PostLikeBar> createState() => _PostLikeBarState();
+  ConsumerState<_PostLikeBar> createState() => _PostLikeBarState();
 }
 
-class _PostLikeBarState extends State<_PostLikeBar>
+class _PostLikeBarState extends ConsumerState<_PostLikeBar>
     with SingleTickerProviderStateMixin {
   bool isLiked = false; // локальное состояние лайка
   int likesCount = 0; // локальный счётчик лайков
@@ -397,7 +399,7 @@ class _PostLikeBarState extends State<_PostLikeBar>
     required String type, // 'post'
   }) async {
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/activity_likes_toggle.php',
         body: {

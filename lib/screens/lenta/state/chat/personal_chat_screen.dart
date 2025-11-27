@@ -2,19 +2,20 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/local_image_compressor.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
-import '../../../../core/services/api_service.dart';
-import '../../../../core/services/auth_service.dart';
+import '../../../../providers/services/api_provider.dart';
+import '../../../../providers/services/auth_provider.dart';
 
 /// ────────────────────────────────────────────────────────────────────────
 /// Экран персонального чата с конкретным пользователем
 /// ────────────────────────────────────────────────────────────────────────
-class PersonalChatScreen extends StatefulWidget {
+class PersonalChatScreen extends ConsumerStatefulWidget {
   final int chatId;
   final int userId;
   final String userName;
@@ -31,7 +32,8 @@ class PersonalChatScreen extends StatefulWidget {
   });
 
   @override
-  State<PersonalChatScreen> createState() => _PersonalChatScreenState();
+  ConsumerState<PersonalChatScreen> createState() =>
+      _PersonalChatScreenState();
 }
 
 /// ────────────────────────────────────────────────────────────────────────
@@ -72,12 +74,10 @@ class ChatMessage {
 /// ────────────────────────────────────────────────────────────────────────
 /// Состояние экрана персонального чата
 /// ────────────────────────────────────────────────────────────────────────
-class _PersonalChatScreenState extends State<PersonalChatScreen>
+class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     with WidgetsBindingObserver {
   final _ctrl = TextEditingController();
   final _scrollController = ScrollController();
-  final ApiService _api = ApiService();
-  final AuthService _auth = AuthService();
   final ImagePicker _picker = ImagePicker();
 
   List<ChatMessage> _messages = [];
@@ -181,7 +181,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
 
   /// ─── Инициализация чата ───
   Future<void> _initChat() async {
-    final userId = await _auth.getUserId();
+    final auth = ref.read(authServiceProvider);
+    final userId = await auth.getUserId();
     if (userId == null) {
       setState(() {
         _error = 'Пользователь не авторизован';
@@ -214,7 +215,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
     });
 
     try {
-      final response = await _api.post(
+      final api = ref.read(apiServiceProvider);
+      final response = await api.post(
         '/create_chat.php',
         body: {'user2_id': widget.userId},
       );
@@ -260,7 +262,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
     });
 
     try {
-      final response = await _api.get(
+      final api = ref.read(apiServiceProvider);
+      final response = await api.get(
         '/get_messages.php',
         queryParams: {
           'chat_id': chatId.toString(),
@@ -330,7 +333,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
     });
 
     try {
-      final response = await _api.get(
+      final api = ref.read(apiServiceProvider);
+      final response = await api.get(
         '/get_messages.php',
         queryParams: {
           'chat_id': chatId.toString(),
@@ -399,7 +403,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
     int chatId = _actualChatId ?? widget.chatId;
     if (chatId == 0) {
       try {
-        final createResponse = await _api.post(
+        final api = ref.read(apiServiceProvider);
+        final createResponse = await api.post(
           '/create_chat.php',
           body: {'user2_id': widget.userId},
         );
@@ -438,7 +443,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
 
     try {
       // Загружаем изображение на сервер
-      final uploadResponse = await _api.postMultipart(
+      final api = ref.read(apiServiceProvider);
+      final uploadResponse = await api.postMultipart(
         '/upload_chat_image.php',
         files: {'image': imageFile},
         fields: {
@@ -451,7 +457,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
         final imagePath = uploadResponse['image_path'] as String;
 
         // Отправляем сообщение с изображением
-        final response = await _api.post(
+        final api = ref.read(apiServiceProvider);
+      final response = await api.post(
           '/send_message.php',
           body: {
             'chat_id': chatId,
@@ -552,7 +559,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
     int chatId = _actualChatId ?? widget.chatId;
     if (chatId == 0 && _currentUserId != null) {
       try {
-        final createResponse = await _api.post(
+        final api = ref.read(apiServiceProvider);
+        final createResponse = await api.post(
           '/create_chat.php',
           body: {'user2_id': widget.userId},
         );
@@ -579,7 +587,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
     }
 
     try {
-      final response = await _api.post(
+      final api = ref.read(apiServiceProvider);
+      final response = await api.post(
         '/send_message.php',
         body: {
           'chat_id': chatId,
@@ -629,7 +638,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
     if (chatId == 0) return;
 
     try {
-      await _api.post(
+      final api = ref.read(apiServiceProvider);
+      await api.post(
         '/mark_messages_read.php',
         body: {'chat_id': chatId, 'user_id': _currentUserId},
       );
@@ -659,7 +669,8 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
     final lastId = _lastMessageId ?? 0;
 
     try {
-      final response = await _api.get(
+      final api = ref.read(apiServiceProvider);
+      final response = await api.get(
         '/check_new_messages.php',
         queryParams: {
           'chat_id': chatId.toString(),

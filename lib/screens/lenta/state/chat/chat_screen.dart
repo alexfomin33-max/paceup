@@ -2,14 +2,15 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_bar.dart'; // ← глобальный AppBar
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/transparent_route.dart';
-import '../../../../core/services/api_service.dart';
-import '../../../../core/services/auth_service.dart';
+import '../../../../providers/services/api_provider.dart';
+import '../../../../providers/services/auth_provider.dart';
 import 'personal_chat_screen.dart';
 import 'start_chat_screen.dart';
 
@@ -49,16 +50,15 @@ class ChatItem {
   }
 }
 
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
-  final ApiService _api = ApiService();
-  final AuthService _auth = AuthService();
+class _ChatScreenState extends ConsumerState<ChatScreen>
+    with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
 
   List<ChatItem> _chats = [];
@@ -113,10 +113,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     if (_isLoading || _isLoadingMore) return;
 
     try {
-      final userId = await _auth.getUserId();
+      final auth = ref.read(authServiceProvider);
+      final api = ref.read(apiServiceProvider);
+      final userId = await auth.getUserId();
       if (userId == null) return;
 
-      final response = await _api.get(
+      final response = await api.get(
         '/get_chats.php',
         queryParams: {
           'user_id': userId.toString(),
@@ -168,7 +170,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     });
 
     try {
-      final userId = await _auth.getUserId();
+      final auth = ref.read(authServiceProvider);
+      final api = ref.read(apiServiceProvider);
+      final userId = await auth.getUserId();
       if (userId == null) {
         setState(() {
           _error = 'Пользователь не авторизован';
@@ -177,7 +181,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         return;
       }
 
-      final response = await _api.get(
+      final response = await api.get(
         '/get_chats.php',
         queryParams: {
           'user_id': userId.toString(),
@@ -221,10 +225,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     });
 
     try {
-      final userId = await _auth.getUserId();
+      final auth = ref.read(authServiceProvider);
+      final api = ref.read(apiServiceProvider);
+      final userId = await auth.getUserId();
       if (userId == null) return;
 
-      final response = await _api.get(
+      final response = await api.get(
         '/get_chats.php',
         queryParams: {
           'user_id': userId.toString(),

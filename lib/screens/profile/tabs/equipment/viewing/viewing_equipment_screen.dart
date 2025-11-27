@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/segmented_pill.dart'; // ← глобальная пилюля
 import '../../../../../core/widgets/more_menu_hub.dart';
@@ -7,16 +8,18 @@ import 'tabs/sneakers/viewing_sneakers_content.dart';
 import 'tabs/bike/viewing_bike_content.dart';
 
 /// Экран «Просмотр снаряжения»
-class ViewingEquipmentScreen extends StatefulWidget {
+class ViewingEquipmentScreen extends ConsumerStatefulWidget {
   /// 0 — Кроссовки (по умолчанию), 1 — Велосипеды
   final int initialSegment;
   const ViewingEquipmentScreen({super.key, this.initialSegment = 0});
 
   @override
-  State<ViewingEquipmentScreen> createState() => _ViewingEquipmentScreenState();
+  ConsumerState<ViewingEquipmentScreen> createState() =>
+      _ViewingEquipmentScreenState();
 }
 
-class _ViewingEquipmentScreenState extends State<ViewingEquipmentScreen> {
+class _ViewingEquipmentScreenState
+    extends ConsumerState<ViewingEquipmentScreen> {
   // motion-токены для табов (локально, чтобы не ловить undefined)
   static const Duration _kTabAnim = Duration(milliseconds: 300);
   static const Curve _kTabCurve = Curves.easeOutCubic;

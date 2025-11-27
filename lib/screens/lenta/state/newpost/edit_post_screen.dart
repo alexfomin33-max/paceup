@@ -13,7 +13,7 @@ import '../../../../core/utils/local_image_compressor.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/primary_button.dart';
-import '../../../../core/services/api_service.dart';
+import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/lenta/lenta_provider.dart';
 import '../../../../core/providers/form_state_provider.dart';
 import '../../../../core/widgets/form_error_display.dart';
@@ -325,7 +325,9 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                       maxWidthDiskCache: side,
                       placeholder: (context, url) => Container(
                         color: AppColors.getBackgroundColor(context),
-                        child: const Center(child: CupertinoActivityIndicator()),
+                        child: const Center(
+                          child: CupertinoActivityIndicator(),
+                        ),
                       ),
                       errorWidget: (context, url, error) => Container(
                         color: AppColors.getBackgroundColor(context),
@@ -365,7 +367,9 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                       ? CupertinoIcons.clear_circled_solid
                       : CupertinoIcons.arrow_uturn_left_circle_fill,
                   size: 20,
-                  color: existing.keep ? AppColors.error : AppColors.brandPrimary,
+                  color: existing.keep
+                      ? AppColors.error
+                      : AppColors.brandPrimary,
                 ),
               ),
             ),
@@ -509,7 +513,10 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
         decoration: InputDecoration(
           filled: true,
           fillColor: AppColors.getSurfaceColor(context),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 4,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             borderSide: BorderSide(
@@ -597,7 +604,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     final hasNewFiles = _newImages.isNotEmpty;
 
     final formNotifier = ref.read(formStateProvider.notifier);
-    final api = ApiService();
+    final api = ref.read(apiServiceProvider);
 
     await formNotifier.submit(
       () async {

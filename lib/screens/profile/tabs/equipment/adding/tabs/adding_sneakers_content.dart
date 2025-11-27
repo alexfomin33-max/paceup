@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/local_image_compressor.dart';
 import '../../../../../../core/widgets/primary_button.dart';
-import '../../../../../../core/services/api_service.dart';
-import '../../../../../../core/services/auth_service.dart';
+import '../../../../../../providers/services/api_provider.dart';
+import '../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../core/providers/form_state_provider.dart';
 import '../../../../../../core/widgets/form_error_display.dart';
 import '../widgets/autocomplete_text_field.dart';
@@ -36,8 +36,7 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
   FocusNode? _modelFocusNode;
   FocusNode? _kmFocusNode;
 
-  // Для автодополнения
-  final ApiService _api = ApiService();
+  // Для автодополнения - используем провайдер
 
   @override
   void dispose() {
@@ -59,7 +58,8 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
     }
 
     try {
-      final data = await _api.post(
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
         '/search_equipment_brands.php',
         body: {'query': query, 'type': 'boots'},
       );
@@ -87,7 +87,8 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
     }
 
     try {
-      final data = await _api.post(
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
         '/search_equipment_models.php',
         body: {'brand': brand, 'query': query, 'type': 'boots'},
       );
@@ -157,8 +158,8 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
     }
 
     final formNotifier = ref.read(formStateProvider.notifier);
-    final api = ApiService();
-    final authService = AuthService();
+    final api = ref.read(apiServiceProvider);
+    final authService = ref.read(authServiceProvider);
 
     await formNotifier.submit(
       () async {

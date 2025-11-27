@@ -10,7 +10,7 @@ import '../../../core/utils/local_image_compressor.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
-import '../../../core/services/api_service.dart';
+import '../../../providers/services/api_provider.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
@@ -103,7 +103,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
   // ── загрузка списка клубов пользователя
   Future<void> _loadUserClubs() async {
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final authService = AuthService();
       final userId = await authService.getUserId();
 
@@ -139,7 +139,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
   /// Загрузка данных события для редактирования
   Future<void> _loadEventData() async {
     try {
-      final api = ApiService();
+      final api = ref.read(apiServiceProvider);
       final authService = AuthService();
       final userId = await authService.getUserId();
 
@@ -506,7 +506,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     if (_deleting) return;
     setState(() => _deleting = true);
 
-    final api = ApiService();
+    final api = ref.read(apiServiceProvider);
     final authService = AuthService();
 
     try {
@@ -575,65 +575,65 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     }
 
     final formNotifier = ref.read(formStateProvider.notifier);
-    final api = ApiService();
+    final api = ref.read(apiServiceProvider);
     final authService = AuthService();
 
     await formNotifier.submit(
       () async {
-      final files = <String, File>{};
-      final fields = <String, String>{};
+        final files = <String, File>{};
+        final fields = <String, String>{};
 
-      // Добавляем логотип (если выбран новый)
-      if (logoFile != null) {
-        files['logo'] = logoFile!;
-      }
-
-      // Добавляем фотографии (только новые)
-      for (int i = 0; i < photos.length; i++) {
-        if (photos[i] != null) {
-          files['images[$i]'] = photos[i]!;
+        // Добавляем логотип (если выбран новый)
+        if (logoFile != null) {
+          files['logo'] = logoFile!;
         }
-      }
+
+        // Добавляем фотографии (только новые)
+        for (int i = 0; i < photos.length; i++) {
+          if (photos[i] != null) {
+            files['images[$i]'] = photos[i]!;
+          }
+        }
 
         // Добавляем поля формы
         final userId = await authService.getUserId();
         if (userId == null) {
           throw Exception('Ошибка авторизации. Необходимо войти в систему');
         }
-      fields['event_id'] = widget.eventId.toString();
-      fields['user_id'] = userId.toString();
-      fields['name'] = nameCtrl.text.trim();
-      fields['activity'] = activity!;
-      fields['place'] = placeCtrl.text.trim();
-      fields['latitude'] = selectedLocation!.latitude.toString();
-      fields['longitude'] = selectedLocation!.longitude.toString();
-      fields['event_date'] = _fmtDate(date!);
-      fields['event_time'] = _fmtTime(time!);
-      fields['description'] = descCtrl.text.trim();
+        fields['event_id'] = widget.eventId.toString();
+        fields['user_id'] = userId.toString();
+        fields['name'] = nameCtrl.text.trim();
+        fields['activity'] = activity!;
+        fields['place'] = placeCtrl.text.trim();
+        fields['latitude'] = selectedLocation!.latitude.toString();
+        fields['longitude'] = selectedLocation!.longitude.toString();
+        fields['event_date'] = _fmtDate(date!);
+        fields['event_time'] = _fmtTime(time!);
+        fields['description'] = descCtrl.text.trim();
 
-      // Флаги для сохранения существующих изображений
-      if (logoUrl != null && logoFile == null && logoFilename != null) {
-        fields['keep_logo'] = 'true';
-      }
-
-      // Собираем имена файлов для сохранения (те, которые не были заменены)
-      final keepImages = <String>[];
-      for (int i = 0; i < photoFilenames.length; i++) {
-        if (photoFilenames[i].isNotEmpty && photos[i] == null) {
-          keepImages.add(photoFilenames[i]);
+        // Флаги для сохранения существующих изображений
+        if (logoUrl != null && logoFile == null && logoFilename != null) {
+          fields['keep_logo'] = 'true';
         }
-      }
-      // Отправляем массив как keep_images[0], keep_images[1], ...
-      for (int i = 0; i < keepImages.length; i++) {
-        fields['keep_images[$i]'] = keepImages[i];
-      }
 
-      if (createFromClub && selectedClub != null) {
-        fields['club_name'] = selectedClub!;
-      }
-      if (saveTemplate && templateCtrl.text.trim().isNotEmpty) {
-        fields['template_name'] = templateCtrl.text.trim();
-      }
+        // Собираем имена файлов для сохранения (те, которые не были заменены)
+        final keepImages = <String>[];
+        for (int i = 0; i < photoFilenames.length; i++) {
+          if (photoFilenames[i].isNotEmpty && photos[i] == null) {
+            keepImages.add(photoFilenames[i]);
+          }
+        }
+        // Отправляем массив как keep_images[0], keep_images[1], ...
+        for (int i = 0; i < keepImages.length; i++) {
+          fields['keep_images[$i]'] = keepImages[i];
+        }
+
+        if (createFromClub && selectedClub != null) {
+          fields['club_name'] = selectedClub!;
+        }
+        if (saveTemplate && templateCtrl.text.trim().isNotEmpty) {
+          fields['template_name'] = templateCtrl.text.trim();
+        }
 
         // Отправляем запрос
         Map<String, dynamic> data;
@@ -650,7 +650,8 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
 
         // Проверяем ответ
         if (data['success'] != true) {
-          final errorMessage = data['message'] ?? 'Ошибка при обновлении события';
+          final errorMessage =
+              data['message'] ?? 'Ошибка при обновлении события';
           throw Exception(errorMessage);
         }
       },
@@ -880,7 +881,9 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                 builder: (context) => Text(
                                   option,
                                   style: AppTextStyles.h14w4.copyWith(
-                                    color: AppColors.getTextPrimaryColor(context),
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -917,29 +920,43 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                               hintText: 'Выберите место на карте',
                               hintStyle: AppTextStyles.h14w4Place,
                               filled: true,
-                              fillColor: AppColors.getSurfaceMutedColor(context),
+                              fillColor: AppColors.getSurfaceMutedColor(
+                                context,
+                              ),
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 17,
                               ),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                                 borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(context).withValues(alpha: 0.6),
+                                  color: AppColors.getBorderColor(
+                                    context,
+                                  ).withValues(alpha: 0.6),
                                   width: 1,
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                                 borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(context).withValues(alpha: 0.6),
+                                  color: AppColors.getBorderColor(
+                                    context,
+                                  ).withValues(alpha: 0.6),
                                   width: 1,
                                 ),
                               ),
                               disabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                                 borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(context).withValues(alpha: 0.6),
+                                  color: AppColors.getBorderColor(
+                                    context,
+                                  ).withValues(alpha: 0.6),
                                   width: 1,
                                 ),
                               ),
@@ -957,8 +974,12 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                               side: BorderSide(
                                 color: AppColors.getBorderColor(context),
                               ),
-                              foregroundColor: AppColors.getTextPrimaryColor(context),
-                              backgroundColor: AppColors.getSurfaceColor(context),
+                              foregroundColor: AppColors.getTextPrimaryColor(
+                                context,
+                              ),
+                              backgroundColor: AppColors.getSurfaceColor(
+                                context,
+                              ),
                               padding: EdgeInsets.zero,
                             ),
                             child: Icon(
@@ -996,11 +1017,14 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                   child: InputDecorator(
                                     decoration: InputDecoration(
                                       filled: true,
-                                      fillColor: AppColors.getSurfaceColor(context),
-                                      contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 18,
+                                      fillColor: AppColors.getSurfaceColor(
+                                        context,
                                       ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 18,
+                                          ),
                                       prefixIcon: Padding(
                                         padding: const EdgeInsets.only(
                                           left: 12,
@@ -1009,19 +1033,24 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                         child: Icon(
                                           CupertinoIcons.calendar,
                                           size: 18,
-                                          color: AppColors.getIconPrimaryColor(context),
+                                          color: AppColors.getIconPrimaryColor(
+                                            context,
+                                          ),
                                         ),
                                       ),
-                                      prefixIconConstraints: const BoxConstraints(
-                                        minWidth: 18 + 14,
-                                        minHeight: 18,
-                                      ),
+                                      prefixIconConstraints:
+                                          const BoxConstraints(
+                                            minWidth: 18 + 14,
+                                            minHeight: 18,
+                                          ),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(
                                           AppRadius.sm,
                                         ),
                                         borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(context),
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -1030,7 +1059,9 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                           AppRadius.sm,
                                         ),
                                         borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(context),
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -1039,7 +1070,9 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                           AppRadius.sm,
                                         ),
                                         borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(context),
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -1050,7 +1083,10 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                           : 'Выберите дату',
                                       style: date != null
                                           ? AppTextStyles.h14w4.copyWith(
-                                              color: AppColors.getTextPrimaryColor(context),
+                                              color:
+                                                  AppColors.getTextPrimaryColor(
+                                                    context,
+                                                  ),
                                             )
                                           : AppTextStyles.h14w4Place,
                                     ),
@@ -1082,11 +1118,14 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                   child: InputDecorator(
                                     decoration: InputDecoration(
                                       filled: true,
-                                      fillColor: AppColors.getSurfaceColor(context),
-                                      contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 18,
+                                      fillColor: AppColors.getSurfaceColor(
+                                        context,
                                       ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 18,
+                                          ),
                                       prefixIcon: Padding(
                                         padding: const EdgeInsets.only(
                                           left: 12,
@@ -1095,19 +1134,24 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                         child: Icon(
                                           CupertinoIcons.time,
                                           size: 18,
-                                          color: AppColors.getIconPrimaryColor(context),
+                                          color: AppColors.getIconPrimaryColor(
+                                            context,
+                                          ),
                                         ),
                                       ),
-                                      prefixIconConstraints: const BoxConstraints(
-                                        minWidth: 18 + 14,
-                                        minHeight: 18,
-                                      ),
+                                      prefixIconConstraints:
+                                          const BoxConstraints(
+                                            minWidth: 18 + 14,
+                                            minHeight: 18,
+                                          ),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(
                                           AppRadius.sm,
                                         ),
                                         borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(context),
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -1116,7 +1160,9 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                           AppRadius.sm,
                                         ),
                                         borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(context),
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -1125,7 +1171,9 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                           AppRadius.sm,
                                         ),
                                         borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(context),
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -1136,7 +1184,10 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                           : 'Выберите время',
                                       style: time != null
                                           ? AppTextStyles.h14w4.copyWith(
-                                              color: AppColors.getTextPrimaryColor(context),
+                                              color:
+                                                  AppColors.getTextPrimaryColor(
+                                                    context,
+                                                  ),
                                             )
                                           : AppTextStyles.h14w4Place,
                                     ),
@@ -1202,7 +1253,6 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                   ),
 
                   const SizedBox(height: 25),
-
                   // Показываем ошибки, если есть
                   if (formState.hasErrors) ...[
                     FormErrorDisplay(formState: formState),
@@ -1217,7 +1267,8 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                         child: PrimaryButton(
                           text: 'Сохранить',
                           onPressed: () {
-                            if (!formState.isSubmitting && !_deleting) _submit();
+                            if (!formState.isSubmitting && !_deleting)
+                              _submit();
                           },
                           expanded: true,
                           isLoading: formState.isSubmitting,
@@ -1226,7 +1277,9 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                       ),
                       const SizedBox(width: 16),
                       TextButton(
-                        onPressed: _deleting || formState.isSubmitting ? null : _deleteEvent,
+                        onPressed: _deleting || formState.isSubmitting
+                            ? null
+                            : _deleteEvent,
                         child: const Text(
                           'Удалить событие',
                           style: TextStyle(
@@ -1405,9 +1458,7 @@ class _MediaTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             color: AppColors.getSurfaceColor(context),
-            border: Border.all(
-              color: AppColors.getBorderColor(context),
-            ),
+            border: Border.all(color: AppColors.getBorderColor(context)),
           ),
           child: Center(
             child: Icon(

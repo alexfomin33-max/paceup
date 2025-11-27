@@ -1,10 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../../core/theme/app_theme.dart';
 import '../../../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../../core/widgets/interactive_back_swipe.dart';
 
-class AllResultsScreen extends StatefulWidget {
+class AllResultsScreen extends ConsumerStatefulWidget {
   final int routeId;
   final String routeTitle;
   final String? difficultyText; // например: "Сложный маршрут"
@@ -17,10 +18,10 @@ class AllResultsScreen extends StatefulWidget {
   });
 
   @override
-  State<AllResultsScreen> createState() => _AllResultsScreenState();
+  ConsumerState<AllResultsScreen> createState() => _AllResultsScreenState();
 }
 
-class _AllResultsScreenState extends State<AllResultsScreen>
+class _AllResultsScreenState extends ConsumerState<AllResultsScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tab = TabController(length: 2, vsync: this);
 
