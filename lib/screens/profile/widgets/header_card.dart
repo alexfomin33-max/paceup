@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../edit_profile_screen.dart';
 import '../state/subscribe/communication_screen.dart';
-import '../../../models/user_profile_header.dart';
-import '../../../widgets/transparent_route.dart';
-import '../../../widgets/avatar.dart';
+import '../../../core/models/user_profile_header.dart';
+import '../../../core/widgets/transparent_route.dart';
+import '../../../core/widgets/avatar.dart';
 
 class HeaderCard extends StatelessWidget {
   final UserProfileHeader? profile;
@@ -195,7 +195,7 @@ class HeaderCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 0),
                 Text(
-                  _subtitleFrom(p) ?? '', 
+                  _subtitleFrom(p) ?? '',
                   style: AppTextStyles.h13w4.copyWith(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? AppColors.darkTextSecondary
@@ -287,7 +287,11 @@ class _SmallIconBtn extends StatelessWidget {
               : AppColors.skeletonBase,
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
-        child: Icon(icon, size: 16, color: AppColors.getIconPrimaryColor(context)),
+        child: Icon(
+          icon,
+          size: 16,
+          color: AppColors.getIconPrimaryColor(context),
+        ),
       ),
     );
   }
@@ -310,10 +314,7 @@ class _FollowStat extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: RichText(
           text: TextSpan(
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-            ),
+            style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
             children: [
               TextSpan(
                 text: '$label: ',

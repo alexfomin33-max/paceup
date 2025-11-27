@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/app_theme.dart';
-import '../../../widgets/app_bar.dart';
-import '../../../widgets/segmented_pill.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_bar.dart';
+import '../../../core/widgets/segmented_pill.dart';
 
 import 'sale_slots/sale_slots_content.dart';
 import 'sale_things/sale_things_content.dart';

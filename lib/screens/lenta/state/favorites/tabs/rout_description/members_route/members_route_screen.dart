@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../../../../../theme/app_theme.dart';
-import '../../../../../../../../widgets/app_bar.dart';
-import '../../../../../../../widgets/interactive_back_swipe.dart';
+import '../../../../../../../../core/theme/app_theme.dart';
+import '../../../../../../../../core/widgets/app_bar.dart';
+import '../../../../../../../core/widgets/interactive_back_swipe.dart';
 
 class MembersRouteScreen extends StatefulWidget {
   final int routeId;

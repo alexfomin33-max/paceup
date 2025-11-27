@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../service/api_service.dart';
-import '../../../../../service/auth_service.dart';
+import '../../../../../core/services/api_service.dart';
+import '../../../../../core/services/auth_service.dart';
 
 /// Модель настроек пользователя
 class UserSettings {
@@ -39,4 +39,3 @@ final userSettingsProvider = FutureProvider<UserSettings>((ref) async {
 
   return UserSettings.fromJson(data);
 });
-

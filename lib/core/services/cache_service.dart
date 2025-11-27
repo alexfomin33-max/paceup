@@ -64,7 +64,9 @@ class CacheService {
         type: activity.type,
         dateStart: Value(activity.dateStart),
         dateEnd: Value(activity.dateEnd),
-        lentaDate: Value(activity.lentaDate), // ✅ Сохраняем дату из таблицы lenta
+        lentaDate: Value(
+          activity.lentaDate,
+        ), // ✅ Сохраняем дату из таблицы lenta
         userName: activity.userName,
         userAvatar: activity.userAvatar,
         userGroup: activity.userGroup,
@@ -92,16 +94,18 @@ class CacheService {
     const pointsConverter = CoordListConverter();
     const imagesConverter = StringListConverter();
     const videosConverter = StringListConverter();
-    
+
     await _db.batch((batch) {
       for (final companion in companions) {
         // Используем Type Converters для правильной сериализации JSON
-        final equipmentsJson = equipmentConverter.toSql(companion.equipments.value);
+        final equipmentsJson = equipmentConverter.toSql(
+          companion.equipments.value,
+        );
         final statsJson = statsConverter.toSql(companion.stats.value);
         final pointsJson = pointsConverter.toSql(companion.points.value);
         final imagesJson = imagesConverter.toSql(companion.mediaImages.value);
         final videosJson = videosConverter.toSql(companion.mediaVideos.value);
-        
+
         // Используем кастомный SQL для обработки конфликта по lenta_id
         batch.customStatement(
           '''
@@ -141,7 +145,8 @@ class CacheService {
             companion.type.value,
             companion.dateStart.value?.toIso8601String(),
             companion.dateEnd.value?.toIso8601String(),
-            companion.lentaDate.value?.toIso8601String(), // ✅ Сохраняем lentaDate
+            companion.lentaDate.value
+                ?.toIso8601String(), // ✅ Сохраняем lentaDate
             companion.userName.value,
             companion.userAvatar.value,
             companion.userGroup.value,
@@ -180,15 +185,9 @@ class CacheService {
       ..orderBy([
         // ✅ Сортируем по lentaDate (дата из таблицы lenta) - новые сверху
         // Старые данные без lentaDate очищены в миграции, новые всегда имеют lentaDate
-        (t) => OrderingTerm(
-          expression: t.lentaDate,
-          mode: OrderingMode.desc,
-        ),
+        (t) => OrderingTerm(expression: t.lentaDate, mode: OrderingMode.desc),
         // Дополнительная сортировка по lentaId для стабильности
-        (t) => OrderingTerm(
-          expression: t.lentaId,
-          mode: OrderingMode.desc,
-        ),
+        (t) => OrderingTerm(expression: t.lentaId, mode: OrderingMode.desc),
       ])
       ..limit(limit);
 
@@ -245,11 +244,7 @@ class CacheService {
   }) async {
     await (_db.update(_db.cachedActivities)
           ..where((tbl) => tbl.lentaId.equals(lentaId)))
-        .write(
-          CachedActivitiesCompanion(
-            mediaImages: Value(mediaImages),
-          ),
-        );
+        .write(CachedActivitiesCompanion(mediaImages: Value(mediaImages)));
   }
 
   /// Пакетное обновление лайков для нескольких активностей
@@ -310,28 +305,30 @@ class CacheService {
   }) async {
     // Проверяем, существует ли уже профиль с таким userId
     final existing = await getCachedProfile(userId: userId);
-    
+
     if (existing != null) {
       // Обновляем существующую запись
-      await (_db.update(_db.cachedProfiles)
-            ..where((tbl) => tbl.userId.equals(userId)))
-          .write(
-            CachedProfilesCompanion(
-              name: Value(name),
-              avatar: Value(avatar),
-              userGroup: Value(userGroup),
-              totalDistance: Value(totalDistance),
-              totalActivities: Value(totalActivities),
-              totalTime: Value(totalTime),
-              city: Value(city),
-              age: Value(age),
-              followers: Value(followers),
-              following: Value(following),
-            ),
-          );
+      await (_db.update(
+        _db.cachedProfiles,
+      )..where((tbl) => tbl.userId.equals(userId))).write(
+        CachedProfilesCompanion(
+          name: Value(name),
+          avatar: Value(avatar),
+          userGroup: Value(userGroup),
+          totalDistance: Value(totalDistance),
+          totalActivities: Value(totalActivities),
+          totalTime: Value(totalTime),
+          city: Value(city),
+          age: Value(age),
+          followers: Value(followers),
+          following: Value(following),
+        ),
+      );
     } else {
       // Вставляем новую запись
-      await _db.into(_db.cachedProfiles).insert(
+      await _db
+          .into(_db.cachedProfiles)
+          .insert(
             CachedProfilesCompanion.insert(
               userId: userId,
               name: name,

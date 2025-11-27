@@ -2,11 +2,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../theme/app_theme.dart';
-import '../../../service/api_service.dart';
-import '../../../service/auth_service.dart';
-import '../../../widgets/transparent_route.dart';
-import '../../../widgets/interactive_back_swipe.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/services/api_service.dart';
+import '../../../core/services/auth_service.dart';
+import '../../../core/widgets/transparent_route.dart';
+import '../../../core/widgets/interactive_back_swipe.dart';
 import 'edit_event_screen.dart';
 
 /// Детальная страница события (на основе coffeerun_screen.dart)
@@ -387,16 +387,17 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
                                               milliseconds: 120,
                                             ),
                                             memCacheWidth: cacheWidth,
-                                            errorWidget: (context, imageUrl, error) =>
-                                                Container(
-                                                  width: 40,
-                                                  height: 40,
-                                                  color: AppColors.border,
-                                                  child: const Icon(
-                                                    Icons.person,
-                                                    size: 20,
-                                                  ),
-                                                ),
+                                            errorWidget:
+                                                (context, imageUrl, error) =>
+                                                    Container(
+                                                      width: 40,
+                                                      height: 40,
+                                                      color: AppColors.border,
+                                                      child: const Icon(
+                                                        Icons.person,
+                                                        size: 20,
+                                                      ),
+                                                    ),
                                           );
                                         },
                                       ),

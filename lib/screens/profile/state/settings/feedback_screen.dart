@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../service/api_service.dart';
-import '../../../../../service/auth_service.dart';
-import '../../../../../theme/app_theme.dart';
-import '../../../../../widgets/app_bar.dart';
-import '../../../../../widgets/interactive_back_swipe.dart';
-import '../../../../../widgets/primary_button.dart';
+import '../../../../../core/services/api_service.dart';
+import '../../../../../core/services/auth_service.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/widgets/app_bar.dart';
+import '../../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../../core/widgets/primary_button.dart';
 
 /// Экран предложений по улучшению
 class FeedbackScreen extends ConsumerStatefulWidget {
@@ -139,118 +139,125 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
                       children: [
-                      // Информационная карточка
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.getSurfaceColor(context),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(color: AppColors.getBorderColor(context), width: 1),
-                        ),
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  CupertinoIcons.info,
-                                  size: 20,
-                                  color: AppColors.brandPrimary,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Ваше мнение важно для нас',
-                                  style: AppTextStyles.h14w6.copyWith(
-                                    color: AppColors.getTextPrimaryColor(context),
+                        // Информационная карточка
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.getSurfaceColor(context),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            border: Border.all(
+                              color: AppColors.getBorderColor(context),
+                              width: 1,
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    CupertinoIcons.info,
+                                    size: 20,
+                                    color: AppColors.brandPrimary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Ваше мнение важно для нас',
+                                    style: AppTextStyles.h14w6.copyWith(
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Поделитесь своими идеями по улучшению приложения. Мы внимательно рассмотрим каждое предложение.',
+                                style: AppTextStyles.h14w4.copyWith(
+                                  color: AppColors.getTextSecondaryColor(
+                                    context,
                                   ),
                                 ),
-                              ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Поле ввода предложения
+                        TextFormField(
+                          controller: _textController,
+                          focusNode: _focusNode,
+                          maxLines: 10,
+                          minLines: 6,
+                          textInputAction: TextInputAction.newline,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: InputDecoration(
+                            labelText: 'Ваше предложение',
+                            labelStyle: AppTextStyles.h14w4Sec.copyWith(
+                              color: AppColors.getTextSecondaryColor(context),
                             ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Поделитесь своими идеями по улучшению приложения. Мы внимательно рассмотрим каждое предложение.',
-                              style: AppTextStyles.h14w4.copyWith(
-                                color: AppColors.getTextSecondaryColor(context),
+                            hintText:
+                                'Опишите, что бы вы хотели улучшить или добавить в приложение...',
+                            hintStyle: TextStyle(
+                              color: AppColors.getTextPlaceholderColor(context),
+                            ),
+                            errorText: _error,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              borderSide: BorderSide(
+                                color: AppColors.getBorderColor(context),
                               ),
                             ),
-                          ],
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              borderSide: BorderSide(
+                                color: AppColors.getBorderColor(context),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              borderSide: const BorderSide(
+                                color: AppColors.brandPrimary,
+                                width: 0.7,
+                              ),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              borderSide: const BorderSide(
+                                color: AppColors.error,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: AppColors.getSurfaceColor(context),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Введите ваше предложение';
+                            }
+                            if (value.trim().length < 10) {
+                              return 'Минимум 10 символов';
+                            }
+                            return null;
+                          },
                         ),
-                      ),
 
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 30),
 
-                      // Поле ввода предложения
-                      TextFormField(
-                        controller: _textController,
-                        focusNode: _focusNode,
-                        maxLines: 10,
-                        minLines: 6,
-                        textInputAction: TextInputAction.newline,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: InputDecoration(
-                          labelText: 'Ваше предложение',
-                          labelStyle: AppTextStyles.h14w4Sec.copyWith(
-                            color: AppColors.getTextSecondaryColor(context),
+                        // Кнопка отправки
+                        Center(
+                          child: PrimaryButton(
+                            text: 'Отправить',
+                            onPressed: _submitFeedback,
+                            isLoading: _isLoading,
+                            horizontalPadding: 60,
                           ),
-                          hintText:
-                              'Опишите, что бы вы хотели улучшить или добавить в приложение...',
-                          hintStyle: TextStyle(
-                            color: AppColors.getTextPlaceholderColor(context),
-                          ),
-                          errorText: _error,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            borderSide: BorderSide(
-                              color: AppColors.getBorderColor(context),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            borderSide: BorderSide(
-                              color: AppColors.getBorderColor(context),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            borderSide: const BorderSide(
-                              color: AppColors.brandPrimary,
-                              width: 0.7,
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            borderSide: const BorderSide(
-                              color: AppColors.error,
-                            ),
-                          ),
-                          filled: true,
-                          fillColor: AppColors.getSurfaceColor(context),
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Введите ваше предложение';
-                          }
-                          if (value.trim().length < 10) {
-                            return 'Минимум 10 символов';
-                          }
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      // Кнопка отправки
-                      Center(
-                        child: PrimaryButton(
-                          text: 'Отправить',
-                          onPressed: _submitFeedback,
-                          isLoading: _isLoading,
-                          horizontalPadding: 60,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
           ),
         ),
       ),

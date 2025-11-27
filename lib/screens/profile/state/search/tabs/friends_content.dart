@@ -1,10 +1,12 @@
+import 'dart:developer';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../../theme/app_theme.dart';
-import '../../../../../widgets/primary_button.dart';
 import '../../../../../providers/search/friends_search_provider.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/widgets/primary_button.dart';
 
 /// Контент вкладки «Друзья»
 /// Переключатели уже в родительском экране. Здесь — секция и «табличный» блок.
@@ -64,39 +66,7 @@ class SearchFriendsContent extends ConsumerWidget {
               );
             }
 
-            return SliverToBoxAdapter(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.getSurfaceColor(context),
-                  border: Border(
-                    top: BorderSide(
-                      color: AppColors.getBorderColor(context),
-                      width: 0.5,
-                    ),
-                    bottom: BorderSide(
-                      color: AppColors.getBorderColor(context),
-                      width: 0.5,
-                    ),
-                  ),
-                ),
-                child: Column(
-                  children: List.generate(friends.length, (i) {
-                    final friend = friends[i];
-                    return Column(
-                      children: [
-                        _FriendRow(friend: friend),
-                        if (i != friends.length - 1)
-                          Divider(
-                            height: 1,
-                            thickness: 0.5,
-                            color: AppColors.getDividerColor(context),
-                          ),
-                      ],
-                    );
-                  }),
-                ),
-              ),
-            );
+            return _FriendsListSliver(friends: friends);
           },
           loading: () => const SliverToBoxAdapter(
             child: Padding(
@@ -106,8 +76,8 @@ class SearchFriendsContent extends ConsumerWidget {
           ),
           error: (error, stack) {
             // Логируем ошибку для отладки
-            debugPrint('❌ Ошибка загрузки друзей: $error');
-            debugPrint('Stack trace: $stack');
+            log('❌ Ошибка загрузки друзей: $error');
+            log('Stack trace: $stack');
 
             return SliverToBoxAdapter(
               child: Padding(
@@ -122,24 +92,28 @@ class SearchFriendsContent extends ConsumerWidget {
                         color: AppColors.getTextSecondaryColor(context),
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        'Ошибка загрузки',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.getTextPrimaryColor(context),
+                      SelectableText.rich(
+                        TextSpan(
+                          text: 'Ошибка загрузки\n',
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.error,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: error.toString(),
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        error.toString(),
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 13,
-                          color: AppColors.getTextSecondaryColor(context),
-                        ),
                       ),
                     ],
                   ),
@@ -238,7 +212,7 @@ class _FriendRowState extends ConsumerState<_FriendRow> {
         _localIsSubscribed = currentStatus;
       });
 
-      debugPrint('❌ Ошибка подписки/отписки: $e');
+      log('❌ Ошибка подписки/отписки: $e');
 
       // Можно показать сообщение об ошибке пользователю
       if (mounted) {}
@@ -349,6 +323,61 @@ class _SectionTitle extends StatelessWidget {
           fontWeight: FontWeight.w500,
           color: AppColors.getTextPrimaryColor(context),
         ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────── Список друзей в виде Sliver ────────────────────────────
+//
+//  Используем SliverList вместо Column, чтобы не держать в памяти весь список сразу.
+//  Это снижает вероятность jank при большом числе элементов благодаря ленивой подгрузке.
+class _FriendsListSliver extends StatelessWidget {
+  final List<FriendUser> friends;
+  const _FriendsListSliver({required this.friends});
+
+  @override
+  Widget build(BuildContext context) {
+    if (friends.isEmpty) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+
+    final borderColor = AppColors.getBorderColor(context);
+    final dividerColor = AppColors.getDividerColor(context);
+    final surfaceColor = AppColors.getSurfaceColor(context);
+    final totalItems = friends.length * 2 - 1;
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          // ── Чётные индексы содержат элементы списка, нечётные — разделители
+          if (index.isOdd) {
+            return Divider(height: 1, thickness: 0.5, color: dividerColor);
+          }
+
+          final friendIndex = index ~/ 2;
+          final friend = friends[friendIndex];
+          final isFirst = friendIndex == 0;
+          final isLast = friendIndex == friends.length - 1;
+
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              color: surfaceColor,
+              border: Border(
+                top: isFirst
+                    ? BorderSide(color: borderColor, width: 0.5)
+                    : BorderSide.none,
+                bottom: isLast
+                    ? BorderSide(color: borderColor, width: 0.5)
+                    : BorderSide.none,
+              ),
+            ),
+            child: _FriendRow(friend: friend),
+          );
+        },
+        childCount: totalItems,
+        addAutomaticKeepAlives: false,
+        addRepaintBoundaries: true,
       ),
     );
   }

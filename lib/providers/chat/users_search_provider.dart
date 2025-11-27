@@ -4,8 +4,8 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../models/chat_user.dart';
-import '../../service/api_service.dart';
+import '../../core/models/chat_user.dart';
+import '../../core/services/api_service.dart';
 import '../services/api_provider.dart';
 
 /// Состояние поиска пользователей
@@ -46,10 +46,9 @@ class UsersSearchNotifier extends StateNotifier<UsersSearchState> {
   final ApiService _api;
   final int limit = 25;
 
-  UsersSearchNotifier({
-    required ApiService api,
-  })  : _api = api,
-        super(const UsersSearchState());
+  UsersSearchNotifier({required ApiService api})
+    : _api = api,
+      super(const UsersSearchState());
 
   /// Загрузка подписчиков (начальный список)
   Future<void> loadSubscribedUsers() async {
@@ -60,10 +59,7 @@ class UsersSearchNotifier extends StateNotifier<UsersSearchState> {
     try {
       final data = await _api.get(
         '/get_subscribed_users.php',
-        queryParams: {
-          'offset': '0',
-          'limit': limit.toString(),
-        },
+        queryParams: {'offset': '0', 'limit': limit.toString()},
       );
 
       final List rawList = data['users'] as List? ?? const [];
@@ -79,10 +75,7 @@ class UsersSearchNotifier extends StateNotifier<UsersSearchState> {
         currentOffset: users.length,
       );
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -114,10 +107,7 @@ class UsersSearchNotifier extends StateNotifier<UsersSearchState> {
         currentOffset: state.currentOffset + newUsers.length,
       );
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -156,10 +146,7 @@ class UsersSearchNotifier extends StateNotifier<UsersSearchState> {
         currentOffset: users.length,
       );
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -192,10 +179,7 @@ class UsersSearchNotifier extends StateNotifier<UsersSearchState> {
         currentOffset: state.currentOffset + newUsers.length,
       );
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -208,10 +192,7 @@ class UsersSearchNotifier extends StateNotifier<UsersSearchState> {
 /// Provider для поиска пользователей
 final usersSearchProvider =
     StateNotifierProvider<UsersSearchNotifier, UsersSearchState>((ref) {
-  final api = ref.watch(apiServiceProvider);
+      final api = ref.watch(apiServiceProvider);
 
-  return UsersSearchNotifier(
-    api: api,
-  );
-});
-
+      return UsersSearchNotifier(api: api);
+    });

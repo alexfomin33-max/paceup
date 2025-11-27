@@ -5,7 +5,7 @@
 // - Parses points from ["LatLng(lat, lng)"] strings
 // - Network helper with utf8 decode, timeout, error handling
 
-import '../service/api_service.dart';
+import '../services/api_service.dart';
 
 // ======== MODELS ========
 
@@ -81,7 +81,9 @@ class Activity {
       dateStart: _parseSqlDateTime(j['date_start']?.toString()),
       dateEnd: _parseSqlDateTime(j['date_end']?.toString()),
       lentaId: _asInt(j['lenta_id']),
-      lentaDate: _parseSqlDateTime(j['lenta_date']?.toString()), // ✅ Дата из таблицы lenta
+      lentaDate: _parseSqlDateTime(
+        j['lenta_date']?.toString(),
+      ), // ✅ Дата из таблицы lenta
       userId: _asInt(j['user_id']),
       userName: j['user_name']?.toString() ?? '',
       userAvatar: j['user_avatar']?.toString() ?? '',
@@ -161,10 +163,7 @@ class Activity {
   }
 
   /// Создаёт копию с обновлёнными медиафайлами
-  Activity copyWithMedia({
-    List<String>? images,
-    List<String>? videos,
-  }) {
+  Activity copyWithMedia({List<String>? images, List<String>? videos}) {
     return Activity(
       id: id,
       type: type,
@@ -365,10 +364,10 @@ DateTime? _parseSqlDateTime(String? s) {
   // - "YYYY-MM-DD HH:mm:ss" (SQL формат)
   // - "YYYY-MM-DDTHH:mm:ss" или "YYYY-MM-DDTHH:mm:ss.000" (ISO формат)
   if (s == null || s.isEmpty) return null;
-  
+
   // Убираем лишние пробелы и нормализуем строку
   String normalized = s.trim();
-  
+
   // Убираем миллисекунды если есть (формат .000 или .123456)
   if (normalized.contains('.')) {
     final dotIndex = normalized.indexOf('.');
@@ -379,15 +378,16 @@ DateTime? _parseSqlDateTime(String? s) {
       final endIndex = afterDot.indexOf(RegExp(r'[^0-9]'));
       if (endIndex > 0) {
         // Убираем миллисекунды
-        normalized = normalized.substring(0, dotIndex) + 
-                    normalized.substring(dotIndex + 1 + endIndex);
+        normalized =
+            normalized.substring(0, dotIndex) +
+            normalized.substring(dotIndex + 1 + endIndex);
       } else {
         // Миллисекунды в конце строки - просто убираем их
         normalized = normalized.substring(0, dotIndex);
       }
     }
   }
-  
+
   try {
     // Если уже содержит 'T' - это ISO формат
     if (normalized.contains('T')) {

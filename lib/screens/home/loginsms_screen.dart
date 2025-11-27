@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_shell.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../providers/services/api_provider.dart';
-import '../../service/api_service.dart' show ApiException;
-import '../../widgets/auth/sms_code_input.dart';
-import '../../widgets/auth/resend_code_button.dart';
+import '../../core/services/api_service.dart' show ApiException;
+import '../../core/widgets/auth/sms_code_input.dart';
+import '../../core/widgets/auth/resend_code_button.dart';
 
 //import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 

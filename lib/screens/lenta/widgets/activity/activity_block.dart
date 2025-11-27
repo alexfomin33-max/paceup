@@ -10,13 +10,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
 // Токены/модели
-import '../../../../theme/app_theme.dart';
-import '../../../../models/activity_lenta.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/models/activity_lenta.dart';
 
 // Подвиджеты
 import 'header/activity_header.dart';
 import 'stats/stats_row.dart';
-import '../../../../../widgets/activity_route_carousel.dart';
+import '../../../../../core/widgets/activity_route_carousel.dart';
 import 'equipment/equipment_chip.dart';
 import 'actions/activity_actions_row.dart';
 
@@ -27,14 +27,14 @@ import '../../activity/edit_activity_screen.dart';
 
 // Провайдеры
 import '../../../../providers/lenta/lenta_provider.dart';
-import '../../../../service/api_service.dart';
-import '../../../../service/auth_service.dart';
-import '../../../../utils/local_image_compressor.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_service.dart';
+import '../../../../core/utils/local_image_compressor.dart';
 
 // Меню с тремя точками
-import '../../../../widgets/more_menu_overlay.dart';
-import '../../../../widgets/transparent_route.dart';
-import '../../../../widgets/expandable_text.dart';
+import '../../../../core/widgets/more_menu_overlay.dart';
+import '../../../../core/widgets/transparent_route.dart';
+import '../../../../core/widgets/expandable_text.dart';
 
 /// Главный виджет «тренировка».
 
@@ -72,7 +72,10 @@ class ActivityBlock extends ConsumerWidget {
         color: AppColors.getSurfaceColor(context),
         border: Border(
           top: BorderSide(width: 0.5, color: AppColors.getBorderColor(context)),
-          bottom: BorderSide(width: 0.5, color: AppColors.getBorderColor(context)),
+          bottom: BorderSide(
+            width: 0.5,
+            color: AppColors.getBorderColor(context),
+          ),
         ),
       ),
       child: Column(
@@ -91,7 +94,7 @@ class ActivityBlock extends ConsumerWidget {
 
               // ⬇️ если в модели Activity есть готовая строка, как в Посте — используем её
               dateTextOverride: updatedActivity.postDateText,
-              
+
               // Нижний слот — метрики
               bottom: StatsRow(
                 distanceMeters: stats?.distance,
@@ -216,7 +219,8 @@ class ActivityBlock extends ConsumerWidget {
                   .map((c) => LatLng(c.lat, c.lng))
                   .toList(),
               imageUrls: updatedActivity.mediaImages,
-              height: 240, // Увеличена высота карты для лучшей видимости маршрута
+              height:
+                  240, // Увеличена высота карты для лучшей видимости маршрута
             ),
 
           // ────────────────────────────────────────────────────────────────
@@ -252,64 +256,64 @@ class ActivityBlock extends ConsumerWidget {
 
                 // Открываем комментарии — поведение как было
                 onOpenComments: () {
+                  // ────────────────────────────────────────────────────────────────
+                  // 🔹 Используем showModalBottomSheet с useRootNavigator для перекрытия нижнего меню
+                  // ────────────────────────────────────────────────────────────────
+                  showModalBottomSheet(
+                    context: context,
+                    useRootNavigator: true,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) {
+                      // ────────────────────────────────────────────────────────────────
+                      // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: передаем lentaId и callback
+                      // ────────────────────────────────────────────────────────────────
+                      final lentaState = ref.read(lentaProvider(currentUserId));
+                      final activityItem = lentaState.items.firstWhere(
+                        (a) => a.lentaId == updatedActivity.lentaId,
+                        orElse: () =>
+                            updatedActivity, // fallback на обновленную activity
+                      );
+
+                      return CommentsBottomSheet(
+                        itemType: 'activity',
+                        itemId: activityItem.id,
+                        currentUserId: currentUserId,
+                        lentaId: activityItem.lentaId,
+                        // Оптимистичное обновление: увеличиваем счетчик на 1
+                        onCommentAdded: () {
+                          // Получаем актуальный счетчик из провайдера перед обновлением
+                          final currentState = ref.read(
+                            lentaProvider(currentUserId),
+                          );
+                          final latestActivity = currentState.items.firstWhere(
+                            (a) => a.lentaId == activityItem.lentaId,
+                            orElse: () => activityItem, // fallback
+                          );
+
+                          ref
+                              .read(lentaProvider(currentUserId).notifier)
+                              .updateComments(
+                                activityItem.lentaId,
+                                latestActivity.comments + 1,
+                              );
+                        },
+                      );
+                    },
+                  );
+                },
+
+                // «Вместе» — пушим экран совместных активностей
+                onOpenTogether: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(builder: (_) => const TogetherScreen()),
+                  );
+                },
+
                 // ────────────────────────────────────────────────────────────────
-                // 🔹 Используем showModalBottomSheet с useRootNavigator для перекрытия нижнего меню
+                // Скрываем правые иконки для тренировок, добавленных вручную
                 // ────────────────────────────────────────────────────────────────
-                showModalBottomSheet(
-                  context: context,
-                  useRootNavigator: true,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) {
-                    // ────────────────────────────────────────────────────────────────
-                    // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: передаем lentaId и callback
-                    // ────────────────────────────────────────────────────────────────
-                    final lentaState = ref.read(lentaProvider(currentUserId));
-                    final activityItem = lentaState.items.firstWhere(
-                      (a) => a.lentaId == updatedActivity.lentaId,
-                      orElse: () =>
-                          updatedActivity, // fallback на обновленную activity
-                    );
-
-                    return CommentsBottomSheet(
-                      itemType: 'activity',
-                      itemId: activityItem.id,
-                      currentUserId: currentUserId,
-                      lentaId: activityItem.lentaId,
-                      // Оптимистичное обновление: увеличиваем счетчик на 1
-                      onCommentAdded: () {
-                        // Получаем актуальный счетчик из провайдера перед обновлением
-                        final currentState = ref.read(
-                          lentaProvider(currentUserId),
-                        );
-                        final latestActivity = currentState.items.firstWhere(
-                          (a) => a.lentaId == activityItem.lentaId,
-                          orElse: () => activityItem, // fallback
-                        );
-
-                        ref
-                            .read(lentaProvider(currentUserId).notifier)
-                            .updateComments(
-                              activityItem.lentaId,
-                              latestActivity.comments + 1,
-                            );
-                      },
-                    );
-                  },
-                );
-              },
-
-              // «Вместе» — пушим экран совместных активностей
-              onOpenTogether: () {
-                Navigator.of(context).push(
-                  CupertinoPageRoute(builder: (_) => const TogetherScreen()),
-                );
-              },
-
-              // ────────────────────────────────────────────────────────────────
-              // Скрываем правые иконки для тренировок, добавленных вручную
-              // ────────────────────────────────────────────────────────────────
-              hideRightActions: updatedActivity.points.isEmpty,
+                hideRightActions: updatedActivity.points.isEmpty,
               ),
             ),
           ),
@@ -336,9 +340,9 @@ Future<void> _handleAddPhotos({
   required int lentaId,
   required int currentUserId,
 }) async {
-    final picker = ImagePicker();
-    final auth = AuthService();
-    final navigator = Navigator.of(context, rootNavigator: true);
+  final picker = ImagePicker();
+  final auth = AuthService();
+  final navigator = Navigator.of(context, rootNavigator: true);
   var loaderShown = false;
 
   void hideLoader() {

@@ -8,7 +8,7 @@ import 'screens/home/home_screen.dart';
 import 'screens/home/createacc_screen.dart';
 import 'screens/home/login_screen.dart';
 import 'screens/home/loginsms_screen.dart';
-import 'widgets/app_bottom_nav_shell.dart';
+import '../../core/widgets/app_bottom_nav_shell.dart';
 
 /// 🔹 Маршруты с нижней навигацией
 const bottomNavRoutes = ['/lenta'];

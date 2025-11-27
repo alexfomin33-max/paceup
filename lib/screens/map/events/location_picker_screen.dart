@@ -22,10 +22,10 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:http/http.dart' as http;
-import '../../../theme/app_theme.dart';
-import '../../../widgets/interactive_back_swipe.dart';
-import '../../../widgets/primary_button.dart';
-import '../../../config/app_config.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/interactive_back_swipe.dart';
+import '../../../core/widgets/primary_button.dart';
+import '../../../core/config/app_config.dart';
 
 // ────────────────────────── Результат выбора места ──────────────────────────
 /// Класс для передачи координат и адреса выбранного места
@@ -55,7 +55,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   PointAnnotationManager? _pointAnnotationManager;
 
   /// Контроллер flutter_map для macOS
-  final flutter_map.MapController _flutterMapController = flutter_map.MapController();
+  final flutter_map.MapController _flutterMapController =
+      flutter_map.MapController();
 
   /// Текущие выбранные координаты (обновляются при движении карты)
   LatLng _selectedLocation = const LatLng(56.129057, 40.406635);
@@ -363,11 +364,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       ..strokeWidth = 3;
 
     // Рисуем круг
-    canvas.drawCircle(
-      const Offset(size / 2, size / 2),
-      size / 2 - 1.5,
-      paint,
-    );
+    canvas.drawCircle(const Offset(size / 2, size / 2), size / 2 - 1.5, paint);
     canvas.drawCircle(
       const Offset(size / 2, size / 2),
       size / 2 - 1.5,
@@ -473,7 +470,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                 ),
                 children: [
                   flutter_map.TileLayer(
-                    urlTemplate: AppConfig.mapTilesUrl.replaceAll('{apiKey}', AppConfig.mapTilerApiKey),
+                    urlTemplate: AppConfig.mapTilesUrl.replaceAll(
+                      '{apiKey}',
+                      AppConfig.mapTilerApiKey,
+                    ),
                     userAgentPackageName: 'com.example.paceup',
                   ),
                   flutter_map.MarkerLayer(

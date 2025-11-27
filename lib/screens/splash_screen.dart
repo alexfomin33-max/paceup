@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../service/auth_service.dart';
-import '../theme/colors.dart';
+import '../core/services/auth_service.dart';
+import '../core/theme/app_theme.dart';
 
 /// 🔹 SplashScreen — стартовый экран приложения, отображается при запуске
 /// Используется для проверки авторизации пользователя и перенаправления

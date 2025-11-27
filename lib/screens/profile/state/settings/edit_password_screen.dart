@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../service/api_service.dart';
-import '../../../../../service/auth_service.dart';
-import '../../../../../theme/app_theme.dart';
-import '../../../../../widgets/app_bar.dart';
-import '../../../../../widgets/interactive_back_swipe.dart';
-import '../../../../../widgets/primary_button.dart';
+import '../../../../../core/services/api_service.dart';
+import '../../../../../core/services/auth_service.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/widgets/app_bar.dart';
+import '../../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../../core/widgets/primary_button.dart';
 
 /// Экран редактирования пароля
 class EditPasswordScreen extends ConsumerStatefulWidget {
@@ -252,7 +252,9 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
         labelStyle: AppTextStyles.h14w4Sec.copyWith(
           color: AppColors.getTextSecondaryColor(context),
         ),
-        floatingLabelStyle: TextStyle(color: AppColors.getTextSecondaryColor(context)),
+        floatingLabelStyle: TextStyle(
+          color: AppColors.getTextSecondaryColor(context),
+        ),
         floatingLabelBehavior: FloatingLabelBehavior.auto,
         alignLabelWithHint: true,
         errorText: errorText,

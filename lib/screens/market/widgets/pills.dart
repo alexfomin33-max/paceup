@@ -1,7 +1,7 @@
 // lib/widgets/pills.dart
 
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../../../../core/theme/app_theme.dart';
 
 /// Пилюля с дистанцией (фикс. ширина, background фон в светлой теме)
 class DistancePill extends StatelessWidget {

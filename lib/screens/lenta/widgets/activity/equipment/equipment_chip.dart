@@ -2,9 +2,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../../models/activity_lenta.dart' as al;
+import '../../../../../core/models/activity_lenta.dart' as al;
 import 'equipment_popup.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../../../../core/theme/app_theme.dart';
 
 /// Чип экипировки с якорным попапом (поведение как в дорефакторинговом Equipment).
 /// Важные детали пиксель-паритета:
@@ -15,14 +15,18 @@ import '../../../../../theme/app_theme.dart';
 class EquipmentChip extends StatefulWidget {
   final List<al.Equipment> items;
   final int userId; // ID пользователя для загрузки всего эквипа
-  final String activityType; // тип активности (run, bike) для определения типа эквипа
+  final String
+  activityType; // тип активности (run, bike) для определения типа эквипа
   final int activityId; // ID активности для обновления эквипа
   final double activityDistance; // дистанция активности в километрах
   final VoidCallback? onEquipmentChanged; // callback после замены эквипа
   final bool showMenuButton; // показывать ли кнопку меню с тремя точками
-  final Function(al.Equipment)? onEquipmentSelected; // callback для выбора экипировки (для экрана добавления)
-  final Color? backgroundColor; // опциональный цвет фона плашки (для переопределения на конкретных экранах)
-  final Color? menuButtonColor; // опциональный цвет фона кнопки меню (для переопределения на конкретных экранах)
+  final Function(al.Equipment)?
+  onEquipmentSelected; // callback для выбора экипировки (для экрана добавления)
+  final Color?
+  backgroundColor; // опциональный цвет фона плашки (для переопределения на конкретных экранах)
+  final Color?
+  menuButtonColor; // опциональный цвет фона кнопки меню (для переопределения на конкретных экранах)
 
   const EquipmentChip({
     super.key,
@@ -32,7 +36,8 @@ class EquipmentChip extends StatefulWidget {
     required this.activityId,
     this.activityDistance = 0.0,
     this.onEquipmentChanged,
-    this.showMenuButton = true, // по умолчанию показываем кнопку для обратной совместимости
+    this.showMenuButton =
+        true, // по умолчанию показываем кнопку для обратной совместимости
     this.onEquipmentSelected,
     this.backgroundColor,
     this.menuButtonColor,
@@ -65,9 +70,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
 
     // Формируем полное название: бренд + название обуви
     // Если бренд есть — показываем "Бренд Название", иначе только название
-    final String displayName = brand.isNotEmpty 
-        ? '$brand $name'
-        : name;
+    final String displayName = brand.isNotEmpty ? '$brand $name' : name;
 
     // Если имя пустое, не показываем чип
     if (name.isEmpty) {
@@ -86,7 +89,8 @@ class _EquipmentChipState extends State<EquipmentChip> {
           // В темной теме используем darkSurfaceMuted (светлее darkSurface карточки)
           // В светлой теме оставляем getBackgroundColor (как было)
           // Если передан backgroundColor, используем его (для переопределения на конкретных экранах)
-          color: widget.backgroundColor ??
+          color:
+              widget.backgroundColor ??
               (Theme.of(context).brightness == Brightness.dark
                   ? AppColors.darkSurfaceMuted
                   : AppColors.getBackgroundColor(context)),
@@ -132,7 +136,9 @@ class _EquipmentChipState extends State<EquipmentChip> {
                                 // ────────────────────────────────────────────────────────────────
                                 // 🌓 ТЕМНАЯ ТЕМА: светлый фон placeholder
                                 // ────────────────────────────────────────────────────────────────
-                                color: Theme.of(context).brightness == Brightness.dark
+                                color:
+                                    Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? AppColors.surface
                                     : AppColors.getSurfaceColor(context),
                               ),
@@ -143,7 +149,9 @@ class _EquipmentChipState extends State<EquipmentChip> {
                                   // ────────────────────────────────────────────────────────────────
                                   // 🌓 ТЕМНАЯ ТЕМА: светлый фон error widget
                                   // ────────────────────────────────────────────────────────────────
-                                  color: Theme.of(context).brightness == Brightness.dark
+                                  color:
+                                      Theme.of(context).brightness ==
+                                          Brightness.dark
                                       ? AppColors.surface
                                       : AppColors.getSurfaceColor(context),
                                   shape: BoxShape.circle,
@@ -151,7 +159,9 @@ class _EquipmentChipState extends State<EquipmentChip> {
                                 child: Icon(
                                   CupertinoIcons.sportscourt,
                                   size: 24,
-                                  color: AppColors.getIconSecondaryColor(context),
+                                  color: AppColors.getIconSecondaryColor(
+                                    context,
+                                  ),
                                 ),
                               ),
                             );
@@ -164,7 +174,8 @@ class _EquipmentChipState extends State<EquipmentChip> {
                             // ────────────────────────────────────────────────────────────────
                             // 🌓 ТЕМНАЯ ТЕМА: светлый фон заглушки
                             // ────────────────────────────────────────────────────────────────
-                            color: Theme.of(context).brightness == Brightness.dark
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
                                 ? AppColors.surface
                                 : AppColors.getSurfaceColor(context),
                             shape: BoxShape.circle,
@@ -185,7 +196,9 @@ class _EquipmentChipState extends State<EquipmentChip> {
             Positioned(
               left: 60,
               top: 7,
-              right: widget.showMenuButton ? 60 : 8, // резервируем место только если кнопка видна
+              right: widget.showMenuButton
+                  ? 60
+                  : 8, // резервируем место только если кнопка видна
               child: Text.rich(
                 TextSpan(
                   children: [
@@ -246,7 +259,8 @@ class _EquipmentChipState extends State<EquipmentChip> {
                       onEquipmentSelected: widget.onEquipmentSelected,
                     ),
                     child: Container(
-                      key: _menuKey, // ← важный ключ для позиционирования попапа
+                      key:
+                          _menuKey, // ← важный ключ для позиционирования попапа
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
@@ -256,7 +270,8 @@ class _EquipmentChipState extends State<EquipmentChip> {
                         // В темной теме используем darkSurface (как карточка тренировки)
                         // В светлой теме оставляем getSurfaceColor (как было)
                         // Если передан menuButtonColor, используем его (для переопределения на конкретных экранах)
-                        color: widget.menuButtonColor ??
+                        color:
+                            widget.menuButtonColor ??
                             (Theme.of(context).brightness == Brightness.dark
                                 ? AppColors.darkSurface
                                 : AppColors.getSurfaceColor(context)),

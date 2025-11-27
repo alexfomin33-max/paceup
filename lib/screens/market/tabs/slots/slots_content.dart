@@ -4,8 +4,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_theme.dart';
-import '../../../../models/market_models.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/models/market_models.dart';
 import 'widgets/market_slot_card.dart';
 
 class SlotsContent extends StatefulWidget {

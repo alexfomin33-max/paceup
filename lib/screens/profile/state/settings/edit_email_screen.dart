@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../service/api_service.dart';
-import '../../../../../service/auth_service.dart';
-import '../../../../../theme/app_theme.dart';
-import '../../../../../widgets/app_bar.dart';
-import '../../../../../widgets/interactive_back_swipe.dart';
-import '../../../../../widgets/primary_button.dart';
+import '../../../../../core/services/api_service.dart';
+import '../../../../../core/services/auth_service.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/widgets/app_bar.dart';
+import '../../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../../core/widgets/primary_button.dart';
 
 /// Экран редактирования email
 class EditEmailScreen extends ConsumerStatefulWidget {
@@ -118,21 +118,29 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
                       floatingLabelBehavior: FloatingLabelBehavior.auto,
                       alignLabelWithHint: true,
                       hintText: 'example@mail.ru',
-                      hintStyle: TextStyle(color: AppColors.getTextPlaceholderColor(context)),
+                      hintStyle: TextStyle(
+                        color: AppColors.getTextPlaceholderColor(context),
+                      ),
                       errorText: _error,
                       filled: true,
                       fillColor: AppColors.getBackgroundColor(context),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+                        borderSide: BorderSide(
+                          color: AppColors.getBorderColor(context),
+                        ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+                        borderSide: BorderSide(
+                          color: AppColors.getBorderColor(context),
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+                        borderSide: BorderSide(
+                          color: AppColors.getBorderColor(context),
+                        ),
                       ),
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.sm),

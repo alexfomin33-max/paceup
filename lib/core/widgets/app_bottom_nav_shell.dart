@@ -2,12 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart';
 
-import '../screens/lenta/lenta_screen.dart';
-import '../screens/map/map_screen.dart';
-import '../screens/market/market_screen.dart';
-import '../screens/tasks/tasks_screen.dart';
-import '../screens/profile/profile_screen.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../screens/lenta/lenta_screen.dart';
+import '../../screens/map/map_screen.dart';
+import '../../screens/market/market_screen.dart';
+import '../../screens/tasks/tasks_screen.dart';
+import '../../screens/profile/profile_screen.dart';
+import '../theme/app_theme.dart';
 
 class AppBottomNavShell extends StatefulWidget {
   final int userId;
@@ -117,7 +117,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
           color: AppColors.getSurfaceColor(context),
           border: Border(
             top: BorderSide(
-              color: AppColors.getBorderColor(context), 
+              color: AppColors.getBorderColor(context),
               width: 0.5,
             ),
           ),

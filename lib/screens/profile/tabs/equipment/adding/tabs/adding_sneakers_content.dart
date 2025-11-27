@@ -2,11 +2,11 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../../../theme/app_theme.dart';
-import '../../../../../../utils/local_image_compressor.dart';
-import '../../../../../../widgets/primary_button.dart';
-import '../../../../../../service/api_service.dart';
-import '../../../../../../service/auth_service.dart';
+import '../../../../../../core/theme/app_theme.dart';
+import '../../../../../../core/utils/local_image_compressor.dart';
+import '../../../../../../core/widgets/primary_button.dart';
+import '../../../../../../core/services/api_service.dart';
+import '../../../../../../core/services/auth_service.dart';
 import '../widgets/autocomplete_text_field.dart';
 
 /// Контент для сегмента «Кроссовки»

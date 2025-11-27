@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/app_bottom_nav_shell.dart';
+import '../core/widgets/app_bottom_nav_shell.dart';
 
 class HomeShell extends StatefulWidget {
   final int userId;

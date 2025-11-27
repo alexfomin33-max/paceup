@@ -3,16 +3,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../theme/app_theme.dart';
-import '../../../service/api_service.dart';
-import '../../../service/auth_service.dart';
-import '../../../widgets/interactive_back_swipe.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/services/api_service.dart';
+import '../../../core/services/auth_service.dart';
+import '../../../core/widgets/interactive_back_swipe.dart';
 import 'coffeerun_vld/tabs/photo_content.dart';
 import 'coffeerun_vld/tabs/members_content.dart';
 import 'coffeerun_vld/tabs/stats_content.dart';
 import 'coffeerun_vld/tabs/glory_content.dart';
 import 'edit_club_screen.dart';
-import '../../../widgets/transparent_route.dart';
+import '../../../core/widgets/transparent_route.dart';
 import '../../../providers/profile/user_clubs_provider.dart';
 
 /// Детальная страница клуба (на основе event_detail_screen.dart)

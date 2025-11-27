@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../../../../core/theme/app_theme.dart';
 import '../models/main_tab_data.dart';
 
 class GearSectionSliver extends StatelessWidget {
@@ -74,7 +74,7 @@ class _SectionTitle extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(
-          text, 
+          text,
           style: AppTextStyles.h15w6.copyWith(
             color: Theme.of(context).brightness == Brightness.dark
                 ? AppColors.darkTextSecondary
@@ -276,7 +276,7 @@ class _GearCard extends StatelessWidget {
           color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: AppColors.getBorderColor(context), 
+            color: AppColors.getBorderColor(context),
             width: 0.5,
           ),
           boxShadow: [
@@ -372,12 +372,12 @@ class _InlineStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     // Разделяем значение на числовую часть и единицы измерения
     // Паттерны: "582 км", "4:18 /км", "35,7 км/ч"
     String numberPart = value;
     String unitPart = '';
-    
+
     // Проверяем наличие единиц измерения в конце строки
     if (value.endsWith(' км')) {
       numberPart = value.substring(0, value.length - 3);
@@ -389,7 +389,7 @@ class _InlineStat extends StatelessWidget {
       numberPart = value.substring(0, value.length - 5);
       unitPart = ' км/ч';
     }
-    
+
     return RichText(
       text: TextSpan(
         style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
@@ -397,8 +397,8 @@ class _InlineStat extends StatelessWidget {
           TextSpan(
             text: '$label ',
             style: TextStyle(
-              color: isDark 
-                  ? AppColors.darkTextSecondary 
+              color: isDark
+                  ? AppColors.darkTextSecondary
                   : AppColors.textSecondary,
             ),
           ),
@@ -414,8 +414,8 @@ class _InlineStat extends StatelessWidget {
               text: unitPart,
               style: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: isDark 
-                    ? AppColors.darkTextSecondary 
+                color: isDark
+                    ? AppColors.darkTextSecondary
                     : AppColors.textSecondary,
               ),
             ),

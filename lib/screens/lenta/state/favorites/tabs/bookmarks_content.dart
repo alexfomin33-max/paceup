@@ -2,11 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../../theme/app_theme.dart';
-import '../../../../../models/event.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/models/event.dart';
 import '../../../../../providers/events/bookmarked_events_provider.dart';
 import '../../../../../providers/services/auth_provider.dart';
-import '../../../../../widgets/transparent_route.dart';
+import '../../../../../core/widgets/transparent_route.dart';
 import '../../../../map/events/event_detail_screen.dart';
 
 /// Вкладка «Закладки» — карточный список с промежутками (как в Маршрутах)

@@ -4,10 +4,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:health/health.dart';
 
-import '../../../../../theme/app_theme.dart';
-import '../../../../../widgets/app_bar.dart'; // PaceAppBar
-import '../../../../../widgets/interactive_back_swipe.dart';
-import '../../../../../widgets/primary_button.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/widgets/app_bar.dart'; // PaceAppBar
+import '../../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../../core/widgets/primary_button.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  ЭКРАН «ПОДКЛЮЧЕННЫЕ ТРЕКЕРЫ»

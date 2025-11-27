@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../service/api_service.dart';
-import '../../../../../service/auth_service.dart';
-import '../../../../../theme/app_theme.dart';
-import '../../../../../widgets/app_bar.dart';
-import '../../../../../widgets/interactive_back_swipe.dart';
-import '../../../../../widgets/primary_button.dart';
+import '../../../../../core/services/api_service.dart';
+import '../../../../../core/services/auth_service.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/widgets/app_bar.dart';
+import '../../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../../core/widgets/primary_button.dart';
 
 /// Экран настроек Push-уведомлений
 class PushNotificationsScreen extends ConsumerStatefulWidget {
@@ -21,7 +21,7 @@ class _PushNotificationsScreenState
     extends ConsumerState<PushNotificationsScreen> {
   bool _isLoading = true;
   String? _error;
-  
+
   // Настройки уведомлений
   bool _newFollowers = true;
   bool _newLikes = true;
@@ -88,10 +88,7 @@ class _PushNotificationsScreenState
       final api = ApiService();
       await api.post(
         '/update_push_settings.php',
-        body: {
-          'user_id': userId,
-          key: value ? 1 : 0,
-        },
+        body: {'user_id': userId, key: value ? 1 : 0},
       );
     } catch (e) {
       // В случае ошибки откатываем значение
@@ -139,151 +136,151 @@ class _PushNotificationsScreenState
                   ),
                 )
               : _error != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              CupertinoIcons.exclamationmark_triangle,
-                              size: 48,
-                              color: AppColors.error,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _error!,
-                              textAlign: TextAlign.center,
-                              style: AppTextStyles.h14w4.copyWith(
-                                color: AppColors.error,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            PrimaryButton(
-                              text: 'Повторить',
-                              onPressed: _loadSettings,
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Социальные уведомления
-                        _NotificationSection(
-                          title: 'Социальные',
-                          children: [
-                            _NotificationTile(
-                              icon: CupertinoIcons.person_add,
-                              iconColor: AppColors.brandPrimary,
-                              title: 'Новые подписчики',
-                              value: _newFollowers,
-                              onChanged: (value) {
-                                setState(() {
-                                  _newFollowers = value;
-                                });
-                                _saveSetting('new_followers', value);
-                              },
-                            ),
-                            const _Divider(),
-                            _NotificationTile(
-                              icon: CupertinoIcons.heart,
-                              iconColor: AppColors.error,
-                              title: 'Новые лайки',
-                              value: _newLikes,
-                              onChanged: (value) {
-                                setState(() {
-                                  _newLikes = value;
-                                });
-                                _saveSetting('new_likes', value);
-                              },
-                            ),
-                            const _Divider(),
-                            _NotificationTile(
-                              icon: CupertinoIcons.chat_bubble,
-                              iconColor: AppColors.brandPrimary,
-                              title: 'Новые комментарии',
-                              value: _newComments,
-                              onChanged: (value) {
-                                setState(() {
-                                  _newComments = value;
-                                });
-                                _saveSetting('new_comments', value);
-                              },
-                            ),
-                            const _Divider(),
-                            _NotificationTile(
-                              icon: CupertinoIcons.mail,
-                              iconColor: AppColors.brandPrimary,
-                              title: 'Новые сообщения',
-                              value: _newMessages,
-                              onChanged: (value) {
-                                setState(() {
-                                  _newMessages = value;
-                                });
-                                _saveSetting('new_messages', value);
-                              },
-                            ),
-                          ],
+                        const Icon(
+                          CupertinoIcons.exclamationmark_triangle,
+                          size: 48,
+                          color: AppColors.error,
                         ),
-
-                        const SizedBox(height: 12),
-
-                        // События и достижения
-                        _NotificationSection(
-                          title: 'События и достижения',
-                          children: [
-                            _NotificationTile(
-                              icon: CupertinoIcons.calendar,
-                              iconColor: AppColors.brandPrimary,
-                              title: 'Напоминания о событиях',
-                              value: _eventReminders,
-                              onChanged: (value) {
-                                setState(() {
-                                  _eventReminders = value;
-                                });
-                                _saveSetting('event_reminders', value);
-                              },
-                            ),
-                            const _Divider(),
-                            _NotificationTile(
-                              icon: CupertinoIcons.star,
-                              iconColor: AppColors.warning,
-                              title: 'Достижения',
-                              value: _achievements,
-                              onChanged: (value) {
-                                setState(() {
-                                  _achievements = value;
-                                });
-                                _saveSetting('achievements', value);
-                              },
-                            ),
-                          ],
+                        const SizedBox(height: 16),
+                        Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.h14w4.copyWith(
+                            color: AppColors.error,
+                          ),
                         ),
-
-                        const SizedBox(height: 12),
-
-                        // Статистика
-                        _NotificationSection(
-                          title: 'Статистика',
-                          children: [
-                            _NotificationTile(
-                              icon: CupertinoIcons.chart_bar,
-                              iconColor: AppColors.brandPrimary,
-                              title: 'Еженедельная статистика',
-                              value: _weeklyStats,
-                              onChanged: (value) {
-                                setState(() {
-                                  _weeklyStats = value;
-                                });
-                                _saveSetting('weekly_stats', value);
-                              },
-                            ),
-                          ],
+                        const SizedBox(height: 24),
+                        PrimaryButton(
+                          text: 'Повторить',
+                          onPressed: _loadSettings,
                         ),
                       ],
                     ),
+                  ),
+                )
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  children: [
+                    // Социальные уведомления
+                    _NotificationSection(
+                      title: 'Социальные',
+                      children: [
+                        _NotificationTile(
+                          icon: CupertinoIcons.person_add,
+                          iconColor: AppColors.brandPrimary,
+                          title: 'Новые подписчики',
+                          value: _newFollowers,
+                          onChanged: (value) {
+                            setState(() {
+                              _newFollowers = value;
+                            });
+                            _saveSetting('new_followers', value);
+                          },
+                        ),
+                        const _Divider(),
+                        _NotificationTile(
+                          icon: CupertinoIcons.heart,
+                          iconColor: AppColors.error,
+                          title: 'Новые лайки',
+                          value: _newLikes,
+                          onChanged: (value) {
+                            setState(() {
+                              _newLikes = value;
+                            });
+                            _saveSetting('new_likes', value);
+                          },
+                        ),
+                        const _Divider(),
+                        _NotificationTile(
+                          icon: CupertinoIcons.chat_bubble,
+                          iconColor: AppColors.brandPrimary,
+                          title: 'Новые комментарии',
+                          value: _newComments,
+                          onChanged: (value) {
+                            setState(() {
+                              _newComments = value;
+                            });
+                            _saveSetting('new_comments', value);
+                          },
+                        ),
+                        const _Divider(),
+                        _NotificationTile(
+                          icon: CupertinoIcons.mail,
+                          iconColor: AppColors.brandPrimary,
+                          title: 'Новые сообщения',
+                          value: _newMessages,
+                          onChanged: (value) {
+                            setState(() {
+                              _newMessages = value;
+                            });
+                            _saveSetting('new_messages', value);
+                          },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // События и достижения
+                    _NotificationSection(
+                      title: 'События и достижения',
+                      children: [
+                        _NotificationTile(
+                          icon: CupertinoIcons.calendar,
+                          iconColor: AppColors.brandPrimary,
+                          title: 'Напоминания о событиях',
+                          value: _eventReminders,
+                          onChanged: (value) {
+                            setState(() {
+                              _eventReminders = value;
+                            });
+                            _saveSetting('event_reminders', value);
+                          },
+                        ),
+                        const _Divider(),
+                        _NotificationTile(
+                          icon: CupertinoIcons.star,
+                          iconColor: AppColors.warning,
+                          title: 'Достижения',
+                          value: _achievements,
+                          onChanged: (value) {
+                            setState(() {
+                              _achievements = value;
+                            });
+                            _saveSetting('achievements', value);
+                          },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Статистика
+                    _NotificationSection(
+                      title: 'Статистика',
+                      children: [
+                        _NotificationTile(
+                          icon: CupertinoIcons.chart_bar,
+                          iconColor: AppColors.brandPrimary,
+                          title: 'Еженедельная статистика',
+                          value: _weeklyStats,
+                          onChanged: (value) {
+                            setState(() {
+                              _weeklyStats = value;
+                            });
+                            _saveSetting('weekly_stats', value);
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
         ),
       ),
     );
@@ -294,10 +291,7 @@ class _PushNotificationsScreenState
 class _NotificationSection extends StatelessWidget {
   final String title;
   final List<Widget> children;
-  const _NotificationSection({
-    required this.title,
-    required this.children,
-  });
+  const _NotificationSection({required this.title, required this.children});
 
   @override
   Widget build(BuildContext context) {
@@ -355,11 +349,7 @@ class _NotificationTile extends StatelessWidget {
             Container(
               width: 28,
               alignment: Alignment.centerLeft,
-              child: Icon(
-                icon,
-                size: 20,
-                color: iconColor,
-              ),
+              child: Icon(icon, size: 20, color: iconColor),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -396,4 +386,3 @@ class _Divider extends StatelessWidget {
     );
   }
 }
-

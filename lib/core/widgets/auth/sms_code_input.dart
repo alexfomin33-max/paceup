@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// 🔹 Виджет для ввода 6-значного SMS-кода
 /// Автоматически переключается между полями при вводе
@@ -73,10 +73,7 @@ class SmsCodeInputState extends State<SmsCodeInput> {
         controller: controllers[index],
         focusNode: nodes[index],
         enabled: widget.enabled,
-        style: const TextStyle(
-          color: AppColors.surface,
-          fontSize: 20,
-        ),
+        style: const TextStyle(color: AppColors.surface, fontSize: 20),
         cursorColor: AppColors.surface,
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
@@ -135,4 +132,3 @@ class SmsCodeInputState extends State<SmsCodeInput> {
     );
   }
 }
-

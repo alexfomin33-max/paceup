@@ -2,8 +2,8 @@
 
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
-import '../../../../../theme/app_theme.dart';
-import '../../../../../service/api_service.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/services/api_service.dart';
 
 /// Панель действий: лайк/комменты/совместно.
 /// Здесь локальная анимация лайка + вызов API лайка.

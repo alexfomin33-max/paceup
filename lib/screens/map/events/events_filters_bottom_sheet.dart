@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../theme/app_theme.dart';
-import '../../../widgets/primary_button.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/primary_button.dart';
 
 /// ──────────── Bottom Sheet для фильтров событий ────────────
 ///

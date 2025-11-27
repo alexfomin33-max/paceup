@@ -11,8 +11,8 @@ import 'package:health/health.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../../../service/api_service.dart';
-import '../../../../../../service/auth_service.dart';
+import '../../../../../../core/services/api_service.dart';
+import '../../../../../../core/services/auth_service.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
 /// ИМПОРТ ОДНОЙ ТРЕНИРОВКИ В БД

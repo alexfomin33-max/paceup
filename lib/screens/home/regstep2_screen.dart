@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../theme/app_theme.dart';
+import '../../core/theme/app_theme.dart';
 import '../../providers/services/api_provider.dart';
-import '../../service/api_service.dart' show ApiService, ApiException;
-import '../../widgets/primary_button.dart';
-import '../../widgets/auth/custom_text_field.dart';
+import '../../core/services/api_service.dart' show ApiService, ApiException;
+import '../../core/widgets/primary_button.dart';
+import '../../core/widgets/auth/custom_text_field.dart';
 
 /// 🔹 Экран регистрации — шаг 2
 /// Принимает [userId] для продолжения регистрации
@@ -209,9 +209,7 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
                     label: 'Рост, см',
                     maxLength: 3,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                   const SizedBox(height: 22),
                   CustomTextField(
@@ -219,9 +217,7 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
                     label: 'Вес, кг',
                     maxLength: 3,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                   const SizedBox(height: 22),
                   CustomTextField(
@@ -229,9 +225,7 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
                     label: 'Максимальный пульс',
                     maxLength: 3,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                   const SizedBox(height: 20),
                   const Text(
@@ -307,7 +301,6 @@ class Regstep2ScreenState extends ConsumerState<Regstep2Screen> {
     );
   }
 }
-
 
 // ==========================
 // Кнопка Продолжить/Завершить

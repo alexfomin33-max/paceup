@@ -1,10 +1,10 @@
 // lib/screens/lenta/activity/together/together_screen.dart
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../core/theme/app_theme.dart';
 
 // 🔹 глобальные виджеты
-import '../../../../widgets/app_bar.dart';
-import '../../../../widgets/segmented_pill.dart';
+import '../../../../core/widgets/app_bar.dart';
+import '../../../../core/widgets/segmented_pill.dart';
 
 // вкладки
 import 'tabs/members/member_content.dart';

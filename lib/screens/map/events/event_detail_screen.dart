@@ -2,11 +2,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../theme/app_theme.dart';
-import '../../../service/api_service.dart';
-import '../../../service/auth_service.dart';
-import '../../../widgets/transparent_route.dart';
-import '../../../widgets/interactive_back_swipe.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/services/api_service.dart';
+import '../../../core/services/auth_service.dart';
+
+import '../../../core/widgets/transparent_route.dart';
+import '../../../core/widgets/interactive_back_swipe.dart';
 import 'edit_event_screen.dart';
 
 /// Детальная страница события (на основе coffeerun_screen.dart)
@@ -418,138 +419,144 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           ),
                         ),
                         child: Column(
-                        children: [
-                          SafeArea(
-                            bottom: false,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              child: SizedBox(
-                                height: 100,
-                                child: Row(
-                                  children: [
-                                    _CircleIconBtn(
-                                      icon: CupertinoIcons.back,
-                                      semantic: 'Назад',
-                                      onTap: () =>
-                                          Navigator.of(context).maybePop(),
-                                    ),
-                                    Expanded(
-                                      child: Center(
-                                        child: logoUrl.isNotEmpty
-                                            ? ClipOval(
-                                                child: _HeaderLogo(
-                                                  url: logoUrl,
-                                                ),
-                                              )
-                                            : Container(
-                                                width: 100,
-                                                height: 100,
-                                                decoration: const BoxDecoration(
-                                                  color: AppColors.border,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: const Icon(
-                                                  Icons.event,
-                                                  size: 48,
-                                                ),
-                                              ),
+                          children: [
+                            SafeArea(
+                              bottom: false,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: SizedBox(
+                                  height: 100,
+                                  child: Row(
+                                    children: [
+                                      _CircleIconBtn(
+                                        icon: CupertinoIcons.back,
+                                        semantic: 'Назад',
+                                        onTap: () =>
+                                            Navigator.of(context).maybePop(),
                                       ),
-                                    ),
-                                    // Показываем карандаш для создателя, закладку для остальных
-                                    _canEdit
-                                        ? _CircleIconBtn(
-                                            icon: CupertinoIcons.pencil,
-                                            semantic: 'Редактировать',
-                                            onTap: _openEditScreen,
-                                          )
-                                        : _CircleIconBtn(
-                                            icon: CupertinoIcons.star_fill,
-                                            semantic: _isBookmarked
-                                                ? 'Удалить из закладок'
-                                                : 'Добавить в закладки',
-                                            onTap: _isTogglingBookmark
-                                                ? null
-                                                : _toggleBookmark,
-                                    color: _isBookmarked
-                                        ? AppColors.orange
-                                        : null,
-                                          ),
-                                  ],
+                                      Expanded(
+                                        child: Center(
+                                          child: logoUrl.isNotEmpty
+                                              ? ClipOval(
+                                                  child: _HeaderLogo(
+                                                    url: logoUrl,
+                                                  ),
+                                                )
+                                              : Container(
+                                                  width: 100,
+                                                  height: 100,
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                        color: AppColors.border,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                  child: const Icon(
+                                                    Icons.event,
+                                                    size: 48,
+                                                  ),
+                                                ),
+                                        ),
+                                      ),
+                                      // Показываем карандаш для создателя, закладку для остальных
+                                      _canEdit
+                                          ? _CircleIconBtn(
+                                              icon: CupertinoIcons.pencil,
+                                              semantic: 'Редактировать',
+                                              onTap: _openEditScreen,
+                                            )
+                                          : _CircleIconBtn(
+                                              icon: CupertinoIcons.star_fill,
+                                              semantic: _isBookmarked
+                                                  ? 'Удалить из закладок'
+                                                  : 'Добавить в закладки',
+                                              onTap: _isTogglingBookmark
+                                                  ? null
+                                                  : _toggleBookmark,
+                                              color: _isBookmarked
+                                                  ? AppColors.orange
+                                                  : null,
+                                            ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
 
-                          // Остальная часть шапки
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  name,
-                                  textAlign: TextAlign.center,
-                                  style: AppTextStyles.h17w6,
-                                ),
-                                const SizedBox(height: 10),
-
-                                _InfoRow(
-                                  icon: CupertinoIcons.person_crop_circle,
-                                  text: organizerName,
-                                ),
-                                const SizedBox(height: 6),
-                                _InfoRow(
-                                  icon: CupertinoIcons.calendar_today,
-                                  text: '$dateFormatted, $time',
-                                ),
-                                const SizedBox(height: 6),
-                                _InfoRow(
-                                  icon: CupertinoIcons.location_solid,
-                                  text: place,
-                                ),
-
-                                if (photos.isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-
-                                  // Фотографии: всегда 3 ячейки для одинакового размера
-                                  Row(
-                                    children: () {
-                                      final widgets = <Widget>[];
-                                      for (var index = 0; index < 3; index++) {
-                                        final hasPhoto = index < photos.length;
-                                        final photoUrl = hasPhoto
-                                            ? photos[index] as String
-                                            : '';
-
-                                        widgets.add(
-                                          Expanded(
-                                            child: hasPhoto
-                                                ? _SquarePhoto(
-                                                    photoUrl,
-                                                    onTap: () =>
-                                                        _openGallery(index),
-                                                  )
-                                                : const SizedBox.shrink(),
-                                          ),
-                                        );
-
-                                        if (index < 2) {
-                                          widgets.add(
-                                            const SizedBox(width: 10),
-                                          );
-                                        }
-                                      }
-                                      return widgets;
-                                    }(),
+                            // Остальная часть шапки
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    name,
+                                    textAlign: TextAlign.center,
+                                    style: AppTextStyles.h17w6,
                                   ),
+                                  const SizedBox(height: 10),
+
+                                  _InfoRow(
+                                    icon: CupertinoIcons.person_crop_circle,
+                                    text: organizerName,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  _InfoRow(
+                                    icon: CupertinoIcons.calendar_today,
+                                    text: '$dateFormatted, $time',
+                                  ),
+                                  const SizedBox(height: 6),
+                                  _InfoRow(
+                                    icon: CupertinoIcons.location_solid,
+                                    text: place,
+                                  ),
+
+                                  if (photos.isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+
+                                    // Фотографии: всегда 3 ячейки для одинакового размера
+                                    Row(
+                                      children: () {
+                                        final widgets = <Widget>[];
+                                        for (
+                                          var index = 0;
+                                          index < 3;
+                                          index++
+                                        ) {
+                                          final hasPhoto =
+                                              index < photos.length;
+                                          final photoUrl = hasPhoto
+                                              ? photos[index] as String
+                                              : '';
+
+                                          widgets.add(
+                                            Expanded(
+                                              child: hasPhoto
+                                                  ? _SquarePhoto(
+                                                      photoUrl,
+                                                      onTap: () =>
+                                                          _openGallery(index),
+                                                    )
+                                                  : const SizedBox.shrink(),
+                                            ),
+                                          );
+
+                                          if (index < 2) {
+                                            widgets.add(
+                                              const SizedBox(width: 10),
+                                            );
+                                          }
+                                        }
+                                        return widgets;
+                                      }(),
+                                    ),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -569,33 +576,33 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             ),
                           ),
                         ),
-                      child: SizedBox(
-                        height: 52,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _HalfTab(
-                                text: 'Описание',
-                                selected: _tab == 0,
-                                onTap: () => setState(() => _tab = 0),
+                        child: SizedBox(
+                          height: 52,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _HalfTab(
+                                  text: 'Описание',
+                                  selected: _tab == 0,
+                                  onTap: () => setState(() => _tab = 0),
+                                ),
                               ),
-                            ),
-                            Container(
-                              width: 1,
-                              height: 24,
-                              color: AppColors.border,
-                            ),
-                            Expanded(
-                              child: _HalfTab(
-                                text:
-                                    'Участники (${_eventData?['participants_count'] ?? 0})',
-                                selected: _tab == 1,
-                                onTap: () => setState(() => _tab = 1),
+                              Container(
+                                width: 1,
+                                height: 24,
+                                color: AppColors.border,
                               ),
-                            ),
-                          ],
+                              Expanded(
+                                child: _HalfTab(
+                                  text:
+                                      'Участники (${_eventData?['participants_count'] ?? 0})',
+                                  selected: _tab == 1,
+                                  onTap: () => setState(() => _tab = 1),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
                       ),
                     ),
                   ),
@@ -626,13 +633,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               ),
                             ),
                           ),
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                          child: EventDescriptionContent(
-                            description:
-                                _eventData!['description'] as String? ?? '',
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                            child: EventDescriptionContent(
+                              description:
+                                  _eventData!['description'] as String? ?? '',
+                            ),
                           ),
-                        ),
                         ),
                       ),
                     )
@@ -984,27 +991,28 @@ class _GalleryViewerState extends State<_GalleryViewer> {
               },
             ),
             Positioned(
-            top: 8,
-            right: 8,
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Builder(
-                builder: (context) => Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.getSurfaceColor(context)
-                        .withValues(alpha: 0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Builder(
-                    builder: (context) => Icon(
-                      CupertinoIcons.xmark,
-                      color: AppColors.getSurfaceColor(context),
-                      size: 18,
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Builder(
+                  builder: (context) => Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurfaceColor(
+                        context,
+                      ).withValues(alpha: 0.5),
+                      shape: BoxShape.circle,
                     ),
-                  ),
+                    alignment: Alignment.center,
+                    child: Builder(
+                      builder: (context) => Icon(
+                        CupertinoIcons.xmark,
+                        color: AppColors.getSurfaceColor(context),
+                        size: 18,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -1442,17 +1450,17 @@ class _MemberRow extends StatelessWidget {
             child: member.avatar.isNotEmpty
                 ? _Avatar40(url: member.avatar)
                 : Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.getBorderColor(context),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.person,
-                    size: 24,
-                    color: AppColors.getIconSecondaryColor(context),
-                  ),
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.getBorderColor(context),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.person,
+                      size: 24,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
                   ),
           ),
           const SizedBox(width: 12),

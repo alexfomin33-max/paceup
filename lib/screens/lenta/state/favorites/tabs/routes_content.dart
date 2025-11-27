@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../../../../core/theme/app_theme.dart';
 import 'rout_description/rout_description_screen.dart';
-import '../../../../../widgets/transparent_route.dart';
+import '../../../../../core/widgets/transparent_route.dart';
 
 /// Вкладка «Маршруты» — таблица с чипом сложности
 class RoutesContent extends StatelessWidget {

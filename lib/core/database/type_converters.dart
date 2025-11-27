@@ -62,9 +62,7 @@ class CoordListConverter extends TypeConverter<List<Coord>, String> {
   @override
   String toSql(List<Coord> value) {
     if (value.isEmpty) return '[]';
-    return jsonEncode(
-      value.map((c) => {'lat': c.lat, 'lng': c.lng}).toList(),
-    );
+    return jsonEncode(value.map((c) => {'lat': c.lat, 'lng': c.lng}).toList());
   }
 }
 
@@ -137,21 +135,33 @@ class ActivityStatsConverter extends TypeConverter<ActivityStats?, String> {
       'minAltitude': value.minAltitude,
       'minAltitudeCoords': value.minAltitudeCoords == null
           ? null
-          : {'lat': value.minAltitudeCoords!.lat, 'lng': value.minAltitudeCoords!.lng},
+          : {
+              'lat': value.minAltitudeCoords!.lat,
+              'lng': value.minAltitudeCoords!.lng,
+            },
       'maxAltitude': value.maxAltitude,
       'maxAltitudeCoords': value.maxAltitudeCoords == null
           ? null
-          : {'lat': value.maxAltitudeCoords!.lat, 'lng': value.maxAltitudeCoords!.lng},
+          : {
+              'lat': value.maxAltitudeCoords!.lat,
+              'lng': value.maxAltitudeCoords!.lng,
+            },
       'cumulativeElevationGain': value.cumulativeElevationGain,
       'cumulativeElevationLoss': value.cumulativeElevationLoss,
       'startedAt': value.startedAt?.toIso8601String(),
       'startedAtCoords': value.startedAtCoords == null
           ? null
-          : {'lat': value.startedAtCoords!.lat, 'lng': value.startedAtCoords!.lng},
+          : {
+              'lat': value.startedAtCoords!.lat,
+              'lng': value.startedAtCoords!.lng,
+            },
       'finishedAt': value.finishedAt?.toIso8601String(),
       'finishedAtCoords': value.finishedAtCoords == null
           ? null
-          : {'lat': value.finishedAtCoords!.lat, 'lng': value.finishedAtCoords!.lng},
+          : {
+              'lat': value.finishedAtCoords!.lat,
+              'lng': value.finishedAtCoords!.lng,
+            },
       'duration': value.duration,
       'bounds': value.bounds.map((c) => {'lat': c.lat, 'lng': c.lng}).toList(),
       'avgHeartRate': value.avgHeartRate,
@@ -183,4 +193,3 @@ class StringListConverter extends TypeConverter<List<String>, String> {
     return jsonEncode(value);
   }
 }
-

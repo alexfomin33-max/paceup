@@ -1,8 +1,8 @@
 // lib/screens/swim_trip_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
-import '../../../widgets/interactive_back_swipe.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/interactive_back_swipe.dart';
 
 class SwimTripScreen extends StatelessWidget {
   const SwimTripScreen({super.key});
@@ -291,7 +291,9 @@ class _ProgressBar extends StatelessWidget {
                 height: 6,
                 decoration: BoxDecoration(
                   color: AppColors.getBackgroundColor(context),
-                  borderRadius: const BorderRadius.all(Radius.circular(AppRadius.xs)),
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(AppRadius.xs),
+                  ),
                 ),
               ),
             ),

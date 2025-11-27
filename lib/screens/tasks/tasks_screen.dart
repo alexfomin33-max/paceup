@@ -1,8 +1,8 @@
 // lib/screens/tasks_screen.dart
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
-import '../../widgets/segmented_pill.dart';
-import '../../widgets/app_bar.dart'; // ← глобальная шапка
+import '../../core/theme/app_theme.dart';
+import '../../core/widgets/segmented_pill.dart';
+import '../../core/widgets/app_bar.dart'; // ← глобальная шапка
 
 // контенты по вкладкам
 import 'tabs/active_content.dart';

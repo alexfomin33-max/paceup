@@ -5,7 +5,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/foundation.dart';
-import '../../models/activity_lenta.dart';
+import '../../core/models/activity_lenta.dart';
 
 /// Состояние ленты активностей
 @immutable

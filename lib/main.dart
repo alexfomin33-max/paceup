@@ -7,13 +7,13 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
-import 'theme/colors.dart';
+import '../../core/theme/app_theme.dart';
 import 'routes.dart';
-import 'config/app_config.dart';
+import 'core/config/app_config.dart';
 import 'providers/services/cache_provider.dart';
 import 'providers/theme_provider.dart';
-import 'utils/db_optimizer.dart';
-import 'utils/image_cache_manager.dart';
+import '../../core/utils/db_optimizer.dart';
+import '../../core/utils/image_cache_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -66,19 +66,21 @@ void main() async {
     // • Прирост: +15-20% query speed, -30% disk space
     final cache = container.read(cacheServiceProvider);
     final optimizer = DbOptimizer(cache);
-    
+
     // Запуск в фоне, не блокируем UI
-    optimizer.runOptimizationIfNeeded().then((optimized) {
-      if (optimized) {
-        debugPrint('✅ DB автоматическая оптимизация завершена');
-      }
-    }).catchError((e) {
-      debugPrint('⚠️ DB оптимизация пропущена: $e');
-    });
+    optimizer
+        .runOptimizationIfNeeded()
+        .then((optimized) {
+          if (optimized) {
+            debugPrint('✅ DB автоматическая оптимизация завершена');
+          }
+        })
+        .catchError((e) {
+          debugPrint('⚠️ DB оптимизация пропущена: $e');
+        });
   } catch (e) {
     debugPrint('❌ Ошибка инициализации Drift Database: $e');
   }
-
 
   // ────────────────────────── Riverpod ──────────────────────────
   // ProviderScope обеспечивает доступ к провайдерам во всём приложении
@@ -86,7 +88,6 @@ void main() async {
     UncontrolledProviderScope(container: container, child: const PaceUpApp()),
   );
 }
-
 
 class PaceUpApp extends StatefulWidget {
   const PaceUpApp({super.key});
@@ -109,7 +110,7 @@ class _PaceUpAppState extends State<PaceUpApp> {
     return Consumer(
       builder: (context, ref, _) {
         final themeMode = ref.watch(themeModeNotifierProvider);
-        
+
         // Базовая светлая тема (Material 3 + Inter + iOS-лайк цвета)
         final ThemeData lightTheme = ThemeData(
           useMaterial3: true,
@@ -212,12 +213,12 @@ class _PaceUpAppState extends State<PaceUpApp> {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               ImageCacheManager.configure(context);
             });
-            
+
             // Обновляем CupertinoTheme в зависимости от темы
-            final brightness = themeMode == ThemeMode.dark 
-                ? Brightness.dark 
+            final brightness = themeMode == ThemeMode.dark
+                ? Brightness.dark
                 : Brightness.light;
-            
+
             return CupertinoTheme(
               data: CupertinoThemeData(
                 brightness: brightness,

@@ -9,13 +9,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../theme/app_theme.dart';
+import '../../core/theme/app_theme.dart';
 import '../../providers/avatar_version_provider.dart';
 import '../../providers/profile/profile_header_provider.dart';
-import '../../utils/local_image_compressor.dart';
-import '../../widgets/app_bar.dart'; // наш глобальный AppBar
-import '../../../widgets/interactive_back_swipe.dart';
-import '../../service/api_service.dart';
+import '../../core/utils/local_image_compressor.dart';
+import '../../core/widgets/app_bar.dart'; // наш глобальный AppBar
+import '../../../core/widgets/interactive_back_swipe.dart';
+import '../../core/services/api_service.dart';
 
 const double kAvatarSize = 88.0;
 const double kQrBtnSize = 44.0;
@@ -567,10 +567,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       }
 
       if (!mounted) return;
-      
+
       // Обновляем данные профиля в шапке сразу после сохранения
       ref.read(profileHeaderProvider(widget.userId).notifier).reload();
-      
+
       Navigator.of(context).maybePop(true);
     } catch (e, st) {
       debugPrint('❌ [EditProfile] SAVE error: $e\n$st');

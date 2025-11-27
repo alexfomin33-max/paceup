@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
-import '../../../../../../../theme/app_theme.dart';
+import '../../../../../../../core/theme/app_theme.dart';
 import '../sneakers/viewing_sneakers_content.dart'
     show GearViewCard; // теперь публичный класс
-import '../../../../../../../service/api_service.dart';
-import '../../../../../../../service/auth_service.dart';
-import '../../../../../../../utils/equipment_date_format.dart';
+import '../../../../../../../core/services/api_service.dart';
+import '../../../../../../../core/services/auth_service.dart';
+import '../../../../../../../core/utils/equipment_date_format.dart';
 
 /// Модель элемента велосипеда для просмотра
 class _BikeItem {

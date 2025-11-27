@@ -73,7 +73,10 @@ class _RouteCardState extends State<RouteCard> {
               ),
               children: [
                 flutter_map.TileLayer(
-                  urlTemplate: AppConfig.mapTilesUrl.replaceAll('{apiKey}', AppConfig.mapTilerApiKey),
+                  urlTemplate: AppConfig.mapTilesUrl.replaceAll(
+                    '{apiKey}',
+                    AppConfig.mapTilerApiKey,
+                  ),
                   userAgentPackageName: 'com.example.paceup',
                 ),
                 flutter_map.PolylineLayer(
@@ -99,16 +102,14 @@ class _RouteCardState extends State<RouteCard> {
             child: MapWidget(
               key: ValueKey('route_card_${points.length}'),
               onMapCreated: (MapboxMap mapboxMap) async {
-
                 // Создаем менеджер полилиний
                 _polylineAnnotationManager = await mapboxMap.annotations
                     .createPolylineAnnotationManager();
 
                 // Создаем полилинию из точек
-                final coordinates = points.map((p) => Position(
-                      p.longitude,
-                      p.latitude,
-                    )).toList();
+                final coordinates = points
+                    .map((p) => Position(p.longitude, p.latitude))
+                    .toList();
 
                 await _polylineAnnotationManager!.create(
                   PolylineAnnotationOptions(

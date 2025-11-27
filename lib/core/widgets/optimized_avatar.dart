@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../providers/avatar_version_provider.dart';
+import '../../providers/avatar_version_provider.dart';
 
 /// Универсальный аватар с fallback, gaplessPlayback и опциональным fade-in.
 /// Поддерживает сеть (url) и ассет (asset).

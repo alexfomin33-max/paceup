@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'create_club_screen.dart';
 import 'clubs_filters_bottom_sheet.dart';
-import '../../../theme/app_theme.dart';
-import '../../../widgets/transparent_route.dart';
-import '../../../service/api_service.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/transparent_route.dart';
+import '../../../core/services/api_service.dart';
 
 /// Склоняет название города в предложный падеж для фразы "Клубы в/во [город]"
 /// Возвращает строку с правильным предлогом и склонённым названием города
@@ -110,7 +110,7 @@ String _declineCityName(String cityName) {
 
 /// Возвращает маркеры для вкладки «Клубы».
 /// Загружает данные через API и группирует клубы по локациям
-/// 
+///
 /// [filterParams] - параметры фильтра (опционально)
 Future<List<Map<String, dynamic>>> clubsMarkers(
   BuildContext context, {
@@ -120,9 +120,7 @@ Future<List<Map<String, dynamic>>> clubsMarkers(
     final api = ApiService();
 
     // Формируем параметры запроса
-    final queryParams = <String, String>{
-      'detail': 'false',
-    };
+    final queryParams = <String, String>{'detail': 'false'};
 
     // Добавляем фильтры по видам спорта
     if (filterParams != null && filterParams.sports.isNotEmpty) {
@@ -132,16 +130,12 @@ Future<List<Map<String, dynamic>>> clubsMarkers(
 
     // Добавляем фильтры по типам клубов
     if (filterParams != null && filterParams.clubTypes.isNotEmpty) {
-      final clubTypes =
-          filterParams.clubTypes.map((t) => t.apiValue).toList();
+      final clubTypes = filterParams.clubTypes.map((t) => t.apiValue).toList();
       queryParams['club_types'] = clubTypes.join(',');
     }
 
     // Загружаем маркеры с группировкой по локациям
-    final data = await api.get(
-      '/get_clubs.php',
-      queryParams: queryParams,
-    );
+    final data = await api.get('/get_clubs.php', queryParams: queryParams);
 
     if (data['success'] != true) {
       return [];

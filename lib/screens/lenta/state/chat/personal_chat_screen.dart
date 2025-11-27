@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import '../../../../theme/app_theme.dart';
-import '../../../../utils/local_image_compressor.dart';
-import '../../../../widgets/interactive_back_swipe.dart';
-import '../../../../service/api_service.dart';
-import '../../../../service/auth_service.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/local_image_compressor.dart';
+import '../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_service.dart';
 
 /// ────────────────────────────────────────────────────────────────────────
 /// Экран персонального чата с конкретным пользователем

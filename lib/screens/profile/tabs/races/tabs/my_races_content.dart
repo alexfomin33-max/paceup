@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../../../../core/theme/app_theme.dart';
 
 /// «Мои» — заголовок/дата снаружи + табличная карточка во всю ширину:
 /// [превью] │ [дистанция] │ [время] │ [темп]

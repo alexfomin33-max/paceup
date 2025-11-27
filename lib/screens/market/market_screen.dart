@@ -7,15 +7,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../theme/app_theme.dart';
-import '../../widgets/app_bar.dart';
-import '../../widgets/segmented_pill.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_bar.dart';
+import '../../core/widgets/segmented_pill.dart';
 
 import 'tabs/slots/slots_content.dart';
 import 'tabs/things/things_content.dart';
 import 'state/sale_screen.dart';
 import 'state/alert_creation_screen.dart';
-import '../../widgets/transparent_route.dart';
+import '../../core/widgets/transparent_route.dart';
 
 // Те же локальные константы, что и в tasks_screen.dart
 const _kTabAnim = Duration(milliseconds: 300);

@@ -1,8 +1,8 @@
 // lib/screens/lenta/widgets/activity/header/activity_header.dart
 import 'package:flutter/cupertino.dart';
-import '../../../../../widgets/user_header.dart';
+import '../../../../../core/widgets/user_header.dart';
 import '../../../../profile/profile_screen.dart';
-import '../../../../../utils/feed_date.dart';
+import '../../../../../core/utils/feed_date.dart';
 
 /// ──────────────────────────────────────────────────────────────
 /// ШАПКА АКТИВНОСТИ: обёртка над UserHeader (единый визуал)

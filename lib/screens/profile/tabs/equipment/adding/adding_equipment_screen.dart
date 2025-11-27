@@ -1,8 +1,8 @@
 // lib/screens/.../adding_equipment_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_theme.dart';
-import '../../../../../widgets/segmented_pill.dart'; // глобальная пилюля
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/widgets/segmented_pill.dart'; // глобальная пилюля
 import 'tabs/adding_bike_content.dart';
 import 'tabs/adding_sneakers_content.dart';
 
@@ -143,4 +143,3 @@ class _TabScroller extends StatelessWidget {
     );
   }
 }
-

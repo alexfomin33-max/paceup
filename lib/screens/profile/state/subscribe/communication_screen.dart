@@ -1,9 +1,9 @@
 // lib/screens/.../communication_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
-import '../../../../widgets/segmented_pill.dart'; // ← глобальная пилюля
-import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/segmented_pill.dart'; // ← глобальная пилюля
+import '../../../../core/widgets/app_bar.dart'; // ← глобальный AppBar
 import 'tabs/subscriptions/subscriptions_content.dart';
 import 'tabs/subscribers/subscribers_content.dart';
 

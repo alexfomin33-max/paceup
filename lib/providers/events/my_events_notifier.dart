@@ -8,19 +8,17 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../service/api_service.dart';
-import '../../models/event.dart';
+import '../../core/services/api_service.dart';
+import '../../core/models/event.dart';
 import 'my_events_state.dart';
 
 class MyEventsNotifier extends StateNotifier<MyEventsState> {
   final ApiService _api;
   final int userId;
 
-  MyEventsNotifier({
-    required ApiService api,
-    required this.userId,
-  })  : _api = api,
-        super(MyEventsState.initial());
+  MyEventsNotifier({required ApiService api, required this.userId})
+    : _api = api,
+      super(MyEventsState.initial());
 
   /// Загрузка событий через API
   Future<List<Event>> _loadEvents() async {
@@ -30,7 +28,7 @@ class MyEventsNotifier extends StateNotifier<MyEventsState> {
     );
 
     final List rawList = data['events'] as List? ?? const [];
-    
+
     final events = rawList
         .whereType<Map<String, dynamic>>()
         .map(Event.fromApi)
@@ -46,16 +44,9 @@ class MyEventsNotifier extends StateNotifier<MyEventsState> {
 
       final events = await _loadEvents();
 
-      state = state.copyWith(
-        events: events,
-        isLoading: false,
-        error: null,
-      );
+      state = state.copyWith(events: events, isLoading: false, error: null);
     } catch (e) {
-      state = state.copyWith(
-        error: e.toString(),
-        isLoading: false,
-      );
+      state = state.copyWith(error: e.toString(), isLoading: false);
     }
   }
 
@@ -66,17 +57,9 @@ class MyEventsNotifier extends StateNotifier<MyEventsState> {
 
       final events = await _loadEvents();
 
-      state = state.copyWith(
-        events: events,
-        isRefreshing: false,
-        error: null,
-      );
+      state = state.copyWith(events: events, isRefreshing: false, error: null);
     } catch (e) {
-      state = state.copyWith(
-        error: e.toString(),
-        isRefreshing: false,
-      );
+      state = state.copyWith(error: e.toString(), isRefreshing: false);
     }
   }
 }
-

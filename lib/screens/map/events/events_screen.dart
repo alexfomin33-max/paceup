@@ -5,9 +5,9 @@ import 'package:intl/intl.dart';
 import 'add_event_screen.dart';
 import 'add_official_event_screen.dart';
 import 'events_filters_bottom_sheet.dart';
-import '../../../../../theme/app_theme.dart';
-import '../../../widgets/transparent_route.dart';
-import '../../../service/api_service.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../core/widgets/transparent_route.dart';
+import '../../../core/services/api_service.dart';
 import '../../../providers/services/auth_provider.dart';
 
 /// Склоняет название города в предложный падеж для фразы "События в/во [город]"

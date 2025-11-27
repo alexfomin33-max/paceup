@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../../../../theme/app_theme.dart';
-import '../../../../../../../widgets/app_bar.dart'; // ← глобальный AppBar
+import '../../../../../../../core/theme/app_theme.dart';
+import '../../../../../../../core/widgets/app_bar.dart'; // ← глобальный AppBar
 import 'my_results/my_results_screen.dart';
 import 'all_results/all_results_screen.dart';
 import 'members_route/members_route_screen.dart';
-import '../../../../../../widgets/interactive_back_swipe.dart';
-import '../../../../../../widgets/transparent_route.dart';
+import '../../../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../../../core/widgets/transparent_route.dart';
 
 /// Экран описания маршрута (без общих виджетов)
 class RouteDescriptionScreen extends StatelessWidget {
@@ -103,8 +103,8 @@ class RouteDescriptionScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         CircleAvatar(
                           radius: 18,
-                          backgroundColor: Theme.of(context).brightness ==
-                                  Brightness.dark
+                          backgroundColor:
+                              Theme.of(context).brightness == Brightness.dark
                               ? AppColors.darkSurfaceMuted
                               : AppColors.skeletonBase,
                           backgroundImage: AssetImage(authorAvatar),

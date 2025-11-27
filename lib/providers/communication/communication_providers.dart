@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../service/api_service.dart';
+import '../../core/services/api_service.dart';
 import '../services/api_provider.dart';
 
 /// ────────────────────────────────────────────────────────────────────────────

@@ -4,12 +4,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../theme/app_theme.dart';
-import '../../models/activity_lenta.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/models/activity_lenta.dart';
 import '../../providers/lenta/lenta_provider.dart';
 import '../../providers/chat/unread_chats_provider.dart';
-import '../../utils/image_cache_manager.dart';
-import '../../service/auth_service.dart';
+import '../../core/utils/image_cache_manager.dart';
+import '../../core/services/auth_service.dart';
 
 import 'widgets/activity/activity_block.dart'; // карточка тренировки
 import 'widgets/recommended/recommended_block.dart'; // блок «Рекомендации»
@@ -24,11 +24,11 @@ import 'state/notifications/notifications_screen.dart';
 import 'state/favorites/favorites_screen.dart';
 import 'activity/description_screen.dart';
 import 'activity/add_activity_screen.dart';
-import '../../widgets/more_menu_hub.dart';
-import '../../widgets/more_menu_overlay.dart';
-import '../../widgets/app_bar.dart'; // ← глобальный AppBar
-import '../../widgets/transparent_route.dart';
-import '../../widgets/primary_button.dart'; // ← кнопка для повтора
+import '../../core/widgets/more_menu_hub.dart';
+import '../../core/widgets/more_menu_overlay.dart';
+import '../../core/widgets/app_bar.dart'; // ← глобальный AppBar
+import '../../core/widgets/transparent_route.dart';
+import '../../core/widgets/primary_button.dart'; // ← кнопка для повтора
 
 /// Единые размеры для AppBar в iOS-стиле
 const double kAppBarIconSize = 22.0; // сама иконка ~20–22pt

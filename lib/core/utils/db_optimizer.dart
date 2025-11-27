@@ -19,7 +19,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../service/cache_service.dart';
+import '../../core/services/cache_service.dart';
 
 class DbOptimizer {
   final CacheService _cache;

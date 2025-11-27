@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../theme/app_theme.dart';
-import '../../../utils/image_picker_helper.dart';
-import '../../../widgets/app_bar.dart';
-import '../../../widgets/interactive_back_swipe.dart';
-import '../../../widgets/primary_button.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/image_picker_helper.dart';
+import '../../../core/widgets/app_bar.dart';
+import '../../../core/widgets/interactive_back_swipe.dart';
+import '../../../core/widgets/primary_button.dart';
 import '../../../providers/events/add_official_event_provider.dart';
 import 'location_picker_screen.dart';
 

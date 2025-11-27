@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../../theme/app_theme.dart';
-import '../../../../../service/api_service.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/services/api_service.dart';
 
 /// ──────────────────────── Контент участников клуба из API с пагинацией ────────────────────────
 class CoffeeRunVldMembersContent extends StatefulWidget {

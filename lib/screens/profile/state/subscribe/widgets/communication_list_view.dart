@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../providers/communication/communication_providers.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../../../../core/theme/app_theme.dart';
 import '../../../profile_screen.dart';
 
 /// ────────────────────────────────────────────────────────────────────────────
@@ -32,8 +32,9 @@ class CommunicationListView extends ConsumerWidget {
     final data = asyncState.valueOrNull;
 
     final bool isInitialLoading = asyncState.isLoading && data == null;
-    final Object? initialError =
-        asyncState.hasError && data == null ? asyncState.error : null;
+    final Object? initialError = asyncState.hasError && data == null
+        ? asyncState.error
+        : null;
 
     return RefreshIndicator(
       color: AppColors.brandPrimary,
@@ -63,16 +64,9 @@ class CommunicationListView extends ConsumerWidget {
             else if (initialError != null)
               _ErrorSection(message: initialError.toString())
             else if ((data?.users.isEmpty ?? true))
-              _EmptySection(
-                title: emptyTitle,
-                subtitle: emptySubtitle,
-              )
+              _EmptySection(title: emptyTitle, subtitle: emptySubtitle)
             else
-              _UsersSliver(
-                users: data!.users,
-                tab: tab,
-                notifier: notifier,
-              ),
+              _UsersSliver(users: data!.users, tab: tab, notifier: notifier),
             if ((data?.lastError?.isNotEmpty ?? false))
               _HintError(message: data!.lastError!),
             if (data?.isLoadingMore ?? false)
@@ -217,45 +211,42 @@ class _UsersSliver extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final user = users[index];
-          final isFirst = index == 0;
-          final isLast = index == users.length - 1;
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final user = users[index];
+        final isFirst = index == 0;
+        final isLast = index == users.length - 1;
 
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              color: AppColors.getSurfaceColor(context),
-              border: Border(
-                top: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: isFirst ? 0.5 : 0,
-                ),
-                bottom: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: isLast ? 0.5 : 0,
-                ),
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.getSurfaceColor(context),
+            border: Border(
+              top: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: isFirst ? 0.5 : 0,
+              ),
+              bottom: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: isLast ? 0.5 : 0,
               ),
             ),
-            child: Column(
-              children: [
-                _CommunicationUserTile(
-                  key: ValueKey('comm_user_${user.id}_${tab.name}'),
-                  user: user,
-                  onToggle: () => notifier.toggleSubscription(user.id),
+          ),
+          child: Column(
+            children: [
+              _CommunicationUserTile(
+                key: ValueKey('comm_user_${user.id}_${tab.name}'),
+                user: user,
+                onToggle: () => notifier.toggleSubscription(user.id),
+              ),
+              if (!isLast)
+                Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  color: AppColors.getDividerColor(context),
                 ),
-                if (!isLast)
-                  Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    color: AppColors.getDividerColor(context),
-                  ),
-              ],
-            ),
-          );
-        },
-        childCount: users.length,
-      ),
+            ],
+          ),
+        );
+      }, childCount: users.length),
     );
   }
 }
@@ -278,9 +269,7 @@ class _CommunicationUserTile extends StatelessWidget {
       child: InkWell(
         onTap: () {
           Navigator.of(context).push(
-            CupertinoPageRoute(
-              builder: (_) => ProfileScreen(userId: user.id),
-            ),
+            CupertinoPageRoute(builder: (_) => ProfileScreen(userId: user.id)),
           );
         },
         child: Padding(
@@ -382,5 +371,3 @@ class _Avatar extends StatelessWidget {
     );
   }
 }
-
-

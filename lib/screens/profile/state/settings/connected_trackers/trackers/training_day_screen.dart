@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:health/health.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../../../../service/api_service.dart';
-import '../../../../../../service/auth_service.dart';
-import '../../../../../../theme/app_theme.dart';
-import '../../../../../../widgets/app_bar.dart';
-import '../../../../../../widgets/route_card.dart';
+import '../../../../../../core/services/api_service.dart';
+import '../../../../../../core/services/auth_service.dart';
+import '../../../../../../core/theme/app_theme.dart';
+import '../../../../../../core/widgets/app_bar.dart';
+import '../../../../../../core/widgets/route_card.dart';
 import 'package:flutter/services.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────

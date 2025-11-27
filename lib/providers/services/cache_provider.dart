@@ -6,8 +6,8 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../database/app_database.dart';
-import '../../service/cache_service.dart';
+import '../../core/database/app_database.dart';
+import '../../core/services/cache_service.dart';
 
 /// Provider для AppDatabase (singleton)
 /// 

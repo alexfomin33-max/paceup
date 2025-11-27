@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/image_precache.dart';
+import '../../core/utils/image_precache.dart';
 
 /// Единый каркас auth-экранов: фон + затемнение + логотип + нижний слот для контента.
 /// Используйте как body любого экрана: Scaffold(body: AuthShell(child: ...))
@@ -52,9 +52,7 @@ class _AuthShellState extends State<AuthShell> {
         Align(
           alignment: Alignment.topCenter,
           child: Padding(
-            padding: EdgeInsets.only(
-              top: screenSize.height * 0.11,
-            ),
+            padding: EdgeInsets.only(top: screenSize.height * 0.11),
             child: Image.asset(
               "assets/logo_icon.png",
               width: logoSize,

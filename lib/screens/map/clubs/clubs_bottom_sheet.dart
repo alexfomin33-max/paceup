@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../theme/app_theme.dart';
-import '../../../widgets/transparent_route.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/transparent_route.dart';
 import 'club_detail_screen.dart';
 
 /// Каркас bottom sheet для вкладки «Клубы» — 1:1 как в events_bottom_sheet.dart

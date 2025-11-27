@@ -9,16 +9,16 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../theme/app_theme.dart';
-import '../../../utils/local_image_compressor.dart';
-import '../../../widgets/app_bar.dart';
-import '../../../widgets/interactive_back_swipe.dart';
-import '../../../widgets/primary_button.dart';
-import '../../../models/activity_lenta.dart' as al;
-import '../../../service/api_service.dart';
-import '../../../service/auth_service.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/local_image_compressor.dart';
+import '../../../core/widgets/app_bar.dart';
+import '../../../core/widgets/interactive_back_swipe.dart';
+import '../../../core/widgets/primary_button.dart';
+import '../../../core/models/activity_lenta.dart' as al;
+import '../../../core/services/api_service.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../providers/lenta/lenta_provider.dart';
-import '../../../widgets/transparent_route.dart';
+import '../../../core/widgets/transparent_route.dart';
 
 import '../widgets/activity/equipment/equipment_chip.dart';
 import 'description_screen.dart';
@@ -359,9 +359,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.sm),
           color: AppColors.getSurfaceColor(context),
-          border: Border.all(
-            color: AppColors.getBorderColor(context),
-          ),
+          border: Border.all(color: AppColors.getBorderColor(context)),
         ),
         child: Center(
           child: Icon(
@@ -441,10 +439,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   color: AppColors.getBackgroundColor(context),
                   border: isDragging
-                      ? Border.all(
-                          color: AppColors.brandPrimary,
-                          width: 2,
-                        )
+                      ? Border.all(color: AppColors.brandPrimary, width: 2)
                       : null,
                 ),
                 clipBehavior: Clip.antiAlias,

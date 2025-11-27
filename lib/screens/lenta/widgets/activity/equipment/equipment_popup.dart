@@ -1,10 +1,10 @@
 // lib/screens/lenta/widgets/activity/equipment/equipment_popup.dart
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../../theme/app_theme.dart';
-import '../../../../../models/activity_lenta.dart' as al;
-import '../../../../../service/api_service.dart';
-import '../../../../../service/auth_service.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/models/activity_lenta.dart' as al;
+import '../../../../../core/services/api_service.dart';
+import '../../../../../core/services/auth_service.dart';
 
 /// Попап экипировки, якорящийся к кнопке справа от чипа.
 /// Поведение и размеры совпадают с исходным вариантом:
@@ -25,7 +25,8 @@ class EquipmentPopup {
     required int activityId,
     required double activityDistance,
     VoidCallback? onEquipmentChanged,
-    Function(al.Equipment)? onEquipmentSelected, // callback для выбора экипировки (для экрана добавления)
+    Function(al.Equipment)?
+    onEquipmentSelected, // callback для выбора экипировки (для экрана добавления)
   }) {
     final overlay = Overlay.of(context, rootOverlay: true);
     final anchorContext = anchorKey.currentContext;

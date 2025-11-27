@@ -3,17 +3,17 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_theme.dart';
-import '../../../../models/activity_lenta.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/models/activity_lenta.dart';
 import 'post_media_carousel.dart';
-import '../../../../widgets/user_header.dart';
-import '../../../../widgets/expandable_text.dart';
-import '../../../../service/api_service.dart';
-import '../../../../utils/feed_date.dart';
+import '../../../../core/widgets/user_header.dart';
+import '../../../../core/widgets/expandable_text.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/utils/feed_date.dart';
 
 // ✅ универсальное всплывающее меню (уже вынесено в lib/widgets)
-import '../../../../widgets/more_menu_overlay.dart';
-import '../../../../widgets/transparent_route.dart';
+import '../../../../core/widgets/more_menu_overlay.dart';
+import '../../../../core/widgets/transparent_route.dart';
 import '../../../profile/profile_screen.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
@@ -162,7 +162,10 @@ class _PostCardState extends State<PostCard> {
         color: AppColors.getSurfaceColor(context),
         border: Border(
           top: BorderSide(width: 0.5, color: AppColors.getBorderColor(context)),
-          bottom: BorderSide(width: 0.5, color: AppColors.getBorderColor(context)),
+          bottom: BorderSide(
+            width: 0.5,
+            color: AppColors.getBorderColor(context),
+          ),
         ),
       ),
       child: Column(

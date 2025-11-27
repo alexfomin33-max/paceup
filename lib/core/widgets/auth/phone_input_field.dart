@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mask_input_formatter/mask_input_formatter.dart';
-import '../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// 🔹 Универсальное поле ввода телефона с валидацией
 /// Используется на экранах входа и регистрации
@@ -66,39 +66,23 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
         textCapitalization: TextCapitalization.none,
         textInputAction: TextInputAction.done,
         style: const TextStyle(color: AppColors.surface),
-        inputFormatters: [
-          MaskInputFormatter(mask: '+# (###) ###-##-##'),
-        ],
+        inputFormatters: [MaskInputFormatter(mask: '+# (###) ###-##-##')],
         decoration: InputDecoration(
           hintText: "+7 (999) 123-45-67",
           labelText: "Телефон",
           floatingLabelBehavior: FloatingLabelBehavior.always,
-          hintStyle: const TextStyle(
-            color: AppColors.textPlaceholder,
-          ),
-          labelStyle: const TextStyle(
-            color: AppColors.surface,
-            fontSize: 16,
-          ),
+          hintStyle: const TextStyle(color: AppColors.textPlaceholder),
+          labelStyle: const TextStyle(color: AppColors.surface, fontSize: 16),
           border: OutlineInputBorder(
-            borderSide: const BorderSide(
-              width: 1.0,
-              color: AppColors.surface,
-            ),
+            borderSide: const BorderSide(width: 1.0, color: AppColors.surface),
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              width: 1.0,
-              color: AppColors.surface,
-            ),
+            borderSide: const BorderSide(width: 1.0, color: AppColors.surface),
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              width: 1.0,
-              color: AppColors.surface,
-            ),
+            borderSide: const BorderSide(width: 1.0, color: AppColors.surface),
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
         ),
@@ -106,4 +90,3 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     );
   }
 }
-

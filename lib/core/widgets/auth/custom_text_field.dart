@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// 🔹 Универсальное текстовое поле для форм регистрации
 /// Используется на экранах regstep1 и regstep2
@@ -44,9 +44,7 @@ class CustomTextField extends StatelessWidget {
       decoration: InputDecoration(
         label: RichText(
           text: TextSpan(
-            text: showRequiredStar
-                ? label.replaceAll('*', '')
-                : label,
+            text: showRequiredStar ? label.replaceAll('*', '') : label,
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 16,
@@ -56,10 +54,7 @@ class CustomTextField extends StatelessWidget {
               if (showRequiredStar || label.contains('*'))
                 const TextSpan(
                   text: '*',
-                  style: TextStyle(
-                    color: AppColors.error,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: AppColors.error, fontSize: 16),
                 ),
             ],
           ),
@@ -87,4 +82,3 @@ class CustomTextField extends StatelessWidget {
     );
   }
 }
-

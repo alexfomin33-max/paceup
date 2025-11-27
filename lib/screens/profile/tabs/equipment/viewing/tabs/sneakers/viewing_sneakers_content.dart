@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../../../../theme/app_theme.dart';
-import '../../../../../../../widgets/more_menu_overlay.dart';
-import '../../../../../../../widgets/transparent_route.dart';
-import '../../../../../../../service/api_service.dart';
-import '../../../../../../../service/auth_service.dart';
-import '../../../../../../../utils/equipment_date_format.dart';
+import '../../../../../../../core/theme/app_theme.dart';
+import '../../../../../../../core/widgets/more_menu_overlay.dart';
+import '../../../../../../../core/widgets/transparent_route.dart';
+import '../../../../../../../core/services/api_service.dart';
+import '../../../../../../../core/services/auth_service.dart';
+import '../../../../../../../core/utils/equipment_date_format.dart';
 import '../../../editing/editing_equipment_screen.dart';
 
 /// Модель элемента снаряжения для просмотра
@@ -375,9 +375,9 @@ class _GearViewCardState extends State<GearViewCard> {
       }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
     }
   }
 
@@ -463,9 +463,9 @@ class _GearViewCardState extends State<GearViewCard> {
       }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
     }
   }
 

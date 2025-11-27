@@ -6,7 +6,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../service/api_service.dart';
+import '../../core/services/api_service.dart';
 import 'unread_chats_state.dart';
 
 class UnreadChatsNotifier extends StateNotifier<UnreadChatsState> {

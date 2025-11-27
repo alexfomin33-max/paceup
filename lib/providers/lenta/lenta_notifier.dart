@@ -13,9 +13,9 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../service/api_service.dart';
-import '../../service/cache_service.dart';
-import '../../models/activity_lenta.dart';
+import '../../core/services/api_service.dart';
+import '../../core/services/cache_service.dart';
+import '../../core/models/activity_lenta.dart';
 import 'lenta_state.dart';
 
 class LentaNotifier extends StateNotifier<LentaState> {
@@ -39,7 +39,7 @@ class LentaNotifier extends StateNotifier<LentaState> {
   // ────────────────────────── ПРИВАТНЫЕ МЕТОДЫ ──────────────────────────
 
   /// Загрузка активностей через API
-  /// 
+  ///
   /// Возвращает список, отсортированный по дате из таблицы lenta (новые сверху)
   /// API уже возвращает данные отсортированными по lenta.dates DESC
   Future<List<Activity>> _loadActivities({
@@ -57,22 +57,22 @@ class LentaNotifier extends StateNotifier<LentaState> {
         .whereType<Map<String, dynamic>>()
         .map(Activity.fromApi)
         .toList();
-    
+
     // ✅ Сортируем по lentaDate (дата из таблицы lenta) - новые сверху
     // Это обеспечивает единую сортировку для активностей и постов
     activities.sort((a, b) {
       final dateA = a.lentaDate;
       final dateB = b.lentaDate;
-      
+
       // Если даты отсутствуют, помещаем в конец
       if (dateA == null && dateB == null) return 0;
       if (dateA == null) return 1;
       if (dateB == null) return -1;
-      
+
       // Сортировка по убыванию (новые сверху)
       return dateB.compareTo(dateA);
     });
-    
+
     return activities;
   }
 
@@ -161,9 +161,7 @@ class LentaNotifier extends StateNotifier<LentaState> {
       await _cache.cacheActivities(freshItems, userId: userId);
 
       // Создаем Map для быстрого поиска свежих элементов по lentaId
-      final freshItemsMap = {
-        for (var item in freshItems) _getId(item): item
-      };
+      final freshItemsMap = {for (var item in freshItems) _getId(item): item};
 
       // Обновляем существующие элементы свежими данными и добавляем новые
       final updatedItems = <Activity>[];

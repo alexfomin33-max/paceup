@@ -2,21 +2,18 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../../../../theme/app_theme.dart';
-import '../../../../../../../utils/local_image_compressor.dart';
-import '../../../../../../../widgets/primary_button.dart';
-import '../../../../../../../service/api_service.dart';
-import '../../../../../../../service/auth_service.dart';
+import '../../../../../../../core/theme/app_theme.dart';
+import '../../../../../../../core/utils/local_image_compressor.dart';
+import '../../../../../../../core/widgets/primary_button.dart';
+import '../../../../../../../core/services/api_service.dart';
+import '../../../../../../../core/services/auth_service.dart';
 import '../../adding/widgets/autocomplete_text_field.dart';
 
 /// Контент для редактирования кроссовок
 class EditingSneakersContent extends StatefulWidget {
   final int equipUserId; // ID записи в equip_user
 
-  const EditingSneakersContent({
-    super.key,
-    required this.equipUserId,
-  });
+  const EditingSneakersContent({super.key, required this.equipUserId});
 
   @override
   State<EditingSneakersContent> createState() => _EditingSneakersContentState();
@@ -102,16 +99,18 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message'] ?? 'Ошибка при загрузке данных')),
+            SnackBar(
+              content: Text(data['message'] ?? 'Ошибка при загрузке данных'),
+            ),
           );
           Navigator.of(context).pop();
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
         Navigator.of(context).pop();
       }
     }
@@ -256,7 +255,9 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
         'name': model,
         'brand': brand,
         'dist': km.toString(),
-        'in_use_since': _formatDateForApi(_inUseFrom), // Дата в формате DD.MM.YYYY
+        'in_use_since': _formatDateForApi(
+          _inUseFrom,
+        ), // Дата в формате DD.MM.YYYY
       };
 
       // Добавляем изображение, если выбрано новое
@@ -283,7 +284,9 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
       if (data['success'] == true) {
         if (mounted) {
           // Закрываем экран после успешного сохранения
-          Navigator.of(context).pop(true); // Возвращаем true для обновления списка
+          Navigator.of(
+            context,
+          ).pop(true); // Возвращаем true для обновления списка
         }
       } else {
         final errorMsg = data['message'] ?? 'Ошибка при сохранении';
@@ -445,7 +448,9 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
                                 return Center(
                                   child: Icon(
                                     Icons.error_outline,
-                                    color: AppColors.getTextSecondaryColor(context),
+                                    color: AppColors.getTextSecondaryColor(
+                                      context,
+                                    ),
                                   ),
                                 );
                               },
@@ -469,7 +474,9 @@ class _EditingSneakersContentState extends State<EditingSneakersContent> {
                                 return Center(
                                   child: Icon(
                                     Icons.error_outline,
-                                    color: AppColors.getTextSecondaryColor(context),
+                                    color: AppColors.getTextSecondaryColor(
+                                      context,
+                                    ),
                                   ),
                                 );
                               },
@@ -676,4 +683,3 @@ class _RightTextFieldState extends State<_RightTextField> {
     );
   }
 }
-

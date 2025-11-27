@@ -1,7 +1,7 @@
 import "package:flutter/material.dart";
-import '../../theme/app_theme.dart';
+import '../../core/theme/app_theme.dart';
 import 'auth_shell.dart';
-import '../../widgets/auth/phone_input_field.dart';
+import '../../core/widgets/auth/phone_input_field.dart';
 
 /// 🔹 Обёртка для экрана создания аккаунта
 /// Используется для маршрутизации и возможного расширения функционала

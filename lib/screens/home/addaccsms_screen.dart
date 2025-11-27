@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_shell.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../providers/services/api_provider.dart';
-import '../../service/api_service.dart' show ApiException;
-import '../../widgets/auth/sms_code_input.dart';
-import '../../widgets/auth/resend_code_button.dart';
+import '../../core/services/api_service.dart' show ApiException;
+import '../../core/widgets/auth/sms_code_input.dart';
+import '../../core/widgets/auth/resend_code_button.dart';
 
 //import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -153,7 +153,6 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     // 🔹 Получаем высоту клавиатуры для адаптации контента
@@ -181,43 +180,43 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              Text(
-                "Введите код, отправленный на номер\n${widget.phone}",
-                style: const TextStyle(
-                  color: AppColors.surface,
-                  fontSize: 15,
-                  fontFamily: 'Inter',
-                ),
-              ),
-              const SizedBox(height: 20),
-              // 🔹 Используем общий виджет для ввода SMS-кода
-              SmsCodeInput(
-                key: _smsCodeInputKey,
-                onCodeComplete: _isSubmitting ? null : enterCode,
-                enabled: !_isSubmitting,
-              ),
-              // 🔹 Показываем ошибку, если есть
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 12),
-                SelectableText.rich(
-                  TextSpan(
-                    text: _errorMessage!,
-                    style: const TextStyle(
-                      color: AppColors.error,
-                      fontSize: 14,
-                      fontFamily: 'Inter',
-                    ),
+                Text(
+                  "Введите код, отправленный на номер\n${widget.phone}",
+                  style: const TextStyle(
+                    color: AppColors.surface,
+                    fontSize: 15,
+                    fontFamily: 'Inter',
                   ),
                 ),
+                const SizedBox(height: 20),
+                // 🔹 Используем общий виджет для ввода SMS-кода
+                SmsCodeInput(
+                  key: _smsCodeInputKey,
+                  onCodeComplete: _isSubmitting ? null : enterCode,
+                  enabled: !_isSubmitting,
+                ),
+                // 🔹 Показываем ошибку, если есть
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 12),
+                  SelectableText.rich(
+                    TextSpan(
+                      text: _errorMessage!,
+                      style: const TextStyle(
+                        color: AppColors.error,
+                        fontSize: 14,
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 15),
+                // 🔹 Используем общий виджет для кнопки повторной отправки
+                ResendCodeButton(
+                  key: _resendButtonKey,
+                  onPressed: _isLoading ? null : resendCode,
+                  initialSeconds: 60,
+                ),
               ],
-              const SizedBox(height: 15),
-              // 🔹 Используем общий виджет для кнопки повторной отправки
-              ResendCodeButton(
-                key: _resendButtonKey,
-                onPressed: _isLoading ? null : resendCode,
-                initialSeconds: 60,
-              ),
-            ],
             ),
           ),
         ),

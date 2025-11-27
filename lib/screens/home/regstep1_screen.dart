@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../theme/app_theme.dart';
+import '../../core/theme/app_theme.dart';
 import '../../providers/services/api_provider.dart';
-import '../../service/api_service.dart' show ApiException;
-import '../../widgets/primary_button.dart';
-import '../../widgets/auth/custom_text_field.dart';
+import '../../core/services/api_service.dart' show ApiException;
+import '../../core/widgets/primary_button.dart';
+import '../../core/widgets/auth/custom_text_field.dart';
 
 /// 🔹 Первый экран регистрации — ввод базовых данных спортсмена
 class Regstep1Screen extends ConsumerStatefulWidget {

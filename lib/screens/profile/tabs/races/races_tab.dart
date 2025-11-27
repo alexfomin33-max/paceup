@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../core/theme/app_theme.dart';
 import 'tabs/my_races_content.dart';
 import 'tabs/friend_races_content.dart';
 

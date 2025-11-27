@@ -2,12 +2,12 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_theme.dart';
-import '../../../../../models/market_models.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/models/market_models.dart';
 import '../tradechat_things_screen.dart';
 import '../../../widgets/image_gallery.dart';
 import '../../../widgets/pills.dart';
-import '../../../../../widgets/transparent_route.dart';
+import '../../../../../core/widgets/transparent_route.dart';
 
 /// Отдельный виджет карточки ТОВАРА.
 class GoodsCard extends StatelessWidget {

@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../theme/app_theme.dart';
-import '../../../../models/market_models.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/models/market_models.dart';
 import '../../widgets/pills.dart'; // GenderPill, PricePill
-import '../../../../widgets/interactive_back_swipe.dart';
+import '../../../../core/widgets/interactive_back_swipe.dart';
 
 class TradeChatSlotsScreen extends StatefulWidget {
   final String itemTitle;

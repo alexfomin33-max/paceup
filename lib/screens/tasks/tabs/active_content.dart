@@ -1,10 +1,10 @@
 // lib/screens/tabs/active_content.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../description/run_200k_screen.dart';
 import '../description/suzdal_screen.dart';
-import '../../../widgets/transparent_route.dart';
+import '../../../core/widgets/transparent_route.dart';
 
 class ActiveContent extends StatelessWidget {
   const ActiveContent({super.key});

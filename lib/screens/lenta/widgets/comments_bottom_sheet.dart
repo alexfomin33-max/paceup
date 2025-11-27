@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import '../../../theme/app_theme.dart';
-import '../../../service/api_service.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/services/api_service.dart';
 
 // ——— Аккуратный показ SnackBar (чтобы не падать без ScaffoldMessenger) ———
 void showSnack(BuildContext context, String message) {
@@ -660,9 +660,7 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Пока нет комментариев',
-            style: TextStyle(
-              color: AppColors.getTextTertiaryColor(context),
-            ),
+            style: TextStyle(color: AppColors.getTextTertiaryColor(context)),
           ),
         ],
       ),
@@ -692,9 +690,7 @@ class _ErrorState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.getTextTertiaryColor(context),
-              ),
+              style: TextStyle(color: AppColors.getTextTertiaryColor(context)),
             ),
             const SizedBox(height: 12),
             FilledButton.tonal(

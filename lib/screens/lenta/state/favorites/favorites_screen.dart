@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
-import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/app_bar.dart'; // ← глобальный AppBar
 import 'tabs/my_events_content.dart';
 import 'tabs/bookmarks_content.dart';
 import 'tabs/routes_content.dart';

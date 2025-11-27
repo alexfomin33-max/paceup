@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../../../../core/theme/app_theme.dart';
 
 /// «Друзей» — заголовок/дата снаружи + таблица со строками друзей и вертикальными разделителями.
 List<Widget> buildFriendRacesSlivers() {
@@ -193,7 +193,9 @@ class _RaceFriendsBlock extends StatelessWidget {
                                       fontFamily: 'Inter',
                                       fontSize: 13,
                                       fontWeight: FontWeight.w400,
-                                      color: AppColors.getTextPrimaryColor(context),
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
                                     ),
                                   ),
                                 ),

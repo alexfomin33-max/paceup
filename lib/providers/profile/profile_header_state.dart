@@ -5,7 +5,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/foundation.dart';
-import '../../models/user_profile_header.dart';
+import '../../core/models/user_profile_header.dart';
 
 /// Состояние header'а профиля
 @immutable
@@ -19,11 +19,7 @@ class ProfileHeaderState {
   /// Ошибка загрузки (если есть)
   final String? error;
 
-  const ProfileHeaderState({
-    this.profile,
-    this.isLoading = false,
-    this.error,
-  });
+  const ProfileHeaderState({this.profile, this.isLoading = false, this.error});
 
   /// Начальное состояние (загрузка)
   factory ProfileHeaderState.initial() =>
@@ -52,6 +48,5 @@ class ProfileHeaderState {
           error == other.error;
 
   @override
-  int get hashCode =>
-      Object.hash(profile, isLoading, error);
+  int get hashCode => Object.hash(profile, isLoading, error);
 }

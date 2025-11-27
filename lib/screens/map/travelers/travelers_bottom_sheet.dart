@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// Каркас bottom sheet для вкладки «Попутчики» — 1:1 как в events_bottom_sheet.dart
 class TravelersBottomSheet extends StatelessWidget {

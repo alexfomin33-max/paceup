@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'travelers_bottom_sheet.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../../../../core/theme/app_theme.dart';
 
 /// Возвращает маркеры для вкладки «Попутчики».
 List<Map<String, dynamic>> travelersMarkers(BuildContext context) {

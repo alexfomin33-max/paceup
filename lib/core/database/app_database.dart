@@ -49,7 +49,8 @@ class CachedActivities extends Table {
   // ────────── Даты (SQL-формат) ──────────
   DateTimeColumn get dateStart => dateTime().nullable()();
   DateTimeColumn get dateEnd => dateTime().nullable()();
-  DateTimeColumn get lentaDate => dateTime().nullable()(); // ✅ Дата из таблицы lenta для сортировки
+  DateTimeColumn get lentaDate =>
+      dateTime().nullable()(); // ✅ Дата из таблицы lenta для сортировки
 
   // ────────── Пользовательские данные ──────────
   TextColumn get userName => text()();
@@ -190,9 +191,7 @@ class AppDatabase extends _$AppDatabase {
       if (from < 3) {
         try {
           // Очищаем старые данные ленты (они без lentaDate и с неправильной сортировкой)
-          await m.database.customStatement(
-            'DELETE FROM cached_activities;',
-          );
+          await m.database.customStatement('DELETE FROM cached_activities;');
           // Добавляем колонку lenta_date типа DATETIME
           await m.database.customStatement(
             'ALTER TABLE cached_activities ADD COLUMN lenta_date DATETIME;',
@@ -200,9 +199,7 @@ class AppDatabase extends _$AppDatabase {
         } catch (_) {
           // Если колонка уже существует, просто очищаем данные
           try {
-            await m.database.customStatement(
-              'DELETE FROM cached_activities;',
-            );
+            await m.database.customStatement('DELETE FROM cached_activities;');
           } catch (_) {
             // Игнорируем ошибки
           }

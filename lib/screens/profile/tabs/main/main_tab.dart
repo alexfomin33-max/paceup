@@ -14,9 +14,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../theme/app_theme.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../equipment/viewing/viewing_equipment_screen.dart';
-import '../../../../service/api_service.dart';
+import '../../../../core/services/api_service.dart';
 
 // 🔹 Модели и парсинг данных
 import 'models/main_tab_data.dart';

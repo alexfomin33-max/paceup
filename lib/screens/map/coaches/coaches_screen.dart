@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'coaches_bottom_sheet.dart';
-import '../../../../../theme/app_theme.dart';
+import '../../../../../core/theme/app_theme.dart';
 
 /// Возвращает маркеры для вкладки «Тренеры».
 List<Map<String, dynamic>> coachesMarkers(BuildContext context) {

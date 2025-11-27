@@ -1,8 +1,8 @@
 // lib/screens/tabs/available_content.dart
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../description/swim_trip_screen.dart';
-import '../../../widgets/transparent_route.dart';
+import '../../../core/widgets/transparent_route.dart';
 
 class AvailableContent extends StatelessWidget {
   const AvailableContent({super.key});

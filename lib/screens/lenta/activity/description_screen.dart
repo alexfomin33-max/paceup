@@ -4,20 +4,20 @@ import 'package:flutter/material.dart';
 import 'dart:ui' as ui; // для ui.Path
 import 'package:latlong2/latlong.dart' as ll;
 
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 // Берём готовые виджеты (чтобы совпадал верх с ActivityBlock)
 import '../widgets/activity/header/activity_header.dart';
 import '../widgets/activity/stats/stats_row.dart';
 import '../widgets/activity/equipment/equipment_chip.dart'
     as ab
     show EquipmentChip;
-import '../../../widgets/route_card.dart' as ab show RouteCard;
+import '../../../core/widgets/route_card.dart' as ab show RouteCard;
 // Модель — через алиас, чтобы не конфликтовало имя Equipment
-import '../../../models/activity_lenta.dart' as al;
+import '../../../core/models/activity_lenta.dart' as al;
 import 'combining_screen.dart';
-import '../../../widgets/app_bar.dart';
-import '../../../widgets/transparent_route.dart';
-import '../../../widgets/interactive_back_swipe.dart';
+import '../../../core/widgets/app_bar.dart';
+import '../../../core/widgets/transparent_route.dart';
+import '../../../core/widgets/interactive_back_swipe.dart';
 
 /// Страница с подробным описанием тренировки.
 /// Верхний блок (аватар, дата, метрики) полностью повторяет ActivityBlock.
@@ -376,10 +376,7 @@ class _SplitsTableFull extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
         border: Border(
-          top: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
+          top: BorderSide(color: AppColors.getBorderColor(context), width: 1),
           bottom: BorderSide(
             color: AppColors.getBorderColor(context),
             width: 1,

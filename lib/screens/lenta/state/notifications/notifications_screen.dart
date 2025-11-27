@@ -2,9 +2,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../theme/app_theme.dart';
-import '../../../../widgets/app_bar.dart'; // ← наш глобальный AppBar
-import '../../../../widgets/interactive_back_swipe.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/app_bar.dart'; // ← наш глобальный AppBar
+import '../../../../core/widgets/interactive_back_swipe.dart';
 
 // ⬇️ наш полноэкранный шит с настройками уведомлений
 import 'settings_bottom_sheet.dart';

@@ -7,12 +7,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../theme/app_theme.dart';
-import '../../../../service/api_service.dart';
-import '../../../../service/auth_service.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_service.dart';
 import 'adding/adding_equipment_screen.dart';
 import 'viewing/viewing_equipment_screen.dart';
-import '../../../../widgets/primary_button.dart';
+import '../../../../core/widgets/primary_button.dart';
 
 /// Модель элемента снаряжения
 class _GearItem {
@@ -556,7 +556,7 @@ class _GearListCard extends StatelessWidget {
           color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: AppColors.getBorderColor(context), 
+            color: AppColors.getBorderColor(context),
             width: 0.5,
           ),
           boxShadow: [

@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../theme/app_theme.dart';
-import '../../../utils/image_picker_helper.dart';
-import '../../../widgets/app_bar.dart';
-import '../../../widgets/interactive_back_swipe.dart';
-import '../../../widgets/primary_button.dart';
-import '../../../service/api_service.dart';
-import '../../../service/auth_service.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/image_picker_helper.dart';
+import '../../../core/widgets/app_bar.dart';
+import '../../../core/widgets/interactive_back_swipe.dart';
+import '../../../core/widgets/primary_button.dart';
+import '../../../core/services/api_service.dart';
+import '../../../core/services/auth_service.dart';
 import 'location_picker_screen.dart';
 
 /// Экран редактирования официального события
@@ -964,7 +964,9 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                                 builder: (context) => Text(
                                   option,
                                   style: AppTextStyles.h14w4.copyWith(
-                                    color: AppColors.getTextPrimaryColor(context),
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1001,32 +1003,43 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                               hintText: 'Выберите место на карте',
                               hintStyle: AppTextStyles.h14w4Place,
                               filled: true,
-                              fillColor: AppColors.getSurfaceMutedColor(context),
+                              fillColor: AppColors.getSurfaceMutedColor(
+                                context,
+                              ),
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 17,
                               ),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                                 borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(context)
-                                      .withValues(alpha: 0.6),
+                                  color: AppColors.getBorderColor(
+                                    context,
+                                  ).withValues(alpha: 0.6),
                                   width: 1,
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                                 borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(context)
-                                      .withValues(alpha: 0.6),
+                                  color: AppColors.getBorderColor(
+                                    context,
+                                  ).withValues(alpha: 0.6),
                                   width: 1,
                                 ),
                               ),
                               disabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                                 borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(context)
-                                      .withValues(alpha: 0.6),
+                                  color: AppColors.getBorderColor(
+                                    context,
+                                  ).withValues(alpha: 0.6),
                                   width: 1,
                                 ),
                               ),
@@ -1044,9 +1057,12 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                               side: BorderSide(
                                 color: AppColors.getBorderColor(context),
                               ),
-                              foregroundColor:
-                                  AppColors.getTextPrimaryColor(context),
-                              backgroundColor: AppColors.getSurfaceColor(context),
+                              foregroundColor: AppColors.getTextPrimaryColor(
+                                context,
+                              ),
+                              backgroundColor: AppColors.getSurfaceColor(
+                                context,
+                              ),
                               padding: EdgeInsets.zero,
                             ),
                             child: Icon(
@@ -1084,11 +1100,14 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                                   child: InputDecorator(
                                     decoration: InputDecoration(
                                       filled: true,
-                                      fillColor: AppColors.getSurfaceColor(context),
-                                      contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 18,
+                                      fillColor: AppColors.getSurfaceColor(
+                                        context,
                                       ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 18,
+                                          ),
                                       prefixIcon: Padding(
                                         padding: const EdgeInsets.only(
                                           left: 12,
@@ -1097,19 +1116,24 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                                         child: Icon(
                                           CupertinoIcons.calendar,
                                           size: 18,
-                                          color: AppColors.getIconPrimaryColor(context),
+                                          color: AppColors.getIconPrimaryColor(
+                                            context,
+                                          ),
                                         ),
                                       ),
-                                      prefixIconConstraints: const BoxConstraints(
-                                        minWidth: 18 + 14,
-                                        minHeight: 18,
-                                      ),
+                                      prefixIconConstraints:
+                                          const BoxConstraints(
+                                            minWidth: 18 + 14,
+                                            minHeight: 18,
+                                          ),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(
                                           AppRadius.sm,
                                         ),
                                         borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(context),
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -1118,7 +1142,9 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                                           AppRadius.sm,
                                         ),
                                         borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(context),
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -1127,7 +1153,9 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                                           AppRadius.sm,
                                         ),
                                         borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(context),
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -1138,7 +1166,10 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                                           : 'Выберите дату',
                                       style: date != null
                                           ? AppTextStyles.h14w4.copyWith(
-                                              color: AppColors.getTextPrimaryColor(context),
+                                              color:
+                                                  AppColors.getTextPrimaryColor(
+                                                    context,
+                                                  ),
                                             )
                                           : AppTextStyles.h14w4Place,
                                     ),
@@ -1170,11 +1201,14 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                                   child: InputDecorator(
                                     decoration: InputDecoration(
                                       filled: true,
-                                      fillColor: AppColors.getSurfaceColor(context),
-                                      contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 18,
+                                      fillColor: AppColors.getSurfaceColor(
+                                        context,
                                       ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 18,
+                                          ),
                                       prefixIcon: Padding(
                                         padding: const EdgeInsets.only(
                                           left: 12,
@@ -1183,19 +1217,24 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                                         child: Icon(
                                           CupertinoIcons.time,
                                           size: 18,
-                                          color: AppColors.getIconPrimaryColor(context),
+                                          color: AppColors.getIconPrimaryColor(
+                                            context,
+                                          ),
                                         ),
                                       ),
-                                      prefixIconConstraints: const BoxConstraints(
-                                        minWidth: 18 + 14,
-                                        minHeight: 18,
-                                      ),
+                                      prefixIconConstraints:
+                                          const BoxConstraints(
+                                            minWidth: 18 + 14,
+                                            minHeight: 18,
+                                          ),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(
                                           AppRadius.sm,
                                         ),
                                         borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(context),
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -1204,7 +1243,9 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                                           AppRadius.sm,
                                         ),
                                         borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(context),
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -1213,7 +1254,9 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                                           AppRadius.sm,
                                         ),
                                         borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(context),
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -1224,7 +1267,10 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                                           : 'Выберите время',
                                       style: time != null
                                           ? AppTextStyles.h14w4.copyWith(
-                                              color: AppColors.getTextPrimaryColor(context),
+                                              color:
+                                                  AppColors.getTextPrimaryColor(
+                                                    context,
+                                                  ),
                                             )
                                           : AppTextStyles.h14w4Place,
                                     ),
@@ -1592,9 +1638,7 @@ class _MediaTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             color: AppColors.getSurfaceColor(context),
-            border: Border.all(
-              color: AppColors.getBorderColor(context),
-            ),
+            border: Border.all(color: AppColors.getBorderColor(context)),
           ),
           child: Center(
             child: Icon(
@@ -1608,4 +1652,3 @@ class _MediaTile extends StatelessWidget {
     );
   }
 }
-

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../core/theme/app_theme.dart';
 import 'walking_skill_tab.dart';
-import '../../../../widgets/transparent_route.dart';
+import '../../../../core/widgets/transparent_route.dart';
 
 class SkillsTab extends StatefulWidget {
   const SkillsTab({super.key});

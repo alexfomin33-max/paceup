@@ -11,10 +11,10 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../service/api_service.dart';
-import '../../service/cache_service.dart';
-import '../../models/user_profile_header.dart';
-import '../../utils/cache_cleaner.dart';
+import '../../core/services/api_service.dart';
+import '../../core/services/cache_service.dart';
+import '../../core/models/user_profile_header.dart';
+import '../../core/utils/cache_cleaner.dart';
 import 'profile_header_state.dart';
 import '../avatar_version_provider.dart';
 
@@ -81,7 +81,7 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
         body: {'user_id': '$userId'},
         timeout: const Duration(seconds: 12),
       );
-      
+
       // Сервер может вернуть данные в разных ключах
       final dynamic raw = map['profile'] ?? map['data'] ?? map;
 
@@ -123,31 +123,31 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
   }
 
   /// Обновление данных профиля (после редактирования)
-  /// 
+  ///
   /// Унифицированная стратегия cache-busting:
   /// Все экраны (профиль, лента, редактирование) используют avatarVersionProvider
   /// для синхронизированного обновления аватарки
   Future<void> reload() async {
     // Сохраняем старый URL для очистки кэша
     final oldAvatar = state.profile?.avatar;
-    
+
     // ШАГ 1: Очищаем кэш профиля для принудительной загрузки свежих данных
     await _cache.clearProfileCache(userId: userId);
-    
+
     // ШАГ 2: Обновляем глобальную версию аватарки
     // Это обновит аватарку везде: в профиле, ленте и редактировании
     _ref.read(avatarVersionProvider.notifier).bump();
-    
+
     // ШАГ 3: Загружаем свежие данные с сервера (без показа кэша)
     // Пропускаем показ кэша, сразу загружаем с сервера
     state = state.copyWith(isLoading: true);
-    
+
     final map = await _api.post(
       '/user_profile_header.php',
       body: {'user_id': '$userId'},
       timeout: const Duration(seconds: 12),
     );
-    
+
     // Сервер может вернуть данные в разных ключах
     final dynamic raw = map['profile'] ?? map['data'] ?? map;
 
@@ -155,9 +155,7 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
       throw const FormatException('Bad payload: not a JSON object');
     }
 
-    final profile = UserProfileHeader.fromJson(
-      Map<String, dynamic>.from(raw),
-    );
+    final profile = UserProfileHeader.fromJson(Map<String, dynamic>.from(raw));
 
     // Сохраняем в кэш
     await _cache.cacheProfile(
@@ -175,20 +173,20 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
     );
 
     state = state.copyWith(profile: profile, isLoading: false, error: null);
-    
+
     final newAvatar = state.profile?.avatar;
     if (newAvatar == null || newAvatar.isEmpty) return;
-    
+
     // ШАГ 4: Очистка кэша для принудительной перезагрузки
     try {
       // Очищаем базовый URL
       await CachedNetworkImage.evictFromCache(newAvatar);
-      
+
       // Очищаем старый URL (если был другой)
       if (oldAvatar != null && oldAvatar != newAvatar) {
         await CachedNetworkImage.evictFromCache(oldAvatar);
       }
-      
+
       // Полная очистка через ImageProvider
       try {
         final provider = CachedNetworkImageProvider(newAvatar);
@@ -196,10 +194,9 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
       } catch (_) {
         // Игнорируем ошибки
       }
-      
+
       // Очистка всех вариантов с cache-busting параметрами
       await clearImageCacheForUrl(newAvatar);
-      
     } catch (e) {
       // Игнорируем ошибки очистки кэша
     }

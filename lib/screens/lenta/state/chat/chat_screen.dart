@@ -4,12 +4,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../theme/app_theme.dart';
-import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
-import '../../../../widgets/interactive_back_swipe.dart';
-import '../../../../widgets/transparent_route.dart';
-import '../../../../service/api_service.dart';
-import '../../../../service/auth_service.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/app_bar.dart'; // ← глобальный AppBar
+import '../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../core/widgets/transparent_route.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_service.dart';
 import 'personal_chat_screen.dart';
 import 'start_chat_screen.dart';
 

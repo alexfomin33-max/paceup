@@ -6,7 +6,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../service/auth_service.dart';
+import '../../core/services/auth_service.dart';
 
 /// Provider для AuthService (singleton)
 ///

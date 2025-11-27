@@ -2,10 +2,10 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../../theme/app_theme.dart';
-import '../../../../../widgets/app_bar.dart';
-import '../../../../../widgets/interactive_back_swipe.dart';
-import '../../../../../widgets/primary_button.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/widgets/app_bar.dart';
+import '../../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../../core/widgets/primary_button.dart';
 
 import 'package:local_auth/local_auth.dart';
 
@@ -57,7 +57,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
       setState(() {
         _isAvailable = false;
         _isLoading = false;
-        _error = Platform.isMacOS 
+        _error = Platform.isMacOS
             ? 'Биометрия недоступна на macOS. Используйте iOS или Android устройство.'
             : 'Биометрия недоступна на этой платформе.';
       });
@@ -73,15 +73,15 @@ class _BiometricScreenState extends State<BiometricScreen> {
         });
         return;
       }
-      
+
       final canCheckBiometrics = await _localAuth.canCheckBiometrics;
       final isDeviceSupported = await _localAuth.isDeviceSupported();
-      
+
       if (!mounted) return;
 
       if (canCheckBiometrics && isDeviceSupported) {
         final availableBiometrics = await _localAuth.getAvailableBiometrics();
-        
+
         setState(() {
           _isAvailable = availableBiometrics.isNotEmpty;
           _availableBiometrics = availableBiometrics;
@@ -97,10 +97,11 @@ class _BiometricScreenState extends State<BiometricScreen> {
       if (!mounted) return;
       // Если плагин недоступен, показываем дружелюбное сообщение
       final errorMsg = e.toString();
-      if (errorMsg.contains('MissingPluginException') || 
+      if (errorMsg.contains('MissingPluginException') ||
           errorMsg.contains('No implementation found')) {
         setState(() {
-          _error = 'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.';
+          _error =
+              'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.';
           _isAvailable = false;
           _isLoading = false;
         });
@@ -119,9 +120,9 @@ class _BiometricScreenState extends State<BiometricScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final enabled = prefs.getBool('biometric_enabled') ?? false;
-      
+
       if (!mounted) return;
-      
+
       setState(() {
         _isEnabled = enabled;
       });
@@ -175,7 +176,8 @@ class _BiometricScreenState extends State<BiometricScreen> {
 
     try {
       final authenticated = await _localAuth.authenticate(
-        localizedReason: 'Подтвердите включение биометрии для защиты приложения',
+        localizedReason:
+            'Подтвердите включение биометрии для защиты приложения',
         /*options: const AuthenticationOptions(
           biometricOnly: false,
           stickyAuth: true,
@@ -190,7 +192,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
           _isLoading = false;
         });
         await _saveSettings(true);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -209,10 +211,11 @@ class _BiometricScreenState extends State<BiometricScreen> {
       if (!mounted) return;
       // Если плагин недоступен, показываем дружелюбное сообщение
       final errorMsg = e.toString();
-      if (errorMsg.contains('MissingPluginException') || 
+      if (errorMsg.contains('MissingPluginException') ||
           errorMsg.contains('No implementation found')) {
         setState(() {
-          _error = 'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.';
+          _error =
+              'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.';
           _isEnabled = false;
           _isLoading = false;
         });
@@ -256,214 +259,220 @@ class _BiometricScreenState extends State<BiometricScreen> {
                   ),
                 )
               : _error != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              CupertinoIcons.exclamationmark_triangle,
-                              size: 48,
-                              color: AppColors.error,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _error!,
-                              textAlign: TextAlign.center,
-                              style: AppTextStyles.h14w4.copyWith(
-                                color: AppColors.error,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            PrimaryButton(
-                              text: 'Повторить',
-                              onPressed: _checkAvailability,
-                            ),
-                          ],
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          CupertinoIcons.exclamationmark_triangle,
+                          size: 48,
+                          color: AppColors.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.h14w4.copyWith(
+                            color: AppColors.error,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        PrimaryButton(
+                          text: 'Повторить',
+                          onPressed: _checkAvailability,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                  children: [
+                    // Информационная карточка
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.getSurfaceColor(context),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: AppColors.getBorderColor(context),
+                          width: 1,
                         ),
                       ),
-                    )
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                      children: [
-                        // Информационная карточка
-                        Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.getSurfaceColor(context),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            border: Border.all(
-                              color: AppColors.getBorderColor(context),
-                              width: 1,
-                            ),
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    CupertinoIcons.info,
-                                    size: 20,
-                                    color: AppColors.brandPrimary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Что это?',
-                                    style: AppTextStyles.h14w6.copyWith(
-                                      color: AppColors.getTextPrimaryColor(context),
-                                    ),
-                                  ),
-                                ],
+                              const Icon(
+                                CupertinoIcons.info,
+                                size: 20,
+                                color: AppColors.brandPrimary,
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(width: 8),
                               Text(
-                                'Биометрическая защита позволяет использовать Face ID, Touch ID или код-пароль для быстрого входа в приложение. Ваши данные защищены системной аутентификацией устройства.',
-                                style: AppTextStyles.h14w4.copyWith(
-                                  color: AppColors.getTextSecondaryColor(context),
+                                'Что это?',
+                                style: AppTextStyles.h14w6.copyWith(
+                                  color: AppColors.getTextPrimaryColor(context),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Статус доступности
-                        if (!_isAvailable)
-                          Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.warning.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                              border: Border.all(
-                                color: AppColors.warning,
-                                width: 1,
-                              ),
-                            ),
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  CupertinoIcons.info,
-                                  size: 24,
-                                  color: AppColors.warning,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Биометрия недоступна на этом устройстве',
-                                    style: AppTextStyles.h14w5.copyWith(
-                                      color: AppColors.warning,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                        if (_isAvailable) ...[
-                          const SizedBox(height: 24),
-
-                          // Доступные типы биометрии
-                          Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.getSurfaceColor(context),
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                              border: Border.all(
-                                color: AppColors.getBorderColor(context),
-                                width: 1,
-                              ),
-                            ),
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Доступные методы:',
-                                  style: AppTextStyles.h14w6.copyWith(
-                                    color: AppColors.getTextPrimaryColor(context),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                ..._availableBiometrics.map((type) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 8),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            type == BiometricType.face
-                                                ? CupertinoIcons.person_fill
-                                                : CupertinoIcons.lock_fill,
-                                            size: 20,
-                                            color: AppColors.brandPrimary,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            _getBiometricTypeName(type),
-                                            style: AppTextStyles.h14w4.copyWith(
-                                              color: AppColors.getTextPrimaryColor(context),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Переключатель
-                          Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.getSurfaceColor(context),
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                              border: Border.all(
-                                color: AppColors.getBorderColor(context),
-                                width: 1,
-                              ),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Биометрическая защита',
-                                        style: AppTextStyles.h14w6.copyWith(
-                                          color: AppColors.getTextPrimaryColor(context),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        _isEnabled
-                                            ? 'Включена'
-                                            : 'Выключена',
-                                        style: AppTextStyles.h13w4.copyWith(
-                                          color: AppColors.getTextSecondaryColor(context),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                CupertinoSwitch(
-                                  value: _isEnabled,
-                                  onChanged: _isLoading
-                                      ? null
-                                      : (value) => _toggleBiometric(value),
-                                  activeTrackColor: AppColors.brandPrimary,
-                                ),
-                              ],
+                          const SizedBox(height: 12),
+                          Text(
+                            'Биометрическая защита позволяет использовать Face ID, Touch ID или код-пароль для быстрого входа в приложение. Ваши данные защищены системной аутентификацией устройства.',
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.getTextSecondaryColor(context),
                             ),
                           ),
                         ],
-                      ],
+                      ),
                     ),
+
+                    const SizedBox(height: 24),
+
+                    // Статус доступности
+                    if (!_isAvailable)
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.warning.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(
+                            color: AppColors.warning,
+                            width: 1,
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              CupertinoIcons.info,
+                              size: 24,
+                              color: AppColors.warning,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Биометрия недоступна на этом устройстве',
+                                style: AppTextStyles.h14w5.copyWith(
+                                  color: AppColors.warning,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    if (_isAvailable) ...[
+                      const SizedBox(height: 24),
+
+                      // Доступные типы биометрии
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurfaceColor(context),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Доступные методы:',
+                              style: AppTextStyles.h14w6.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ..._availableBiometrics.map(
+                              (type) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      type == BiometricType.face
+                                          ? CupertinoIcons.person_fill
+                                          : CupertinoIcons.lock_fill,
+                                      size: 20,
+                                      color: AppColors.brandPrimary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _getBiometricTypeName(type),
+                                      style: AppTextStyles.h14w4.copyWith(
+                                        color: AppColors.getTextPrimaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Переключатель
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurfaceColor(context),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Биометрическая защита',
+                                    style: AppTextStyles.h14w6.copyWith(
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _isEnabled ? 'Включена' : 'Выключена',
+                                    style: AppTextStyles.h13w4.copyWith(
+                                      color: AppColors.getTextSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            CupertinoSwitch(
+                              value: _isEnabled,
+                              onChanged: _isLoading
+                                  ? null
+                                  : (value) => _toggleBiometric(value),
+                              activeTrackColor: AppColors.brandPrimary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
         ),
       ),
     );

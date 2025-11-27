@@ -2,13 +2,13 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../theme/app_theme.dart';
-import '../../../utils/image_picker_helper.dart';
-import '../../../widgets/app_bar.dart';
-import '../../../widgets/interactive_back_swipe.dart';
-import '../../../widgets/primary_button.dart';
-import '../../../service/api_service.dart';
-import '../../../service/auth_service.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/image_picker_helper.dart';
+import '../../../core/widgets/app_bar.dart';
+import '../../../core/widgets/interactive_back_swipe.dart';
+import '../../../core/widgets/primary_button.dart';
+import '../../../core/services/api_service.dart';
+import '../../../core/services/auth_service.dart';
 import 'location_picker_screen.dart';
 
 class AddEventScreen extends StatefulWidget {

@@ -2,13 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../providers/training/training_provider.dart';
-import '../../../../widgets/route_card.dart';
+import '../../../../core/widgets/route_card.dart';
 import '../../lenta/activity/description_screen.dart';
-import '../../../../models/activity_lenta.dart' as al;
+import '../../../core/models/activity_lenta.dart' as al;
 import '../../../../providers/services/auth_provider.dart';
-import '../../../../widgets/transparent_route.dart';
+import '../../../../core/widgets/transparent_route.dart';
 
 class TrainingTab extends ConsumerStatefulWidget {
   const TrainingTab({super.key});
@@ -68,7 +68,8 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
             }
           } catch (e) {
             // Игнорируем ошибки парсинга
-            _monthInitialized = true; // Помечаем как инициализированный даже при ошибке
+            _monthInitialized =
+                true; // Помечаем как инициализированный даже при ошибке
           }
         } else if (data.lastWorkoutMonth != null) {
           // Помечаем как инициализированный, если месяц уже был установлен ранее
@@ -78,15 +79,15 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
         // Фильтруем тренировки по текущему месяцу
         final items = data.activities
             .where((w) {
-              return w.when.year == _month.year &&
-                  w.when.month == _month.month;
+              return w.when.year == _month.year && w.when.month == _month.month;
             })
             .toList(growable: false);
 
         // Получаем календарь для текущего месяца
-        final monthKey = '${_month.year}-${_month.month.toString().padLeft(2, '0')}';
+        final monthKey =
+            '${_month.year}-${_month.month.toString().padLeft(2, '0')}';
         final calendarData = <int, String>{};
-        
+
         // Получаем дни для текущего месяца из календаря
         if (data.calendar.containsKey(monthKey)) {
           final daysMap = data.calendar[monthKey]!;
@@ -566,10 +567,7 @@ class _WorkoutTable extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
         border: Border(
-          top: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 0.5,
-          ),
+          top: BorderSide(color: AppColors.getBorderColor(context), width: 0.5),
           bottom: BorderSide(
             color: AppColors.getBorderColor(context),
             width: 0.5,
@@ -640,119 +638,116 @@ class _WorkoutRow extends ConsumerWidget {
         // слева/сверху/снизу уменьшены, справа прежний 12
         padding: const EdgeInsets.fromLTRB(8, 6, 10, 6),
         child: Row(
-        children: [
-          // Мини-карта 80x55 (статичная карта маршрута)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-            child: SizedBox(
-              width: 80,
-              height: 55,
-              child: item.points.isEmpty
-                  ? const Image(
-                      image: AssetImage('assets/training_map.png'),
-                      fit: BoxFit.cover,
-                    )
-                  : RouteCard(
-                      points: item.points,
-                      height: 55,
-                    ),
+          children: [
+            // Мини-карта 80x55 (статичная карта маршрута)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.xs),
+              child: SizedBox(
+                width: 80,
+                height: 55,
+                child: item.points.isEmpty
+                    ? const Image(
+                        image: AssetImage('assets/training_map.png'),
+                        fit: BoxFit.cover,
+                      )
+                    : RouteCard(points: item.points, height: 55),
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
+            const SizedBox(width: 12),
 
-          // Текстовая часть
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Дата/время (иконку слева убрали)
-                Row(
-                  children: [
-                    Text(
-                      _fmtDate(item.when),
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        color: AppColors.getTextSecondaryColor(context),
-                      ),
-                    ),
-                    const Spacer(),
-                    Icon(
-                      Icons.more_horiz,
-                      size: 18,
-                      color: AppColors.getTextSecondaryColor(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // Три метрики — строго таблично, с вертикальными разделителями
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+            // Текстовая часть
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Дата/время (иконку слева убрали)
+                  Row(
                     children: [
-                      // Иконка вида спорта в отдельной колонке с фиксированной шириной
-                      SizedBox(
-                        width: 21,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Icon(
-                            item.kind == 0
-                                ? Icons.directions_run
-                                : (item.kind == 1
-                                      ? Icons.pedal_bike
-                                      : Icons.pool),
-                            size: 15,
-                            color: AppColors.brandPrimary,
-                          ),
+                      Text(
+                        _fmtDate(item.when),
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          color: AppColors.getTextSecondaryColor(context),
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: _metric(
-                          context,
-                          null,
-                          item.distText,
-                          MainAxisAlignment.start,
-                        ),
-                      ),
-                      VerticalDivider(
-                        width: 1,
-                        thickness: 0.5,
-                        color: AppColors.getDividerColor(context),
-                        indent: 0,
-                        endIndent: 0,
-                      ),
-                      Expanded(
-                        child: _metric(
-                          context,
-                          null,
-                          item.durText,
-                          MainAxisAlignment.center,
-                        ),
-                      ),
-                      VerticalDivider(
-                        width: 1,
-                        thickness: 0.5,
-                        color: AppColors.getDividerColor(context),
-                        indent: 0,
-                        endIndent: 0,
-                      ),
-                      Expanded(
-                        child: _metric(
-                          context,
-                          null,
-                          item.paceText,
-                          MainAxisAlignment.center,
-                        ),
+                      const Spacer(),
+                      Icon(
+                        Icons.more_horiz,
+                        size: 18,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+
+                  // Три метрики — строго таблично, с вертикальными разделителями
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        // Иконка вида спорта в отдельной колонке с фиксированной шириной
+                        SizedBox(
+                          width: 21,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Icon(
+                              item.kind == 0
+                                  ? Icons.directions_run
+                                  : (item.kind == 1
+                                        ? Icons.pedal_bike
+                                        : Icons.pool),
+                              size: 15,
+                              color: AppColors.brandPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: _metric(
+                            context,
+                            null,
+                            item.distText,
+                            MainAxisAlignment.start,
+                          ),
+                        ),
+                        VerticalDivider(
+                          width: 1,
+                          thickness: 0.5,
+                          color: AppColors.getDividerColor(context),
+                          indent: 0,
+                          endIndent: 0,
+                        ),
+                        Expanded(
+                          child: _metric(
+                            context,
+                            null,
+                            item.durText,
+                            MainAxisAlignment.center,
+                          ),
+                        ),
+                        VerticalDivider(
+                          width: 1,
+                          thickness: 0.5,
+                          color: AppColors.getDividerColor(context),
+                          indent: 0,
+                          endIndent: 0,
+                        ),
+                        Expanded(
+                          child: _metric(
+                            context,
+                            null,
+                            item.paceText,
+                            MainAxisAlignment.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
         ),
       ),
     );

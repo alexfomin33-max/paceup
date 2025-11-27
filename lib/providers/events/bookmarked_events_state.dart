@@ -5,7 +5,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/foundation.dart';
-import '../../models/event.dart';
+import '../../core/models/event.dart';
 
 /// Состояние списка событий из закладок пользователя
 @immutable
@@ -31,10 +31,10 @@ class BookmarkedEventsState {
 
   /// Начальное состояние
   factory BookmarkedEventsState.initial() => const BookmarkedEventsState(
-        events: [],
-        isLoading: true, // начинаем с loading state
-        isRefreshing: false,
-      );
+    events: [],
+    isLoading: true, // начинаем с loading state
+    isRefreshing: false,
+  );
 
   /// Состояние загрузки
   BookmarkedEventsState copyWith({
@@ -62,7 +62,5 @@ class BookmarkedEventsState {
           error == other.error;
 
   @override
-  int get hashCode =>
-      Object.hash(events, isLoading, isRefreshing, error);
+  int get hashCode => Object.hash(events, isLoading, isRefreshing, error);
 }
-

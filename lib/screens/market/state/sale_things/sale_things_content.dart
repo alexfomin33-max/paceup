@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
-import '../../../../models/market_models.dart' show Gender;
-import '../../../../widgets/primary_button.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/models/market_models.dart' show Gender;
+import '../../../../core/widgets/primary_button.dart';
 
 /// Контент вкладки «Продажа вещи»
 class SaleThingsContent extends StatefulWidget {
@@ -223,10 +223,7 @@ class _SmallLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.w500,
-      ),
+      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
     );
   }
 }
@@ -369,10 +366,7 @@ class _DropdownField extends StatelessWidget {
               items: items.map((o) {
                 return DropdownMenuItem<String>(
                   value: o,
-                  child: Text(
-                    o,
-                    style: AppTextStyles.h14w4,
-                  ),
+                  child: Text(o, style: AppTextStyles.h14w4),
                 );
               }).toList(),
             ),
@@ -515,8 +509,8 @@ class _OvalToggle extends StatelessWidget {
     // Используем ту же логику, что и в alert_creation_screen.dart
     final fg = selected
         ? (Theme.of(context).brightness == Brightness.dark
-            ? AppColors.surface
-            : AppColors.getSurfaceColor(context))
+              ? AppColors.surface
+              : AppColors.getSurfaceColor(context))
         : AppColors.getTextPrimaryColor(context);
     return GestureDetector(
       onTap: onTap,

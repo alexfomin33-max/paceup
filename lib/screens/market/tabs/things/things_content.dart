@@ -3,8 +3,8 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_theme.dart';
-import '../../../../models/market_models.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/models/market_models.dart';
 import 'widgets/market_things_card.dart';
 
 class ThingsContent extends StatefulWidget {

@@ -6,11 +6,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
-import '../../../models/market_models.dart' show Gender;
-import '../../../widgets/app_bar.dart';
-import '../../../widgets/primary_button.dart';
-import '../../../widgets/interactive_back_swipe.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/models/market_models.dart' show Gender;
+import '../../../core/widgets/app_bar.dart';
+import '../../../core/widgets/primary_button.dart';
+import '../../../core/widgets/interactive_back_swipe.dart';
 import '../widgets/pills.dart';
 
 /// Модель оповещения о слоте

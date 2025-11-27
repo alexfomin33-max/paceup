@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// 🔹 Кнопка повторной отправки SMS-кода с таймером
 /// Показывает оставшееся время до возможности повторной отправки
@@ -11,11 +11,7 @@ class ResendCodeButton extends StatefulWidget {
   /// 🔹 Начальное время таймера в секундах (по умолчанию 60)
   final int initialSeconds;
 
-  const ResendCodeButton({
-    super.key,
-    this.onPressed,
-    this.initialSeconds = 60,
-  });
+  const ResendCodeButton({super.key, this.onPressed, this.initialSeconds = 60});
 
   @override
   State<ResendCodeButton> createState() => ResendCodeButtonState();
@@ -75,9 +71,7 @@ class ResendCodeButtonState extends State<ResendCodeButton> {
       onPressed: isEnabled ? widget.onPressed : null,
       style: const ButtonStyle(
         overlayColor: WidgetStatePropertyAll(Colors.transparent),
-        padding: WidgetStatePropertyAll(
-          EdgeInsets.symmetric(vertical: 15),
-        ),
+        padding: WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: 15)),
       ),
       child: Text(
         // 🔹 Показываем оставшееся время или текст кнопки
@@ -96,4 +90,3 @@ class ResendCodeButtonState extends State<ResendCodeButton> {
     );
   }
 }
-

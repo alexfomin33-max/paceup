@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../theme/app_theme.dart';
-import '../../../../widgets/app_bar.dart';
-import '../../../../widgets/interactive_back_swipe.dart';
-import '../../../../widgets/transparent_route.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/app_bar.dart';
+import '../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../core/widgets/transparent_route.dart';
 import '../../../../providers/theme_provider.dart';
 import 'connected_trackers/connected_trackers_screen.dart';
 import 'edit_phone_screen.dart';

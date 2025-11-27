@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:latlong2/latlong.dart' as latlong;
 import 'package:flutter_map/flutter_map.dart' as flutter_map;
-import '../../theme/app_theme.dart';
-import '../../config/app_config.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/config/app_config.dart';
 
 // контент вкладок
 import 'events/events_screen.dart' as ev;
