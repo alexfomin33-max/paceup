@@ -76,6 +76,13 @@ class _MapScreenState extends State<MapScreen> {
     // 3: AppColors.accentPurple, // попутчики - временно закомментировано
   };
 
+  /// ──────────── Буфер маркеров для повторной отрисовки ────────────
+  /// Хранит последние данные API, чтобы отрисовать их после готовности карты.
+  List<Map<String, dynamic>> _pendingMarkers = const [];
+
+  /// Цвет маркеров последней активной вкладки (используется после инициализации).
+  Color? _pendingMarkerColor;
+
   List<Map<String, dynamic>> _markersForTabSync(BuildContext context) {
     switch (_selectedIndex) {
       case 1:
@@ -269,6 +276,32 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  /// ──────────── Планировщик обновления маркеров ────────────
+  /// Сохраняет данные и инициирует перерисовку, когда карта готова.
+  void _queueMarkersUpdate(
+    List<Map<String, dynamic>> markers,
+    Color markerColor,
+  ) {
+    _pendingMarkers = List<Map<String, dynamic>>.unmodifiable(markers);
+    _pendingMarkerColor = markerColor;
+    _applyPendingMarkersIfReady();
+  }
+
+  /// Запускает перерисовку маркеров, как только Mapbox и менеджер готовы.
+  void _applyPendingMarkersIfReady() {
+    if (!mounted ||
+        _mapboxMap == null ||
+        _pointAnnotationManager == null ||
+        _pendingMarkerColor == null) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _pendingMarkerColor == null) return;
+      _setupMarkers(_pendingMarkers, _pendingMarkerColor!);
+    });
+  }
+
   /// Обработка клика по маркеру (для Mapbox)
   Future<void> _onMarkerTap(PointAnnotation annotation) async {
     // Получаем координаты из геометрии аннотации
@@ -294,9 +327,7 @@ class _MapScreenState extends State<MapScreen> {
     if (_mapboxMap != null) {
       try {
         final screenCoordinate = await _mapboxMap!.pixelForCoordinate(
-          Point(
-            coordinates: Position(lng, lat),
-          ),
+          Point(coordinates: Position(lng, lat)),
         );
         screenPosition = Offset(
           screenCoordinate.x.toDouble(),
@@ -307,10 +338,7 @@ class _MapScreenState extends State<MapScreen> {
       }
     }
 
-    _showMarkerBottomSheet(
-      marker,
-      screenPosition: screenPosition,
-    );
+    _showMarkerBottomSheet(marker, screenPosition: screenPosition);
   }
 
   /// Обработка клика по маркеру (для flutter_map на macOS)
@@ -333,7 +361,7 @@ class _MapScreenState extends State<MapScreen> {
     if (_selectedIndex == 1) {
       final count = marker['count'] as int? ?? 0;
       final clubs = marker['clubs'] as List<dynamic>? ?? [];
-      
+
       // Если клуб один — показываем попап
       if (count == 1 && clubs.isNotEmpty) {
         final club = clubs.first as Map<String, dynamic>;
@@ -345,7 +373,7 @@ class _MapScreenState extends State<MapScreen> {
         );
         return;
       }
-      
+
       // Если клубов больше одного — показываем bottom sheet
       if (count > 1) {
         final Widget sheet = cbs.ClubsBottomSheet(
@@ -755,12 +783,8 @@ class _MapScreenState extends State<MapScreen> {
       return _buildFlutterMap(markers, markerColor);
     }
 
-    // Обновляем маркеры при изменении данных
-    if (_mapboxMap != null && _pointAnnotationManager != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _setupMarkers(markers, markerColor);
-      });
-    }
+    // Обновляем маркеры при изменении данных (с гарантией после инициализации)
+    _queueMarkersUpdate(markers, markerColor);
 
     return SizedBox.expand(
       child: MapWidget(
@@ -777,8 +801,13 @@ class _MapScreenState extends State<MapScreen> {
             },
           );
 
-          // Настраиваем маркеры после создания карты
-          await _setupMarkers(markers, markerColor);
+          // Сохраняем цвет/данные по умолчанию, если Future уже вернул маркеры
+          _pendingMarkerColor ??= markerColor;
+          if (_pendingMarkers.isEmpty && markers.isNotEmpty) {
+            _pendingMarkers = List<Map<String, dynamic>>.unmodifiable(markers);
+          }
+
+          _applyPendingMarkersIfReady();
         },
         cameraOptions: CameraOptions(
           center: Point(coordinates: Position(40.406635, 56.129057)),
@@ -825,12 +854,18 @@ class _MapScreenState extends State<MapScreen> {
                 return Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      // Сбрасываем флаг инициализации при смене вкладки
-                      // Это нужно для корректной работы при переключении между вкладками
-                      if (_selectedIndex != index) {
-                        _mapInitialized = false;
+                      // Если вкладка уже активна, выходим без пересборки,
+                      // чтобы избежать повторной отрисовки маркеров и мерцаний
+                      if (_selectedIndex == index) {
+                        return;
                       }
-                      setState(() => _selectedIndex = index);
+
+                      // При реальном переключении вкладок сбрасываем карту
+                      // и инициируем обновление маркеров для новой вкладки
+                      setState(() {
+                        _mapInitialized = false;
+                        _selectedIndex = index;
+                      });
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
