@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'create_club_screen.dart';
@@ -69,31 +68,31 @@ String _formatCityInLocativeCase(String cityName) {
 String _declineCityName(String cityName) {
   // Города на -а/-я → -е/-е (Казань → Казани, но есть исключения выше)
   if (cityName.endsWith('а') && !cityName.endsWith('ь')) {
-    return cityName.substring(0, cityName.length - 1) + 'е';
+    return '${cityName.substring(0, cityName.length - 1)}е';
   }
   if (cityName.endsWith('я')) {
-    return cityName.substring(0, cityName.length - 1) + 'е';
+    return '${cityName.substring(0, cityName.length - 1)}е';
   }
 
   // Города на -ск/-цк → -ске/-цке
   if (cityName.endsWith('ск')) {
-    return cityName + 'е';
+    return '$cityNameе';
   }
   if (cityName.endsWith('цк')) {
-    return cityName + 'е';
+    return '$cityNameе';
   }
 
   // Города на -ль/-нь → -ле/-не
   if (cityName.endsWith('ль')) {
-    return cityName.substring(0, cityName.length - 2) + 'ле';
+    return '${cityName.substring(0, cityName.length - 2)}ле';
   }
   if (cityName.endsWith('нь')) {
-    return cityName.substring(0, cityName.length - 2) + 'не';
+    return '${cityName.substring(0, cityName.length - 2)}не';
   }
 
   // Города на -ь → заменяем на -и
   if (cityName.endsWith('ь')) {
-    return cityName.substring(0, cityName.length - 1) + 'и';
+    return '${cityName.substring(0, cityName.length - 1)}и';
   }
 
   // Города на -о/-е → -е/-е
@@ -103,7 +102,7 @@ String _declineCityName(String cityName) {
 
   // По умолчанию добавляем -е
   if (!cityName.endsWith('е') && !cityName.endsWith('и')) {
-    return cityName + 'е';
+    return '$cityNameе';
   }
 
   return cityName;

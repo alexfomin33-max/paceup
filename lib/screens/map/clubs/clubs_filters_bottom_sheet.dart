@@ -127,7 +127,7 @@ class _ClubsFiltersBottomSheetState extends State<ClubsFiltersBottomSheet> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // ──── Секция "Вид спорта" ────
-                  _SectionTitle('Вид спорта'),
+                  const _SectionTitle('Вид спорта'),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
@@ -155,7 +155,7 @@ class _ClubsFiltersBottomSheetState extends State<ClubsFiltersBottomSheet> {
                   const SizedBox(height: 24),
 
                   // ──── Секция "Тип клуба" ────
-                  _SectionTitle('Тип клуба'),
+                  const _SectionTitle('Тип клуба'),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,

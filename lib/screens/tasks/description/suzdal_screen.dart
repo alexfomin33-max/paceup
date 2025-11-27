@@ -101,7 +101,7 @@ class _SuzdalScreenState extends State<SuzdalScreen> {
                     const SizedBox(height: 16),
 
                     // Узкий прогресс-бар по центру
-                    Center(
+                    const Center(
                       child: SizedBox(
                         width: 240,
                         child: _MiniProgress(percent: percent),

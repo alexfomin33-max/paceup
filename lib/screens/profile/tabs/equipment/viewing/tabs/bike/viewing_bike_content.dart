@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import '../../../../../../../theme/app_theme.dart';
 import '../sneakers/viewing_sneakers_content.dart'
     show GearViewCard; // теперь публичный класс

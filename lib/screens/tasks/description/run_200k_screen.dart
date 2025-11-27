@@ -104,7 +104,7 @@ class _Run200kScreenState extends State<Run200kScreen> {
                         const SizedBox(height: 12),
 
                         // узкий прогресс-бар по центру
-                        Center(
+                        const Center(
                           child: SizedBox(
                             width: 240,
                             child: _MiniProgress(percent: 145.8 / 200.0),

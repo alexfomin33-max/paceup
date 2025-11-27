@@ -44,7 +44,7 @@ Future<ImportResult> importWorkout(
 
     // Пропускаем тренировки без дистанции
     if (distanceMeters <= 0) {
-      return ImportResult(
+      return const ImportResult(
         success: false,
         message: 'Тренировка без дистанции пропущена',
       );
@@ -161,7 +161,7 @@ Future<ImportResult> importWorkout(
     final authService = AuthService();
     final userId = await authService.getUserId();
     if (userId == null) {
-      return ImportResult(
+      return const ImportResult(
         success: false,
         message: 'Пользователь не авторизован',
       );
@@ -184,7 +184,7 @@ Future<ImportResult> importWorkout(
     final response = await api.post('/create_activity.php', body: body);
 
     if (response['success'] == true) {
-      return ImportResult(
+      return const ImportResult(
         success: true,
         message: 'Тренировка успешно импортирована',
       );

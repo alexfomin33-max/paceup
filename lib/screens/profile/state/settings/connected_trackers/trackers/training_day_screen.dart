@@ -742,7 +742,7 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
+                        const Icon(
                           CupertinoIcons.info_circle,
                           size: 18,
                           color: AppColors.warning,

@@ -220,7 +220,7 @@ class RouteDescriptionScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    _ActionRow(
+                    const _ActionRow(
                       icon: CupertinoIcons.rosette,
                       title: 'Личный рекорд',
                       trailingText: '1:32:57',

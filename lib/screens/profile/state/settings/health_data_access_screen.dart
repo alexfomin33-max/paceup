@@ -90,17 +90,16 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
       }
 
       // Запрашиваем разрешения
-      final bool? granted = await _health!.requestAuthorization(_types);
+      final bool granted = await _health!.requestAuthorization(_types);
 
       if (!mounted) return;
 
-      final bool isGranted = granted ?? false;
       setState(() {
-        _hasAccess = isGranted;
+        _hasAccess = granted;
         _isLoading = false;
       });
 
-      if (!isGranted) {
+      if (!granted) {
         // Показываем диалог с инструкциями
         if (mounted) {
           await showDialog(
@@ -151,7 +150,7 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           CupertinoIcons.exclamationmark_triangle,
                           size: 48,
                           color: AppColors.error,
@@ -189,7 +188,7 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 CupertinoIcons.info,
                                 size: 20,
                                 color: AppColors.brandPrimary,

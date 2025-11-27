@@ -99,10 +99,10 @@ class StatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final distanceKm = (distanceMeters ?? 0) / 1000.0;
     final distanceText = distanceMeters != null
-        ? '${distanceKm.toStringAsFixed(2)}'
+        ? distanceKm.toStringAsFixed(2)
         : '—';
     final elevationText = elevationGainM != null
-        ? '${elevationGainM!.toStringAsFixed(0)}'
+        ? elevationGainM!.toStringAsFixed(0)
         : '—';
     final durationText = durationSec != null
         ? formatDuration(durationSec)

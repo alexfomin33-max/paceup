@@ -111,7 +111,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     size: 20,
                     color: AppColors.getIconPrimaryColor(context),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
                     'AI тренер',
                     style: TextStyle(
@@ -120,7 +120,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
-                  SizedBox(width: 6),
+                  const SizedBox(width: 6),
                 ],
               ),
               showBack: false,
@@ -146,7 +146,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       },
       loading: () => Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: PaceAppBar(
+        appBar: const PaceAppBar(
           titleWidget: Row(
             children: [
               Icon(
@@ -165,11 +165,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           showBack: false,
           showBottomDivider: true,
         ),
-        body: Center(child: CircularProgressIndicator()),
+        body: const Center(child: CircularProgressIndicator()),
       ),
       error: (err, stack) => Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: PaceAppBar(
+        appBar: const PaceAppBar(
           titleWidget: Row(
             children: [
               Icon(
@@ -188,7 +188,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           showBack: false,
           showBottomDivider: true,
         ),
-        body: Center(
+        body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -228,7 +228,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               size: 20,
               color: AppColors.getIconPrimaryColor(context),
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text(
               'AI тренер',
               style: TextStyle(
@@ -237,7 +237,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 color: AppColors.getTextPrimaryColor(context),
               ),
             ),
-            SizedBox(width: 6),
+            const SizedBox(width: 6),
           ],
         ),
         showBack: false, // это корневой экран профиля — кнопка назад не нужна

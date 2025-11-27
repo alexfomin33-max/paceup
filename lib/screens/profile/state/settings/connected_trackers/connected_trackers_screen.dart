@@ -492,7 +492,7 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
 
       setState(() {
         _status =
-            'Импорт завершён: успешно ${_importedCount}, ошибок $_failedCount';
+            'Импорт завершён: успешно $_importedCount, ошибок $_failedCount';
         _importing = false;
       });
 
@@ -583,24 +583,24 @@ class _ConnectedTrackersScreenState extends State<ConnectedTrackersScreen> {
                           width: 1,
                         ),
                       ),
-                      child: Column(
+                      child: const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 CupertinoIcons.info_circle_fill,
                                 size: 18,
                                 color: AppColors.brandPrimary,
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text(
                                 'Настройка Garmin Connect',
                                 style: AppTextStyles.h13w6,
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Text(
                             'Чтобы выгружать тренировки из Garmin Connect:\n\n'
                             '1. Откройте приложение Garmin Connect\n'

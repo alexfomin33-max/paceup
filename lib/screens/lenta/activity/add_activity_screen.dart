@@ -398,8 +398,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         });
       },
       child: DragTarget<Object>(
-        onWillAccept: (data) => data != image,
-        onAccept: (data) {
+        onWillAcceptWithDetails: (data) => data != image,
+        onAcceptWithDetails: (data) {
           final oldIndex = _images.indexOf(data);
           final newIndex = photoIndex;
 

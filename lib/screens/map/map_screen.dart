@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:ui' as ui;
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -556,11 +555,11 @@ class _MapScreenState extends State<MapScreen> {
             markers: markers.map((marker) {
               final point = marker['point'] as latlong.LatLng?;
               if (point == null) {
-                return flutter_map.Marker(
-                  point: const latlong.LatLng(0, 0),
+                return const flutter_map.Marker(
+                  point: latlong.LatLng(0, 0),
                   width: 0,
                   height: 0,
-                  child: const SizedBox.shrink(),
+                  child: SizedBox.shrink(),
                 );
               }
 
@@ -788,7 +787,7 @@ class _MapScreenState extends State<MapScreen> {
 
     return SizedBox.expand(
       child: MapWidget(
-        key: ValueKey('map_screen_${_selectedIndex}_${_mapInitialized}'),
+        key: ValueKey('map_screen_${_selectedIndex}_$_mapInitialized'),
         onMapCreated: (MapboxMap mapboxMap) async {
           _mapboxMap = mapboxMap;
 

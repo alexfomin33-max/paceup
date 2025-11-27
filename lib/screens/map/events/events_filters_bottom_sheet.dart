@@ -213,7 +213,7 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // ──── Секция "Вид спорта" ────
-                  _SectionTitle('Вид спорта'),
+                  const _SectionTitle('Вид спорта'),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
@@ -241,7 +241,7 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
                   const SizedBox(height: 24),
 
                   // ──── Секция "Тип события" ────
-                  _SectionTitle('Тип события'),
+                  const _SectionTitle('Тип события'),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
@@ -269,7 +269,7 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
                   const SizedBox(height: 24),
 
                   // ──── Секция "Дата проведения" ────
-                  _SectionTitle('Дата проведения'),
+                  const _SectionTitle('Дата проведения'),
                   const SizedBox(height: 12),
                   Row(
                     children: [

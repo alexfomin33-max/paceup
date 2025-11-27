@@ -878,7 +878,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                         child: DropdownButton<String>(
                           value: activity,
                           isExpanded: true,
-                          hint: Text(
+                          hint: const Text(
                             'Выберите вид активности',
                             style: AppTextStyles.h14w4Place,
                           ),

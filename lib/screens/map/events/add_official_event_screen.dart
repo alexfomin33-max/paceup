@@ -2,78 +2,82 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/image_picker_helper.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/interactive_back_swipe.dart';
 import '../../../widgets/primary_button.dart';
-import '../../../service/api_service.dart';
-import '../../../service/auth_service.dart';
+import '../../../providers/events/add_official_event_provider.dart';
 import 'location_picker_screen.dart';
 
-class AddOfficialEventScreen extends StatefulWidget {
+class AddOfficialEventScreen extends ConsumerStatefulWidget {
   const AddOfficialEventScreen({super.key});
 
   @override
-  State<AddOfficialEventScreen> createState() => _AddOfficialEventScreenState();
+  ConsumerState<AddOfficialEventScreen> createState() =>
+      _AddOfficialEventScreenState();
 }
 
-class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
-  // контроллеры
-  final nameCtrl = TextEditingController();
-  final placeCtrl = TextEditingController();
-  final descCtrl = TextEditingController();
-  final linkCtrl = TextEditingController();
-  final templateCtrl = TextEditingController(text: 'Субботний коферан');
-
-  // выборы
-  String? activity;
-  DateTime? date;
-  TimeOfDay? time;
-  // ── контроллеры для полей ввода дистанций
+class _AddOfficialEventScreenState
+    extends ConsumerState<AddOfficialEventScreen> {
+  // ── контроллеры для полей ввода (используются для синхронизации с состоянием)
+  late final TextEditingController nameCtrl;
+  late final TextEditingController placeCtrl;
+  late final TextEditingController descCtrl;
+  late final TextEditingController linkCtrl;
+  late final TextEditingController templateCtrl;
   final List<TextEditingController> _distanceControllers = [];
 
-  // чекбоксы
-  bool saveTemplate = false;
-
-  // медиа
-  File? logoFile;
-  File? backgroundFile;
+  // ── состояние блока загрузки шаблона
+  bool _showTemplateBlock = false;
+  String? _selectedTemplate;
 
   // ──────────── фиксированные пропорции для обрезки медиа ────────────
   static const double _logoAspectRatio = 1;
   static const double _backgroundAspectRatio = 2.3;
 
-  // координаты выбранного места
-  LatLng? selectedLocation;
-
-  // ── состояние загрузки
-  bool _loading = false;
-
-  // ── состояние блока загрузки шаблона
-  bool _showTemplateBlock = false;
-  List<String> _templates = [];
-  String? _selectedTemplate;
-  bool _loadingTemplates = false;
-
-  bool get isFormValid =>
-      (nameCtrl.text.trim().isNotEmpty) &&
-      (placeCtrl.text.trim().isNotEmpty) &&
-      (activity != null) &&
-      (date != null) &&
-      (time != null) &&
-      (selectedLocation != null);
-
   @override
   void initState() {
     super.initState();
-    nameCtrl.addListener(() => _refresh());
-    placeCtrl.addListener(() => _refresh());
-    linkCtrl.addListener(() => _refresh());
+    // ── инициализируем контроллеры
+    nameCtrl = TextEditingController();
+    placeCtrl = TextEditingController();
+    descCtrl = TextEditingController();
+    linkCtrl = TextEditingController();
+    templateCtrl = TextEditingController(text: 'Субботний коферан');
+
     // ── создаём первое поле для ввода дистанции
     _distanceControllers.add(TextEditingController());
-    _distanceControllers.last.addListener(() => _refresh());
+
+    // ── синхронизируем контроллеры с состоянием провайдера
+    nameCtrl.addListener(() {
+      ref.read(addOfficialEventFormProvider.notifier).updateName(nameCtrl.text);
+    });
+    placeCtrl.addListener(() {
+      ref
+          .read(addOfficialEventFormProvider.notifier)
+          .updatePlace(placeCtrl.text);
+    });
+    descCtrl.addListener(() {
+      ref
+          .read(addOfficialEventFormProvider.notifier)
+          .updateDescription(descCtrl.text);
+    });
+    linkCtrl.addListener(() {
+      ref.read(addOfficialEventFormProvider.notifier).updateLink(linkCtrl.text);
+    });
+    templateCtrl.addListener(() {
+      ref
+          .read(addOfficialEventFormProvider.notifier)
+          .updateTemplateName(templateCtrl.text);
+    });
+    _distanceControllers.last.addListener(() {
+      ref
+          .read(addOfficialEventFormProvider.notifier)
+          .updateDistance(0, _distanceControllers.last.text);
+    });
   }
 
   @override
@@ -90,15 +94,19 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
     super.dispose();
   }
 
-  void _refresh() => setState(() {});
-
   // ── добавление нового поля для ввода дистанции
   void _addDistanceField() {
+    final newController = TextEditingController();
+    final index = _distanceControllers.length;
+    newController.addListener(() {
+      ref
+          .read(addOfficialEventFormProvider.notifier)
+          .updateDistance(index, newController.text);
+    });
     setState(() {
-      final newController = TextEditingController();
-      newController.addListener(() => _refresh());
       _distanceControllers.add(newController);
     });
+    ref.read(addOfficialEventFormProvider.notifier).addDistanceField();
   }
 
   Future<void> _pickLogo() async {
@@ -112,7 +120,7 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() => logoFile = processed);
+    ref.read(addOfficialEventFormProvider.notifier).updateLogoFile(processed);
   }
 
   Future<void> _pickBackground() async {
@@ -126,31 +134,36 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() => backgroundFile = processed);
+    ref
+        .read(addOfficialEventFormProvider.notifier)
+        .updateBackgroundFile(processed);
   }
 
   /// Открыть экран выбора места на карте
   Future<void> _pickLocation() async {
+    final formState = ref.read(addOfficialEventFormProvider);
     final result = await Navigator.of(context).push<LocationResult?>(
       MaterialPageRoute(
-        builder: (_) => LocationPickerScreen(initialPosition: selectedLocation),
+        builder: (_) =>
+            LocationPickerScreen(initialPosition: formState.selectedLocation),
       ),
     );
 
     if (result != null) {
-      setState(() {
-        selectedLocation = result.coordinates;
-        // ⚡️ Автозаполнение поля "Место проведения" адресом из геокодинга
-        if (result.address != null && result.address!.isNotEmpty) {
-          placeCtrl.text = result.address!;
-        }
-      });
+      // ⚡️ Автозаполнение поля "Место проведения" адресом из геокодинга
+      if (result.address != null && result.address!.isNotEmpty) {
+        placeCtrl.text = result.address!;
+      }
+      ref
+          .read(addOfficialEventFormProvider.notifier)
+          .updateLocation(result.coordinates, result.address);
     }
   }
 
   Future<void> _pickDateCupertino() async {
+    final formState = ref.read(addOfficialEventFormProvider);
     final today = DateUtils.dateOnly(DateTime.now());
-    DateTime temp = DateUtils.dateOnly(date ?? today);
+    DateTime temp = DateUtils.dateOnly(formState.date ?? today);
 
     final picker = CupertinoDatePicker(
       mode: CupertinoDatePickerMode.date,
@@ -162,19 +175,18 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
     if (ok) {
-      setState(() {
-        date = temp;
-      });
+      ref.read(addOfficialEventFormProvider.notifier).updateDate(temp);
     }
   }
 
   Future<void> _pickTimeCupertino() async {
+    final formState = ref.read(addOfficialEventFormProvider);
     DateTime temp = DateTime(
       DateTime.now().year,
       DateTime.now().month,
       DateTime.now().day,
-      time?.hour ?? 12,
-      time?.minute ?? 0,
+      formState.time?.hour ?? 12,
+      formState.time?.minute ?? 0,
     );
 
     final picker = CupertinoDatePicker(
@@ -186,9 +198,9 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
     if (ok) {
-      setState(() {
-        time = TimeOfDay(hour: temp.hour, minute: temp.minute);
-      });
+      ref
+          .read(addOfficialEventFormProvider.notifier)
+          .updateTime(TimeOfDay(hour: temp.hour, minute: temp.minute));
     }
   }
 
@@ -289,314 +301,120 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
     return '$hh:$mm';
   }
 
-  // ── загрузка списка шаблонов
-  Future<void> _loadTemplates() async {
-    setState(() => _loadingTemplates = true);
-
-    try {
-      final api = ApiService();
-      final authService = AuthService();
-      final userId = await authService.getUserId();
-
-      if (userId == null) {
-        setState(() {
-          _templates = [];
-          _loadingTemplates = false;
-        });
-        return;
-      }
-
-      final data = await api.get(
-        '/get_templates.php',
-        queryParams: {'user_id': userId.toString()},
-      );
-
-      if (data['success'] == true && data['templates'] != null) {
-        final templates = data['templates'] as List<dynamic>;
-        setState(() {
-          _templates = templates.map((t) => t.toString()).toList();
-        });
-      } else {
-        setState(() {
-          _templates = [];
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _templates = [];
-      });
-    } finally {
-      setState(() => _loadingTemplates = false);
-    }
-  }
-
   // ── загрузка данных выбранного шаблона
   Future<void> _loadTemplateData(String templateName) async {
-    setState(() => _loading = true);
-
     try {
-      final api = ApiService();
-      final authService = AuthService();
-      final userId = await authService.getUserId();
-
-      if (userId == null) {
-        setState(() => _loading = false);
-        return;
-      }
-
-      final data = await api.get(
-        '/get_template.php',
-        queryParams: {
-          'template_name': templateName,
-          'user_id': userId.toString(),
-        },
+      final templateAsync = await ref.read(
+        templateDataProvider(templateName).future,
       );
 
-      if (data['success'] == true && data['template'] != null) {
-        final template = data['template'] as Map<String, dynamic>;
+      // Заполняем форму данными из шаблона
+      nameCtrl.text = templateAsync.name;
+      placeCtrl.text = templateAsync.place;
+      descCtrl.text = templateAsync.description;
+      linkCtrl.text = templateAsync.link ?? '';
+      ref
+          .read(addOfficialEventFormProvider.notifier)
+          .updateActivity(templateAsync.activity);
+      ref
+          .read(addOfficialEventFormProvider.notifier)
+          .updateDate(templateAsync.date);
+      ref
+          .read(addOfficialEventFormProvider.notifier)
+          .updateTime(templateAsync.time);
 
-        // Заполняем форму данными из шаблона
-        setState(() {
-          nameCtrl.text = template['name'] as String? ?? '';
-          placeCtrl.text = template['place'] as String? ?? '';
-          descCtrl.text = template['description'] as String? ?? '';
-          linkCtrl.text = template['event_link'] as String? ?? '';
-          activity = template['activity'] as String?;
+      // Координаты
+      if (templateAsync.latitude != null && templateAsync.longitude != null) {
+        ref
+            .read(addOfficialEventFormProvider.notifier)
+            .updateLocation(
+              LatLng(templateAsync.latitude!, templateAsync.longitude!),
+              templateAsync.place,
+            );
+      }
 
-          // Парсим дату
-          final dateStr = template['event_date'] as String?;
-          if (dateStr != null && dateStr.isNotEmpty) {
-            try {
-              final parts = dateStr.split('.');
-              if (parts.length == 3) {
-                date = DateTime(
-                  int.parse(parts[2]),
-                  int.parse(parts[1]),
-                  int.parse(parts[0]),
-                );
-              }
-            } catch (e) {
-              // Игнорируем ошибку парсинга
-            }
-          }
+      // ── обработка дистанций из шаблона
+      // Очищаем существующие контроллеры
+      for (final controller in _distanceControllers) {
+        controller.dispose();
+      }
+      _distanceControllers.clear();
 
-          // Парсим время
-          final timeStr = template['event_time'] as String?;
-          if (timeStr != null && timeStr.isNotEmpty) {
-            try {
-              final parts = timeStr.split(':');
-              if (parts.length == 2) {
-                time = TimeOfDay(
-                  hour: int.parse(parts[0]),
-                  minute: int.parse(parts[1]),
-                );
-              }
-            } catch (e) {
-              // Игнорируем ошибку парсинга
-            }
-          }
+      // Создаём контроллеры для каждой дистанции
+      final distances = templateAsync.distances.isNotEmpty
+          ? templateAsync.distances
+          : [''];
 
-          // Координаты
-          final lat = template['latitude'] as double?;
-          final lng = template['longitude'] as double?;
-          if (lat != null && lng != null) {
-            selectedLocation = LatLng(lat, lng);
-          }
-
-          // ── обработка дистанций из шаблона
-          // Очищаем существующие контроллеры (кроме первого, если он пустой)
-          for (final controller in _distanceControllers) {
-            controller.removeListener(() => _refresh());
-            controller.dispose();
-          }
-          _distanceControllers.clear();
-
-          // Парсим дистанции из шаблона (формат: "5000, 10000, 21100" - все в метрах)
-          final distanceStr = template['distance'] as String?;
-          if (distanceStr != null && distanceStr.isNotEmpty) {
-            // Разделяем по запятой и очищаем пробелы
-            final distances = distanceStr
-                .split(',')
-                .map((d) => d.trim())
-                .where((d) => d.isNotEmpty)
-                .toList();
-
-            // Создаём контроллеры для каждой дистанции
-            for (final dist in distances) {
-              final controller = TextEditingController(text: dist);
-              controller.addListener(() => _refresh());
-              _distanceControllers.add(controller);
-            }
-          }
-
-          // Если дистанций нет, создаём одно пустое поле
-          if (_distanceControllers.isEmpty) {
-            final controller = TextEditingController();
-            controller.addListener(() => _refresh());
-            _distanceControllers.add(controller);
-          }
-
-          templateCtrl.text = templateName;
+      for (int i = 0; i < distances.length; i++) {
+        final controller = TextEditingController(text: distances[i]);
+        final index = i;
+        controller.addListener(() {
+          ref
+              .read(addOfficialEventFormProvider.notifier)
+              .updateDistance(index, controller.text);
         });
-      } else {
-        // Если шаблон не найден, показываем сообщение
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Шаблон не найден')));
-        }
+        _distanceControllers.add(controller);
       }
+
+      // Обновляем состояние провайдера
+      ref
+          .read(addOfficialEventFormProvider.notifier)
+          .loadFromTemplate(
+            name: templateAsync.name,
+            place: templateAsync.place,
+            description: templateAsync.description,
+            link: templateAsync.link ?? '',
+            activity: templateAsync.activity,
+            date: templateAsync.date,
+            time: templateAsync.time,
+            location:
+                templateAsync.latitude != null &&
+                    templateAsync.longitude != null
+                ? LatLng(templateAsync.latitude!, templateAsync.longitude!)
+                : null,
+            distances: distances,
+          );
+
+      templateCtrl.text = templateName;
     } catch (e) {
+      // Ошибка уже обработана в провайдере через AsyncValue
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка загрузки шаблона: ${e.toString()}')),
-        );
+        // Показываем ошибку через SelectableText.rich (будет добавлено в build)
       }
-    } finally {
-      setState(() => _loading = false);
     }
   }
 
   Future<void> _submit() async {
+    final formState = ref.read(addOfficialEventFormProvider);
     // ── проверяем валидность формы (кнопка неактивна, если форма невалидна, но на всякий случай)
-    if (!isFormValid) {
+    if (!formState.isValid) {
       return;
     }
 
-    // ── форма валидна — отправляем на сервер
-    setState(() => _loading = true);
-
-    final api = ApiService();
-    final authService = AuthService();
-
     try {
-      // Формируем данные
-      final files = <String, File>{};
-      final fields = <String, String>{};
-
-      // Добавляем логотип
-      if (logoFile != null) {
-        files['logo'] = logoFile!;
-      }
-      // ── прикрепляем фоновую картинку, если пользователь её выбрал
-      if (backgroundFile != null) {
-        files['background'] = backgroundFile!;
-      }
-
-      // Добавляем поля формы
-      final userId = await authService.getUserId();
-      if (userId == null) {
-        if (!mounted) return;
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ошибка авторизации. Необходимо войти в систему'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-        return;
-      }
-      fields['user_id'] = userId.toString();
-      fields['name'] = nameCtrl.text.trim();
-      fields['activity'] = activity!;
-      fields['place'] = placeCtrl.text.trim();
-      fields['latitude'] = selectedLocation!.latitude.toString();
-      fields['longitude'] = selectedLocation!.longitude.toString();
-      fields['event_date'] = _fmtDate(date!);
-      fields['event_time'] = _fmtTime(time!);
-      fields['description'] = descCtrl.text.trim();
-      // ── собираем введённые дистанции (только непустые, все в метрах)
-      final distanceValues = _distanceControllers
-          .map((ctrl) => ctrl.text.trim())
-          .where((value) => value.isNotEmpty && value.isNotEmpty)
-          .toList();
-      // ── отправляем дистанции как массив (все в метрах)
-      if (distanceValues.isNotEmpty) {
-        // Для multipart нужно отправлять как массив
-        for (int i = 0; i < distanceValues.length; i++) {
-          fields['distance[$i]'] = distanceValues[i];
-        }
-      }
-      // Добавляем ссылку на страницу мероприятия
-      if (linkCtrl.text.trim().isNotEmpty) {
-        fields['event_link'] = linkCtrl.text.trim();
-      }
-      if (saveTemplate && templateCtrl.text.trim().isNotEmpty) {
-        fields['template_name'] = templateCtrl.text.trim();
-      }
-
-      // Отправляем запрос в API для официальных событий
-      Map<String, dynamic> data;
-      if (files.isEmpty) {
-        // JSON запрос без файлов
-        // Для JSON нужно отправлять массивы правильно
-        final jsonBody = <String, dynamic>{
-          'user_id': fields['user_id'],
-          'name': fields['name'],
-          'activity': fields['activity'],
-          'place': fields['place'],
-          'latitude': fields['latitude'],
-          'longitude': fields['longitude'],
-          'event_date': fields['event_date'],
-          'event_time': fields['event_time'],
-          'description': fields['description'],
-          'event_link': fields['event_link'] ?? '',
-          'template_name': fields['template_name'] ?? '',
-        };
-        if (distanceValues.isNotEmpty) {
-          jsonBody['distance'] = distanceValues;
-        }
-        data = await api.post('/create_official_event.php', body: jsonBody);
-      } else {
-        // Multipart запрос с файлами
-        data = await api.postMultipart(
-          '/create_official_event.php',
-          files: files,
-          fields: fields,
-          timeout: const Duration(seconds: 60),
-        );
-      }
-
-      // Проверяем ответ
-      bool success = false;
-      String? errorMessage;
-
-      if (data['success'] == true) {
-        success = true;
-      } else if (data['success'] == false) {
-        errorMessage = data['message'] ?? 'Ошибка при создании события';
-      } else {
-        errorMessage = 'Неожиданный формат ответа сервера';
-      }
-
-      if (success) {
-        if (!mounted) return;
-
-        // Закрываем экран создания события и возвращаемся на карту с результатом
-        // Экран создания события открывается с карты, поэтому возвращаем результат для обновления данных
+      await ref.read(submitEventProvider.notifier).submit(formState);
+      // ── успешная отправка — закрываем экран
+      if (mounted) {
         Navigator.of(context).pop('created');
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage ?? 'Ошибка при создании события'),
-          ),
-        );
       }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Ошибка сети: ${e.toString()}')));
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      // Ошибка обрабатывается через AsyncValue в build методе
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // ── получаем состояние формы из провайдера
+    final formState = ref.watch(addOfficialEventFormProvider);
+    // ── получаем состояние списка шаблонов
+    final templatesAsync = ref.watch(templatesListProvider);
+    // ── получаем состояние отправки формы
+    final submitAsync = ref.watch(submitEventProvider);
+    // ── получаем состояние загрузки шаблона (если выбран)
+    final templateDataAsync = _selectedTemplate != null
+        ? ref.watch(templateDataProvider(_selectedTemplate!))
+        : null;
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
@@ -608,10 +426,8 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                 setState(() {
                   _showTemplateBlock = !_showTemplateBlock;
                   // Загружаем шаблоны при первом открытии
-                  if (_showTemplateBlock &&
-                      _templates.isEmpty &&
-                      !_loadingTemplates) {
-                    _loadTemplates();
+                  if (_showTemplateBlock) {
+                    ref.read(templatesListProvider.notifier).reload();
                   }
                 });
               },
@@ -640,6 +456,60 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // ── отображение ошибок отправки формы
+                  if (submitAsync.hasError) ...[
+                    SelectableText.rich(
+                      TextSpan(
+                        text: 'Ошибка отправки: ',
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.error,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: submitAsync.error.toString(),
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // ── отображение ошибок загрузки шаблона
+                  if (templateDataAsync?.hasError == true) ...[
+                    SelectableText.rich(
+                      TextSpan(
+                        text: 'Ошибка загрузки шаблона: ',
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.error,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: templateDataAsync!.error.toString(),
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                   // ---------- Блок загрузки шаблона ----------
                   if (_showTemplateBlock) ...[
                     Text(
@@ -651,137 +521,150 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _loadingTemplates
-                              ? const Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 14),
-                                    child: CupertinoActivityIndicator(
-                                      radius: 9,
+                    templatesAsync.when(
+                      data: (templates) => Row(
+                        children: [
+                          Expanded(
+                            child: Builder(
+                              builder: (context) => InputDecorator(
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: AppColors.getSurfaceColor(context),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.sm,
+                                    ),
+                                    borderSide: BorderSide(
+                                      color: AppColors.getBorderColor(context),
+                                      width: 1,
                                     ),
                                   ),
-                                )
-                              : Builder(
-                                  builder: (context) => InputDecorator(
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: AppColors.getSurfaceColor(
-                                        context,
-                                      ),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 4,
-                                          ),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.sm,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(
-                                            context,
-                                          ),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.sm,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(
-                                            context,
-                                          ),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.sm,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(
-                                            context,
-                                          ),
-                                          width: 1,
-                                        ),
-                                      ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.sm,
                                     ),
-                                    child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<String>(
-                                        value: _selectedTemplate,
-                                        isExpanded: true,
-                                        hint: Text(
-                                          'Выберите шаблон',
-                                          style: AppTextStyles.h14w4Place,
-                                        ),
-                                        onChanged: _templates.isNotEmpty
-                                            ? (String? newValue) {
-                                                setState(
-                                                  () => _selectedTemplate =
-                                                      newValue,
-                                                );
-                                              }
-                                            : null,
-                                        dropdownColor:
-                                            AppColors.getSurfaceColor(context),
-                                        menuMaxHeight: 300,
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.md,
-                                        ),
-                                        icon: Icon(
-                                          Icons.arrow_drop_down,
-                                          color: _templates.isNotEmpty
-                                              ? AppColors.getIconSecondaryColor(
-                                                  context,
-                                                )
-                                              : AppColors.iconTertiary,
-                                        ),
-                                        style: AppTextStyles.h14w4.copyWith(
-                                          color: AppColors.getTextPrimaryColor(
-                                            context,
-                                          ),
-                                        ),
-                                        items: _templates.map((item) {
-                                          return DropdownMenuItem<String>(
-                                            value: item,
-                                            child: Builder(
-                                              builder: (context) => Text(
-                                                item,
-                                                style: AppTextStyles.h14w4.copyWith(
-                                                  color:
-                                                      AppColors.getTextPrimaryColor(
-                                                        context,
-                                                      ),
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        }).toList(),
-                                      ),
+                                    borderSide: BorderSide(
+                                      color: AppColors.getBorderColor(context),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.sm,
+                                    ),
+                                    borderSide: BorderSide(
+                                      color: AppColors.getBorderColor(context),
+                                      width: 1,
                                     ),
                                   ),
                                 ),
-                        ),
-                        const SizedBox(width: 12),
-                        IntrinsicWidth(
-                          child: PrimaryButton(
-                            text: 'Загрузить',
-                            onPressed: _selectedTemplate != null
-                                ? () {
-                                    if (_selectedTemplate != null) {
-                                      _loadTemplateData(_selectedTemplate!);
-                                    }
-                                  }
-                                : () {},
-                            expanded: false,
-                            isLoading: false,
-                            enabled: _selectedTemplate != null,
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: _selectedTemplate,
+                                    isExpanded: true,
+                                    hint: const Text(
+                                      'Выберите шаблон',
+                                      style: AppTextStyles.h14w4Place,
+                                    ),
+                                    onChanged: templates.isNotEmpty
+                                        ? (String? newValue) {
+                                            setState(
+                                              () =>
+                                                  _selectedTemplate = newValue,
+                                            );
+                                          }
+                                        : null,
+                                    dropdownColor: AppColors.getSurfaceColor(
+                                      context,
+                                    ),
+                                    menuMaxHeight: 300,
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
+                                    ),
+                                    icon: Icon(
+                                      Icons.arrow_drop_down,
+                                      color: templates.isNotEmpty
+                                          ? AppColors.getIconSecondaryColor(
+                                              context,
+                                            )
+                                          : AppColors.iconTertiary,
+                                    ),
+                                    style: AppTextStyles.h14w4.copyWith(
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                    items: templates.map((item) {
+                                      return DropdownMenuItem<String>(
+                                        value: item,
+                                        child: Builder(
+                                          builder: (context) => Text(
+                                            item,
+                                            style: AppTextStyles.h14w4.copyWith(
+                                              color:
+                                                  AppColors.getTextPrimaryColor(
+                                                    context,
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
+                          const SizedBox(width: 12),
+                          IntrinsicWidth(
+                            child: PrimaryButton(
+                              text: 'Загрузить',
+                              onPressed: _selectedTemplate != null
+                                  ? () {
+                                      if (_selectedTemplate != null) {
+                                        _loadTemplateData(_selectedTemplate!);
+                                      }
+                                    }
+                                  : () {},
+                              expanded: false,
+                              isLoading: templateDataAsync?.isLoading ?? false,
+                              enabled: _selectedTemplate != null,
+                            ),
+                          ),
+                        ],
+                      ),
+                      loading: () => const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 14),
+                          child: CupertinoActivityIndicator(radius: 9),
                         ),
-                      ],
+                      ),
+                      error: (error, stack) => SelectableText.rich(
+                        TextSpan(
+                          text: 'Ошибка загрузки шаблонов: ',
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.error,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: error.toString(),
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -803,9 +686,11 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                           ),
                           const SizedBox(height: 8),
                           _MediaTile(
-                            file: logoFile,
+                            file: formState.logoFile,
                             onPick: _pickLogo,
-                            onRemove: () => setState(() => logoFile = null),
+                            onRemove: () => ref
+                                .read(addOfficialEventFormProvider.notifier)
+                                .updateLogoFile(null),
                             width: 90,
                             height: 90,
                           ),
@@ -826,10 +711,11 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                             ),
                             const SizedBox(height: 8),
                             _MediaTile(
-                              file: backgroundFile,
+                              file: formState.backgroundFile,
                               onPick: _pickBackground,
-                              onRemove: () =>
-                                  setState(() => backgroundFile = null),
+                              onRemove: () => ref
+                                  .read(addOfficialEventFormProvider.notifier)
+                                  .updateBackgroundFile(null),
                               width:
                                   207, // Ширина для соотношения 2.3:1 (90 * 2.3)
                               height: 90,
@@ -988,16 +874,16 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: activity,
+                          value: formState.activity,
                           isExpanded: true,
-                          hint: Text(
+                          hint: const Text(
                             'Выберите вид активности',
                             style: AppTextStyles.h14w4Place,
                           ),
                           onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setState(() => activity = newValue);
-                            }
+                            ref
+                                .read(addOfficialEventFormProvider.notifier)
+                                .updateActivity(newValue);
                           },
                           dropdownColor: AppColors.getSurfaceColor(context),
                           menuMaxHeight: 300,
@@ -1225,10 +1111,10 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                                       ),
                                     ),
                                     child: Text(
-                                      date != null
-                                          ? _fmtDate(date!)
+                                      formState.date != null
+                                          ? _fmtDate(formState.date!)
                                           : 'Выберите дату',
-                                      style: date != null
+                                      style: formState.date != null
                                           ? AppTextStyles.h14w4.copyWith(
                                               color:
                                                   AppColors.getTextPrimaryColor(
@@ -1326,10 +1212,10 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                                       ),
                                     ),
                                     child: Text(
-                                      time != null
-                                          ? _fmtTime(time!)
+                                      formState.time != null
+                                          ? _fmtTime(formState.time!)
                                           : 'Выберите время',
-                                      style: time != null
+                                      style: formState.time != null
                                           ? AppTextStyles.h14w4.copyWith(
                                               color:
                                                   AppColors.getTextPrimaryColor(
@@ -1426,7 +1312,7 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                   // ── кнопка "добавить ещё"
                   GestureDetector(
                     onTap: _addDistanceField,
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
@@ -1434,7 +1320,7 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                           size: 20,
                           color: AppColors.brandPrimary,
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           'добавить ещё',
                           style: TextStyle(
@@ -1510,7 +1396,7 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                             scale: 0.85,
                             alignment: Alignment.centerLeft,
                             child: Checkbox(
-                              value: saveTemplate,
+                              value: formState.saveTemplate,
                               materialTapTargetSize:
                                   MaterialTapTargetSize.shrinkWrap,
                               visualDensity: VisualDensity.compact,
@@ -1520,8 +1406,9 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                                 color: AppColors.getIconSecondaryColor(context),
                                 width: 1.5,
                               ),
-                              onChanged: (v) =>
-                                  setState(() => saveTemplate = v ?? false),
+                              onChanged: (v) => ref
+                                  .read(addOfficialEventFormProvider.notifier)
+                                  .updateSaveTemplate(v ?? false),
                             ),
                           ),
                         ),
@@ -1537,12 +1424,12 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                       ],
                     ),
                   ),
-                  if (saveTemplate) ...[
+                  if (formState.saveTemplate) ...[
                     const SizedBox(height: 8),
                     Builder(
                       builder: (context) => TextField(
                         controller: templateCtrl,
-                        enabled: saveTemplate,
+                        enabled: formState.saveTemplate,
                         style: AppTextStyles.h14w4.copyWith(
                           color: AppColors.getTextPrimaryColor(context),
                         ),
@@ -1596,11 +1483,11 @@ class _AddOfficialEventScreenState extends State<AddOfficialEventScreen> {
                     child: PrimaryButton(
                       text: 'Создать мероприятие',
                       onPressed: () {
-                        if (!_loading) _submit();
+                        if (!submitAsync.isLoading) _submit();
                       },
                       expanded: false,
-                      isLoading: _loading,
-                      enabled: isFormValid,
+                      isLoading: submitAsync.isLoading,
+                      enabled: formState.isValid,
                     ),
                   ),
                 ],

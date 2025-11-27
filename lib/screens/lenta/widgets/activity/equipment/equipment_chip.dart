@@ -56,12 +56,12 @@ class _EquipmentChipState extends State<EquipmentChip> {
       return const SizedBox.shrink();
     }
 
-    final al.Equipment? e = widget.items.first;
+    final al.Equipment e = widget.items.first;
     // Используем данные из API, если они есть
-    final String name = (e?.name ?? '').trim();
-    final String brand = (e?.brand ?? '').trim(); // получаем бренд из модели
-    final int mileage = e?.mileage ?? 0;
-    final String img = e?.img ?? '';
+    final String name = e.name.trim();
+    final String brand = e.brand.trim(); // получаем бренд из модели
+    final int mileage = e.mileage;
+    final String img = e.img;
 
     // Формируем полное название: бренд + название обуви
     // Если бренд есть — показываем "Бренд Название", иначе только название

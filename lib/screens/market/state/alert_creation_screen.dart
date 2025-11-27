@@ -5,7 +5,6 @@
 // Карточки текущих оповещений в стиле market_slot_card.dart
 // ─────────────────────────────────────────────────────────────────────────────
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../../../models/market_models.dart' show Gender;

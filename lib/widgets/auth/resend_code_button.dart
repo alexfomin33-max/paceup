@@ -82,7 +82,7 @@ class ResendCodeButtonState extends State<ResendCodeButton> {
       child: Text(
         // 🔹 Показываем оставшееся время или текст кнопки
         _remainingSeconds > 0
-            ? "Отправить заново (${_remainingSeconds}с)"
+            ? "Отправить заново ($_remainingSecondsс)"
             : "Отправить заново",
         style: TextStyle(
           color: isEnabled

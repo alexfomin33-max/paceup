@@ -94,7 +94,7 @@ class _CategoryDropdown extends StatelessWidget {
         child: SizedBox(
           width: dropdownWidth,
           child: DropdownButtonFormField<String>(
-            value: value,
+            initialValue: value,
             isExpanded: true,
             onChanged: onChanged,
             dropdownColor: AppColors.getSurfaceColor(context),
@@ -105,11 +105,11 @@ class _CategoryDropdown extends StatelessWidget {
               Icons.arrow_drop_down,
               color: AppColors.getIconSecondaryColor(context),
             ),
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               isDense: true,
               // Убираем фон
               filled: false,
-              contentPadding: const EdgeInsets.fromLTRB(0, 6, 16, 8),
+              contentPadding: EdgeInsets.fromLTRB(0, 6, 16, 8),
               // Только нижняя подчеркивающая линия
               border: UnderlineInputBorder(
                 borderSide: BorderSide(color: AppColors.outline),

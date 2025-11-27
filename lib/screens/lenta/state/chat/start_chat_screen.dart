@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../models/chat_user.dart';
 import '../../../../providers/chat/users_search_provider.dart';
 import '../../../../theme/app_theme.dart';
-import '../../../../theme/text_styles.dart';
 import '../../../../widgets/app_bar.dart';
 import '../../../../widgets/interactive_back_swipe.dart';
 import '../../../../widgets/transparent_route.dart';

@@ -376,7 +376,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: PaceAppBar(title: 'Создание клуба'),
+        appBar: const PaceAppBar(title: 'Создание клуба'),
         body: GestureDetector(
           // ── скрываем клавиатуру при нажатии на пустую область экрана
           onTap: () => FocusScope.of(context).unfocus(),
@@ -548,7 +548,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                         child: DropdownButton<String>(
                           value: activity,
                           isExpanded: true,
-                          hint: Text(
+                          hint: const Text(
                             'Выберите вид активности',
                             style: AppTextStyles.h14w4Place,
                           ),

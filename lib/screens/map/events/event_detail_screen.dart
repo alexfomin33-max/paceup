@@ -360,7 +360,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       return InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.getBackgroundColor(context),
-          body: Center(child: CircularProgressIndicator()),
+          body: const Center(child: CircularProgressIndicator()),
         ),
       );
     }

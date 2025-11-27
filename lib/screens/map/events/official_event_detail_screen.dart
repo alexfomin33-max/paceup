@@ -427,7 +427,7 @@ class _OfficialEventDetailScreenState
                                   onTap: () => _openEventLink(registrationLink),
                                   child: Row(
                                     children: [
-                                      Icon(
+                                      const Icon(
                                         CupertinoIcons.globe,
                                         size: 18,
                                         color: AppColors.brandPrimary,
@@ -436,7 +436,7 @@ class _OfficialEventDetailScreenState
                                       Expanded(
                                         child: Text(
                                           registrationLink,
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontFamily: 'Inter',
                                             fontSize: 14,
                                             color: AppColors.brandPrimary,
@@ -456,7 +456,7 @@ class _OfficialEventDetailScreenState
                               const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     CupertinoIcons.sportscourt,
                                     size: 18,
                                     color: AppColors.brandPrimary,

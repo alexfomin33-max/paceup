@@ -221,7 +221,7 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
                                 size: 14,
                                 color: AppColors.getIconSecondaryColor(context),
                               ),
-                              SizedBox(width: 6),
+                              const SizedBox(width: 6),
                               Text(
                                 'Бронь',
                                 style: TextStyle(
@@ -295,7 +295,7 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
                               thickness: 0.5,
                               color: AppColors.getDividerColor(context),
                             ),
-                            SizedBox(height: 6),
+                            const SizedBox(height: 6),
                           ],
                         ),
                       );
@@ -548,7 +548,7 @@ class _PillFinal extends StatelessWidget {
   final Color border;
   final Color fg;
 
-  _PillFinal({
+  const _PillFinal({
     required this.icon,
     required this.text,
     required this.bg,

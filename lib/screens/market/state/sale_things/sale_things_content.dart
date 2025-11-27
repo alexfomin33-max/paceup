@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
-import '../../../../theme/text_styles.dart';
 import '../../../../models/market_models.dart' show Gender;
 import '../../../../widgets/primary_button.dart';
 
@@ -171,7 +170,7 @@ class _SaleThingsContentState extends State<SaleThingsContent> {
           // ── кнопка "добавить ещё"
           GestureDetector(
             onTap: _addCityField,
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
@@ -179,7 +178,7 @@ class _SaleThingsContentState extends State<SaleThingsContent> {
                   size: 20,
                   color: AppColors.brandPrimary,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Text(
                   'добавить ещё',
                   style: TextStyle(

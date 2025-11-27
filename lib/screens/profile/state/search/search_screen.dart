@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
-import '../../../../theme/text_styles.dart';
 import '../../../../widgets/segmented_pill.dart';
 import '../../../../widgets/app_bar.dart'; // ← глобальный AppBar
 

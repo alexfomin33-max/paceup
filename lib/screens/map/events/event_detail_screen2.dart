@@ -167,7 +167,7 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
       return InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.getBackgroundColor(context),
-          body: Center(child: CircularProgressIndicator()),
+          body: const Center(child: CircularProgressIndicator()),
         ),
       );
     }
@@ -221,14 +221,14 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
     final durationSeconds = _eventData!['duration_seconds'] as num?;
 
     // ─── Форматирование метрик
-    String _formatDistance(double? meters) {
+    String formatDistance(double? meters) {
       if (meters == null || meters <= 0) return '5 - 7 км';
       final km = meters / 1000.0;
       return '${km.toStringAsFixed(2)} км';
     }
 
     // ─── Форматирование сложности
-    String _formatDifficulty(double? meters, int? seconds) {
+    String formatDifficulty(double? meters, int? seconds) {
       if (meters == null || meters <= 0 || seconds == null || seconds <= 0) {
         return 'Лёгкая';
       }
@@ -256,12 +256,12 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
       ),
       _EventMetric(
         label: 'Дистанция',
-        value: _formatDistance(distanceMeters?.toDouble()),
+        value: formatDistance(distanceMeters?.toDouble()),
         tint: CupertinoColors.activeBlue,
       ),
       _EventMetric(
         label: 'Сложность',
-        value: _formatDifficulty(
+        value: formatDifficulty(
           distanceMeters?.toDouble(),
           durationSeconds?.toInt(),
         ),

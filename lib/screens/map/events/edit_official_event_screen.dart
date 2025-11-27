@@ -936,7 +936,7 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                         child: DropdownButton<String>(
                           value: activity,
                           isExpanded: true,
-                          hint: Text(
+                          hint: const Text(
                             'Выберите вид активности',
                             style: AppTextStyles.h14w4Place,
                           ),
@@ -1316,7 +1316,7 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                   // ── кнопка "добавить ещё"
                   GestureDetector(
                     onTap: _addDistanceField,
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
@@ -1324,7 +1324,7 @@ class _EditOfficialEventScreenState extends State<EditOfficialEventScreen> {
                           size: 20,
                           color: AppColors.brandPrimary,
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           'добавить ещё',
                           style: TextStyle(

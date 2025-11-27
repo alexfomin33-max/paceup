@@ -687,7 +687,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                                       child: DropdownButton<String>(
                                         value: _selectedTemplate,
                                         isExpanded: true,
-                                        hint: Text(
+                                        hint: const Text(
                                           'Выберите шаблон',
                                           style: AppTextStyles.h14w4Place,
                                         ),
@@ -916,7 +916,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         child: DropdownButton<String>(
                           value: activity,
                           isExpanded: true,
-                          hint: Text(
+                          hint: const Text(
                             'Выберите вид активности',
                             style: AppTextStyles.h14w4Place,
                           ),
@@ -1410,7 +1410,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           child: DropdownButton<String>(
                             value: selectedClub,
                             isExpanded: true,
-                            hint: Text(
+                            hint: const Text(
                               'Выберите клуб',
                               style: AppTextStyles.h14w4Place,
                             ),

@@ -1,6 +1,5 @@
 // lib/widgets/activity_route_carousel.dart
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:latlong2/latlong.dart';
 import 'route_card.dart';

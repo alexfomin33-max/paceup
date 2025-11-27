@@ -254,9 +254,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.sm),
           color: AppColors.getSurfaceColor(context),
-          border: Border.all(
-            color: AppColors.getBorderColor(context),
-          ),
+          border: Border.all(color: AppColors.getBorderColor(context)),
         ),
         child: Center(
           child: Icon(
@@ -277,9 +275,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.sm),
         color: AppColors.getBackgroundColor(context),
-        border: Border.all(
-          color: AppColors.getBorderColor(context),
-        ),
+        border: Border.all(color: AppColors.getBorderColor(context)),
       ),
       clipBehavior: Clip.antiAlias,
       child: points.isEmpty
@@ -321,15 +317,15 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         });
       },
       child: DragTarget<String>(
-        onWillAccept: (data) => data != imageUrl,
-        onAccept: (data) {
-          final oldIndex = _imageUrls.indexOf(data);
+        onWillAcceptWithDetails: (data) => data.data != imageUrl,
+        onAcceptWithDetails: (data) {
+          final oldIndex = _imageUrls.indexOf(data.data);
           final newIndex = photoIndex;
 
           if (oldIndex != -1 && oldIndex != newIndex) {
             setState(() {
               _imageUrls.removeAt(oldIndex);
-              _imageUrls.insert(newIndex, data);
+              _imageUrls.insert(newIndex, data.data);
               _checkForChanges();
             });
           }
@@ -365,10 +361,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   color: AppColors.getBackgroundColor(context),
                   border: isDragging
-                      ? Border.all(
-                          color: AppColors.brandPrimary,
-                          width: 2,
-                        )
+                      ? Border.all(color: AppColors.brandPrimary, width: 2)
                       : null,
                 ),
                 clipBehavior: Clip.antiAlias,

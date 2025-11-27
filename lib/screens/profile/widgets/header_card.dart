@@ -310,7 +310,7 @@ class _FollowStat extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: RichText(
           text: TextSpan(
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
             ),
