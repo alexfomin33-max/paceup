@@ -47,7 +47,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(userSettingsProvider);
     final themeMode = ref.watch(themeModeNotifierProvider);
-    
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
@@ -61,8 +61,8 @@ class SettingsScreen extends ConsumerWidget {
               padding: const EdgeInsets.only(right: 8),
               child: IconButton(
                 icon: Icon(
-                  themeMode == ThemeMode.dark 
-                      ? CupertinoIcons.moon_fill 
+                  themeMode == ThemeMode.dark
+                      ? CupertinoIcons.moon_fill
                       : CupertinoIcons.sun_max,
                   size: 22,
                   color: AppColors.brandPrimary,
@@ -70,8 +70,8 @@ class SettingsScreen extends ConsumerWidget {
                 onPressed: () {
                   ref.read(themeModeNotifierProvider.notifier).toggleTheme();
                 },
-                tooltip: themeMode == ThemeMode.dark 
-                    ? 'Переключить на светлую тему' 
+                tooltip: themeMode == ThemeMode.dark
+                    ? 'Переключить на светлую тему'
                     : 'Переключить на темную тему',
               ),
             ),
@@ -138,7 +138,7 @@ class SettingsScreen extends ConsumerWidget {
                     trailingText: 'Загрузка...',
                     onTap: () {},
                   ),
-                  error: (_, __) => _SettingsTile(
+                  error: (error, stackTrace) => _SettingsTile(
                     icon: CupertinoIcons.phone,
                     iconColor: AppColors.brandPrimary,
                     title: 'Телефон',
@@ -172,7 +172,7 @@ class SettingsScreen extends ConsumerWidget {
                     trailingText: 'Загрузка...',
                     onTap: () {},
                   ),
-                  error: (_, __) => _SettingsTile(
+                  error: (error, stackTrace) => _SettingsTile(
                     icon: CupertinoIcons.envelope,
                     iconColor: AppColors.brandPrimary,
                     title: 'E-mail',
@@ -209,7 +209,7 @@ class SettingsScreen extends ConsumerWidget {
                     trailingText: 'Загрузка...',
                     onTap: () {},
                   ),
-                  error: (_, __) => _SettingsTile(
+                  error: (error, stackTrace) => _SettingsTile(
                     icon: CupertinoIcons.lock,
                     iconColor: AppColors.brandPrimary,
                     title: 'Пароль',
@@ -432,12 +432,14 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Используем цвета из темы
-    final defaultIconColor = iconColor ?? AppColors.getIconPrimaryColor(context);
-    final defaultTextColor = trailingTextColor ?? 
+    final defaultIconColor =
+        iconColor ?? AppColors.getIconPrimaryColor(context);
+    final defaultTextColor =
+        trailingTextColor ??
         (Theme.of(context).brightness == Brightness.dark
             ? AppColors.darkTextTertiary
             : AppColors.textTertiary);
-    
+
     return InkWell(
       onTap: onTap ?? () {},
       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -448,28 +450,19 @@ class _SettingsTile extends StatelessWidget {
             Container(
               width: 28,
               alignment: Alignment.centerLeft,
-              child: Icon(
-                icon,
-                size: 20,
-                color: defaultIconColor,
-              ),
+              child: Icon(icon, size: 20, color: defaultIconColor),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                title, 
+                title,
                 style: AppTextStyles.h14w4.copyWith(
                   color: AppColors.getTextPrimaryColor(context),
                 ),
               ),
             ),
             if (trailingText != null) ...[
-              Text(
-                trailingText!,
-                style: TextStyle(
-                  color: defaultTextColor,
-                ),
-              ),
+              Text(trailingText!, style: TextStyle(color: defaultTextColor)),
               const SizedBox(width: 6),
             ],
             Icon(
@@ -503,10 +496,7 @@ BoxDecoration _cardDecoration(BuildContext context) => BoxDecoration(
   color: AppColors.getSurfaceColor(context),
   borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
   border: Border.fromBorderSide(
-    BorderSide(
-      color: AppColors.getBorderColor(context), 
-      width: 0.5,
-    ),
+    BorderSide(color: AppColors.getBorderColor(context), width: 0.5),
   ),
   boxShadow: [
     BoxShadow(

@@ -113,7 +113,7 @@ class _RouteCardState extends State<RouteCard> {
                 await _polylineAnnotationManager!.create(
                   PolylineAnnotationOptions(
                     geometry: LineString(coordinates: coordinates),
-                    lineColor: AppColors.brandPrimary.value,
+                    lineColor: AppColors.brandPrimary.toARGB32(),
                     lineWidth: 3.0,
                   ),
                 );

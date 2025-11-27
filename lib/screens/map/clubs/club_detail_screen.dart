@@ -406,11 +406,12 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                             ),
                                           );
                                       // Если редактирование прошло успешно, обновляем данные
-                                      if (result == true && mounted) {
+                                      if (!context.mounted) return;
+                                      if (result == true) {
                                         _loadClub();
                                       }
                                       // Если клуб был удалён, возвращаемся назад с результатом
-                                      if (result == 'deleted' && mounted) {
+                                      if (result == 'deleted') {
                                         Navigator.of(context).pop('deleted');
                                       }
                                     },
@@ -799,7 +800,7 @@ class _HeaderLogo extends StatelessWidget {
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
-      errorWidget: (_, __, ___) => Builder(
+      errorWidget: (context, imageUrl, error) => Builder(
         builder: (context) => Container(
           width: 90,
           height: 90,
@@ -838,7 +839,7 @@ class _BackgroundImage extends StatelessWidget {
       memCacheHeight: targetH,
       maxWidthDiskCache: targetW,
       maxHeightDiskCache: targetH,
-      errorWidget: (_, __, ___) => Builder(
+      errorWidget: (context, imageUrl, error) => Builder(
         builder: (context) => Container(
           width: double.infinity,
           height: calculatedHeight,

@@ -15,13 +15,13 @@ class SearchFriendsContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final trimmedQuery = query.trim();
-    
+
     // ────────────────────────────────────────────────────────────────────────
     // Логика переключения между поиском и рекомендованными друзьями:
     // • Если строка поиска НЕ пустая → показываем результаты поиска
     // • Если строка поиска пустая → ВСЕГДА показываем рекомендованных друзей
     // ────────────────────────────────────────────────────────────────────────
-    
+
     // Критически важно: при пустом query ВСЕГДА используем рекомендованных друзей
     // Это гарантирует, что при очистке поля поиска список рекомендованных друзей
     // сразу отобразится
@@ -101,16 +101,14 @@ class SearchFriendsContent extends ConsumerWidget {
           loading: () => const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(32),
-              child: Center(
-                child: CupertinoActivityIndicator(),
-              ),
+              child: Center(child: CupertinoActivityIndicator()),
             ),
           ),
           error: (error, stack) {
             // Логируем ошибку для отладки
             debugPrint('❌ Ошибка загрузки друзей: $error');
             debugPrint('Stack trace: $stack');
-            
+
             return SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(32),
@@ -212,7 +210,7 @@ class _FriendRowState extends ConsumerState<_FriendRow> {
 
   Future<void> _handleToggleSubscribe() async {
     final currentStatus = _currentIsSubscribed;
-    
+
     // Оптимистичное обновление UI
     setState(() {
       _localIsSubscribed = !currentStatus;
@@ -224,10 +222,8 @@ class _FriendRowState extends ConsumerState<_FriendRow> {
         targetUserId: widget.friend.id,
         isSubscribed: currentStatus,
       );
-      
-      final newStatus = await ref.read(
-        toggleSubscribeProvider(params).future,
-      );
+
+      final newStatus = await ref.read(toggleSubscribeProvider(params).future);
 
       // Обновляем локальное состояние на основе ответа сервера
       setState(() {
@@ -241,13 +237,11 @@ class _FriendRowState extends ConsumerState<_FriendRow> {
       setState(() {
         _localIsSubscribed = currentStatus;
       });
-      
+
       debugPrint('❌ Ошибка подписки/отписки: $e');
-      
+
       // Можно показать сообщение об ошибке пользователю
-      if (mounted) {
-        // TODO: Показать SnackBar или другое уведомление об ошибке
-      }
+      if (mounted) {}
     }
   }
 
@@ -328,7 +322,8 @@ class _FriendRowState extends ConsumerState<_FriendRow> {
                   : CupertinoIcons.person_crop_circle_badge_plus,
               size: 26,
               color: isSubscribed
-                  ? Colors.red // Красный цвет для подписки
+                  ? Colors
+                        .red // Красный цвет для подписки
                   : AppColors.brandPrimary, // Синий цвет для подписки
             ),
           ),
@@ -337,7 +332,6 @@ class _FriendRowState extends ConsumerState<_FriendRow> {
     );
   }
 }
-
 
 class _SectionTitle extends StatelessWidget {
   final String text;

@@ -365,7 +365,7 @@ class _ClubLogoImage extends StatelessWidget {
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: targetW,
       maxWidthDiskCache: targetW,
-      errorWidget: (_, __, ___) => Container(
+      errorWidget: (context, imageUrl, error) => Container(
         color: AppColors.skeletonBase,
         alignment: Alignment.center,
         child: const Icon(
@@ -374,7 +374,7 @@ class _ClubLogoImage extends StatelessWidget {
           color: AppColors.textSecondary,
         ),
       ),
-      placeholder: (_, __) => Container(
+      placeholder: (context, imageUrl) => Container(
         color: AppColors.skeletonBase,
         alignment: Alignment.center,
         child: const CircularProgressIndicator(strokeWidth: 2),

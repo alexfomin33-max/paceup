@@ -221,7 +221,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           top: 6,
         ), // Добавляем padding сверху для кнопок удаления
         itemCount: totalItems,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           // Первый элемент — кнопка добавления фото
           if (index == 0) {

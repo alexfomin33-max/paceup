@@ -87,7 +87,7 @@ class ResendCodeButtonState extends State<ResendCodeButton> {
         style: TextStyle(
           color: isEnabled
               ? AppColors.surface
-              : AppColors.surface.withOpacity(0.5),
+              : AppColors.surface.withValues(alpha: 0.5),
           fontSize: 15,
           fontWeight: FontWeight.w500,
         ),

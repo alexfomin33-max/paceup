@@ -422,13 +422,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               fadeInDuration: const Duration(milliseconds: 120),
                               memCacheWidth: w,
                               maxWidthDiskCache: w,
-                              errorWidget: (_, __, ___) {
+                              errorWidget: (context, imageUrl, error) {
                                 return Image.asset(
                                   'assets/${chat.userAvatar}',
                                   width: 44,
                                   height: 44,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) {
+                                  errorBuilder: (context, error, stackTrace) {
                                     return Container(
                                       width: 44,
                                       height: 44,

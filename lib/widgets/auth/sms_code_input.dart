@@ -93,7 +93,7 @@ class SmsCodeInputState extends State<SmsCodeInput> {
           ),
           disabledBorder: OutlineInputBorder(
             borderSide: BorderSide(
-              color: AppColors.surface.withOpacity(0.5),
+              color: AppColors.surface.withValues(alpha: 0.5),
             ),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),

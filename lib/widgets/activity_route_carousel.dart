@@ -225,7 +225,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
               shape: BoxShape.circle,
               color: _currentIndex == index
                   ? AppColors.brandPrimary
-                  : AppColors.brandPrimary.withOpacity(0.3),
+                  : AppColors.brandPrimary.withValues(alpha: 0.3),
             ),
           ),
         ),

@@ -334,7 +334,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.only(top: 6),
         itemCount: totalItems,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           // Первый элемент — кнопка добавления фото
           if (index == 0) {
@@ -1487,32 +1487,27 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                 );
               } catch (e2) {
                 // Если все еще не найдена, просто закрываем экран
-                if (mounted) {
-                  Navigator.of(context).pop(true);
-                }
+                if (!mounted) return;
+                Navigator.of(context).pop(true);
                 return;
               }
             }
 
             // После всех проверок createdActivity гарантированно не null
             // (если не найдена, происходит return выше)
-            if (mounted) {
-              // Закрываем экран добавления
-              Navigator.of(context).pop();
+            if (!mounted) return;
+            // Закрываем экран добавления
+            Navigator.of(context).pop();
 
-              // Открываем экран описания тренировки
-              Navigator.of(context).push(
-                TransparentPageRoute(
-                  builder: (_) => ActivityDescriptionPage(
-                    activity: createdActivity!,
-                    currentUserId: widget.currentUserId,
-                  ),
+            // Открываем экран описания тренировки
+            Navigator.of(context).push(
+              TransparentPageRoute(
+                builder: (_) => ActivityDescriptionPage(
+                  activity: createdActivity!,
+                  currentUserId: widget.currentUserId,
                 ),
-              );
-            } else if (mounted) {
-              // Если активность не найдена, просто закрываем экран
-              Navigator.of(context).pop(true);
-            }
+              ),
+            );
           }
         } else {
           if (mounted) {

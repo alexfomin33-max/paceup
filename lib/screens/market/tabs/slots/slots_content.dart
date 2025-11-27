@@ -117,9 +117,10 @@ class _SearchFieldState extends State<_SearchField> {
           // Используем небольшую задержку, чтобы дать TextField обработать тап
           // (например, для установки курсора), затем снимаем фокус
           Future.delayed(const Duration(milliseconds: 200), () {
-            if (mounted && widget.focusNode.hasFocus) {
-              FocusScope.of(context).unfocus();
+            if (!mounted || !context.mounted || !widget.focusNode.hasFocus) {
+              return;
             }
+            FocusScope.of(context).unfocus();
           });
         }
       },

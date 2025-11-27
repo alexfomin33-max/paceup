@@ -344,7 +344,7 @@ class _RowTile extends StatelessWidget {
                     fadeInDuration: const Duration(milliseconds: 120),
                     memCacheWidth: w,
                     maxWidthDiskCache: w,
-                    errorWidget: (_, __, ___) {
+                    errorWidget: (context, imageUrl, error) {
                       return Container(
                         width: 44,
                         height: 44,

@@ -168,9 +168,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
     // Если событие было удалено, возвращаемся назад
     if (result == 'deleted') {
-      if (mounted) {
-        Navigator.of(context).pop(true);
-      }
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
       return;
     }
 
@@ -188,14 +187,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final authService = AuthService();
     final userId = await authService.getUserId();
     if (userId == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ошибка: Пользователь не авторизован'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ошибка: Пользователь не авторизован'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -230,24 +228,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         setState(() {
           _isTogglingBookmark = false;
         });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        );
       }
     } catch (e) {
       setState(() {
         _isTogglingBookmark = false;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -259,14 +255,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final authService = AuthService();
     final userId = await authService.getUserId();
     if (userId == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ошибка: Пользователь не авторизован'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ошибка: Пользователь не авторизован'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -308,9 +303,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         if (_tab == 1) {
           // Небольшая задержка для завершения обновления состояния
           Future.delayed(const Duration(milliseconds: 100), () {
-            if (mounted) {
-              _membersSliverKey.currentState?.reloadParticipants();
-            }
+            if (!mounted) return;
+            _membersSliverKey.currentState?.reloadParticipants();
           });
         }
       } else {
@@ -318,24 +312,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         setState(() {
           _isTogglingParticipation = false;
         });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        );
       }
     } catch (e) {
       setState(() {
         _isTogglingParticipation = false;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -812,7 +804,7 @@ class _HeaderLogo extends StatelessWidget {
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
-      errorWidget: (_, __, ___) => Builder(
+      errorWidget: (context, imageUrl, error) => Builder(
         builder: (context) => Container(
           width: 100,
           height: 100,
@@ -845,7 +837,7 @@ class _Avatar40 extends StatelessWidget {
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
-      errorWidget: (_, __, ___) => Builder(
+      errorWidget: (context, imageUrl, error) => Builder(
         builder: (context) => Container(
           width: 40,
           height: 40,
@@ -885,7 +877,7 @@ class _SquarePhoto extends StatelessWidget {
                 fadeInDuration: const Duration(milliseconds: 120),
                 memCacheWidth: target,
                 maxWidthDiskCache: target,
-                errorWidget: (_, __, ___) => Builder(
+                errorWidget: (context, imageUrl, error) => Builder(
                   builder: (context) => Container(
                     color: AppColors.getBorderColor(context),
                     child: Icon(
@@ -976,7 +968,7 @@ class _GalleryViewerState extends State<_GalleryViewer> {
                       imageUrl: widget.images[i],
                       fit: BoxFit.contain,
                       fadeInDuration: const Duration(milliseconds: 120),
-                      errorWidget: (_, __, ___) => Builder(
+                      errorWidget: (context, imageUrl, error) => Builder(
                         builder: (context) => Container(
                           color: AppColors.getBorderColor(context),
                           child: Icon(

@@ -21,8 +21,7 @@ class OfficialEventDetailScreen extends StatefulWidget {
       _OfficialEventDetailScreenState();
 }
 
-class _OfficialEventDetailScreenState
-    extends State<OfficialEventDetailScreen> {
+class _OfficialEventDetailScreenState extends State<OfficialEventDetailScreen> {
   Map<String, dynamic>? _eventData;
   bool _loading = true;
   String? _error;
@@ -154,9 +153,8 @@ class _OfficialEventDetailScreenState
 
     // Если событие было удалено, возвращаемся назад
     if (result == 'deleted') {
-      if (mounted) {
-        Navigator.of(context).pop(true);
-      }
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
       return;
     }
 
@@ -174,14 +172,13 @@ class _OfficialEventDetailScreenState
     final authService = AuthService();
     final userId = await authService.getUserId();
     if (userId == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ошибка: Пользователь не авторизован'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ошибка: Пользователь не авторизован'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -216,24 +213,22 @@ class _OfficialEventDetailScreenState
         setState(() {
           _isTogglingBookmark = false;
         });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        );
       }
     } catch (e) {
       setState(() {
         _isTogglingBookmark = false;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -241,14 +236,13 @@ class _OfficialEventDetailScreenState
   Future<void> _openEventLink(String url) async {
     // Копируем ссылку в буфер обмена
     await Clipboard.setData(ClipboardData(text: url));
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ссылка скопирована в буфер обмена'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Ссылка скопирована в буфер обмена'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   int _tab = 0; // 0 — Описание, 1 — Участники
@@ -308,8 +302,7 @@ class _OfficialEventDetailScreenState
     final dateFormatted = _eventData!['date_formatted_short'] as String? ?? '';
     final place = _eventData!['place'] as String? ?? '';
     final photos = _eventData!['photos'] as List<dynamic>? ?? [];
-    final registrationLink =
-        _eventData!['registration_link'] as String? ?? '';
+    final registrationLink = _eventData!['registration_link'] as String? ?? '';
     final participantsCount = _eventData!['participants_count'] as int? ?? 0;
 
     return InteractiveBackSwipe(
@@ -340,9 +333,7 @@ class _OfficialEventDetailScreenState
                         SafeArea(
                           bottom: false,
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: SizedBox(
                               height: 100,
                               child: Row(
@@ -357,9 +348,7 @@ class _OfficialEventDetailScreenState
                                     child: Center(
                                       child: logoUrl.isNotEmpty
                                           ? ClipOval(
-                                              child: _HeaderLogo(
-                                                url: logoUrl,
-                                              ),
+                                              child: _HeaderLogo(url: logoUrl),
                                             )
                                           : Container(
                                               width: 100,
@@ -468,7 +457,8 @@ class _OfficialEventDetailScreenState
                                       fontFamily: 'Inter',
                                       fontSize: 14,
                                       color: AppColors.getTextPrimaryColor(
-                                          context),
+                                        context,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -500,9 +490,7 @@ class _OfficialEventDetailScreenState
                                       );
 
                                       if (index < 2) {
-                                        widgets.add(
-                                          const SizedBox(width: 10),
-                                        );
+                                        widgets.add(const SizedBox(width: 10));
                                       }
                                     }
                                     return widgets;
@@ -720,7 +708,7 @@ class _HeaderLogo extends StatelessWidget {
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
-      errorWidget: (_, __, ___) => Builder(
+      errorWidget: (context, imageUrl, error) => Builder(
         builder: (context) => Container(
           width: 100,
           height: 100,
@@ -753,7 +741,7 @@ class _Avatar40 extends StatelessWidget {
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
-      errorWidget: (_, __, ___) => Builder(
+      errorWidget: (context, imageUrl, error) => Builder(
         builder: (context) => Container(
           width: 40,
           height: 40,
@@ -793,7 +781,7 @@ class _SquarePhoto extends StatelessWidget {
                 fadeInDuration: const Duration(milliseconds: 120),
                 memCacheWidth: target,
                 maxWidthDiskCache: target,
-                errorWidget: (_, __, ___) => Builder(
+                errorWidget: (context, imageUrl, error) => Builder(
                   builder: (context) => Container(
                     color: AppColors.getBorderColor(context),
                     child: Icon(
@@ -884,7 +872,7 @@ class _GalleryViewerState extends State<_GalleryViewer> {
                       imageUrl: widget.images[i],
                       fit: BoxFit.contain,
                       fadeInDuration: const Duration(milliseconds: 120),
-                      errorWidget: (_, __, ___) => Builder(
+                      errorWidget: (context, imageUrl, error) => Builder(
                         builder: (context) => Container(
                           color: AppColors.getBorderColor(context),
                           child: Icon(
@@ -909,8 +897,9 @@ class _GalleryViewerState extends State<_GalleryViewer> {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: AppColors.getSurfaceColor(context)
-                          .withValues(alpha: 0.5),
+                      color: AppColors.getSurfaceColor(
+                        context,
+                      ).withValues(alpha: 0.5),
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
@@ -1289,4 +1278,3 @@ class _Member {
   final IconData? roleIcon;
   const _Member(this.name, this.role, this.avatar, {this.roleIcon});
 }
-

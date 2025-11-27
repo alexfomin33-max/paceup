@@ -773,12 +773,11 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
               onPressed: () async {
                 // Отмечаем сообщения как прочитанные перед закрытием
                 await _markMessagesAsRead();
-                if (mounted) {
-                  Navigator.pop(
-                    context,
-                    true,
-                  ); // Возвращаем true для обновления списка
-                }
+                if (!context.mounted) return;
+                Navigator.pop(
+                  context,
+                  true,
+                ); // Возвращаем true для обновления списка
               },
               splashRadius: 18,
             ),
@@ -801,13 +800,13 @@ class _PersonalChatScreenState extends State<PersonalChatScreen>
                       fadeInDuration: const Duration(milliseconds: 120),
                       memCacheWidth: w,
                       maxWidthDiskCache: w,
-                      errorWidget: (_, __, ___) {
+                      errorWidget: (context, imageUrl, error) {
                         return Image.asset(
                           'assets/${widget.userAvatar}',
                           width: 36,
                           height: 36,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) {
+                          errorBuilder: (context, error, stackTrace) {
                             return Container(
                               width: 36,
                               height: 36,
@@ -1022,7 +1021,7 @@ class _BubbleLeft extends StatelessWidget {
                   fadeInDuration: const Duration(milliseconds: 120),
                   memCacheWidth: w,
                   maxWidthDiskCache: w,
-                  errorWidget: (_, __, ___) => Container(
+                  errorWidget: (context, url, error) => Container(
                     width: 28,
                     height: 28,
                     color: AppColors.getSurfaceMutedColor(context),
@@ -1076,7 +1075,7 @@ class _BubbleLeft extends StatelessWidget {
                               fadeInDuration: const Duration(milliseconds: 200),
                               memCacheWidth: w,
                               maxWidthDiskCache: w,
-                              errorWidget: (_, __, ___) {
+                              errorWidget: (context, url, error) {
                                 return Container(
                                   width: maxW,
                                   height: 200,
@@ -1193,7 +1192,7 @@ class _BubbleRight extends StatelessWidget {
                               fadeInDuration: const Duration(milliseconds: 200),
                               memCacheWidth: w,
                               maxWidthDiskCache: w,
-                              errorWidget: (_, __, ___) {
+                              errorWidget: (context, url, error) {
                                 return Container(
                                   width: maxW,
                                   height: 200,
@@ -1400,7 +1399,7 @@ class _FullscreenImageView extends StatelessWidget {
                 imageUrl: imageUrl,
                 fit: BoxFit.contain,
                 fadeInDuration: const Duration(milliseconds: 200),
-                errorWidget: (_, __, ___) {
+                errorWidget: (context, url, error) {
                   return Container(
                     color: AppColors.getSurfaceMutedColor(context),
                     child: Icon(

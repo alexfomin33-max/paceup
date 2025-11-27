@@ -193,7 +193,7 @@ class ClubsListFromApi extends StatelessWidget {
                 memCacheHeight: targetH,
                 maxWidthDiskCache: targetW,
                 maxHeightDiskCache: targetH,
-                errorWidget: (_, __, ___) => Container(
+                errorWidget: (context, imageUrl, error) => Container(
                   width: 55,
                   height: 55,
                   color: AppColors.getSurfaceMutedColor(context),
@@ -296,7 +296,7 @@ class ClubsListFromApi extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
       physics: const BouncingScrollPhysics(),
       itemCount: clubs.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 2),
+      separatorBuilder: (context, index) => const SizedBox(height: 2),
       itemBuilder: (context, index) {
         final club = clubs[index] as Map<String, dynamic>;
         final clubId = club['id'] as int?;

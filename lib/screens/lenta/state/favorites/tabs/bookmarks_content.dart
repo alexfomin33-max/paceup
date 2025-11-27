@@ -331,7 +331,7 @@ class _BookmarkRow extends ConsumerWidget {
                         memCacheHeight: targetH,
                         maxWidthDiskCache: targetW,
                         maxHeightDiskCache: targetH,
-                        errorWidget: (_, __, ___) => Container(
+                        errorWidget: (context, imageUrl, error) => Container(
                           width: 80,
                           height: 55,
                           color: AppColors.skeletonBase,
@@ -343,7 +343,7 @@ class _BookmarkRow extends ConsumerWidget {
                             color: AppColors.getTextSecondaryColor(context),
                           ),
                         ),
-                        placeholder: (_, __) => Container(
+                        placeholder: (context, imageUrl) => Container(
                           width: 80,
                           height: 55,
                           color: AppColors.skeletonBase,

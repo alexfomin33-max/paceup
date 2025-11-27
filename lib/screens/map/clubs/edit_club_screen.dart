@@ -862,7 +862,9 @@ class _EditClubScreenState extends State<EditClubScreen> {
                         height: 24,
                         child: Radio<bool>(
                           value: true,
+                              // ignore: deprecated_member_use
                           groupValue: isOpenCommunity,
+                              // ignore: deprecated_member_use
                           onChanged: (v) =>
                               setState(() => isOpenCommunity = v ?? false),
                           activeColor: AppColors.brandPrimary,
@@ -885,7 +887,9 @@ class _EditClubScreenState extends State<EditClubScreen> {
                         height: 24,
                         child: Radio<bool>(
                           value: false,
+                              // ignore: deprecated_member_use
                           groupValue: isOpenCommunity,
+                              // ignore: deprecated_member_use
                           onChanged: (v) =>
                               setState(() => isOpenCommunity = v ?? false),
                           activeColor: AppColors.brandPrimary,
@@ -1330,7 +1334,7 @@ class _MediaTile extends StatelessWidget {
                     fadeInDuration: const Duration(milliseconds: 120),
                     memCacheWidth: side,
                     maxWidthDiskCache: side,
-                    errorWidget: (_, __, ___) => Container(
+                    errorWidget: (context, imageUrl, error) => Container(
                       width: width,
                       height: height,
                       color: AppColors.getBackgroundColor(context),

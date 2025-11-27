@@ -163,7 +163,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         itemCount: totalItems,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           // Первый элемент — кнопка добавления фото
           if (index == 0) {
@@ -505,9 +505,8 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
         // Небольшая задержка для гарантии обновления данных на сервере
         await Future.delayed(const Duration(milliseconds: 500));
 
-        if (mounted) {
-          Navigator.pop(context, true);
-        }
+        if (!mounted) return;
+        Navigator.pop(context, true);
       } else {
         if (!mounted) return;
         final msg = errorMessage ?? 'Ошибка сервера';
@@ -551,15 +550,13 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
         _updatePublishState();
       });
     } on PlatformException catch (e) {
-      if (mounted) {
-        _showError(
-          'Нет доступа к галерее: ${e.message ?? 'неизвестная ошибка'}.',
-        );
-      }
+      if (!mounted) return;
+      _showError(
+        'Нет доступа к галерее: ${e.message ?? 'неизвестная ошибка'}.',
+      );
     } catch (e) {
-      if (mounted) {
-        _showError('Не удалось загрузить фотографии. Попробуйте ещё раз.');
-      }
+      if (!mounted) return;
+      _showError('Не удалось загрузить фотографии. Попробуйте ещё раз.');
     }
   }
 

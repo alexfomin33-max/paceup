@@ -333,7 +333,7 @@ class EventsFloatingButtons extends ConsumerWidget {
                 }
               },
             ),
-            error: (_, __) => _SolidPillButton(
+            error: (error, stackTrace) => _SolidPillButton(
               icon: Icons.add_circle_outline,
               label: 'Добавить',
               onTap: () async {

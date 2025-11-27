@@ -194,7 +194,7 @@ class _ToggleRow extends StatelessWidget {
                 }
                 // В темной теме используем более светлый цвет для неактивного трека
                 return Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.getBorderColor(context).withOpacity(0.3)
+                    ? AppColors.getBorderColor(context).withValues(alpha: 0.3)
                     : AppColors.scrim20;
               }),
               trackOutlineColor: WidgetStateProperty.all<Color>(

@@ -226,7 +226,7 @@ class _MapScreenState extends State<MapScreen> {
       for (final marker in markers) {
         try {
           final count = marker['count'] as int;
-          final imageKey = 'marker_${markerColor.value}_$count';
+          final imageKey = 'marker_${markerColor.toARGB32()}_$count';
           if (!imageMap.containsKey(imageKey)) {
             imageMap[imageKey] = await _createMarkerImage(
               markerColor,
@@ -244,7 +244,7 @@ class _MapScreenState extends State<MapScreen> {
         try {
           final point = marker['point'] as latlong.LatLng;
           final count = marker['count'] as int;
-          final imageKey = 'marker_${markerColor.value}_$count';
+          final imageKey = 'marker_${markerColor.toARGB32()}_$count';
           final imageBytes = imageMap[imageKey]!;
 
           // Сохраняем данные маркера по координатам для поиска при клике

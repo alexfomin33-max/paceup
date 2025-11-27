@@ -177,11 +177,7 @@ class _CoffeeRunVldMembersContentState
                   IconButton(
                     // Для пользователей с ролью (владелец) иконка неактивна
                     // Для обычных пользователей — клик добавит в друзья (реализуем позже)
-                    onPressed: role != null
-                        ? null
-                        : () {
-                            // TODO: Реализовать добавление в друзья
-                          },
+                    onPressed: role != null ? null : () {},
                     splashRadius: 22,
                     icon: Icon(
                       role != null
@@ -224,7 +220,7 @@ class _Avatar40 extends StatelessWidget {
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
-      errorWidget: (_, __, ___) => Container(
+      errorWidget: (context, imageUrl, error) => Container(
         width: 40,
         height: 40,
         color: AppColors.border,

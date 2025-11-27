@@ -387,7 +387,7 @@ class _EventDetailScreen2State extends State<EventDetailScreen2> {
                                               milliseconds: 120,
                                             ),
                                             memCacheWidth: cacheWidth,
-                                            errorWidget: (_, __, ___) =>
+                                            errorWidget: (context, imageUrl, error) =>
                                                 Container(
                                                   width: 40,
                                                   height: 40,
@@ -664,7 +664,7 @@ class _HeaderLogo extends StatelessWidget {
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
-      errorWidget: (_, __, ___) => Container(
+      errorWidget: (context, imageUrl, error) => Container(
         width: 100,
         height: 100,
         color: AppColors.border,
@@ -691,7 +691,7 @@ class _Avatar40 extends StatelessWidget {
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
-      errorWidget: (_, __, ___) => Container(
+      errorWidget: (context, imageUrl, error) => Container(
         width: 40,
         height: 40,
         color: AppColors.border,
@@ -725,7 +725,7 @@ class _SquarePhoto extends StatelessWidget {
                 fadeInDuration: const Duration(milliseconds: 120),
                 memCacheWidth: target,
                 maxWidthDiskCache: target,
-                errorWidget: (_, __, ___) => Container(
+                errorWidget: (context, imageUrl, error) => Container(
                   color: AppColors.border,
                   child: const Icon(Icons.image, size: 48),
                 ),
@@ -808,7 +808,7 @@ class _GalleryViewerState extends State<_GalleryViewer> {
                       imageUrl: widget.images[i],
                       fit: BoxFit.contain,
                       fadeInDuration: const Duration(milliseconds: 120),
-                      errorWidget: (_, __, ___) => Container(
+                      errorWidget: (context, imageUrl, error) => Container(
                         color: AppColors.border,
                         child: const Icon(Icons.image, size: 48),
                       ),

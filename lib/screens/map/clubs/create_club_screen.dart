@@ -601,7 +601,9 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                         height: 24,
                         child: Radio<bool>(
                           value: true,
+                          // ignore: deprecated_member_use
                           groupValue: isOpenCommunity,
+                          // ignore: deprecated_member_use
                           onChanged: (v) =>
                               setState(() => isOpenCommunity = v ?? false),
                           activeColor: AppColors.brandPrimary,
@@ -624,7 +626,9 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                         height: 24,
                         child: Radio<bool>(
                           value: false,
+                          // ignore: deprecated_member_use
                           groupValue: isOpenCommunity,
+                          // ignore: deprecated_member_use
                           onChanged: (v) =>
                               setState(() => isOpenCommunity = v ?? false),
                           activeColor: AppColors.brandPrimary,

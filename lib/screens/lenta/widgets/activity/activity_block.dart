@@ -336,9 +336,9 @@ Future<void> _handleAddPhotos({
   required int lentaId,
   required int currentUserId,
 }) async {
-  final picker = ImagePicker();
-  final auth = AuthService();
-  final navigator = Navigator.of(context, rootNavigator: true);
+    final picker = ImagePicker();
+    final auth = AuthService();
+    final navigator = Navigator.of(context, rootNavigator: true);
   var loaderShown = false;
 
   void hideLoader() {
@@ -386,6 +386,7 @@ Future<void> _handleAddPhotos({
       return;
     }
 
+    if (!context.mounted) return;
     _showBlockingLoader(context, message: 'Загружаем фотографии…');
     loaderShown = true;
 
@@ -480,7 +481,7 @@ Future<void> _handleDeleteActivity({
   required int currentUserId,
 }) async {
   final confirmed = await _confirmDeletion(context);
-  if (!confirmed) return;
+  if (!confirmed || !context.mounted) return;
 
   final navigator = Navigator.of(context, rootNavigator: true);
   _showBlockingLoader(context);
@@ -493,6 +494,8 @@ Future<void> _handleDeleteActivity({
   if (navigator.mounted) {
     navigator.pop();
   }
+
+  if (!context.mounted) return;
 
   if (success) {
     await ref

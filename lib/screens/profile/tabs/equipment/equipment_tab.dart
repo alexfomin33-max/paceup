@@ -215,6 +215,7 @@ class _GearTabState extends State<GearTab> with AutomaticKeepAliveClientMixin {
         }
       });
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Ошибка при обновлении: $e')));

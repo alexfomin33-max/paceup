@@ -194,7 +194,7 @@ class EventsListFromApi extends StatelessWidget {
                 memCacheHeight: targetH,
                 maxWidthDiskCache: targetW,
                 maxHeightDiskCache: targetH,
-                errorWidget: (_, __, ___) => Container(
+                errorWidget: (context, imageUrl, error) => Container(
                   width: 55,
                   height: 55,
                   color: AppColors.getSurfaceMutedColor(context),
@@ -297,7 +297,7 @@ class EventsListFromApi extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
       physics: const BouncingScrollPhysics(),
       itemCount: events.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 2),
+      separatorBuilder: (context, index) => const SizedBox(height: 2),
       itemBuilder: (context, index) {
         final event = events[index] as Map<String, dynamic>;
         final eventId = event['id'] as int?;

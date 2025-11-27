@@ -279,7 +279,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   Future<void> _createPost() async {
     // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
     final userId = await _auth.getUserId();
-    if (userId == null) return;
+    if (userId == null || !mounted) return;
 
     MoreMenuHub.hide();
 
@@ -378,7 +378,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   Future<void> _editPost(Activity post) async {
     // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
     final userId = await _auth.getUserId();
-    if (userId == null) return;
+    if (userId == null || !mounted) return;
 
     MoreMenuHub.hide();
 

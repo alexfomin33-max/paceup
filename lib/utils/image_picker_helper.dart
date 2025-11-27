@@ -37,6 +37,7 @@ class ImagePickerHelper {
     // ── выбираем файл из галереи
     final picked = await _picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return null;
+    if (!context.mounted) return null;
 
     // ── открываем экран обрезки с нужными пропорциями
     final cropped = await cropPickedImage(

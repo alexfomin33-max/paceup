@@ -342,11 +342,10 @@ class _GearViewCardState extends State<GearViewCard> {
       final authService = AuthService();
       final userId = await authService.getUserId();
       if (userId == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Пользователь не авторизован')),
-          );
-        }
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Пользователь не авторизован')),
+        );
         return;
       }
 
@@ -362,27 +361,23 @@ class _GearViewCardState extends State<GearViewCard> {
       );
 
       if (data['success'] == true) {
-        if (mounted) {
-          // Очищаем кэш MainTab, чтобы данные обновились на главной странице профиля
-          final prefs = await SharedPreferences.getInstance();
-          final cacheKey = 'main_tab_$userId';
-          await prefs.remove(cacheKey);
-          // Обновляем список
-          widget.onUpdate?.call();
-        }
+        final prefs = await SharedPreferences.getInstance();
+        final cacheKey = 'main_tab_$userId';
+        await prefs.remove(cacheKey);
+        if (!context.mounted) return;
+        // Обновляем список
+        widget.onUpdate?.call();
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message'] ?? 'Ошибка при обновлении')),
-          );
-        }
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'Ошибка при обновлении')),
+        );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
-      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка: $e')),
+      );
     }
   }
 
@@ -431,16 +426,16 @@ class _GearViewCardState extends State<GearViewCard> {
     );
 
     if (confirmed != true) return;
+    if (!mounted) return;
 
     try {
       final authService = AuthService();
       final userId = await authService.getUserId();
       if (userId == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Пользователь не авторизован')),
-          );
-        }
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Пользователь не авторизован')),
+        );
         return;
       }
 
@@ -454,26 +449,23 @@ class _GearViewCardState extends State<GearViewCard> {
       );
 
       if (data['success'] == true) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Снаряжение успешно удалено')),
-          );
-          // Обновляем список
-          widget.onUpdate?.call();
-        }
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Снаряжение успешно удалено')),
+        );
+        // Обновляем список
+        widget.onUpdate?.call();
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message'] ?? 'Ошибка при удалении')),
-          );
-        }
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'Ошибка при удалении')),
+        );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
-      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка: $e')),
+      );
     }
   }
 

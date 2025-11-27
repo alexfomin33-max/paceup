@@ -369,14 +369,13 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
       final authService = AuthService();
       final userId = await authService.getUserId();
       if (userId == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ошибка: пользователь не авторизован'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ошибка: пользователь не авторизован'),
+            duration: Duration(seconds: 2),
+          ),
+        );
         return;
       }
 
@@ -462,25 +461,23 @@ class _TrainingTabContentState extends State<_TrainingTabContent>
 
       if (response['success'] == true) {
         // Успешно сохранено
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Тренировка сохранена в базу данных'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Тренировка сохранена в базу данных'),
+            duration: Duration(seconds: 2),
+          ),
+        );
       } else {
         // Ошибка сохранения
         final errorMsg = response['message'] ?? 'Неизвестная ошибка';
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Ошибка сохранения: $errorMsg'),
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка сохранения: $errorMsg'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     } catch (e) {
       // Ошибка при сохранении (логируем, но не показываем пользователю,

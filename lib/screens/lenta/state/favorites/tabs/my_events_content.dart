@@ -409,7 +409,7 @@ class _EventRow extends StatelessWidget {
                         memCacheHeight: targetH,
                         maxWidthDiskCache: targetW,
                         maxHeightDiskCache: targetH,
-                        errorWidget: (_, __, ___) => Container(
+                        errorWidget: (context, imageUrl, error) => Container(
                           width: 55,
                           height: 55,
                           // ── Цвет скелетона (можно оставить константу, т.к. это декоративный элемент)
@@ -422,7 +422,7 @@ class _EventRow extends StatelessWidget {
                             color: AppColors.getTextSecondaryColor(context),
                           ),
                         ),
-                        placeholder: (_, __) => Container(
+                        placeholder: (context, imageUrl) => Container(
                           width: 55,
                           height: 55,
                           color: AppColors.skeletonBase,
