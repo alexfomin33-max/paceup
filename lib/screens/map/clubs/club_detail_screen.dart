@@ -4,15 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/error_handler.dart';
+import '../../../providers/services/api_provider.dart';
 import '../../../providers/services/auth_provider.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
-import '../../../providers/clubs/club_detail_provider.dart';
 import 'coffeerun_vld/tabs/photo_content.dart';
 import 'coffeerun_vld/tabs/members_content.dart';
 import 'coffeerun_vld/tabs/stats_content.dart';
 import 'coffeerun_vld/tabs/glory_content.dart';
 import 'edit_club_screen.dart';
 import '../../../core/widgets/transparent_route.dart';
+import '../../../providers/profile/user_clubs_provider.dart';
 
 /// Детальная страница клуба (на основе event_detail_screen.dart)
 class ClubDetailScreen extends ConsumerStatefulWidget {
@@ -25,24 +27,81 @@ class ClubDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
+  Map<String, dynamic>? _clubData;
+  bool _loading = true;
+  String? _error;
+  bool _canEdit = false; // Права на редактирование
+  bool _isMember = false; // Является ли пользователь участником
+  bool _isRequest = false; // Подана ли заявка (для закрытых клубов)
+  bool _isJoining = false; // Идёт ли процесс вступления
+
   @override
   void initState() {
     super.initState();
-    // Префетч изображений после загрузки данных
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final state = ref.read(clubDetailProvider(widget.clubId));
-      if (state.clubData != null) {
-        _prefetchImages(context, state.clubData!);
+    _loadClub();
+  }
+
+  /// Загрузка данных клуба через API
+  Future<void> _loadClub() async {
+    try {
+      final api = ref.read(apiServiceProvider);
+      final authService = ref.read(authServiceProvider);
+      final userId = await authService.getUserId();
+
+      final data = await api.get(
+        '/get_clubs.php',
+        queryParams: {'club_id': widget.clubId.toString()},
+      );
+
+      if (data['success'] == true && data['club'] != null) {
+        final club = data['club'] as Map<String, dynamic>;
+
+        // Проверяем права на редактирование: только создатель может редактировать
+        final clubUserId = club['user_id'] as int?;
+        final canEdit = userId != null && clubUserId == userId;
+
+        // Проверяем, является ли пользователь участником клуба
+        bool isMember = false;
+        if (userId != null) {
+          final members = club['members'] as List<dynamic>? ?? [];
+          isMember = members.any((m) => m['user_id'] == userId);
+        }
+
+        setState(() {
+          _clubData = club;
+          _canEdit = canEdit;
+          _isMember = isMember;
+          _isRequest = false; // Сбрасываем статус заявки при загрузке
+          _loading = false;
+        });
+
+        // ───── После успешной загрузки — лёгкий префетч логотипа и фоновой картинки ─────
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _prefetchImages(context);
+          });
+        }
+      } else {
+        setState(() {
+          _error = data['message'] as String? ?? 'Клуб не найден';
+          _loading = false;
+        });
       }
-    });
+    } catch (e) {
+      setState(() {
+        _error = ErrorHandler.formatWithContext(e, context: 'загрузке клуба');
+        _loading = false;
+      });
+    }
   }
 
   /// ──────────────────────── Префетч изображений ────────────────────────
-  void _prefetchImages(BuildContext context, Map<String, dynamic> clubData) {
+  void _prefetchImages(BuildContext context) {
+    if (_clubData == null) return;
     final dpr = MediaQuery.of(context).devicePixelRatio;
 
     // Логотип в шапке: 90×90
-    final logoUrl = clubData['logo_url'] as String?;
+    final logoUrl = _clubData!['logo_url'] as String?;
     if (logoUrl != null && logoUrl.isNotEmpty) {
       final w = (90 * dpr).round();
       final h = (90 * dpr).round();
@@ -53,7 +112,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     }
 
     // Фоновая картинка (соотношение сторон 2.3:1)
-    final backgroundUrl = clubData['background_url'] as String?;
+    final backgroundUrl = _clubData!['background_url'] as String?;
     if (backgroundUrl != null && backgroundUrl.isNotEmpty) {
       final screenW = MediaQuery.of(context).size.width;
       final calculatedHeight =
@@ -71,69 +130,150 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     }
   }
 
+  int _tab = 0; // 0 — Фото, 1 — Участники, 2 — Статистика, 3 — Зал славы
+
   /// ──────────────────────── Вступление в клуб ────────────────────────
   Future<void> _joinClub() async {
-    final state = ref.read(clubDetailProvider(widget.clubId));
-    if (state.isJoining || state.clubData == null) return;
+    if (_isJoining || _clubData == null) return;
 
-    final userId = await ref.read(authServiceProvider).getUserId();
-    if (userId == null) {
+    try {
+      setState(() => _isJoining = true);
+
+      final api = ref.read(apiServiceProvider);
+      final authService = ref.read(authServiceProvider);
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Необходимо войти в систему'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        setState(() => _isJoining = false);
+        return;
+      }
+
+      final data = await api.post(
+        '/join_club.php',
+        body: {
+          'club_id': widget.clubId.toString(),
+          'user_id': userId.toString(),
+        },
+      );
+
+      if (data['success'] == true && mounted) {
+        final isMember = data['is_member'] as bool? ?? false;
+        final isRequest = data['is_request'] as bool? ?? false;
+
+        setState(() {
+          _isMember = isMember;
+          _isRequest = isRequest;
+          _isJoining = false;
+        });
+
+        // Обновляем данные клуба (чтобы обновилось количество участников)
+        _loadClub();
+
+        // Инвалидируем provider клубов пользователя для обновления списка в clubs_tab.dart
+        // userId гарантированно не null после проверки выше
+        ref.invalidate(userClubsProvider(userId));
+      } else {
+        final errorMessage =
+            data['message'] as String? ?? 'Ошибка вступления в клуб';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        setState(() => _isJoining = false);
+      }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Необходимо войти в систему'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-      return;
-    }
-
-    await ref.read(clubDetailProvider(widget.clubId).notifier).joinClub();
-
-    if (mounted) {
-      final newState = ref.read(clubDetailProvider(widget.clubId));
-      if (newState.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(newState.error!),
+            content: Text(ErrorHandler.format(e)),
             duration: const Duration(seconds: 2),
           ),
         );
       }
+      setState(() => _isJoining = false);
     }
   }
 
   /// ──────────────────────── Выход из клуба ────────────────────────
   Future<void> _leaveClub() async {
-    final state = ref.read(clubDetailProvider(widget.clubId));
-    if (state.isJoining || state.clubData == null) return;
+    if (_isJoining || _clubData == null) return;
 
-    final userId = await ref.read(authServiceProvider).getUserId();
-    if (userId == null) {
+    try {
+      setState(() => _isJoining = true);
+
+      final api = ref.read(apiServiceProvider);
+      final authService = ref.read(authServiceProvider);
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Необходимо войти в систему'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        setState(() => _isJoining = false);
+        return;
+      }
+
+      final data = await api.post(
+        '/leave_club.php',
+        body: {
+          'club_id': widget.clubId.toString(),
+          'user_id': userId.toString(),
+        },
+      );
+
+      if (data['success'] == true && mounted) {
+        setState(() {
+          _isMember = false;
+          _isRequest = false;
+          _isJoining = false;
+        });
+
+        // Обновляем данные клуба (чтобы обновилось количество участников)
+        _loadClub();
+
+        // Инвалидируем provider клубов пользователя для обновления списка в clubs_tab.dart
+        // userId гарантированно не null после проверки выше
+        ref.invalidate(userClubsProvider(userId));
+      } else {
+        final errorMessage =
+            data['message'] as String? ?? 'Ошибка выхода из клуба';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        setState(() => _isJoining = false);
+      }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Необходимо войти в систему'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-      return;
-    }
-
-    await ref.read(clubDetailProvider(widget.clubId).notifier).leaveClub();
-
-    if (mounted) {
-      final newState = ref.read(clubDetailProvider(widget.clubId));
-      if (newState.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(newState.error!),
+            content: Text(ErrorHandler.format(e)),
             duration: const Duration(seconds: 2),
           ),
         );
       }
+      setState(() => _isJoining = false);
     }
   }
 
@@ -147,16 +287,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final clubState = ref.watch(clubDetailProvider(widget.clubId));
-
-    // Префетч изображений после загрузки данных
-    if (clubState.clubData != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _prefetchImages(context, clubState.clubData!);
-      });
-    }
-
-    if (clubState.isLoading) {
+    if (_loading) {
       return InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.getBackgroundColor(context),
@@ -165,7 +296,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
       );
     }
 
-    if (clubState.error != null || clubState.clubData == null) {
+    if (_error != null || _clubData == null) {
       return InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.getBackgroundColor(context),
@@ -176,7 +307,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                 children: [
                   Builder(
                     builder: (context) => Text(
-                      clubState.error ?? 'Клуб не найден',
+                      _error ?? 'Клуб не найден',
                       style: TextStyle(
                         fontSize: 16,
                         color: AppColors.getTextPrimaryColor(context),
@@ -196,16 +327,14 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
       );
     }
 
-    final logoUrl = clubState.clubData!['logo_url'] as String? ?? '';
-    final name = clubState.clubData!['name'] as String? ?? '';
-    final dateFormatted =
-        clubState.clubData!['date_formatted'] as String? ?? '';
-    final backgroundUrl =
-        clubState.clubData!['background_url'] as String? ?? '';
-    final membersCount = clubState.clubData!['members_count'] as int? ?? 0;
-    final isOpen = clubState.clubData!['is_open'] as bool? ?? true;
+    final logoUrl = _clubData!['logo_url'] as String? ?? '';
+    final name = _clubData!['name'] as String? ?? '';
+    final dateFormatted = _clubData!['date_formatted'] as String? ?? '';
+    final backgroundUrl = _clubData!['background_url'] as String? ?? '';
+    final membersCount = _clubData!['members_count'] as int? ?? 0;
+    final isOpen = _clubData!['is_open'] as bool? ?? true;
 
-    final description = clubState.clubData!['description'] as String? ?? '';
+    final description = _clubData!['description'] as String? ?? '';
 
     return InteractiveBackSwipe(
       child: Scaffold(
@@ -263,7 +392,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                   onTap: () => Navigator.of(context).maybePop(),
                                 ),
                                 const Spacer(),
-                                if (clubState.canEdit)
+                                if (_canEdit)
                                   _CircleIconBtn(
                                     icon: CupertinoIcons.pencil,
                                     semantic: 'Редактировать',
@@ -280,13 +409,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                       // Если редактирование прошло успешно, обновляем данные
                                       if (!context.mounted) return;
                                       if (result == true) {
-                                        ref
-                                            .read(
-                                              clubDetailProvider(
-                                                widget.clubId,
-                                              ).notifier,
-                                            )
-                                            .reload();
+                                        _loadClub();
                                       }
                                       // Если клуб был удалён, возвращаемся назад с результатом
                                       if (result == 'deleted') {
@@ -430,16 +553,16 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                           alignment: Alignment.center,
                           child: Builder(
                             builder: (context) => ElevatedButton(
-                              onPressed: clubState.isJoining
+                              onPressed: _isJoining
                                   ? null
-                                  : clubState.isMember
+                                  : _isMember
                                   ? _leaveClub
                                   : _joinClub,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: clubState.isMember
+                                backgroundColor: _isMember
                                     ? AppColors.getBackgroundColor(context)
                                     : AppColors.brandPrimary,
-                                foregroundColor: clubState.isMember
+                                foregroundColor: _isMember
                                     ? AppColors.getTextSecondaryColor(context)
                                     : AppColors.getSurfaceColor(context),
                                 elevation: 0,
@@ -453,7 +576,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                   ),
                                 ),
                               ),
-                              child: clubState.isJoining
+                              child: _isJoining
                                   ? SizedBox(
                                       width: 20,
                                       height: 20,
@@ -469,9 +592,9 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                     )
                                   : Builder(
                                       builder: (context) => Text(
-                                        clubState.isMember
+                                        _isMember
                                             ? 'Выйти из клуба'
-                                            : clubState.isRequest
+                                            : _isRequest
                                             ? 'Заявка подана'
                                             : isOpen
                                             ? 'Вступить в клуб'
@@ -480,7 +603,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                           fontFamily: 'Inter',
                                           fontSize: 15,
                                           fontWeight: FontWeight.w500,
-                                          color: clubState.isMember
+                                          color: _isMember
                                               ? AppColors.getTextSecondaryColor(
                                                   context,
                                                 )
@@ -526,50 +649,26 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                             children: [
                               _TabBtn(
                                 text: 'Фото',
-                                selected: clubState.tab == 0,
-                                onTap: () => ref
-                                    .read(
-                                      clubDetailProvider(
-                                        widget.clubId,
-                                      ).notifier,
-                                    )
-                                    .setTab(0),
+                                selected: _tab == 0,
+                                onTap: () => setState(() => _tab = 0),
                               ),
                               _vDivider(),
                               _TabBtn(
                                 text: 'Участники',
-                                selected: clubState.tab == 1,
-                                onTap: () => ref
-                                    .read(
-                                      clubDetailProvider(
-                                        widget.clubId,
-                                      ).notifier,
-                                    )
-                                    .setTab(1),
+                                selected: _tab == 1,
+                                onTap: () => setState(() => _tab = 1),
                               ),
                               _vDivider(),
                               _TabBtn(
                                 text: 'Статистика',
-                                selected: clubState.tab == 2,
-                                onTap: () => ref
-                                    .read(
-                                      clubDetailProvider(
-                                        widget.clubId,
-                                      ).notifier,
-                                    )
-                                    .setTab(2),
+                                selected: _tab == 2,
+                                onTap: () => setState(() => _tab = 2),
                               ),
                               _vDivider(),
                               _TabBtn(
                                 text: 'Зал славы',
-                                selected: clubState.tab == 3,
-                                onTap: () => ref
-                                    .read(
-                                      clubDetailProvider(
-                                        widget.clubId,
-                                      ).notifier,
-                                    )
-                                    .setTab(3),
+                                selected: _tab == 3,
+                                onTap: () => setState(() => _tab = 3),
                               ),
                             ],
                           ),
@@ -581,19 +680,19 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                           ),
                         ),
 
-                        if (clubState.tab == 0)
+                        if (_tab == 0)
                           const Padding(
                             padding: EdgeInsets.all(2),
                             child: CoffeeRunVldPhotoContent(),
                           )
-                        else if (clubState.tab == 1)
+                        else if (_tab == 1)
                           Padding(
                             padding: const EdgeInsets.only(top: 0, bottom: 0),
                             child: CoffeeRunVldMembersContent(
                               clubId: widget.clubId,
                             ),
                           )
-                        else if (clubState.tab == 2)
+                        else if (_tab == 2)
                           const Padding(
                             padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
                             child: CoffeeRunVldStatsContent(),
