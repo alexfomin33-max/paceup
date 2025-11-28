@@ -3,11 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/image_picker_helper.dart';
-import '../../../core/utils/error_handler.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
@@ -15,6 +13,7 @@ import '../../../providers/services/api_provider.dart';
 import '../../../providers/services/auth_provider.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
+import '../../../providers/events/edit_official_event_provider.dart';
 import 'location_picker_screen.dart';
 
 /// Экран редактирования официального события
@@ -37,47 +36,35 @@ class _EditOfficialEventScreenState
   final linkCtrl = TextEditingController();
   final templateCtrl = TextEditingController();
 
-  // выборы
-  String? activity;
-  DateTime? date;
-  TimeOfDay? time;
-
   // ── контроллеры для полей ввода дистанций
   final List<TextEditingController> _distanceControllers = [];
-
-  // чекбоксы
-  bool saveTemplate = false;
-
-  // медиа
-  File? logoFile;
-  String? logoUrl; // URL для отображения существующего логотипа
-  String? logoFilename; // Имя файла существующего логотипа
-  File? backgroundFile;
-  String? backgroundUrl; // URL для отображения существующего фона
-  String? backgroundFilename; // Имя файла существующего фона
 
   // ──────────── фиксированные пропорции для обрезки медиа ────────────
   static const double _logoAspectRatio = 1;
   static const double _backgroundAspectRatio = 2.3;
 
-  // координаты выбранного места
-  LatLng? selectedLocation;
+  bool _controllersInitialized = false;
 
-  bool get isFormValid =>
-      (nameCtrl.text.trim().isNotEmpty) &&
-      (placeCtrl.text.trim().isNotEmpty) &&
-      (activity != null) &&
-      (date != null) &&
-      (time != null) &&
-      (selectedLocation != null);
+  bool get isFormValid {
+    final state = ref.read(editOfficialEventProvider(widget.eventId));
+    return (nameCtrl.text.trim().isNotEmpty) &&
+        (placeCtrl.text.trim().isNotEmpty) &&
+        (state.activity != null) &&
+        (state.date != null) &&
+        (state.time != null) &&
+        (state.selectedLocation != null);
+  }
 
   @override
   void initState() {
     super.initState();
-    _loadEventData();
-    nameCtrl.addListener(() => _refresh());
-    placeCtrl.addListener(() => _refresh());
-    linkCtrl.addListener(() => _refresh());
+    nameCtrl.addListener(() => setState(() {}));
+    placeCtrl.addListener(() => setState(() {}));
+    linkCtrl.addListener(() => setState(() {}));
+    // Инициализируем контроллеры после первой загрузки данных
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeControllers();
+    });
   }
 
   @override
@@ -94,167 +81,61 @@ class _EditOfficialEventScreenState
     super.dispose();
   }
 
-  void _refresh() => setState(() {});
+  /// Инициализация контроллеров из загруженных данных
+  Future<void> _initializeControllers() async {
+    if (_controllersInitialized) return;
+
+    final textFields = await ref
+        .read(editOfficialEventProvider(widget.eventId).notifier)
+        .loadEventData();
+
+    if (textFields != null && mounted) {
+      nameCtrl.text = textFields['name'] ?? '';
+      placeCtrl.text = textFields['place'] ?? '';
+      descCtrl.text = textFields['description'] ?? '';
+      linkCtrl.text = textFields['link'] ?? '';
+      templateCtrl.text = textFields['template_name'] ?? '';
+
+      // Обработка дистанций
+      for (final controller in _distanceControllers) {
+        controller.removeListener(() => setState(() {}));
+        controller.dispose();
+      }
+      _distanceControllers.clear();
+
+      final distanceStr = textFields['distance'] ?? '';
+      if (distanceStr.isNotEmpty) {
+        final distances = distanceStr
+            .split(',')
+            .map((d) => d.trim())
+            .where((d) => d.isNotEmpty)
+            .toList();
+
+        for (final dist in distances) {
+          final controller = TextEditingController(text: dist);
+          controller.addListener(() => setState(() {}));
+          _distanceControllers.add(controller);
+        }
+      }
+
+      // Если дистанций нет, создаём одно пустое поле
+      if (_distanceControllers.isEmpty) {
+        final controller = TextEditingController();
+        controller.addListener(() => setState(() {}));
+        _distanceControllers.add(controller);
+      }
+
+      _controllersInitialized = true;
+    }
+  }
 
   // ── добавление нового поля для ввода дистанции
   void _addDistanceField() {
     setState(() {
       final newController = TextEditingController();
-      newController.addListener(() => _refresh());
+      newController.addListener(() => setState(() {}));
       _distanceControllers.add(newController);
     });
-  }
-
-  /// Загрузка данных события для редактирования
-  Future<void> _loadEventData() async {
-    final formNotifier = ref.read(formStateProvider.notifier);
-    final api = ref.read(apiServiceProvider);
-    final authService = ref.read(authServiceProvider);
-
-    await formNotifier.submitWithLoading(
-      () async {
-        final userId = await authService.getUserId();
-
-        if (userId == null) {
-          throw Exception('Ошибка авторизации');
-        }
-
-        final data = await api.get(
-          '/update_event.php',
-          queryParams: {
-            'event_id': widget.eventId.toString(),
-            'user_id': userId.toString(),
-          },
-        );
-
-        if (data['success'] == true && data['event'] != null) {
-          final event = data['event'] as Map<String, dynamic>;
-
-          // Заполняем текстовые поля
-          nameCtrl.text = event['name'] as String? ?? '';
-          final placeText = event['place'] as String? ?? '';
-          placeCtrl.text = placeText;
-          descCtrl.text = event['description'] as String? ?? '';
-          linkCtrl.text = event['registration_link'] as String? ?? '';
-          templateCtrl.text = event['template_name'] as String? ?? '';
-
-          // Заполняем выборы
-          final activityStr = event['activity'] as String?;
-          // Проверяем, что значение активности входит в список допустимых
-          const allowedActivities = ['Бег', 'Велосипед', 'Плавание'];
-          if (activityStr != null && allowedActivities.contains(activityStr)) {
-            activity = activityStr;
-          } else {
-            activity = null; // Если значение не валидно, оставляем null
-          }
-
-          saveTemplate = (event['template_name'] as String? ?? '').isNotEmpty;
-
-          // Заполняем дату и время
-          final eventDateStr = event['event_date'] as String? ?? '';
-          if (eventDateStr.isNotEmpty) {
-            try {
-              final parts = eventDateStr.split('.');
-              if (parts.length == 3) {
-                date = DateTime(
-                  int.parse(parts[2]),
-                  int.parse(parts[1]),
-                  int.parse(parts[0]),
-                );
-              }
-            } catch (e) {
-              // Игнорируем ошибку парсинга
-            }
-          }
-
-          final eventTimeStr = event['event_time'] as String? ?? '';
-          if (eventTimeStr.isNotEmpty) {
-            try {
-              final parts = eventTimeStr.split(':');
-              if (parts.length >= 2) {
-                time = TimeOfDay(
-                  hour: int.parse(parts[0]),
-                  minute: int.parse(parts[1]),
-                );
-              }
-            } catch (e) {
-              // Игнорируем ошибку парсинга
-            }
-          }
-
-          // Координаты
-          final lat = event['latitude'] as num?;
-          final lng = event['longitude'] as num?;
-          if (lat != null && lng != null) {
-            selectedLocation = LatLng(lat.toDouble(), lng.toDouble());
-          }
-
-          // Логотип
-          logoUrl = event['logo_url'] as String?;
-          logoFilename = event['logo_filename'] as String?;
-
-          // Фоновая картинка
-          backgroundUrl = event['background_url'] as String?;
-          backgroundFilename = event['background_filename'] as String?;
-
-          // ── обработка дистанций из события
-          // Очищаем существующие контроллеры
-          for (final controller in _distanceControllers) {
-            controller.removeListener(() => _refresh());
-            controller.dispose();
-          }
-          _distanceControllers.clear();
-
-          // Парсим дистанции из события (формат: "5000, 10000, 21100" - все в метрах)
-          final distanceStr = event['distance'] as String?;
-          if (distanceStr != null && distanceStr.isNotEmpty) {
-            // Разделяем по запятой и очищаем пробелы
-            final distances = distanceStr
-                .split(',')
-                .map((d) => d.trim())
-                .where((d) => d.isNotEmpty)
-                .toList();
-
-            // Создаём контроллеры для каждой дистанции
-            for (final dist in distances) {
-              final controller = TextEditingController(text: dist);
-              controller.addListener(() => _refresh());
-              _distanceControllers.add(controller);
-            }
-          }
-
-          // Если дистанций нет, создаём одно пустое поле
-          if (_distanceControllers.isEmpty) {
-            final controller = TextEditingController();
-            controller.addListener(() => _refresh());
-            _distanceControllers.add(controller);
-          }
-
-          if (!mounted) return;
-          setState(() {});
-        } else {
-          throw Exception(
-            data['message'] as String? ?? 'Не удалось загрузить данные события',
-          );
-        }
-      },
-      onError: (error) {
-        if (!mounted) return;
-        final formState = ref.read(formStateProvider);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              formState.error ??
-                  ErrorHandler.formatWithContext(
-                    error,
-                    context: 'загрузке данных',
-                  ),
-            ),
-          ),
-        );
-        Navigator.of(context).pop();
-      },
-    );
   }
 
   Future<void> _pickLogo() async {
@@ -268,10 +149,9 @@ class _EditOfficialEventScreenState
     );
     if (processed == null || !mounted) return;
 
-    setState(() {
-      logoFile = processed;
-      logoUrl = null; // Сбрасываем URL, так как выбран новый файл
-    });
+    ref
+        .read(editOfficialEventProvider(widget.eventId).notifier)
+        .setLogoFile(processed);
   }
 
   Future<void> _pickBackground() async {
@@ -285,33 +165,34 @@ class _EditOfficialEventScreenState
     );
     if (processed == null || !mounted) return;
 
-    setState(() {
-      backgroundFile = processed;
-      backgroundUrl = null; // Сбрасываем URL, так как выбран новый файл
-    });
+    ref
+        .read(editOfficialEventProvider(widget.eventId).notifier)
+        .setBackgroundFile(processed);
   }
 
   /// Открыть экран выбора места на карте
   Future<void> _pickLocation() async {
+    final state = ref.read(editOfficialEventProvider(widget.eventId));
     final result = await Navigator.of(context).push<LocationResult?>(
       MaterialPageRoute(
-        builder: (_) => LocationPickerScreen(initialPosition: selectedLocation),
+        builder: (_) => LocationPickerScreen(initialPosition: state.selectedLocation),
       ),
     );
 
     if (result != null) {
-      setState(() {
-        selectedLocation = result.coordinates;
-        if (result.address != null && result.address!.isNotEmpty) {
-          placeCtrl.text = result.address!;
-        }
-      });
+      ref
+          .read(editOfficialEventProvider(widget.eventId).notifier)
+          .setLocation(result.coordinates);
+      if (result.address != null && result.address!.isNotEmpty) {
+        placeCtrl.text = result.address!;
+      }
     }
   }
 
   Future<void> _pickDateCupertino() async {
+    final state = ref.read(editOfficialEventProvider(widget.eventId));
     final today = DateUtils.dateOnly(DateTime.now());
-    DateTime temp = DateUtils.dateOnly(date ?? today);
+    DateTime temp = DateUtils.dateOnly(state.date ?? today);
 
     final picker = CupertinoDatePicker(
       mode: CupertinoDatePickerMode.date,
@@ -323,17 +204,18 @@ class _EditOfficialEventScreenState
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
     if (ok) {
-      setState(() => date = temp);
+      ref.read(editOfficialEventProvider(widget.eventId).notifier).setDate(temp);
     }
   }
 
   Future<void> _pickTimeCupertino() async {
+    final state = ref.read(editOfficialEventProvider(widget.eventId));
     DateTime temp = DateTime(
       DateTime.now().year,
       DateTime.now().month,
       DateTime.now().day,
-      time?.hour ?? 12,
-      time?.minute ?? 0,
+      state.time?.hour ?? 12,
+      state.time?.minute ?? 0,
     );
 
     final picker = CupertinoDatePicker(
@@ -345,9 +227,9 @@ class _EditOfficialEventScreenState
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
     if (ok) {
-      setState(() {
-        time = TimeOfDay(hour: temp.hour, minute: temp.minute);
-      });
+      ref.read(editOfficialEventProvider(widget.eventId).notifier).setTime(
+        TimeOfDay(hour: temp.hour, minute: temp.minute),
+      );
     }
   }
 
@@ -477,48 +359,26 @@ class _EditOfficialEventScreenState
     final confirmed = await _confirmDelete();
     if (!confirmed) return;
 
-    final formNotifier = ref.read(formStateProvider.notifier);
-    final api = ref.read(apiServiceProvider);
-    final authService = ref.read(authServiceProvider);
+    final success = await ref
+        .read(editOfficialEventProvider(widget.eventId).notifier)
+        .deleteEvent();
 
-    await formNotifier.submit(
-      () async {
-        final userId = await authService.getUserId();
-        if (userId == null) {
-          throw Exception('Ошибка: Пользователь не авторизован');
-        }
+    if (!mounted) return;
 
-        // Отправляем запрос на удаление
-        final data = await api.post(
-          '/delete_event.php',
-          body: {'event_id': widget.eventId, 'user_id': userId},
-        );
-
-        // Проверяем ответ
-        if (data['success'] == true) {
-          // Успешно удалено
-        } else if (data['success'] == false) {
-          throw Exception(data['message'] ?? 'Ошибка при удалении события');
-        } else {
-          throw Exception('Неожиданный формат ответа сервера');
-        }
-      },
-      onSuccess: () {
-        if (!mounted) return;
-        // Возвращаемся на предыдущий экран с результатом удаления
-        Navigator.of(context).pop('deleted');
-      },
-      onError: (error) {
-        if (!mounted) return;
-        final formState = ref.read(formStateProvider);
+    if (success) {
+      // Возвращаемся на предыдущий экран с результатом удаления
+      Navigator.of(context).pop('deleted');
+    } else {
+      final state = ref.read(editOfficialEventProvider(widget.eventId));
+      if (state.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(formState.error ?? 'Ошибка при удалении события'),
+            content: Text(state.error!),
             backgroundColor: Colors.red,
           ),
         );
-      },
-    );
+      }
+    }
   }
 
   Future<void> _submit() async {
@@ -527,6 +387,7 @@ class _EditOfficialEventScreenState
       return;
     }
 
+    final editState = ref.read(editOfficialEventProvider(widget.eventId));
     final formNotifier = ref.read(formStateProvider.notifier);
     final api = ref.read(apiServiceProvider);
     final authService = ref.read(authServiceProvider);
@@ -537,13 +398,13 @@ class _EditOfficialEventScreenState
         final fields = <String, String>{};
 
         // Добавляем логотип (если выбран новый)
-        if (logoFile != null) {
-          files['logo'] = logoFile!;
+        if (editState.logoFile != null) {
+          files['logo'] = editState.logoFile!;
         }
 
         // Добавляем фоновую картинку (если выбран новый)
-        if (backgroundFile != null) {
-          files['background'] = backgroundFile!;
+        if (editState.backgroundFile != null) {
+          files['background'] = editState.backgroundFile!;
         }
 
         // Добавляем поля формы
@@ -554,22 +415,24 @@ class _EditOfficialEventScreenState
         fields['event_id'] = widget.eventId.toString();
         fields['user_id'] = userId.toString();
         fields['name'] = nameCtrl.text.trim();
-        fields['activity'] = activity!;
+        fields['activity'] = editState.activity!;
         fields['place'] = placeCtrl.text.trim();
-        fields['latitude'] = selectedLocation!.latitude.toString();
-        fields['longitude'] = selectedLocation!.longitude.toString();
-        fields['event_date'] = _fmtDate(date!);
-        fields['event_time'] = _fmtTime(time!);
+        fields['latitude'] = editState.selectedLocation!.latitude.toString();
+        fields['longitude'] = editState.selectedLocation!.longitude.toString();
+        fields['event_date'] = _fmtDate(editState.date!);
+        fields['event_time'] = _fmtTime(editState.time!);
         fields['description'] = descCtrl.text.trim();
 
         // Флаги для сохранения существующих изображений
-        if (logoUrl != null && logoFile == null && logoFilename != null) {
+        if (editState.logoUrl != null &&
+            editState.logoFile == null &&
+            editState.logoFilename != null) {
           fields['keep_logo'] = 'true';
         }
 
-        if (backgroundUrl != null &&
-            backgroundFile == null &&
-            backgroundFilename != null) {
+        if (editState.backgroundUrl != null &&
+            editState.backgroundFile == null &&
+            editState.backgroundFilename != null) {
           fields['keep_background'] = 'true';
         }
 
@@ -584,7 +447,7 @@ class _EditOfficialEventScreenState
           fields['event_link'] = linkCtrl.text.trim();
         }
 
-        if (saveTemplate && templateCtrl.text.trim().isNotEmpty) {
+        if (editState.saveTemplate && templateCtrl.text.trim().isNotEmpty) {
           fields['template_name'] = templateCtrl.text.trim();
         }
 
@@ -668,6 +531,14 @@ class _EditOfficialEventScreenState
   @override
   Widget build(BuildContext context) {
     final formState = ref.watch(formStateProvider);
+    final editState = ref.watch(editOfficialEventProvider(widget.eventId));
+
+    // Инициализируем контроллеры, если они еще не заполнены
+    if (!_controllersInitialized && !editState.isLoadingData) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _initializeControllers();
+      });
+    }
     if (formState.isLoading) {
       return Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
@@ -706,14 +577,13 @@ class _EditOfficialEventScreenState
                           ),
                           const SizedBox(height: 8),
                           _MediaTile(
-                            file: logoFile,
-                            url: logoUrl,
+                            file: editState.logoFile,
+                            url: editState.logoUrl,
                             onPick: _pickLogo,
-                            onRemove: () => setState(() {
-                              logoFile = null;
-                              logoUrl = null;
-                              logoFilename = null;
-                            }),
+                            onRemove: () => ref
+                                .read(editOfficialEventProvider(widget.eventId)
+                                    .notifier)
+                                .removeLogo(),
                             width: 90,
                             height: 90,
                           ),
@@ -734,14 +604,13 @@ class _EditOfficialEventScreenState
                             ),
                             const SizedBox(height: 8),
                             _MediaTile(
-                              file: backgroundFile,
-                              url: backgroundUrl,
+                              file: editState.backgroundFile,
+                              url: editState.backgroundUrl,
                               onPick: _pickBackground,
-                              onRemove: () => setState(() {
-                                backgroundFile = null;
-                                backgroundUrl = null;
-                                backgroundFilename = null;
-                              }),
+                              onRemove: () => ref
+                                  .read(editOfficialEventProvider(widget.eventId)
+                                      .notifier)
+                                  .removeBackground(),
                               width: 207, // Ширина для соотношения 2.3:1
                               height: 90,
                             ),
@@ -899,7 +768,7 @@ class _EditOfficialEventScreenState
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: activity,
+                          value: editState.activity,
                           isExpanded: true,
                           hint: const Text(
                             'Выберите вид активности',
@@ -907,7 +776,10 @@ class _EditOfficialEventScreenState
                           ),
                           onChanged: (String? newValue) {
                             if (newValue != null) {
-                              setState(() => activity = newValue);
+                              ref
+                                  .read(editOfficialEventProvider(widget.eventId)
+                                      .notifier)
+                                  .setActivity(newValue);
                             }
                           },
                           dropdownColor: AppColors.getSurfaceColor(context),
@@ -1126,10 +998,10 @@ class _EditOfficialEventScreenState
                                       ),
                                     ),
                                     child: Text(
-                                      date != null
-                                          ? _fmtDate(date!)
+                                      editState.date != null
+                                          ? _fmtDate(editState.date!)
                                           : 'Выберите дату',
-                                      style: date != null
+                                      style: editState.date != null
                                           ? AppTextStyles.h14w4.copyWith(
                                               color:
                                                   AppColors.getTextPrimaryColor(
@@ -1227,10 +1099,10 @@ class _EditOfficialEventScreenState
                                       ),
                                     ),
                                     child: Text(
-                                      time != null
-                                          ? _fmtTime(time!)
+                                      editState.time != null
+                                          ? _fmtTime(editState.time!)
                                           : 'Выберите время',
-                                      style: time != null
+                                      style: editState.time != null
                                           ? AppTextStyles.h14w4.copyWith(
                                               color:
                                                   AppColors.getTextPrimaryColor(
