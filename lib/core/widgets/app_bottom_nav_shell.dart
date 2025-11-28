@@ -2,11 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart';
 
-import '../../screens/lenta/lenta_screen.dart';
-import '../../screens/map/map_screen.dart';
-import '../../screens/market/market_screen.dart';
-import '../../screens/tasks/tasks_screen.dart';
-import '../../screens/profile/profile_screen.dart';
+import '../../features/lenta/screens/lenta_screen.dart';
+import '../../features/map/screens/map_screen.dart';
+import '../../features/market/screens/market_screen.dart';
+import '../../features/tasks/screens/tasks_screen.dart';
+import '../../features/profile/screens/profile_screen.dart';
 import '../theme/app_theme.dart';
 
 class AppBottomNavShell extends StatefulWidget {

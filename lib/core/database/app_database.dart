@@ -20,7 +20,7 @@ import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'type_converters.dart';
-import '../models/activity_lenta.dart'; // Импорт моделей для Type Converters
+import '../../domain/models/activity_lenta.dart'; // Импорт моделей для Type Converters
 
 part 'app_database.g.dart';
 

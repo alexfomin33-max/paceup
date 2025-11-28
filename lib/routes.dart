@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'screens/splash_screen.dart';
-import 'screens/lenta/lenta_screen.dart';
-import 'screens/home/regstep1_screen.dart';
-import 'screens/home/regstep2_screen.dart';
-import 'screens/home/addaccsms_screen.dart';
-import 'screens/home/home_screen.dart';
-import 'screens/home/createacc_screen.dart';
-import 'screens/home/login_screen.dart';
-import 'screens/home/loginsms_screen.dart';
+import 'features/auth/screens/splash_screen.dart';
+import 'features/lenta/screens/lenta_screen.dart';
+import 'features/auth/screens/regstep1_screen.dart';
+import 'features/auth/screens/regstep2_screen.dart';
+import 'features/auth/screens/addaccsms_screen.dart';
+import 'features/auth/screens/home_screen.dart';
+import 'features/auth/screens/createacc_screen.dart';
+import 'features/auth/screens/login_screen.dart';
+import 'features/auth/screens/loginsms_screen.dart';
 import '../../core/widgets/app_bottom_nav_shell.dart';
 
 /// 🔹 Маршруты с нижней навигацией

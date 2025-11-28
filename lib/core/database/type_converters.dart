@@ -11,7 +11,7 @@
 
 import 'dart:convert';
 import 'package:drift/drift.dart';
-import '../models/activity_lenta.dart';
+import '../../domain/models/activity_lenta.dart';
 
 // ────────────────────────── Coord Converter ──────────────────────────
 

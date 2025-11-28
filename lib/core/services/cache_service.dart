@@ -29,7 +29,7 @@
 import 'package:drift/drift.dart';
 import '../database/app_database.dart';
 import '../database/type_converters.dart';
-import '../models/activity_lenta.dart';
+import '../../domain/models/activity_lenta.dart';
 
 class CacheService {
   final AppDatabase _db;
