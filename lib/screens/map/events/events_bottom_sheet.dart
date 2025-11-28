@@ -306,9 +306,13 @@ class EventsListFromApi extends StatelessWidget {
         final date = event['date'] as String? ?? '';
         final participantsCount = event['participants_count'] as int? ?? 0;
         final subtitle = '$date  ·  Участников: $participantsCount';
-        // Проверяем, является ли событие официальным (топ событием)
-        final registrationLink = event['registration_link'] as String? ?? '';
-        final isOfficialEvent = registrationLink.isNotEmpty;
+        // ── Проверяем, является ли событие официальным (топ событием)
+        // Используем event_type для точного определения, так как registration_link может отсутствовать в кратком списке
+        final eventType = event['event_type'] as String? ?? 'amateur';
+        final registrationLink = event['registration_link'] as String? ??
+            event['event_link'] as String? ??
+            '';
+        final isOfficialEvent = eventType == 'official' || registrationLink.isNotEmpty;
 
         return eventCard(
           logoUrl: logoUrl,

@@ -14,16 +14,18 @@ import '../services/api_provider.dart';
 /// Тип вкладки в экране «Связи».
 enum CommunicationTab { subscriptions, subscribers }
 
-/// Аргументы для провайдера списка (учитываем тип вкладки и строку поиска).
+/// Аргументы для провайдера списка (учитываем тип вкладки, строку поиска и userId).
 @immutable
 class CommunicationListArgs {
   const CommunicationListArgs({
     required this.tab,
     required String query,
+    this.userId,
   }) : rawQuery = query;
 
   final CommunicationTab tab;
   final String rawQuery;
+  final int? userId; // Если null, используется авторизованный пользователь
 
   String get sanitizedQuery => rawQuery.trim();
   String get normalizedQuery => sanitizedQuery.toLowerCase();
@@ -32,11 +34,13 @@ class CommunicationListArgs {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! CommunicationListArgs) return false;
-    return tab == other.tab && normalizedQuery == other.normalizedQuery;
+    return tab == other.tab &&
+        normalizedQuery == other.normalizedQuery &&
+        userId == other.userId;
   }
 
   @override
-  int get hashCode => Object.hash(tab, normalizedQuery);
+  int get hashCode => Object.hash(tab, normalizedQuery, userId);
 }
 
 /// Модель пользователя для вкладок подписок/подписчиков.
@@ -200,6 +204,7 @@ class CommunicationRepository {
     required int offset,
     required int limit,
     required String query,
+    int? userId,
   }) async {
     final endpoint = tab == CommunicationTab.subscriptions
         ? '/get_subscribed_users.php'
@@ -211,6 +216,11 @@ class CommunicationRepository {
     };
     if (query.isNotEmpty) {
       params['query'] = query;
+    }
+    // Если передан userId, добавляем его в параметры запроса
+    // API будет использовать этот userId вместо авторизованного пользователя
+    if (userId != null) {
+      params['user_id'] = '$userId';
     }
 
     final response = await _api.get(
@@ -293,6 +303,7 @@ class CommunicationListNotifier extends AutoDisposeFamilyAsyncNotifier<
       offset: 0,
       limit: CommunicationRepository.pageSize,
       query: args.sanitizedQuery,
+      userId: args.userId,
     );
 
     final users = _filterUnique(page.users);
@@ -347,6 +358,7 @@ class CommunicationListNotifier extends AutoDisposeFamilyAsyncNotifier<
         offset: current.users.length,
         limit: CommunicationRepository.pageSize,
         query: args.sanitizedQuery,
+        userId: args.userId,
       );
 
       final updatedUsers = [

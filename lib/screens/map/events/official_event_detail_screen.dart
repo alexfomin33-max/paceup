@@ -306,8 +306,41 @@ class _OfficialEventDetailScreenState
     final dateFormatted = _eventData!['date_formatted_short'] as String? ?? '';
     final place = _eventData!['place'] as String? ?? '';
     final photos = _eventData!['photos'] as List<dynamic>? ?? [];
-    final registrationLink = _eventData!['registration_link'] as String? ?? '';
+    
+    // ── Извлекаем ссылку на регистрацию (поддерживаем оба варианта названия)
+    dynamic linkRaw = _eventData!['registration_link'];
+    if (linkRaw == null || (linkRaw is String && linkRaw.isEmpty)) {
+      linkRaw = _eventData!['event_link'];
+    }
+    final registrationLink = (linkRaw?.toString().trim() ?? '').replaceAll(' ', '');
+    
     final participantsCount = _eventData!['participants_count'] as int? ?? 0;
+    
+    // ── Извлекаем дистанции из данных события (массив в метрах)
+    // Обрабатываем разные форматы: числа, строки, null
+    final distancesRaw = _eventData!['distances'];
+    final List<num> distances = [];
+    
+    if (distancesRaw != null) {
+      if (distancesRaw is List) {
+        for (final d in distancesRaw) {
+          if (d == null) continue;
+          num? value;
+          if (d is num) {
+            value = d;
+          } else if (d is String) {
+            final parsed = num.tryParse(d.trim());
+            value = parsed;
+          }
+          if (value != null && value > 0) {
+            distances.add(value);
+          }
+        }
+      } else if (distancesRaw is num && distancesRaw > 0) {
+        // Если дистанция одна и пришла как число
+        distances.add(distancesRaw);
+      }
+    }
 
     return InteractiveBackSwipe(
       child: Scaffold(
@@ -413,7 +446,16 @@ class _OfficialEventDetailScreenState
                                 text: '$dateFormatted · $place',
                               ),
 
-                              // Ссылка на мероприятие
+                              // ── Дистанции события (если есть)
+                              if (distances.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                _InfoRow(
+                                  icon: CupertinoIcons.location,
+                                  text: _formatDistances(distances),
+                                ),
+                              ],
+
+                              // ── Ссылка на мероприятие (URL)
                               if (registrationLink.isNotEmpty) ...[
                                 const SizedBox(height: 6),
                                 GestureDetector(
@@ -621,6 +663,31 @@ class _OfficialEventDetailScreenState
     } else {
       return 'участников';
     }
+  }
+
+  /// ──────────────────────── Форматирование дистанций ────────────────────────
+  /// Преобразует массив дистанций в метрах в читаемую строку
+  String _formatDistances(List<num> distances) {
+    if (distances.isEmpty) return '';
+
+    final formatted = distances.map((d) {
+      final meters = d.toDouble();
+      if (meters >= 1000) {
+        // Если >= 1000 м, показываем в километрах с одним знаком после запятой
+        final km = meters / 1000;
+        // Если целое число, показываем без десятичных
+        if (km == km.roundToDouble()) {
+          return '${km.toInt()} км';
+        } else {
+          return '${km.toStringAsFixed(1)} км';
+        }
+      } else {
+        // Если < 1000 м, показываем в метрах
+        return '${meters.toInt()} м';
+      }
+    }).join(', ');
+
+    return formatted;
   }
 }
 

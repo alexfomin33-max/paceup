@@ -36,6 +36,8 @@ migrate_working_dir/
 # Configuration files with sensitive data
 # lib/config/app_config.dart
 lib/service/auth_service.dart
+lib/core/services/auth_service.dart
+lib/routes.dart
 
 # Firebase configuration files (contain sensitive keys)
 android/app/google-services.json

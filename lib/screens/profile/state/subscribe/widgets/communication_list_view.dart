@@ -17,16 +17,18 @@ class CommunicationListView extends ConsumerWidget {
     required this.query,
     required this.emptyTitle,
     required this.emptySubtitle,
+    this.userId,
   });
 
   final CommunicationTab tab;
   final String query;
   final String emptyTitle;
   final String emptySubtitle;
+  final int? userId; // Если null, используется авторизованный пользователь
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final args = CommunicationListArgs(tab: tab, query: query);
+    final args = CommunicationListArgs(tab: tab, query: query, userId: userId);
     final asyncState = ref.watch(communicationListProvider(args));
     final notifier = ref.read(communicationListProvider(args).notifier);
     final data = asyncState.valueOrNull;

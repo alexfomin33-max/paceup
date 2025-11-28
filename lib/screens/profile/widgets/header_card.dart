@@ -211,8 +211,9 @@ class HeaderCard extends StatelessWidget {
                       onTap: () {
                         Navigator.of(context).push(
                           CupertinoPageRoute(
-                            builder: (_) => const CommunicationPrefsPage(
+                            builder: (_) => CommunicationPrefsPage(
                               startIndex: 0,
+                              userId: userId,
                             ), // Подписки
                           ),
                         );
@@ -225,8 +226,9 @@ class HeaderCard extends StatelessWidget {
                       onTap: () {
                         Navigator.of(context).push(
                           CupertinoPageRoute(
-                            builder: (_) => const CommunicationPrefsPage(
+                            builder: (_) => CommunicationPrefsPage(
                               startIndex: 1,
+                              userId: userId,
                             ), // Подписчики
                           ),
                         );

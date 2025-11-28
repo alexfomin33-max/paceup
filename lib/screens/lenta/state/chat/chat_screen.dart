@@ -22,6 +22,7 @@ class ChatItem {
   final String userName;
   final String userAvatar;
   final String lastMessage;
+  final bool lastMessageHasImage; // ─── Флаг наличия изображения в последнем сообщении ───
   final DateTime lastMessageAt;
   final bool unread;
   final DateTime createdAt;
@@ -32,6 +33,7 @@ class ChatItem {
     required this.userName,
     required this.userAvatar,
     required this.lastMessage,
+    required this.lastMessageHasImage,
     required this.lastMessageAt,
     required this.unread,
     required this.createdAt,
@@ -44,6 +46,7 @@ class ChatItem {
       userName: json['user_name'] as String,
       userAvatar: json['user_avatar'] as String,
       lastMessage: json['last_message'] as String? ?? '',
+      lastMessageHasImage: json['last_message_has_image'] as bool? ?? false,
       lastMessageAt: DateTime.parse(json['last_message_at'] as String),
       unread: json['unread'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -493,7 +496,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                               children: [
                                 Expanded(
                                   child: Text(
-                                    chat.lastMessage,
+                                    // ─── Показываем "Изображение" если последнее сообщение - изображение без текста ───
+                                    chat.lastMessageHasImage &&
+                                            chat.lastMessage.isEmpty
+                                        ? 'Изображение'
+                                        : chat.lastMessage,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     // ─── Жирный стиль для непрочитанных сообщений ───

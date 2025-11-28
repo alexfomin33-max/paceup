@@ -58,10 +58,12 @@ class AddOfficialEventNotifier extends StateNotifier<AddOfficialEventState> {
   /// Обновление дистанции по индексу
   void updateDistance(int index, String value) {
     final newDistances = List<String>.from(state.distances);
-    if (index < newDistances.length) {
-      newDistances[index] = value;
-      state = state.copyWith(distances: newDistances);
+    // Расширяем массив, если индекс выходит за границы
+    while (newDistances.length <= index) {
+      newDistances.add('');
     }
+    newDistances[index] = value;
+    state = state.copyWith(distances: newDistances);
   }
 
   /// Обновление логотипа
