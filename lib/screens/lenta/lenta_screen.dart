@@ -10,6 +10,7 @@ import '../../providers/lenta/lenta_provider.dart';
 import '../../providers/chat/unread_chats_provider.dart';
 import '../../core/utils/image_cache_manager.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/widgets/error_display.dart';
 
 import 'widgets/activity/activity_block.dart'; // карточка тренировки
 import 'widgets/recommended/recommended_block.dart'; // блок «Рекомендации»
@@ -28,7 +29,6 @@ import '../../core/widgets/more_menu_hub.dart';
 import '../../core/widgets/more_menu_overlay.dart';
 import '../../core/widgets/app_bar.dart'; // ← глобальный AppBar
 import '../../core/widgets/transparent_route.dart';
-import '../../core/widgets/primary_button.dart'; // ← кнопка для повтора
 
 /// Единые размеры для AppBar в iOS-стиле
 const double kAppBarIconSize = 22.0; // сама иконка ~20–22pt
@@ -639,51 +639,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       body: () {
         // Показываем ошибку, если есть
         if (lentaState.error != null && lentaState.items.isEmpty) {
-          // ── Определяем, является ли ошибка сетевой
-          final errorText = lentaState.error!.toLowerCase();
-          final isNetworkError =
-              errorText.contains('failed host lookup') ||
-              errorText.contains('ошибка сети') ||
-              errorText.contains('нет подключения') ||
-              errorText.contains('socketexception') ||
-              errorText.contains('network') ||
-              errorText.contains('connection');
-
-          // ── Пользовательское сообщение для сетевых ошибок
-          final displayMessage = isNetworkError
-              ? 'Нет соединения с интернетом'
-              : 'Ошибка: ${lentaState.error}';
-
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SelectableText.rich(
-                    TextSpan(
-                      text: displayMessage,
-                      style: const TextStyle(
-                        color: AppColors.error,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  PrimaryButton(
-                    text: 'Повторить',
-                    onPressed: () async {
-                      // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
-                      final userId = await _auth.getUserId();
-                      if (userId == null) return;
-                      ref.read(lentaProvider(userId).notifier).loadInitial();
-                    },
-                    width: MediaQuery.of(context).size.width / 2,
-                  ),
-                ],
-              ),
-            ),
+          return ErrorDisplay.centered(
+            error: lentaState.error,
+            onRetry: () async {
+              // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
+              final userId = await _auth.getUserId();
+              if (userId == null) return;
+              ref.read(lentaProvider(userId).notifier).loadInitial();
+            },
           );
         }
 

@@ -11,13 +11,13 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/local_image_compressor.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/route_card.dart';
 import '../../../core/models/activity_lenta.dart';
 import '../../../providers/services/api_provider.dart';
-import '../../../core/services/api_service.dart'; // для ApiException
 import '../../../core/services/auth_service.dart';
 import '../../../providers/lenta/lenta_provider.dart';
 import '../../../core/providers/form_state_provider.dart';
@@ -621,7 +621,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
         if (response['success'] != true) {
           final message =
-              response['message']?.toString() ?? 'Не удалось сохранить изменения';
+              response['message']?.toString() ??
+              'Не удалось сохранить изменения';
           throw Exception(message);
         }
 
@@ -643,7 +644,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   }
 
   /// Показывает ошибку
-  void _showError(String message) {
+  void _showError(dynamic error) {
+    final message = ErrorHandler.format(error);
     showCupertinoDialog<void>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
@@ -795,22 +797,10 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           _imageUrls.addAll(updatedActivity.mediaImages);
         });
       }
-    } on PlatformException catch (e) {
-      hideLoader();
-      if (mounted) {
-        _showError(
-          'Нет доступа к галерее: ${e.message ?? 'неизвестная ошибка'}.',
-        );
-      }
-    } on ApiException catch (e) {
-      hideLoader();
-      if (mounted) {
-        _showError(e.message);
-      }
     } catch (e) {
       hideLoader();
       if (mounted) {
-        _showError('Не удалось загрузить фотографии. Попробуйте ещё раз.');
+        _showError(e);
       }
     }
   }
@@ -910,16 +900,6 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           _showError(message);
         }
       }
-    } on ApiException catch (e) {
-      // Возвращаем фотографию в список при ошибке
-      setState(() {
-        _imageUrls.add(imageUrl);
-        _checkForChanges();
-      });
-
-      if (mounted) {
-        _showError(e.message);
-      }
     } catch (e) {
       // Возвращаем фотографию в список при ошибке
       setState(() {
@@ -928,7 +908,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       });
 
       if (mounted) {
-        _showError('Ошибка при удалении фотографии: $e');
+        _showError(e);
       }
     }
   }

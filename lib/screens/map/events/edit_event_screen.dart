@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/local_image_compressor.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
@@ -272,7 +273,11 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка загрузки: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              ErrorHandler.formatWithContext(e, context: 'загрузке данных'),
+            ),
+          ),
         );
         Navigator.of(context).pop();
       }
@@ -561,7 +566,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
       setState(() => _deleting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Ошибка сети: ${e.toString()}'),
+          content: Text(ErrorHandler.format(e)),
           backgroundColor: Colors.red,
         ),
       );

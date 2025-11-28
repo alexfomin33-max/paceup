@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../../../providers/services/api_provider.dart';
 import '../../../../../../providers/services/auth_provider.dart';
+import '../../../../../../core/utils/error_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
@@ -198,7 +199,10 @@ Future<ImportResult> importWorkout(
       );
     }
   } catch (e) {
-    return ImportResult(success: false, message: 'Ошибка импорта: $e');
+    return ImportResult(
+      success: false,
+      message: ErrorHandler.formatWithContext(e, context: 'импорте тренировки'),
+    );
   }
 }
 

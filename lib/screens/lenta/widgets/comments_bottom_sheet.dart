@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../providers/services/api_provider.dart';
 
 // ——— Аккуратный показ SnackBar (чтобы не падать без ScaffoldMessenger) ———
@@ -184,7 +185,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = ErrorHandler.format(e);
         _initialLoading = false;
         _pageLoading = false;
       });

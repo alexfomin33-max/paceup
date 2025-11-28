@@ -10,6 +10,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../../../../providers/services/api_provider.dart';
 import '../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../core/theme/app_theme.dart';
+import '../../../../../../core/utils/error_handler.dart';
 import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/route_card.dart';
 import 'package:flutter/services.dart';
@@ -478,7 +479,9 @@ class _TrainingTabContentState extends ConsumerState<_TrainingTabContent>
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Ошибка сохранения: $errorMsg'),
+            content: Text(
+              ErrorHandler.formatWithContext(errorMsg, context: 'сохранении'),
+            ),
             duration: const Duration(seconds: 3),
           ),
         );

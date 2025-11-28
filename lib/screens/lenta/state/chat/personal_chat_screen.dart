@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/local_image_compressor.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
@@ -241,7 +242,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       }
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = ErrorHandler.format(e);
         _isLoading = false;
       });
     }
@@ -315,7 +316,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       }
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = ErrorHandler.format(e);
         _isLoading = false;
       });
     }
@@ -387,7 +388,9 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Ошибка выбора изображения: $e'),
+            content: Text(
+              ErrorHandler.formatWithContext(e, context: 'выборе изображения'),
+            ),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -432,7 +435,9 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Ошибка создания чата: $e'),
+              content: Text(
+                ErrorHandler.formatWithContext(e, context: 'создании чата'),
+              ),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -513,7 +518,9 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Ошибка отправки изображения: $e'),
+            content: Text(
+              ErrorHandler.formatWithContext(e, context: 'отправке изображения'),
+            ),
             duration: const Duration(seconds: 2),
           ),
         );

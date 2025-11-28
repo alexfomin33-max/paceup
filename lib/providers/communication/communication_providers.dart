@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/services/api_service.dart';
+import '../../core/utils/error_handler.dart';
 import '../services/api_provider.dart';
 
 /// ────────────────────────────────────────────────────────────────────────────
@@ -362,8 +363,7 @@ class CommunicationListNotifier extends AutoDisposeFamilyAsyncNotifier<
         ),
       );
     } catch (error) {
-      final message =
-          error is ApiException ? error.message : error.toString();
+      final message = ErrorHandler.format(error);
       state = AsyncData(
         current.copyWith(
           isLoadingMore: false,
@@ -425,8 +425,7 @@ class CommunicationListNotifier extends AutoDisposeFamilyAsyncNotifier<
       final rollbackUsers = [...current.users];
       rollbackUsers[index] = originalUser;
 
-      final message =
-          error is ApiException ? error.message : error.toString();
+      final message = ErrorHandler.format(error);
 
       state = AsyncData(
         current.copyWith(users: rollbackUsers, lastError: message),

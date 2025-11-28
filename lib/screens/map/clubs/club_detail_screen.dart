@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../providers/services/api_provider.dart';
 import '../../../providers/services/auth_provider.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
@@ -88,7 +89,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
       }
     } catch (e) {
       setState(() {
-        _error = 'Ошибка загрузки: ${e.toString()}';
+        _error = ErrorHandler.formatWithContext(e, context: 'загрузке клуба');
         _loading = false;
       });
     }
@@ -196,7 +197,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Ошибка: ${e.toString()}'),
+            content: Text(ErrorHandler.format(e)),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -267,7 +268,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Ошибка: ${e.toString()}'),
+            content: Text(ErrorHandler.format(e)),
             duration: const Duration(seconds: 2),
           ),
         );

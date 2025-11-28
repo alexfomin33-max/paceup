@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../providers/search/friends_search_provider.dart';
 import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/utils/error_handler.dart';
 import '../../../../../core/widgets/primary_button.dart';
 
 /// Контент вкладки «Друзья»
@@ -103,7 +104,7 @@ class SearchFriendsContent extends ConsumerWidget {
                           ),
                           children: [
                             TextSpan(
-                              text: error.toString(),
+                              text: ErrorHandler.format(error),
                               style: const TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 13,

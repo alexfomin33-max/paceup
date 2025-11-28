@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/image_picker_helper.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
@@ -374,7 +375,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
           },
         );
 
-        if (templateData['success'] != true || templateData['template'] == null) {
+        if (templateData['success'] != true ||
+            templateData['template'] == null) {
           throw Exception('Шаблон не найден');
         }
 
@@ -383,63 +385,63 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
         // Заполняем форму данными из шаблона
         if (mounted) {
           setState(() {
-          nameCtrl.text = template['name'] as String? ?? '';
-          placeCtrl.text = template['place'] as String? ?? '';
-          descCtrl.text = template['description'] as String? ?? '';
-          activity = template['activity'] as String?;
+            nameCtrl.text = template['name'] as String? ?? '';
+            placeCtrl.text = template['place'] as String? ?? '';
+            descCtrl.text = template['description'] as String? ?? '';
+            activity = template['activity'] as String?;
 
-          // Парсим дату
-          final dateStr = template['event_date'] as String?;
-          if (dateStr != null && dateStr.isNotEmpty) {
-            try {
-              final parts = dateStr.split('.');
-              if (parts.length == 3) {
-                date = DateTime(
-                  int.parse(parts[2]),
-                  int.parse(parts[1]),
-                  int.parse(parts[0]),
-                );
+            // Парсим дату
+            final dateStr = template['event_date'] as String?;
+            if (dateStr != null && dateStr.isNotEmpty) {
+              try {
+                final parts = dateStr.split('.');
+                if (parts.length == 3) {
+                  date = DateTime(
+                    int.parse(parts[2]),
+                    int.parse(parts[1]),
+                    int.parse(parts[0]),
+                  );
+                }
+              } catch (e) {
+                // Игнорируем ошибку парсинга
               }
-            } catch (e) {
-              // Игнорируем ошибку парсинга
             }
-          }
 
-          // Парсим время
-          final timeStr = template['event_time'] as String?;
-          if (timeStr != null && timeStr.isNotEmpty) {
-            try {
-              final parts = timeStr.split(':');
-              if (parts.length == 2) {
-                time = TimeOfDay(
-                  hour: int.parse(parts[0]),
-                  minute: int.parse(parts[1]),
-                );
+            // Парсим время
+            final timeStr = template['event_time'] as String?;
+            if (timeStr != null && timeStr.isNotEmpty) {
+              try {
+                final parts = timeStr.split(':');
+                if (parts.length == 2) {
+                  time = TimeOfDay(
+                    hour: int.parse(parts[0]),
+                    minute: int.parse(parts[1]),
+                  );
+                }
+              } catch (e) {
+                // Игнорируем ошибку парсинга
               }
-            } catch (e) {
-              // Игнорируем ошибку парсинга
             }
-          }
 
-          // Координаты
-          final lat = template['latitude'] as double?;
-          final lng = template['longitude'] as double?;
-          if (lat != null && lng != null) {
-            selectedLocation = LatLng(lat, lng);
-          }
+            // Координаты
+            final lat = template['latitude'] as double?;
+            final lng = template['longitude'] as double?;
+            if (lat != null && lng != null) {
+              selectedLocation = LatLng(lat, lng);
+            }
 
-          // Клуб
-          final clubName = template['club_name'] as String?;
-          if (clubName != null &&
-              clubName.isNotEmpty &&
-              clubs.contains(clubName)) {
-            createFromClub = true;
-            selectedClub = clubName;
-            clubCtrl.text = clubName;
-          } else {
-            createFromClub = false;
-            selectedClub = clubs.isNotEmpty ? clubs.first : null;
-          }
+            // Клуб
+            final clubName = template['club_name'] as String?;
+            if (clubName != null &&
+                clubName.isNotEmpty &&
+                clubs.contains(clubName)) {
+              createFromClub = true;
+              selectedClub = clubName;
+              clubCtrl.text = clubName;
+            } else {
+              createFromClub = false;
+              selectedClub = clubs.isNotEmpty ? clubs.first : null;
+            }
 
             templateCtrl.text = templateName;
           });
@@ -450,7 +452,12 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
           final formState = ref.read(formStateProvider);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Ошибка загрузки шаблона: ${formState.error ?? error.toString()}'),
+              content: Text(
+                ErrorHandler.formatWithContext(
+                  formState.error ?? error,
+                  context: 'загрузке шаблона',
+                ),
+              ),
             ),
           );
         }
@@ -466,47 +473,47 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
 
     // ── форма валидна — отправляем на сервер
     final formNotifier = ref.read(formStateProvider.notifier);
-        final api = ref.read(apiServiceProvider);
-        final authService = ref.read(authServiceProvider);
+    final api = ref.read(apiServiceProvider);
+    final authService = ref.read(authServiceProvider);
 
     await formNotifier.submit(
       () async {
-      // Формируем данные
-      final files = <String, File>{};
-      final fields = <String, String>{};
+        // Формируем данные
+        final files = <String, File>{};
+        final fields = <String, String>{};
 
-      // Добавляем логотип
-      if (logoFile != null) {
-        files['logo'] = logoFile!;
-      }
-
-      // Добавляем фотографии
-      for (int i = 0; i < photos.length; i++) {
-        if (photos[i] != null) {
-          files['images[$i]'] = photos[i]!;
+        // Добавляем логотип
+        if (logoFile != null) {
+          files['logo'] = logoFile!;
         }
-      }
+
+        // Добавляем фотографии
+        for (int i = 0; i < photos.length; i++) {
+          if (photos[i] != null) {
+            files['images[$i]'] = photos[i]!;
+          }
+        }
 
         // Добавляем поля формы
         final userId = await authService.getUserId();
         if (userId == null) {
           throw Exception('Ошибка авторизации. Необходимо войти в систему');
         }
-      fields['user_id'] = userId.toString();
-      fields['name'] = nameCtrl.text.trim();
-      fields['activity'] = activity!;
-      fields['place'] = placeCtrl.text.trim();
-      fields['latitude'] = selectedLocation!.latitude.toString();
-      fields['longitude'] = selectedLocation!.longitude.toString();
-      fields['event_date'] = _fmtDate(date!);
-      fields['event_time'] = _fmtTime(time!);
-      fields['description'] = descCtrl.text.trim();
-      if (createFromClub && selectedClub != null) {
-        fields['club_name'] = selectedClub!;
-      }
-      if (saveTemplate && templateCtrl.text.trim().isNotEmpty) {
-        fields['template_name'] = templateCtrl.text.trim();
-      }
+        fields['user_id'] = userId.toString();
+        fields['name'] = nameCtrl.text.trim();
+        fields['activity'] = activity!;
+        fields['place'] = placeCtrl.text.trim();
+        fields['latitude'] = selectedLocation!.latitude.toString();
+        fields['longitude'] = selectedLocation!.longitude.toString();
+        fields['event_date'] = _fmtDate(date!);
+        fields['event_time'] = _fmtTime(time!);
+        fields['description'] = descCtrl.text.trim();
+        if (createFromClub && selectedClub != null) {
+          fields['club_name'] = selectedClub!;
+        }
+        if (saveTemplate && templateCtrl.text.trim().isNotEmpty) {
+          fields['template_name'] = templateCtrl.text.trim();
+        }
 
         // Отправляем запрос
         Map<String, dynamic> data;

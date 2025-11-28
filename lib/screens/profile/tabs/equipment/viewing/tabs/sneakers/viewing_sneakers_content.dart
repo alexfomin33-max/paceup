@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../../../core/theme/app_theme.dart';
+import '../../../../../../../core/utils/error_handler.dart';
 import '../../../../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../../../../core/widgets/transparent_route.dart';
 import '../../../../../../../providers/services/api_provider.dart';
@@ -172,7 +173,7 @@ class _ViewingSneakersContentState
       }
     } catch (e) {
       setState(() {
-        _error = 'Ошибка: $e';
+        _error = ErrorHandler.format(e);
         _isLoading = false;
       });
     }
@@ -380,7 +381,7 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
+      ).showSnackBar(SnackBar(content: Text(ErrorHandler.format(e))));
     }
   }
 
@@ -468,7 +469,7 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
+      ).showSnackBar(SnackBar(content: Text(ErrorHandler.format(e))));
     }
   }
 

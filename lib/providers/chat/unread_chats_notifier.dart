@@ -7,17 +7,16 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/api_service.dart';
+import '../../core/utils/error_handler.dart';
 import 'unread_chats_state.dart';
 
 class UnreadChatsNotifier extends StateNotifier<UnreadChatsState> {
   final ApiService _api;
   final int userId;
 
-  UnreadChatsNotifier({
-    required ApiService api,
-    required this.userId,
-  })  : _api = api,
-        super(UnreadChatsState.initial());
+  UnreadChatsNotifier({required ApiService api, required this.userId})
+    : _api = api,
+      super(UnreadChatsState.initial());
 
   /// Загрузка количества непрочитанных чатов
   ///
@@ -48,7 +47,8 @@ class UnreadChatsNotifier extends StateNotifier<UnreadChatsState> {
       );
 
       if (response['success'] == true) {
-        final List<dynamic> chatsJson = response['chats'] as List<dynamic>? ?? [];
+        final List<dynamic> chatsJson =
+            response['chats'] as List<dynamic>? ?? [];
 
         // Подсчитываем количество чатов с unread: true
         int unreadCount = 0;
@@ -75,10 +75,7 @@ class UnreadChatsNotifier extends StateNotifier<UnreadChatsState> {
       }
     } catch (e) {
       // При ошибке сохраняем предыдущее значение счетчика, чтобы индикатор не пропал
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: ErrorHandler.format(e));
     }
   }
 
@@ -93,4 +90,3 @@ class UnreadChatsNotifier extends StateNotifier<UnreadChatsState> {
     state = UnreadChatsState.initial();
   }
 }
-

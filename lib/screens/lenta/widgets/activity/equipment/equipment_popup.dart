@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/utils/error_handler.dart';
 import '../../../../../core/models/activity_lenta.dart' as al;
 import '../../../../../providers/services/api_provider.dart';
 import '../../../../../providers/services/auth_provider.dart';
@@ -358,7 +359,7 @@ class _PopupContentState extends ConsumerState<_PopupContent> {
       }
     } catch (e) {
       setState(() {
-        _error = 'Ошибка загрузки эквипа: $e';
+        _error = ErrorHandler.formatWithContext(e, context: 'загрузке эквипа');
         _isLoading = false;
       });
     }

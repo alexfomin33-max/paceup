@@ -6,6 +6,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/chat_user.dart';
 import '../../core/services/api_service.dart';
+import '../../core/utils/error_handler.dart';
 import '../services/api_provider.dart';
 
 /// Состояние поиска пользователей
@@ -75,7 +76,10 @@ class UsersSearchNotifier extends StateNotifier<UsersSearchState> {
         currentOffset: users.length,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: ErrorHandler.format(e),
+      );
     }
   }
 
@@ -107,7 +111,10 @@ class UsersSearchNotifier extends StateNotifier<UsersSearchState> {
         currentOffset: state.currentOffset + newUsers.length,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: ErrorHandler.format(e),
+      );
     }
   }
 
@@ -146,7 +153,10 @@ class UsersSearchNotifier extends StateNotifier<UsersSearchState> {
         currentOffset: users.length,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: ErrorHandler.format(e),
+      );
     }
   }
 
@@ -179,7 +189,10 @@ class UsersSearchNotifier extends StateNotifier<UsersSearchState> {
         currentOffset: state.currentOffset + newUsers.length,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: ErrorHandler.format(e),
+      );
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
 
 import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/utils/error_handler.dart';
 import '../../../../../core/widgets/app_bar.dart'; // PaceAppBar
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../core/widgets/primary_button.dart';
@@ -416,7 +417,7 @@ class _ConnectedTrackersScreenState
     } catch (e) {
       if (!mounted) return;
       setState(() => _status = 'Ошибка: $e');
-      _showSnackBar('Ошибка: $e');
+      _showSnackBar(ErrorHandler.format(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -507,7 +508,9 @@ class _ConnectedTrackersScreenState
         _status = 'Ошибка импорта: $e';
         _importing = false;
       });
-      _showSnackBar('Ошибка импорта: $e');
+      _showSnackBar(
+        ErrorHandler.formatWithContext(e, context: 'импорте тренировок'),
+      );
     }
   }
 

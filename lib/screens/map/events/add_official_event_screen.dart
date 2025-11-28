@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/image_picker_helper.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
@@ -469,7 +470,7 @@ class _AddOfficialEventScreenState
                         ),
                         children: [
                           TextSpan(
-                            text: submitAsync.error.toString(),
+                            text: ErrorHandler.format(submitAsync.error!),
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 14,
@@ -496,7 +497,9 @@ class _AddOfficialEventScreenState
                         ),
                         children: [
                           TextSpan(
-                            text: templateDataAsync!.error.toString(),
+                            text: ErrorHandler.format(
+                              templateDataAsync!.error!,
+                            ),
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 14,
@@ -654,7 +657,7 @@ class _AddOfficialEventScreenState
                           ),
                           children: [
                             TextSpan(
-                              text: error.toString(),
+                              text: ErrorHandler.format(error),
                               style: const TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 14,

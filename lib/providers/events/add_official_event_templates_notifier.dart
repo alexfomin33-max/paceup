@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/utils/error_handler.dart';
 import '../services/api_provider.dart';
 import '../services/auth_provider.dart';
 
@@ -122,7 +123,9 @@ class TemplatesListNotifier extends AsyncNotifier<List<String>> {
 
       return [];
     } catch (e) {
-      throw Exception('Ошибка загрузки шаблонов: $e');
+      throw Exception(
+        ErrorHandler.formatWithContext(e, context: 'загрузке шаблонов'),
+      );
     }
   }
 
@@ -181,7 +184,9 @@ class TemplateDataNotifier extends FamilyAsyncNotifier<EventTemplate, String> {
 
       throw Exception('Шаблон не найден');
     } catch (e) {
-      throw Exception('Ошибка загрузки шаблона: $e');
+      throw Exception(
+        ErrorHandler.formatWithContext(e, context: 'загрузке шаблона'),
+      );
     }
   }
 }

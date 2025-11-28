@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../equipment/viewing/viewing_equipment_screen.dart';
 import '../../../../providers/services/api_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -252,7 +253,7 @@ class _MainTabState extends MainTabState
                 hasScrollBody: false,
                 child: Center(
                   child: Text(
-                    'Не удалось загрузить данные\n${snap.error}',
+                    'Не удалось загрузить данные\n${ErrorHandler.format(snap.error!)}',
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
                   ),

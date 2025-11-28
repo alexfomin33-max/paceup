@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../core/theme/app_theme.dart';
 import '../../../../../../../core/utils/local_image_compressor.dart';
+import '../../../../../../../core/utils/error_handler.dart';
 import '../../../../../../../core/widgets/primary_button.dart';
 import '../../../../../../../providers/services/api_provider.dart';
 import '../../../../../../../providers/services/auth_provider.dart';
@@ -100,7 +101,11 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              formState.error ?? 'Ошибка при загрузке данных',
+              formState.error ??
+                  ErrorHandler.formatWithContext(
+                    error,
+                    context: 'загрузке данных',
+                  ),
             ),
           ),
         );
@@ -281,7 +286,13 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
         final formState = ref.read(formStateProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(formState.error ?? 'Ошибка при сохранении'),
+            content: Text(
+              formState.error ??
+                  ErrorHandler.formatWithContext(
+                    error,
+                    context: 'сохранении снаряжения',
+                  ),
+            ),
           ),
         );
       },

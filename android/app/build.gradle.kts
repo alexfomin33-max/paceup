@@ -31,6 +31,17 @@ android {
         release {
             // Подпись для дебага — замени на свою release-конфигурацию, когда будет готова
             signingConfig = signingConfigs.getByName("debug")
+            
+            // ────────────────────────── Минификация и обфускация ──────────────────────────
+            // Включаем минификацию кода для уменьшения размера APK
+            isMinifyEnabled = true
+            // Удаляем неиспользуемые ресурсы (изображения, строки и т.д.)
+            isShrinkResources = true
+            // Подключаем ProGuard правила для корректной работы Flutter, Riverpod и Drift
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

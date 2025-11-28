@@ -10,6 +10,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/error_handler.dart';
 import '../../providers/avatar_version_provider.dart';
 import '../../providers/profile/profile_header_provider.dart';
 import '../../core/utils/local_image_compressor.dart';
@@ -435,7 +436,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       onError: (error) {
         if (!mounted) return;
         final formState = ref.read(formStateProvider);
-        setState(() => _loadError = formState.error ?? error.toString());
+        setState(
+          () => _loadError = formState.error ?? ErrorHandler.format(error),
+        );
       },
     );
   }
@@ -556,7 +559,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         );
 
         final ok =
-            map['ok'] == true || map['status'] == 'ok' || map['success'] == true;
+            map['ok'] == true ||
+            map['status'] == 'ok' ||
+            map['success'] == true;
 
         if (!ok && map.containsKey('error')) {
           throw Exception(map['error'].toString());
@@ -573,9 +578,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       onError: (error) {
         if (!mounted) return;
         final formState = ref.read(formStateProvider);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Не удалось сохранить: ${formState.error ?? error}'),
           ),
@@ -649,25 +652,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   );
                 }
                 return _FormPane(
-                    key: const ValueKey('form'),
-                    avatarUrl: _avatarUrl,
-                    avatarBytes: _avatarBytes,
-                    onPickAvatar: _pickAvatar,
-                    firstName: _firstName,
-                    lastName: _lastName,
-                    nickname: _nickname,
-                    city: _city,
-                    height: _height,
-                    weight: _weight,
-                    hrMax: _hrMax,
-                    birthDate: _birthDate,
-                    gender: _gender,
-                    mainSport: _mainSport,
-                    setBirthDate: (d) => setState(() => _birthDate = d),
-                    setGender: (g) => setState(() => _gender = g),
-                    setSport: (s) => setState(() => _mainSport = s),
-                    pickBirthDate: _pickBirthDate,
-                  );
+                  key: const ValueKey('form'),
+                  avatarUrl: _avatarUrl,
+                  avatarBytes: _avatarBytes,
+                  onPickAvatar: _pickAvatar,
+                  firstName: _firstName,
+                  lastName: _lastName,
+                  nickname: _nickname,
+                  city: _city,
+                  height: _height,
+                  weight: _weight,
+                  hrMax: _hrMax,
+                  birthDate: _birthDate,
+                  gender: _gender,
+                  mainSport: _mainSport,
+                  setBirthDate: (d) => setState(() => _birthDate = d),
+                  setGender: (g) => setState(() => _gender = g),
+                  setSport: (s) => setState(() => _mainSport = s),
+                  pickBirthDate: _pickBirthDate,
+                );
               },
             ),
           ),

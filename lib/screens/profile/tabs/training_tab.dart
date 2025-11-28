@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../providers/training/training_provider.dart';
 import '../../../../core/widgets/route_card.dart';
 import '../../lenta/activity/description_screen.dart';
@@ -192,7 +193,7 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
               ),
               children: [
                 TextSpan(
-                  text: error.toString(),
+                  text: ErrorHandler.format(error),
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 12,

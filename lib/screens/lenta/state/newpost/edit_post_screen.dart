@@ -10,6 +10,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/local_image_compressor.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/primary_button.dart';
@@ -738,15 +739,9 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
         _newImages.addAll(compressedFiles);
         _updateSaveState();
       });
-    } on PlatformException catch (e) {
-      if (mounted) {
-        _showError(
-          'Нет доступа к галерее: ${e.message ?? 'неизвестная ошибка'}.',
-        );
-      }
     } catch (e) {
       if (mounted) {
-        _showError('Не удалось загрузить фотографии. Попробуйте ещё раз.');
+        _showError(e);
       }
     }
   }
@@ -760,7 +755,8 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
   }
 
   /// Показывает ошибку
-  void _showError(String message) {
+  void _showError(dynamic error) {
+    final message = ErrorHandler.format(error);
     showCupertinoDialog<void>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(

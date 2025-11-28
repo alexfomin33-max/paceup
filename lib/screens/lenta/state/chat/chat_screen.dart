@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/app_bar.dart'; // ← глобальный AppBar
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/transparent_route.dart';
@@ -210,7 +211,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       }
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = ErrorHandler.format(e);
         _isLoading = false;
       });
     }

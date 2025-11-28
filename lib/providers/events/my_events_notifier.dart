@@ -10,6 +10,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/api_service.dart';
 import '../../core/models/event.dart';
+import '../../core/utils/error_handler.dart';
 import 'my_events_state.dart';
 
 class MyEventsNotifier extends StateNotifier<MyEventsState> {
@@ -46,7 +47,10 @@ class MyEventsNotifier extends StateNotifier<MyEventsState> {
 
       state = state.copyWith(events: events, isLoading: false, error: null);
     } catch (e) {
-      state = state.copyWith(error: e.toString(), isLoading: false);
+      state = state.copyWith(
+        error: ErrorHandler.format(e),
+        isLoading: false,
+      );
     }
   }
 
@@ -59,7 +63,10 @@ class MyEventsNotifier extends StateNotifier<MyEventsState> {
 
       state = state.copyWith(events: events, isRefreshing: false, error: null);
     } catch (e) {
-      state = state.copyWith(error: e.toString(), isRefreshing: false);
+      state = state.copyWith(
+        error: ErrorHandler.format(e),
+        isRefreshing: false,
+      );
     }
   }
 }

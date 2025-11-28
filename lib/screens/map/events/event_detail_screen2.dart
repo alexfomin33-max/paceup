@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../providers/services/api_provider.dart';
 import '../../../providers/services/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -92,7 +93,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
       }
     } catch (e) {
       setState(() {
-        _error = 'Ошибка загрузки: ${e.toString()}';
+        _error = ErrorHandler.formatWithContext(e, context: 'загрузке события');
         _loading = false;
       });
     }

@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -12,6 +11,7 @@ import 'package:latlong2/latlong.dart';
 // Токены/модели
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/models/activity_lenta.dart';
+import '../../../../core/utils/error_handler.dart';
 
 // Подвиджеты
 import 'header/activity_header.dart';
@@ -363,7 +363,7 @@ Future<void> _handleAddPhotos({
       if (context.mounted) {
         await _showErrorDialog(
           context: context,
-          message:
+          error:
               'Не удалось определить пользователя. Пожалуйста, авторизуйтесь.',
         );
       }
@@ -386,7 +386,7 @@ Future<void> _handleAddPhotos({
       if (context.mounted) {
         await _showErrorDialog(
           context: context,
-          message: 'Не удалось подготовить файлы для загрузки.',
+          error: 'Не удалось подготовить файлы для загрузки.',
         );
       }
       return;
@@ -411,7 +411,7 @@ Future<void> _handleAddPhotos({
           response['message']?.toString() ??
           'Не удалось загрузить фотографии. Попробуйте ещё раз.';
       if (context.mounted) {
-        await _showErrorDialog(context: context, message: message);
+        await _showErrorDialog(context: context, error: message);
       }
       return;
     }
@@ -449,26 +449,10 @@ Future<void> _handleAddPhotos({
         ),
       );
     }
-  } on PlatformException catch (e) {
-    hideLoader();
-    if (context.mounted) {
-      await _showErrorDialog(
-        context: context,
-        message: 'Нет доступа к галерее: ${e.message ?? 'неизвестная ошибка'}.',
-      );
-    }
-  } on ApiException catch (e) {
-    hideLoader();
-    if (context.mounted) {
-      await _showErrorDialog(context: context, message: e.message);
-    }
   } catch (e) {
     hideLoader();
     if (context.mounted) {
-      await _showErrorDialog(
-        context: context,
-        message: 'Не удалось загрузить фотографии. Попробуйте ещё раз.',
-      );
+      await _showErrorDialog(context: context, error: e);
     }
   }
 }
@@ -511,7 +495,7 @@ Future<void> _handleDeleteActivity({
   } else {
     await _showErrorDialog(
       context: context,
-      message: 'Не удалось удалить тренировку. Попробуйте ещё раз.',
+      error: 'Не удалось удалить тренировку. Попробуйте ещё раз.',
     );
   }
 }
@@ -568,8 +552,9 @@ void _showBlockingLoader(
 /// Универсальный показ ошибки через SelectableText.rich (вместо SnackBar).
 Future<void> _showErrorDialog({
   required BuildContext context,
-  required String message,
+  required dynamic error,
 }) {
+  final message = ErrorHandler.format(error);
   return showCupertinoDialog<void>(
     context: context,
     builder: (ctx) => CupertinoAlertDialog(

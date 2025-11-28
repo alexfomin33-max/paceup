@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/error_display.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../providers/services/api_provider.dart';
 import '../../../providers/services/auth_provider.dart';
 
@@ -1145,7 +1147,7 @@ class _EventMembersSliverState
       setState(() {
         _loading = false;
         if (_participants.isEmpty) {
-          _error = 'Ошибка: ${e.toString()}';
+          _error = ErrorHandler.format(e);
         }
       });
     }
@@ -1176,46 +1178,9 @@ class _EventMembersSliverState
 
     // Показываем ошибку если есть
     if (_error != null && _participants.isEmpty) {
-      return SliverFillRemaining(
-        hasScrollBody: false,
-        child: Builder(
-          builder: (context) => Container(
-            decoration: BoxDecoration(
-              color: AppColors.getSurfaceColor(context),
-              border: Border(
-                bottom: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Builder(
-                builder: (context) => SelectableText.rich(
-                  TextSpan(
-                    text: 'Ошибка загрузки: ',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      color: AppColors.getTextSecondaryColor(context),
-                    ),
-                    children: [
-                      TextSpan(
-                        text: _error,
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+      return ErrorDisplaySliver(
+        error: _error,
+        onRetry: () => reloadParticipants(),
       );
     }
 

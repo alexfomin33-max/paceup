@@ -15,6 +15,7 @@ import '../../core/services/api_service.dart';
 import '../../core/services/cache_service.dart';
 import '../../core/models/user_profile_header.dart';
 import '../../core/utils/cache_cleaner.dart';
+import '../../core/utils/error_handler.dart';
 import 'profile_header_state.dart';
 import '../avatar_version_provider.dart';
 
@@ -117,7 +118,10 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
           isLoading: false,
         );
       } else {
-        state = state.copyWith(error: e.toString(), isLoading: false);
+        state = state.copyWith(
+          error: ErrorHandler.format(e),
+          isLoading: false,
+        );
       }
     }
   }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/utils/error_handler.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../core/widgets/primary_button.dart';
@@ -81,7 +82,7 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
       onError: (error) {
         if (!mounted) return;
         final formState = ref.read(formStateProvider);
-        final errorMsg = formState.error ?? error.toString();
+        final errorMsg = formState.error ?? ErrorHandler.format(error);
         if (errorMsg.contains('MissingPluginException') ||
             errorMsg.contains('No implementation found')) {
           ref.read(formStateProvider.notifier).setError(
@@ -185,7 +186,7 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
       onError: (error) {
         if (!mounted) return;
         final formState = ref.read(formStateProvider);
-        final errorMsg = formState.error ?? error.toString();
+        final errorMsg = formState.error ?? ErrorHandler.format(error);
         if (errorMsg.contains('MissingPluginException') ||
             errorMsg.contains('No implementation found')) {
           ref.read(formStateProvider.notifier).setError(

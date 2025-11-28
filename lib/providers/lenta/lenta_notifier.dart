@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/cache_service.dart';
 import '../../core/models/activity_lenta.dart';
+import '../../core/utils/error_handler.dart';
 import 'lenta_state.dart';
 
 class LentaNotifier extends StateNotifier<LentaState> {
@@ -140,10 +141,16 @@ class LentaNotifier extends StateNotifier<LentaState> {
           isRefreshing: false,
         );
       } else {
-        state = state.copyWith(error: e.toString(), isRefreshing: false);
+        state = state.copyWith(
+        error: ErrorHandler.format(e),
+        isRefreshing: false,
+      );
       }
       */
-      state = state.copyWith(error: e.toString(), isRefreshing: false);
+      state = state.copyWith(
+        error: ErrorHandler.format(e),
+        isRefreshing: false,
+      );
     }
   }
 
@@ -190,7 +197,10 @@ class LentaNotifier extends StateNotifier<LentaState> {
         isRefreshing: false,
       );
     } catch (e) {
-      state = state.copyWith(error: e.toString(), isRefreshing: false);
+      state = state.copyWith(
+        error: ErrorHandler.format(e),
+        isRefreshing: false,
+      );
     }
   }
 
@@ -224,7 +234,10 @@ class LentaNotifier extends StateNotifier<LentaState> {
         error: null,
       );
     } catch (e) {
-      state = state.copyWith(error: e.toString(), isRefreshing: false);
+      state = state.copyWith(
+        error: ErrorHandler.format(e),
+        isRefreshing: false,
+      );
     }
   }
 

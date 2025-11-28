@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import '../../../../../../../core/theme/app_theme.dart';
+import '../../../../../../../core/utils/error_handler.dart';
 import '../sneakers/viewing_sneakers_content.dart'
     show GearViewCard; // теперь публичный класс
 import '../../../../../../../providers/services/api_provider.dart';
@@ -168,7 +169,7 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
       }
     } catch (e) {
       setState(() {
-        _error = 'Ошибка: $e';
+        _error = ErrorHandler.format(e);
         _isLoading = false;
       });
     }

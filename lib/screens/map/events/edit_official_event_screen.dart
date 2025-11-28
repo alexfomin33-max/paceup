@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/image_picker_helper.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
@@ -243,7 +244,11 @@ class _EditOfficialEventScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              formState.error ?? 'Ошибка загрузки: ${error.toString()}',
+              formState.error ??
+                  ErrorHandler.formatWithContext(
+                    error,
+                    context: 'загрузке данных',
+                  ),
             ),
           ),
         );

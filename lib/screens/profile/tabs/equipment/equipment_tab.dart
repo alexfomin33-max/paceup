@@ -8,6 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -154,7 +155,7 @@ class _GearTabState extends ConsumerState<GearTab>
       }
     } catch (e) {
       setState(() {
-        _error = 'Ошибка: $e';
+        _error = ErrorHandler.format(e);
         _isLoading = false;
       });
     }
@@ -220,7 +221,13 @@ class _GearTabState extends ConsumerState<GearTab>
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Ошибка при обновлении: $e')));
+      ).showSnackBar(
+        SnackBar(
+          content: Text(
+            ErrorHandler.formatWithContext(e, context: 'обновлении снаряжения'),
+          ),
+        ),
+      );
     }
   }
 

@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/local_image_compressor.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
@@ -1444,7 +1445,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
         if (response['success'] != true) {
           final message =
-              response['message']?.toString() ?? 'Не удалось создать тренировку';
+              response['message']?.toString() ??
+              'Не удалось создать тренировку';
           throw Exception(message);
         }
 
@@ -1481,9 +1483,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         } catch (e) {
           // Если активность не найдена, пробуем еще раз после небольшой задержки
           await Future.delayed(const Duration(milliseconds: 300));
-          final updatedState = ref.read(
-            lentaProvider(widget.currentUserId),
-          );
+          final updatedState = ref.read(lentaProvider(widget.currentUserId));
           try {
             createdActivity = updatedState.items.firstWhere(
               (a) => a.id == activityId || a.lentaId == (lentaId ?? 0),
@@ -1562,7 +1562,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   }
 
   /// Показывает ошибку
-  void _showError(String message) {
+  void _showError(dynamic error) {
+    final message = ErrorHandler.format(error);
     showCupertinoDialog<void>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
@@ -1610,15 +1611,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       setState(() {
         _images.addAll(compressedFiles);
       });
-    } on PlatformException catch (e) {
-      if (mounted) {
-        _showError(
-          'Нет доступа к галерее: ${e.message ?? 'неизвестная ошибка'}.',
-        );
-      }
     } catch (e) {
       if (mounted) {
-        _showError('Не удалось загрузить фотографии. Попробуйте ещё раз.');
+        _showError(e);
       }
     }
   }
