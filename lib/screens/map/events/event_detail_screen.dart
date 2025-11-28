@@ -6,8 +6,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/error_display.dart';
 import '../../../core/utils/error_handler.dart';
+import '../../../providers/events/event_detail_provider.dart';
 import '../../../providers/services/api_provider.dart';
-import '../../../providers/services/auth_provider.dart';
 
 import '../../../core/widgets/transparent_route.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
@@ -24,15 +24,6 @@ class EventDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
-  Map<String, dynamic>? _eventData;
-  bool _loading = true;
-  String? _error;
-  bool _canEdit = false; // Права на редактирование
-  bool _isParticipant = false; // Является ли текущий пользователь участником
-  bool _isTogglingParticipation = false; // Флаг процесса присоединения/выхода
-  bool _isBookmarked = false; // Находится ли событие в закладках
-  bool _isTogglingBookmark =
-      false; // Флаг процесса добавления/удаления закладки
   final ScrollController _scrollController =
       ScrollController(); // Контроллер для отслеживания прокрутки
   final GlobalKey<_EventMembersSliverState> _membersSliverKey =
@@ -41,7 +32,6 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _loadEvent();
     _scrollController.addListener(_onScroll);
   }
 
@@ -53,7 +43,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   /// Обработка прокрутки для пагинации участников
   void _onScroll() {
-    if (_tab == 1 && _scrollController.hasClients) {
+    final state = ref.read(eventDetailProvider(widget.eventId));
+    if (state.tab == 1 && _scrollController.hasClients) {
       final position = _scrollController.position;
       // Подгружаем новые участники при достижении 80% прокрутки
       if (position.pixels >= position.maxScrollExtent * 0.8) {
@@ -62,77 +53,12 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     }
   }
 
-  /// Загрузка данных события через API
-  Future<void> _loadEvent() async {
-    try {
-      final api = ref.read(apiServiceProvider);
-      final authService = ref.read(authServiceProvider);
-      final userId = await authService.getUserId();
-
-      final data = await api.get(
-        '/get_events.php',
-        queryParams: {'event_id': widget.eventId.toString()},
-      );
-
-      if (data['success'] == true && data['event'] != null) {
-        final event = data['event'] as Map<String, dynamic>;
-
-        // Проверяем права на редактирование: только создатель может редактировать
-        final eventUserId = event['user_id'] as int?;
-        final canEdit = userId != null && eventUserId == userId;
-
-        // Проверяем, является ли текущий пользователь участником
-        final participants = event['participants'] as List<dynamic>? ?? [];
-        bool isParticipant = false;
-        if (userId != null) {
-          for (final p in participants) {
-            final pMap = p as Map<String, dynamic>;
-            final pUserId = pMap['user_id'] as int?;
-            if (pUserId == userId) {
-              isParticipant = true;
-              break;
-            }
-          }
-        }
-
-        // Проверяем статус закладки
-        final isBookmarked = event['is_bookmarked'] as bool? ?? false;
-
-        setState(() {
-          _eventData = event;
-          _canEdit = canEdit;
-          _isParticipant = isParticipant;
-          _isBookmarked = isBookmarked;
-          _loading = false;
-        });
-
-        // ───── После успешной загрузки — лёгкий префетч логотипа и фото ─────
-        if (mounted) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _prefetchImages(context);
-          });
-        }
-      } else {
-        setState(() {
-          _error = data['message'] as String? ?? 'Событие не найдено';
-          _loading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Ошибка загрузки: ${e.toString()}';
-        _loading = false;
-      });
-    }
-  }
-
   /// ──────────────────────── Префетч изображений ────────────────────────
-  void _prefetchImages(BuildContext context) {
-    if (_eventData == null) return;
+  void _prefetchImages(BuildContext context, Map<String, dynamic> eventData) {
     final dpr = MediaQuery.of(context).devicePixelRatio;
 
     // Логотип в шапке: 92×92
-    final logoUrl = _eventData!['logo_url'] as String?;
+    final logoUrl = eventData['logo_url'] as String?;
     if (logoUrl != null && logoUrl.isNotEmpty) {
       final w = (100 * dpr).round();
       final h = (100 * dpr).round();
@@ -143,7 +69,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     }
 
     // Первые 6 фото для сетки превью (3 столбца с отступами 12/10)
-    final photos = _eventData!['photos'] as List<dynamic>? ?? [];
+    final photos = eventData['photos'] as List<dynamic>? ?? [];
     if (photos.isEmpty) return;
     final screenW = MediaQuery.of(context).size.width;
     final cell = ((screenW - 12 * 2 - 10 * 2) / 3).clamp(60.0, 400.0);
@@ -162,7 +88,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   /// Открытие экрана редактирования
   Future<void> _openEditScreen() async {
-    if (!_canEdit) return;
+    final state = ref.read(eventDetailProvider(widget.eventId));
+    if (!state.canEdit) return;
 
     final result = await Navigator.of(context).push<dynamic>(
       TransparentPageRoute(
@@ -179,167 +106,66 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
     // Если событие было обновлено, перезагружаем данные
     if (result == true) {
-      await _loadEvent();
+      ref.read(eventDetailProvider(widget.eventId).notifier).reload();
     }
   }
 
   /// ──────────────────────── Добавление/удаление из закладок ────────────────────────
   Future<void> _toggleBookmark() async {
-    if (_isTogglingBookmark || _eventData == null) return;
+    final success = await ref
+        .read(eventDetailProvider(widget.eventId).notifier)
+        .toggleBookmark();
 
-    // Проверяем, что userId доступен
-    final authService = ref.read(authServiceProvider);
-    final userId = await authService.getUserId();
-    if (userId == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ошибка: Пользователь не авторизован'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+    if (!mounted) return;
 
-    setState(() {
-      _isTogglingBookmark = true;
-    });
-
-    try {
-      final api = ref.read(apiServiceProvider);
-      final data = await api.post(
-        '/toggle_event_bookmark.php',
-        body: {'event_id': widget.eventId},
-      );
-
-      if (data['success'] == true) {
-        final isBookmarked = data['is_bookmarked'] as bool? ?? false;
-
-        // Обновляем состояние
-        setState(() {
-          _isBookmarked = isBookmarked;
-          _isTogglingBookmark = false;
-        });
-
-        // Обновляем данные события
-        if (_eventData != null) {
-          setState(() {
-            _eventData = {..._eventData!, 'is_bookmarked': isBookmarked};
-          });
-        }
-      } else {
-        final errorMessage = data['message'] as String? ?? 'Неизвестная ошибка';
-        setState(() {
-          _isTogglingBookmark = false;
-        });
-        if (!mounted) return;
+    if (!success) {
+      final state = ref.read(eventDetailProvider(widget.eventId));
+      if (state.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(state.error!),
+            backgroundColor: Colors.red,
+          ),
         );
       }
-    } catch (e) {
-      setState(() {
-        _isTogglingBookmark = false;
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ошибка: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
   /// ──────────────────────── Присоединение/выход из события ────────────────────────
   Future<void> _toggleParticipation() async {
-    if (_isTogglingParticipation || _eventData == null) return;
+    final success = await ref
+        .read(eventDetailProvider(widget.eventId).notifier)
+        .toggleParticipation();
 
-    // Проверяем, что userId доступен
-    final authService = ref.read(authServiceProvider);
-    final userId = await authService.getUserId();
-    if (userId == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ошибка: Пользователь не авторизован'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+    if (!mounted) return;
 
-    setState(() {
-      _isTogglingParticipation = true;
-    });
-
-    try {
-      final api = ref.read(apiServiceProvider);
-      final action = _isParticipant ? 'leave' : 'join';
-
-      final data = await api.post(
-        '/join_event.php',
-        body: {'event_id': widget.eventId, 'action': action},
-      );
-
-      if (data['success'] == true) {
-        final isParticipant = data['is_participant'] as bool? ?? false;
-        final participantsCount = data['participants_count'] as int? ?? 0;
-
-        // Обновляем состояние
-        setState(() {
-          _isParticipant = isParticipant;
-          _isTogglingParticipation = false;
-        });
-
-        // Обновляем счетчик участников в данных события
-        if (_eventData != null) {
-          setState(() {
-            _eventData = {
-              ..._eventData!,
-              'participants_count': participantsCount,
-            };
-          });
-        }
-
-        // Если открыта вкладка участников, обновляем список
-        // (при присоединении пользователь появится, при выходе - исчезнет)
-        if (_tab == 1) {
-          // Небольшая задержка для завершения обновления состояния
-          Future.delayed(const Duration(milliseconds: 100), () {
-            if (!mounted) return;
-            _membersSliverKey.currentState?.reloadParticipants();
-          });
-        }
-      } else {
-        final errorMessage = data['message'] as String? ?? 'Неизвестная ошибка';
-        setState(() {
-          _isTogglingParticipation = false;
-        });
-        if (!mounted) return;
+    if (!success) {
+      final state = ref.read(eventDetailProvider(widget.eventId));
+      if (state.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(state.error!),
+            backgroundColor: Colors.red,
+          ),
         );
       }
-    } catch (e) {
-      setState(() {
-        _isTogglingParticipation = false;
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ошибка: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    } else {
+      // Если открыта вкладка участников, обновляем список
+      final state = ref.read(eventDetailProvider(widget.eventId));
+      if (state.tab == 1) {
+        // Небольшая задержка для завершения обновления состояния
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (!mounted) return;
+          _membersSliverKey.currentState?.reloadParticipants();
+        });
+      }
     }
   }
 
-  int _tab = 0; // 0 — Описание, 1 — Участники
-
   void _openGallery(int startIndex) {
-    if (_eventData == null) return;
-    final photos = _eventData!['photos'] as List<dynamic>? ?? [];
+    final state = ref.read(eventDetailProvider(widget.eventId));
+    if (state.eventData == null) return;
+    final photos = state.eventData!['photos'] as List<dynamic>? ?? [];
     if (photos.isEmpty) return;
 
     showDialog(
@@ -352,7 +178,16 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
+    final state = ref.watch(eventDetailProvider(widget.eventId));
+
+    // Префетч изображений после загрузки
+    if (state.eventData != null && !state.isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _prefetchImages(context, state.eventData!);
+      });
+    }
+
+    if (state.isLoading) {
       return InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.getBackgroundColor(context),
@@ -361,7 +196,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       );
     }
 
-    if (_error != null || _eventData == null) {
+    if (state.error != null || state.eventData == null) {
       return InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.getBackgroundColor(context),
@@ -371,7 +206,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    _error ?? 'Событие не найдено',
+                    state.error ?? 'Событие не найдено',
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 16),
@@ -387,13 +222,14 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       );
     }
 
-    final logoUrl = _eventData!['logo_url'] as String? ?? '';
-    final name = _eventData!['name'] as String? ?? '';
-    final organizerName = _eventData!['organizer_name'] as String? ?? '';
-    final dateFormatted = _eventData!['date_formatted_short'] as String? ?? '';
-    final time = _eventData!['event_time'] as String? ?? '';
-    final place = _eventData!['place'] as String? ?? '';
-    final photos = _eventData!['photos'] as List<dynamic>? ?? [];
+    final eventData = state.eventData!;
+    final logoUrl = eventData['logo_url'] as String? ?? '';
+    final name = eventData['name'] as String? ?? '';
+    final organizerName = eventData['organizer_name'] as String? ?? '';
+    final dateFormatted = eventData['date_formatted_short'] as String? ?? '';
+    final time = eventData['event_time'] as String? ?? '';
+    final place = eventData['place'] as String? ?? '';
+    final photos = eventData['photos'] as List<dynamic>? ?? [];
 
     return InteractiveBackSwipe(
       child: Scaffold(
@@ -463,7 +299,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                         ),
                                       ),
                                       // Показываем карандаш для создателя, закладку для остальных
-                                      _canEdit
+                                      state.canEdit
                                           ? _CircleIconBtn(
                                               icon: CupertinoIcons.pencil,
                                               semantic: 'Редактировать',
@@ -471,13 +307,13 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                             )
                                           : _CircleIconBtn(
                                               icon: CupertinoIcons.star_fill,
-                                              semantic: _isBookmarked
+                                              semantic: state.isBookmarked
                                                   ? 'Удалить из закладок'
                                                   : 'Добавить в закладки',
-                                              onTap: _isTogglingBookmark
+                                              onTap: state.isTogglingBookmark
                                                   ? null
                                                   : _toggleBookmark,
-                                              color: _isBookmarked
+                                              color: state.isBookmarked
                                                   ? AppColors.orange
                                                   : null,
                                             ),
@@ -586,8 +422,11 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                               Expanded(
                                 child: _HalfTab(
                                   text: 'Описание',
-                                  selected: _tab == 0,
-                                  onTap: () => setState(() => _tab = 0),
+                                  selected: state.tab == 0,
+                                  onTap: () => ref
+                                      .read(eventDetailProvider(widget.eventId)
+                                          .notifier)
+                                      .setTab(0),
                                 ),
                               ),
                               Container(
@@ -598,9 +437,12 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                               Expanded(
                                 child: _HalfTab(
                                   text:
-                                      'Участники (${_eventData?['participants_count'] ?? 0})',
-                                  selected: _tab == 1,
-                                  onTap: () => setState(() => _tab = 1),
+                                      'Участники (${eventData['participants_count'] ?? 0})',
+                                  selected: state.tab == 1,
+                                  onTap: () => ref
+                                      .read(eventDetailProvider(widget.eventId)
+                                          .notifier)
+                                      .setTab(1),
                                 ),
                               ),
                             ],
@@ -621,7 +463,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                   ),
 
                   // ───────── Контент активной вкладки
-                  if (_tab == 0)
+                  if (state.tab == 0)
                     // Вкладка "Описание" — фиксированный контент
                     SliverFillRemaining(
                       hasScrollBody: false,
@@ -640,7 +482,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                             padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                             child: EventDescriptionContent(
                               description:
-                                  _eventData!['description'] as String? ?? '',
+                                  eventData['description'] as String? ?? '',
                             ),
                           ),
                         ),
@@ -664,13 +506,13 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                   top: false,
                   child: Center(
                     child: Material(
-                      color: _isParticipant
+                      color: state.isParticipant
                           ? AppColors.red
                           : AppColors.brandPrimary,
                       borderRadius: BorderRadius.circular(AppRadius.xxl),
                       elevation: 0,
                       child: InkWell(
-                        onTap: _isTogglingParticipation
+                        onTap: state.isTogglingParticipation
                             ? null
                             : _toggleParticipation,
                         borderRadius: BorderRadius.circular(AppRadius.xxl),
@@ -680,7 +522,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: _isParticipant
+                            color: state.isParticipant
                                 ? AppColors.red
                                 : AppColors.brandPrimary,
                             borderRadius: BorderRadius.circular(AppRadius.xxl),
@@ -692,7 +534,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                               ),
                             ],
                           ),
-                          child: _isTogglingParticipation
+                          child: state.isTogglingParticipation
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
@@ -704,7 +546,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                   ),
                                 )
                               : Text(
-                                  _isParticipant ? 'Выйти' : 'Присоединиться',
+                                  state.isParticipant ? 'Выйти' : 'Присоединиться',
                                   style: const TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 15,

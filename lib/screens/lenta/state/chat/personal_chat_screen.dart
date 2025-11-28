@@ -10,8 +10,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/local_image_compressor.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
-import '../../../../providers/services/api_provider.dart';
-import '../../../../providers/services/auth_provider.dart';
+import '../../../../providers/chat/personal_chat_provider.dart';
 
 /// ────────────────────────────────────────────────────────────────────────
 /// Экран персонального чата с конкретным пользователем
@@ -33,8 +32,7 @@ class PersonalChatScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<PersonalChatScreen> createState() =>
-      _PersonalChatScreenState();
+  ConsumerState<PersonalChatScreen> createState() => _PersonalChatScreenState();
 }
 
 /// ────────────────────────────────────────────────────────────────────────
@@ -80,24 +78,15 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
   final _ctrl = TextEditingController();
   final _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
-
-  List<ChatMessage> _messages = [];
-  bool _isLoading = false;
-  bool _isLoadingMore = false;
-  bool _hasMore = true;
-  int _offset = 0;
-  int? _currentUserId;
-  int? _lastMessageId;
-  String? _error;
   Timer? _pollingTimer;
-  int? _actualChatId; // Реальный chatId (создается если widget.chatId = 0)
   double _previousKeyboardHeight = 0; // Для отслеживания изменений клавиатуры
+  bool _hasScrolledToBottom = false; // Флаг для отслеживания первой прокрутки
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initChat();
+    _startPolling();
   }
 
   @override
@@ -109,16 +98,60 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     super.dispose();
   }
 
+  /// ─── Запуск polling для проверки новых сообщений ───
+  void _startPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (mounted) {
+        final args = PersonalChatArgs(
+          chatId: widget.chatId,
+          userId: widget.userId,
+        );
+        final notifier = ref.read(personalChatProvider(args).notifier);
+        final stateBefore = ref.read(personalChatProvider(args));
+        notifier.checkNewMessages().then((_) {
+          if (!mounted) return;
+          final stateAfter = ref.read(personalChatProvider(args));
+          // Если появились новые сообщения, прокручиваем вниз
+          if (stateAfter.messages.length > stateBefore.messages.length) {
+            final hasIncomingMessages = stateAfter.messages
+                .where((m) => !m.isMine)
+                .any((m) => !stateBefore.messages.any((old) => old.id == m.id));
+            if (hasIncomingMessages) {
+              // Отмечаем как прочитанные
+              notifier.markMessagesAsRead();
+              // ─── Прокрутка вниз при получении новых сообщений ───
+              // При reverse: true "вниз" - это позиция 0
+              if (_scrollController.hasClients) {
+                final isNearBottom = _scrollController.position.pixels <= 100;
+                if (isNearBottom) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (_scrollController.hasClients && mounted) {
+                      _scrollController.animateTo(
+                        0, // ─── При reverse: true позиция 0 - это последние сообщения ───
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  });
+                }
+              }
+            }
+          }
+        });
+      }
+    });
+  }
+
   /// ─── Прокрутка вниз к последним сообщениям ───
   void _scrollToBottom({bool animated = true, bool force = false}) {
     if (!_scrollController.hasClients || !mounted) return;
 
     // Если force = true, всегда прокручиваем (например, при открытии клавиатуры)
     if (!force) {
-      // Проверяем, находится ли пользователь уже внизу (в пределах 200px от конца)
-      final isNearBottom =
-          _scrollController.position.pixels >=
-          _scrollController.position.maxScrollExtent - 200;
+      // ─── Проверяем, находится ли пользователь уже внизу ───
+      // При reverse: true "вниз" - это позиция 0 (последние сообщения)
+      final isNearBottom = _scrollController.position.pixels <= 200;
 
       // Прокручиваем только если пользователь уже внизу
       if (!isNearBottom) return;
@@ -128,12 +161,12 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       if (_scrollController.hasClients && mounted) {
         if (animated) {
           _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
+            0, // ─── При reverse: true позиция 0 - это последние сообщения ───
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
           );
         } else {
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+          _scrollController.jumpTo(0);
         }
       }
     });
@@ -167,206 +200,20 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
     // ─── Обновляем сообщения при возврате приложения из фона ───
-    if (state == AppLifecycleState.resumed) {
-      final chatId = _actualChatId ?? widget.chatId;
-      if (chatId != 0 && _currentUserId != null) {
+    if (lifecycleState == AppLifecycleState.resumed) {
+      final args = PersonalChatArgs(
+        chatId: widget.chatId,
+        userId: widget.userId,
+      );
+      final chatState = ref.read(personalChatProvider(args));
+      if (chatState.actualChatId != null && chatState.currentUserId != null) {
         // Проверяем новые сообщения при возврате
-        _checkNewMessages();
+        ref.read(personalChatProvider(args).notifier).checkNewMessages();
         // Отмечаем сообщения как прочитанные
-        _markMessagesAsRead();
+        ref.read(personalChatProvider(args).notifier).markMessagesAsRead();
       }
-    }
-  }
-
-  /// ─── Инициализация чата ───
-  Future<void> _initChat() async {
-    final auth = ref.read(authServiceProvider);
-    final userId = await auth.getUserId();
-    if (userId == null) {
-      setState(() {
-        _error = 'Пользователь не авторизован';
-      });
-      return;
-    }
-
-    setState(() {
-      _currentUserId = userId;
-    });
-
-    // Если chatId = 0, создаем новый чат
-    if (widget.chatId == 0) {
-      await _createChat();
-    } else {
-      _actualChatId = widget.chatId;
-      await _loadInitial();
-      _markMessagesAsRead(); // Отмечаем сообщения как прочитанные при открытии
-      _startPolling();
-    }
-  }
-
-  /// ─── Создание нового чата ───
-  Future<void> _createChat() async {
-    if (_currentUserId == null) return;
-
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final api = ref.read(apiServiceProvider);
-      final response = await api.post(
-        '/create_chat.php',
-        body: {'user2_id': widget.userId},
-      );
-
-      if (response['success'] == true) {
-        final chatId = response['chat_id'] as int;
-
-        setState(() {
-          _actualChatId = chatId;
-          _isLoading = false;
-        });
-
-        // После создания чата загружаем сообщения
-        await _loadInitial();
-        _markMessagesAsRead();
-        _startPolling();
-      } else {
-        setState(() {
-          _error = response['message'] as String? ?? 'Ошибка создания чата';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = ErrorHandler.format(e);
-        _isLoading = false;
-      });
-    }
-  }
-
-  /// ─── Загрузка начальных сообщений ───
-  Future<void> _loadInitial() async {
-    if (_isLoading || _currentUserId == null) return;
-
-    // Если чат еще не создан, не загружаем сообщения
-    final chatId = _actualChatId ?? widget.chatId;
-    if (chatId == 0) return;
-
-    setState(() {
-      _isLoading = true;
-      _error = null;
-      _offset = 0;
-    });
-
-    try {
-      final api = ref.read(apiServiceProvider);
-      final response = await api.get(
-        '/get_messages.php',
-        queryParams: {
-          'chat_id': chatId.toString(),
-          'user_id': _currentUserId.toString(),
-          'offset': '0',
-          'limit': '50',
-        },
-      );
-
-      if (response['success'] == true) {
-        final List<dynamic> messagesJson =
-            response['messages'] as List<dynamic>;
-        final messages = messagesJson
-            .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
-            .toList();
-
-        // Обновляем last_message_id (берем самый последний ID)
-        if (messages.isNotEmpty) {
-          // Находим максимальный ID среди всех сообщений
-          _lastMessageId = messages
-              .map((m) => m.id)
-              .reduce((a, b) => a > b ? a : b);
-        } else {
-          // Если сообщений нет, устанавливаем last_message_id в 0
-          _lastMessageId = 0;
-        }
-
-        setState(() {
-          _messages = messages;
-          _hasMore = response['has_more'] as bool? ?? false;
-          _offset = messages.length;
-          _isLoading = false;
-        });
-
-        // Прокрутка вниз после загрузки
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scrollController.hasClients) {
-            _scrollController.jumpTo(
-              _scrollController.position.maxScrollExtent,
-            );
-          }
-        });
-      } else {
-        setState(() {
-          _error =
-              response['message'] as String? ?? 'Ошибка загрузки сообщений';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = ErrorHandler.format(e);
-        _isLoading = false;
-      });
-    }
-  }
-
-  /// ─── Загрузка старых сообщений (при прокрутке вверх) ───
-  Future<void> _loadMore() async {
-    if (_isLoadingMore || !_hasMore || _currentUserId == null) return;
-
-    final chatId = _actualChatId ?? widget.chatId;
-    if (chatId == 0) return;
-
-    setState(() {
-      _isLoadingMore = true;
-    });
-
-    try {
-      final api = ref.read(apiServiceProvider);
-      final response = await api.get(
-        '/get_messages.php',
-        queryParams: {
-          'chat_id': chatId.toString(),
-          'user_id': _currentUserId.toString(),
-          'offset': _offset.toString(),
-          'limit': '50',
-        },
-      );
-
-      if (response['success'] == true) {
-        final List<dynamic> messagesJson =
-            response['messages'] as List<dynamic>;
-        final newMessages = messagesJson
-            .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
-            .toList();
-
-        setState(() {
-          _messages.insertAll(0, newMessages);
-          _hasMore = response['has_more'] as bool? ?? false;
-          _offset += newMessages.length;
-          _isLoadingMore = false;
-        });
-      } else {
-        setState(() {
-          _isLoadingMore = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _isLoadingMore = false;
-      });
     }
   }
 
@@ -376,13 +223,27 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       final XFile? pickedFile = await _picker.pickImage(
         source: ImageSource.gallery,
       );
-      if (pickedFile != null && _currentUserId != null) {
+      if (pickedFile != null) {
         final compressed = await compressLocalImage(
           sourceFile: File(pickedFile.path),
           maxSide: 1600,
           jpegQuality: 80,
         );
-        await _sendImage(compressed);
+        final args = PersonalChatArgs(
+          chatId: widget.chatId,
+          userId: widget.userId,
+        );
+        final success = await ref
+            .read(personalChatProvider(args).notifier)
+            .sendImage(compressed);
+        if (!success && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ошибка отправки изображения'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -398,355 +259,31 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     }
   }
 
-  /// ─── Отправка изображения в чат ───
-  Future<void> _sendImage(File imageFile) async {
-    if (_currentUserId == null) return;
-
-    // Если чат еще не создан, создаем его перед отправкой изображения
-    int chatId = _actualChatId ?? widget.chatId;
-    if (chatId == 0) {
-      try {
-        final api = ref.read(apiServiceProvider);
-        final createResponse = await api.post(
-          '/create_chat.php',
-          body: {'user2_id': widget.userId},
-        );
-
-        if (createResponse['success'] == true) {
-          chatId = createResponse['chat_id'] as int;
-          setState(() {
-            _actualChatId = chatId;
-          });
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  createResponse['message'] as String? ??
-                      'Ошибка создания чата',
-                ),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          }
-          return;
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                ErrorHandler.formatWithContext(e, context: 'создании чата'),
-              ),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-        return;
-      }
-    }
-
-    try {
-      // Загружаем изображение на сервер
-      final api = ref.read(apiServiceProvider);
-      final uploadResponse = await api.postMultipart(
-        '/upload_chat_image.php',
-        files: {'image': imageFile},
-        fields: {
-          'chat_id': chatId.toString(),
-          'user_id': _currentUserId.toString(),
-        },
-      );
-
-      if (uploadResponse['success'] == true) {
-        final imagePath = uploadResponse['image_path'] as String;
-
-        // Отправляем сообщение с изображением
-        final api = ref.read(apiServiceProvider);
-      final response = await api.post(
-          '/send_message.php',
-          body: {
-            'chat_id': chatId,
-            'user_id': _currentUserId,
-            'text': '', // Пустой текст для сообщения с изображением
-            'image': imagePath, // Относительный путь к изображению
-          },
-        );
-
-        if (response['success'] == true) {
-          final messageId = response['message_id'] as int;
-
-          // Обновляем last_message_id - polling сам добавит сообщение
-          // Это предотвращает дублирование сообщений
-          setState(() {
-            _lastMessageId = messageId;
-          });
-
-          // Небольшая задержка перед проверкой новых сообщений
-          // чтобы сервер успел обработать запрос
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              _checkNewMessages();
-            }
-          });
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  response['message'] as String? ?? 'Ошибка отправки сообщения',
-                ),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          }
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                uploadResponse['message'] as String? ??
-                    'Ошибка загрузки изображения',
-              ),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              ErrorHandler.formatWithContext(e, context: 'отправке изображения'),
-            ),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
   /// ─── Отправка текстового сообщения ───
   Future<void> _sendText() async {
     final text = _ctrl.text.trim();
-    if (text.isEmpty || _currentUserId == null) return;
+    if (text.isEmpty) return;
 
-    final messageText = text;
     _ctrl.clear();
     FocusScope.of(context).unfocus();
 
-    // Оптимистичное обновление UI
-    final tempMessage = ChatMessage(
-      id: -1, // Временный ID
-      senderId: _currentUserId!,
-      text: messageText,
-      createdAt: DateTime.now(),
-      isMine: true,
-      isRead: false,
-    );
+    final args = PersonalChatArgs(chatId: widget.chatId, userId: widget.userId);
+    final success = await ref
+        .read(personalChatProvider(args).notifier)
+        .sendText(text);
 
-    setState(() {
-      _messages.add(tempMessage);
-    });
-
-    // Прокрутка вниз
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-
-    // Если чат еще не создан, создаем его перед отправкой сообщения
-    int chatId = _actualChatId ?? widget.chatId;
-    if (chatId == 0 && _currentUserId != null) {
-      try {
-        final api = ref.read(apiServiceProvider);
-        final createResponse = await api.post(
-          '/create_chat.php',
-          body: {'user2_id': widget.userId},
-        );
-
-        if (createResponse['success'] == true) {
-          chatId = createResponse['chat_id'] as int;
-          setState(() {
-            _actualChatId = chatId;
-          });
-        } else {
-          // Удаляем временное сообщение при ошибке
-          setState(() {
-            _messages.removeWhere((m) => m.id == -1);
-          });
-          return;
+    // ─── Прокрутка вниз после отправки ───
+    // При reverse: true позиция 0 - это последние сообщения
+    if (success) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0, // ─── При reverse: true позиция 0 - это последние сообщения ───
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          );
         }
-      } catch (e) {
-        // Удаляем временное сообщение при ошибке
-        setState(() {
-          _messages.removeWhere((m) => m.id == -1);
-        });
-        return;
-      }
-    }
-
-    try {
-      final api = ref.read(apiServiceProvider);
-      final response = await api.post(
-        '/send_message.php',
-        body: {
-          'chat_id': chatId,
-          'user_id': _currentUserId,
-          'text': messageText,
-        },
-      );
-
-      if (response['success'] == true) {
-        final messageId = response['message_id'] as int;
-        final createdAt = DateTime.parse(response['created_at'] as String);
-
-        // Обновляем временное сообщение с реальными данными
-        setState(() {
-          final index = _messages.indexWhere((m) => m.id == -1);
-          if (index != -1) {
-            _messages[index] = ChatMessage(
-              id: messageId,
-              senderId: _currentUserId!,
-              text: messageText,
-              createdAt: createdAt,
-              isMine: true,
-              isRead: false,
-            );
-          }
-          _lastMessageId = messageId;
-        });
-      } else {
-        // Удаляем временное сообщение при ошибке
-        setState(() {
-          _messages.removeWhere((m) => m.id == -1);
-        });
-      }
-    } catch (e) {
-      // Удаляем временное сообщение при ошибке
-      setState(() {
-        _messages.removeWhere((m) => m.id == -1);
       });
-    }
-  }
-
-  /// ─── Отметка сообщений как прочитанных ───
-  Future<void> _markMessagesAsRead() async {
-    if (_currentUserId == null) return;
-
-    final chatId = _actualChatId ?? widget.chatId;
-    if (chatId == 0) return;
-
-    try {
-      final api = ref.read(apiServiceProvider);
-      await api.post(
-        '/mark_messages_read.php',
-        body: {'chat_id': chatId, 'user_id': _currentUserId},
-      );
-    } catch (e) {
-      // Игнорируем ошибки - не критично
-    }
-  }
-
-  /// ─── Запуск polling для проверки новых сообщений ───
-  void _startPolling() {
-    _pollingTimer?.cancel();
-    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (mounted) {
-        _checkNewMessages();
-      }
-    });
-  }
-
-  /// ─── Проверка новых сообщений ───
-  Future<void> _checkNewMessages() async {
-    if (_currentUserId == null) return;
-
-    final chatId = _actualChatId ?? widget.chatId;
-    if (chatId == 0) return;
-
-    // Если last_message_id еще не установлен, используем 0
-    final lastId = _lastMessageId ?? 0;
-
-    try {
-      final api = ref.read(apiServiceProvider);
-      final response = await api.get(
-        '/check_new_messages.php',
-        queryParams: {
-          'chat_id': chatId.toString(),
-          'user_id': _currentUserId.toString(),
-          'last_message_id': lastId.toString(),
-        },
-      );
-
-      if (response['success'] == true && response['has_new'] == true) {
-        final List<dynamic> newMessagesJson =
-            response['new_messages'] as List<dynamic>;
-        final newMessages = newMessagesJson
-            .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
-            .toList();
-
-        if (newMessages.isNotEmpty && mounted) {
-          // Обновляем last_message_id на максимальный ID среди новых сообщений
-          final maxNewId = newMessages
-              .map((m) => m.id)
-              .reduce((a, b) => a > b ? a : b);
-
-          // ─── Защита от дубликатов: проверяем ID перед добавлением ───
-          final existingIds = _messages.map((m) => m.id).toSet();
-          final uniqueNewMessages = newMessages
-              .where((m) => !existingIds.contains(m.id))
-              .toList();
-
-          if (uniqueNewMessages.isNotEmpty) {
-            setState(() {
-              _messages.addAll(uniqueNewMessages);
-              // Всегда обновляем на максимальный ID, если он больше текущего
-              if (maxNewId > (lastId)) {
-                _lastMessageId = maxNewId;
-              }
-            });
-
-            // Отмечаем новые сообщения как прочитанные, если они от другого пользователя
-            // и пользователь находится в чате (экран открыт)
-            final hasIncomingMessages = uniqueNewMessages.any(
-              (msg) => !msg.isMine,
-            );
-            if (hasIncomingMessages) {
-              _markMessagesAsRead();
-            }
-
-            // Прокрутка вниз при получении новых сообщений
-            // Только если пользователь уже находится внизу списка
-            if (_scrollController.hasClients) {
-              final isNearBottom =
-                  _scrollController.position.pixels >=
-                  _scrollController.position.maxScrollExtent - 100;
-
-              if (isNearBottom) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (_scrollController.hasClients && mounted) {
-                    _scrollController.animateTo(
-                      _scrollController.position.maxScrollExtent,
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeOut,
-                    );
-                  }
-                });
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {
-      // Игнорируем ошибки polling, чтобы не мешать пользователю
     }
   }
 
@@ -767,12 +304,12 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
   @override
   Widget build(BuildContext context) {
-    // ─── Получаем высоту клавиатуры для адаптации ───
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        // ─── Белый фон для лучшего контраста с пузырями сообщений ───
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkBackground
+            : AppColors.surface,
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
           backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -790,7 +327,13 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
               icon: const Icon(CupertinoIcons.back),
               onPressed: () async {
                 // Отмечаем сообщения как прочитанные перед закрытием
-                await _markMessagesAsRead();
+                final args = PersonalChatArgs(
+                  chatId: widget.chatId,
+                  userId: widget.userId,
+                );
+                await ref
+                    .read(personalChatProvider(args).notifier)
+                    .markMessagesAsRead();
                 if (!context.mounted) return;
                 Navigator.pop(
                   context,
@@ -893,85 +436,124 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             children: [
               // ─── Прокручиваемая область с сообщениями ───
               Expanded(
-                child: () {
-                  if (_error != null && _messages.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Ошибка: $_error',
-                              style: const TextStyle(color: AppColors.error),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 12),
-                            OutlinedButton(
-                              onPressed: _loadInitial,
-                              child: const Text('Повторить'),
-                            ),
-                          ],
+                child: Builder(
+                  builder: (context) {
+                    final args = PersonalChatArgs(
+                      chatId: widget.chatId,
+                      userId: widget.userId,
+                    );
+                    final chatState = ref.watch(personalChatProvider(args));
+
+                    // ─── Автоматическая прокрутка вниз при первой загрузке сообщений ───
+                    // При reverse: true прокрутка к 0 означает прокрутку к последним сообщениям
+                    if (!chatState.isLoading &&
+                        chatState.messages.isNotEmpty &&
+                        !_hasScrolledToBottom) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted && _scrollController.hasClients) {
+                          _scrollController.jumpTo(0);
+                          _hasScrolledToBottom = true;
+                        }
+                      });
+                    }
+
+                    if (chatState.error != null && chatState.messages.isEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Ошибка: ${chatState.error}',
+                                style: const TextStyle(color: AppColors.error),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              OutlinedButton(
+                                onPressed: () {
+                                  ref
+                                      .read(personalChatProvider(args).notifier)
+                                      .loadInitial();
+                                },
+                                child: const Text('Повторить'),
+                              ),
+                            ],
+                          ),
                         ),
+                      );
+                    }
+
+                    if (chatState.isLoading && chatState.messages.isEmpty) {
+                      return const Center(child: CupertinoActivityIndicator());
+                    }
+
+                    return NotificationListener<ScrollNotification>(
+                      onNotification: (notification) {
+                        if (notification is ScrollStartNotification) {
+                          // ─── Загрузка старых сообщений при прокрутке вверх ───
+                          // При reverse: true прокрутка вверх означает увеличение pixels
+                          if (_scrollController.position.pixels >=
+                                  _scrollController.position.maxScrollExtent -
+                                      100 &&
+                              chatState.hasMore &&
+                              !chatState.isLoadingMore) {
+                            ref
+                                .read(personalChatProvider(args).notifier)
+                                .loadMore();
+                          }
+                        }
+                        return false;
+                      },
+                      child: ListView.builder(
+                        reverse:
+                            true, // ─── Сообщения прижаты к низу (к панели ввода) ───
+                        controller: _scrollController,
+                        // ─── Padding: небольшой нижний отступ для панели ввода ───
+                        padding: EdgeInsets.fromLTRB(
+                          12,
+                          8,
+                          12,
+                          // ─── Небольшой нижний отступ между сообщениями и панелью ввода ───
+                          8,
+                        ),
+                        itemCount:
+                            chatState.messages.length +
+                            (chatState.isLoadingMore ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          // ─── Индикатор загрузки старых сообщений в конце списка (сверху) ───
+                          if (index == chatState.messages.length &&
+                              chatState.isLoadingMore) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child: CupertinoActivityIndicator(),
+                              ),
+                            );
+                          }
+
+                          // ─── Разворачиваем список, чтобы при reverse: true новые сообщения были внизу ───
+                          final reversedIndex =
+                              chatState.messages.length - 1 - index;
+                          final message = chatState.messages[reversedIndex];
+
+                          return message.isMine
+                              ? _BubbleRight(
+                                  text: message.text,
+                                  image: message.image,
+                                  time: _formatTime(message.createdAt),
+                                )
+                              : _BubbleLeft(
+                                  text: message.text,
+                                  image: message.image,
+                                  time: _formatTime(message.createdAt),
+                                  avatarUrl: _getAvatarUrl(widget.userAvatar),
+                                );
+                        },
                       ),
                     );
-                  }
-
-                  if (_isLoading && _messages.isEmpty) {
-                    return const Center(child: CupertinoActivityIndicator());
-                  }
-
-                  return NotificationListener<ScrollNotification>(
-                    onNotification: (notification) {
-                      if (notification is ScrollStartNotification) {
-                        if (_scrollController.position.pixels <= 100 &&
-                            _hasMore &&
-                            !_isLoadingMore) {
-                          _loadMore();
-                        }
-                      }
-                      return false;
-                    },
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      // ─── Динамический padding: учитываем высоту клавиатуры и панели ввода ───
-                      // Панель ввода (_Composer) имеет минимальную высоту ~100px
-                      // При открытой клавиатуре добавляем небольшой дополнительный отступ
-                      padding: EdgeInsets.fromLTRB(
-                        12,
-                        8,
-                        12,
-                        // Базовый отступ для панели ввода, при открытой клавиатуре немного больше
-                        keyboardHeight > 0 ? 50 : 50,
-                      ),
-                      itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == 0 && _isLoadingMore) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            child: Center(child: CupertinoActivityIndicator()),
-                          );
-                        }
-
-                        final messageIndex = _isLoadingMore ? index - 1 : index;
-                        final message = _messages[messageIndex];
-
-                        return message.isMine
-                            ? _BubbleRight(
-                                text: message.text,
-                                image: message.image,
-                                time: _formatTime(message.createdAt),
-                              )
-                            : _BubbleLeft(
-                                text: message.text,
-                                image: message.image,
-                                time: _formatTime(message.createdAt),
-                                avatarUrl: _getAvatarUrl(widget.userAvatar),
-                              );
-                      },
-                    ),
-                  );
-                }(),
+                  },
+                ),
               ),
 
               // ─── Неподвижная нижняя панель ввода ───
@@ -1059,9 +641,11 @@ class _BubbleLeft extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
               decoration: BoxDecoration(
+                // ─── Нейтральный серый фон для сообщений собеседника (более контрастный) ───
                 color: Theme.of(context).brightness == Brightness.dark
                     ? AppColors.darkSurfaceMuted
-                    : AppColors.softBg,
+                    : AppColors
+                          .softBg, // ─── Более темный серый для лучшего контраста на белом фоне ───
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Column(
@@ -1176,9 +760,10 @@ class _BubbleRight extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
               decoration: BoxDecoration(
+                // ─── Брендовый синий цвет для моих сообщений (стандарт для чатов) ───
                 color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.green.withValues(alpha: 0.15)
-                    : AppColors.greenBg,
+                    ? AppColors.brandPrimary.withValues(alpha: 0.25)
+                    : AppColors.brandPrimary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Column(
