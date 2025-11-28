@@ -4,10 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/local_image_compressor.dart';
-import '../../../core/utils/error_handler.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/widgets/primary_button.dart';
@@ -15,6 +13,7 @@ import '../../../providers/services/api_provider.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
+import '../../../providers/events/edit_event_provider.dart';
 import 'location_picker_screen.dart';
 
 /// Экран редактирования события
@@ -35,58 +34,28 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
   final clubCtrl = TextEditingController();
   final templateCtrl = TextEditingController();
 
-  // выборы
-  String? activity;
-  DateTime? date;
-  TimeOfDay? time;
-
-  // список клубов
-  List<String> clubs = [];
-  String? selectedClub;
-
-  // чекбоксы
-  bool createFromClub = false;
-  bool saveTemplate = false;
-
   // медиа
   final picker = ImagePicker();
-  File? logoFile;
-  String? logoUrl; // URL для отображения существующего логотипа
-  String? logoFilename; // Имя файла существующего логотипа
-  final List<File?> photos = [null, null, null];
-  final List<String> photoUrls = [
-    '',
-    '',
-    '',
-  ]; // URL для отображения существующих фото
-  final List<String> photoFilenames = [
-    '',
-    '',
-    '',
-  ]; // Имена файлов существующих фото
 
-  // координаты выбранного места
-  LatLng? selectedLocation;
-
-  // ── состояние загрузки данных
-  bool _loadingData = true;
-  bool _deleting = false; // ── состояние удаления
-
-  bool get isFormValid =>
-      (nameCtrl.text.trim().isNotEmpty) &&
-      (placeCtrl.text.trim().isNotEmpty) &&
-      (activity != null) &&
-      (date != null) &&
-      (time != null) &&
-      (selectedLocation != null);
+  bool get isFormValid {
+    final state = ref.read(editEventProvider(widget.eventId));
+    return (nameCtrl.text.trim().isNotEmpty) &&
+        (placeCtrl.text.trim().isNotEmpty) &&
+        (state.activity != null) &&
+        (state.date != null) &&
+        (state.time != null) &&
+        (state.selectedLocation != null);
+  }
 
   @override
   void initState() {
     super.initState();
-    _loadUserClubs(); // ── загружаем клубы пользователя при инициализации
-    _loadEventData();
-    nameCtrl.addListener(() => _refresh());
-    placeCtrl.addListener(() => _refresh());
+    nameCtrl.addListener(() => setState(() {}));
+    placeCtrl.addListener(() => setState(() {}));
+    // Инициализируем контроллеры после первой загрузки данных
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeControllers();
+    });
   }
 
   @override
@@ -99,188 +68,23 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     super.dispose();
   }
 
-  void _refresh() => setState(() {});
+  bool _controllersInitialized = false;
 
-  // ── загрузка списка клубов пользователя
-  Future<void> _loadUserClubs() async {
-    try {
-      final api = ref.read(apiServiceProvider);
-      final authService = AuthService();
-      final userId = await authService.getUserId();
+  /// Инициализация контроллеров из загруженных данных
+  Future<void> _initializeControllers() async {
+    if (_controllersInitialized) return;
 
-      if (userId == null) {
-        setState(() {
-          clubs = [];
-        });
-        return;
-      }
+    final textFields = await ref
+        .read(editEventProvider(widget.eventId).notifier)
+        .loadEventData();
 
-      final data = await api.get(
-        '/get_user_clubs.php',
-        queryParams: {'user_id': userId.toString()},
-      );
-
-      if (data['success'] == true && data['clubs'] != null) {
-        final clubsList = data['clubs'] as List<dynamic>;
-        setState(() {
-          clubs = clubsList.map((c) => c.toString()).toList();
-        });
-      } else {
-        setState(() {
-          clubs = [];
-        });
-      }
-    } catch (e) {
-      setState(() {
-        clubs = [];
-      });
-    }
-  }
-
-  /// Загрузка данных события для редактирования
-  Future<void> _loadEventData() async {
-    try {
-      final api = ref.read(apiServiceProvider);
-      final authService = AuthService();
-      final userId = await authService.getUserId();
-
-      if (userId == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Ошибка авторизации')));
-          Navigator.of(context).pop();
-        }
-        return;
-      }
-
-      final data = await api.get(
-        '/update_event.php',
-        queryParams: {
-          'event_id': widget.eventId.toString(),
-          'user_id': userId.toString(),
-        },
-      );
-
-      if (data['success'] == true && data['event'] != null) {
-        final event = data['event'] as Map<String, dynamic>;
-
-        // Заполняем текстовые поля
-        nameCtrl.text = event['name'] as String? ?? '';
-        final placeText = event['place'] as String? ?? '';
-        placeCtrl.text = placeText;
-        descCtrl.text = event['description'] as String? ?? '';
-        clubCtrl.text = event['club_name'] as String? ?? '';
-        templateCtrl.text = event['template_name'] as String? ?? '';
-
-        // Заполняем выборы
-        final activityStr = event['activity'] as String?;
-        // Проверяем, что значение активности входит в список допустимых
-        const allowedActivities = ['Бег', 'Велосипед', 'Плавание'];
-        if (activityStr != null && allowedActivities.contains(activityStr)) {
-          activity = activityStr;
-        } else {
-          activity = null; // Если значение не валидно, оставляем null
-        }
-
-        final clubNameStr = event['club_name'] as String? ?? '';
-        createFromClub = clubNameStr.isNotEmpty;
-        // Проверяем, что значение клуба входит в список допустимых
-        // Если клубы ещё не загружены, сохраняем название и проверим позже
-        if (createFromClub) {
-          if (clubs.contains(clubNameStr)) {
-            selectedClub = clubNameStr;
-          } else if (clubs.isEmpty) {
-            // Если клубы ещё не загружены, сохраняем название
-            // Оно будет проверено после загрузки клубов
-            selectedClub = clubNameStr;
-          } else {
-            selectedClub = null; // Если значение не валидно, оставляем null
-          }
-        }
-
-        saveTemplate = (event['template_name'] as String? ?? '').isNotEmpty;
-
-        // Заполняем дату и время
-        final eventDateStr = event['event_date'] as String? ?? '';
-        if (eventDateStr.isNotEmpty) {
-          try {
-            final parts = eventDateStr.split('.');
-            if (parts.length == 3) {
-              date = DateTime(
-                int.parse(parts[2]),
-                int.parse(parts[1]),
-                int.parse(parts[0]),
-              );
-            }
-          } catch (e) {
-            // Игнорируем ошибку парсинга
-          }
-        }
-
-        final eventTimeStr = event['event_time'] as String? ?? '';
-        if (eventTimeStr.isNotEmpty) {
-          try {
-            final parts = eventTimeStr.split(':');
-            if (parts.length >= 2) {
-              time = TimeOfDay(
-                hour: int.parse(parts[0]),
-                minute: int.parse(parts[1]),
-              );
-            }
-          } catch (e) {
-            // Игнорируем ошибку парсинга
-          }
-        }
-
-        // Координаты
-        final lat = event['latitude'] as num?;
-        final lng = event['longitude'] as num?;
-        if (lat != null && lng != null) {
-          selectedLocation = LatLng(lat.toDouble(), lng.toDouble());
-        }
-
-        // Логотип
-        logoUrl = event['logo_url'] as String?;
-        logoFilename = event['logo_filename'] as String?;
-
-        // Фотографии
-        final photosList = event['photos'] as List<dynamic>? ?? [];
-        for (int i = 0; i < 3 && i < photosList.length; i++) {
-          final photo = photosList[i] as Map<String, dynamic>?;
-          if (photo != null) {
-            photoUrls[i] = photo['url'] as String? ?? '';
-            photoFilenames[i] = photo['filename'] as String? ?? '';
-          }
-        }
-
-        setState(() {
-          _loadingData = false;
-        });
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                data['message'] as String? ??
-                    'Не удалось загрузить данные события',
-              ),
-            ),
-          );
-          Navigator.of(context).pop();
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              ErrorHandler.formatWithContext(e, context: 'загрузке данных'),
-            ),
-          ),
-        );
-        Navigator.of(context).pop();
-      }
+    if (textFields != null && mounted) {
+      nameCtrl.text = textFields['name'] ?? '';
+      placeCtrl.text = textFields['place'] ?? '';
+      descCtrl.text = textFields['description'] ?? '';
+      clubCtrl.text = textFields['club_name'] ?? '';
+      templateCtrl.text = textFields['template_name'] ?? '';
+      _controllersInitialized = true;
     }
   }
 
@@ -296,10 +100,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     );
     if (!mounted) return;
 
-    setState(() {
-      logoFile = compressed;
-      logoUrl = null; // Сбрасываем URL, так как выбран новый файл
-    });
+    ref.read(editEventProvider(widget.eventId).notifier).setLogoFile(compressed);
   }
 
   Future<void> _pickPhoto(int i) async {
@@ -314,34 +115,30 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     );
     if (!mounted) return;
 
-    setState(() {
-      photos[i] = compressed;
-      photoUrls[i] = ''; // Сбрасываем URL, так как выбран новый файл
-      photoFilenames[i] = '';
-    });
+    ref.read(editEventProvider(widget.eventId).notifier).setPhotoFile(i, compressed);
   }
 
   /// Открыть экран выбора места на карте
   Future<void> _pickLocation() async {
+    final state = ref.read(editEventProvider(widget.eventId));
     final result = await Navigator.of(context).push<LocationResult?>(
       MaterialPageRoute(
-        builder: (_) => LocationPickerScreen(initialPosition: selectedLocation),
+        builder: (_) => LocationPickerScreen(initialPosition: state.selectedLocation),
       ),
     );
 
     if (result != null) {
-      setState(() {
-        selectedLocation = result.coordinates;
-        if (result.address != null && result.address!.isNotEmpty) {
-          placeCtrl.text = result.address!;
-        }
-      });
+      ref.read(editEventProvider(widget.eventId).notifier).setLocation(result.coordinates);
+      if (result.address != null && result.address!.isNotEmpty) {
+        placeCtrl.text = result.address!;
+      }
     }
   }
 
   Future<void> _pickDateCupertino() async {
+    final state = ref.read(editEventProvider(widget.eventId));
     final today = DateUtils.dateOnly(DateTime.now());
-    DateTime temp = DateUtils.dateOnly(date ?? today);
+    DateTime temp = DateUtils.dateOnly(state.date ?? today);
 
     final picker = CupertinoDatePicker(
       mode: CupertinoDatePickerMode.date,
@@ -353,17 +150,18 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
     if (ok) {
-      setState(() => date = temp);
+      ref.read(editEventProvider(widget.eventId).notifier).setDate(temp);
     }
   }
 
   Future<void> _pickTimeCupertino() async {
+    final state = ref.read(editEventProvider(widget.eventId));
     DateTime temp = DateTime(
       DateTime.now().year,
       DateTime.now().month,
       DateTime.now().day,
-      time?.hour ?? 12,
-      time?.minute ?? 0,
+      state.time?.hour ?? 12,
+      state.time?.minute ?? 0,
     );
 
     final picker = CupertinoDatePicker(
@@ -375,9 +173,9 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
     if (ok) {
-      setState(() {
-        time = TimeOfDay(hour: temp.hour, minute: temp.minute);
-      });
+      ref.read(editEventProvider(widget.eventId).notifier).setTime(
+        TimeOfDay(hour: temp.hour, minute: temp.minute),
+      );
     }
   }
 
@@ -507,69 +305,25 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     final confirmed = await _confirmDelete();
     if (!confirmed) return;
 
-    // ── защита от повторных нажатий
-    if (_deleting) return;
-    setState(() => _deleting = true);
+    final success = await ref
+        .read(editEventProvider(widget.eventId).notifier)
+        .deleteEvent();
 
-    final api = ref.read(apiServiceProvider);
-    final authService = AuthService();
+    if (!mounted) return;
 
-    try {
-      final userId = await authService.getUserId();
-      if (userId == null) {
-        if (!mounted) return;
-        setState(() => _deleting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ошибка: Пользователь не авторизован'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      // Отправляем запрос на удаление
-      final data = await api.post(
-        '/delete_event.php',
-        body: {'event_id': widget.eventId, 'user_id': userId},
-      );
-
-      // Проверяем ответ
-      bool success = false;
-      String? errorMessage;
-
-      if (data['success'] == true) {
-        success = true;
-      } else if (data['success'] == false) {
-        errorMessage = data['message'] ?? 'Ошибка при удалении события';
-      } else {
-        errorMessage = 'Неожиданный формат ответа сервера';
-      }
-
-      if (success) {
-        if (!mounted) return;
-
-        // Возвращаемся на предыдущий экран с результатом удаления
-        Navigator.of(context).pop('deleted');
-      } else {
-        if (!mounted) return;
-        setState(() => _deleting = false);
+    if (success) {
+      // Возвращаемся на предыдущий экран с результатом удаления
+      Navigator.of(context).pop('deleted');
+    } else {
+      final state = ref.read(editEventProvider(widget.eventId));
+      if (state.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage ?? 'Ошибка при удалении события'),
+            content: Text(state.error!),
             backgroundColor: Colors.red,
           ),
         );
       }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _deleting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(ErrorHandler.format(e)),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
@@ -579,6 +333,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
       return;
     }
 
+    final editState = ref.read(editEventProvider(widget.eventId));
     final formNotifier = ref.read(formStateProvider.notifier);
     final api = ref.read(apiServiceProvider);
     final authService = AuthService();
@@ -589,14 +344,14 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
         final fields = <String, String>{};
 
         // Добавляем логотип (если выбран новый)
-        if (logoFile != null) {
-          files['logo'] = logoFile!;
+        if (editState.logoFile != null) {
+          files['logo'] = editState.logoFile!;
         }
 
         // Добавляем фотографии (только новые)
-        for (int i = 0; i < photos.length; i++) {
-          if (photos[i] != null) {
-            files['images[$i]'] = photos[i]!;
+        for (int i = 0; i < editState.photos.length; i++) {
+          if (editState.photos[i] != null) {
+            files['images[$i]'] = editState.photos[i]!;
           }
         }
 
@@ -608,24 +363,27 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
         fields['event_id'] = widget.eventId.toString();
         fields['user_id'] = userId.toString();
         fields['name'] = nameCtrl.text.trim();
-        fields['activity'] = activity!;
+        fields['activity'] = editState.activity!;
         fields['place'] = placeCtrl.text.trim();
-        fields['latitude'] = selectedLocation!.latitude.toString();
-        fields['longitude'] = selectedLocation!.longitude.toString();
-        fields['event_date'] = _fmtDate(date!);
-        fields['event_time'] = _fmtTime(time!);
+        fields['latitude'] = editState.selectedLocation!.latitude.toString();
+        fields['longitude'] = editState.selectedLocation!.longitude.toString();
+        fields['event_date'] = _fmtDate(editState.date!);
+        fields['event_time'] = _fmtTime(editState.time!);
         fields['description'] = descCtrl.text.trim();
 
         // Флаги для сохранения существующих изображений
-        if (logoUrl != null && logoFile == null && logoFilename != null) {
+        if (editState.logoUrl != null &&
+            editState.logoFile == null &&
+            editState.logoFilename != null) {
           fields['keep_logo'] = 'true';
         }
 
         // Собираем имена файлов для сохранения (те, которые не были заменены)
         final keepImages = <String>[];
-        for (int i = 0; i < photoFilenames.length; i++) {
-          if (photoFilenames[i].isNotEmpty && photos[i] == null) {
-            keepImages.add(photoFilenames[i]);
+        for (int i = 0; i < editState.photoFilenames.length; i++) {
+          if (editState.photoFilenames[i].isNotEmpty &&
+              editState.photos[i] == null) {
+            keepImages.add(editState.photoFilenames[i]);
           }
         }
         // Отправляем массив как keep_images[0], keep_images[1], ...
@@ -633,10 +391,10 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
           fields['keep_images[$i]'] = keepImages[i];
         }
 
-        if (createFromClub && selectedClub != null) {
-          fields['club_name'] = selectedClub!;
+        if (editState.createFromClub && editState.selectedClub != null) {
+          fields['club_name'] = editState.selectedClub!;
         }
-        if (saveTemplate && templateCtrl.text.trim().isNotEmpty) {
+        if (editState.saveTemplate && templateCtrl.text.trim().isNotEmpty) {
           fields['template_name'] = templateCtrl.text.trim();
         }
 
@@ -671,13 +429,21 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
   @override
   Widget build(BuildContext context) {
     final formState = ref.watch(formStateProvider);
+    final editState = ref.watch(editEventProvider(widget.eventId));
 
-    if (_loadingData) {
+    if (editState.isLoadingData) {
       return Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Редактирование события'),
         body: const Center(child: CircularProgressIndicator()),
       );
+    }
+
+    // Инициализируем контроллеры, если они еще не заполнены
+    if (!_controllersInitialized && !editState.isLoadingData) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _initializeControllers();
+      });
     }
 
     return InteractiveBackSwipe(
@@ -710,14 +476,12 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                           ),
                           const SizedBox(height: 8),
                           _MediaTile(
-                            file: logoFile,
-                            url: logoUrl,
+                            file: editState.logoFile,
+                            url: editState.logoUrl,
                             onPick: _pickLogo,
-                            onRemove: () => setState(() {
-                              logoFile = null;
-                              logoUrl = null;
-                              logoFilename = null;
-                            }),
+                            onRemove: () => ref
+                                .read(editEventProvider(widget.eventId).notifier)
+                                .removeLogo(),
                           ),
                         ],
                       ),
@@ -744,14 +508,13 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                 separatorBuilder: (_, _) =>
                                     const SizedBox(width: 12),
                                 itemBuilder: (_, i) => _MediaTile(
-                                  file: photos[i],
-                                  url: photoUrls[i],
+                                  file: editState.photos[i],
+                                  url: editState.photoUrls[i],
                                   onPick: () => _pickPhoto(i),
-                                  onRemove: () => setState(() {
-                                    photos[i] = null;
-                                    photoUrls[i] = '';
-                                    photoFilenames[i] = '';
-                                  }),
+                                  onRemove: () => ref
+                                      .read(editEventProvider(widget.eventId)
+                                          .notifier)
+                                      .removePhoto(i),
                                 ),
                               ),
                             ),
@@ -856,7 +619,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: activity,
+                          value: editState.activity,
                           isExpanded: true,
                           hint: const Text(
                             'Выберите вид активности',
@@ -864,7 +627,10 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                           ),
                           onChanged: (String? newValue) {
                             if (newValue != null) {
-                              setState(() => activity = newValue);
+                              ref
+                                  .read(editEventProvider(widget.eventId)
+                                      .notifier)
+                                  .setActivity(newValue);
                             }
                           },
                           dropdownColor: AppColors.getSurfaceColor(context),
@@ -1083,10 +849,10 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                       ),
                                     ),
                                     child: Text(
-                                      date != null
-                                          ? _fmtDate(date!)
+                                      editState.date != null
+                                          ? _fmtDate(editState.date!)
                                           : 'Выберите дату',
-                                      style: date != null
+                                      style: editState.date != null
                                           ? AppTextStyles.h14w4.copyWith(
                                               color:
                                                   AppColors.getTextPrimaryColor(
@@ -1184,10 +950,10 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                       ),
                                     ),
                                     child: Text(
-                                      time != null
-                                          ? _fmtTime(time!)
+                                      editState.time != null
+                                          ? _fmtTime(editState.time!)
                                           : 'Выберите время',
-                                      style: time != null
+                                      style: editState.time != null
                                           ? AppTextStyles.h14w4.copyWith(
                                               color:
                                                   AppColors.getTextPrimaryColor(
@@ -1272,8 +1038,8 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                         child: PrimaryButton(
                           text: 'Сохранить',
                           onPressed: () {
-                            if (!formState.isSubmitting && !_deleting)
-                              _submit();
+                            if (!formState.isSubmitting &&
+                                !editState.isDeleting) _submit();
                           },
                           expanded: true,
                           isLoading: formState.isSubmitting,
@@ -1282,7 +1048,8 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                       ),
                       const SizedBox(width: 16),
                       TextButton(
-                        onPressed: _deleting || formState.isSubmitting
+                        onPressed: editState.isDeleting ||
+                                formState.isSubmitting
                             ? null
                             : _deleteEvent,
                         child: const Text(

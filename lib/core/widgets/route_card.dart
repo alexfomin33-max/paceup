@@ -102,6 +102,16 @@ class _RouteCardState extends State<RouteCard> {
             child: MapWidget(
               key: ValueKey('route_card_${points.length}'),
               onMapCreated: (MapboxMap mapboxMap) async {
+                // ────────────────────────── Отключаем масштабную линейку ──────────────────────────
+                // Отключаем горизонтальную линию масштаба, которая отображается сверху слева
+                try {
+                  await mapboxMap.scaleBar.updateSettings(
+                    ScaleBarSettings(enabled: false),
+                  );
+                } catch (e) {
+                  // Если метод недоступен, игнорируем ошибку
+                }
+
                 // Создаем менеджер полилиний
                 _polylineAnnotationManager = await mapboxMap.annotations
                     .createPolylineAnnotationManager();
