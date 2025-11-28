@@ -520,6 +520,16 @@ class _LocationPickerScreenState
                 onMapCreated: (MapboxMap mapboxMap) async {
                   _mapboxMap = mapboxMap;
 
+                  // ────────────────────────── Отключаем масштабную линейку ──────────────────────────
+                  // Отключаем горизонтальную линию масштаба, которая отображается сверху слева
+                  try {
+                    await mapboxMap.scaleBar.updateSettings(
+                      ScaleBarSettings(enabled: false),
+                    );
+                  } catch (e) {
+                    // Если метод недоступен, игнорируем ошибку
+                  }
+
                   // Создаем менеджер аннотаций
                   _pointAnnotationManager = await mapboxMap.annotations
                       .createPointAnnotationManager();

@@ -792,6 +792,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         onMapCreated: (MapboxMap mapboxMap) async {
           _mapboxMap = mapboxMap;
 
+          // ────────────────────────── Отключаем масштабную линейку ──────────────────────────
+          // Отключаем горизонтальную линию масштаба, которая отображается сверху слева
+          try {
+            await mapboxMap.scaleBar.updateSettings(
+              ScaleBarSettings(enabled: false),
+            );
+          } catch (e) {
+            // Если метод недоступен (для обратной совместимости), игнорируем ошибку
+            debugPrint('⚠️ Не удалось отключить масштабную линейку: $e');
+          }
+
           // Подписываемся на клики по маркерам
           _pointAnnotationManager = await mapboxMap.annotations
               .createPointAnnotationManager();
