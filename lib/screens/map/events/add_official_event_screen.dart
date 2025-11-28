@@ -309,11 +309,39 @@ class _AddOfficialEventScreenState
         templateDataProvider(templateName).future,
       );
 
-      // Заполняем форму данными из шаблона
+      // ── Обработка дистанций из шаблона (делаем это ПЕРВЫМ, чтобы контроллеры были готовы)
+      // Очищаем существующие контроллеры
+      for (final controller in _distanceControllers) {
+        controller.dispose();
+      }
+      _distanceControllers.clear();
+
+      // Получаем дистанции из шаблона
+      final distances = templateAsync.distances.isNotEmpty
+          ? List<String>.from(templateAsync.distances)
+          : [''];
+
+      // Создаём контроллеры для каждой дистанции СНАЧАЛА
+      for (int i = 0; i < distances.length; i++) {
+        final controller = TextEditingController(text: distances[i]);
+        final index = i;
+        controller.addListener(() {
+          ref
+              .read(addOfficialEventFormProvider.notifier)
+              .updateDistance(index, controller.text);
+        });
+        _distanceControllers.add(controller);
+      }
+
+      // ── Заполняем форму данными из шаблона
       nameCtrl.text = templateAsync.name;
       placeCtrl.text = templateAsync.place;
       descCtrl.text = templateAsync.description;
-      linkCtrl.text = templateAsync.link ?? '';
+      
+      // ── Заполняем ссылку и обновляем провайдер
+      final linkValue = (templateAsync.link?.trim() ?? '').replaceAll(' ', '');
+      linkCtrl.text = linkValue;
+      
       ref
           .read(addOfficialEventFormProvider.notifier)
           .updateActivity(templateAsync.activity);
@@ -334,37 +362,15 @@ class _AddOfficialEventScreenState
             );
       }
 
-      // ── обработка дистанций из шаблона
-      // Очищаем существующие контроллеры
-      for (final controller in _distanceControllers) {
-        controller.dispose();
-      }
-      _distanceControllers.clear();
-
-      // Создаём контроллеры для каждой дистанции
-      final distances = templateAsync.distances.isNotEmpty
-          ? templateAsync.distances
-          : [''];
-
-      for (int i = 0; i < distances.length; i++) {
-        final controller = TextEditingController(text: distances[i]);
-        final index = i;
-        controller.addListener(() {
-          ref
-              .read(addOfficialEventFormProvider.notifier)
-              .updateDistance(index, controller.text);
-        });
-        _distanceControllers.add(controller);
-      }
-
-      // Обновляем состояние провайдера
+      // ── Обновляем состояние провайдера (включая ссылку и дистанции)
+      // Это должно быть сделано ПЕРЕД обновлением отдельных полей
       ref
           .read(addOfficialEventFormProvider.notifier)
           .loadFromTemplate(
             name: templateAsync.name,
             place: templateAsync.place,
             description: templateAsync.description,
-            link: templateAsync.link ?? '',
+            link: linkValue,
             activity: templateAsync.activity,
             date: templateAsync.date,
             time: templateAsync.time,
@@ -376,7 +382,19 @@ class _AddOfficialEventScreenState
             distances: distances,
           );
 
+      // ── Дополнительно обновляем ссылку (для гарантии синхронизации)
+      if (linkValue.isNotEmpty) {
+        ref
+            .read(addOfficialEventFormProvider.notifier)
+            .updateLink(linkValue);
+      }
+
       templateCtrl.text = templateName;
+
+      // ── Принудительно обновляем виджет для отображения новых контроллеров
+      if (mounted) {
+        setState(() {});
+      }
     } catch (e) {
       // Ошибка уже обработана в провайдере через AsyncValue
       if (mounted) {

@@ -37,6 +37,9 @@ class _EditOfficialEventScreenState
   final linkCtrl = TextEditingController();
   final templateCtrl = TextEditingController();
 
+  // ── флаг процесса удаления
+  bool _isDeleting = false;
+
   // выборы
   String? activity;
   DateTime? date;
@@ -74,7 +77,11 @@ class _EditOfficialEventScreenState
   @override
   void initState() {
     super.initState();
-    _loadEventData();
+    // ── Откладываем загрузку данных до завершения построения виджета
+    // чтобы избежать ошибки "Tried to modify a provider while the widget tree was building"
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadEventData();
+    });
     nameCtrl.addListener(() => _refresh());
     placeCtrl.addListener(() => _refresh());
     linkCtrl.addListener(() => _refresh());
@@ -102,6 +109,20 @@ class _EditOfficialEventScreenState
       final newController = TextEditingController();
       newController.addListener(() => _refresh());
       _distanceControllers.add(newController);
+    });
+  }
+
+  // ── удаление поля для ввода дистанции
+  void _removeDistanceField(int index) {
+    if (_distanceControllers.length <= 1) {
+      // Не удаляем последнее поле
+      return;
+    }
+    setState(() {
+      final controller = _distanceControllers[index];
+      controller.removeListener(() => _refresh());
+      controller.dispose();
+      _distanceControllers.removeAt(index);
     });
   }
 
@@ -135,7 +156,12 @@ class _EditOfficialEventScreenState
           final placeText = event['place'] as String? ?? '';
           placeCtrl.text = placeText;
           descCtrl.text = event['description'] as String? ?? '';
-          linkCtrl.text = event['registration_link'] as String? ?? '';
+          // ── Извлекаем ссылку (поддерживаем оба варианта названия)
+          dynamic linkRaw = event['registration_link'];
+          if (linkRaw == null || (linkRaw is String && linkRaw.isEmpty)) {
+            linkRaw = event['event_link'];
+          }
+          linkCtrl.text = (linkRaw?.toString().trim() ?? '').replaceAll(' ', '');
           templateCtrl.text = event['template_name'] as String? ?? '';
 
           // Заполняем выборы
@@ -205,22 +231,47 @@ class _EditOfficialEventScreenState
           }
           _distanceControllers.clear();
 
-          // Парсим дистанции из события (формат: "5000, 10000, 21100" - все в метрах)
-          final distanceStr = event['distance'] as String?;
-          if (distanceStr != null && distanceStr.isNotEmpty) {
-            // Разделяем по запятой и очищаем пробелы
-            final distances = distanceStr
-                .split(',')
-                .map((d) => d.trim())
-                .where((d) => d.isNotEmpty)
-                .toList();
-
-            // Создаём контроллеры для каждой дистанции
-            for (final dist in distances) {
-              final controller = TextEditingController(text: dist);
-              controller.addListener(() => _refresh());
-              _distanceControllers.add(controller);
+          // Парсим дистанции из события (может быть массив или строка)
+          final distancesRaw = event['distances'];
+          final List<String> distances = [];
+          
+          if (distancesRaw != null) {
+            if (distancesRaw is List) {
+              // Если это массив
+              for (final d in distancesRaw) {
+                if (d != null) {
+                  distances.add(d.toString().trim());
+                }
+              }
+            } else if (distancesRaw is String && distancesRaw.isNotEmpty) {
+              // Если это строка через запятую
+              distances.addAll(
+                distancesRaw
+                    .split(',')
+                    .map((d) => d.trim())
+                    .where((d) => d.isNotEmpty),
+              );
             }
+          }
+          
+          // Если массив не найден, пробуем строку distance
+          if (distances.isEmpty) {
+            final distanceStr = event['distance'] as String?;
+            if (distanceStr != null && distanceStr.isNotEmpty) {
+              distances.addAll(
+                distanceStr
+                    .split(',')
+                    .map((d) => d.trim())
+                    .where((d) => d.isNotEmpty),
+              );
+            }
+          }
+
+          // Создаём контроллеры для каждой дистанции
+          for (final dist in distances) {
+            final controller = TextEditingController(text: dist);
+            controller.addListener(() => _refresh());
+            _distanceControllers.add(controller);
           }
 
           // Если дистанций нет, создаём одно пустое поле
@@ -477,48 +528,60 @@ class _EditOfficialEventScreenState
     final confirmed = await _confirmDelete();
     if (!confirmed) return;
 
-    final formNotifier = ref.read(formStateProvider.notifier);
+    // ── защита от повторных нажатий
+    if (_isDeleting) return;
+    setState(() => _isDeleting = true);
+
     final api = ref.read(apiServiceProvider);
     final authService = ref.read(authServiceProvider);
 
-    await formNotifier.submit(
-      () async {
-        final userId = await authService.getUserId();
-        if (userId == null) {
-          throw Exception('Ошибка: Пользователь не авторизован');
-        }
-
-        // Отправляем запрос на удаление
-        final data = await api.post(
-          '/delete_event.php',
-          body: {'event_id': widget.eventId, 'user_id': userId},
-        );
-
-        // Проверяем ответ
-        if (data['success'] == true) {
-          // Успешно удалено
-        } else if (data['success'] == false) {
-          throw Exception(data['message'] ?? 'Ошибка при удалении события');
-        } else {
-          throw Exception('Неожиданный формат ответа сервера');
-        }
-      },
-      onSuccess: () {
+    try {
+      final userId = await authService.getUserId();
+      if (userId == null) {
         if (!mounted) return;
-        // Возвращаемся на предыдущий экран с результатом удаления
-        Navigator.of(context).pop('deleted');
-      },
-      onError: (error) {
-        if (!mounted) return;
-        final formState = ref.read(formStateProvider);
+        setState(() => _isDeleting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(formState.error ?? 'Ошибка при удалении события'),
+          const SnackBar(
+            content: Text('Ошибка: Пользователь не авторизован'),
             backgroundColor: Colors.red,
           ),
         );
-      },
-    );
+        return;
+      }
+
+      // Отправляем запрос на удаление
+      final data = await api.post(
+        '/delete_event.php',
+        body: {'event_id': widget.eventId, 'user_id': userId},
+      );
+
+      // Проверяем ответ
+      if (data['success'] == true) {
+        if (!mounted) return;
+        // Возвращаемся на предыдущий экран с результатом удаления
+        Navigator.of(context).pop('deleted');
+      } else {
+        if (!mounted) return;
+        setState(() => _isDeleting = false);
+        final errorMessage =
+            data['message'] as String? ?? 'Ошибка при удалении события';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isDeleting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _submit() async {
@@ -615,7 +678,7 @@ class _EditOfficialEventScreenState
           if (fields.containsKey('keep_background')) {
             jsonBody['keep_background'] = 'true';
           }
-          data = await api.post('/update_official_event.php', body: jsonBody);
+          data = await api.post('/update_event.php', body: jsonBody);
         } else {
           // Multipart запрос с файлами
           // ── отправляем дистанции как массив (все в метрах)
@@ -626,7 +689,7 @@ class _EditOfficialEventScreenState
             }
           }
           data = await api.postMultipart(
-            '/update_official_event.php',
+            '/update_event.php',
             files: files,
             fields: fields,
             timeout: const Duration(seconds: 60),
@@ -1270,55 +1333,95 @@ class _EditOfficialEventScreenState
                       return SizedBox(
                         width:
                             (MediaQuery.of(context).size.width - 32 - 16) / 2,
-                        child: Builder(
-                          builder: (context) => TextField(
-                            controller: _distanceControllers[index],
-                            keyboardType: TextInputType.number,
-                            textInputAction: TextInputAction.next,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Builder(
+                                builder: (context) => TextField(
+                                  controller: _distanceControllers[index],
+                                  keyboardType: TextInputType.number,
+                                  textInputAction: TextInputAction.next,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
+                                  style: AppTextStyles.h14w4.copyWith(
+                                    color:
+                                        AppColors.getTextPrimaryColor(context),
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: 'Введите дистанцию',
+                                    hintStyle: AppTextStyles.h14w4Place,
+                                    filled: true,
+                                    fillColor:
+                                        AppColors.getSurfaceColor(context),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 17,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.sm,
+                                      ),
+                                      borderSide: BorderSide(
+                                        color:
+                                            AppColors.getBorderColor(context),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.sm,
+                                      ),
+                                      borderSide: BorderSide(
+                                        color:
+                                            AppColors.getBorderColor(context),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.sm,
+                                      ),
+                                      borderSide: BorderSide(
+                                        color:
+                                            AppColors.getBorderColor(context),
+                                        width: 1,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // ── кнопка удаления (показываем только если дистанций больше одной)
+                            if (_distanceControllers.length > 1) ...[
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () => _removeDistanceField(index),
+                                child: Builder(
+                                  builder: (context) => Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.getSurfaceColor(context),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.sm,
+                                      ),
+                                      border: Border.all(
+                                        color:
+                                            AppColors.getBorderColor(context),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      CupertinoIcons.delete,
+                                      size: 18,
+                                      color: AppColors.error,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
-                            style: AppTextStyles.h14w4.copyWith(
-                              color: AppColors.getTextPrimaryColor(context),
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Введите дистанцию',
-                              hintStyle: AppTextStyles.h14w4Place,
-                              filled: true,
-                              fillColor: AppColors.getSurfaceColor(context),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 17,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
-                                ),
-                                borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(context),
-                                  width: 1,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
-                                ),
-                                borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(context),
-                                  width: 1,
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
-                                ),
-                                borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(context),
-                                  width: 1,
-                                ),
-                              ),
-                            ),
-                          ),
+                          ],
                         ),
                       );
                     }),
@@ -1425,17 +1528,40 @@ class _EditOfficialEventScreenState
                       ),
                       const SizedBox(width: 16),
                       TextButton(
-                        onPressed: formState.isSubmitting || formState.isLoading
+                        onPressed: (formState.isSubmitting ||
+                                formState.isLoading ||
+                                _isDeleting)
                             ? null
                             : _deleteEvent,
-                        child: const Text(
-                          'Удалить событие',
-                          style: TextStyle(
-                            color: AppColors.error,
-                            fontFamily: 'Inter',
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_isDeleting)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.error,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            Text(
+                              'Удалить событие',
+                              style: TextStyle(
+                                color: _isDeleting
+                                    ? AppColors.error.withValues(alpha: 0.6)
+                                    : AppColors.error,
+                                fontFamily: 'Inter',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
