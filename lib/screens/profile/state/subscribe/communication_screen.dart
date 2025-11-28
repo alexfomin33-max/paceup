@@ -11,7 +11,14 @@ import 'tabs/subscribers/subscribers_content.dart';
 class CommunicationPrefsPage extends StatefulWidget {
   /// 0 = Подписки (по умолчанию), 1 = Подписчики
   final int startIndex;
-  const CommunicationPrefsPage({super.key, this.startIndex = 0});
+  /// ID пользователя, чьи подписки/подписчики нужно показать
+  /// Если null, используются подписки/подписчики авторизованного пользователя
+  final int? userId;
+  const CommunicationPrefsPage({
+    super.key,
+    this.startIndex = 0,
+    this.userId,
+  });
 
   @override
   State<CommunicationPrefsPage> createState() => _CommunicationPrefsPageState();
@@ -114,12 +121,14 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
                   child: SubscriptionsContent(
                     key: const ValueKey('subscriptions'),
                     query: query,
+                    userId: widget.userId,
                   ),
                 ),
                 _PageKeepAlive(
                   child: SubscribersContent(
                     key: const ValueKey('subscribers'),
                     query: query,
+                    userId: widget.userId,
                   ),
                 ),
               ],
