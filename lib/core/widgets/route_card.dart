@@ -112,22 +112,34 @@ class _RouteCardState extends State<RouteCard> {
                   // Если метод недоступен, игнорируем ошибку
                 }
 
-                // Создаем менеджер полилиний
-                _polylineAnnotationManager = await mapboxMap.annotations
-                    .createPolylineAnnotationManager();
+                // Ждём полной инициализации карты перед созданием аннотаций
+                // Добавляем небольшую задержку для гарантии готовности каналов
+                await Future.delayed(const Duration(milliseconds: 100));
 
-                // Создаем полилинию из точек
-                final coordinates = points
-                    .map((p) => Position(p.longitude, p.latitude))
-                    .toList();
+                // Создаем менеджер полилиний с обработкой ошибок
+                try {
+                  _polylineAnnotationManager = await mapboxMap.annotations
+                      .createPolylineAnnotationManager();
 
-                await _polylineAnnotationManager!.create(
-                  PolylineAnnotationOptions(
-                    geometry: LineString(coordinates: coordinates),
-                    lineColor: AppColors.brandPrimary.toARGB32(),
-                    lineWidth: 3.0,
-                  ),
-                );
+                  // Создаем полилинию из точек
+                  final coordinates = points
+                      .map((p) => Position(p.longitude, p.latitude))
+                      .toList();
+
+                  await _polylineAnnotationManager!.create(
+                    PolylineAnnotationOptions(
+                      geometry: LineString(coordinates: coordinates),
+                      lineColor: AppColors.brandPrimary.toARGB32(),
+                      lineWidth: 3.0,
+                    ),
+                  );
+                } catch (annotationError) {
+                  // Если не удалось создать полилинию, логируем ошибку
+                  // Карта всё равно отобразится, просто без трека
+                  debugPrint(
+                    '⚠️ Не удалось создать полилинию на карте: $annotationError',
+                  );
+                }
 
                 // Подстраиваем камеру под границы
                 final camera = await mapboxMap.cameraForCoordinateBounds(
