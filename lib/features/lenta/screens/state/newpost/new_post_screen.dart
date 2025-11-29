@@ -102,7 +102,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                       color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 2),
                   _buildPhotoCarousel(),
 
                   const SizedBox(height: 24),
@@ -194,22 +194,25 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
 
   /// Кнопка добавления фотографии
   Widget _buildAddPhotoButton() {
-    return Builder(
-      builder: (context) => GestureDetector(
-        onTap: _handleAddPhotos,
-        child: Container(
-          width: 90,
-          height: 90,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            color: AppColors.getSurfaceColor(context),
-            border: Border.all(color: AppColors.getBorderColor(context)),
-          ),
-          child: Center(
-            child: Icon(
-              CupertinoIcons.photo,
-              size: 28,
-              color: AppColors.getIconSecondaryColor(context),
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Builder(
+        builder: (context) => GestureDetector(
+          onTap: _handleAddPhotos,
+          child: Container(
+            width: 90,
+            height: 90,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              color: AppColors.getSurfaceColor(context),
+              border: Border.all(color: AppColors.getBorderColor(context)),
+            ),
+            child: Center(
+              child: Icon(
+                CupertinoIcons.photo,
+                size: 28,
+                color: AppColors.getIconSecondaryColor(context),
+              ),
             ),
           ),
         ),
@@ -220,76 +223,79 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
   /// Элемент фотографии с кнопкой удаления
   Widget _buildPhotoItem(File file, int photoIndex) {
     return Builder(
-      builder: (context) => Stack(
-        clipBehavior: Clip.none,
-        children: [
-          GestureDetector(
-            onTap: () async {
-              // По тапу можно заменить картинку
-              final picker = ImagePicker();
-              final XFile? pickedFile = await picker.pickImage(
-                source: ImageSource.gallery,
-              );
-              if (pickedFile == null) return;
+      builder: (context) => Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            GestureDetector(
+              onTap: () async {
+                // По тапу можно заменить картинку
+                final picker = ImagePicker();
+                final XFile? pickedFile = await picker.pickImage(
+                  source: ImageSource.gallery,
+                );
+                if (pickedFile == null) return;
 
-              // ── сжимаем выбранное фото перед заменой
-              final compressed = await compressLocalImage(
-                sourceFile: File(pickedFile.path),
-                maxSide: 1600,
-                jpegQuality: 80,
-              );
-              if (!mounted) return;
+                // ── сжимаем выбранное фото перед заменой
+                final compressed = await compressLocalImage(
+                  sourceFile: File(pickedFile.path),
+                  maxSide: 1600,
+                  jpegQuality: 80,
+                );
+                if (!mounted) return;
 
-              setState(() {
-                _images[photoIndex] = compressed;
-                _updatePublishState();
-              });
-            },
-            child: Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                color: AppColors.getBackgroundColor(context),
-              ),
-              clipBehavior: Clip.hardEdge,
-              child: Image.file(
-                file,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+                setState(() {
+                  _images[photoIndex] = compressed;
+                  _updatePublishState();
+                });
+              },
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   color: AppColors.getBackgroundColor(context),
-                  child: Icon(
-                    CupertinoIcons.photo,
-                    size: 24,
-                    color: AppColors.getIconSecondaryColor(context),
+                ),
+                clipBehavior: Clip.hardEdge,
+                child: Image.file(
+                  file,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: AppColors.getBackgroundColor(context),
+                    child: Icon(
+                      CupertinoIcons.photo,
+                      size: 24,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          // Кнопка удаления в правом верхнем углу
-          Positioned(
-            right: -6,
-            top: -6,
-            child: GestureDetector(
-              onTap: () => _handleDeletePhoto(file),
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: AppColors.getSurfaceColor(context),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.getBorderColor(context)),
-                ),
-                child: const Icon(
-                  CupertinoIcons.clear_circled_solid,
-                  size: 20,
-                  color: AppColors.error,
+            // Кнопка удаления в правом верхнем углу
+            Positioned(
+              right: -6,
+              top: -6,
+              child: GestureDetector(
+                onTap: () => _handleDeletePhoto(file),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppColors.getSurfaceColor(context),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: AppColors.getBorderColor(context)),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.clear_circled_solid,
+                    size: 20,
+                    color: AppColors.error,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

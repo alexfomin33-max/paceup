@@ -708,7 +708,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                               color: AppColors.getTextPrimaryColor(context),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 2),
                           _MediaTile(
                             file: logoFile,
                             url: logoUrl,
@@ -734,7 +734,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                 color: AppColors.getTextPrimaryColor(context),
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 2),
                             SizedBox(
                               height: 90,
                               child: ListView.separated(
@@ -1329,147 +1329,156 @@ class _MediaTile extends StatelessWidget {
   Widget build(BuildContext context) {
     // Если есть новый файл - показываем его
     if (file != null) {
-      return Stack(
-        clipBehavior: Clip.none,
-        children: [
-          GestureDetector(
-            onTap: onPick,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Image.file(
-                file!,
-                fit: BoxFit.cover,
-                width: 90,
-                height: 90,
-                errorBuilder: (context, error, stackTrace) => Container(
+      return Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            GestureDetector(
+              onTap: onPick,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Image.file(
+                  file!,
+                  fit: BoxFit.cover,
                   width: 90,
                   height: 90,
-                  color: AppColors.getBackgroundColor(context),
-                  child: Icon(
-                    CupertinoIcons.photo,
-                    size: 24,
-                    color: AppColors.getIconSecondaryColor(context),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            right: -6,
-            top: -6,
-            child: Builder(
-              builder: (context) => GestureDetector(
-                onTap: onRemove,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: AppColors.getSurfaceColor(context),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(
-                      color: AppColors.getBorderColor(context),
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 90,
+                    height: 90,
+                    color: AppColors.getBackgroundColor(context),
+                    child: Icon(
+                      CupertinoIcons.photo,
+                      size: 24,
+                      color: AppColors.getIconSecondaryColor(context),
                     ),
                   ),
-                  child: const Icon(
-                    CupertinoIcons.clear_circled_solid,
-                    size: 20,
-                    color: AppColors.error,
+                ),
+              ),
+            ),
+            Positioned(
+              right: -6,
+              top: -6,
+              child: Builder(
+                builder: (context) => GestureDetector(
+                  onTap: onRemove,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurfaceColor(context),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: AppColors.getBorderColor(context),
+                      ),
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.clear_circled_solid,
+                      size: 20,
+                      color: AppColors.error,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     }
 
     // Если есть URL существующего изображения - показываем его
     if (url != null && url!.isNotEmpty) {
-      return Stack(
-        clipBehavior: Clip.none,
-        children: [
-          GestureDetector(
-            onTap: onPick,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Builder(
-                builder: (context) {
-                  final dpr = MediaQuery.of(context).devicePixelRatio;
-                  final side = (90 * dpr).round();
-                  return CachedNetworkImage(
-                    imageUrl: url!,
-                    fit: BoxFit.cover,
-                    width: 90,
-                    height: 90,
-                    memCacheWidth: side,
-                    maxWidthDiskCache: side,
-                    placeholder: (context, url) => Container(
+      return Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            GestureDetector(
+              onTap: onPick,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Builder(
+                  builder: (context) {
+                    final dpr = MediaQuery.of(context).devicePixelRatio;
+                    final side = (90 * dpr).round();
+                    return CachedNetworkImage(
+                      imageUrl: url!,
+                      fit: BoxFit.cover,
                       width: 90,
                       height: 90,
-                      color: AppColors.getBackgroundColor(context),
-                      child: const Center(child: CupertinoActivityIndicator()),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      width: 90,
-                      height: 90,
-                      color: AppColors.getBackgroundColor(context),
-                      child: Icon(
-                        CupertinoIcons.photo,
-                        size: 24,
-                        color: AppColors.getIconSecondaryColor(context),
+                      memCacheWidth: side,
+                      maxWidthDiskCache: side,
+                      placeholder: (context, url) => Container(
+                        width: 90,
+                        height: 90,
+                        color: AppColors.getBackgroundColor(context),
+                        child: const Center(child: CupertinoActivityIndicator()),
                       ),
-                    ),
-                  );
-                },
+                      errorWidget: (context, url, error) => Container(
+                        width: 90,
+                        height: 90,
+                        color: AppColors.getBackgroundColor(context),
+                        child: Icon(
+                          CupertinoIcons.photo,
+                          size: 24,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-          Positioned(
-            right: -6,
-            top: -6,
-            child: Builder(
-              builder: (context) => GestureDetector(
-                onTap: onRemove,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: AppColors.getSurfaceColor(context),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(
-                      color: AppColors.getBorderColor(context),
+            Positioned(
+              right: -6,
+              top: -6,
+              child: Builder(
+                builder: (context) => GestureDetector(
+                  onTap: onRemove,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurfaceColor(context),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: AppColors.getBorderColor(context),
+                      ),
                     ),
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.clear_circled_solid,
-                    size: 20,
-                    color: AppColors.error,
+                    child: const Icon(
+                      CupertinoIcons.clear_circled_solid,
+                      size: 20,
+                      color: AppColors.error,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     }
 
     // Пустая плитка для выбора
-    return Builder(
-      builder: (context) => GestureDetector(
-        onTap: onPick,
-        child: Container(
-          width: 90,
-          height: 90,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            color: AppColors.getSurfaceColor(context),
-            border: Border.all(color: AppColors.getBorderColor(context)),
-          ),
-          child: Center(
-            child: Icon(
-              CupertinoIcons.photo,
-              size: 28,
-              color: AppColors.getIconSecondaryColor(context),
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Builder(
+        builder: (context) => GestureDetector(
+          onTap: onPick,
+          child: Container(
+            width: 90,
+            height: 90,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              color: AppColors.getSurfaceColor(context),
+              border: Border.all(color: AppColors.getBorderColor(context)),
+            ),
+            child: Center(
+              child: Icon(
+                CupertinoIcons.photo,
+                size: 28,
+                color: AppColors.getIconSecondaryColor(context),
+              ),
             ),
           ),
         ),

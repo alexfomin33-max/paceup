@@ -74,7 +74,13 @@ class _EditOfficialEventScreenState
   @override
   void initState() {
     super.initState();
-    _loadEventData();
+    // Откладываем загрузку данных до завершения сборки дерева виджетов
+    // чтобы избежать изменения провайдера во время build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadEventData();
+      }
+    });
     nameCtrl.addListener(() => _refresh());
     placeCtrl.addListener(() => _refresh());
     linkCtrl.addListener(() => _refresh());
