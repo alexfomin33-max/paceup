@@ -230,10 +230,15 @@ class _BuyButtonText extends StatelessWidget {
     final bg = enabled
         ? AppColors.brandPrimary
         : AppColors.disabledBg; // disabledBg обычно не меняется
+    // ── Для disabled кнопки в светлой теме используем более темный цвет текста
+    final isLight = Theme.of(context).brightness == Brightness.light;
     final fg = enabled
         ? Colors
               .white // белый цвет для иконки и текста на синем фоне
-        : AppColors.disabledText; // disabledText обычно не меняется
+        : (isLight
+              ? AppColors
+                    .textSecondary // более темный цвет для светлой темы
+              : AppColors.disabledText); // в темной теме оставляем как было
     final icon = text == 'Бронь' ? CupertinoIcons.lock : CupertinoIcons.cart;
 
     return ConstrainedBox(
@@ -252,7 +257,7 @@ class _BuyButtonText extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.xs),
             ),
           ),
-          icon: Icon(icon, size: 14),
+          icon: Icon(icon, size: 14, color: fg),
           label: Text(
             text,
             style: TextStyle(

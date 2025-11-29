@@ -248,7 +248,10 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     MoreMenuHub.hide();
 
-    final created = await Navigator.of(context).push<bool>(
+    final created = await Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push<bool>(
       TransparentPageRoute(
         builder: (_) => AddActivityScreen(currentUserId: _actualUserId!),
       ),

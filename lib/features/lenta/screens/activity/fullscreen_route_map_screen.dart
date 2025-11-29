@@ -125,7 +125,8 @@ class _FullscreenRouteMapScreenState extends State<FullscreenRouteMapScreen> {
         }
 
         // Ждём полной инициализации карты перед созданием аннотаций
-        await Future.delayed(const Duration(milliseconds: 100));
+        // Увеличиваем задержку для гарантии готовности каналов Mapbox
+        await Future.delayed(const Duration(milliseconds: 300));
 
         // Создаем менеджер полилиний с обработкой ошибок
         try {
@@ -150,30 +151,38 @@ class _FullscreenRouteMapScreenState extends State<FullscreenRouteMapScreen> {
           );
         }
 
-        // Подстраиваем камеру под границы
-        final camera = await mapboxMap.cameraForCoordinateBounds(
-          CoordinateBounds(
-            southwest: Point(
-              coordinates: Position(
-                bounds.southwest.longitude,
-                bounds.southwest.latitude,
+        // Подстраиваем камеру под границы с обработкой ошибок канала
+        try {
+          final camera = await mapboxMap.cameraForCoordinateBounds(
+            CoordinateBounds(
+              southwest: Point(
+                coordinates: Position(
+                  bounds.southwest.longitude,
+                  bounds.southwest.latitude,
+                ),
               ),
-            ),
-            northeast: Point(
-              coordinates: Position(
-                bounds.northeast.longitude,
-                bounds.northeast.latitude,
+              northeast: Point(
+                coordinates: Position(
+                  bounds.northeast.longitude,
+                  bounds.northeast.latitude,
+                ),
               ),
+              infiniteBounds: false,
             ),
-            infiniteBounds: false,
-          ),
-          MbxEdgeInsets(top: 12, left: 12, bottom: 12, right: 12),
-          null,
-          null,
-          null,
-          null,
-        );
-        await mapboxMap.setCamera(camera);
+            MbxEdgeInsets(top: 12, left: 12, bottom: 12, right: 12),
+            null,
+            null,
+            null,
+            null,
+          );
+          await mapboxMap.setCamera(camera);
+        } catch (cameraError) {
+          // Если канал еще не готов, логируем и продолжаем работу
+          // Карта отобразится с начальной позицией из cameraOptions
+          debugPrint(
+            '⚠️ Не удалось настроить камеру карты: $cameraError',
+          );
+        }
       },
       cameraOptions: CameraOptions(
         center: Point(coordinates: Position(center.longitude, center.latitude)),

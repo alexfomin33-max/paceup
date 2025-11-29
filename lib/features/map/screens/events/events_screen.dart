@@ -269,8 +269,10 @@ class EventsFloatingButtons extends ConsumerWidget {
                       icon: Icons.attach_money,
                       label: 'Платные',
                       onTap: () async {
-                        final result = await Navigator.push(
+                        final result = await Navigator.of(
                           context,
+                          rootNavigator: true,
+                        ).push(
                           TransparentPageRoute(
                             builder: (_) => const AddOfficialEventScreen(),
                           ),
@@ -286,8 +288,10 @@ class EventsFloatingButtons extends ConsumerWidget {
                       icon: Icons.add_circle_outline,
                       label: 'Добавить',
                       onTap: () async {
-                        final result = await Navigator.push(
+                        final result = await Navigator.of(
                           context,
+                          rootNavigator: true,
+                        ).push(
                           TransparentPageRoute(
                             builder: (_) => const AddEventScreen(),
                           ),
@@ -306,8 +310,10 @@ class EventsFloatingButtons extends ConsumerWidget {
                   icon: Icons.add_circle_outline,
                   label: 'Добавить',
                   onTap: () async {
-                    final result = await Navigator.push(
+                    final result = await Navigator.of(
                       context,
+                      rootNavigator: true,
+                    ).push(
                       TransparentPageRoute(
                         builder: (_) => const AddEventScreen(),
                       ),
@@ -324,9 +330,13 @@ class EventsFloatingButtons extends ConsumerWidget {
               icon: Icons.add_circle_outline,
               label: 'Добавить',
               onTap: () async {
-                final result = await Navigator.push(
+                final result = await Navigator.of(
                   context,
-                  TransparentPageRoute(builder: (_) => const AddEventScreen()),
+                  rootNavigator: true,
+                ).push(
+                  TransparentPageRoute(
+                    builder: (_) => const AddEventScreen(),
+                  ),
                 );
                 // Если событие было создано, вызываем callback для обновления данных на карте
                 if (result == 'created' && context.mounted) {
@@ -338,9 +348,13 @@ class EventsFloatingButtons extends ConsumerWidget {
               icon: Icons.add_circle_outline,
               label: 'Добавить',
               onTap: () async {
-                final result = await Navigator.push(
+                final result = await Navigator.of(
                   context,
-                  TransparentPageRoute(builder: (_) => const AddEventScreen()),
+                  rootNavigator: true,
+                ).push(
+                  TransparentPageRoute(
+                    builder: (_) => const AddEventScreen(),
+                  ),
                 );
                 // Если событие было создано, вызываем callback для обновления данных на карте
                 if (result == 'created' && context.mounted) {

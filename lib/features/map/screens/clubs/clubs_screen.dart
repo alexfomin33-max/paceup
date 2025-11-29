@@ -224,9 +224,13 @@ class ClubsFloatingButtons extends StatelessWidget {
             icon: Icons.group_add_outlined,
             label: 'Создать клуб',
             onTap: () async {
-              final result = await Navigator.push(
+              final result = await Navigator.of(
                 context,
-                TransparentPageRoute(builder: (_) => const CreateClubScreen()),
+                rootNavigator: true,
+              ).push(
+                TransparentPageRoute(
+                  builder: (_) => const CreateClubScreen(),
+                ),
               );
               // Если клуб был создан, вызываем callback для обновления данных на карте
               if (result == 'created' && context.mounted) {

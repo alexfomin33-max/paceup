@@ -91,6 +91,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
   Timer? _pollingTimer;
   int? _actualChatId; // Реальный chatId (создается если widget.chatId = 0)
   double _previousKeyboardHeight = 0; // Для отслеживания изменений клавиатуры
+  String? _fullscreenImageUrl; // URL изображения для полноэкранного просмотра
 
   @override
   void initState() {
@@ -771,10 +772,26 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     return 'http://uploads.paceup.ru/images/users/avatars/${widget.userId}/$avatar';
   }
 
+  /// ─── Показать изображение в полноэкранном режиме ───
+  void _showFullscreenImage(String imageUrl) {
+    setState(() {
+      _fullscreenImageUrl = imageUrl;
+    });
+  }
+
+  /// ─── Скрыть полноэкранное изображение ───
+  void _hideFullscreenImage() {
+    setState(() {
+      _fullscreenImageUrl = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
-      child: Scaffold(
+      child: Stack(
+        children: [
+          Scaffold(
         backgroundColor: Theme.of(context).brightness == Brightness.light
             ? AppColors.surface
             : AppColors.getBackgroundColor(context),
@@ -983,6 +1000,10 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                                 time: _formatTime(message.createdAt),
                                 topSpacing: topSpacing,
                                 bottomSpacing: bottomSpacing,
+                                onImageTap: message.image != null &&
+                                        message.image!.isNotEmpty
+                                    ? () => _showFullscreenImage(message.image!)
+                                    : null,
                               )
                             : _BubbleLeft(
                                 text: message.text,
@@ -991,6 +1012,10 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                                 avatarUrl: _getAvatarUrl(widget.userAvatar),
                                 topSpacing: topSpacing,
                                 bottomSpacing: bottomSpacing,
+                                onImageTap: message.image != null &&
+                                        message.image!.isNotEmpty
+                                    ? () => _showFullscreenImage(message.image!)
+                                    : null,
                               );
                       },
                     ),
@@ -1018,6 +1043,14 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
           ),
         ),
       ),
+          // ─── Overlay для полноэкранного просмотра изображения ───
+          if (_fullscreenImageUrl != null)
+            _FullscreenImageOverlay(
+              imageUrl: _fullscreenImageUrl!,
+              onClose: _hideFullscreenImage,
+            ),
+        ],
+      ),
     );
   }
 }
@@ -1034,6 +1067,7 @@ class _BubbleLeft extends StatelessWidget {
   final String avatarUrl;
   final double topSpacing;
   final double bottomSpacing;
+  final VoidCallback? onImageTap;
 
   const _BubbleLeft({
     required this.text,
@@ -1042,6 +1076,7 @@ class _BubbleLeft extends StatelessWidget {
     required this.avatarUrl,
     this.topSpacing = 0.0,
     this.bottomSpacing = 0.0,
+    this.onImageTap,
   });
 
   @override
@@ -1103,15 +1138,7 @@ class _BubbleLeft extends StatelessWidget {
                   // ─── Изображение (если есть) ───
                   if (image != null && image!.isNotEmpty) ...[
                     GestureDetector(
-                      onTap: () {
-                        // ─── Открываем изображение в полный размер ───
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                _FullscreenImageView(imageUrl: image!),
-                          ),
-                        );
-                      },
+                      onTap: onImageTap,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         child: Builder(
@@ -1193,6 +1220,7 @@ class _BubbleRight extends StatelessWidget {
   final String time;
   final double topSpacing;
   final double bottomSpacing;
+  final VoidCallback? onImageTap;
 
   const _BubbleRight({
     required this.text,
@@ -1200,6 +1228,7 @@ class _BubbleRight extends StatelessWidget {
     required this.time,
     this.topSpacing = 0.0,
     this.bottomSpacing = 0.0,
+    this.onImageTap,
   });
 
   @override
@@ -1233,15 +1262,7 @@ class _BubbleRight extends StatelessWidget {
                   // ─── Изображение (если есть) ───
                   if (image != null && image!.isNotEmpty) ...[
                     GestureDetector(
-                      onTap: () {
-                        // ─── Открываем изображение в полный размер ───
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                _FullscreenImageView(imageUrl: image!),
-                          ),
-                        );
-                      },
+                      onTap: onImageTap,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         child: Builder(
@@ -1441,66 +1462,78 @@ class _ComposerState extends State<_Composer> {
 }
 
 /// ────────────────────────────────────────────────────────────────────────
-/// Полноэкранный просмотр изображения
+/// Overlay для полноэкранного просмотра изображения на той же странице
 /// ────────────────────────────────────────────────────────────────────────
-class _FullscreenImageView extends StatelessWidget {
+class _FullscreenImageOverlay extends StatelessWidget {
   final String imageUrl;
+  final VoidCallback onClose;
 
-  const _FullscreenImageView({required this.imageUrl});
+  const _FullscreenImageOverlay({
+    required this.imageUrl,
+    required this.onClose,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.textPrimary, // Чёрный фон
-      body: Stack(
-        children: [
-          // ─── Изображение с возможностью зума ───
-          Center(
-            child: InteractiveViewer(
-              minScale: 0.5,
-              maxScale: 4.0,
-              child: CachedNetworkImage(
-                imageUrl: imageUrl,
-                fit: BoxFit.contain,
-                fadeInDuration: const Duration(milliseconds: 200),
-                errorWidget: (context, url, error) {
-                  return Container(
-                    color: AppColors.getSurfaceMutedColor(context),
-                    child: Icon(
-                      CupertinoIcons.photo,
-                      size: 64,
-                      color: AppColors.getIconSecondaryColor(context),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-
-          // ─── Кнопка закрытия (крестик) в верхнем левом углу ───
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface.withValues(alpha: 0.7),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.xmark,
-                    color: AppColors.surface,
-                    size: 20,
+    return GestureDetector(
+      // ─── Закрываем при тапе на фон ───
+      onTap: onClose,
+      child: Container(
+        color: AppColors.textPrimary.withValues(alpha: 0.95), // Чёрный фон с прозрачностью
+        child: Stack(
+          children: [
+            // ─── Изображение с возможностью зума ───
+            Center(
+              child: GestureDetector(
+                // ─── Предотвращаем закрытие при тапе на изображение ───
+                onTap: () {},
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.contain,
+                    fadeInDuration: const Duration(milliseconds: 200),
+                    errorWidget: (context, url, error) {
+                      return Container(
+                        color: AppColors.getSurfaceMutedColor(context),
+                        child: Icon(
+                          CupertinoIcons.photo,
+                          size: 64,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      );
+                    },
                   ),
                 ),
-                splashRadius: 24,
               ),
             ),
-          ),
-        ],
+
+            // ─── Кнопка закрытия (крестик) в верхнем левом углу ───
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: IconButton(
+                  onPressed: onClose,
+                  icon: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface.withValues(alpha: 0.7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.xmark,
+                      color: AppColors.surface,
+                      size: 20,
+                    ),
+                  ),
+                  splashRadius: 24,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -141,20 +141,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       maxLng = maxLng > point.longitude ? maxLng : point.longitude;
     }
 
-    // Создаём bounds и подстраиваем карту с отступами
-    final camera = await _mapboxMap!.cameraForCoordinateBounds(
-      CoordinateBounds(
-        southwest: Point(coordinates: Position(minLng, minLat)),
-        northeast: Point(coordinates: Position(maxLng, maxLat)),
-        infiniteBounds: false,
-      ),
-      MbxEdgeInsets(left: 30, right: 30, top: 160, bottom: 130),
-      null,
-      null,
-      null,
-      null,
-    );
-    await _mapboxMap!.setCamera(camera);
+    // Создаём bounds и подстраиваем карту с отступами с обработкой ошибок канала
+    try {
+      final camera = await _mapboxMap!.cameraForCoordinateBounds(
+        CoordinateBounds(
+          southwest: Point(coordinates: Position(minLng, minLat)),
+          northeast: Point(coordinates: Position(maxLng, maxLat)),
+          infiniteBounds: false,
+        ),
+        MbxEdgeInsets(left: 30, right: 30, top: 160, bottom: 130),
+        null,
+        null,
+        null,
+        null,
+      );
+      await _mapboxMap!.setCamera(camera);
+    } catch (cameraError) {
+      // Если канал еще не готов, логируем и продолжаем работу
+      // Карта останется в текущей позиции
+      debugPrint(
+        '⚠️ Не удалось настроить камеру карты: $cameraError',
+      );
+    }
   }
 
   /// Создание изображения маркера с текстом
@@ -206,17 +214,47 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     List<Map<String, dynamic>> markers,
     Color markerColor,
   ) async {
-    if (_mapboxMap == null) return;
+    if (_mapboxMap == null || !mounted) return;
 
     try {
-      // Удаляем старые маркеры
+      // ── Безопасное удаление старых маркеров
+      // Проверяем, что менеджер существует и карта готова
       if (_pointAnnotationManager != null) {
-        await _pointAnnotationManager!.deleteAll();
+        try {
+          await _pointAnnotationManager!.deleteAll();
+        } catch (e) {
+          // Если менеджер был уничтожен (например, при навигации),
+          // сбрасываем ссылку и создадим новый ниже
+          debugPrint(
+            'Менеджер аннотаций был уничтожен, создаём новый: $e',
+          );
+          _pointAnnotationManager = null;
+        }
       }
 
-      // Создаем менеджер аннотаций, если его нет
-      _pointAnnotationManager ??= await _mapboxMap!.annotations
-          .createPointAnnotationManager();
+      // ── Создаем менеджер аннотаций, если его нет или он был уничтожен
+      if (_pointAnnotationManager == null && _mapboxMap != null && mounted) {
+        try {
+          _pointAnnotationManager = await _mapboxMap!.annotations
+              .createPointAnnotationManager();
+          // ── Подписываемся на клики по маркерам после пересоздания менеджера
+          if (_pointAnnotationManager != null && mounted) {
+            _pointAnnotationManager!.tapEvents(
+              onTap: (annotation) {
+                _onMarkerTap(annotation);
+              },
+            );
+          }
+        } catch (e) {
+          debugPrint('Ошибка создания менеджера аннотаций: $e');
+          return; // Не можем продолжить без менеджера
+        }
+      }
+
+      // ── Проверяем, что менеджер готов перед использованием
+      if (_pointAnnotationManager == null || _mapboxMap == null || !mounted) {
+        return;
+      }
 
       _markerData.clear();
 
@@ -268,8 +306,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         }
       }
 
-      if (annotations.isNotEmpty) {
-        await _pointAnnotationManager!.createMulti(annotations);
+      // ── Создаем аннотации, если они есть и менеджер готов
+      if (annotations.isNotEmpty &&
+          _pointAnnotationManager != null &&
+          _mapboxMap != null &&
+          mounted) {
+        try {
+          await _pointAnnotationManager!.createMulti(annotations);
+        } catch (e) {
+          debugPrint('Ошибка создания аннотаций: $e');
+        }
       }
     } catch (e) {
       debugPrint('Ошибка настройки маркеров: $e');
@@ -803,14 +849,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             debugPrint('⚠️ Не удалось отключить масштабную линейку: $e');
           }
 
-          // Подписываемся на клики по маркерам
-          _pointAnnotationManager = await mapboxMap.annotations
-              .createPointAnnotationManager();
-          _pointAnnotationManager!.tapEvents(
-            onTap: (annotation) {
-              _onMarkerTap(annotation);
-            },
-          );
+          // ── Подписываемся на клики по маркерам
+          try {
+            _pointAnnotationManager = await mapboxMap.annotations
+                .createPointAnnotationManager();
+            if (_pointAnnotationManager != null && mounted) {
+              _pointAnnotationManager!.tapEvents(
+                onTap: (annotation) {
+                  _onMarkerTap(annotation);
+                },
+              );
+            }
+          } catch (e) {
+            debugPrint('Ошибка создания менеджера аннотаций в onMapCreated: $e');
+          }
 
           // Сохраняем цвет/данные по умолчанию, если Future уже вернул маркеры
           _pendingMarkerColor ??= markerColor;
