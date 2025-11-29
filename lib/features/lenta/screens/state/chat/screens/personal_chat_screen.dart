@@ -114,10 +114,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
     // Если force = true, всегда прокручиваем (например, при открытии клавиатуры)
     if (!force) {
-      // Проверяем, находится ли пользователь уже внизу (в пределах 200px от конца)
-      final isNearBottom =
-          _scrollController.position.pixels >=
-          _scrollController.position.maxScrollExtent - 200;
+      // При reverse: true "вниз" означает позицию 0 (в пределах 200px)
+      final isNearBottom = _scrollController.position.pixels <= 200;
 
       // Прокручиваем только если пользователь уже внизу
       if (!isNearBottom) return;
@@ -126,13 +124,15 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients && mounted) {
         if (animated) {
+          // При reverse: true прокрутка вниз = позиция 0
           _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
+            0,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
           );
         } else {
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+          // При reverse: true прокрутка вниз = позиция 0
+          _scrollController.jumpTo(0);
         }
       }
     });
@@ -298,12 +298,10 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
           _isLoading = false;
         });
 
-        // Прокрутка вниз после загрузки
+        // Прокрутка вниз после загрузки (при reverse: true это позиция 0)
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients) {
-            _scrollController.jumpTo(
-              _scrollController.position.maxScrollExtent,
-            );
+            _scrollController.jumpTo(0);
           }
         });
       } else {
@@ -352,7 +350,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             .toList();
 
         setState(() {
-          _messages.insertAll(0, newMessages);
+          // При reverse: true старые сообщения добавляются в конец
+          _messages.addAll(newMessages);
           _hasMore = response['has_more'] as bool? ?? false;
           _offset += newMessages.length;
           _isLoadingMore = false;
@@ -550,14 +549,15 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     );
 
     setState(() {
-      _messages.add(tempMessage);
+      // При reverse: true новые сообщения добавляются в начало
+      _messages.insert(0, tempMessage);
     });
 
-    // Прокрутка вниз
+    // Прокрутка вниз (при reverse: true это позиция 0)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          0,
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
         );
@@ -709,7 +709,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
           if (uniqueNewMessages.isNotEmpty) {
             setState(() {
-              _messages.addAll(uniqueNewMessages);
+              // При reverse: true новые сообщения добавляются в начало
+              _messages.insertAll(0, uniqueNewMessages);
               // Всегда обновляем на максимальный ID, если он больше текущего
               if (maxNewId > (lastId)) {
                 _lastMessageId = maxNewId;
@@ -728,15 +729,15 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             // Прокрутка вниз при получении новых сообщений
             // Только если пользователь уже находится внизу списка
             if (_scrollController.hasClients) {
-              final isNearBottom =
-                  _scrollController.position.pixels >=
-                  _scrollController.position.maxScrollExtent - 100;
+              // При reverse: true "вниз" означает позицию 0 (в пределах 100px)
+              final isNearBottom = _scrollController.position.pixels <= 100;
 
               if (isNearBottom) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (_scrollController.hasClients && mounted) {
+                    // При reverse: true прокрутка вниз = позиция 0
                     _scrollController.animateTo(
-                      _scrollController.position.maxScrollExtent,
+                      0,
                       duration: const Duration(milliseconds: 200),
                       curve: Curves.easeOut,
                     );
@@ -769,12 +770,11 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
   @override
   Widget build(BuildContext context) {
-    // ─── Получаем высоту клавиатуры для адаптации ───
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.surface
+            : AppColors.getBackgroundColor(context),
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
           backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -926,49 +926,68 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                   return NotificationListener<ScrollNotification>(
                     onNotification: (notification) {
                       if (notification is ScrollStartNotification) {
-                        if (_scrollController.position.pixels <= 100 &&
-                            _hasMore &&
-                            !_isLoadingMore) {
-                          _loadMore();
+                        // При reverse: true старые сообщения загружаются при прокрутке вверх
+                        // (к позиции maxScrollExtent)
+                        if (_scrollController.hasClients) {
+                          final isNearTop =
+                              _scrollController.position.pixels >=
+                              _scrollController.position.maxScrollExtent - 100;
+                          if (isNearTop && _hasMore && !_isLoadingMore) {
+                            _loadMore();
+                          }
                         }
                       }
                       return false;
                     },
                     child: ListView.builder(
                       controller: _scrollController,
-                      // ─── Динамический padding: учитываем высоту клавиатуры и панели ввода ───
-                      // Панель ввода (_Composer) имеет минимальную высоту ~100px
-                      // При открытой клавиатуре добавляем небольшой дополнительный отступ
+                      reverse: true,
+                      // ─── Padding: прижимаем сообщения к нижней панели ввода ───
+                      // Верхний padding для панели ввода, нижний минимальный
                       padding: EdgeInsets.fromLTRB(
                         12,
+                        // Базовый отступ для панели ввода
                         8,
                         12,
-                        // Базовый отступ для панели ввода, при открытой клавиатуре немного больше
-                        keyboardHeight > 0 ? 50 : 50,
+                        0,
                       ),
                       itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
                       itemBuilder: (context, index) {
-                        if (index == 0 && _isLoadingMore) {
+                        // При reverse: true индексы идут в обратном порядке
+                        if (index == _messages.length && _isLoadingMore) {
                           return const Padding(
                             padding: EdgeInsets.symmetric(vertical: 16),
                             child: Center(child: CupertinoActivityIndicator()),
                           );
                         }
 
-                        final messageIndex = _isLoadingMore ? index - 1 : index;
+                        // При reverse: true последний элемент списка - это первый в массиве
+                        final messageIndex = _messages.length - 1 - index;
                         final message = _messages[messageIndex];
+
+                        // ─── Фиксированный отступ между всеми пузырями ───
+                        // При reverse: true выше на экране = меньший messageIndex в массиве
+                        // Проверяем, есть ли сообщение с меньшим messageIndex (которое выше на экране)
+                        final hasMessageAbove = messageIndex > 0;
+                        final topSpacing = hasMessageAbove ? 8.0 : 0.0;
+                        // Нижний отступ только для самого нижнего пузыря (index == 0)
+                        final bottomSpacing = index == 0 ? 8.0 : 0.0;
 
                         return message.isMine
                             ? _BubbleRight(
                                 text: message.text,
                                 image: message.image,
                                 time: _formatTime(message.createdAt),
+                                topSpacing: topSpacing,
+                                bottomSpacing: bottomSpacing,
                               )
                             : _BubbleLeft(
                                 text: message.text,
                                 image: message.image,
                                 time: _formatTime(message.createdAt),
                                 avatarUrl: _getAvatarUrl(widget.userAvatar),
+                                topSpacing: topSpacing,
+                                bottomSpacing: bottomSpacing,
                               );
                       },
                     ),
@@ -1010,12 +1029,16 @@ class _BubbleLeft extends StatelessWidget {
   final String? image;
   final String time;
   final String avatarUrl;
+  final double topSpacing;
+  final double bottomSpacing;
 
   const _BubbleLeft({
     required this.text,
     this.image,
     required this.time,
     required this.avatarUrl,
+    this.topSpacing = 0.0,
+    this.bottomSpacing = 0.0,
   });
 
   @override
@@ -1024,7 +1047,12 @@ class _BubbleLeft extends StatelessWidget {
     final max = screenW * 0.72;
 
     return Padding(
-      padding: const EdgeInsets.only(right: 12, left: 0, bottom: 12),
+      padding: EdgeInsets.only(
+        right: 12,
+        left: 0,
+        top: topSpacing,
+        bottom: bottomSpacing,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -1160,15 +1188,28 @@ class _BubbleRight extends StatelessWidget {
   final String text;
   final String? image;
   final String time;
+  final double topSpacing;
+  final double bottomSpacing;
 
-  const _BubbleRight({required this.text, this.image, required this.time});
+  const _BubbleRight({
+    required this.text,
+    this.image,
+    required this.time,
+    this.topSpacing = 0.0,
+    this.bottomSpacing = 0.0,
+  });
 
   @override
   Widget build(BuildContext context) {
     final max = MediaQuery.of(context).size.width * 0.75;
 
     return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 0, bottom: 8),
+      padding: EdgeInsets.only(
+        left: 12,
+        right: 0,
+        top: topSpacing,
+        bottom: bottomSpacing,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -1179,8 +1220,8 @@ class _BubbleRight extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.green.withValues(alpha: 0.15)
-                    : AppColors.greenBg,
+                    ? AppColors.brandPrimary.withValues(alpha: 0.2)
+                    : AppColors.blueBg,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Column(
