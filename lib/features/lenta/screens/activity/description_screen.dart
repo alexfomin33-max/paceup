@@ -15,6 +15,7 @@ import '../../../../core/widgets/route_card.dart' as ab show RouteCard;
 // Модель — через алиас, чтобы не конфликтовало имя Equipment
 import '../../../../domain/models/activity_lenta.dart' as al;
 import 'combining_screen.dart';
+import 'fullscreen_route_map_screen.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
@@ -162,10 +163,34 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
             // ───────── Карта маршрута (только если есть точки)
             if (a.points.isNotEmpty) ...[
               SliverToBoxAdapter(
-                child: ab.RouteCard(
-                  points: a.points.map((c) => ll.LatLng(c.lat, c.lng)).toList(),
-                  height:
-                      240, // Увеличена высота карты для лучшей видимости маршрута
+                child: Stack(
+                  children: [
+                    // Карта (с IgnorePointer внутри, поэтому неинтерактивна)
+                    ab.RouteCard(
+                      points: a.points.map((c) => ll.LatLng(c.lat, c.lng)).toList(),
+                      height:
+                          240, // Увеличена высота карты для лучшей видимости маршрута
+                    ),
+                    // Прозрачный слой для обработки кликов поверх карты
+                    Positioned.fill(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            TransparentPageRoute(
+                              builder: (context) => FullscreenRouteMapScreen(
+                                points: a.points
+                                    .map((c) => ll.LatLng(c.lat, c.lng))
+                                    .toList(),
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          color: Colors.transparent,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),

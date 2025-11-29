@@ -549,8 +549,9 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     );
 
     setState(() {
-      // При reverse: true новые сообщения добавляются в начало
-      _messages.insert(0, tempMessage);
+      // При reverse: true новые сообщения добавляются в конец списка
+      // чтобы они отображались внизу экрана
+      _messages.add(tempMessage);
     });
 
     // Прокрутка вниз (при reverse: true это позиция 0)
@@ -612,7 +613,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
         // Обновляем временное сообщение с реальными данными
         setState(() {
-          final index = _messages.indexWhere((m) => m.id == -1);
+          // Ищем последнее временное сообщение (id == -1) в конце списка
+          final index = _messages.lastIndexWhere((m) => m.id == -1);
           if (index != -1) {
             _messages[index] = ChatMessage(
               id: messageId,
@@ -709,8 +711,9 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
           if (uniqueNewMessages.isNotEmpty) {
             setState(() {
-              // При reverse: true новые сообщения добавляются в начало
-              _messages.insertAll(0, uniqueNewMessages);
+              // При reverse: true новые сообщения добавляются в конец списка
+              // чтобы они отображались внизу экрана
+              _messages.addAll(uniqueNewMessages);
               // Всегда обновляем на максимальный ID, если он больше текущего
               if (maxNewId > (lastId)) {
                 _lastMessageId = maxNewId;

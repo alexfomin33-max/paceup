@@ -225,7 +225,10 @@ class _TradeChatSlotsScreenState extends State<TradeChatSlotsScreen> {
                               Text(
                                 'Бронь',
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w500,
+                                  fontWeight: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? FontWeight.w500
+                                      : FontWeight.w400,
                                   color:
                                       Theme.of(context).brightness ==
                                           Brightness.dark
@@ -386,9 +389,9 @@ class _ChipNeutral extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.getSurfaceMutedColor(
-          context,
-        ), // как у GenderPill и PricePill
+        color: Theme.of(context).brightness == Brightness.light
+            ? AppColors.background
+            : AppColors.getSurfaceMutedColor(context),
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: DefaultTextStyle(
@@ -735,8 +738,8 @@ class _BubbleRight extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.green.withValues(alpha: 0.15)
-                    : AppColors.greenBg,
+                    ? AppColors.brandPrimary.withValues(alpha: 0.2)
+                    : AppColors.blueBg,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Column(
