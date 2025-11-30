@@ -133,7 +133,7 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
                     children: [
                       // ─── Информационное сообщение ───
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 0),
+                        padding: EdgeInsets.zero,
                         child: Text(
                           'Вам придёт оповещение, если кто-то разместит слот, '
                           'соответствующий указанным критериям',
@@ -281,15 +281,21 @@ class _LabeledTextField extends StatelessWidget {
               vertical: 10,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: const BorderRadius.all(
+                Radius.circular(AppRadius.sm),
+              ),
               borderSide: BorderSide(color: AppColors.getBorderColor(context)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: const BorderRadius.all(
+                Radius.circular(AppRadius.sm),
+              ),
               borderSide: BorderSide(color: AppColors.getBorderColor(context)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: const BorderRadius.all(
+                Radius.circular(AppRadius.sm),
+              ),
               borderSide: const BorderSide(color: AppColors.outline),
             ),
           ),
@@ -353,7 +359,9 @@ class _ChipsRow extends StatelessWidget {
               color: sel
                   ? AppColors.brandPrimary
                   : AppColors.getSurfaceColor(context),
-              borderRadius: BorderRadius.circular(AppRadius.xl),
+              borderRadius: const BorderRadius.all(
+                Radius.circular(AppRadius.xl),
+              ),
               border: Border.all(
                 color: sel
                     ? AppColors.brandPrimary
@@ -407,7 +415,7 @@ class _OvalToggle extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.xl)),
           border: Border.all(
             color: selected
                 ? AppColors.brandPrimary
@@ -440,7 +448,7 @@ class _AlertCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm)),
         boxShadow: [
           BoxShadow(
             color: Theme.of(context).brightness == Brightness.dark
@@ -460,7 +468,9 @@ class _AlertCard extends StatelessWidget {
             width: 58,
             height: 58,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.xs),
+              borderRadius: const BorderRadius.all(
+                Radius.circular(AppRadius.xs),
+              ),
               color: AppColors.getBackgroundColor(context),
               image: DecorationImage(
                 image: AssetImage(alert.imageUrl),
@@ -529,8 +539,8 @@ class _DeleteButton extends StatelessWidget {
             elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             minimumSize: Size.zero,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.xs),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(AppRadius.xs)),
             ),
           ),
           child: const Text(
