@@ -20,8 +20,15 @@ class ClubsBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final h = MediaQuery.of(context).size.height;
-    final maxH = h * maxHeightFraction;
+    final mediaQuery = MediaQuery.of(context);
+    final screenHeight = mediaQuery.size.height;
+    final topPadding = mediaQuery.padding.top; // Высота верхней брови (notch)
+    final bottomPadding =
+        mediaQuery.padding.bottom; // Высота нижней безопасной зоны
+    // Максимальная высота: от низа экрана до верхней брови
+    // Вычитаем небольшой отступ снизу для визуального комфорта
+    final maxH =
+        screenHeight - topPadding - (bottomPadding > 0 ? bottomPadding : 16);
 
     return SafeArea(
       top: false,
@@ -33,48 +40,62 @@ class ClubsBottomSheet extends StatelessWidget {
           ),
         ),
         padding: const EdgeInsets.all(6),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxH),
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              // «ручка»
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 10, top: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.getBorderColor(context),
-                  borderRadius: BorderRadius.circular(AppRadius.xs),
-                ),
-              ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Вычисляем доступную высоту для контента
+            // Вычитаем высоту ручки (4 + 10), заголовка (~40), отступов (12 + 10 + 12)
+            final availableHeight = maxH - 88;
+            final contentMaxHeight = availableHeight > 0
+                ? availableHeight
+                : 100.0;
 
-              // заголовок
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Center(
-                  child: Text(
-                    title,
-                    style: AppTextStyles.h17w6.copyWith(
-                      color: AppColors.getTextPrimaryColor(context),
+            return ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxH),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // «ручка»
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 10, top: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.getBorderColor(context),
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 12),
 
-              // контент — отдаем прокрутку на откуп дочернему виджету
-              // чтобы списки могли лениво строиться без двойного скролла
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 0),
-                  child: child,
-                ),
-              ),
+                  // заголовок
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Center(
+                      child: Text(
+                        title,
+                        style: AppTextStyles.h17w6.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
 
-              const SizedBox(height: 10),
-            ],
-          ),
+                  // контент — динамическая высота: занимает только необходимое место
+                  // до максимальной высоты, после чего включается скролл
+                  Flexible(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: contentMaxHeight),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 0),
+                        child: child,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -292,7 +313,9 @@ class ClubsListFromApi extends StatelessWidget {
     }
 
     // ─────────────────────────── Ленивый список ───────────────────────────
+    // Используем shrinkWrap для динамической высоты bottom sheet
     return ListView.separated(
+      shrinkWrap: true,
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
       physics: const BouncingScrollPhysics(),
       itemCount: clubs.length,
