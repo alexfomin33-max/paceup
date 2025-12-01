@@ -459,6 +459,37 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
       if (uploadResponse['success'] == true) {
         final imagePath = uploadResponse['image_path'] as String;
+        // Получаем полный URL изображения для оптимистичного обновления
+        final imageUrl = uploadResponse['image_url'] as String? ??
+            'http://uploads.paceup.ru/$imagePath';
+
+        // ─── Оптимистичное обновление: добавляем временное сообщение ───
+        final tempMessage = ChatMessage(
+          id: -1, // Временный ID
+          senderId: _currentUserId!,
+          text: '', // Пустой текст для сообщения с изображением
+          image: imageUrl, // Полный URL изображения
+          createdAt: DateTime.now(),
+          isMine: true,
+          isRead: false,
+        );
+
+        setState(() {
+          // При reverse: true новые сообщения добавляются в конец списка
+          // чтобы они отображались внизу экрана
+          _messages.add(tempMessage);
+        });
+
+        // Прокрутка вниз (при reverse: true это позиция 0)
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+            );
+          }
+        });
 
         // Отправляем сообщение с изображением
         final api = ref.read(apiServiceProvider);
@@ -474,21 +505,30 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
         if (response['success'] == true) {
           final messageId = response['message_id'] as int;
+          final createdAt = DateTime.parse(response['created_at'] as String);
 
-          // Обновляем last_message_id - polling сам добавит сообщение
-          // Это предотвращает дублирование сообщений
+          // Обновляем временное сообщение с реальными данными
           setState(() {
+            // Ищем последнее временное сообщение (id == -1) в конце списка
+            final index = _messages.lastIndexWhere((m) => m.id == -1);
+            if (index != -1) {
+              _messages[index] = ChatMessage(
+                id: messageId,
+                senderId: _currentUserId!,
+                text: '',
+                image: imageUrl, // Используем тот же URL
+                createdAt: createdAt,
+                isMine: true,
+                isRead: false,
+              );
+            }
             _lastMessageId = messageId;
           });
-
-          // Небольшая задержка перед проверкой новых сообщений
-          // чтобы сервер успел обработать запрос
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              _checkNewMessages();
-            }
-          });
         } else {
+          // Удаляем временное сообщение при ошибке
+          setState(() {
+            _messages.removeWhere((m) => m.id == -1);
+          });
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -514,6 +554,10 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         }
       }
     } catch (e) {
+      // Удаляем временное сообщение при ошибке (если было добавлено)
+      setState(() {
+        _messages.removeWhere((m) => m.id == -1);
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
