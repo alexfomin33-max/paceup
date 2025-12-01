@@ -184,6 +184,25 @@ Future<List<Map<String, dynamic>>> eventsMarkers(
       final place = marker['place'] as String? ?? '';
       final events = marker['events'] as List<dynamic>? ?? [];
 
+      // ────────────────────────────────────────────────────────────────
+      // Проверяем, есть ли в маркере официальные события
+      // Событие считается официальным, если event_type == 'official'
+      // или registration_link не пустой
+      // ────────────────────────────────────────────────────────────────
+      bool hasOfficialEvent = false;
+      for (final event in events) {
+        if (event is Map<String, dynamic>) {
+          final eventType = event['event_type'] as String? ?? 'amateur';
+          final registrationLink = event['registration_link'] as String? ??
+              event['event_link'] as String? ??
+              '';
+          if (eventType == 'official' || registrationLink.isNotEmpty) {
+            hasOfficialEvent = true;
+            break;
+          }
+        }
+      }
+
       // Формируем заголовок для bottom sheet (только название города с правильным склонением)
       String title = 'События';
       if (place.isNotEmpty) {
@@ -201,6 +220,7 @@ Future<List<Map<String, dynamic>>> eventsMarkers(
         'events': events,
         'latitude': lat,
         'longitude': lng,
+        'is_official': hasOfficialEvent, // Флаг наличия официальных событий
       };
     }).toList();
   } catch (e) {

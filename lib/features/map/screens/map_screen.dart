@@ -85,6 +85,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// ID слоя для кругов отдельных точек (фон)
   static const String _unclusteredCircleLayerId = 'unclustered-point-circle';
 
+  /// ID слоя для официальных маркеров (красные)
+  static const String _officialCircleLayerId = 'official-point-circle';
+
   /// Цвета маркеров по вкладкам
   final markerColors = const {
     0: AppColors.accentBlue, // события
@@ -205,6 +208,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           '${point.latitude.toStringAsFixed(6)}_${point.longitude.toStringAsFixed(6)}';
       _markerData[markerKey] = marker;
 
+      // Получаем флаг официального события
+      final isOfficial = marker['is_official'] as bool? ?? false;
+
       // Создаем GeoJSON Feature
       features.add({
         'type': 'Feature',
@@ -217,6 +223,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           'title': marker['title'] as String? ?? '',
           'latitude': point.latitude,
           'longitude': point.longitude,
+          'is_official':
+              isOfficial, // Флаг официального события для условного цвета
         },
       });
     }
@@ -359,6 +367,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       debugPrint('✅ GeoJSON source создан');
 
       // ── Создаем слой для кластеров (круги)
+      // Используем условное выражение для цвета: красный для официальных, синий для обычных
+      // Для кластеров используем базовый цвет, так как кластер может содержать смешанные события
       final clusterLayer = CircleLayer(
         id: _clusterLayerId,
         sourceId: _geoJsonSourceId,
@@ -394,7 +404,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
       // ── Создаем слой для отдельных точек (не кластеры)
       // Используем комбинацию CircleLayer (фон) и SymbolLayer (текст)
-      // Сначала создаем круг для фона
+      // Создаем два слоя: один для официальных (красный), другой для обычных (синий)
+
+      // Слой для обычных маркеров (синий)
       final unclusteredCircleLayer = CircleLayer(
         id: _unclusteredCircleLayerId,
         sourceId: _geoJsonSourceId,
@@ -404,13 +416,47 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         circleStrokeColor: AppColors.border.toARGB32(),
       );
 
-      // Фильтр: показываем только точки без кластеризации
+      // Фильтр: показываем только обычные точки без кластеризации
       unclusteredCircleLayer.filter = [
-        '!',
-        ['has', 'point_count'],
+        'all',
+        [
+          '!',
+          ['has', 'point_count'],
+        ],
+        [
+          '!=',
+          ['get', 'is_official'],
+          true,
+        ],
       ];
 
       await style.addLayer(unclusteredCircleLayer);
+
+      // Слой для официальных маркеров (красный)
+      final officialCircleLayer = CircleLayer(
+        id: _officialCircleLayerId,
+        sourceId: _geoJsonSourceId,
+        circleColor: AppColors.error.toARGB32(), // Красный цвет для официальных
+        circleRadius: 12.0, // Размер точки (как раньше)
+        circleStrokeWidth: 1.0,
+        circleStrokeColor: AppColors.border.toARGB32(),
+      );
+
+      // Фильтр: показываем только официальные точки без кластеризации
+      officialCircleLayer.filter = [
+        'all',
+        [
+          '!',
+          ['has', 'point_count'],
+        ],
+        [
+          '==',
+          ['get', 'is_official'],
+          true,
+        ],
+      ];
+
+      await style.addLayer(officialCircleLayer);
 
       // Затем создаем слой для текста с количеством
       final unclusteredTextLayer = SymbolLayer(
@@ -456,7 +502,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       // Это важно для правильного удаления без ошибок
       final layerIds = [
         _unclusteredLayerId, // Текст отдельных точек
-        _unclusteredCircleLayerId, // Круг отдельных точек
+        _officialCircleLayerId, // Круг официальных точек
+        _unclusteredCircleLayerId, // Круг обычных точек
         _clusterTextLayerId, // Текст кластеров
         _clusterLayerId, // Круги кластеров
       ];
@@ -552,16 +599,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       }
 
       // Создаем изображения маркеров
+      // Используем разные цвета для официальных и обычных маркеров
       final imageMap = <String, Uint8List>{};
       for (final marker in markers) {
         try {
           final count = marker['count'] as int;
-          final imageKey = 'marker_${markerColor.toARGB32()}_$count';
+          final isOfficial = marker['is_official'] as bool? ?? false;
+          // Используем красный цвет для официальных, синий для обычных
+          final color = isOfficial ? AppColors.error : markerColor;
+          final imageKey = 'marker_${color.toARGB32()}_$count';
           if (!imageMap.containsKey(imageKey)) {
-            imageMap[imageKey] = await _createMarkerImage(
-              markerColor,
-              '$count',
-            );
+            imageMap[imageKey] = await _createMarkerImage(color, '$count');
           }
         } catch (e) {
           debugPrint('Ошибка создания изображения маркера: $e');
@@ -574,7 +622,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         try {
           final point = marker['point'] as latlong.LatLng;
           final count = marker['count'] as int;
-          final imageKey = 'marker_${markerColor.toARGB32()}_$count';
+          final isOfficial = marker['is_official'] as bool? ?? false;
+          // Используем красный цвет для официальных, синий для обычных
+          final color = isOfficial ? AppColors.error : markerColor;
+          final imageKey = 'marker_${color.toARGB32()}_$count';
           final imageBytes = imageMap[imageKey]!;
 
           final markerKey =
@@ -700,7 +751,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         layerIds: [
           _clusterLayerId,
           _clusterTextLayerId,
-          _unclusteredCircleLayerId,
+          _officialCircleLayerId, // Официальные маркеры
+          _unclusteredCircleLayerId, // Обычные маркеры
           _unclusteredLayerId,
         ],
       );
@@ -1202,6 +1254,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               }
 
               final count = marker['count'] as int? ?? 0;
+              final isOfficial = marker['is_official'] as bool? ?? false;
+              // Используем красный цвет для официальных, синий для обычных
+              final color = isOfficial ? AppColors.error : markerColor;
 
               return flutter_map.Marker(
                 point: point,
@@ -1213,7 +1268,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: markerColor,
+                      color: color,
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.border, width: 1),
                     ),
