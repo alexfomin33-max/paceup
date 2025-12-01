@@ -459,13 +459,13 @@ class _EventRow extends StatelessWidget {
                     color: AppColors.getTextPrimaryColor(context),
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 7),
                 Text(
-                  '${event.dateFormatted}  ·  Участников: ${_fmt(event.participantsCount)}',
+                  '${_formatDateWithoutCurrentYear(event.dateFormatted)}  ·  Участников: ${_fmt(event.participantsCount)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   // ── Цвет текста из темы
-                  style: AppTextStyles.h13w4.copyWith(
+                  style: AppTextStyles.h13w5.copyWith(
                     color: AppColors.getTextSecondaryColor(context),
                   ),
                 ),
@@ -644,6 +644,62 @@ class _D extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Форматирует дату, убирая год, если это текущий год
+/// Работает с форматом "10 июня 2025" → "10 июня" (если 2025 = текущий год)
+String _formatDateWithoutCurrentYear(String dateFormatted) {
+  if (dateFormatted.isEmpty) {
+    return dateFormatted;
+  }
+
+  final currentYear = DateTime.now().year;
+  final trimmedDate = dateFormatted.trim();
+
+  // ──────────────────────────────────────────────────────────────
+  // Ищем паттерн: "dd месяца yyyy" (с годом)
+  // Пример: "10 июня 2025" → "10 июня" (если 2025 = текущий год)
+  // ──────────────────────────────────────────────────────────────
+  final regexWithYear = RegExp(
+    r'^(\d{1,2})\s+([а-яА-ЯёЁ]+)\s+(\d{4})$',
+    caseSensitive: false,
+  );
+
+  final matchWithYear = regexWithYear.firstMatch(trimmedDate);
+  if (matchWithYear != null) {
+    final yearStr = matchWithYear.group(3)!;
+    final year = int.tryParse(yearStr);
+    if (year != null && year == currentYear) {
+      // Год текущий — убираем его
+      final day = matchWithYear.group(1)!;
+      final monthName = matchWithYear.group(2)!;
+      return '$day $monthName';
+    }
+    // Год не текущий — возвращаем как есть
+    return dateFormatted;
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Более гибкий поиск: ищем любой 4-значный год в строке
+  // и удаляем его, если это текущий год
+  // ──────────────────────────────────────────────────────────────
+  final yearPattern = RegExp(r'\b(\d{4})\b');
+  final allMatches = yearPattern.allMatches(trimmedDate);
+
+  for (final match in allMatches) {
+    final yearStr = match.group(1)!;
+    final year = int.tryParse(yearStr);
+    if (year != null && year == currentYear) {
+      // Нашли текущий год — удаляем его вместе с окружающими пробелами
+      final before = trimmedDate.substring(0, match.start);
+      final after = trimmedDate.substring(match.end);
+      // Убираем лишние пробелы
+      return (before.trim() + ' ' + after.trim()).trim();
+    }
+  }
+
+  // Не нашли текущий год — возвращаем как есть
+  return dateFormatted;
 }
 
 String _fmt(int n) {

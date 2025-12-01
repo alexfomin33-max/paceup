@@ -37,7 +37,7 @@ class _AddOfficialEventScreenState
 
   // ──────────── фиксированные пропорции для обрезки медиа ────────────
   static const double _logoAspectRatio = 1;
-  static const double _backgroundAspectRatio = 2.3;
+  static const double _backgroundAspectRatio = 2.1;
 
   @override
   void initState() {
@@ -125,7 +125,7 @@ class _AddOfficialEventScreenState
   }
 
   Future<void> _pickBackground() async {
-    // ── выбираем фон с обрезкой 16:9 и сжатием до оптимального размера
+    // ── выбираем фон с обрезкой 2.1:1 и сжатием до оптимального размера
     final processed = await ImagePickerHelper.pickAndProcessImage(
       context: context,
       aspectRatio: _backgroundAspectRatio,
@@ -337,11 +337,11 @@ class _AddOfficialEventScreenState
       nameCtrl.text = templateAsync.name;
       placeCtrl.text = templateAsync.place;
       descCtrl.text = templateAsync.description;
-      
+
       // ── Заполняем ссылку и обновляем провайдер
       final linkValue = (templateAsync.link?.trim() ?? '').replaceAll(' ', '');
       linkCtrl.text = linkValue;
-      
+
       ref
           .read(addOfficialEventFormProvider.notifier)
           .updateActivity(templateAsync.activity);
@@ -384,9 +384,7 @@ class _AddOfficialEventScreenState
 
       // ── Дополнительно обновляем ссылку (для гарантии синхронизации)
       if (linkValue.isNotEmpty) {
-        ref
-            .read(addOfficialEventFormProvider.notifier)
-            .updateLink(linkValue);
+        ref.read(addOfficialEventFormProvider.notifier).updateLink(linkValue);
       }
 
       templateCtrl.text = templateName;
@@ -738,7 +736,7 @@ class _AddOfficialEventScreenState
                                   .read(addOfficialEventFormProvider.notifier)
                                   .updateBackgroundFile(null),
                               width:
-                                  207, // Ширина для соотношения 2.3:1 (90 * 2.3)
+                                  189, // Ширина для соотношения 2.1:1 (90 * 2.1)
                               height: 90,
                             ),
                           ],

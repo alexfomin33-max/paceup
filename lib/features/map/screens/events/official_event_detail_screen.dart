@@ -117,13 +117,20 @@ class _OfficialEventDetailScreenState
     if (_eventData == null) return;
     final dpr = MediaQuery.of(context).devicePixelRatio;
 
-    // Логотип в шапке: 92×92
-    final logoUrl = _eventData!['logo_url'] as String?;
-    if (logoUrl != null && logoUrl.isNotEmpty) {
-      final w = (100 * dpr).round();
-      final h = (100 * dpr).round();
+    // Фоновая картинка (соотношение сторон 2.1:1)
+    final backgroundUrl = _eventData!['background_url'] as String?;
+    if (backgroundUrl != null && backgroundUrl.isNotEmpty) {
+      final screenW = MediaQuery.of(context).size.width;
+      final calculatedHeight =
+          screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
+      final targetW = (screenW * dpr).round();
+      final targetH = (calculatedHeight * dpr).round();
       precacheImage(
-        CachedNetworkImageProvider(logoUrl, maxWidth: w, maxHeight: h),
+        CachedNetworkImageProvider(
+          backgroundUrl,
+          maxWidth: targetW,
+          maxHeight: targetH,
+        ),
         context,
       );
     }
@@ -394,7 +401,6 @@ class _OfficialEventDetailScreenState
       );
     }
 
-    final logoUrl = _eventData!['logo_url'] as String? ?? '';
     final backgroundUrl = _eventData!['background_url'] as String? ?? '';
     final name = _eventData!['name'] as String? ?? '';
     final dateFormattedShort = _eventData!['date_formatted_short'] as String? ?? '';
@@ -462,100 +468,71 @@ class _OfficialEventDetailScreenState
                     ),
                     child: Column(
                       children: [
-                        // ── Фоновая картинка (если есть)
-                        if (backgroundUrl.isNotEmpty) ...[
-                          SizedBox(
-                            height: 200,
-                            width: double.infinity,
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                CachedNetworkImage(
-                                  imageUrl: backgroundUrl,
-                                  fit: BoxFit.cover,
-                                  errorWidget: (context, url, error) => Container(
-                                    color: AppColors.getBackgroundColor(context),
-                                  ),
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            // Cover изображение (если есть)
+                            if (backgroundUrl.isNotEmpty)
+                              _BackgroundImage(url: backgroundUrl)
+                            else
+                              Builder(
+                                builder: (context) {
+                                  final screenW = MediaQuery.of(context).size.width;
+                                  final calculatedHeight =
+                                      screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
+                                  return Container(
+                                    width: double.infinity,
+                                    height: calculatedHeight,
+                                    color: AppColors.getBorderColor(context),
+                                  );
+                                },
+                              ),
+                            // Верхние кнопки
+                            SafeArea(
+                              bottom: false,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
                                 ),
-                                // Градиент сверху для лучшей читаемости кнопок
-                                Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        AppColors.getSurfaceColor(context).withValues(alpha: 0.7),
-                                        Colors.transparent,
-                                      ],
+                                child: Row(
+                                  children: [
+                                    _CircleIconBtn(
+                                      icon: CupertinoIcons.back,
+                                      semantic: 'Назад',
+                                      onTap: () =>
+                                          Navigator.of(context).maybePop(),
                                     ),
-                                  ),
+                                    const Spacer(),
+                                    // Показываем карандаш для создателя, закладку для остальных
+                                    if (_canEdit)
+                                      _CircleIconBtn(
+                                        icon: CupertinoIcons.pencil,
+                                        semantic: 'Редактировать',
+                                        onTap: _openEditScreen,
+                                      )
+                                    else
+                                      _CircleIconBtn(
+                                        icon: CupertinoIcons.star_fill,
+                                        semantic: _isBookmarked
+                                            ? 'Удалить из закладок'
+                                            : 'Добавить в закладки',
+                                        onTap: _isTogglingBookmark
+                                            ? null
+                                            : _toggleBookmark,
+                                        color: _isBookmarked
+                                            ? AppColors.orange
+                                            : null,
+                                      ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
-                        ],
-                        SafeArea(
-                          bottom: false,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: SizedBox(
-                              height: 100,
-                              child: Row(
-                                children: [
-                                  _CircleIconBtn(
-                                    icon: CupertinoIcons.back,
-                                    semantic: 'Назад',
-                                    onTap: () =>
-                                        Navigator.of(context).maybePop(),
-                                  ),
-                                  Expanded(
-                                    child: Center(
-                                      child: logoUrl.isNotEmpty
-                                          ? ClipOval(
-                                              child: _HeaderLogo(url: logoUrl),
-                                            )
-                                          : Container(
-                                              width: 100,
-                                              height: 100,
-                                              decoration: const BoxDecoration(
-                                                color: AppColors.border,
-                                                shape: BoxShape.circle,
-                                              ),
-                                              child: const Icon(
-                                                Icons.event,
-                                                size: 48,
-                                              ),
-                                            ),
-                                    ),
-                                  ),
-                                  // Показываем карандаш для создателя, закладку для остальных
-                                  _canEdit
-                                      ? _CircleIconBtn(
-                                          icon: CupertinoIcons.pencil,
-                                          semantic: 'Редактировать',
-                                          onTap: _openEditScreen,
-                                        )
-                                      : _CircleIconBtn(
-                                          icon: CupertinoIcons.star_fill,
-                                          semantic: _isBookmarked
-                                              ? 'Удалить из закладок'
-                                              : 'Добавить в закладки',
-                                          onTap: _isTogglingBookmark
-                                              ? null
-                                              : _toggleBookmark,
-                                          color: _isBookmarked
-                                              ? AppColors.orange
-                                              : null,
-                                        ),
-                                ],
                               ),
                             ),
-                          ),
+                          ],
                         ),
-
                         // Остальная часть шапки
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -757,7 +734,7 @@ class _CircleIconBtn extends StatelessWidget {
   final IconData icon;
   final String? semantic;
   final VoidCallback? onTap;
-  final Color? color; // Цвет иконки (по умолчанию AppColors.surface)
+  final Color? color; // Цвет иконки (для закладки может быть оранжевым)
   const _CircleIconBtn({
     required this.icon,
     this.onTap,
@@ -771,6 +748,14 @@ class _CircleIconBtn extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    // В светлой теме иконки светлые (белые), в темной — как обычно
+    // Если передан явный цвет (например, для закладки), используем его
+    final brightness = Theme.of(context).brightness;
+    final iconColor = color ??
+        (brightness == Brightness.light
+            ? Colors.white
+            : AppColors.getIconPrimaryColor(context));
+
     return Semantics(
       label: semantic,
       button: true,
@@ -780,15 +765,11 @@ class _CircleIconBtn extends StatelessWidget {
           width: 34,
           height: 34,
           decoration: const BoxDecoration(
-            color: AppColors.scrim20,
+            color: AppColors.scrim40,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(
-            icon,
-            size: 18,
-            color: color ?? AppColors.getIconPrimaryColor(context),
-          ),
+          child: Icon(icon, size: 18, color: iconColor),
         ),
       ),
     );
@@ -817,39 +798,6 @@ class _InfoRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Круглый логотип 92×92 с кэшем
-class _HeaderLogo extends StatelessWidget {
-  final String url;
-  const _HeaderLogo({required this.url});
-
-  @override
-  Widget build(BuildContext context) {
-    final dpr = MediaQuery.of(context).devicePixelRatio;
-    final w = (100 * dpr).round();
-    return CachedNetworkImage(
-      imageUrl: url,
-      width: 100,
-      height: 100,
-      fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 120),
-      memCacheWidth: w,
-      maxWidthDiskCache: w,
-      errorWidget: (context, imageUrl, error) => Builder(
-        builder: (context) => Container(
-          width: 100,
-          height: 100,
-          color: AppColors.getBorderColor(context),
-          child: Icon(
-            Icons.image,
-            size: 48,
-            color: AppColors.getIconSecondaryColor(context),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -923,6 +871,45 @@ class _SquarePhoto extends StatelessWidget {
                 ),
               );
             },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Фоновая картинка события (соотношение сторон 2.1:1)
+class _BackgroundImage extends StatelessWidget {
+  final String url;
+  const _BackgroundImage({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    final screenW = MediaQuery.of(context).size.width;
+    final calculatedHeight =
+        screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final targetW = (screenW * dpr).round();
+    final targetH = (calculatedHeight * dpr).round();
+    return CachedNetworkImage(
+      imageUrl: url,
+      width: double.infinity,
+      height: calculatedHeight,
+      fit: BoxFit.cover,
+      fadeInDuration: const Duration(milliseconds: 120),
+      memCacheWidth: targetW,
+      memCacheHeight: targetH,
+      maxWidthDiskCache: targetW,
+      maxHeightDiskCache: targetH,
+      errorWidget: (context, imageUrl, error) => Builder(
+        builder: (context) => Container(
+          width: double.infinity,
+          height: calculatedHeight,
+          color: AppColors.getBorderColor(context),
+          child: Icon(
+            Icons.image,
+            size: 48,
+            color: AppColors.getIconSecondaryColor(context),
           ),
         ),
       ),

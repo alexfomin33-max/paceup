@@ -58,7 +58,7 @@ class _EditOfficialEventScreenState
 
   // ──────────── фиксированные пропорции для обрезки медиа ────────────
   static const double _logoAspectRatio = 1;
-  static const double _backgroundAspectRatio = 2.3;
+  static const double _backgroundAspectRatio = 2.1;
 
   // координаты выбранного места
   LatLng? selectedLocation;
@@ -281,7 +281,7 @@ class _EditOfficialEventScreenState
   }
 
   Future<void> _pickBackground() async {
-    // ── выбираем фон с обрезкой 2.3:1 и сжатием до оптимального размера
+    // ── выбираем фон с обрезкой 2.1:1 и сжатием до оптимального размера
     final processed = await ImagePickerHelper.pickAndProcessImage(
       context: context,
       aspectRatio: _backgroundAspectRatio,
@@ -748,7 +748,7 @@ class _EditOfficialEventScreenState
                                 backgroundUrl = null;
                                 backgroundFilename = null;
                               }),
-                              width: 207, // Ширина для соотношения 2.3:1
+                              width: 189, // Ширина для соотношения 2.1:1
                               height: 90,
                             ),
                           ],

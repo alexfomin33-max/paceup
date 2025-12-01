@@ -310,21 +310,22 @@ class _BookmarkRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
+      // внутренние отступы карточки
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Превью (главная картинка из события)
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.xs),
             child: event.logoUrl != null && event.logoUrl!.isNotEmpty
                 ? Builder(
                     builder: (context) {
                       final dpr = MediaQuery.of(context).devicePixelRatio;
-                      final targetW = (80 * dpr).round();
+                      final targetW = (55 * dpr).round();
                       final targetH = (55 * dpr).round();
                       return CachedNetworkImage(
                         imageUrl: event.logoUrl!,
-                        width: 80,
+                        width: 55,
                         height: 55,
                         fit: BoxFit.cover,
                         memCacheWidth: targetW,
@@ -332,8 +333,9 @@ class _BookmarkRow extends ConsumerWidget {
                         maxWidthDiskCache: targetW,
                         maxHeightDiskCache: targetH,
                         errorWidget: (context, imageUrl, error) => Container(
-                          width: 80,
+                          width: 55,
                           height: 55,
+                          // ── Цвет скелетона (можно оставить константу, т.к. это декоративный элемент)
                           color: AppColors.skeletonBase,
                           alignment: Alignment.center,
                           child: Icon(
@@ -344,7 +346,7 @@ class _BookmarkRow extends ConsumerWidget {
                           ),
                         ),
                         placeholder: (context, imageUrl) => Container(
-                          width: 80,
+                          width: 55,
                           height: 55,
                           color: AppColors.skeletonBase,
                           alignment: Alignment.center,
@@ -354,7 +356,7 @@ class _BookmarkRow extends ConsumerWidget {
                     },
                   )
                 : Container(
-                    width: 80,
+                    width: 55,
                     height: 55,
                     color: AppColors.skeletonBase,
                     alignment: Alignment.center,
@@ -367,8 +369,6 @@ class _BookmarkRow extends ConsumerWidget {
                   ),
           ),
           const SizedBox(width: 10),
-
-          // Правый столбец
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,14 +394,13 @@ class _BookmarkRow extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                // Вторая строка: дата + участники
+                const SizedBox(height: 5),
                 Text(
-                  '${event.dateFormatted}  ·  Участников: ${_fmt(event.participantsCount)}',
+                  '${_formatDateWithoutCurrentYear(event.dateFormatted)}  ·  Участников: ${_fmt(event.participantsCount)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   // ── Цвет текста из темы
-                  style: AppTextStyles.h13w4.copyWith(
+                  style: AppTextStyles.h13w5.copyWith(
                     color: AppColors.getTextSecondaryColor(context),
                   ),
                 ),
@@ -429,14 +428,75 @@ class _RemoveButton extends StatelessWidget {
       child: Container(
         width: 20,
         height: 20,
-        decoration: const BoxDecoration(
-          color: AppColors.error,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
           shape: BoxShape.circle,
+          border: Border.all(color: AppColors.error, width: 1),
         ),
-        child: const Icon(CupertinoIcons.xmark, size: 12, color: Colors.white),
+        child: const Icon(
+          CupertinoIcons.xmark,
+          size: 12,
+          color: AppColors.error,
+        ),
       ),
     );
   }
+}
+
+/// Форматирует дату, убирая год, если это текущий год
+/// Работает с форматом "10 июня 2025" → "10 июня" (если 2025 = текущий год)
+String _formatDateWithoutCurrentYear(String dateFormatted) {
+  if (dateFormatted.isEmpty) {
+    return dateFormatted;
+  }
+
+  final currentYear = DateTime.now().year;
+  final trimmedDate = dateFormatted.trim();
+
+  // ──────────────────────────────────────────────────────────────
+  // Ищем паттерн: "dd месяца yyyy" (с годом)
+  // Пример: "10 июня 2025" → "10 июня" (если 2025 = текущий год)
+  // ──────────────────────────────────────────────────────────────
+  final regexWithYear = RegExp(
+    r'^(\d{1,2})\s+([а-яА-ЯёЁ]+)\s+(\d{4})$',
+    caseSensitive: false,
+  );
+
+  final matchWithYear = regexWithYear.firstMatch(trimmedDate);
+  if (matchWithYear != null) {
+    final yearStr = matchWithYear.group(3)!;
+    final year = int.tryParse(yearStr);
+    if (year != null && year == currentYear) {
+      // Год текущий — убираем его
+      final day = matchWithYear.group(1)!;
+      final monthName = matchWithYear.group(2)!;
+      return '$day $monthName';
+    }
+    // Год не текущий — возвращаем как есть
+    return dateFormatted;
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Более гибкий поиск: ищем любой 4-значный год в строке
+  // и удаляем его, если это текущий год
+  // ──────────────────────────────────────────────────────────────
+  final yearPattern = RegExp(r'\b(\d{4})\b');
+  final allMatches = yearPattern.allMatches(trimmedDate);
+
+  for (final match in allMatches) {
+    final yearStr = match.group(1)!;
+    final year = int.tryParse(yearStr);
+    if (year != null && year == currentYear) {
+      // Нашли текущий год — удаляем его вместе с окружающими пробелами
+      final before = trimmedDate.substring(0, match.start);
+      final after = trimmedDate.substring(match.end);
+      // Убираем лишние пробелы
+      return (before.trim() + ' ' + after.trim()).trim();
+    }
+  }
+
+  // Не нашли текущий год — возвращаем как есть
+  return dateFormatted;
 }
 
 String _fmt(int n) {

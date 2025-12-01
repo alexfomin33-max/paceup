@@ -24,10 +24,12 @@ class EventsBottomSheet extends StatelessWidget {
     final mediaQuery = MediaQuery.of(context);
     final screenHeight = mediaQuery.size.height;
     final topPadding = mediaQuery.padding.top; // Высота верхней брови (notch)
-    final bottomPadding = mediaQuery.padding.bottom; // Высота нижней безопасной зоны
+    final bottomPadding =
+        mediaQuery.padding.bottom; // Высота нижней безопасной зоны
     // Максимальная высота: от низа экрана до верхней брови
     // Вычитаем небольшой отступ снизу для визуального комфорта
-    final maxH = screenHeight - topPadding - (bottomPadding > 0 ? bottomPadding : 16);
+    final maxH =
+        screenHeight - topPadding - (bottomPadding > 0 ? bottomPadding : 16);
 
     return SafeArea(
       top: false,
@@ -44,7 +46,9 @@ class EventsBottomSheet extends StatelessWidget {
             // Вычисляем доступную высоту для контента
             // Вычитаем высоту ручки (4 + 10), заголовка (~40), отступов (12 + 10 + 12)
             final availableHeight = maxH - 88;
-            final contentMaxHeight = availableHeight > 0 ? availableHeight : 100.0;
+            final contentMaxHeight = availableHeight > 0
+                ? availableHeight
+                : 100.0;
 
             return ConstrainedBox(
               constraints: BoxConstraints(maxHeight: maxH),
@@ -80,9 +84,7 @@ class EventsBottomSheet extends StatelessWidget {
                   // до максимальной высоты, после чего включается скролл
                   Flexible(
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: contentMaxHeight,
-                      ),
+                      constraints: BoxConstraints(maxHeight: contentMaxHeight),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 0),
                         child: child,
@@ -148,6 +150,66 @@ class EventsListFromApi extends StatelessWidget {
     this.latitude,
     this.longitude,
   });
+
+  /// Форматирует дату, убирая год, если это текущий год
+  /// Работает с форматом "10 июня 2025" → "10 июня" (если 2025 = текущий год)
+  /// Адаптация подхода из _normalizeServerDateText (feed_date.dart)
+  String _formatDateWithoutCurrentYear(
+    String dateFormatted,
+    Map<String, dynamic> event,
+  ) {
+    if (dateFormatted.isEmpty) {
+      return dateFormatted;
+    }
+
+    final currentYear = DateTime.now().year;
+    final trimmedDate = dateFormatted.trim();
+
+    // ──────────────────────────────────────────────────────────────
+    // Ищем паттерн: "dd месяца yyyy" (с годом)
+    // Пример: "10 июня 2025" → "10 июня" (если 2025 = текущий год)
+    // ──────────────────────────────────────────────────────────────
+    final regexWithYear = RegExp(
+      r'^(\d{1,2})\s+([а-яА-ЯёЁ]+)\s+(\d{4})$',
+      caseSensitive: false,
+    );
+
+    final matchWithYear = regexWithYear.firstMatch(trimmedDate);
+    if (matchWithYear != null) {
+      final yearStr = matchWithYear.group(3)!;
+      final year = int.tryParse(yearStr);
+      if (year != null && year == currentYear) {
+        // Год текущий — убираем его
+        final day = matchWithYear.group(1)!;
+        final monthName = matchWithYear.group(2)!;
+        return '$day $monthName';
+      }
+      // Год не текущий — возвращаем как есть
+      return dateFormatted;
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Более гибкий поиск: ищем любой 4-значный год в строке
+    // и удаляем его, если это текущий год
+    // ──────────────────────────────────────────────────────────────
+    final yearPattern = RegExp(r'\b(\d{4})\b');
+    final allMatches = yearPattern.allMatches(trimmedDate);
+
+    for (final match in allMatches) {
+      final yearStr = match.group(1)!;
+      final year = int.tryParse(yearStr);
+      if (year != null && year == currentYear) {
+        // Нашли текущий год — удаляем его вместе с окружающими пробелами
+        final before = trimmedDate.substring(0, match.start);
+        final after = trimmedDate.substring(match.end);
+        // Убираем лишние пробелы
+        return (before.trim() + ' ' + after.trim()).trim();
+      }
+    }
+
+    // Не нашли текущий год — возвращаем как есть
+    return dateFormatted;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -264,6 +326,7 @@ class EventsListFromApi extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.h13w4.copyWith(
                       color: AppColors.getTextSecondaryColor(context),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -324,16 +387,20 @@ class EventsListFromApi extends StatelessWidget {
         final eventId = event['id'] as int?;
         final name = event['name'] as String? ?? '';
         final logoUrl = event['logo_url'] as String?;
-        final date = event['date'] as String? ?? '';
+        final dateRaw = event['date'] as String? ?? '';
+        // Форматируем дату, убирая год, если это текущий год
+        final date = _formatDateWithoutCurrentYear(dateRaw, event);
         final participantsCount = event['participants_count'] as int? ?? 0;
         final subtitle = '$date  ·  Участников: $participantsCount';
         // ── Проверяем, является ли событие официальным (топ событием)
         // Используем event_type для точного определения, так как registration_link может отсутствовать в кратком списке
         final eventType = event['event_type'] as String? ?? 'amateur';
-        final registrationLink = event['registration_link'] as String? ??
+        final registrationLink =
+            event['registration_link'] as String? ??
             event['event_link'] as String? ??
             '';
-        final isOfficialEvent = eventType == 'official' || registrationLink.isNotEmpty;
+        final isOfficialEvent =
+            eventType == 'official' || registrationLink.isNotEmpty;
 
         return eventCard(
           logoUrl: logoUrl,
