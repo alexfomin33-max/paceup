@@ -74,6 +74,9 @@ dependencies:
   cached_network_image: ^3.3.1
   flutter_cache_manager: ^3.3.1
   
+  # ────────────────────────── URL Launcher ──────────────────────────
+  url_launcher: ^6.3.1
+  
 
 dev_dependencies:
   flutter_test:

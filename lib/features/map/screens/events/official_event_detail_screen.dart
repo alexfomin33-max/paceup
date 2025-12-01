@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/error_display.dart';
 import '../../../../core/utils/error_handler.dart';
@@ -236,20 +237,112 @@ class _OfficialEventDetailScreenState
     }
   }
 
-  /// Открытие ссылки на мероприятие (копирование в буфер обмена)
+  /// Открытие ссылки на мероприятие
   Future<void> _openEventLink(String url) async {
-    // Копируем ссылку в буфер обмена
-    await Clipboard.setData(ClipboardData(text: url));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Ссылка скопирована в буфер обмена'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    // Убеждаемся, что URL имеет правильный формат
+    Uri? uri;
+    try {
+      uri = Uri.parse(url);
+      // Если URL не содержит схему, добавляем https://
+      if (!uri.hasScheme) {
+        uri = Uri.parse('https://$url');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Некорректная ссылка'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Пытаемся открыть ссылку напрямую (без проверки canLaunchUrl)
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Не удалось открыть ссылку'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   int _tab = 0; // 0 — Описание, 1 — Участники
+
+  /// ──────────────────────── Форматирование даты с годом ────────────────────────
+  /// Добавляет год к дате, если это не текущий год
+  String _formatDateWithYear(String dateFormattedShort) {
+    if (dateFormattedShort.isEmpty || _eventData == null) {
+      return dateFormattedShort;
+    }
+
+    // Пытаемся получить полную дату из данных события
+    dynamic eventDateRaw = _eventData!['event_date'];
+    if (eventDateRaw == null) {
+      eventDateRaw = _eventData!['date'];
+    }
+
+    if (eventDateRaw == null) {
+      return dateFormattedShort;
+    }
+
+    // Парсим дату
+    DateTime? eventDate;
+    try {
+      if (eventDateRaw is String) {
+        // Пробуем разные форматы
+        if (eventDateRaw.contains(' ')) {
+          // Формат "YYYY-MM-DD HH:mm:ss"
+          eventDate = DateTime.parse(eventDateRaw.split(' ')[0]);
+        } else if (eventDateRaw.contains('.')) {
+          // Формат "DD.MM.YYYY"
+          final parts = eventDateRaw.split('.');
+          if (parts.length == 3) {
+            eventDate = DateTime(
+              int.parse(parts[2]),
+              int.parse(parts[1]),
+              int.parse(parts[0]),
+            );
+          }
+        } else {
+          // Формат "YYYY-MM-DD"
+          eventDate = DateTime.parse(eventDateRaw);
+        }
+      }
+    } catch (e) {
+      // Если не удалось распарсить, возвращаем исходную строку
+      return dateFormattedShort;
+    }
+
+    if (eventDate == null) {
+      return dateFormattedShort;
+    }
+
+    // Сравниваем год с текущим
+    final currentYear = DateTime.now().year;
+    if (eventDate.year != currentYear) {
+      // Добавляем год к дате
+      return '$dateFormattedShort ${eventDate.year}';
+    }
+
+    return dateFormattedShort;
+  }
 
   void _openGallery(int startIndex) {
     if (_eventData == null) return;
@@ -303,9 +396,12 @@ class _OfficialEventDetailScreenState
 
     final logoUrl = _eventData!['logo_url'] as String? ?? '';
     final name = _eventData!['name'] as String? ?? '';
-    final dateFormatted = _eventData!['date_formatted_short'] as String? ?? '';
+    final dateFormattedShort = _eventData!['date_formatted_short'] as String? ?? '';
     final place = _eventData!['place'] as String? ?? '';
     final photos = _eventData!['photos'] as List<dynamic>? ?? [];
+    
+    // ── Форматируем дату с добавлением года, если это не текущий год
+    final dateFormatted = _formatDateWithYear(dateFormattedShort);
     
     // ── Извлекаем ссылку на регистрацию (поддерживаем оба варианта названия)
     dynamic linkRaw = _eventData!['registration_link'];
@@ -313,9 +409,7 @@ class _OfficialEventDetailScreenState
       linkRaw = _eventData!['event_link'];
     }
     final registrationLink = (linkRaw?.toString().trim() ?? '').replaceAll(' ', '');
-    
-    final participantsCount = _eventData!['participants_count'] as int? ?? 0;
-    
+
     // ── Извлекаем дистанции из данных события (массив в метрах)
     // Обрабатываем разные форматы: числа, строки, null
     final distancesRaw = _eventData!['distances'];
@@ -440,20 +534,18 @@ class _OfficialEventDetailScreenState
                               ),
                               const SizedBox(height: 10),
 
-                              // Дата и адрес (вместо даты и времени)
+                              // ── Адрес
                               _InfoRow(
-                                icon: CupertinoIcons.calendar_today,
-                                text: '$dateFormatted · $place',
+                                icon: CupertinoIcons.location,
+                                text: place,
                               ),
 
-                              // ── Дистанции события (если есть)
-                              if (distances.isNotEmpty) ...[
-                                const SizedBox(height: 6),
-                                _InfoRow(
-                                  icon: CupertinoIcons.location,
-                                  text: _formatDistances(distances),
-                                ),
-                              ],
+                              // ── Дата
+                              const SizedBox(height: 6),
+                              _InfoRow(
+                                icon: CupertinoIcons.calendar_today,
+                                text: dateFormatted,
+                              ),
 
                               // ── Ссылка на мероприятие (URL)
                               if (registrationLink.isNotEmpty) ...[
@@ -475,8 +567,6 @@ class _OfficialEventDetailScreenState
                                             fontFamily: 'Inter',
                                             fontSize: 14,
                                             color: AppColors.brandPrimary,
-                                            decoration:
-                                                TextDecoration.underline,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -486,29 +576,6 @@ class _OfficialEventDetailScreenState
                                   ),
                                 ),
                               ],
-
-                              // Количество участников
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    CupertinoIcons.sportscourt,
-                                    size: 18,
-                                    color: AppColors.brandPrimary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '$participantsCount ${_formatParticipants(participantsCount)}',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14,
-                                      color: AppColors.getTextPrimaryColor(
-                                        context,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
 
                               if (photos.isNotEmpty) ...[
                                 const SizedBox(height: 12),
@@ -629,6 +696,7 @@ class _OfficialEventDetailScreenState
                         child: EventDescriptionContent(
                           description:
                               _eventData!['description'] as String? ?? '',
+                          distances: distances,
                         ),
                       ),
                     ),
@@ -647,48 +715,6 @@ class _OfficialEventDetailScreenState
     );
   }
 
-  /// Форматирование слова "участник" в зависимости от количества
-  String _formatParticipants(int count) {
-    final lastDigit = count % 10;
-    final lastTwoDigits = count % 100;
-
-    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
-      return 'участников';
-    }
-
-    if (lastDigit == 1) {
-      return 'участник';
-    } else if (lastDigit >= 2 && lastDigit <= 4) {
-      return 'участника';
-    } else {
-      return 'участников';
-    }
-  }
-
-  /// ──────────────────────── Форматирование дистанций ────────────────────────
-  /// Преобразует массив дистанций в метрах в читаемую строку
-  String _formatDistances(List<num> distances) {
-    if (distances.isEmpty) return '';
-
-    final formatted = distances.map((d) {
-      final meters = d.toDouble();
-      if (meters >= 1000) {
-        // Если >= 1000 м, показываем в километрах с одним знаком после запятой
-        final km = meters / 1000;
-        // Если целое число, показываем без десятичных
-        if (km == km.roundToDouble()) {
-          return '${km.toInt()} км';
-        } else {
-          return '${km.toStringAsFixed(1)} км';
-        }
-      } else {
-        // Если < 1000 м, показываем в метрах
-        return '${meters.toInt()} м';
-      }
-    }).join(', ');
-
-    return formatted;
-  }
 }
 
 /// ─── helpers
@@ -995,7 +1021,12 @@ class _GalleryViewerState extends State<_GalleryViewer> {
 /// Контент описания события из API
 class EventDescriptionContent extends StatelessWidget {
   final String description;
-  const EventDescriptionContent({super.key, required this.description});
+  final List<num> distances;
+  const EventDescriptionContent({
+    super.key,
+    required this.description,
+    required this.distances,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1006,17 +1037,76 @@ class EventDescriptionContent extends StatelessWidget {
       color: AppColors.getTextPrimaryColor(context),
     );
 
-    if (description.isEmpty) {
-      return Align(
-        alignment: Alignment.topLeft,
-        child: Text('Описание отсутствует', style: style),
-      );
-    }
-
     return Align(
       alignment: Alignment.topLeft,
-      child: Text(description, style: style, textAlign: TextAlign.start),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Текст описания
+          if (description.isEmpty)
+            Text('Описание отсутствует', style: style)
+          else
+            Text(description, style: style, textAlign: TextAlign.start),
+          
+          // Дистанции после описания (если есть)
+          if (distances.isNotEmpty) ...[
+            if (description.isNotEmpty) const SizedBox(height: 12),
+            // Заголовок "Дистанции"
+            Text(
+              'Дистанции',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Маркированный список дистанций
+            ...distances.map((distance) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '• ',
+                      style: style,
+                    ),
+                    Expanded(
+                      child: Text(
+                        _formatDistance(distance),
+                        style: style,
+                        textAlign: TextAlign.start,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ],
+      ),
     );
+  }
+
+  /// ──────────────────────── Форматирование одной дистанции ────────────────────────
+  /// Преобразует дистанцию в метрах в читаемую строку
+  String _formatDistance(num distance) {
+    final meters = distance.toDouble();
+    if (meters >= 1000) {
+      // Если >= 1000 м, показываем в километрах с одним знаком после запятой
+      final km = meters / 1000;
+      // Если целое число, показываем без десятичных
+      if (km == km.roundToDouble()) {
+        return '${km.toInt()} км';
+      } else {
+        return '${km.toStringAsFixed(1)} км';
+      }
+    } else {
+      // Если < 1000 м, показываем в метрах
+      return '${meters.toInt()} м';
+    }
   }
 }
 

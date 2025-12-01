@@ -24,7 +24,6 @@ class SplashScreen extends ConsumerStatefulWidget {
 /// SingleTickerProviderStateMixin — для анимации fade-in логотипа
 class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
-
   // ────────────────────────── Анимация ──────────────────────────
   /// 🔹 Контроллер анимации для fade-in эффекта логотипа
   late AnimationController _animationController;
@@ -75,7 +74,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Future<void> _checkAuth() async {
     // Получаем AuthService через провайдер
     final auth = ref.read(authServiceProvider);
-    
+
     // Запускаем проверку авторизации и минимальное время показа параллельно
     final results = await Future.wait([
       auth.isAuthorized(),
