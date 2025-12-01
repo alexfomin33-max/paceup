@@ -100,6 +100,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Цвет маркеров последней активной вкладки (используется после инициализации).
   Color? _pendingMarkerColor;
 
+  /// ──────────── Исходные маркеры для определения кластеров ────────────
+  /// Хранит все исходные маркеры до кластеризации для точного определения
+  /// принадлежности точек к кластерам при клике
+  List<Map<String, dynamic>> _allOriginalMarkers = const [];
+
   /// Флаг для предотвращения параллельных операций с маркерами
   bool _isUpdatingMarkers = false;
 
@@ -306,6 +311,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     try {
       _markerData.clear();
+      // Сохраняем исходные маркеры для определения кластеров
+      _allOriginalMarkers = List<Map<String, dynamic>>.unmodifiable(markers);
 
       if (markers.isEmpty) {
         await _removeGeoJsonSource();
@@ -724,29 +731,137 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       final clickedLayerId = layerIds.first;
       debugPrint('📍 Клик по слою: $clickedLayerId');
 
-      // Если клик по кластеру, расширяем его
+      // Если клик по кластеру, получаем все точки внутри и показываем bottom sheet
       if (clickedLayerId == _clusterLayerId ||
           clickedLayerId == _clusterTextLayerId) {
+        debugPrint('📍 Клик по кластеру, координаты: $lat, $lng');
         try {
-          // Используем координаты из контекста для расширения кластера
-          final expansionZoom = await _mapboxMap!
-              .getGeoJsonClusterExpansionZoom(_geoJsonSourceId, {
-                'type': 'Feature',
-                'geometry': {
-                  'type': 'Point',
-                  'coordinates': [lng, lat],
-                },
-              });
+          // ────────────────────────────────────────────────────────────────
+          // Подход как в Google Maps / Яндекс.Картах:
+          // Определяем принадлежность маркеров к кластеру по экранным координатам
+          // Это самый точный способ, используемый в крупных сервисах
+          // ────────────────────────────────────────────────────────────────
 
-          if (expansionZoom.value != null) {
-            await _mapboxMap!.easeTo(
-              CameraOptions(center: point, zoom: expansionZoom.value as double),
-              MapAnimationOptions(duration: 300),
-            );
-            debugPrint('✅ Кластер расширен');
+          // Получаем экранные координаты центра кластера
+          final clusterScreenPoint = ScreenCoordinate(
+            x: context.touchPosition.x,
+            y: context.touchPosition.y,
+          );
+
+          // Радиус кластера в пикселях (соответствует визуальному размеру)
+          // clusterRadius = 30 пикселей (из настроек кластеризации)
+          // Добавляем запас для надежности (40px = примерно радиус кластера + отступ)
+          const clusterRadiusPixels = 40.0;
+
+          debugPrint(
+            '📍 Поиск маркеров в кластере по экранным координатам (радиус: ${clusterRadiusPixels}px)...',
+          );
+
+          // Собираем все события/клубы из маркеров, входящих в кластер
+          final allEvents = <dynamic>[];
+          final allClubs = <dynamic>[];
+          final foundMarkerKeys = <String>{};
+          String? clusterTitle;
+
+          // Проходим по всем исходным маркерам (до кластеризации)
+          for (final marker in _allOriginalMarkers) {
+            final markerPoint = marker['point'] as latlong.LatLng?;
+            if (markerPoint == null) continue;
+
+            try {
+              // Преобразуем географические координаты маркера в экранные координаты
+              final markerMapPoint = Point(
+                coordinates: Position(
+                  markerPoint.longitude,
+                  markerPoint.latitude,
+                ),
+              );
+
+              final markerScreenPoint = await _mapboxMap!.pixelForCoordinate(
+                markerMapPoint,
+              );
+
+              // Вычисляем расстояние в пикселях от центра кластера до маркера
+              final dx = markerScreenPoint.x - clusterScreenPoint.x;
+              final dy = markerScreenPoint.y - clusterScreenPoint.y;
+              final distancePixels = (dx * dx + dy * dy);
+
+              // Если маркер находится в пределах радиуса кластера
+              if (distancePixels <= clusterRadiusPixels * clusterRadiusPixels) {
+                // Формируем ключ маркера для проверки дубликатов
+                final markerKey =
+                    '${markerPoint.latitude.toStringAsFixed(6)}_${markerPoint.longitude.toStringAsFixed(6)}';
+
+                if (!foundMarkerKeys.contains(markerKey)) {
+                  foundMarkerKeys.add(markerKey);
+
+                  // Собираем события
+                  final events = marker['events'] as List<dynamic>?;
+                  if (events != null) {
+                    allEvents.addAll(events);
+                  }
+
+                  // Собираем клубы
+                  final clubs = marker['clubs'] as List<dynamic>?;
+                  if (clubs != null) {
+                    allClubs.addAll(clubs);
+                  }
+
+                  // Используем заголовок первого маркера
+                  if (clusterTitle == null) {
+                    clusterTitle = marker['title'] as String? ?? 'Маркеры';
+                  }
+
+                  debugPrint(
+                    '📍 Маркер в кластере: $markerKey, расстояние: ${distancePixels.toStringAsFixed(1)}px',
+                  );
+                }
+              }
+            } catch (e) {
+              // Если не удалось преобразовать координаты, пропускаем маркер
+              debugPrint('⚠️ Ошибка преобразования координат маркера: $e');
+              continue;
+            }
           }
+
+          debugPrint(
+            '📍 Собрано событий: ${allEvents.length}, клубов: ${allClubs.length}, маркеров: ${foundMarkerKeys.length}',
+          );
+
+          if (allEvents.isEmpty && allClubs.isEmpty) {
+            debugPrint('⚠️ Не найдено данных в кластере');
+            return;
+          }
+
+          // Создаем объединенный маркер для bottom sheet
+          final clusterMarker = <String, dynamic>{
+            'point': latlong.LatLng(lat.toDouble(), lng.toDouble()),
+            'title': clusterTitle ?? 'Маркеры',
+            'count': allEvents.length + allClubs.length,
+            'events': allEvents,
+            'clubs': allClubs,
+            'latitude': lat.toDouble(),
+            'longitude': lng.toDouble(),
+          };
+
+          // Вычисляем позицию на экране для bottom sheet
+          Offset? screenPosition;
+          try {
+            final pixelCoordinate = await _mapboxMap!.pixelForCoordinate(point);
+            screenPosition = Offset(
+              pixelCoordinate.x.toDouble(),
+              pixelCoordinate.y.toDouble(),
+            );
+          } catch (e) {
+            debugPrint('⚠️ Ошибка вычисления позиции кластера: $e');
+          }
+
+          // Показываем bottom sheet с объединенными данными
+          _showMarkerBottomSheet(clusterMarker, screenPosition: screenPosition);
+          debugPrint('✅ Bottom sheet для кластера показан');
         } catch (e) {
-          debugPrint('⚠️ Ошибка расширения кластера: $e');
+          debugPrint('❌ Ошибка обработки кластера: $e');
+          debugPrint('   Stack trace: ${StackTrace.current}');
         }
         return;
       }
