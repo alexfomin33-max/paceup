@@ -83,7 +83,7 @@ final recommendedFriendsProvider = FutureProvider<List<FriendUser>>((ref) async 
   try {
     final response = await api.get(
       '/get_recommended_friends.php',
-      queryParams: {'limit': '50'},
+      queryParams: {'limit': '3'}, // Запрашиваем сразу 3 друга
     );
 
     // Логируем ответ для отладки
@@ -103,16 +103,14 @@ final recommendedFriendsProvider = FutureProvider<List<FriendUser>>((ref) async 
         debugPrint('ℹ️ Сообщение от API: ${response['message']}');
       }
       
-      // Загружаем статусы подписок для всех пользователей
-      if (users.isNotEmpty) {
-        final usersWithSubscriptions = await _loadSubscriptionStatuses(
-          api: api,
-          users: users,
-        );
-        return usersWithSubscriptions;
-      }
+      // Бэкенд уже фильтрует пользователей, на которых не подписан
+      // и возвращает их в случайном порядке (ORDER BY RAND())
+      // Просто берем первые 3 элемента
+      final result = users.take(3).toList();
       
-      return users;
+      debugPrint('✅ Выбрано 3 случайных друга: ${result.length}');
+      
+      return result;
     }
     
     // Если success != true, логируем сообщение об ошибке

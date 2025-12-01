@@ -126,7 +126,7 @@ class _EditOfficialEventScreenState
         }
 
         final data = await api.get(
-          '/update_event.php',
+          '/update_official_event.php',
           queryParams: {
             'event_id': widget.eventId.toString(),
             'user_id': userId.toString(),

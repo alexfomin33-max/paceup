@@ -58,8 +58,10 @@ final recommendedClubsProvider = FutureProvider<List<ClubSearch>>((ref) async {
   try {
     final response = await api.get(
       '/get_recommended_clubs.php',
-      queryParams: {'limit': '50'},
+      queryParams: {'limit': '3'}, // Запрашиваем сразу 3 клуба
     );
+
+    debugPrint('📥 Ответ API рекомендованных клубов: $response');
 
     if (response['success'] == true) {
       final clubs = (response['clubs'] as List<dynamic>?)
@@ -70,6 +72,10 @@ final recommendedClubsProvider = FutureProvider<List<ClubSearch>>((ref) async {
       if (response['message'] != null) {
         debugPrint('ℹ️ Сообщение от API: ${response['message']}');
       }
+      
+      // Бэкенд уже фильтрует клубы, в которые пользователь не вступил
+      // и возвращает их в случайном порядке (ORDER BY RAND())
+      debugPrint('✅ Получено клубов: ${clubs.length}');
       
       return clubs;
     }

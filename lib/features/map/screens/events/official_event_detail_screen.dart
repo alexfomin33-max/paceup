@@ -395,6 +395,7 @@ class _OfficialEventDetailScreenState
     }
 
     final logoUrl = _eventData!['logo_url'] as String? ?? '';
+    final backgroundUrl = _eventData!['background_url'] as String? ?? '';
     final name = _eventData!['name'] as String? ?? '';
     final dateFormattedShort = _eventData!['date_formatted_short'] as String? ?? '';
     final place = _eventData!['place'] as String? ?? '';
@@ -461,6 +462,38 @@ class _OfficialEventDetailScreenState
                     ),
                     child: Column(
                       children: [
+                        // ── Фоновая картинка (если есть)
+                        if (backgroundUrl.isNotEmpty) ...[
+                          SizedBox(
+                            height: 200,
+                            width: double.infinity,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                CachedNetworkImage(
+                                  imageUrl: backgroundUrl,
+                                  fit: BoxFit.cover,
+                                  errorWidget: (context, url, error) => Container(
+                                    color: AppColors.getBackgroundColor(context),
+                                  ),
+                                ),
+                                // Градиент сверху для лучшей читаемости кнопок
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        AppColors.getSurfaceColor(context).withValues(alpha: 0.7),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         SafeArea(
                           bottom: false,
                           child: Padding(
