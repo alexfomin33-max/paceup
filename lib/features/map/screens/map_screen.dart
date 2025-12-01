@@ -479,17 +479,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   /// ──────────── Настройка обработчиков кликов по слоям ────────────
-  /// ВАЖНО: Обработка кликов по кластерам упрощена.
-  /// Для полной реализации нужно проверить правильный API для обработки событий.
+  /// Обрабатывает клики по кластерам и отдельным точкам через GeoJSON слои
   Future<void> _setupLayerClickHandlers() async {
     if (_mapboxMap == null || !mounted) return;
 
-    // TODO: Реализовать обработку кликов по кластерам после проверки API
-    // В текущей версии клики обрабатываются через fallback метод
-    // (PointAnnotationManager), который используется при ошибках кластеризации
-    debugPrint(
-      '📍 Обработчики кликов для кластеризации настроены (упрощенная версия)',
-    );
+    // Обработчики кликов уже настроены в MapWidget через onTapListener
+    // Этот метод вызывается для логирования успешной настройки
+    debugPrint('✅ Обработчики кликов для кластеризации настроены');
   }
 
   /// ──────────── Fallback: старый метод через PointAnnotationManager ────────────
@@ -668,7 +664,167 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     });
   }
 
-  /// Обработка клика по маркеру (для Mapbox)
+  /// ──────────── Обработка клика по карте (для GeoJSON слоев) ────────────
+  /// Обрабатывает клики по кластерам и отдельным точкам через queryRenderedFeatures
+  Future<void> _onMapTap(MapContentGestureContext context) async {
+    if (_mapboxMap == null || !mounted) return;
+
+    try {
+      debugPrint('📍 Клик по карте: ${context.point.coordinates}');
+
+      // Получаем координаты клика на карте (географические)
+      final point = context.point;
+      final lat = point.coordinates.lat;
+      final lng = point.coordinates.lng;
+
+      // Получаем координаты клика на экране
+      final screenCoordinate = ScreenCoordinate(
+        x: context.touchPosition.x,
+        y: context.touchPosition.y,
+      );
+
+      // Создаем геометрию для запроса с небольшим радиусом для точности
+      final queryGeometry = RenderedQueryGeometry.fromScreenCoordinate(
+        screenCoordinate,
+      );
+
+      // Настраиваем опции запроса - проверяем все наши слои
+      final options = RenderedQueryOptions(
+        layerIds: [
+          _clusterLayerId,
+          _clusterTextLayerId,
+          _unclusteredCircleLayerId,
+          _unclusteredLayerId,
+        ],
+      );
+
+      // Запрашиваем features в точке клика
+      final features = await _mapboxMap!.queryRenderedFeatures(
+        queryGeometry,
+        options,
+      );
+
+      debugPrint('📍 Найдено features: ${features.length}');
+
+      if (features.isEmpty) {
+        debugPrint('⚠️ Клик был не по маркеру');
+        return;
+      }
+
+      // Берем первый найденный feature и проверяем его слой
+      final queriedFeature = features.first;
+
+      // Проверяем, какой слой был кликнут
+      final layerIds = queriedFeature?.layers;
+      if (layerIds == null || layerIds.isEmpty) {
+        debugPrint('⚠️ Нет информации о слоях');
+        return;
+      }
+
+      final clickedLayerId = layerIds.first;
+      debugPrint('📍 Клик по слою: $clickedLayerId');
+
+      // Если клик по кластеру, расширяем его
+      if (clickedLayerId == _clusterLayerId ||
+          clickedLayerId == _clusterTextLayerId) {
+        try {
+          // Используем координаты из контекста для расширения кластера
+          final expansionZoom = await _mapboxMap!
+              .getGeoJsonClusterExpansionZoom(_geoJsonSourceId, {
+                'type': 'Feature',
+                'geometry': {
+                  'type': 'Point',
+                  'coordinates': [lng, lat],
+                },
+              });
+
+          if (expansionZoom.value != null) {
+            await _mapboxMap!.easeTo(
+              CameraOptions(center: point, zoom: expansionZoom.value as double),
+              MapAnimationOptions(duration: 300),
+            );
+            debugPrint('✅ Кластер расширен');
+          }
+        } catch (e) {
+          debugPrint('⚠️ Ошибка расширения кластера: $e');
+        }
+        return;
+      }
+
+      // Если клик по отдельной точке, ищем маркер в _markerData
+      // Используем поиск по ближайшим координатам с допуском
+      Map<String, dynamic>? closestMarker;
+      double minDistance = double.infinity;
+      const tolerance =
+          0.01; // Допуск для поиска маркера (примерно 1 км) - увеличен для лучшей работы кликов
+
+      for (final entry in _markerData.entries) {
+        final marker = entry.value;
+        final markerPoint = marker['point'] as latlong.LatLng?;
+        if (markerPoint == null) continue;
+
+        // Вычисляем расстояние до маркера
+        final distance = _calculateDistance(
+          lat.toDouble(),
+          lng.toDouble(),
+          markerPoint.latitude.toDouble(),
+          markerPoint.longitude.toDouble(),
+        );
+
+        // Если это ближайший маркер в радиусе клика
+        if (distance < minDistance && distance < tolerance) {
+          minDistance = distance;
+          closestMarker = marker;
+        }
+      }
+
+      // Если нашли маркер, показываем bottom sheet
+      if (closestMarker != null) {
+        debugPrint('📍 Найден маркер, расстояние: $minDistance');
+        Offset? screenPosition;
+        try {
+          final markerPoint = closestMarker['point'] as latlong.LatLng;
+          final mapPoint = Point(
+            coordinates: Position(markerPoint.longitude, markerPoint.latitude),
+          );
+          final pixelCoordinate = await _mapboxMap!.pixelForCoordinate(
+            mapPoint,
+          );
+          screenPosition = Offset(
+            pixelCoordinate.x.toDouble(),
+            pixelCoordinate.y.toDouble(),
+          );
+        } catch (e) {
+          debugPrint('⚠️ Ошибка вычисления позиции маркера: $e');
+        }
+
+        _showMarkerBottomSheet(closestMarker, screenPosition: screenPosition);
+        return;
+      }
+
+      debugPrint('⚠️ Маркер не найден для координат: $lat, $lng');
+    } catch (e) {
+      debugPrint('❌ Ошибка обработки клика по карте: $e');
+      debugPrint('   Stack trace: ${StackTrace.current}');
+    }
+  }
+
+  /// ──────────── Вычисление расстояния между двумя точками ────────────
+  /// Использует простую формулу для вычисления расстояния в градусах
+  double _calculateDistance(
+    double lat1,
+    double lng1,
+    double lat2,
+    double lng2,
+  ) {
+    // Простое вычисление расстояния через разницу координат
+    // Для точности можно использовать формулу гаверсинуса, но для наших целей достаточно
+    final dLat = (lat1 - lat2).abs();
+    final dLng = (lng1 - lng2).abs();
+    return dLat * dLat + dLng * dLng;
+  }
+
+  /// Обработка клика по маркеру (для fallback метода через PointAnnotationManager)
   Future<void> _onMarkerTap(PointAnnotation annotation) async {
     // Получаем координаты из геометрии аннотации
     final geometry = annotation.geometry;
@@ -1155,6 +1311,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return SizedBox.expand(
       child: MapWidget(
         key: ValueKey('map_screen_${_selectedIndex}_$_mapInitialized'),
+        onTapListener: _onMapTap,
         onMapCreated: (MapboxMap mapboxMap) async {
           _mapboxMap = mapboxMap;
 
