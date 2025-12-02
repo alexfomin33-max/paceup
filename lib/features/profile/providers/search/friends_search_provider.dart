@@ -97,9 +97,6 @@ final recommendedFriendsProvider = FutureProvider.autoDispose<List<FriendUser>>(
       },
     );
 
-    // Логируем ответ для отладки
-    debugPrint('📥 Ответ API рекомендованных друзей: $response');
-
     // Проверяем успешность ответа
     if (response['success'] == true) {
       final users = (response['users'] as List<dynamic>?)
@@ -107,19 +104,10 @@ final recommendedFriendsProvider = FutureProvider.autoDispose<List<FriendUser>>(
               .toList() ??
           [];
       
-      debugPrint('✅ Загружено рекомендованных друзей: ${users.length}');
-      
-      // Если есть сообщение (например, "У пользователя не указан город")
-      if (response['message'] != null) {
-        debugPrint('ℹ️ Сообщение от API: ${response['message']}');
-      }
-      
       // Бэкенд уже фильтрует пользователей, на которых не подписан
       // и возвращает их в случайном порядке (ORDER BY RAND())
       // Просто берем первые 3 элемента
       final result = users.take(3).toList();
-      
-      debugPrint('✅ Выбрано 3 случайных друга: ${result.length}');
       
       return result;
     }

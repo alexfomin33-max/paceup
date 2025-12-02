@@ -85,13 +85,6 @@ class ApiService {
     // IOClient — обёртка для HttpClient с поддержкой http package API
     // Автоматически управляет connection pooling и keep-alive
     _client = IOClient(httpClient);
-
-    debugPrint(
-      '✅ HTTP Client инициализирован:\n'
-      '   • Connection Pool: ${AppConfig.maxConnectionsPerHost} соединений/хост\n'
-      '   • Keep-Alive: ${AppConfig.idleTimeout.inSeconds}s idle timeout\n'
-      '   • Connection Timeout: ${AppConfig.connectionTimeout.inSeconds}s',
-    );
   }
 
   /// Закрытие клиента (вызывать при выходе из приложения)

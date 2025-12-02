@@ -93,6 +93,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       final int? userId = await auth.getUserId();
       if (!mounted) return;
 
+      // Синхронизация будет запущена в LentaScreen после загрузки экрана
+      // (там пользователь уже точно авторизован и данные готовы)
       if (userId != null) {
         // 🔹 Если получили userId → переходим на основной экран с данными пользователя
         Navigator.pushReplacementNamed(

@@ -67,6 +67,7 @@ class MainActivity : FlutterFragmentActivity(), CoroutineScope by MainScope() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
+        // ───────────────────────── MethodChannel для маршрутов ─────────────────────────
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -86,6 +87,31 @@ class MainActivity : FlutterFragmentActivity(), CoroutineScope by MainScope() {
                         getLatestRoute(days, result)
                     }
                     else -> result.notImplemented()
+                }
+            }
+        
+        // ───────────────────────── MethodChannel для синхронизации Health Connect ─────────────────────────
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "paceup/health_sync")
+            .setMethodCallHandler { call, result ->
+                val prefs = getSharedPreferences("health_sync_prefs", MODE_PRIVATE)
+                
+                when (call.method) {
+                    "getLastSyncTime" -> {
+                        val lastSyncTime = prefs.getLong("last_sync_time", 0)
+                        result.success(lastSyncTime)
+                    }
+                    "setLastSyncTime" -> {
+                        val timeMillis = call.argument<Long>("timeMillis")
+                        if (timeMillis != null) {
+                            prefs.edit().putLong("last_sync_time", timeMillis).apply()
+                            result.success(null)
+                        } else {
+                            result.error("INVALID_ARGUMENT", "timeMillis cannot be null", null)
+                        }
+                    }
+                    else -> {
+                        result.notImplemented()
+                    }
                 }
             }
     }

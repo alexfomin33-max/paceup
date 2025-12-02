@@ -54,29 +54,20 @@ class DbOptimizer {
       final shouldOptimize = await _shouldOptimize();
 
       if (!shouldOptimize) {
-        debugPrint(
-          '🔷 DB Optimization: не требуется (последняя < 7 дней назад)',
-        );
         return false;
       }
 
-      debugPrint('🔷 DB Optimization: запуск автоматической оптимизации...');
-
       // ────────── Очистка старого кэша ──────────
-      debugPrint('  • Очистка старого кэша (>7 дней)...');
       await _cache.clearOldCache(days: 7);
 
       // ────────── Полная оптимизация БД ──────────
-      debugPrint('  • ANALYZE + WAL checkpoint + vacuum...');
       await _cache.optimizeDatabase();
 
       // ────────── Сохраняем метку времени ──────────
       await _markOptimizationComplete();
 
-      debugPrint('✅ DB Optimization: завершена успешно');
       return true;
     } catch (e) {
-      debugPrint('❌ DB Optimization: ошибка - $e');
       return false;
     }
   }
@@ -85,13 +76,9 @@ class DbOptimizer {
   ///
   /// Используйте в настройках приложения или при проблемах с производительностью
   Future<void> forceOptimization() async {
-    debugPrint('🔷 DB Optimization: принудительная оптимизация...');
-
     await _cache.clearOldCache(days: 7);
     await _cache.optimizeDatabase();
     await _markOptimizationComplete();
-
-    debugPrint('✅ DB Optimization: принудительная оптимизация завершена');
   }
 
   // ────────────────────────── МОНИТОРИНГ ──────────────────────────
