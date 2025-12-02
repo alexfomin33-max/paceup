@@ -234,7 +234,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       key: const ValueKey('form'),
       avatarUrl: profileState.avatarUrl,
       avatarBytes: profileState.avatarBytes,
-      onPickAvatar: () => notifier.pickAvatar(),
+      onPickAvatar: () => notifier.pickAvatar(context),
       firstName: _firstName,
       lastName: _lastName,
       nickname: _nickname,

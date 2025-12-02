@@ -6,15 +6,15 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'dart:convert';
-import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../../../core/services/api_service.dart';
 import '../../../../../core/utils/error_handler.dart';
+import '../../../../../core/utils/image_picker_helper.dart';
 import '../../../../../core/utils/local_image_compressor.dart'
-    show compressLocalImage, ImageCompressionPreset;
+    show ImageCompressionPreset;
 import '../../../../../core/providers/form_state_provider.dart';
 import '../../../providers/profile_header_provider.dart';
 import 'edit_profile_state.dart';
@@ -96,23 +96,19 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
     );
   }
 
-  /// Выбор аватара из галереи
-  Future<void> pickAvatar() async {
-    final picker = ImagePicker();
-    final XFile? file = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 2048,
-      maxHeight: 2048,
-    );
-    if (file == null) return;
-
-    final compressed = await compressLocalImage(
-      sourceFile: File(file.path),
+  /// Выбор аватара из галереи с обрезкой в пропорции 1:1
+  Future<void> pickAvatar(BuildContext context) async {
+    // ── выбираем аватарку с обрезкой в фиксированную пропорцию 1:1
+    final processed = await ImagePickerHelper.pickAndProcessImage(
+      context: context,
+      aspectRatio: 1.0,
       maxSide: ImageCompressionPreset.avatar.maxSide,
       jpegQuality: ImageCompressionPreset.avatar.quality,
+      cropTitle: 'Обрезка аватарки',
     );
-    final bytes = await compressed.readAsBytes();
+    if (processed == null) return;
 
+    final bytes = await processed.readAsBytes();
     state = state.copyWith(avatarBytes: bytes);
   }
 
