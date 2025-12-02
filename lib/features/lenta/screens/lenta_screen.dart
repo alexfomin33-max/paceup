@@ -10,6 +10,7 @@ import '../providers/lenta_provider.dart';
 import 'state/chat/providers/unread_chats_provider.dart';
 import '../../../../core/utils/image_cache_manager.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/health_sync_service.dart';
 import '../../../../core/widgets/error_display.dart';
 
 import 'widgets/activity/activity_block.dart'; // карточка тренировки
@@ -48,7 +49,7 @@ class LentaScreen extends ConsumerStatefulWidget {
 
 /// ✅ Держим состояние живым при перелистывании вкладок
 class _LentaScreenState extends ConsumerState<LentaScreen>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   @override
   bool get wantKeepAlive => true;
 
@@ -61,6 +62,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   int? _actualUserId;
   // Ключ для кнопки создания поста (для выпадающего меню)
   final GlobalKey _createMenuKey = GlobalKey();
+  
+  // Флаг для предотвращения двойного запуска синхронизации
+  bool _isSyncingHealthData = false;
 
   // ────────────────────────────────────────────────────────────────
   // 🖼️ PREFETCHING: отслеживаем предзагруженные индексы постов
@@ -86,6 +90,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
     // widget.userId используется только как fallback, если AuthService вернет null
@@ -129,6 +134,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
         // Запускаем polling для динамического обновления счетчика
         _startUnreadChatsPolling(userId);
+        
+        // Проверка флага синхронизации от Broadcast Receiver
+        _checkAndSyncHealthData();
       }
     });
 
@@ -151,10 +159,50 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scrollController.dispose();
     _prefetchDebounceTimer?.cancel(); // ✅ Очищаем таймер prefetch
     _unreadChatsPollingTimer?.cancel(); // ✅ Очищаем таймер polling
     super.dispose();
+  }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Проверяем флаг синхронизации при возврате приложения из фона
+    if (state == AppLifecycleState.resumed) {
+      _checkAndSyncHealthData();
+    }
+  }
+  
+  // ─────────────────────────────────────────────────────────────────────────
+  //  ПРОВЕРКА И СИНХРОНИЗАЦИЯ HEALTH CONNECT
+  // ─────────────────────────────────────────────────────────────────────────
+  
+  /// Проверяет флаг синхронизации и запускает импорт новых тренировок
+  Future<void> _checkAndSyncHealthData() async {
+    // Предотвращаем двойной запуск синхронизации
+    if (_isSyncingHealthData) return;
+    
+    try {
+      final syncService = ref.read(healthSyncServiceProvider);
+      
+      // Запускаем синхронизацию, если пользователь авторизован
+      if (_actualUserId != null && mounted) {
+        // Устанавливаем флаг, чтобы предотвратить повторный запуск
+        _isSyncingHealthData = true;
+        
+        // Запускаем синхронизацию в фоне
+        syncService.syncNewWorkouts(ref).then((result) {
+          _isSyncingHealthData = false;
+        }).catchError((error) {
+          _isSyncingHealthData = false;
+          debugPrint('Ошибка автоматической синхронизации: $error');
+        });
+      }
+      } catch (e) {
+      _isSyncingHealthData = false;
+      debugPrint('Ошибка синхронизации: $e');
+    }
   }
 
   // ———————————— Refresh через Riverpod ————————————

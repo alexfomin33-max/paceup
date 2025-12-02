@@ -27,8 +27,6 @@
     <uses-permission android:name="android.permission.health.READ_EXERCISE_ROUTES" />
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
     <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
-    <!-- (опционально, если понадобится бэкграунд-синх): 
-         <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" /> -->
 
     <application
         android:label="PaceUp"
@@ -83,6 +81,7 @@
                 <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
             </intent-filter>
         </activity-alias>
+
 
     </application>
 
