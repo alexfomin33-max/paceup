@@ -1,29 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../models/market_models.dart' show Gender;
 import '../../../../../core/widgets/primary_button.dart';
+import '../../../../../core/services/api_service.dart';
+import '../../../../../core/services/auth_service.dart';
+import '../../../../../core/utils/error_handler.dart';
+import '../../../providers/slots_provider.dart';
 
 /// Контент вкладки «Продажа слота»
-class SaleSlotsContent extends StatefulWidget {
+class SaleSlotsContent extends ConsumerStatefulWidget {
   const SaleSlotsContent({super.key});
 
   @override
-  State<SaleSlotsContent> createState() => _SaleSlotsContentState();
+  ConsumerState<SaleSlotsContent> createState() => _SaleSlotsContentState();
 }
 
-class _SaleSlotsContentState extends State<SaleSlotsContent> {
+// ─── Модель события для автопоиска ───
+class _EventOption {
+  final int id;
+  final String name;
+  final String place;
+  final String eventDate;
+
+  const _EventOption({
+    required this.id,
+    required this.name,
+    required this.place,
+    required this.eventDate,
+  });
+}
+
+class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
   final nameCtrl = TextEditingController();
   final descCtrl = TextEditingController();
   final priceCtrl = TextEditingController();
 
   Gender _gender = Gender.male;
   int _distanceIndex = 0;
-  final List<String> _distances = const [
-    '5 км',
-    '10,5 км',
-    '21,1 км',
-    '42,2 км',
-  ];
+  List<String> _distances = []; // Динамический список дистанций
+
+  // ─── Состояние выбранного события ───
+  int? _selectedEventId;
+  bool _isLoadingDistances = false;
+
+  // ─── Состояние загрузки и ошибок ───
+  bool _isSubmitting = false;
+  String? _errorMessage;
 
   bool get _isValid =>
       nameCtrl.text.trim().isNotEmpty && priceCtrl.text.trim().isNotEmpty;
@@ -36,14 +60,165 @@ class _SaleSlotsContentState extends State<SaleSlotsContent> {
     super.dispose();
   }
 
-  void _submit() {
-    if (!_isValid) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Объявление о продаже слота размещено (демо)'),
-      ),
-    );
-    Navigator.pop(context);
+  /// Загрузка дистанций события
+  Future<void> _loadEventDistances(int eventId) async {
+    setState(() {
+      _isLoadingDistances = true;
+      _distances = [];
+      _distanceIndex = 0;
+    });
+
+    try {
+      final api = ApiService();
+      final response = await api.post(
+        '/get_event_distances.php',
+        body: {'event_id': eventId},
+      );
+
+      if (response['success'] == true && mounted) {
+        final List<dynamic> distancesData = response['distances'] ?? [];
+        final distances = distancesData
+            .map((d) => d['formatted'] as String)
+            .toList();
+
+        setState(() {
+          _distances = distances;
+          _distanceIndex = 0;
+          _isLoadingDistances = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingDistances = false;
+        });
+      }
+    } catch (e) {
+      ErrorHandler.logError(e);
+      if (mounted) {
+        setState(() {
+          _isLoadingDistances = false;
+        });
+      }
+    }
+  }
+
+  /// Поиск событий для автозаполнения
+  Future<Iterable<_EventOption>> _searchEvents(String query) async {
+    if (query.length < 2) {
+      return const [];
+    }
+
+    try {
+      final api = ApiService();
+      final response = await api.post(
+        '/search_events.php',
+        body: {'query': query},
+      );
+
+      if (response['success'] == true) {
+        final List<dynamic> eventsData = response['events'] ?? [];
+        return eventsData.map((e) {
+          return _EventOption(
+            id: e['id'] as int,
+            name: e['name'] as String,
+            place: e['place'] as String? ?? '',
+            eventDate: e['event_date'] as String? ?? '',
+          );
+        });
+      }
+    } catch (e) {
+      ErrorHandler.logError(e);
+    }
+
+    return const [];
+  }
+
+  /// Отправка формы создания слота на сервер
+  Future<void> _submit() async {
+    if (!_isValid || _isSubmitting) return;
+
+    // ─── Сброс предыдущей ошибки ───
+    setState(() {
+      _errorMessage = null;
+      _isSubmitting = true;
+    });
+
+    try {
+      // ─── Получаем user_id из AuthService ───
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        throw Exception('Не удалось получить ID пользователя');
+      }
+
+      // ─── Парсим цену ───
+      final priceText = priceCtrl.text.trim();
+      final price = int.tryParse(priceText);
+      if (price == null || price <= 0) {
+        throw Exception('Некорректная цена. Введите число больше нуля');
+      }
+
+      // ─── Проверяем, что дистанция выбрана ───
+      if (_distances.isEmpty || _distanceIndex >= _distances.length) {
+        throw Exception('Выберите дистанцию');
+      }
+
+      // ─── Получаем выбранную дистанцию ───
+      final distance = _distances[_distanceIndex];
+
+      // ─── Преобразуем Gender в строку для API ───
+      final genderString = _gender == Gender.male ? 'male' : 'female';
+
+      // ─── Отправляем данные на сервер ───
+      final api = ApiService();
+      final response = await api.post(
+        '/create_slot.php',
+        body: {
+          'user_id': userId,
+          if (_selectedEventId != null) 'event_id': _selectedEventId,
+          'title': nameCtrl.text.trim(),
+          'distance': distance,
+          'price': price,
+          'gender': genderString,
+          'description': descCtrl.text.trim(),
+        },
+      );
+
+      // ─── Проверяем успешность ответа ───
+      if (response['success'] == true) {
+        // ─── Успешно создан слот ───
+        if (mounted) {
+          // ─── Обновляем список слотов без перезагрузки экрана ───
+          final slotsNotifier = ref.read(slotsProvider.notifier);
+          await slotsNotifier.loadInitial();
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Объявление о продаже слота успешно размещено'),
+            ),
+          );
+          Navigator.pop(context);
+        }
+      } else {
+        // ─── Ошибка от сервера ───
+        final errorMsg = response['message']?.toString() ??
+            'Не удалось создать слот. Попробуйте ещё раз';
+        setState(() {
+          _errorMessage = errorMsg;
+          _isSubmitting = false;
+        });
+      }
+    } catch (e) {
+      // ─── Обработка ошибок ───
+      ErrorHandler.logError(e);
+      final errorMsg = ErrorHandler.format(e);
+      if (mounted) {
+        setState(() {
+          _errorMessage = errorMsg;
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   @override
@@ -53,11 +228,18 @@ class _SaleSlotsContentState extends State<SaleSlotsContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _LabeledTextField(
+          _EventAutocompleteField(
             label: 'Название события',
-            hint: 'Название спортивного события',
+            hint: 'Начните вводить название события',
             controller: nameCtrl,
-            onChanged: (_) => setState(() {}),
+            onEventSelected: (event) {
+              setState(() {
+                _selectedEventId = event.id;
+                nameCtrl.text = event.name;
+              });
+              _loadEventDistances(event.id);
+            },
+            searchFunction: _searchEvents,
           ),
           const SizedBox(height: 20),
 
@@ -71,14 +253,32 @@ class _SaleSlotsContentState extends State<SaleSlotsContent> {
           ),
           const SizedBox(height: 20),
 
-          const _SmallLabel('Дистанция'),
-          const SizedBox(height: 8),
-          _ChipsRow(
-            items: _distances,
-            selectedIndex: _distanceIndex,
-            onSelected: (i) => setState(() => _distanceIndex = i),
-          ),
-          const SizedBox(height: 20),
+          // ─── Показываем список дистанций только если выбрано событие ───
+          if (_selectedEventId != null) ...[
+            const _SmallLabel('Дистанция'),
+            const SizedBox(height: 8),
+            if (_isLoadingDistances)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CupertinoActivityIndicator(),
+                ),
+              )
+            else if (_distances.isEmpty)
+              Text(
+                'У этого события нет доступных дистанций',
+                style: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextSecondaryColor(context),
+                ),
+              )
+            else
+              _ChipsRow(
+                items: _distances,
+                selectedIndex: _distanceIndex,
+                onSelected: (i) => setState(() => _distanceIndex = i),
+              ),
+            const SizedBox(height: 20),
+          ],
 
           _PriceField(controller: priceCtrl, onChanged: (_) => setState(() {})),
           const SizedBox(height: 20),
@@ -92,11 +292,29 @@ class _SaleSlotsContentState extends State<SaleSlotsContent> {
           ),
           const SizedBox(height: 24),
 
+          // ─── Отображение ошибки ───
+          if (_errorMessage != null) ...[
+            SelectableText.rich(
+              TextSpan(
+                text: _errorMessage,
+                style: const TextStyle(
+                  color: AppColors.error,
+                  fontSize: 14,
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+          ],
+
           Center(
             child: PrimaryButton(
               text: 'Разместить продажу',
-              onPressed: _submit,
+              onPressed: _isSubmitting ? () {} : () => _submit(),
               width: 220,
+              isLoading: _isSubmitting,
             ),
           ),
         ],
@@ -106,6 +324,155 @@ class _SaleSlotsContentState extends State<SaleSlotsContent> {
 }
 
 /// ——— Локальные UI-компоненты ———
+
+/// Поле автозаполнения для поиска событий
+class _EventAutocompleteField extends StatelessWidget {
+  final String label;
+  final String hint;
+  final TextEditingController controller;
+  final ValueChanged<_EventOption> onEventSelected;
+  final Future<Iterable<_EventOption>> Function(String) searchFunction;
+
+  const _EventAutocompleteField({
+    required this.label,
+    required this.hint,
+    required this.controller,
+    required this.onEventSelected,
+    required this.searchFunction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SmallLabel(label),
+        const SizedBox(height: 8),
+        Autocomplete<_EventOption>(
+          optionsBuilder: (TextEditingValue textEditingValue) async {
+            if (textEditingValue.text.length < 2) {
+              return const Iterable<_EventOption>.empty();
+            }
+            return await searchFunction(textEditingValue.text);
+          },
+          onSelected: onEventSelected,
+          displayStringForOption: (option) => option.name,
+          fieldViewBuilder: (
+            BuildContext context,
+            TextEditingController textEditingController,
+            FocusNode focusNode,
+            VoidCallback onFieldSubmitted,
+          ) {
+            return TextFormField(
+              controller: textEditingController,
+              focusNode: focusNode,
+              onFieldSubmitted: (String value) {
+                onFieldSubmitted();
+              },
+              style: AppTextStyles.h14w4.copyWith(
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: AppTextStyles.h14w4Place.copyWith(
+                  color: AppColors.getTextPlaceholderColor(context),
+                ),
+                filled: true,
+                fillColor: AppColors.getSurfaceColor(context),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 17,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide(
+                    color: AppColors.getBorderColor(context),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide(
+                    color: AppColors.getBorderColor(context),
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide(
+                    color: AppColors.getBorderColor(context),
+                    width: 1,
+                  ),
+                ),
+              ),
+            );
+          },
+          optionsViewBuilder: (
+            BuildContext context,
+            AutocompleteOnSelected<_EventOption> onSelected,
+            Iterable<_EventOption> options,
+          ) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4.0,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final option = options.elementAt(index);
+                      return InkWell(
+                        onTap: () => onSelected(option),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.getSurfaceColor(context),
+                            border: Border(
+                              bottom: BorderSide(
+                                color: AppColors.getBorderColor(context),
+                                width: 0.5,
+                              ),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                option.name,
+                                style: AppTextStyles.h14w5.copyWith(
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
+                              ),
+                              if (option.place.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  option.place,
+                                  style: AppTextStyles.h14w4.copyWith(
+                                    color: AppColors.getTextSecondaryColor(
+                                      context,
+                                    ),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
 
 class _SmallLabel extends StatelessWidget {
   final String text;
@@ -125,14 +492,12 @@ class _LabeledTextField extends StatelessWidget {
   final String hint;
   final TextEditingController controller;
   final int maxLines;
-  final ValueChanged<String>? onChanged;
 
   const _LabeledTextField({
     required this.label,
     required this.hint,
     required this.controller,
     this.maxLines = 1,
-    this.onChanged,
   });
 
   @override
@@ -145,7 +510,6 @@ class _LabeledTextField extends StatelessWidget {
         TextFormField(
           controller: controller,
           maxLines: maxLines,
-          onChanged: onChanged,
           style: AppTextStyles.h14w4.copyWith(
             color: AppColors.getTextPrimaryColor(context),
           ),

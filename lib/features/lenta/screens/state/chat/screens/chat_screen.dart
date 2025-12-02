@@ -14,13 +14,23 @@ import '../../../../../../providers/services/api_provider.dart';
 import '../../../../../../providers/services/auth_provider.dart';
 import 'personal_chat_screen.dart';
 import 'start_chat_screen.dart';
+import '../../../../../market/screens/tabs/slots/tradechat_slots_screen.dart';
 
 /// Модель чата из API
 class ChatItem {
   final int id;
-  final int userId;
-  final String userName;
-  final String userAvatar;
+  final String chatType; // 'regular' или 'slot'
+  
+  // Для обычных чатов
+  final int? userId;
+  final String? userName;
+  final String? userAvatar;
+  
+  // Для чатов по продаже слотов
+  final int? slotId;
+  final String? slotTitle;
+  final String? eventLogoUrl;
+  
   final String lastMessage;
   final bool
   lastMessageHasImage; // ─── Флаг наличия изображения в последнем сообщении ───
@@ -30,9 +40,13 @@ class ChatItem {
 
   const ChatItem({
     required this.id,
-    required this.userId,
-    required this.userName,
-    required this.userAvatar,
+    required this.chatType,
+    this.userId,
+    this.userName,
+    this.userAvatar,
+    this.slotId,
+    this.slotTitle,
+    this.eventLogoUrl,
     required this.lastMessage,
     required this.lastMessageHasImage,
     required this.lastMessageAt,
@@ -41,17 +55,52 @@ class ChatItem {
   });
 
   factory ChatItem.fromJson(Map<String, dynamic> json) {
-    return ChatItem(
-      id: (json['id'] as num).toInt(),
-      userId: (json['user_id'] as num).toInt(),
-      userName: json['user_name'] as String,
-      userAvatar: json['user_avatar'] as String,
-      lastMessage: json['last_message'] as String? ?? '',
-      lastMessageHasImage: json['last_message_has_image'] as bool? ?? false,
-      lastMessageAt: DateTime.parse(json['last_message_at'] as String),
-      unread: json['unread'] as bool? ?? false,
-      createdAt: DateTime.parse(json['created_at'] as String),
-    );
+    final chatType = json['chat_type'] as String? ?? 'regular';
+    
+    if (chatType == 'slot') {
+      return ChatItem(
+        id: (json['id'] as num).toInt(),
+        chatType: chatType,
+        slotId: json['slot_id'] != null ? (json['slot_id'] as num).toInt() : null,
+        slotTitle: json['slot_title'] as String?,
+        eventLogoUrl: json['event_logo_url'] as String?,
+        lastMessage: json['last_message'] as String? ?? '',
+        lastMessageHasImage: json['last_message_has_image'] as bool? ?? false,
+        lastMessageAt: DateTime.parse(json['last_message_at'] as String),
+        unread: json['unread'] as bool? ?? false,
+        createdAt: DateTime.parse(json['created_at'] as String),
+      );
+    } else {
+      return ChatItem(
+        id: (json['id'] as num).toInt(),
+        chatType: chatType,
+        userId: json['user_id'] != null ? (json['user_id'] as num).toInt() : null,
+        userName: json['user_name'] as String?,
+        userAvatar: json['user_avatar'] as String?,
+        lastMessage: json['last_message'] as String? ?? '',
+        lastMessageHasImage: json['last_message_has_image'] as bool? ?? false,
+        lastMessageAt: DateTime.parse(json['last_message_at'] as String),
+        unread: json['unread'] as bool? ?? false,
+        createdAt: DateTime.parse(json['created_at'] as String),
+      );
+    }
+  }
+  
+  bool get isSlotChat => chatType == 'slot';
+  bool get isRegularChat => chatType == 'regular';
+}
+
+/// ─── Обертка для навигации к TradeChatSlotsScreen ───
+class _SlotChatScreenWrapper extends StatelessWidget {
+  final int slotId;
+
+  const _SlotChatScreenWrapper({
+    required this.slotId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TradeChatSlotsScreen(slotId: slotId);
   }
 }
 
@@ -289,14 +338,31 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     return DateFormat('dd.MM.yyyy').format(d);
   }
 
-  /// ─── Получение URL аватара ───
-  String _getAvatarUrl(String avatar, int userId) {
-    if (avatar.isEmpty) {
-      return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+  /// ─── Получение URL аватара или logo события ───
+  String? _getImageUrl(ChatItem chat) {
+    if (chat.isSlotChat) {
+      // Для slot чатов возвращаем URL logo события
+      return chat.eventLogoUrl;
+    } else {
+      // Для обычных чатов возвращаем URL аватара пользователя
+      if (chat.userAvatar == null || chat.userAvatar!.isEmpty) {
+        return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+      }
+      if (chat.userAvatar!.startsWith('http')) {
+        return chat.userAvatar;
+      }
+      // ⚡️ Используем правильный путь: /images/users/avatars/{user_id}/{avatar}
+      return 'http://uploads.paceup.ru/images/users/avatars/${chat.userId}/${chat.userAvatar}';
     }
-    if (avatar.startsWith('http')) return avatar;
-    // ⚡️ Используем правильный путь: /images/users/avatars/{user_id}/{avatar}
-    return 'http://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
+  }
+  
+  /// ─── Получение названия для отображения ───
+  String _getDisplayName(ChatItem chat) {
+    if (chat.isSlotChat) {
+      return chat.slotTitle ?? 'Слот';
+    } else {
+      return chat.userName ?? 'Пользователь';
+    }
   }
 
   @override
@@ -403,6 +469,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 }
 
                 final chat = _chats[i];
+                final imageUrl = _getImageUrl(chat);
+                final displayName = _getDisplayName(chat);
 
                 Widget chatRow = Padding(
                   padding: const EdgeInsets.symmetric(
@@ -412,50 +480,83 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Аватар
-                      ClipOval(
-                        child: Builder(
-                          builder: (context) {
-                            final dpr = MediaQuery.of(context).devicePixelRatio;
-                            final w = (44 * dpr).round();
-                            final url = _getAvatarUrl(
-                              chat.userAvatar,
-                              chat.userId,
-                            );
-                            return CachedNetworkImage(
-                              key: ValueKey(
-                                'avatar_${chat.id}_${chat.userId}_$url',
-                              ),
-                              imageUrl: url,
-                              width: 44,
-                              height: 44,
-                              fit: BoxFit.cover,
-                              fadeInDuration: const Duration(milliseconds: 120),
-                              memCacheWidth: w,
-                              maxWidthDiskCache: w,
-                              errorWidget: (context, imageUrl, error) {
-                                return Image.asset(
-                                  'assets/${chat.userAvatar}',
-                                  width: 44,
-                                  height: 44,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
+                      // Аватар или logo события
+                      chat.isSlotChat
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(22),
+                              child: Builder(
+                                builder: (context) {
+                                  final dpr = MediaQuery.of(context).devicePixelRatio;
+                                  final w = (44 * dpr).round();
+                                  if (imageUrl == null || imageUrl.isEmpty) {
                                     return Container(
                                       width: 44,
                                       height: 44,
                                       color: AppColors.surfaceMuted,
                                       child: const Icon(
-                                        CupertinoIcons.person,
+                                        CupertinoIcons.calendar,
                                         size: 24,
                                       ),
                                     );
-                                  },
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ),
+                                  }
+                                  return CachedNetworkImage(
+                                    key: ValueKey(
+                                      'slot_logo_${chat.id}_$imageUrl',
+                                    ),
+                                    imageUrl: imageUrl,
+                                    width: 44,
+                                    height: 44,
+                                    fit: BoxFit.cover,
+                                    fadeInDuration: const Duration(milliseconds: 120),
+                                    memCacheWidth: w,
+                                    maxWidthDiskCache: w,
+                                    errorWidget: (context, url, error) {
+                                      return Container(
+                                        width: 44,
+                                        height: 44,
+                                        color: AppColors.surfaceMuted,
+                                        child: const Icon(
+                                          CupertinoIcons.calendar,
+                                          size: 24,
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            )
+                          : ClipOval(
+                              child: Builder(
+                                builder: (context) {
+                                  final dpr = MediaQuery.of(context).devicePixelRatio;
+                                  final w = (44 * dpr).round();
+                                  final url = imageUrl ?? 'http://uploads.paceup.ru/images/users/avatars/def.png';
+                                  return CachedNetworkImage(
+                                    key: ValueKey(
+                                      'avatar_${chat.id}_${chat.userId}_$url',
+                                    ),
+                                    imageUrl: url,
+                                    width: 44,
+                                    height: 44,
+                                    fit: BoxFit.cover,
+                                    fadeInDuration: const Duration(milliseconds: 120),
+                                    memCacheWidth: w,
+                                    maxWidthDiskCache: w,
+                                    errorWidget: (context, url, error) {
+                                      return Container(
+                                        width: 44,
+                                        height: 44,
+                                        color: AppColors.surfaceMuted,
+                                        child: const Icon(
+                                          CupertinoIcons.person,
+                                          size: 24,
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
                       const SizedBox(width: 10),
 
                       // Контент
@@ -468,7 +569,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                               children: [
                                 Expanded(
                                   child: Text(
-                                    chat.userName,
+                                    displayName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     // ─── Жирный стиль для непрочитанных сообщений ───
@@ -543,17 +644,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 final item = GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () async {
-                    final result =
-                        await Navigator.of(context, rootNavigator: true).push(
+                    dynamic result;
+                    
+                    if (chat.isSlotChat) {
+                      // Для slot чатов открываем TradeChatSlotsScreen
+                      if (chat.slotId != null) {
+                        result = await Navigator.of(context, rootNavigator: true).push(
                           TransparentPageRoute(
-                            builder: (_) => PersonalChatScreen(
-                              chatId: chat.id,
-                              userId: chat.userId,
-                              userName: chat.userName,
-                              userAvatar: chat.userAvatar,
+                            builder: (_) => _SlotChatScreenWrapper(
+                              slotId: chat.slotId!,
                             ),
                           ),
                         );
+                      }
+                    } else {
+                      // Для обычных чатов открываем PersonalChatScreen
+                      result = await Navigator.of(context, rootNavigator: true).push(
+                        TransparentPageRoute(
+                          builder: (_) => PersonalChatScreen(
+                            chatId: chat.id,
+                            userId: chat.userId ?? 0,
+                            userName: chat.userName ?? 'Пользователь',
+                            userAvatar: chat.userAvatar ?? '',
+                          ),
+                        ),
+                      );
+                    }
 
                     // Обновляем список чатов после возврата из чата
                     if (result == true && mounted) {
