@@ -6,7 +6,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/local_image_compressor.dart';
+import '../../../../core/utils/local_image_compressor.dart'
+    show compressLocalImage, ImageCompressionPreset;
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
@@ -291,8 +292,8 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
 
     final compressed = await compressLocalImage(
       sourceFile: File(picked.path),
-      maxSide: 900,
-      jpegQuality: 85,
+      maxSide: ImageCompressionPreset.logo.maxSide,
+      jpegQuality: ImageCompressionPreset.logo.quality,
     );
     if (!mounted) return;
 
@@ -309,8 +310,8 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
 
     final compressed = await compressLocalImage(
       sourceFile: File(picked.path),
-      maxSide: 1600,
-      jpegQuality: 80,
+      maxSide: ImageCompressionPreset.eventPhoto.maxSide,
+      jpegQuality: ImageCompressionPreset.eventPhoto.quality,
     );
     if (!mounted) return;
 

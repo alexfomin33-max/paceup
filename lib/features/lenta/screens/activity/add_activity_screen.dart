@@ -9,7 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/local_image_compressor.dart';
+import '../../../../core/utils/local_image_compressor.dart'
+    show compressLocalImage, ImageCompressionPreset;
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
@@ -1600,8 +1601,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       for (final file in pickedFiles) {
         final compressed = await compressLocalImage(
           sourceFile: File(file.path),
-          maxSide: 1600,
-          jpegQuality: 80,
+          maxSide: ImageCompressionPreset.activity.maxSide,
+          jpegQuality: ImageCompressionPreset.activity.quality,
         );
         compressedFiles.add(compressed);
       }

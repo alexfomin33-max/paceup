@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../core/theme/app_theme.dart';
-import '../../../../../../../core/utils/local_image_compressor.dart';
+import '../../../../../../../core/utils/local_image_compressor.dart'
+    show compressLocalImage, ImageCompressionPreset;
 import '../../../../../../../core/utils/error_handler.dart';
 import '../../../../../../../core/widgets/primary_button.dart';
 import '../../../../../../../providers/services/api_provider.dart';
@@ -117,8 +118,8 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
     // ── сжимаем фото кроссовок перед отправкой в API
     final compressed = await compressLocalImage(
       sourceFile: File(picked.path),
-      maxSide: 1600,
-      jpegQuality: 80,
+      maxSide: ImageCompressionPreset.equipmentView.maxSide,
+      jpegQuality: ImageCompressionPreset.equipmentView.quality,
     );
     if (!mounted) return;
 

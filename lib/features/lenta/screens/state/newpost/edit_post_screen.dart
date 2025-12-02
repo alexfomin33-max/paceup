@@ -8,7 +8,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/utils/local_image_compressor.dart';
+import '../../../../../core/utils/local_image_compressor.dart'
+    show compressLocalImage, ImageCompressionPreset;
 import '../../../../../core/utils/error_handler.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
@@ -298,8 +299,8 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                 // ── уменьшаем выбранное изображение перед добавлением в пост
                 final compressed = await compressLocalImage(
                   sourceFile: File(picked.path),
-                  maxSide: 1600,
-                  jpegQuality: 80,
+                  maxSide: ImageCompressionPreset.post.maxSide,
+                  jpegQuality: ImageCompressionPreset.post.quality,
                 );
                 if (!mounted) return;
 
@@ -740,8 +741,8 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
       for (final file in pickedFiles) {
         final compressed = await compressLocalImage(
           sourceFile: File(file.path),
-          maxSide: 1600,
-          jpegQuality: 80,
+          maxSide: ImageCompressionPreset.post.maxSide,
+          jpegQuality: ImageCompressionPreset.post.quality,
         );
         compressedFiles.add(compressed);
       }
