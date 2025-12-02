@@ -12,13 +12,34 @@ import '../../../../../../features/profile/screens/profile_screen.dart';
 
 /// Контент вкладки «Друзья»
 /// Переключатели уже в родительском экране. Здесь — секция и «табличный» блок.
-class SearchFriendsContent extends ConsumerWidget {
+class SearchFriendsContent extends ConsumerStatefulWidget {
   final String query;
   const SearchFriendsContent({super.key, required this.query});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final trimmedQuery = query.trim();
+  ConsumerState<SearchFriendsContent> createState() => _SearchFriendsContentState();
+}
+
+class _SearchFriendsContentState extends ConsumerState<SearchFriendsContent> {
+  // ────────────────────────────────────────────────────────────────────────
+  // Обновление провайдеров при переключении вкладок:
+  // При каждом создании виджета (переключении вкладки) инвалидируем провайдеры,
+  // чтобы получить свежие данные
+  // ────────────────────────────────────────────────────────────────────────
+  bool _hasInvalidated = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // Инвалидируем провайдеры при первом build (переключении вкладки)
+    if (!_hasInvalidated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.invalidate(recommendedFriendsProvider);
+          _hasInvalidated = true;
+        }
+      });
+    }
+    final trimmedQuery = widget.query.trim();
 
     // ────────────────────────────────────────────────────────────────────────
     // Логика переключения между поиском и рекомендованными друзьями:
@@ -34,7 +55,25 @@ class SearchFriendsContent extends ConsumerWidget {
         ? ref.watch(searchFriendsProvider(trimmedQuery))
         : ref.watch(recommendedFriendsProvider);
 
-    return CustomScrollView(
+    // ────────────────────────────────────────────────────────────────────────
+    // Функция обновления данных при pull-to-refresh
+    // ────────────────────────────────────────────────────────────────────────
+    Future<void> _onRefresh() async {
+      if (isSearching) {
+        // При поиске инвалидируем провайдер поиска
+        ref.invalidate(searchFriendsProvider(trimmedQuery));
+      } else {
+        // При просмотре рекомендованных друзей инвалидируем соответствующий провайдер
+        ref.invalidate(recommendedFriendsProvider);
+      }
+      // Ждем завершения обновления
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+
+    return RefreshIndicator(
+      onRefresh: _onRefresh,
+      color: AppColors.brandPrimary,
+      child: CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 8)),
@@ -164,6 +203,7 @@ class SearchFriendsContent extends ConsumerWidget {
 
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ],
+      ),
     );
   }
 }
