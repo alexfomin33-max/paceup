@@ -408,8 +408,8 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                 // ── сжимаем выбранное фото перед заменой в локальном списке
                 final compressed = await compressLocalImage(
                   sourceFile: File(pickedFile.path),
-                  maxSide: 1600,
-                  jpegQuality: 80,
+                  maxSide: ImageCompressionPreset.post.maxSide,
+                  jpegQuality: ImageCompressionPreset.post.quality,
                 );
                 if (!mounted) return;
 

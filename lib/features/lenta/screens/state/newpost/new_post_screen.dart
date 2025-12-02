@@ -559,8 +559,8 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
       for (final file in pickedFiles) {
         final compressed = await compressLocalImage(
           sourceFile: File(file.path),
-          maxSide: 1600,
-          jpegQuality: 80,
+          maxSide: ImageCompressionPreset.post.maxSide,
+          jpegQuality: ImageCompressionPreset.post.quality,
         );
         compressedFiles.add(compressed);
       }

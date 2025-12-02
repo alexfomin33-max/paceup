@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path/path.dart' as p;
@@ -62,6 +63,9 @@ class ImageCompressionPreset {
 /// Сжимает локальный файл изображения с сохранением пропорций.
 /// Возвращает новый файл в системной временной директории.
 /// Использует нативные API для более эффективного сжатия.
+///
+/// [maxSide] - максимальный размер самой большой стороны изображения.
+/// Если изображение больше, оно будет уменьшено с сохранением пропорций.
 Future<File> compressLocalImage({
   required File sourceFile,
   int maxSide = 1600,
@@ -74,22 +78,37 @@ Future<File> compressLocalImage({
     final isPng = sourcePath.endsWith('.png');
     final format = isPng ? CompressFormat.png : CompressFormat.jpeg;
 
+    // ── получаем размеры исходного изображения для правильного расчета
+    final imageBytes = await sourceFile.readAsBytes();
+    final codec = await ui.instantiateImageCodec(imageBytes);
+    final frame = await codec.getNextFrame();
+    final sourceWidth = frame.image.width;
+    final sourceHeight = frame.image.height;
+    frame.image.dispose();
+
+    // ── вычисляем целевые размеры с сохранением пропорций
+    final maxSourceSide = sourceWidth > sourceHeight ? sourceWidth : sourceHeight;
+    
+    // ── если наибольшая сторона больше maxSide, вычисляем размеры для уменьшения
+    // иначе используем исходные размеры (не изменяем изображение)
+    final targetWidth = maxSourceSide > maxSide
+        ? (sourceWidth * (maxSide / maxSourceSide)).round()
+        : sourceWidth;
+    final targetHeight = maxSourceSide > maxSide
+        ? (sourceHeight * (maxSide / maxSourceSide)).round()
+        : sourceHeight;
+
     // ── сжимаем изображение с использованием нативных API
-    // minWidth и minHeight работают как ограничения максимального размера:
-    // если изображение больше этих значений, оно будет уменьшено с сохранением пропорций
-    final compressedBytes = await FlutterImageCompress.compressWithFile(
-      sourceFile.absolute.path,
-      minWidth: maxSide,
-      minHeight: maxSide,
+    // Передаем целевые размеры - flutter_image_compress уменьшит изображение
+    // до этих размеров, сохраняя пропорции
+    final compressedBytes = await FlutterImageCompress.compressWithList(
+      imageBytes,
+      minWidth: targetWidth,
+      minHeight: targetHeight,
       quality: jpegQuality,
       format: format,
       keepExif: false,
     );
-
-    if (compressedBytes == null) {
-      // ── если сжатие не удалось, используем оригинал без модификаций
-      return sourceFile;
-    }
 
     // ── сохраняем сжатое изображение во временный файл
     final tempDir = await getTemporaryDirectory();
