@@ -178,17 +178,21 @@ class _FriendRow extends ConsumerStatefulWidget {
 class _FriendRowState extends ConsumerState<_FriendRow> {
   // Локальное состояние для оптимистичного обновления UI
   bool? _localIsSubscribed;
+  bool _isToggling = false; // Флаг процесса подписки/отписки
 
   bool get _currentIsSubscribed {
     return _localIsSubscribed ?? widget.friend.isSubscribed;
   }
 
   Future<void> _handleToggleSubscribe() async {
+    if (_isToggling) return; // Предотвращаем повторные клики
+
     final currentStatus = _currentIsSubscribed;
 
     // Оптимистичное обновление UI
     setState(() {
       _localIsSubscribed = !currentStatus;
+      _isToggling = true;
     });
 
     try {
@@ -201,22 +205,32 @@ class _FriendRowState extends ConsumerState<_FriendRow> {
       final newStatus = await ref.read(toggleSubscribeProvider(params).future);
 
       // Обновляем локальное состояние на основе ответа сервера
-      setState(() {
-        _localIsSubscribed = newStatus;
-      });
+      if (mounted) {
+        setState(() {
+          _localIsSubscribed = newStatus;
+          _isToggling = false;
+        });
+      }
 
       // НЕ инвалидируем провайдеры - пользователи должны оставаться в списке
       // Только меняется иконка подписки (локальное состояние)
     } catch (e) {
       // В случае ошибки возвращаем предыдущее состояние
-      setState(() {
-        _localIsSubscribed = currentStatus;
-      });
+      if (mounted) {
+        setState(() {
+          _localIsSubscribed = currentStatus;
+          _isToggling = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorHandler.format(e)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
 
       log('❌ Ошибка подписки/отписки: $e');
-
-      // Можно показать сообщение об ошибке пользователю
-      if (mounted) {}
     }
   }
 
@@ -286,20 +300,30 @@ class _FriendRowState extends ConsumerState<_FriendRow> {
           ),
 
           // Кнопка подписки/отписки
-          // Если подписан → показываем красную иконку "checkmark"
-          // Если не подписан → показываем синюю иконку "plus"
+          // Если подписан → показываем красную иконку с минусом
+          // Если не подписан → показываем синюю иконку с плюсом
           IconButton(
-            onPressed: _handleToggleSubscribe,
+            onPressed: _isToggling ? null : _handleToggleSubscribe,
             splashRadius: 24,
-            icon: Icon(
-              isSubscribed
-                  ? CupertinoIcons.checkmark_circle_fill
-                  : CupertinoIcons.person_crop_circle_badge_plus,
-              size: 26,
-              color: isSubscribed
-                  ? Colors
-                        .red // Красный цвет для подписки
-                  : AppColors.brandPrimary, // Синий цвет для подписки
+            icon: _isToggling
+                ? const SizedBox(
+                    width: 26,
+                    height: 26,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Icon(
+                    isSubscribed
+                        ? CupertinoIcons.person_crop_circle_badge_minus
+                        : CupertinoIcons.person_crop_circle_badge_plus,
+                    size: 24,
+                  ),
+            style: IconButton.styleFrom(
+              foregroundColor: isSubscribed
+                  ? Colors.red // Красный цвет для подписки
+                  : AppColors.brandPrimary, // Синий цвет для неподписки
+              disabledForegroundColor: AppColors.disabledText,
             ),
           ),
         ],
