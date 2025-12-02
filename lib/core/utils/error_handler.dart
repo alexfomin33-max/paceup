@@ -156,7 +156,6 @@ class ErrorHandler {
   ///
   /// В будущем можно расширить, если API будет возвращать коды ошибок
   static int? getErrorCode(dynamic error) {
-    // TODO: Добавить парсинг кодов ошибок из ApiException, если они появятся
     return null;
   }
 

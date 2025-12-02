@@ -7,7 +7,6 @@
 import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 
 import 'edit_profile_form_fields.dart';
 import 'edit_profile_avatar_section.dart';
@@ -132,4 +131,3 @@ class EditProfilePersonalInfoSection extends StatelessWidget {
     );
   }
 }
-

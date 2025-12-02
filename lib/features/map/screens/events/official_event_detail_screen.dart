@@ -1,7 +1,6 @@
 // lib/screens/map/events/official_event_detail_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -301,9 +300,7 @@ class _OfficialEventDetailScreenState
 
     // Пытаемся получить полную дату из данных события
     dynamic eventDateRaw = _eventData!['event_date'];
-    if (eventDateRaw == null) {
-      eventDateRaw = _eventData!['date'];
-    }
+    eventDateRaw ??= _eventData!['date'];
 
     if (eventDateRaw == null) {
       return dateFormattedShort;
@@ -403,25 +400,29 @@ class _OfficialEventDetailScreenState
 
     final backgroundUrl = _eventData!['background_url'] as String? ?? '';
     final name = _eventData!['name'] as String? ?? '';
-    final dateFormattedShort = _eventData!['date_formatted_short'] as String? ?? '';
+    final dateFormattedShort =
+        _eventData!['date_formatted_short'] as String? ?? '';
     final place = _eventData!['place'] as String? ?? '';
     final photos = _eventData!['photos'] as List<dynamic>? ?? [];
-    
+
     // ── Форматируем дату с добавлением года, если это не текущий год
     final dateFormatted = _formatDateWithYear(dateFormattedShort);
-    
+
     // ── Извлекаем ссылку на регистрацию (поддерживаем оба варианта названия)
     dynamic linkRaw = _eventData!['registration_link'];
     if (linkRaw == null || (linkRaw is String && linkRaw.isEmpty)) {
       linkRaw = _eventData!['event_link'];
     }
-    final registrationLink = (linkRaw?.toString().trim() ?? '').replaceAll(' ', '');
+    final registrationLink = (linkRaw?.toString().trim() ?? '').replaceAll(
+      ' ',
+      '',
+    );
 
     // ── Извлекаем дистанции из данных события (массив в метрах)
     // Обрабатываем разные форматы: числа, строки, null
     final distancesRaw = _eventData!['distances'];
     final List<num> distances = [];
-    
+
     if (distancesRaw != null) {
       if (distancesRaw is List) {
         for (final d in distancesRaw) {
@@ -477,9 +478,12 @@ class _OfficialEventDetailScreenState
                             else
                               Builder(
                                 builder: (context) {
-                                  final screenW = MediaQuery.of(context).size.width;
+                                  final screenW = MediaQuery.of(
+                                    context,
+                                  ).size.width;
                                   final calculatedHeight =
-                                      screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
+                                      screenW /
+                                      2.1; // Вычисляем высоту по соотношению 2.1:1
                                   return Container(
                                     width: double.infinity,
                                     height: calculatedHeight,
@@ -724,7 +728,6 @@ class _OfficialEventDetailScreenState
       ),
     );
   }
-
 }
 
 /// ─── helpers
@@ -751,7 +754,8 @@ class _CircleIconBtn extends StatelessWidget {
     // В светлой теме иконки светлые (белые), в темной — как обычно
     // Если передан явный цвет (например, для закладки), используем его
     final brightness = Theme.of(context).brightness;
-    final iconColor = color ??
+    final iconColor =
+        color ??
         (brightness == Brightness.light
             ? Colors.white
             : AppColors.getIconPrimaryColor(context));
@@ -1067,7 +1071,7 @@ class EventDescriptionContent extends StatelessWidget {
             Text('Описание отсутствует', style: style)
           else
             Text(description, style: style, textAlign: TextAlign.start),
-          
+
           // Дистанции после описания (если есть)
           if (distances.isNotEmpty) ...[
             if (description.isNotEmpty) const SizedBox(height: 12),
@@ -1089,10 +1093,7 @@ class EventDescriptionContent extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '• ',
-                      style: style,
-                    ),
+                    Text('• ', style: style),
                     Expanded(
                       child: Text(
                         _formatDistance(distance),
@@ -1140,8 +1141,7 @@ class _EventMembersSliver extends ConsumerStatefulWidget {
       _EventMembersSliverState();
 }
 
-class _EventMembersSliverState
-    extends ConsumerState<_EventMembersSliver> {
+class _EventMembersSliverState extends ConsumerState<_EventMembersSliver> {
   final List<Map<String, dynamic>> _participants = [];
   bool _loading = false;
   bool _hasMore = true;

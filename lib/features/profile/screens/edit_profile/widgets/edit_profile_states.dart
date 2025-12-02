@@ -6,7 +6,6 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_theme.dart';
 
@@ -19,9 +18,7 @@ class EditProfileLoadingPane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const SingleChildScrollView(
-      physics: BouncingScrollPhysics(
-        parent: AlwaysScrollableScrollPhysics(),
-      ),
+      physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       padding: EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Align(
         alignment: Alignment.topCenter,
@@ -79,4 +76,3 @@ class EditProfileErrorPane extends StatelessWidget {
     );
   }
 }
-

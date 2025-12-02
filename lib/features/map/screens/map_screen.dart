@@ -670,10 +670,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   /// ──────────── Вспомогательная функция: конвертация Color в RGBA массив ────────────
-  /// TODO: Используется для будущей реализации кластеризации
   // ignore: unused_element
   List<int> _colorToRgbaArray(Color color) {
-    return [color.red, color.green, color.blue, color.alpha];
+    return [
+      (color.r * 255.0).round() & 0xff,
+      (color.g * 255.0).round() & 0xff,
+      (color.b * 255.0).round() & 0xff,
+      (color.a * 255.0).round() & 0xff,
+    ];
   }
 
   /// ──────────── Планировщик обновления маркеров ────────────
@@ -860,9 +864,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   }
 
                   // Используем заголовок первого маркера
-                  if (clusterTitle == null) {
-                    clusterTitle = marker['title'] as String? ?? 'Маркеры';
-                  }
+                  clusterTitle ??= marker['title'] as String? ?? 'Маркеры';
 
                   debugPrint(
                     '📍 Маркер в кластере: $markerKey, расстояние: ${distancePixels.toStringAsFixed(1)}px',

@@ -1272,8 +1272,9 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                         child: PrimaryButton(
                           text: 'Сохранить',
                           onPressed: () {
-                            if (!formState.isSubmitting && !_deleting)
+                            if (!formState.isSubmitting && !_deleting) {
                               _submit();
+                            }
                           },
                           expanded: true,
                           isLoading: formState.isSubmitting,
@@ -1412,7 +1413,9 @@ class _MediaTile extends StatelessWidget {
                         width: 90,
                         height: 90,
                         color: AppColors.getBackgroundColor(context),
-                        child: const Center(child: CupertinoActivityIndicator()),
+                        child: const Center(
+                          child: CupertinoActivityIndicator(),
+                        ),
                       ),
                       errorWidget: (context, url, error) => Container(
                         width: 90,

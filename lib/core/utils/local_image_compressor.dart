@@ -1,7 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:image/image.dart' as img;
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 
 /// Сжимает локальный файл изображения с сохранением пропорций.
 /// Возвращает новый файл в системной временной директории.
+/// Использует нативные API для более эффективного сжатия.
 Future<File> compressLocalImage({
   required File sourceFile,
   int maxSide = 1600,
@@ -16,48 +17,36 @@ Future<File> compressLocalImage({
 }) async {
   // ── оборачиваем логику в try, чтобы не уронить экран при ошибке кодека
   try {
-    final originalBytes = await sourceFile.readAsBytes();
-    final decoded = img.decodeImage(originalBytes);
+    // ── определяем формат по расширению файла: PNG сохраняет альфу, JPEG легче
+    final sourcePath = sourceFile.path.toLowerCase();
+    final isPng = sourcePath.endsWith('.png');
+    final format = isPng ? CompressFormat.png : CompressFormat.jpeg;
 
-    if (decoded == null) {
-      // ── если декодер не справился, используем оригинал без модификаций
+    // ── сжимаем изображение с использованием нативных API
+    // minWidth и minHeight работают как ограничения максимального размера:
+    // если изображение больше этих значений, оно будет уменьшено с сохранением пропорций
+    final compressedBytes = await FlutterImageCompress.compressWithFile(
+      sourceFile.absolute.path,
+      minWidth: maxSide,
+      minHeight: maxSide,
+      quality: jpegQuality,
+      format: format,
+      keepExif: false,
+    );
+
+    if (compressedBytes == null) {
+      // ── если сжатие не удалось, используем оригинал без модификаций
       return sourceFile;
     }
 
-    // ── вычисляем новые размеры с учётом ограничения по большей стороне
-    var targetWidth = decoded.width;
-    var targetHeight = decoded.height;
-    if (targetWidth > targetHeight && targetWidth > maxSide) {
-      targetWidth = maxSide;
-      targetHeight = (decoded.height * maxSide / decoded.width).round();
-    } else if (targetHeight >= targetWidth && targetHeight > maxSide) {
-      targetHeight = maxSide;
-      targetWidth = (decoded.width * maxSide / decoded.height).round();
-    }
-
-    final resized = (targetWidth != decoded.width ||
-            targetHeight != decoded.height)
-        ? img.copyResize(
-            decoded,
-            width: targetWidth,
-            height: targetHeight,
-            interpolation: img.Interpolation.linear,
-          )
-        : decoded;
-
-    // ── определяем формат: PNG сохраняет альфу, JPEG легче для непрозрачных
-    final hasAlpha = resized.hasAlpha;
-    final encodedBytes = hasAlpha
-        ? img.encodePng(resized, level: 6)
-        : img.encodeJpg(resized, quality: jpegQuality);
-
+    // ── сохраняем сжатое изображение во временный файл
     final tempDir = await getTemporaryDirectory();
-    final ext = hasAlpha ? '.png' : '.jpg';
+    final ext = isPng ? '.png' : '.jpg';
     final fileName = 'cmp_${DateTime.now().millisecondsSinceEpoch}$ext';
     final outputPath = p.join(tempDir.path, fileName);
 
     final compressedFile = await File(outputPath).writeAsBytes(
-      encodedBytes,
+      compressedBytes,
       flush: true,
     );
 

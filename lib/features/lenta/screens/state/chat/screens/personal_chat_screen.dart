@@ -1008,7 +1008,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                       reverse: true,
                       // ─── Padding: прижимаем сообщения к нижней панели ввода ───
                       // Верхний padding для панели ввода, нижний минимальный
-                      padding: EdgeInsets.fromLTRB(
+                      padding: const EdgeInsets.fromLTRB(
                         12,
                         // Базовый отступ для панели ввода
                         8,

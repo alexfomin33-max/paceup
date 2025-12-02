@@ -5,7 +5,6 @@
 //  Включает: _FieldRow, _GroupBlock, _NameBlock, _BareTextField, _CircleIconBtn
 // ────────────────────────────────────────────────────────────────────────────
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -67,7 +66,7 @@ class EditProfileGroupBlock extends StatelessWidget {
 
 /// ───────────────────────────── Строка поля ─────────────────────────────
 
-enum _EditProfileFieldRowType { input, picker, dropdown }
+enum EditProfileFieldRowType { input, picker, dropdown }
 
 /// Универсальная строка поля формы (текстовое поле, пикер, выпадающий список)
 class EditProfileFieldRow extends StatelessWidget {
@@ -91,28 +90,26 @@ class EditProfileFieldRow extends StatelessWidget {
     String? hint,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
-  }) =>
-      EditProfileFieldRow._(
-        label: label,
-        controller: controller,
-        hint: hint,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
-        type: _EditProfileFieldRowType.input,
-      );
+  }) => EditProfileFieldRow._(
+    label: label,
+    controller: controller,
+    hint: hint,
+    keyboardType: keyboardType,
+    inputFormatters: inputFormatters,
+    type: EditProfileFieldRowType.input,
+  );
 
   /// Фабрика для пикера (дата, время и т.д.)
   factory EditProfileFieldRow.picker({
     required String label,
     required String value,
     required VoidCallback onTap,
-  }) =>
-      EditProfileFieldRow._(
-        label: label,
-        value: value,
-        onTap: onTap,
-        type: _EditProfileFieldRowType.picker,
-      );
+  }) => EditProfileFieldRow._(
+    label: label,
+    value: value,
+    onTap: onTap,
+    type: EditProfileFieldRowType.picker,
+  );
 
   /// Фабрика для выпадающего списка
   factory EditProfileFieldRow.dropdown({
@@ -120,14 +117,13 @@ class EditProfileFieldRow extends StatelessWidget {
     required String? value,
     required List<String> items,
     required void Function(String) onChanged,
-  }) =>
-      EditProfileFieldRow._(
-        label: label,
-        value: value,
-        dropdownItems: items,
-        onDropdownChanged: onChanged,
-        type: _EditProfileFieldRowType.dropdown,
-      );
+  }) => EditProfileFieldRow._(
+    label: label,
+    value: value,
+    dropdownItems: items,
+    onDropdownChanged: onChanged,
+    type: EditProfileFieldRowType.dropdown,
+  );
 
   final String label;
 
@@ -145,11 +141,11 @@ class EditProfileFieldRow extends StatelessWidget {
   final List<String>? dropdownItems;
   final void Function(String)? onDropdownChanged;
 
-  final _EditProfileFieldRowType type;
+  final EditProfileFieldRowType type;
 
   Widget _buildFieldContent(BuildContext context) {
     switch (type) {
-      case _EditProfileFieldRowType.input:
+      case EditProfileFieldRowType.input:
         return TextField(
           controller: controller,
           keyboardType: keyboardType,
@@ -162,7 +158,7 @@ class EditProfileFieldRow extends StatelessWidget {
           style: const TextStyle(fontSize: 14),
         );
 
-      case _EditProfileFieldRowType.picker:
+      case EditProfileFieldRowType.picker:
         return InkWell(
           borderRadius: BorderRadius.circular(AppRadius.sm),
           onTap: onTap,
@@ -189,7 +185,7 @@ class EditProfileFieldRow extends StatelessWidget {
           ),
         );
 
-      case _EditProfileFieldRowType.dropdown:
+      case EditProfileFieldRowType.dropdown:
         return DropdownButtonHideUnderline(
           child: DropdownButton<String>(
             value: value,
@@ -408,4 +404,3 @@ class EditProfileCircleIconBtn extends StatelessWidget {
     );
   }
 }
-

@@ -292,11 +292,11 @@ class _LabeledTextField extends StatelessWidget {
               ),
               borderSide: BorderSide(color: AppColors.getBorderColor(context)),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: const BorderRadius.all(
+            focusedBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(
                 Radius.circular(AppRadius.sm),
               ),
-              borderSide: const BorderSide(color: AppColors.outline),
+              borderSide: BorderSide(color: AppColors.outline),
             ),
           ),
         ),

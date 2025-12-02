@@ -694,7 +694,7 @@ String _formatDateWithoutCurrentYear(String dateFormatted) {
       final before = trimmedDate.substring(0, match.start);
       final after = trimmedDate.substring(match.end);
       // Убираем лишние пробелы
-      return (before.trim() + ' ' + after.trim()).trim();
+      return '${before.trim()} ${after.trim()}'.trim();
     }
   }
 

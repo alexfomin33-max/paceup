@@ -11,7 +11,6 @@
 //  • Поддержка SelectableText для копирования ошибок
 // ────────────────────────────────────────────────────────────────────────────
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../utils/error_handler.dart';
@@ -250,7 +249,7 @@ class ErrorDisplayForm extends StatelessWidget {
       child: SelectableText.rich(
         TextSpan(
           text: error,
-          style: TextStyle(
+          style: const TextStyle(
             color: AppColors.error,
             fontSize: 13,
             fontWeight: FontWeight.w400,

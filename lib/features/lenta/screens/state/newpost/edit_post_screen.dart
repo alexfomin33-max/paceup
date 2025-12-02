@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -366,7 +365,9 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.getSurfaceColor(context),
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: AppColors.getBorderColor(context)),
+                    border: Border.all(
+                      color: AppColors.getBorderColor(context),
+                    ),
                   ),
                   child: Icon(
                     existing.keep
@@ -450,7 +451,9 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.getSurfaceColor(context),
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: AppColors.getBorderColor(context)),
+                    border: Border.all(
+                      color: AppColors.getBorderColor(context),
+                    ),
                   ),
                   child: const Icon(
                     CupertinoIcons.clear_circled_solid,
