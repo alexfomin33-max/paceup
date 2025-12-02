@@ -8,6 +8,7 @@ import '../../../../../../features/profile/providers/search/friends_search_provi
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/error_handler.dart';
 import '../../../../../../core/widgets/primary_button.dart';
+import '../../../../../../features/profile/screens/profile_screen.dart';
 
 /// Контент вкладки «Друзья»
 /// Переключатели уже в родительском экране. Здесь — секция и «табличный» блок.
@@ -238,95 +239,107 @@ class _FriendRowState extends ConsumerState<_FriendRow> {
   Widget build(BuildContext context) {
     final isSubscribed = _currentIsSubscribed;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(
-        children: [
-          // Аватар
-          ClipOval(
-            child: CachedNetworkImage(
-              imageUrl: widget.friend.avatarUrl,
-              width: 40,
-              height: 40,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
-                width: 40,
-                height: 40,
-                color: AppColors.getSkeletonBaseColor(context),
-                alignment: Alignment.center,
-                child: const CupertinoActivityIndicator(),
-              ),
-              errorWidget: (context, url, error) => Container(
-                width: 40,
-                height: 40,
-                color: AppColors.getSkeletonBaseColor(context),
-                alignment: Alignment.center,
-                child: Icon(
-                  CupertinoIcons.person,
-                  size: 20,
-                  color: AppColors.getTextSecondaryColor(context),
-                ),
-              ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            CupertinoPageRoute(
+              builder: (context) => ProfileScreen(userId: widget.friend.id),
             ),
-          ),
-          const SizedBox(width: 12),
-
-          // Имя + возраст/город
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.friend.fullName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h14w5.copyWith(
-                    color: AppColors.getTextPrimaryColor(context),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              // Аватар
+              ClipOval(
+                child: CachedNetworkImage(
+                  imageUrl: widget.friend.avatarUrl,
+                  width: 44,
+                  height: 44,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    width: 44,
+                    height: 44,
+                    color: AppColors.getSkeletonBaseColor(context),
+                    alignment: Alignment.center,
+                    child: const CupertinoActivityIndicator(),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  widget.friend.age > 0
-                      ? '${widget.friend.age} лет, ${widget.friend.city}'
-                      : widget.friend.city,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h12w4Sec.copyWith(
-                    color: AppColors.getTextSecondaryColor(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Кнопка подписки/отписки
-          // Если подписан → показываем красную иконку с минусом
-          // Если не подписан → показываем синюю иконку с плюсом
-          IconButton(
-            onPressed: _isToggling ? null : _handleToggleSubscribe,
-            splashRadius: 24,
-            icon: _isToggling
-                ? const SizedBox(
-                    width: 26,
-                    height: 26,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                  errorWidget: (context, url, error) => Container(
+                    width: 44,
+                    height: 44,
+                    color: AppColors.getSkeletonBaseColor(context),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      CupertinoIcons.person,
+                      size: 20,
+                      color: AppColors.getTextSecondaryColor(context),
                     ),
-                  )
-                : Icon(
-                    isSubscribed
-                        ? CupertinoIcons.person_crop_circle_badge_minus
-                        : CupertinoIcons.person_crop_circle_badge_plus,
-                    size: 24,
                   ),
-            style: IconButton.styleFrom(
-              foregroundColor: isSubscribed
-                  ? Colors.red // Красный цвет для подписки
-                  : AppColors.brandPrimary, // Синий цвет для неподписки
-              disabledForegroundColor: AppColors.disabledText,
-            ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Имя + возраст/город
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.friend.fullName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.h15w5.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.friend.age > 0
+                          ? '${widget.friend.age} лет, ${widget.friend.city}'
+                          : widget.friend.city,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.h13w4Sec.copyWith(
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Кнопка подписки/отписки
+              // Если подписан → показываем красную иконку с крестиком
+              // Если не подписан → показываем синюю иконку с плюсом
+              IconButton(
+                onPressed: _isToggling ? null : _handleToggleSubscribe,
+                splashRadius: 24,
+                icon: _isToggling
+                    ? const SizedBox(
+                        width: 26,
+                        height: 26,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Icon(
+                        isSubscribed
+                            ? CupertinoIcons.person_crop_circle_badge_xmark
+                            : CupertinoIcons.person_crop_circle_badge_plus,
+                        size: 26,
+                      ),
+                style: IconButton.styleFrom(
+                  foregroundColor: isSubscribed
+                      ? AppColors.error // Красный цвет для подписки
+                      : AppColors.brandPrimary, // Синий цвет для неподписки
+                  disabledForegroundColor: AppColors.disabledText,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -357,6 +370,7 @@ class _SectionTitle extends StatelessWidget {
 //
 //  Используем SliverList вместо Column, чтобы не держать в памяти весь список сразу.
 //  Это снижает вероятность jank при большом числе элементов благодаря ленивой подгрузке.
+//  Структура соответствует стилю из CommunicationListView для единообразия UI.
 class _FriendsListSliver extends StatelessWidget {
   final List<FriendUser> friends;
   const _FriendsListSliver({required this.friends});
@@ -370,37 +384,42 @@ class _FriendsListSliver extends StatelessWidget {
     final borderColor = AppColors.getBorderColor(context);
     final dividerColor = AppColors.getDividerColor(context);
     final surfaceColor = AppColors.getSurfaceColor(context);
-    final totalItems = friends.length * 2 - 1;
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          // ── Чётные индексы содержат элементы списка, нечётные — разделители
-          if (index.isOdd) {
-            return Divider(height: 1, thickness: 0.5, color: dividerColor);
-          }
-
-          final friendIndex = index ~/ 2;
-          final friend = friends[friendIndex];
-          final isFirst = friendIndex == 0;
-          final isLast = friendIndex == friends.length - 1;
+          final friend = friends[index];
+          final isFirst = index == 0;
+          final isLast = index == friends.length - 1;
 
           return DecoratedBox(
             decoration: BoxDecoration(
               color: surfaceColor,
               border: Border(
-                top: isFirst
-                    ? BorderSide(color: borderColor, width: 0.5)
-                    : BorderSide.none,
-                bottom: isLast
-                    ? BorderSide(color: borderColor, width: 0.5)
-                    : BorderSide.none,
+                top: BorderSide(
+                  color: borderColor,
+                  width: isFirst ? 0.5 : 0,
+                ),
+                bottom: BorderSide(
+                  color: borderColor,
+                  width: isLast ? 0.5 : 0,
+                ),
               ),
             ),
-            child: _FriendRow(friend: friend),
+            child: Column(
+              children: [
+                _FriendRow(friend: friend),
+                if (!isLast)
+                  Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: dividerColor,
+                  ),
+              ],
+            ),
           );
         },
-        childCount: totalItems,
+        childCount: friends.length,
         addAutomaticKeepAlives: false,
         addRepaintBoundaries: true,
       ),
