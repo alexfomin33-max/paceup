@@ -15,6 +15,7 @@ import '../../../../core/widgets/error_display.dart';
 import 'widgets/activity/activity_block.dart'; // карточка тренировки
 import 'widgets/recommended/recommended_block.dart'; // блок «Рекомендации»
 import 'widgets/post/post_card.dart'; // карточка поста (с попапом «…» внутри)
+import '../../../../features/profile/providers/search/friends_search_provider.dart'; // провайдер рекомендаций
 
 import 'state/newpost/new_post_screen.dart';
 import 'state/newpost/edit_post_screen.dart';
@@ -169,6 +170,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     await ref.read(lentaProvider(userId).notifier).refresh();
     // Обновляем количество непрочитанных чатов при обновлении ленты
     ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
+    // Инвалидируем провайдер рекомендаций для получения новых рандомных пользователей
+    ref.invalidate(recommendedFriendsProvider);
   }
 
   // ────────────────────────────────────────────────────────────────

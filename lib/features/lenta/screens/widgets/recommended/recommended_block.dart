@@ -1,13 +1,18 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_theme.dart';
+import '../../../../profile/providers/search/friends_search_provider.dart';
 
-/// Блок «Рекомендации для вас», вынесенный в отдельный виджет.
-/// Пока данные захардкожены — позже можно передать список через параметры.
-class RecommendedBlock extends StatelessWidget {
+/// Блок «Рекомендации для вас» с реальными данными из API
+class RecommendedBlock extends ConsumerWidget {
   const RecommendedBlock({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final recommendedFriendsAsync = ref.watch(recommendedFriendsProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -21,18 +26,36 @@ class RecommendedBlock extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        const _RecommendedList(),
+        recommendedFriendsAsync.when(
+          data: (friends) {
+            if (friends.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            return _RecommendedList(friends: friends);
+          },
+          loading: () => const SizedBox(
+            height: 286,
+            child: Center(child: CupertinoActivityIndicator()),
+          ),
+          error: (error, stack) => const SizedBox.shrink(),
+        ),
       ],
     );
   }
 }
 
-/// Горизонтальный список карточек рекомендаций.
+/// Горизонтальный список карточек рекомендаций с реальными данными
 class _RecommendedList extends StatelessWidget {
-  const _RecommendedList();
+  final List<FriendUser> friends;
+
+  const _RecommendedList({required this.friends});
 
   @override
   Widget build(BuildContext context) {
+    if (friends.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return SizedBox(
       height: 286,
       child: ListView(
@@ -42,49 +65,84 @@ class _RecommendedList extends StatelessWidget {
         ),
         cacheExtent: 300,
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        children: const [
-          _FriendCard(
-            name: 'Екатерина Виноградова',
-            desc: '27 лет, Санкт-Петербург',
-            mutual: '6 общих друзей',
-            avatarAsset: 'assets/recommended_1.png',
-          ),
-          SizedBox(width: 12),
-          _FriendCard(
-            name: 'Юрий Селиванов',
-            desc: '38 лет, Ковров',
-            mutual: '4 общих друга',
-            avatarAsset: 'assets/recommended_2.jpg',
-          ),
-          SizedBox(width: 12),
-          _FriendCard(
-            name: 'Евгения Миронова',
-            desc: '25 лет, Иваново',
-            mutual: '3 общих друга',
-            avatarAsset: 'assets/recommended_3.png',
-          ),
+        children: [
+          for (int i = 0; i < friends.length; i++) ...[
+            if (i > 0) const SizedBox(width: 12),
+            _FriendCard(friend: friends[i]),
+          ],
         ],
       ),
     );
   }
 }
 
-/// Одна карточка рекомендации.
-class _FriendCard extends StatelessWidget {
-  final String name;
-  final String desc;
-  final String mutual;
-  final String avatarAsset;
+/// Одна карточка рекомендации с реальными данными
+class _FriendCard extends ConsumerStatefulWidget {
+  final FriendUser friend;
 
-  const _FriendCard({
-    required this.name,
-    required this.desc,
-    required this.mutual,
-    required this.avatarAsset,
-  });
+  const _FriendCard({required this.friend});
+
+  @override
+  ConsumerState<_FriendCard> createState() => _FriendCardState();
+}
+
+class _FriendCardState extends ConsumerState<_FriendCard> {
+  bool? _localIsSubscribed;
+  bool _isToggling = false;
+
+  bool get _currentIsSubscribed {
+    return _localIsSubscribed ?? widget.friend.isSubscribed;
+  }
+
+  Future<void> _handleSubscribe() async {
+    if (_isToggling) return;
+
+    final currentStatus = _currentIsSubscribed;
+
+    setState(() {
+      _localIsSubscribed = !currentStatus;
+      _isToggling = true;
+    });
+
+    try {
+      final params = ToggleSubscribeParams(
+        targetUserId: widget.friend.id,
+        isSubscribed: currentStatus,
+      );
+
+      final newStatus = await ref.read(toggleSubscribeProvider(params).future);
+
+      if (mounted) {
+        setState(() {
+          _localIsSubscribed = newStatus;
+          _isToggling = false;
+        });
+
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 НЕ инвалидируем провайдер - пользователи остаются в списке
+        // до обновления экрана (pull-to-refresh). Меняется только кнопка.
+        // ────────────────────────────────────────────────────────────────
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _localIsSubscribed = currentStatus;
+          _isToggling = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final friend = widget.friend;
+    final isSubscribed = _currentIsSubscribed;
+    final desc = friend.age > 0
+        ? '${friend.age} лет${friend.city.isNotEmpty ? ', ${friend.city}' : ''}'
+        : friend.city.isNotEmpty
+            ? friend.city
+            : '';
+
     return Container(
       width: 220,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
@@ -100,47 +158,62 @@ class _FriendCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           ClipOval(
-            child: Image.asset(
-              avatarAsset,
+            child: CachedNetworkImage(
+              imageUrl: friend.avatarUrl,
               width: 120,
               height: 120,
               fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                width: 120,
+                height: 120,
+                color: AppColors.getSkeletonBaseColor(context),
+                alignment: Alignment.center,
+                child: const CupertinoActivityIndicator(),
+              ),
+              errorWidget: (context, url, error) => Container(
+                width: 120,
+                height: 120,
+                color: AppColors.getSkeletonBaseColor(context),
+                alignment: Alignment.center,
+                child: Icon(
+                  CupertinoIcons.person,
+                  size: 40,
+                  color: AppColors.getTextSecondaryColor(context),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 12),
           Text(
-            name,
+            friend.fullName,
             style: AppTextStyles.h14w5.copyWith(
               color: AppColors.getTextPrimaryColor(context),
             ),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4),
-          Text(
-            desc,
-            style: AppTextStyles.h12w4Sec.copyWith(
-              color: AppColors.getTextSecondaryColor(context),
+          if (desc.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              desc,
+              style: AppTextStyles.h12w4Sec.copyWith(
+                color: AppColors.getTextSecondaryColor(context),
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              textAlign: TextAlign.center,
             ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            mutual,
-            style: AppTextStyles.h12w4Sec.copyWith(
-              color: AppColors.getTextSecondaryColor(context),
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
+          ],
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: _isToggling ? null : _handleSubscribe,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.brandPrimary,
+                backgroundColor: isSubscribed
+                    ? Colors.red
+                    : AppColors.brandPrimary,
                 foregroundColor: Theme.of(context).brightness == Brightness.dark
                     ? AppColors.surface
                     : AppColors.getSurfaceColor(context),
@@ -148,11 +221,24 @@ class _FriendCard extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
+                disabledBackgroundColor: AppColors.disabledText,
               ),
-              child: const Text(
-                'Подписаться',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
+              child: _isToggling
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      isSubscribed ? 'Отписаться' : 'Подписаться',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
             ),
           ),
         ],
