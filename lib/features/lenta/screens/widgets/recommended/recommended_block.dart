@@ -57,7 +57,7 @@ class _RecommendedList extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 286,
+      height: 254,
       child: ListView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(
@@ -140,12 +140,12 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
     final desc = friend.age > 0
         ? '${friend.age} лет${friend.city.isNotEmpty ? ', ${friend.city}' : ''}'
         : friend.city.isNotEmpty
-            ? friend.city
-            : '';
+        ? friend.city
+        : '';
 
     return Container(
       width: 220,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -183,7 +183,7 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             friend.fullName,
             style: AppTextStyles.h14w5.copyWith(
@@ -194,7 +194,7 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
             textAlign: TextAlign.center,
           ),
           if (desc.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               desc,
               style: AppTextStyles.h12w4Sec.copyWith(
@@ -205,7 +205,7 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
               textAlign: TextAlign.center,
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(

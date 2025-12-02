@@ -482,8 +482,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                 const SizedBox(width: 8),
                                 Text(
                                   _formatWhen(chat.lastMessageAt),
-                                  style: AppTextStyles.h11w4Ter.copyWith(
-                                    color: AppColors.getTextTertiaryColor(
+                                  style: AppTextStyles.h11w5Sec.copyWith(
+                                    color: AppColors.getTextSecondaryColor(
                                       context,
                                     ),
                                   ),

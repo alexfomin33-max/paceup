@@ -188,6 +188,15 @@ class AppTextStyles {
   );
   // style: AppTextStyles.h11w6
 
+  static const TextStyle h11w5Sec = TextStyle(
+    fontFamily: 'Inter',
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textSecondary,
+    letterSpacing: 0,
+  );
+  // style: AppTextStyles.h11w5Sec
+
   static const TextStyle h11w4Sec = TextStyle(
     fontFamily: 'Inter',
     fontSize: 11,
