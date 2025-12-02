@@ -17,7 +17,8 @@ class SearchFriendsContent extends ConsumerStatefulWidget {
   const SearchFriendsContent({super.key, required this.query});
 
   @override
-  ConsumerState<SearchFriendsContent> createState() => _SearchFriendsContentState();
+  ConsumerState<SearchFriendsContent> createState() =>
+      _SearchFriendsContentState();
 }
 
 class _SearchFriendsContentState extends ConsumerState<SearchFriendsContent> {
@@ -58,7 +59,7 @@ class _SearchFriendsContentState extends ConsumerState<SearchFriendsContent> {
     // ────────────────────────────────────────────────────────────────────────
     // Функция обновления данных при pull-to-refresh
     // ────────────────────────────────────────────────────────────────────────
-    Future<void> _onRefresh() async {
+    Future<void> onRefresh() async {
       if (isSearching) {
         // При поиске инвалидируем провайдер поиска
         ref.invalidate(searchFriendsProvider(trimmedQuery));
@@ -71,138 +72,138 @@ class _SearchFriendsContentState extends ConsumerState<SearchFriendsContent> {
     }
 
     return RefreshIndicator(
-      onRefresh: _onRefresh,
+      onRefresh: onRefresh,
       color: AppColors.brandPrimary,
       child: CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        const SliverToBoxAdapter(child: SizedBox(height: 8)),
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-        // ───── Заголовок секции (показываем только если не идет поиск)
-        if (!isSearching)
-          const SliverToBoxAdapter(
-            child: _SectionTitle('Рекомендованные друзья'),
-          ),
+          // ───── Заголовок секции (показываем только если не идет поиск)
+          if (!isSearching)
+            const SliverToBoxAdapter(
+              child: _SectionTitle('Рекомендованные друзья'),
+            ),
 
-        // ───── Контент: список друзей или результаты поиска
-        friendsAsync.when(
-          data: (friends) {
-            if (friends.isEmpty) {
+          // ───── Контент: список друзей или результаты поиска
+          friendsAsync.when(
+            data: (friends) {
+              if (friends.isEmpty) {
+                return SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Center(
+                      child: Text(
+                        isSearching
+                            ? 'Ничего не найдено'
+                            : 'Нет рекомендованных друзей',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return _FriendsListSliver(friends: friends);
+            },
+            loading: () => const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(child: CupertinoActivityIndicator()),
+              ),
+            ),
+            error: (error, stack) {
+              // Логируем ошибку для отладки
+              log('❌ Ошибка загрузки друзей: $error');
+              log('Stack trace: $stack');
+
               return SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(32),
                   child: Center(
-                    child: Text(
-                      isSearching
-                          ? 'Ничего не найдено'
-                          : 'Нет рекомендованных друзей',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        color: AppColors.getTextSecondaryColor(context),
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.exclamationmark_circle,
+                          size: 48,
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                        const SizedBox(height: 16),
+                        SelectableText.rich(
+                          TextSpan(
+                            text: 'Ошибка загрузки\n',
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.error,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: ErrorHandler.format(error),
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            ],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               );
-            }
-
-            return _FriendsListSliver(friends: friends);
-          },
-          loading: () => const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Center(child: CupertinoActivityIndicator()),
-            ),
+            },
           ),
-          error: (error, stack) {
-            // Логируем ошибку для отладки
-            log('❌ Ошибка загрузки друзей: $error');
-            log('Stack trace: $stack');
 
-            return SliverToBoxAdapter(
+          // ───── Подпись и кнопка «Пригласить» (показываем только если не идет поиск)
+          if (!isSearching) ...[
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+            SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(32),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        CupertinoIcons.exclamationmark_circle,
-                        size: 48,
-                        color: AppColors.getTextSecondaryColor(context),
-                      ),
-                      const SizedBox(height: 16),
-                      SelectableText.rich(
-                        TextSpan(
-                          text: 'Ошибка загрузки\n',
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.error,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: ErrorHandler.format(error),
-                              style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 13,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.error,
-                              ),
-                            ),
-                          ],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-
-        // ───── Подпись и кнопка «Пригласить» (показываем только если не идет поиск)
-        if (!isSearching) ...[
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: Text(
-                  'Пригласите друзей, которые еще не пользуются',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    color: AppColors.getTextSecondaryColor(context),
+                  child: Text(
+                    'Пригласите друзей, которые еще не пользуются',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      color: AppColors.getTextSecondaryColor(context),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: PrimaryButton(
-                  text: 'Пригласить',
-                  onPressed: () {},
-                  width: 220,
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Center(
+                  child: PrimaryButton(
+                    text: 'Пригласить',
+                    onPressed: () {},
+                    width: 220,
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
+
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
-
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-      ],
       ),
     );
   }
@@ -360,9 +361,7 @@ class _FriendRowState extends ConsumerState<_FriendRow> {
                     ? const SizedBox(
                         width: 26,
                         height: 26,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Icon(
                         isSubscribed
@@ -372,7 +371,8 @@ class _FriendRowState extends ConsumerState<_FriendRow> {
                       ),
                 style: IconButton.styleFrom(
                   foregroundColor: isSubscribed
-                      ? AppColors.error // Красный цвет для подписки
+                      ? AppColors
+                            .error // Красный цвет для подписки
                       : AppColors.brandPrimary, // Синий цвет для неподписки
                   disabledForegroundColor: AppColors.disabledText,
                 ),
@@ -436,25 +436,15 @@ class _FriendsListSliver extends StatelessWidget {
             decoration: BoxDecoration(
               color: surfaceColor,
               border: Border(
-                top: BorderSide(
-                  color: borderColor,
-                  width: isFirst ? 0.5 : 0,
-                ),
-                bottom: BorderSide(
-                  color: borderColor,
-                  width: isLast ? 0.5 : 0,
-                ),
+                top: BorderSide(color: borderColor, width: isFirst ? 0.5 : 0),
+                bottom: BorderSide(color: borderColor, width: isLast ? 0.5 : 0),
               ),
             ),
             child: Column(
               children: [
                 _FriendRow(friend: friend),
                 if (!isLast)
-                  Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    color: dividerColor,
-                  ),
+                  Divider(height: 1, thickness: 0.5, color: dividerColor),
               ],
             ),
           );

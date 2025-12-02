@@ -97,10 +97,6 @@ class ImageCacheManager {
 
     // Настраиваем максимальный размер кэша в байтах
     imageCache.maximumSizeBytes = _maxMemorySizeBytes;
-
-    debugPrint('🖼️ ImageCache настроен: '
-        'maxSize=$_maxMemoryObjects, '
-        'maxBytes=${_maxMemorySizeBytes ~/ (1 << 20)}MB');
   }
 
   /// Очистка всего кэша (disk + memory)

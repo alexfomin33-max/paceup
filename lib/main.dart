@@ -43,9 +43,6 @@ void main() async {
   // ────────────────────────── Drift Offline-First Cache ──────────────────────────
   // Инициализируем базу данных перед запуском приложения
   // Это гарантирует, что кэш готов к использованию с первого кадра
-  debugPrint(
-    '🔷 Инициализация Drift Database для offline-first кэширования...',
-  );
 
   // ProviderScope создаётся один раз
   final container = ProviderContainer();
@@ -53,22 +50,17 @@ void main() async {
   // Инициализируем базу данных через провайдер
   try {
     final db = container.read(appDatabaseProvider);
-    debugPrint('✅ Drift Database инициализирована: ${db.runtimeType}');
 
     // Проверяем подключение с обработкой ошибок чтения
     try {
-      final count = await db.select(db.cachedActivities).get();
-      debugPrint('📊 Закэшированных активностей: ${count.length}');
+      await db.select(db.cachedActivities).get();
     } catch (readError) {
       // Если ошибка при чтении, возможно в базе некорректные данные
       // Очищаем таблицу активностей и продолжаем работу
-      debugPrint('⚠️ Ошибка чтения кэша: $readError');
-      debugPrint('🧹 Очищаем некорректные данные...');
       try {
         await db.customStatement('DELETE FROM cached_activities;');
-        debugPrint('✅ Некорректные данные очищены');
       } catch (deleteError) {
-        debugPrint('⚠️ Не удалось очистить данные: $deleteError');
+        // Игнорируем ошибки очистки
       }
     }
 
@@ -81,18 +73,9 @@ void main() async {
     final optimizer = DbOptimizer(cache);
 
     // Запуск в фоне, не блокируем UI
-    optimizer
-        .runOptimizationIfNeeded()
-        .then((optimized) {
-          if (optimized) {
-            debugPrint('✅ DB автоматическая оптимизация завершена');
-          }
-        })
-        .catchError((e) {
-          debugPrint('⚠️ DB оптимизация пропущена: $e');
-        });
+    optimizer.runOptimizationIfNeeded();
   } catch (e) {
-    debugPrint('❌ Ошибка инициализации Drift Database: $e');
+    // Игнорируем ошибки инициализации БД
   }
 
   // ────────────────────────── Riverpod ──────────────────────────
