@@ -33,6 +33,10 @@ class _SearchPrefsPageState extends State<SearchPrefsPage> {
   // Пейджер для свайпа вкладок
   late final PageController _page;
 
+  // Счетчик переключений вкладок для принудительного пересоздания виджетов
+  // Это гарантирует обновление данных при каждом переключении вкладок
+  int _tabSwitchCounter = 0;
+
   @override
   void initState() {
     super.initState();
@@ -85,6 +89,8 @@ class _SearchPrefsPageState extends State<SearchPrefsPage> {
                       _index = v;
                       _controller.clear();
                       _focus.unfocus();
+                      // Увеличиваем счетчик для принудительного пересоздания виджетов
+                      _tabSwitchCounter++;
                     });
                     _page.animateToPage(
                       v,
@@ -123,17 +129,22 @@ class _SearchPrefsPageState extends State<SearchPrefsPage> {
                     _index = i;
                     _controller.clear(); // очищаем строку поиска
                     _focus.unfocus(); // убираем клавиатуру/фокус
+                    // Увеличиваем счетчик для принудительного пересоздания виджетов
+                    _tabSwitchCounter++;
                   });
                 },
                 children: [
-                  // Важно: даём ключи, чтобы сохранить состояние при переключении
-                  // query передается как prop, виджет обновится через setState при изменении текста
+                  // ────────────────────────────────────────────────────────────────
+                  // Используем ValueKey с индексом вкладки и счетчиком переключений
+                  // для принудительного пересоздания виджетов при каждом переключении.
+                  // Это гарантирует вызов initState и обновление провайдеров.
+                  // ────────────────────────────────────────────────────────────────
                   SearchFriendsContent(
-                    key: const PageStorageKey('search_friends_page'),
+                    key: ValueKey('friends_${_index}_$_tabSwitchCounter'),
                     query: _controller.text.trim(),
                   ),
                   SearchClubsContent(
-                    key: const PageStorageKey('search_clubs_page'),
+                    key: ValueKey('clubs_${_index}_$_tabSwitchCounter'),
                     query: _controller.text.trim(),
                   ),
                 ],

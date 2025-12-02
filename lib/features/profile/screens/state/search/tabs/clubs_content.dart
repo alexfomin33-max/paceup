@@ -8,20 +8,59 @@ import '../../../../../../features/map/screens/clubs/club_detail_screen.dart';
 
 /// Контент вкладки «Клубы»
 /// Табличный список «в одну коробку» (как на карте/в маршрутных списках).
-class SearchClubsContent extends ConsumerWidget {
+class SearchClubsContent extends ConsumerStatefulWidget {
   final String query;
   const SearchClubsContent({super.key, required this.query});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final trimmedQuery = query.trim();
+  ConsumerState<SearchClubsContent> createState() => _SearchClubsContentState();
+}
+
+class _SearchClubsContentState extends ConsumerState<SearchClubsContent> {
+  // ────────────────────────────────────────────────────────────────────────
+  // Обновление провайдеров при переключении вкладок:
+  // При каждом создании виджета (переключении вкладки) инвалидируем провайдеры,
+  // чтобы получить свежие данные
+  // ────────────────────────────────────────────────────────────────────────
+  bool _hasInvalidated = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // Инвалидируем провайдеры при первом build (переключении вкладки)
+    if (!_hasInvalidated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.invalidate(recommendedClubsProvider);
+          _hasInvalidated = true;
+        }
+      });
+    }
+    final trimmedQuery = widget.query.trim();
     final isSearching = trimmedQuery.isNotEmpty;
     
     final clubsAsync = isSearching
         ? ref.watch(searchClubsProvider(trimmedQuery))
         : ref.watch(recommendedClubsProvider);
 
-    return CustomScrollView(
+    // ────────────────────────────────────────────────────────────────────────
+    // Функция обновления данных при pull-to-refresh
+    // ────────────────────────────────────────────────────────────────────────
+    Future<void> _onRefresh() async {
+      if (isSearching) {
+        // При поиске инвалидируем провайдер поиска
+        ref.invalidate(searchClubsProvider(trimmedQuery));
+      } else {
+        // При просмотре рекомендованных клубов инвалидируем соответствующий провайдер
+        ref.invalidate(recommendedClubsProvider);
+      }
+      // Ждем завершения обновления
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+
+    return RefreshIndicator(
+      onRefresh: _onRefresh,
+      color: AppColors.brandPrimary,
+      child: CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 8)),
@@ -146,6 +185,7 @@ class SearchClubsContent extends ConsumerWidget {
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ],
+      ),
     );
   }
 }

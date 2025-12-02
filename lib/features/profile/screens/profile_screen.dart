@@ -58,12 +58,59 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final GlobalKey<MainTabState> _mainTabKey = GlobalKey<MainTabState>();
 
   int _tab = 0;
+  bool _wasRouteActive = false; // Отслеживание предыдущего состояния видимости маршрута
 
   @override
   void dispose() {
     _pageController.dispose();
     _gearPrefs.dispose();
     super.dispose();
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Обновление данных профиля при открытии экрана
+  // Вызывается при инициализации виджета для получения свежих данных
+  // Использует refresh() вместо reload() чтобы не очищать кэш аватарки
+  // и избежать визуального "мигания" изображения
+  // ────────────────────────────────────────────────────────────────────────
+  void _updateProfileHeader(int userId) {
+    // Используем refresh() для обновления данных без очистки кэша аватарки
+    // Это обновит количество подписок и подписчиков без визуального эффекта
+    ref.read(profileHeaderProvider(userId).notifier).refresh();
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Проверка видимости экрана и обновление данных при отображении
+  // Вызывается при каждом build для отслеживания видимости маршрута
+  // ────────────────────────────────────────────────────────────────────────
+  void _checkRouteVisibility() {
+    final route = ModalRoute.of(context);
+    final isRouteActive = route?.isCurrent ?? false;
+
+    // Если маршрут стал активным (видимым), обновляем данные
+    if (isRouteActive && !_wasRouteActive) {
+      _wasRouteActive = true;
+      
+      // Обновляем данные профиля при отображении экрана
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        
+        final userId = widget.userId;
+        if (userId != null) {
+          _updateProfileHeader(userId);
+        } else {
+          final currentUserIdAsync = ref.read(currentUserIdProvider);
+          currentUserIdAsync.whenData((currentUserId) {
+            if (currentUserId != null && mounted) {
+              _updateProfileHeader(currentUserId);
+            }
+          });
+        }
+      });
+    } else if (!isRouteActive) {
+      // Если маршрут стал неактивным, сбрасываем флаг для следующего отображения
+      _wasRouteActive = false;
+    }
   }
 
   void _onTabTap(int i) {
@@ -82,10 +129,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (i == 0) {
       MainTab.checkCache(_mainTabKey);
     }
+    
+    // ────────────────────────────────────────────────────────────────────────
+    // Обновление данных профиля при переключении вкладок
+    // Обновляем количество подписок и подписчиков при каждом переключении
+    // ────────────────────────────────────────────────────────────────────────
+    final userId = widget.userId;
+    if (userId != null) {
+      _updateProfileHeader(userId);
+    } else {
+      // Если userId не передан, получаем текущего пользователя
+      final currentUserIdAsync = ref.read(currentUserIdProvider);
+      currentUserIdAsync.whenData((currentUserId) {
+        if (currentUserId != null) {
+          _updateProfileHeader(currentUserId);
+        }
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // ────────────────────────────────────────────────────────────────────────
+    // Проверка видимости экрана и обновление данных при отображении
+    // Вызывается при каждом build для отслеживания, когда экран становится видимым
+    // Это гарантирует обновление данных при возврате из других экранов (например, настроек)
+    // ────────────────────────────────────────────────────────────────────────
+    _checkRouteVisibility();
+
     // Если userId передан явно, используем его, иначе получаем текущего пользователя из AuthService
     if (widget.userId != null) {
       // Используем переданный userId (например, при открытии профиля другого пользователя из ленты)

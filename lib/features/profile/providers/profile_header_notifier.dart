@@ -205,4 +205,60 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
       // Игнорируем ошибки очистки кэша
     }
   }
+
+  /// Обновление данных профиля без очистки кэша аватарки
+  ///
+  /// Используется для периодического обновления данных (подписки/подписчики)
+  /// без визуального "мигания" аватарки. Кэш аватарки сохраняется.
+  Future<void> refresh() async {
+    try {
+      // Загружаем свежие данные с сервера
+      state = state.copyWith(isLoading: true);
+
+      final map = await _api.post(
+        '/user_profile_header.php',
+        body: {'user_id': '$userId'},
+        timeout: const Duration(seconds: 12),
+      );
+
+      // Сервер может вернуть данные в разных ключах
+      final dynamic raw = map['profile'] ?? map['data'] ?? map;
+
+      if (raw is! Map) {
+        throw const FormatException('Bad payload: not a JSON object');
+      }
+
+      final profile = UserProfileHeader.fromJson(Map<String, dynamic>.from(raw));
+
+      // Сохраняем в кэш (обновляем данные, но НЕ очищаем кэш аватарки)
+      await _cache.cacheProfile(
+        userId: profile.id,
+        name: '${profile.firstName} ${profile.lastName}',
+        avatar: profile.avatar ?? '',
+        userGroup: 0,
+        totalDistance: 0,
+        totalActivities: 0,
+        totalTime: 0,
+        city: profile.city,
+        age: profile.age,
+        followers: profile.followers,
+        following: profile.following,
+      );
+
+      state = state.copyWith(profile: profile, isLoading: false, error: null);
+    } catch (e) {
+      // Если ошибка сети — показываем текущие данные
+      if (state.profile != null) {
+        state = state.copyWith(
+          error: 'Не удалось обновить данные',
+          isLoading: false,
+        );
+      } else {
+        state = state.copyWith(
+          error: ErrorHandler.format(e),
+          isLoading: false,
+        );
+      }
+    }
+  }
 }
