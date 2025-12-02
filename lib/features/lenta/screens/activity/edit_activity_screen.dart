@@ -703,8 +703,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         if (path.isEmpty) continue;
         final compressed = await compressLocalImage(
           sourceFile: File(path),
-          maxSide: 1600,
-          jpegQuality: 80,
+          maxSide: ImageCompressionPreset.activity.maxSide,
+          jpegQuality: ImageCompressionPreset.activity.quality,
         );
         filesForUpload['file$i'] = compressed;
       }

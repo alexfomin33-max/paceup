@@ -7,7 +7,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../../../../core/theme/app_theme.dart';
-import '../../../../../../core/utils/local_image_compressor.dart';
+import '../../../../../../core/utils/local_image_compressor.dart'
+    show compressLocalImage, ImageCompressionPreset;
 import '../../../../../../core/utils/error_handler.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../providers/services/api_provider.dart';
@@ -378,8 +379,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       if (pickedFile != null && _currentUserId != null) {
         final compressed = await compressLocalImage(
           sourceFile: File(pickedFile.path),
-          maxSide: 1600,
-          jpegQuality: 80,
+          maxSide: ImageCompressionPreset.chat.maxSide,
+          jpegQuality: ImageCompressionPreset.chat.quality,
         );
         await _sendImage(compressed);
       }

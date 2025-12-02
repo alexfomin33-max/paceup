@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/image_picker_helper.dart';
+import '../../../../core/utils/local_image_compressor.dart'
+    show ImageCompressionPreset;
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
@@ -92,8 +94,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     final processed = await ImagePickerHelper.pickAndProcessImage(
       context: context,
       aspectRatio: _logoAspectRatio,
-      maxSide: 900,
-      jpegQuality: 85,
+      maxSide: ImageCompressionPreset.logo.maxSide,
+      jpegQuality: ImageCompressionPreset.logo.quality,
       cropTitle: 'Обрезка логотипа',
     );
     if (processed == null || !mounted) return;
@@ -104,8 +106,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
   Future<void> _pickPhoto(int i) async {
     // ── забираем фото события и сжимаем его перед загрузкой (без обрезки)
     final compressed = await ImagePickerHelper.pickImageWithoutCrop(
-      maxSide: 1600,
-      jpegQuality: 80,
+      maxSide: ImageCompressionPreset.eventPhoto.maxSide,
+      jpegQuality: ImageCompressionPreset.eventPhoto.quality,
     );
     if (compressed == null || !mounted) return;
 

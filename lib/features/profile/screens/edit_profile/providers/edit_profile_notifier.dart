@@ -13,7 +13,8 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../../core/services/api_service.dart';
 import '../../../../../core/utils/error_handler.dart';
-import '../../../../../core/utils/local_image_compressor.dart';
+import '../../../../../core/utils/local_image_compressor.dart'
+    show compressLocalImage, ImageCompressionPreset;
 import '../../../../../core/providers/form_state_provider.dart';
 import '../../../providers/profile_header_provider.dart';
 import 'edit_profile_state.dart';
@@ -107,8 +108,8 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
 
     final compressed = await compressLocalImage(
       sourceFile: File(file.path),
-      maxSide: 1600,
-      jpegQuality: 85,
+      maxSide: ImageCompressionPreset.avatar.maxSide,
+      jpegQuality: ImageCompressionPreset.avatar.quality,
     );
     final bytes = await compressed.readAsBytes();
 

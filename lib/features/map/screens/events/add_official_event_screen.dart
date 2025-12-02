@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/image_picker_helper.dart';
+import '../../../../core/utils/local_image_compressor.dart'
+    show ImageCompressionPreset;
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
@@ -115,8 +117,8 @@ class _AddOfficialEventScreenState
     final processed = await ImagePickerHelper.pickAndProcessImage(
       context: context,
       aspectRatio: _logoAspectRatio,
-      maxSide: 900,
-      jpegQuality: 85,
+      maxSide: ImageCompressionPreset.logo.maxSide,
+      jpegQuality: ImageCompressionPreset.logo.quality,
       cropTitle: 'Обрезка логотипа',
     );
     if (processed == null || !mounted) return;
@@ -129,8 +131,8 @@ class _AddOfficialEventScreenState
     final processed = await ImagePickerHelper.pickAndProcessImage(
       context: context,
       aspectRatio: _backgroundAspectRatio,
-      maxSide: 1600,
-      jpegQuality: 80,
+      maxSide: ImageCompressionPreset.background.maxSide,
+      jpegQuality: ImageCompressionPreset.background.quality,
       cropTitle: 'Обрезка фонового фото',
     );
     if (processed == null || !mounted) return;

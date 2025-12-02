@@ -30,7 +30,8 @@ import '../../../../../features/lenta/providers/lenta_provider.dart';
 import '../../../../../providers/services/api_provider.dart';
 import '../../../../../providers/services/auth_provider.dart';
 import '../../../../../core/services/api_service.dart'; // для ApiException
-import '../../../../../core/utils/local_image_compressor.dart';
+import '../../../../../core/utils/local_image_compressor.dart'
+    show compressLocalImage, ImageCompressionPreset;
 
 // Меню с тремя точками
 import '../../../../../core/widgets/more_menu_overlay.dart';
@@ -376,8 +377,8 @@ Future<void> _handleAddPhotos({
       if (path.isEmpty) continue;
       final compressed = await compressLocalImage(
         sourceFile: File(path),
-        maxSide: 1600,
-        jpegQuality: 80,
+        maxSide: ImageCompressionPreset.activity.maxSide,
+        jpegQuality: ImageCompressionPreset.activity.quality,
       );
       filesForUpload['file$i'] = compressed;
     }
