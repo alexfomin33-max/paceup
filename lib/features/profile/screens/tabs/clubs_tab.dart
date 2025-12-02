@@ -150,6 +150,15 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
               );
             }
 
+            // Сортируем клубы по количеству участников (по убыванию)
+            // Если количество одинаковое, сортируем по имени
+            final sortedClubs = List<Club>.from(clubs)
+              ..sort((a, b) {
+                final countDiff = b.membersCount.compareTo(a.membersCount);
+                if (countDiff != 0) return countDiff;
+                return a.name.compareTo(b.name);
+              });
+
             // Сетка карточек 2xN
             return SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -160,8 +169,8 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
                   crossAxisSpacing: 12,
                   mainAxisExtent: 174,
                 ),
-                itemCount: clubs.length,
-                itemBuilder: (context, i) => _ClubCard(club: clubs[i]),
+                itemCount: sortedClubs.length,
+                itemBuilder: (context, i) => _ClubCard(club: sortedClubs[i]),
               ),
             );
           },

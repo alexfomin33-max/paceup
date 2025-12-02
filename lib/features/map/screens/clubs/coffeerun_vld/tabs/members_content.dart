@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../providers/services/api_provider.dart';
+import '../../../../../../core/utils/error_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// ──────────────────────── Контент участников клуба из API с пагинацией ────────────────────────
@@ -23,6 +24,7 @@ class _CoffeeRunVldMembersContentState
   bool _hasMore = true;
   int _currentPage = 1;
   static const int _limit = 25;
+  final Map<int, bool> _togglingSubscriptions = {}; // Для отслеживания процесса подписки/отписки
 
   @override
   void initState() {
@@ -92,6 +94,71 @@ class _CoffeeRunVldMembersContentState
     }
   }
 
+  /// ──────────────────────── Подписка/отписка на пользователя ────────────────────────
+  Future<void> _toggleSubscribe(int targetUserId, bool currentlySubscribed) async {
+    // Проверяем, не идет ли уже процесс подписки/отписки для этого пользователя
+    if (_togglingSubscriptions[targetUserId] == true) return;
+
+    if (!mounted) return;
+    setState(() {
+      _togglingSubscriptions[targetUserId] = true;
+    });
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      final action = currentlySubscribed ? 'unsubscribe' : 'subscribe';
+
+      final data = await api.post(
+        '/toggle_subscribe.php',
+        body: {
+          'target_user_id': targetUserId.toString(),
+          'action': action,
+        },
+      );
+
+      if (!mounted) return;
+
+      if (data['success'] == true) {
+        final isSubscribed = data['is_subscribed'] as bool? ?? false;
+
+        // Обновляем статус подписки в списке участников
+        setState(() {
+          final index = _members.indexWhere((m) => (m['user_id'] as int?) == targetUserId);
+          if (index != -1) {
+            _members[index]['is_subscribed'] = isSubscribed;
+          }
+          _togglingSubscriptions[targetUserId] = false;
+        });
+      } else {
+        final errorMessage = data['message'] as String? ?? 'Ошибка подписки';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        setState(() {
+          _togglingSubscriptions[targetUserId] = false;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorHandler.format(e)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      setState(() {
+        _togglingSubscriptions[targetUserId] = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_members.isEmpty && !_loading) {
@@ -127,6 +194,10 @@ class _CoffeeRunVldMembersContentState
         final name = m['name'] as String? ?? 'Пользователь';
         final avatarUrl = m['avatar_url'] as String? ?? '';
         final role = m['role'] as String?;
+        final userId = m['user_id'] as int?;
+        final isCurrentUser = m['is_current_user'] as bool? ?? false;
+        final isSubscribed = m['is_subscribed'] as bool? ?? false;
+        final isToggling = userId != null && (_togglingSubscriptions[userId] == true);
 
         return Column(
           children: [
@@ -175,23 +246,36 @@ class _CoffeeRunVldMembersContentState
                       ],
                     ),
                   ),
-                  IconButton(
-                    // Для пользователей с ролью (владелец) иконка неактивна
-                    // Для обычных пользователей — клик добавит в друзья (реализуем позже)
-                    onPressed: role != null ? null : () {},
-                    splashRadius: 22,
-                    icon: Icon(
-                      role != null
-                          ? CupertinoIcons
-                                .person_crop_circle_fill_badge_checkmark
-                          : CupertinoIcons.person_crop_circle_badge_plus,
-                      size: 24,
+                  // Иконка подписки: не показываем для текущего пользователя и владельца
+                  if (!isCurrentUser && userId != null)
+                    IconButton(
+                      onPressed: isToggling
+                          ? null
+                          : () => _toggleSubscribe(userId, isSubscribed),
+                      splashRadius: 22,
+                      icon: isToggling
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Icon(
+                              isSubscribed
+                                  ? CupertinoIcons
+                                      .person_crop_circle_badge_minus
+                                  : CupertinoIcons
+                                      .person_crop_circle_badge_plus,
+                              size: 24,
+                            ),
+                      style: IconButton.styleFrom(
+                        foregroundColor: isSubscribed
+                            ? Colors.red
+                            : AppColors.brandPrimary,
+                        disabledForegroundColor: AppColors.disabledText,
+                      ),
                     ),
-                    style: IconButton.styleFrom(
-                      foregroundColor: AppColors.brandPrimary,
-                      disabledForegroundColor: AppColors.disabledText,
-                    ),
-                  ),
                 ],
               ),
             ),

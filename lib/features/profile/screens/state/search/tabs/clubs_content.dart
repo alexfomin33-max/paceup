@@ -51,6 +51,15 @@ class SearchClubsContent extends ConsumerWidget {
               );
             }
 
+            // Сортируем клубы по количеству участников (по убыванию)
+            // Если количество одинаковое, сортируем по имени
+            final sortedClubs = List<ClubSearch>.from(clubs)
+              ..sort((a, b) {
+                final countDiff = b.membersCount.compareTo(a.membersCount);
+                if (countDiff != 0) return countDiff;
+                return a.name.compareTo(b.name);
+              });
+
             return SliverToBoxAdapter(
               child: Container(
                 decoration: BoxDecoration(
@@ -67,12 +76,12 @@ class SearchClubsContent extends ConsumerWidget {
                   ),
                 ),
                 child: Column(
-                  children: List.generate(clubs.length, (i) {
-                    final club = clubs[i];
+                  children: List.generate(sortedClubs.length, (i) {
+                    final club = sortedClubs[i];
                     return Column(
                       children: [
                         _ClubRow(club: club),
-                        if (i != clubs.length - 1)
+                        if (i != sortedClubs.length - 1)
                           Divider(
                             height: 1,
                             thickness: 0.5,

@@ -1073,6 +1073,7 @@ class _EventMembersSliverState
   String? _error;
   int _currentPage = 1;
   static const int _limit = 25;
+  final Map<int, bool> _togglingSubscriptions = {}; // Для отслеживания процесса подписки/отписки
 
   @override
   void initState() {
@@ -1097,6 +1098,71 @@ class _EventMembersSliverState
       _error = null;
     });
     _loadParticipants();
+  }
+
+  /// ──────────────────────── Подписка/отписка на пользователя ────────────────────────
+  Future<void> _toggleSubscribe(int targetUserId, bool currentlySubscribed) async {
+    // Проверяем, не идет ли уже процесс подписки/отписки для этого пользователя
+    if (_togglingSubscriptions[targetUserId] == true) return;
+
+    if (!mounted) return;
+    setState(() {
+      _togglingSubscriptions[targetUserId] = true;
+    });
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      final action = currentlySubscribed ? 'unsubscribe' : 'subscribe';
+
+      final data = await api.post(
+        '/toggle_subscribe.php',
+        body: {
+          'target_user_id': targetUserId.toString(),
+          'action': action,
+        },
+      );
+
+      if (!mounted) return;
+
+      if (data['success'] == true) {
+        final isSubscribed = data['is_subscribed'] as bool? ?? false;
+
+        // Обновляем статус подписки в списке участников
+        setState(() {
+          final index = _participants.indexWhere((p) => (p['user_id'] as int?) == targetUserId);
+          if (index != -1) {
+            _participants[index]['is_subscribed'] = isSubscribed;
+          }
+          _togglingSubscriptions[targetUserId] = false;
+        });
+      } else {
+        final errorMessage = data['message'] as String? ?? 'Ошибка подписки';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        setState(() {
+          _togglingSubscriptions[targetUserId] = false;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorHandler.format(e)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      setState(() {
+        _togglingSubscriptions[targetUserId] = false;
+      });
+    }
   }
 
   /// Загрузка участников с пагинацией
@@ -1236,6 +1302,10 @@ class _EventMembersSliverState
         final name = (p['name'] as String?)?.trim() ?? 'Пользователь';
         final avatarUrl = (p['avatar_url'] as String?)?.trim() ?? '';
         final isOrganizer = p['is_organizer'] as bool? ?? false;
+        final userId = p['user_id'] as int?;
+        final isCurrentUser = p['is_current_user'] as bool? ?? false;
+        final isSubscribed = p['is_subscribed'] as bool? ?? false;
+        final isToggling = userId != null && (_togglingSubscriptions[userId] == true);
 
         return Builder(
           builder: (context) => Container(
@@ -1251,6 +1321,13 @@ class _EventMembersSliverState
                         ? CupertinoIcons.person_crop_circle_fill_badge_checkmark
                         : null,
                   ),
+                  userId: userId,
+                  isCurrentUser: isCurrentUser,
+                  isSubscribed: isSubscribed,
+                  isToggling: isToggling,
+                  onToggleSubscribe: userId != null && !isCurrentUser
+                      ? () => _toggleSubscribe(userId, isSubscribed)
+                      : null,
                 ),
                 if (index < _participants.length - 1)
                   Divider(
@@ -1284,6 +1361,7 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
   bool _hasMore = true;
   int _currentPage = 1;
   static const int _limit = 25;
+  final Map<int, bool> _togglingSubscriptions = {}; // Для отслеживания процесса подписки/отписки
 
   @override
   void initState() {
@@ -1351,6 +1429,71 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
     }
   }
 
+  /// ──────────────────────── Подписка/отписка на пользователя ────────────────────────
+  Future<void> _toggleSubscribe(int targetUserId, bool currentlySubscribed) async {
+    // Проверяем, не идет ли уже процесс подписки/отписки для этого пользователя
+    if (_togglingSubscriptions[targetUserId] == true) return;
+
+    if (!mounted) return;
+    setState(() {
+      _togglingSubscriptions[targetUserId] = true;
+    });
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      final action = currentlySubscribed ? 'unsubscribe' : 'subscribe';
+
+      final data = await api.post(
+        '/toggle_subscribe.php',
+        body: {
+          'target_user_id': targetUserId.toString(),
+          'action': action,
+        },
+      );
+
+      if (!mounted) return;
+
+      if (data['success'] == true) {
+        final isSubscribed = data['is_subscribed'] as bool? ?? false;
+
+        // Обновляем статус подписки в списке участников
+        setState(() {
+          final index = _participants.indexWhere((p) => (p['user_id'] as int?) == targetUserId);
+          if (index != -1) {
+            _participants[index]['is_subscribed'] = isSubscribed;
+          }
+          _togglingSubscriptions[targetUserId] = false;
+        });
+      } else {
+        final errorMessage = data['message'] as String? ?? 'Ошибка подписки';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        setState(() {
+          _togglingSubscriptions[targetUserId] = false;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorHandler.format(e)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      setState(() {
+        _togglingSubscriptions[targetUserId] = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_participants.isEmpty && !_loading) {
@@ -1377,6 +1520,10 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
         final name = p['name'] as String? ?? 'Пользователь';
         final avatarUrl = p['avatar_url'] as String? ?? '';
         final isOrganizer = p['is_organizer'] as bool? ?? false;
+        final userId = p['user_id'] as int?;
+        final isCurrentUser = p['is_current_user'] as bool? ?? false;
+        final isSubscribed = p['is_subscribed'] as bool? ?? false;
+        final isToggling = userId != null && (_togglingSubscriptions[userId] == true);
 
         return Column(
           children: [
@@ -1389,6 +1536,13 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
                     ? CupertinoIcons.person_crop_circle_fill_badge_checkmark
                     : null,
               ),
+              userId: userId,
+              isCurrentUser: isCurrentUser,
+              isSubscribed: isSubscribed,
+              isToggling: isToggling,
+              onToggleSubscribe: userId != null && !isCurrentUser
+                  ? () => _toggleSubscribe(userId, isSubscribed)
+                  : null,
             ),
             if (index < _participants.length - 1)
               Builder(
@@ -1407,7 +1561,19 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
 
 class _MemberRow extends StatelessWidget {
   final _Member member;
-  const _MemberRow({required this.member});
+  final int? userId;
+  final bool isCurrentUser;
+  final bool isSubscribed;
+  final bool isToggling;
+  final VoidCallback? onToggleSubscribe;
+  const _MemberRow({
+    required this.member,
+    this.userId,
+    this.isCurrentUser = false,
+    this.isSubscribed = false,
+    this.isToggling = false,
+    this.onToggleSubscribe,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1464,18 +1630,48 @@ class _MemberRow extends StatelessWidget {
             ),
           ),
 
-          IconButton(
-            onPressed: (member.roleIcon != null) ? null : () {},
-            splashRadius: 22,
-            icon: Icon(
-              member.roleIcon ?? CupertinoIcons.person_crop_circle_badge_plus,
-              size: 24,
+          // Иконка подписки: не показываем для текущего пользователя и организатора
+          if (!isCurrentUser && userId != null)
+            IconButton(
+              onPressed: isToggling ? null : onToggleSubscribe,
+              splashRadius: 22,
+              icon: isToggling
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Icon(
+                      isSubscribed
+                          ? CupertinoIcons
+                              .person_crop_circle_badge_minus
+                          : member.roleIcon ??
+                              CupertinoIcons
+                                  .person_crop_circle_badge_plus,
+                      size: 24,
+                    ),
+              style: IconButton.styleFrom(
+                foregroundColor: isSubscribed
+                    ? Colors.red
+                    : AppColors.brandPrimary,
+                disabledForegroundColor: AppColors.disabledText,
+              ),
+            )
+          else if (member.roleIcon != null)
+            IconButton(
+              onPressed: null,
+              splashRadius: 22,
+              icon: Icon(
+                member.roleIcon,
+                size: 24,
+              ),
+              style: IconButton.styleFrom(
+                foregroundColor: AppColors.brandPrimary,
+                disabledForegroundColor: AppColors.disabledText,
+              ),
             ),
-            style: IconButton.styleFrom(
-              foregroundColor: AppColors.brandPrimary,
-              disabledForegroundColor: AppColors.disabledText,
-            ),
-          ),
         ],
       ),
     );
