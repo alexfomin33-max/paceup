@@ -8,6 +8,7 @@ enum SortMode { relevance, priceAsc, priceDesc }
 
 /// Модель «Слот» — место на забег / старт и т.п.
 class MarketItem {
+  final int id; // ID слота из базы данных
   final String title; // Заголовок: например, «Марафон "Алые Паруса"»
   final String distance; // Дистанция: «21,1 км», «10 км» и т.п.
   final int price; // Цена в рублях
@@ -21,8 +22,10 @@ class MarketItem {
   final String? dateText; // Дата/время
   final String? placeText; // Город/место
   final String? typeText; // Тип (марафон/полумарафон и т.п.)
+  final String? description; // Подробное описание (для раскрывающегося блока)
 
   const MarketItem({
+    required this.id,
     required this.title,
     required this.distance,
     required this.price,
@@ -34,6 +37,7 @@ class MarketItem {
     this.dateText,
     this.placeText,
     this.typeText,
+    this.description,
   });
 }
 

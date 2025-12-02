@@ -1,6 +1,7 @@
 // lib/widgets/market_slot_card.dart
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../models/market_models.dart';
@@ -14,17 +15,18 @@ class MarketSlotCard extends StatelessWidget {
   final MarketItem item;
   final bool expanded; // сейчас используется только для «Алые Паруса» (пример)
   final VoidCallback onToggle; // коллбэк на тап по карточке (раскрыть/свернуть)
+  final VoidCallback? onChatClosed; // коллбэк после закрытия экрана чата (для обновления списка)
 
   const MarketSlotCard({
     super.key,
     required this.item,
     required this.expanded,
     required this.onToggle,
+    this.onChatClosed,
   });
 
-  // Условный признак: только для одной карточки показываем «детали» ниже
-  bool get _hasDetails =>
-      item.title.contains('Алые Паруса') || item.title.contains('Алые Паруса"');
+  // Показываем детали, если есть описание
+  bool get _hasDetails => item.description != null && item.description!.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +56,7 @@ class MarketSlotCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Миниатюра слева — НЕ кликабельна
-                _Thumb(imageAsset: item.imageUrl, heroGroup: item),
+                _Thumb(imageUrl: item.imageUrl, heroGroup: item),
                 const SizedBox(width: 8),
 
                 // Текстовая часть и чипы
@@ -109,21 +111,20 @@ class MarketSlotCard extends StatelessWidget {
                           _BuyButtonText(
                             text: item.buttonText,
                             enabled: item.buttonEnabled,
-                            onPressed: () {
-                              Navigator.of(context, rootNavigator: true).push(
+                            onPressed: () async {
+                              // Открываем экран чата и ждём возврата
+                              await Navigator.of(context, rootNavigator: true).push(
                                 TransparentPageRoute(
                                   builder: (_) => TradeChatSlotsScreen(
-                                    itemTitle: item.title,
-                                    itemThumb: item.imageUrl,
-                                    distance: item.distance,
-                                    gender: item.gender,
-                                    price: item.price,
-                                    statusText: item.locked
-                                        ? 'Бронь'
-                                        : 'Свободен',
+                                    slotId: item.id,
                                   ),
                                 ),
                               );
+                              // После возврата обновляем список слотов
+                              // Это нужно, чтобы обновить статусы слотов (например, если слот был куплен)
+                              if (onChatClosed != null) {
+                                onChatClosed!();
+                              }
                             },
                           ),
                         ],
@@ -151,8 +152,7 @@ class MarketSlotCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Text(
-                      'Имя: Илья. Время: 3:01 - 3:15. '
-                      'Передача по доверенности в Москве, либо в СПб на экспо.',
+                      item.description!,
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
@@ -187,28 +187,96 @@ class MarketSlotCard extends StatelessWidget {
 
 /// НЕ кликабельная миниатюра слота.
 /// Оставил Hero для красивого появления/скролла, но без переходов.
+/// Поддерживает как AssetImage (для локальных ресурсов), так и NetworkImage (для URL из API).
 class _Thumb extends StatelessWidget {
-  final String imageAsset;
+  final String imageUrl;
   final Object? heroGroup;
 
-  const _Thumb({required this.imageAsset, this.heroGroup});
+  const _Thumb({required this.imageUrl, this.heroGroup});
+
+  /// Определяет, является ли URL локальным ресурсом (assets) или сетевым URL
+  bool get _isAsset => imageUrl.startsWith('assets/');
+  
+  /// Проверяет, является ли URL валидным HTTP/HTTPS URL
+  bool get _isValidNetworkUrl {
+    if (imageUrl.isEmpty) return false;
+    if (_isAsset) return false;
+    return imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+  }
 
   @override
   Widget build(BuildContext context) {
     return Hero(
-      tag: Object.hash(heroGroup ?? imageAsset, 0),
+      tag: Object.hash(heroGroup ?? imageUrl, 0),
       child: Container(
         width: 60,
         height: 60,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.xs),
           color: AppColors.getBackgroundColor(context),
-          image: DecorationImage(
-            image: AssetImage(imageAsset),
-            fit: BoxFit.cover,
-          ),
         ),
         clipBehavior: Clip.antiAlias,
+        child: imageUrl.isEmpty
+            ? Container(
+                color: AppColors.getBackgroundColor(context),
+                child: Icon(
+                  CupertinoIcons.photo,
+                  size: 24,
+                  color: AppColors.getIconSecondaryColor(context),
+                ),
+              )
+            : _isAsset
+                ? Image(
+                    image: AssetImage(imageUrl),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      debugPrint('❌ Ошибка загрузки asset: $imageUrl - $error');
+                      return Container(
+                        color: AppColors.getBackgroundColor(context),
+                        child: Icon(
+                          CupertinoIcons.photo,
+                          size: 24,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      );
+                    },
+                  )
+                : _isValidNetworkUrl
+                    ? Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: AppColors.getBackgroundColor(context),
+                            child: Center(
+                              child: CupertinoActivityIndicator(
+                                radius: 10,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          debugPrint('❌ Ошибка загрузки изображения: $imageUrl - $error');
+                          return Container(
+                            color: AppColors.getBackgroundColor(context),
+                            child: Icon(
+                              CupertinoIcons.photo,
+                              size: 24,
+                              color: AppColors.getIconSecondaryColor(context),
+                            ),
+                          );
+                        },
+                      )
+                    : Container(
+                        color: AppColors.getBackgroundColor(context),
+                        child: Icon(
+                          CupertinoIcons.photo,
+                          size: 24,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      ),
       ),
     );
   }
