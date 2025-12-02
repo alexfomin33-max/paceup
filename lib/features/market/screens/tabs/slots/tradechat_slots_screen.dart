@@ -717,6 +717,15 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
 
                     // Сообщения
                     final msg = _messages[index - headerCount];
+                    
+                    // ─── Определяем аватар для сообщений от другого пользователя ───
+                    // Если sender_id совпадает с seller_id, то это сообщение от продавца
+                    // Если sender_id совпадает с buyer_id, то это сообщение от покупателя
+                    final isFromSeller = msg.senderId == chatData.sellerId;
+                    final otherUserAvatar = isFromSeller 
+                        ? chatData.sellerAvatar 
+                        : chatData.buyerAvatar;
+                    
                     if (msg.messageType == 'image') {
                       return msg.isMine
                           ? _BubbleImageRight(
@@ -726,9 +735,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
                           : _BubbleImageLeft(
                               imageUrl: msg.imageUrl!,
                               time: _formatTime(msg.createdAt),
-                              avatarUrl: msg.isMine
-                                  ? chatData.buyerAvatar
-                                  : chatData.sellerAvatar,
+                              avatarUrl: otherUserAvatar,
                             );
                     } else {
                       return msg.isMine
@@ -739,7 +746,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
                           : _BubbleLeft(
                               text: msg.text ?? '',
                               time: _formatTime(msg.createdAt),
-                              avatarUrl: chatData.sellerAvatar,
+                              avatarUrl: otherUserAvatar,
                             );
                     }
                   },
