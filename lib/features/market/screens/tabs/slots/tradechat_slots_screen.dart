@@ -676,8 +676,16 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
                       );
                     }
 
-                    // 7 — Кнопки действий
+                    // 7 — Кнопки действий (только для покупателя, не для продавца)
                     if (index == 7) {
+                      // Проверяем, является ли текущий пользователь продавцом
+                      final isSeller = _currentUserId == chatData.sellerId;
+                      
+                      if (isSeller) {
+                        // Для продавца не показываем кнопки действий
+                        return const SizedBox.shrink();
+                      }
+                      
                       return Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
