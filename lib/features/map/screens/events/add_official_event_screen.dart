@@ -182,30 +182,6 @@ class _AddOfficialEventScreenState
     }
   }
 
-  Future<void> _pickTimeCupertino() async {
-    final formState = ref.read(addOfficialEventFormProvider);
-    DateTime temp = DateTime(
-      DateTime.now().year,
-      DateTime.now().month,
-      DateTime.now().day,
-      formState.time?.hour ?? 12,
-      formState.time?.minute ?? 0,
-    );
-
-    final picker = CupertinoDatePicker(
-      mode: CupertinoDatePickerMode.time,
-      use24hFormat: true,
-      initialDateTime: temp,
-      onDateTimeChanged: (dt) => temp = dt,
-    );
-
-    final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
-    if (ok) {
-      ref
-          .read(addOfficialEventFormProvider.notifier)
-          .updateTime(TimeOfDay(hour: temp.hour, minute: temp.minute));
-    }
-  }
 
   Future<T?> _showCupertinoSheet<T>({required Widget child}) {
     return showCupertinoModalPopup<T>(
@@ -297,12 +273,6 @@ class _AddOfficialEventScreenState
     return '$dd.$mm.$yy';
   }
 
-  String _fmtTime(TimeOfDay? t) {
-    if (t == null) return '';
-    final hh = t.hour.toString().padLeft(2, '0');
-    final mm = t.minute.toString().padLeft(2, '0');
-    return '$hh:$mm';
-  }
 
   // ── загрузка данных выбранного шаблона
   Future<void> _loadTemplateData(String templateName) async {
@@ -350,9 +320,6 @@ class _AddOfficialEventScreenState
       ref
           .read(addOfficialEventFormProvider.notifier)
           .updateDate(templateAsync.date);
-      ref
-          .read(addOfficialEventFormProvider.notifier)
-          .updateTime(templateAsync.time);
 
       // Координаты
       if (templateAsync.latitude != null && templateAsync.longitude != null) {
@@ -375,7 +342,6 @@ class _AddOfficialEventScreenState
             link: linkValue,
             activity: templateAsync.activity,
             date: templateAsync.date,
-            time: templateAsync.time,
             location:
                 templateAsync.latitude != null &&
                     templateAsync.longitude != null
@@ -1048,208 +1014,101 @@ class _AddOfficialEventScreenState
                   ),
                   const SizedBox(height: 24),
 
-                  // ---------- Дата / Время ----------
-                  Row(
+                  // ---------- Дата ----------
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Дата проведения',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.getTextPrimaryColor(context),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Builder(
-                              builder: (context) => GestureDetector(
-                                onTap: _pickDateCupertino,
-                                child: AbsorbPointer(
-                                  child: InputDecorator(
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: AppColors.getSurfaceColor(
-                                        context,
-                                      ),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 18,
-                                          ),
-                                      prefixIcon: Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 12,
-                                          right: 6,
-                                        ),
-                                        child: Icon(
-                                          CupertinoIcons.calendar,
-                                          size: 18,
-                                          color: AppColors.getIconPrimaryColor(
-                                            context,
-                                          ),
-                                        ),
-                                      ),
-                                      prefixIconConstraints:
-                                          const BoxConstraints(
-                                            minWidth: 18 + 14,
-                                            minHeight: 18,
-                                          ),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.sm,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(
-                                            context,
-                                          ),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.sm,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(
-                                            context,
-                                          ),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.sm,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(
-                                            context,
-                                          ),
-                                          width: 1,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      formState.date != null
-                                          ? _fmtDate(formState.date!)
-                                          : 'Выберите дату',
-                                      style: formState.date != null
-                                          ? AppTextStyles.h14w4.copyWith(
-                                              color:
-                                                  AppColors.getTextPrimaryColor(
-                                                    context,
-                                                  ),
-                                            )
-                                          : AppTextStyles.h14w4Place,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                      Text(
+                        'Дата проведения',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Время начала',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.getTextPrimaryColor(context),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Builder(
-                              builder: (context) => GestureDetector(
-                                onTap: _pickTimeCupertino,
-                                child: AbsorbPointer(
-                                  child: InputDecorator(
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: AppColors.getSurfaceColor(
-                                        context,
-                                      ),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 18,
-                                          ),
-                                      prefixIcon: Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 12,
-                                          right: 6,
-                                        ),
-                                        child: Icon(
-                                          CupertinoIcons.time,
-                                          size: 18,
-                                          color: AppColors.getIconPrimaryColor(
-                                            context,
-                                          ),
-                                        ),
-                                      ),
-                                      prefixIconConstraints:
-                                          const BoxConstraints(
-                                            minWidth: 18 + 14,
-                                            minHeight: 18,
-                                          ),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.sm,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(
-                                            context,
-                                          ),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.sm,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(
-                                            context,
-                                          ),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.sm,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: AppColors.getBorderColor(
-                                            context,
-                                          ),
-                                          width: 1,
-                                        ),
-                                      ),
+                      const SizedBox(height: 8),
+                      Builder(
+                        builder: (context) => GestureDetector(
+                          onTap: _pickDateCupertino,
+                          child: AbsorbPointer(
+                            child: InputDecorator(
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: AppColors.getSurfaceColor(
+                                  context,
+                                ),
+                                contentPadding:
+                                    const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 18,
                                     ),
-                                    child: Text(
-                                      formState.time != null
-                                          ? _fmtTime(formState.time!)
-                                          : 'Выберите время',
-                                      style: formState.time != null
-                                          ? AppTextStyles.h14w4.copyWith(
-                                              color:
-                                                  AppColors.getTextPrimaryColor(
-                                                    context,
-                                                  ),
-                                            )
-                                          : AppTextStyles.h14w4Place,
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 12,
+                                    right: 6,
+                                  ),
+                                  child: Icon(
+                                    CupertinoIcons.calendar,
+                                    size: 18,
+                                    color: AppColors.getIconPrimaryColor(
+                                      context,
                                     ),
                                   ),
                                 ),
+                                prefixIconConstraints:
+                                    const BoxConstraints(
+                                      minWidth: 18 + 14,
+                                      minHeight: 18,
+                                    ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.sm,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: AppColors.getBorderColor(
+                                      context,
+                                    ),
+                                    width: 1,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.sm,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: AppColors.getBorderColor(
+                                      context,
+                                    ),
+                                    width: 1,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.sm,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: AppColors.getBorderColor(
+                                      context,
+                                    ),
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                              child: Text(
+                                formState.date != null
+                                    ? _fmtDate(formState.date!)
+                                    : 'Выберите дату',
+                                style: formState.date != null
+                                    ? AppTextStyles.h14w4.copyWith(
+                                        color:
+                                            AppColors.getTextPrimaryColor(
+                                              context,
+                                            ),
+                                      )
+                                    : AppTextStyles.h14w4Place,
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ],

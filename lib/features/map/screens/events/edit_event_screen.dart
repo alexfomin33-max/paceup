@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/local_image_compressor.dart'
     show compressLocalImage, ImageCompressionPreset;
+import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
@@ -55,6 +56,9 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
   String? logoUrl; // URL для отображения существующего логотипа
   String? logoFilename; // Имя файла существующего логотипа
   final List<File?> photos = [null, null, null];
+
+  // ──────────── фиксированные пропорции для обрезки логотипа ────────────
+  static const double _logoAspectRatio = 1;
   final List<String> photoUrls = [
     '',
     '',
@@ -286,19 +290,18 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
   }
 
   Future<void> _pickLogo() async {
-    // ── выбираем новый логотип события и сжимаем его перед загрузкой
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-
-    final compressed = await compressLocalImage(
-      sourceFile: File(picked.path),
+    // ── выбираем логотип с обрезкой в фиксированную пропорцию 1:1
+    final processed = await ImagePickerHelper.pickAndProcessImage(
+      context: context,
+      aspectRatio: _logoAspectRatio,
       maxSide: ImageCompressionPreset.logo.maxSide,
       jpegQuality: ImageCompressionPreset.logo.quality,
+      cropTitle: 'Обрезка логотипа',
     );
-    if (!mounted) return;
+    if (processed == null || !mounted) return;
 
     setState(() {
-      logoFile = compressed;
+      logoFile = processed;
       logoUrl = null; // Сбрасываем URL, так как выбран новый файл
     });
   }

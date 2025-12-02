@@ -7,7 +7,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/local_image_compressor.dart'
-    show compressLocalImage, ImageCompressionPreset;
+    show ImageCompressionPreset;
+import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
@@ -49,6 +50,10 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
   File? backgroundFile;
   String? backgroundUrl; // URL для отображения существующей фоновой картинки
   String? backgroundFilename; // Имя файла существующей фоновой картинки
+
+  // ──────────── фиксированные пропорции для обрезки медиа ────────────
+  static const double _logoAspectRatio = 1;
+  static const double _backgroundAspectRatio = 2.3;
 
   // ── состояние загрузки данных
   bool _loadingData = true;
@@ -245,37 +250,35 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
   }
 
   Future<void> _pickLogo() async {
-    // ── заменяем логотип и уменьшаем его размер для экономии трафика
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-
-    final compressed = await compressLocalImage(
-      sourceFile: File(picked.path),
+    // ── выбираем логотип с обрезкой в фиксированную пропорцию 1:1
+    final processed = await ImagePickerHelper.pickAndProcessImage(
+      context: context,
+      aspectRatio: _logoAspectRatio,
       maxSide: ImageCompressionPreset.logo.maxSide,
       jpegQuality: ImageCompressionPreset.logo.quality,
+      cropTitle: 'Обрезка логотипа',
     );
-    if (!mounted) return;
+    if (processed == null || !mounted) return;
 
     setState(() {
-      logoFile = compressed;
+      logoFile = processed;
       logoUrl = null; // Сбрасываем URL, так как выбран новый файл
     });
   }
 
   Future<void> _pickBackground() async {
-    // ── обновляем фоновую картинку и сразу сжимаем файл
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-
-    final compressed = await compressLocalImage(
-      sourceFile: File(picked.path),
+    // ── выбираем фон с обрезкой 2.3:1 и сжатием до оптимального размера
+    final processed = await ImagePickerHelper.pickAndProcessImage(
+      context: context,
+      aspectRatio: _backgroundAspectRatio,
       maxSide: ImageCompressionPreset.background.maxSide,
       jpegQuality: ImageCompressionPreset.background.quality,
+      cropTitle: 'Обрезка фонового фото',
     );
-    if (!mounted) return;
+    if (processed == null || !mounted) return;
 
     setState(() {
-      backgroundFile = compressed;
+      backgroundFile = processed;
       backgroundUrl = null; // Сбрасываем URL, так как выбран новый файл
     });
   }

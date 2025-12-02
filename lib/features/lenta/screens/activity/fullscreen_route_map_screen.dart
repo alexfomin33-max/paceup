@@ -28,6 +28,10 @@ class _FullscreenRouteMapScreenState extends State<FullscreenRouteMapScreen> {
   MapboxMap? _mapboxMap;
   final flutter_map.MapController _flutterMapController =
       flutter_map.MapController();
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ФЛАГ ГОТОВНОСТИ: скрываем карту до полной инициализации маршрута
+  // ────────────────────────────────────────────────────────────────
+  bool _isMapReady = false;
 
   @override
   Widget build(BuildContext context) {
@@ -110,85 +114,117 @@ class _FullscreenRouteMapScreenState extends State<FullscreenRouteMapScreen> {
     }
 
     // Используем Mapbox для Android/iOS
-    return MapWidget(
-      key: ValueKey('fullscreen_route_${widget.points.length}'),
-      onMapCreated: (MapboxMap mapboxMap) async {
-        _mapboxMap = mapboxMap;
+    return Stack(
+      children: [
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 ФОН: показываем до готовности карты (цвет фона экрана)
+        // ────────────────────────────────────────────────────────────────
+        Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: AppColors.getBackgroundColor(context),
+        ),
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 КАРТА: появляется с fade-эффектом после полной инициализации
+        // ────────────────────────────────────────────────────────────────
+        AnimatedOpacity(
+          opacity: _isMapReady ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          child: MapWidget(
+            key: ValueKey('fullscreen_route_${widget.points.length}'),
+            onMapCreated: (MapboxMap mapboxMap) async {
+              _mapboxMap = mapboxMap;
 
-        // ────────────────────────── Отключаем масштабную линейку ──────────────────────────
-        try {
-          await mapboxMap.scaleBar.updateSettings(
-            ScaleBarSettings(enabled: false),
-          );
-        } catch (e) {
-          // Если метод недоступен, игнорируем ошибку
-        }
+              // ────────────────────────── Отключаем масштабную линейку ──────────────────────────
+              try {
+                await mapboxMap.scaleBar.updateSettings(
+                  ScaleBarSettings(enabled: false),
+                );
+              } catch (e) {
+                // Если метод недоступен, игнорируем ошибку
+              }
 
-        // Ждём полной инициализации карты перед созданием аннотаций
-        // Увеличиваем задержку для гарантии готовности каналов Mapbox
-        await Future.delayed(const Duration(milliseconds: 300));
+              // Ждём полной инициализации карты перед созданием аннотаций
+              // Увеличиваем задержку для гарантии готовности каналов Mapbox
+              await Future.delayed(const Duration(milliseconds: 300));
 
-        // Создаем менеджер полилиний с обработкой ошибок
-        try {
-          _polylineAnnotationManager = await mapboxMap.annotations
-              .createPolylineAnnotationManager();
+              // Создаем менеджер полилиний с обработкой ошибок
+              try {
+                _polylineAnnotationManager = await mapboxMap.annotations
+                    .createPolylineAnnotationManager();
 
-          // Создаем полилинию из точек
-          final coordinates = widget.points
-              .map((p) => Position(p.longitude, p.latitude))
-              .toList();
+                // Создаем полилинию из точек
+                final coordinates = widget.points
+                    .map((p) => Position(p.longitude, p.latitude))
+                    .toList();
 
-          await _polylineAnnotationManager!.create(
-            PolylineAnnotationOptions(
-              geometry: LineString(coordinates: coordinates),
-              lineColor: AppColors.brandPrimary.toARGB32(),
-              lineWidth: 3.0,
-            ),
-          );
-        } catch (annotationError) {
-          debugPrint(
-            '⚠️ Не удалось создать полилинию на карте: $annotationError',
-          );
-        }
+                await _polylineAnnotationManager!.create(
+                  PolylineAnnotationOptions(
+                    geometry: LineString(coordinates: coordinates),
+                    lineColor: AppColors.brandPrimary.toARGB32(),
+                    lineWidth: 3.0,
+                  ),
+                );
+              } catch (annotationError) {
+                debugPrint(
+                  '⚠️ Не удалось создать полилинию на карте: $annotationError',
+                );
+              }
 
-        // Подстраиваем камеру под границы с обработкой ошибок канала
-        try {
-          final camera = await mapboxMap.cameraForCoordinateBounds(
-            CoordinateBounds(
-              southwest: Point(
-                coordinates: Position(
-                  bounds.southwest.longitude,
-                  bounds.southwest.latitude,
-                ),
+              // Подстраиваем камеру под границы с обработкой ошибок канала
+              try {
+                final camera = await mapboxMap.cameraForCoordinateBounds(
+                  CoordinateBounds(
+                    southwest: Point(
+                      coordinates: Position(
+                        bounds.southwest.longitude,
+                        bounds.southwest.latitude,
+                      ),
+                    ),
+                    northeast: Point(
+                      coordinates: Position(
+                        bounds.northeast.longitude,
+                        bounds.northeast.latitude,
+                      ),
+                    ),
+                    infiniteBounds: false,
+                  ),
+                  MbxEdgeInsets(top: 12, left: 12, bottom: 12, right: 12),
+                  null,
+                  null,
+                  null,
+                  null,
+                );
+                await mapboxMap.setCamera(camera);
+              } catch (cameraError) {
+                // Если канал еще не готов, логируем и продолжаем работу
+                // Карта отобразится с начальной позицией из cameraOptions
+                debugPrint(
+                  '⚠️ Не удалось настроить камеру карты: $cameraError',
+                );
+              }
+
+              // ────────────────────────────────────────────────────────────────
+              // 🔹 ПОКАЗЫВАЕМ КАРТУ: устанавливаем флаг готовности после
+              // полной инициализации маршрута и камеры
+              // ────────────────────────────────────────────────────────────────
+              if (mounted) {
+                setState(() {
+                  _isMapReady = true;
+                });
+              }
+            },
+            cameraOptions: CameraOptions(
+              center: Point(
+                coordinates: Position(center.longitude, center.latitude),
               ),
-              northeast: Point(
-                coordinates: Position(
-                  bounds.northeast.longitude,
-                  bounds.northeast.latitude,
-                ),
-              ),
-              infiniteBounds: false,
+              zoom: 12,
             ),
-            MbxEdgeInsets(top: 12, left: 12, bottom: 12, right: 12),
-            null,
-            null,
-            null,
-            null,
-          );
-          await mapboxMap.setCamera(camera);
-        } catch (cameraError) {
-          // Если канал еще не готов, логируем и продолжаем работу
-          // Карта отобразится с начальной позицией из cameraOptions
-          debugPrint(
-            '⚠️ Не удалось настроить камеру карты: $cameraError',
-          );
-        }
-      },
-      cameraOptions: CameraOptions(
-        center: Point(coordinates: Position(center.longitude, center.latitude)),
-        zoom: 12,
-      ),
-      styleUri: MapboxStyles.MAPBOX_STREETS,
+            styleUri: MapboxStyles.MAPBOX_STREETS,
+          ),
+        ),
+      ],
     );
   }
 
