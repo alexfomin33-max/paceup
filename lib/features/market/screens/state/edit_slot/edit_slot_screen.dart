@@ -30,6 +30,7 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
   Gender _gender = Gender.male;
   int _distanceIndex = 0;
   List<String> _distances = []; // Динамический список дистанций
+  String? _currentDistance; // Текущая дистанция слота (если событие не выбрано)
 
   // ─── Состояние выбранного события ───
   int? _selectedEventId;
@@ -136,8 +137,10 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
       } else {
         // Если события нет, просто устанавливаем название слота
         nameCtrl.text = slot['title'] ?? '';
+        final currentDistance = slot['distance'] ?? '';
         setState(() {
           _selectedEventId = null;
+          _currentDistance = currentDistance.isNotEmpty ? currentDistance : null;
           _isLoading = false;
         });
       }
@@ -244,25 +247,36 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
         throw Exception('Некорректная цена. Введите число больше нуля');
       }
 
-      // ─── Проверяем, что дистанция выбрана ───
-      if (_distances.isEmpty || _distanceIndex >= _distances.length) {
-        throw Exception('Выберите дистанцию');
+      // ─── Определяем дистанцию ───
+      String distance = '';
+      if (_selectedEventId != null) {
+        // Если событие выбрано, проверяем, что дистанция выбрана из списка
+        if (_distances.isEmpty || _distanceIndex >= _distances.length) {
+          throw Exception('Выберите дистанцию');
+        }
+        distance = _distances[_distanceIndex];
+      } else {
+        // Если событие не выбрано, используем текущую дистанцию слота
+        // или название слота, если дистанция не была сохранена
+        distance = _currentDistance ?? nameCtrl.text.trim();
+        if (distance.isEmpty) {
+          throw Exception('Укажите дистанцию');
+        }
       }
-
-      // ─── Получаем выбранную дистанцию ───
-      final distance = _distances[_distanceIndex];
 
       // ─── Преобразуем Gender в строку для API ───
       final genderString = _gender == Gender.male ? 'male' : 'female';
 
       // ─── Отправляем данные на сервер ───
+      // ВАЖНО: Всегда передаём event_id (даже если null), чтобы бэкенд правильно обновил текущий слот
+      // и не создавал новую запись и не удалял текущую
       final api = ApiService();
       final response = await api.post(
         '/update_slot.php',
         body: {
           'slot_id': widget.slotId,
           'user_id': userId,
-          if (_selectedEventId != null) 'event_id': _selectedEventId,
+          'event_id': _selectedEventId, // Передаём null, если событие не выбрано
           'title': nameCtrl.text.trim(),
           'distance': distance,
           'price': price,
