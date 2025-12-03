@@ -516,7 +516,7 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
                   onPressed: _isSubmitting || _isDeleting
                       ? () {}
                       : () => _save(),
-                  width: 140,
+                  width: 160,
                   isLoading: _isSubmitting,
                 ),
                 const SizedBox(width: 12),

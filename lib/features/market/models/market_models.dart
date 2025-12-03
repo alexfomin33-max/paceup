@@ -14,7 +14,7 @@ class MarketItem {
   final int price; // Цена в рублях
   final Gender gender; // Для кого слот (М/Ж)
   final bool buttonEnabled; // Доступна ли кнопка (можно ли купить)
-  final String buttonText; // Текст на кнопке: «Купить» или «Бронь» или «Редактировать»
+  final String buttonText; // Текст на кнопке: «Купить» или «Бронь» или «Изменить»
   final bool locked; // На будущее: заблокировано или нет
   final String imageUrl; // Путь к картинке-миниатюре ассета
 

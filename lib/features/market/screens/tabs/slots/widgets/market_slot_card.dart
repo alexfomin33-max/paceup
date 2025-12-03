@@ -129,8 +129,7 @@ class MarketSlotCard extends StatelessWidget {
                                   currentUserId != null &&
                                   currentUserId == item.sellerId;
 
-                              if (isSeller &&
-                                  item.buttonText == 'Редактировать') {
+                              if (isSeller && item.buttonText == 'Изменить') {
                                 // Открываем экран редактирования для продавца
                                 await Navigator.of(
                                   context,
@@ -349,9 +348,11 @@ class _BuyButtonText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ── Определяем цвет фона: оранжевый для "В чат", синий для остальных
+    // ── Определяем цвет фона: оранжевый для "В чат", приглушенный зеленый для "Купить", синий для остальных
     final bg = enabled
-        ? (text == 'В чат' ? AppColors.orange : AppColors.brandPrimary)
+        ? (text == 'В чат'
+              ? AppColors.orange
+              : (text == 'Купить' ? AppColors.green : AppColors.brandPrimary))
         : AppColors.disabledBg; // disabledBg обычно не меняется
     // ── Для disabled кнопки в светлой теме используем более темный цвет текста
     final isLight = Theme.of(context).brightness == Brightness.light;
@@ -363,37 +364,49 @@ class _BuyButtonText extends StatelessWidget {
                     .textSecondary // более темный цвет для светлой темы
               : AppColors.disabledText); // в темной теме оставляем как было
     // ── Определяем иконку: пузырь сообщения для "В чат", замок для "Бронь", корзина для остальных
+    // Для "Изменить" иконка не отображается
     final icon = text == 'В чат'
         ? CupertinoIcons.chat_bubble
         : (text == 'Бронь' ? CupertinoIcons.lock : CupertinoIcons.cart);
+    final showIcon = text != 'Изменить';
+
+    final buttonStyle = ElevatedButton.styleFrom(
+      backgroundColor: bg,
+      foregroundColor: fg,
+      elevation: 0,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      minimumSize: Size.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+      ),
+    );
+
+    final textWidget = Text(
+      text,
+      style: TextStyle(
+        fontFamily: 'Inter',
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        color: fg, // уже адаптивный через fg
+      ),
+    );
 
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: 72),
       child: SizedBox(
         height: 28,
-        child: ElevatedButton.icon(
-          onPressed: enabled ? onPressed : null, // 🔹 используем коллбэк
-          style: ElevatedButton.styleFrom(
-            backgroundColor: bg,
-            foregroundColor: fg,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            minimumSize: Size.zero,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.xs),
-            ),
-          ),
-          icon: Icon(icon, size: 14, color: fg),
-          label: Text(
-            text,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: fg, // уже адаптивный через fg
-            ),
-          ),
-        ),
+        child: showIcon
+            ? ElevatedButton.icon(
+                onPressed: enabled ? onPressed : null,
+                style: buttonStyle,
+                icon: Icon(icon, size: 14, color: fg),
+                label: textWidget,
+              )
+            : ElevatedButton(
+                onPressed: enabled ? onPressed : null,
+                style: buttonStyle,
+                child: textWidget,
+              ),
       ),
     );
   }
