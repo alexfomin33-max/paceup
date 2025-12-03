@@ -577,6 +577,9 @@ class _ComposerBar extends StatelessWidget {
                   key: textFieldKey,
                   controller: controller,
                   focusNode: focusNode,
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
                   minLines: 1,
                   maxLines: 5,
                   textInputAction: TextInputAction.newline,
@@ -595,7 +598,7 @@ class _ComposerBar extends StatelessWidget {
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
-                    fillColor: AppColors.getSurfaceMutedColor(context),
+                    fillColor: AppColors.getBackgroundColor(context),
                   ),
                 ),
               ),
