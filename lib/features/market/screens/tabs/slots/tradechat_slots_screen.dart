@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/services/api_service.dart';
 import '../../../../../core/services/auth_service.dart';
@@ -15,10 +16,7 @@ import '../../../../../core/widgets/interactive_back_swipe.dart';
 class TradeChatSlotsScreen extends ConsumerStatefulWidget {
   final int slotId;
 
-  const TradeChatSlotsScreen({
-    super.key,
-    required this.slotId,
-  });
+  const TradeChatSlotsScreen({super.key, required this.slotId});
 
   @override
   ConsumerState<TradeChatSlotsScreen> createState() =>
@@ -179,6 +177,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
   int? _currentUserId;
   int? _lastMessageId;
   Timer? _pollTimer;
+  String? _fullscreenImageUrl; // URL изображения для полноэкранного просмотра
 
   @override
   void initState() {
@@ -211,14 +210,13 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
       // Резервируем слот и создаём/получаем чат
       final reserveResponse = await _api.post(
         '/reserve_slot.php',
-        body: {
-          'slot_id': widget.slotId,
-          'user_id': userId,
-        },
+        body: {'slot_id': widget.slotId, 'user_id': userId},
       );
 
       if (reserveResponse['success'] != true) {
-        throw Exception(reserveResponse['message'] ?? 'Ошибка резервирования слота');
+        throw Exception(
+          reserveResponse['message'] ?? 'Ошибка резервирования слота',
+        );
       }
 
       final chatId = reserveResponse['chat_id'] as int;
@@ -253,7 +251,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
       }
 
       final chatData = _ChatData.fromJson(response);
-      
+
       // Если created_at передан из reserve_slot, используем его, иначе из response
       DateTime? chatCreatedAt;
       if (chatCreatedAtStr != null) {
@@ -265,7 +263,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
           chatCreatedAt = DateTime.parse(response['chat_created_at'] as String);
         } catch (_) {}
       }
-      
+
       final messagesData = response['messages'] as List<dynamic>;
       final messages = messagesData
           .map((m) => _ChatMessage.fromJson(m as Map<String, dynamic>))
@@ -303,10 +301,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
     try {
       await _api.post(
         '/mark_slot_chat_messages_read.php',
-        body: {
-          'chat_id': chatId,
-          'user_id': userId,
-        },
+        body: {'chat_id': chatId, 'user_id': userId},
       );
     } catch (e) {
       // Игнорируем ошибки при отметке как прочитанных
@@ -344,7 +339,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
               _messages.addAll(newMessages);
               _lastMessageId = newMessages.last.id;
             });
-            
+
             // Отмечаем новые сообщения как прочитанные, так как чат открыт
             await _markMessagesAsRead(chatId, userId);
           }
@@ -366,11 +361,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
 
       final response = await _api.post(
         '/send_slot_chat_message.php',
-        body: {
-          'chat_id': _chatData!.chatId,
-          'user_id': userId,
-          'text': text,
-        },
+        body: {'chat_id': _chatData!.chatId, 'user_id': userId, 'text': text},
       );
 
       if (response['success'] == true) {
@@ -465,6 +456,20 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
     }
   }
 
+  // ─── Показать изображение в полноэкранном режиме ───
+  void _showFullscreenImage(String imageUrl) {
+    setState(() {
+      _fullscreenImageUrl = imageUrl;
+    });
+  }
+
+  // ─── Скрыть полноэкранное изображение ───
+  void _hideFullscreenImage() {
+    setState(() {
+      _fullscreenImageUrl = null;
+    });
+  }
+
   // ─── Форматирование даты создания чата ───
   String _formatChatDate(DateTime? date) {
     if (date == null) {
@@ -524,244 +529,323 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
     }
 
     final chatData = _chatData!;
-    const headerCount = 9;
+    final isSeller = _currentUserId == chatData.sellerId;
 
     return InteractiveBackSwipe(
-      child: Scaffold(
-        backgroundColor: Theme.of(context).brightness == Brightness.light
-            ? AppColors.getSurfaceColor(context)
-            : AppColors.getBackgroundColor(context),
-        appBar: AppBar(
-          backgroundColor: AppColors.getSurfaceColor(context),
-          elevation: 1,
-          shadowColor: AppColors.shadowStrong,
-          leadingWidth: 40,
-          leading: Transform.translate(
-            offset: const Offset(-4, 0),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-              icon: const Icon(CupertinoIcons.back),
-              onPressed: () => Navigator.pop(context),
-              splashRadius: 18,
-            ),
-          ),
-          titleSpacing: -8,
-          title: Row(
-            children: [
-              if (chatData.slotImageUrl != null && chatData.slotImageUrl!.isNotEmpty) ...[
-                Container(
-                  width: 36,
-                  height: 36,
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppRadius.xs),
-                    image: DecorationImage(
-                      image: NetworkImage(chatData.slotImageUrl!),
-                      fit: BoxFit.cover,
-                      onError: (_, __) {},
-                    ),
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: Theme.of(context).brightness == Brightness.light
+                ? AppColors.getSurfaceColor(context)
+                : AppColors.getBackgroundColor(context),
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkSurface
+                  : AppColors.surface,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              leadingWidth: 40,
+              leading: Transform.translate(
+                offset: const Offset(-4, 0),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
                   ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Чат продажи слота',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      chatData.slotTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.getTextSecondaryColor(context),
-                      ),
-                    ),
-                  ],
+                  icon: const Icon(CupertinoIcons.back),
+                  onPressed: () => Navigator.pop(context),
+                  splashRadius: 18,
                 ),
               ),
-            ],
-          ),
-        ),
-        body: GestureDetector(
-          onTap: () => FocusScope.of(context).unfocus(),
-          behavior: HitTestBehavior.translucent,
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
-                  itemCount: headerCount + _messages.length,
-                  itemBuilder: (_, index) {
-                    // 0 — дата
-                    if (index == 0) {
-                      return _DateSeparator(
-                        text: '${_formatChatDate(chatData.chatCreatedAt)}, автоматическое создание чата',
-                      );
-                    }
-
-                    // 1..4 — инфо-строки
-                    if (index == 1) {
-                      return _KVLine(
-                        k: 'Слот переведён в статус',
-                        v: _ChipNeutral(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                CupertinoIcons.lock,
-                                size: 14,
-                                color: AppColors.getIconSecondaryColor(context),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Бронь',
-                                style: TextStyle(
-                                  fontWeight: Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? FontWeight.w500
-                                      : FontWeight.w400,
-                                  color: Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? AppColors.darkTextSecondary
-                                      : AppColors.getTextPrimaryColor(context),
-                                ),
-                              ),
-                            ],
+              titleSpacing: -8,
+              title: Row(
+                children: [
+                  if (chatData.slotImageUrl != null &&
+                      chatData.slotImageUrl!.isNotEmpty) ...[
+                    Container(
+                      width: 36,
+                      height: 36,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.xs),
+                        image: DecorationImage(
+                          image: NetworkImage(chatData.slotImageUrl!),
+                          fit: BoxFit.cover,
+                          onError: (_, __) {},
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Чат продажи слота',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      );
-                    }
-                    if (index == 2) {
-                      return _KVLine(
-                        k: 'Дистанция',
-                        v: _ChipNeutral(child: Text(chatData.slotDistance)),
-                      );
-                    }
-                    if (index == 3) {
-                      return _KVLine(
-                        k: 'Пол',
-                        v: chatData.slotGender == Gender.male
-                            ? const GenderPill.male()
-                            : const GenderPill.female(),
-                      );
-                    }
-                    if (index == 4) {
-                      return _KVLine(
-                        k: 'Стоимость',
-                        v: PricePill(text: _formatPrice(chatData.slotPrice)),
-                      );
-                    }
-
-                    // 5..6 — участники
-                    if (index == 5) {
-                      return _ParticipantRow(
-                        avatarUrl: chatData.sellerAvatar,
-                        nameAndRole: '${chatData.sellerName} - продавец',
-                      );
-                    }
-                    if (index == 6) {
-                      return _ParticipantRow(
-                        avatarUrl: chatData.buyerAvatar,
-                        nameAndRole: '${chatData.buyerName} - покупатель',
-                      );
-                    }
-
-                    // 7 — Кнопки действий (только для покупателя, не для продавца)
-                    if (index == 7) {
-                      // Проверяем, является ли текущий пользователь продавцом
-                      final isSeller = _currentUserId == chatData.sellerId;
-                      
-                      if (isSeller) {
-                        // Для продавца не показываем кнопки действий
-                        return const SizedBox.shrink();
-                      }
-                      
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                        const SizedBox(height: 2),
+                        Text(
+                          chatData.slotTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.getTextSecondaryColor(context),
+                          ),
                         ),
-                        child: _ActionsWrap(
-                          dealStatus: chatData.dealStatus,
-                          onUpdateStatus: _updateDealStatus,
-                        ),
-                      );
-                    }
-
-                    // 8 — Divider
-                    if (index == 8) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Column(
-                          children: [
-                            Divider(
-                              height: 16,
-                              thickness: 0.5,
-                              color: AppColors.getDividerColor(context),
-                            ),
-                            const SizedBox(height: 6),
-                          ],
-                        ),
-                      );
-                    }
-
-                    // Сообщения
-                    final msg = _messages[index - headerCount];
-                    
-                    // ─── Определяем аватар для сообщений от другого пользователя ───
-                    // Если sender_id совпадает с seller_id, то это сообщение от продавца
-                    // Если sender_id совпадает с buyer_id, то это сообщение от покупателя
-                    final isFromSeller = msg.senderId == chatData.sellerId;
-                    final otherUserAvatar = isFromSeller 
-                        ? chatData.sellerAvatar 
-                        : chatData.buyerAvatar;
-                    
-                    if (msg.messageType == 'image') {
-                      return msg.isMine
-                          ? _BubbleImageRight(
-                              imageUrl: msg.imageUrl!,
-                              time: _formatTime(msg.createdAt),
-                            )
-                          : _BubbleImageLeft(
-                              imageUrl: msg.imageUrl!,
-                              time: _formatTime(msg.createdAt),
-                              avatarUrl: otherUserAvatar,
-                            );
-                    } else {
-                      return msg.isMine
-                          ? _BubbleRight(
-                              text: msg.text ?? '',
-                              time: _formatTime(msg.createdAt),
-                            )
-                          : _BubbleLeft(
-                              text: msg.text ?? '',
-                              time: _formatTime(msg.createdAt),
-                              avatarUrl: otherUserAvatar,
-                            );
-                    }
-                  },
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(0.5),
+                child: Divider(
+                  height: 0.5,
+                  thickness: 0.5,
+                  color: AppColors.getBorderColor(context),
                 ),
               ),
+            ),
+            body: GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              behavior: HitTestBehavior.translucent,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: CustomScrollView(
+                      slivers: [
+                        // ─── Основной контент (дата, инфо, участники) ───
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                // 0 — дата
+                                if (index == 0) {
+                                  return _DateSeparator(
+                                    text:
+                                        '${_formatChatDate(chatData.chatCreatedAt)}, автоматическое создание чата',
+                                  );
+                                }
 
-              // Composer
-              _Composer(
-                controller: _ctrl,
-                onSend: _sendText,
-                onPickImage: _pickImage,
+                                // 1..4 — инфо-строки
+                                if (index == 1) {
+                                  return _KVLine(
+                                    k: 'Слот переведён в статус',
+                                    v: _ChipNeutral(
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            CupertinoIcons.lock,
+                                            size: 14,
+                                            color: AppColors
+                                                .getIconSecondaryColor(
+                                              context,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Бронь',
+                                            style: TextStyle(
+                                              fontWeight:
+                                                  Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? FontWeight.w500
+                                                  : FontWeight.w400,
+                                              color:
+                                                  Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? AppColors.darkTextSecondary
+                                                  : AppColors
+                                                      .getTextPrimaryColor(
+                                                    context,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }
+                                if (index == 2) {
+                                  return _KVLine(
+                                    k: 'Дистанция',
+                                    v: _ChipNeutral(
+                                        child: Text(chatData.slotDistance)),
+                                  );
+                                }
+                                if (index == 3) {
+                                  return _KVLine(
+                                    k: 'Пол',
+                                    v: chatData.slotGender == Gender.male
+                                        ? const GenderPill.male()
+                                        : const GenderPill.female(),
+                                  );
+                                }
+                                if (index == 4) {
+                                  return _KVLine(
+                                    k: 'Стоимость',
+                                    v: PricePill(
+                                      text: _formatPrice(chatData.slotPrice),
+                                    ),
+                                  );
+                                }
+
+                                // 5..6 — участники
+                                if (index == 5) {
+                                  return _ParticipantRow(
+                                    avatarUrl: chatData.sellerAvatar,
+                                    nameAndRole:
+                                        '${chatData.sellerName} - продавец',
+                                  );
+                                }
+                                if (index == 6) {
+                                  return _ParticipantRow(
+                                    avatarUrl: chatData.buyerAvatar,
+                                    nameAndRole:
+                                        '${chatData.buyerName} - покупатель',
+                                  );
+                                }
+
+                                return const SizedBox.shrink();
+                              },
+                              childCount: 7, // 0-6: дата, 4 инфо-строки, 2 участника
+                            ),
+                          ),
+                        ),
+
+                        // ─── Закреплённый блок кнопок (только для покупателя) ───
+                        if (!isSeller)
+                          SliverPersistentHeader(
+                            pinned: true,
+                            delegate: _ActionsHeaderDelegate(
+                              child: Container(
+                                color: Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? AppColors.getSurfaceColor(context)
+                                    : AppColors.getBackgroundColor(context),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                child: _ActionsWrap(
+                                  dealStatus: chatData.dealStatus,
+                                  onUpdateStatus: _updateDealStatus,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                        // ─── Divider ───
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Column(
+                              children: [
+                                Divider(
+                                  height: 16,
+                                  thickness: 0.5,
+                                  color: AppColors.getDividerColor(context),
+                                ),
+                                const SizedBox(height: 6),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // ─── Сообщения ───
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                          // bottom padding = 0, отступ создаётся через bottomSpacing последнего сообщения
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final msg = _messages[index];
+
+                                // ─── Определяем отступы между пузырями ───
+                                // topSpacing: отступ сверху, если есть предыдущее сообщение
+                                final hasMessageAbove = index > 0;
+                                final topSpacing = hasMessageAbove ? 8.0 : 0.0;
+                                // bottomSpacing: отступ снизу только для последнего сообщения
+                                final isLastMessage =
+                                    index == _messages.length - 1;
+                                final bottomSpacing = isLastMessage ? 8.0 : 0.0;
+
+                                // ─── Определяем аватар для сообщений от другого пользователя ───
+                                // Если sender_id совпадает с seller_id, то это сообщение от продавца
+                                // Если sender_id совпадает с buyer_id, то это сообщение от покупателя
+                                final isFromSeller = msg.senderId == chatData.sellerId;
+                                final otherUserAvatar = isFromSeller
+                                    ? chatData.sellerAvatar
+                                    : chatData.buyerAvatar;
+
+                                // Используем единые виджеты для текста и изображений
+                                return msg.isMine
+                                    ? _BubbleRight(
+                                        text: msg.text ?? '',
+                                        image: msg.messageType == 'image'
+                                            ? msg.imageUrl
+                                            : null,
+                                        time: _formatTime(msg.createdAt),
+                                        topSpacing: topSpacing,
+                                        bottomSpacing: bottomSpacing,
+                                        onImageTap:
+                                            msg.messageType == 'image' &&
+                                                    msg.imageUrl != null
+                                                ? () => _showFullscreenImage(
+                                                    msg.imageUrl!)
+                                                : null,
+                                      )
+                                    : _BubbleLeft(
+                                        text: msg.text ?? '',
+                                        image: msg.messageType == 'image'
+                                            ? msg.imageUrl
+                                            : null,
+                                        time: _formatTime(msg.createdAt),
+                                        avatarUrl: otherUserAvatar,
+                                        topSpacing: topSpacing,
+                                        bottomSpacing: bottomSpacing,
+                                        onImageTap:
+                                            msg.messageType == 'image' &&
+                                                    msg.imageUrl != null
+                                                ? () => _showFullscreenImage(
+                                                    msg.imageUrl!)
+                                                : null,
+                                      );
+                              },
+                              childCount: _messages.length,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Composer
+                  _Composer(
+                    controller: _ctrl,
+                    onSend: _sendText,
+                    onPickImage: _pickImage,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          // ─── Overlay для полноэкранного просмотра изображения ───
+          if (_fullscreenImageUrl != null)
+            _FullscreenImageOverlay(
+              imageUrl: _fullscreenImageUrl!,
+              onClose: _hideFullscreenImage,
+            ),
+        ],
       ),
     );
   }
@@ -844,10 +928,7 @@ class _ActionsWrap extends StatelessWidget {
   final String? dealStatus;
   final Function(String) onUpdateStatus;
 
-  const _ActionsWrap({
-    required this.dealStatus,
-    required this.onUpdateStatus,
-  });
+  const _ActionsWrap({required this.dealStatus, required this.onUpdateStatus});
 
   @override
   Widget build(BuildContext context) {
@@ -1013,25 +1094,22 @@ class _DateSeparator extends StatelessWidget {
   const _DateSeparator({required this.text});
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        alignment: Alignment.center,
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.getTextTertiaryColor(context),
-          ),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    alignment: Alignment.center,
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 12,
+        color: AppColors.getTextTertiaryColor(context),
+      ),
+    ),
+  );
 }
 
 class _ParticipantRow extends StatelessWidget {
   final String? avatarUrl;
   final String nameAndRole;
-  const _ParticipantRow({
-    required this.avatarUrl,
-    required this.nameAndRole,
-  });
+  const _ParticipantRow({required this.avatarUrl, required this.nameAndRole});
   @override
   Widget build(BuildContext context) {
     final parts = nameAndRole.split(' - ');
@@ -1088,18 +1166,31 @@ class _ParticipantRow extends StatelessWidget {
 
 class _BubbleLeft extends StatelessWidget {
   final String text;
+  final String? image;
   final String time;
   final String? avatarUrl;
+  final double topSpacing;
+  final double bottomSpacing;
+  final VoidCallback? onImageTap;
   const _BubbleLeft({
     required this.text,
+    this.image,
     required this.time,
     this.avatarUrl,
+    this.topSpacing = 0.0,
+    this.bottomSpacing = 0.0,
+    this.onImageTap,
   });
   @override
   Widget build(BuildContext context) {
     final max = MediaQuery.of(context).size.width * 0.75;
     return Padding(
-      padding: const EdgeInsets.only(right: 12, left: 0, bottom: 12),
+      padding: EdgeInsets.only(
+        right: 12,
+        left: 0,
+        top: topSpacing,
+        bottom: bottomSpacing,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -1131,17 +1222,61 @@ class _BubbleLeft extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: Text(
-                      text,
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.35,
-                        color: AppColors.getTextPrimaryColor(context),
+                  // ─── Изображение (если есть) ───
+                  if (image != null && image!.isNotEmpty) ...[
+                    GestureDetector(
+                      onTap: onImageTap,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Builder(
+                          builder: (context) {
+                            final dpr = MediaQuery.of(context).devicePixelRatio;
+                            final maxW = max * 0.9;
+                            final w = (maxW * dpr).round();
+                            return CachedNetworkImage(
+                              imageUrl: image!,
+                              width: maxW,
+                              fit: BoxFit.cover,
+                              fadeInDuration: const Duration(milliseconds: 200),
+                              memCacheWidth: w,
+                              maxWidthDiskCache: w,
+                              errorWidget: (context, url, error) {
+                                return Container(
+                                  width: maxW,
+                                  height: 200,
+                                  color: AppColors.getSurfaceMutedColor(
+                                    context,
+                                  ),
+                                  child: Icon(
+                                    CupertinoIcons.photo,
+                                    size: 40,
+                                    color: AppColors.getIconSecondaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
                       ),
                     ),
-                  ),
+                    if (text.isNotEmpty) const SizedBox(height: 8),
+                  ],
+                  // ─── Текст (если есть) ───
+                  if (text.isNotEmpty)
+                    SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        text,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.35,
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+                    ),
+                  // ─── Время ───
                   Padding(
                     padding: const EdgeInsets.only(top: 0),
                     child: Align(
@@ -1150,9 +1285,7 @@ class _BubbleLeft extends StatelessWidget {
                         time,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.getTextTertiaryColor(context),
+                          color: AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -1169,13 +1302,29 @@ class _BubbleLeft extends StatelessWidget {
 
 class _BubbleRight extends StatelessWidget {
   final String text;
+  final String? image;
   final String time;
-  const _BubbleRight({required this.text, required this.time});
+  final double topSpacing;
+  final double bottomSpacing;
+  final VoidCallback? onImageTap;
+  const _BubbleRight({
+    required this.text,
+    this.image,
+    required this.time,
+    this.topSpacing = 0.0,
+    this.bottomSpacing = 0.0,
+    this.onImageTap,
+  });
   @override
   Widget build(BuildContext context) {
     final max = MediaQuery.of(context).size.width * 0.75;
     return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 0, bottom: 8),
+      padding: EdgeInsets.only(
+        left: 12,
+        right: 0,
+        top: topSpacing,
+        bottom: bottomSpacing,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -1193,17 +1342,61 @@ class _BubbleRight extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: Text(
-                      text,
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.35,
-                        color: AppColors.getTextPrimaryColor(context),
+                  // ─── Изображение (если есть) ───
+                  if (image != null && image!.isNotEmpty) ...[
+                    GestureDetector(
+                      onTap: onImageTap,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Builder(
+                          builder: (context) {
+                            final dpr = MediaQuery.of(context).devicePixelRatio;
+                            final maxW = max * 0.9;
+                            final w = (maxW * dpr).round();
+                            return CachedNetworkImage(
+                              imageUrl: image!,
+                              width: maxW,
+                              fit: BoxFit.cover,
+                              fadeInDuration: const Duration(milliseconds: 200),
+                              memCacheWidth: w,
+                              maxWidthDiskCache: w,
+                              errorWidget: (context, url, error) {
+                                return Container(
+                                  width: maxW,
+                                  height: 200,
+                                  color: AppColors.getSurfaceMutedColor(
+                                    context,
+                                  ),
+                                  child: Icon(
+                                    CupertinoIcons.photo,
+                                    size: 40,
+                                    color: AppColors.getIconSecondaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
                       ),
                     ),
-                  ),
+                    if (text.isNotEmpty) const SizedBox(height: 8),
+                  ],
+                  // ─── Текст (если есть) ───
+                  if (text.isNotEmpty)
+                    SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        text,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.35,
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+                    ),
+                  // ─── Время ───
                   Padding(
                     padding: const EdgeInsets.only(top: 0),
                     child: Align(
@@ -1212,9 +1405,7 @@ class _BubbleRight extends StatelessWidget {
                         time,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.getTextTertiaryColor(context),
+                          color: AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -1227,141 +1418,6 @@ class _BubbleRight extends StatelessWidget {
       ),
     );
   }
-}
-
-class _BubbleImageLeft extends StatelessWidget {
-  final String imageUrl;
-  final String time;
-  final String? avatarUrl;
-  const _BubbleImageLeft({
-    required this.imageUrl,
-    required this.time,
-    this.avatarUrl,
-  });
-  @override
-  Widget build(BuildContext context) {
-    final max = MediaQuery.of(context).size.width * 0.6;
-    return Padding(
-      padding: const EdgeInsets.only(right: 12, left: 8, bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          CircleAvatar(
-            radius: 14,
-            backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
-                ? NetworkImage(avatarUrl!)
-                : null,
-            child: avatarUrl == null || avatarUrl!.isEmpty
-                ? Icon(
-                    CupertinoIcons.person_fill,
-                    size: 14,
-                    color: AppColors.getIconSecondaryColor(context),
-                  )
-                : null,
-            onBackgroundImageError: (_, __) {},
-          ),
-          const SizedBox(width: 8),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: max),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Stack(
-                children: [
-                  Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: max,
-                      height: 200,
-                      color: AppColors.getSurfaceMutedColor(context),
-                      child: Icon(
-                        CupertinoIcons.photo,
-                        color: AppColors.getIconSecondaryColor(context),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: 6,
-                    bottom: 6,
-                    child: _TimeBadge(time: time),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BubbleImageRight extends StatelessWidget {
-  final String imageUrl;
-  final String time;
-  const _BubbleImageRight({required this.imageUrl, required this.time});
-  @override
-  Widget build(BuildContext context) {
-    final max = MediaQuery.of(context).size.width * 0.6;
-    return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 12, bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: max),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Stack(
-                children: [
-                  Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: max,
-                      height: 200,
-                      color: AppColors.getSurfaceMutedColor(context),
-                      child: Icon(
-                        CupertinoIcons.photo,
-                        color: AppColors.getIconSecondaryColor(context),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: 6,
-                    bottom: 6,
-                    child: _TimeBadge(time: time),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TimeBadge extends StatelessWidget {
-  final String time;
-  const _TimeBadge({required this.time});
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: AppColors.getTextSecondaryColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Text(
-          time,
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkTextSecondary
-                : AppColors.getTextPrimaryColor(context),
-            fontSize: 11,
-          ),
-        ),
-      );
 }
 
 class _Composer extends StatelessWidget {
@@ -1427,7 +1483,9 @@ class _Composer extends StatelessWidget {
                         borderSide: BorderSide.none,
                       ),
                       filled: true,
-                      fillColor: AppColors.getSurfaceMutedColor(context),
+                      fillColor: Theme.of(context).brightness == Brightness.light
+                          ? AppColors.background
+                          : AppColors.getSurfaceMutedColor(context),
                     ),
                   ),
                 ),
@@ -1450,5 +1508,114 @@ class _Composer extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// ────────────────────────────────────────────────────────────────────────
+/// Overlay для полноэкранного просмотра изображения на той же странице
+/// ────────────────────────────────────────────────────────────────────────
+class _FullscreenImageOverlay extends StatelessWidget {
+  final String imageUrl;
+  final VoidCallback onClose;
+
+  const _FullscreenImageOverlay({
+    required this.imageUrl,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      // ─── Закрываем при тапе на фон ───
+      onTap: onClose,
+      child: Container(
+        color: AppColors.textPrimary.withValues(
+          alpha: 0.95,
+        ), // Чёрный фон с прозрачностью
+        child: Stack(
+          children: [
+            // ─── Изображение с возможностью зума ───
+            Center(
+              child: GestureDetector(
+                // ─── Предотвращаем закрытие при тапе на изображение ───
+                onTap: () {},
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.contain,
+                    fadeInDuration: const Duration(milliseconds: 200),
+                    errorWidget: (context, url, error) {
+                      return Container(
+                        color: AppColors.getSurfaceMutedColor(context),
+                        child: Icon(
+                          CupertinoIcons.photo,
+                          size: 64,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+
+            // ─── Кнопка закрытия (крестик) в верхнем левом углу ───
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: IconButton(
+                  onPressed: onClose,
+                  icon: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface.withValues(alpha: 0.7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.xmark,
+                      color: AppColors.surface,
+                      size: 20,
+                    ),
+                  ),
+                  splashRadius: 24,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ────────────────────────────────────────────────────────────────────────
+/// Delegate для закреплённого заголовка с кнопками действий
+/// ────────────────────────────────────────────────────────────────────────
+class _ActionsHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+
+  _ActionsHeaderDelegate({required this.child});
+
+  @override
+  double get minExtent => 48.0; // Минимальная высота (padding + минимальная высота кнопок)
+
+  @override
+  double get maxExtent => 48.0; // Максимальная высота
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(_ActionsHeaderDelegate oldDelegate) {
+    return child != oldDelegate.child;
   }
 }

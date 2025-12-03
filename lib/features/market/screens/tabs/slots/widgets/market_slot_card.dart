@@ -15,7 +15,8 @@ class MarketSlotCard extends StatelessWidget {
   final MarketItem item;
   final bool expanded; // сейчас используется только для «Алые Паруса» (пример)
   final VoidCallback onToggle; // коллбэк на тап по карточке (раскрыть/свернуть)
-  final VoidCallback? onChatClosed; // коллбэк после закрытия экрана чата (для обновления списка)
+  final VoidCallback?
+  onChatClosed; // коллбэк после закрытия экрана чата (для обновления списка)
 
   const MarketSlotCard({
     super.key,
@@ -26,7 +27,8 @@ class MarketSlotCard extends StatelessWidget {
   });
 
   // Показываем детали, если есть описание
-  bool get _hasDetails => item.description != null && item.description!.isNotEmpty;
+  bool get _hasDetails =>
+      item.description != null && item.description!.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -113,11 +115,13 @@ class MarketSlotCard extends StatelessWidget {
                             enabled: item.buttonEnabled,
                             onPressed: () async {
                               // Открываем экран чата и ждём возврата
-                              await Navigator.of(context, rootNavigator: true).push(
+                              await Navigator.of(
+                                context,
+                                rootNavigator: true,
+                              ).push(
                                 TransparentPageRoute(
-                                  builder: (_) => TradeChatSlotsScreen(
-                                    slotId: item.id,
-                                  ),
+                                  builder: (_) =>
+                                      TradeChatSlotsScreen(slotId: item.id),
                                 ),
                               );
                               // После возврата обновляем список слотов
@@ -196,7 +200,7 @@ class _Thumb extends StatelessWidget {
 
   /// Определяет, является ли URL локальным ресурсом (assets) или сетевым URL
   bool get _isAsset => imageUrl.startsWith('assets/');
-  
+
   /// Проверяет, является ли URL валидным HTTP/HTTPS URL
   bool get _isValidNetworkUrl {
     if (imageUrl.isEmpty) return false;
@@ -226,57 +230,59 @@ class _Thumb extends StatelessWidget {
                 ),
               )
             : _isAsset
-                ? Image(
-                    image: AssetImage(imageUrl),
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      debugPrint('❌ Ошибка загрузки asset: $imageUrl - $error');
-                      return Container(
-                        color: AppColors.getBackgroundColor(context),
-                        child: Icon(
-                          CupertinoIcons.photo,
-                          size: 24,
-                          color: AppColors.getIconSecondaryColor(context),
-                        ),
-                      );
-                    },
-                  )
-                : _isValidNetworkUrl
-                    ? Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            color: AppColors.getBackgroundColor(context),
-                            child: Center(
-                              child: CupertinoActivityIndicator(
-                                radius: 10,
-                                color: AppColors.getIconSecondaryColor(context),
-                              ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          debugPrint('❌ Ошибка загрузки изображения: $imageUrl - $error');
-                          return Container(
-                            color: AppColors.getBackgroundColor(context),
-                            child: Icon(
-                              CupertinoIcons.photo,
-                              size: 24,
-                              color: AppColors.getIconSecondaryColor(context),
-                            ),
-                          );
-                        },
-                      )
-                    : Container(
-                        color: AppColors.getBackgroundColor(context),
-                        child: Icon(
-                          CupertinoIcons.photo,
-                          size: 24,
-                          color: AppColors.getIconSecondaryColor(context),
-                        ),
+            ? Image(
+                image: AssetImage(imageUrl),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  debugPrint('❌ Ошибка загрузки asset: $imageUrl - $error');
+                  return Container(
+                    color: AppColors.getBackgroundColor(context),
+                    child: Icon(
+                      CupertinoIcons.photo,
+                      size: 24,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
+                  );
+                },
+              )
+            : _isValidNetworkUrl
+            ? Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: AppColors.getBackgroundColor(context),
+                    child: Center(
+                      child: CupertinoActivityIndicator(
+                        radius: 10,
+                        color: AppColors.getIconSecondaryColor(context),
                       ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  debugPrint(
+                    '❌ Ошибка загрузки изображения: $imageUrl - $error',
+                  );
+                  return Container(
+                    color: AppColors.getBackgroundColor(context),
+                    child: Icon(
+                      CupertinoIcons.photo,
+                      size: 24,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
+                  );
+                },
+              )
+            : Container(
+                color: AppColors.getBackgroundColor(context),
+                child: Icon(
+                  CupertinoIcons.photo,
+                  size: 24,
+                  color: AppColors.getIconSecondaryColor(context),
+                ),
+              ),
       ),
     );
   }
@@ -295,19 +301,23 @@ class _BuyButtonText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ── Определяем цвет фона: оранжевый для "В чат", синий для остальных
     final bg = enabled
-        ? AppColors.brandPrimary
+        ? (text == 'В чат' ? AppColors.orange : AppColors.brandPrimary)
         : AppColors.disabledBg; // disabledBg обычно не меняется
     // ── Для disabled кнопки в светлой теме используем более темный цвет текста
     final isLight = Theme.of(context).brightness == Brightness.light;
     final fg = enabled
         ? Colors
-              .white // белый цвет для иконки и текста на синем фоне
+              .white // белый цвет для иконки и текста на синем/оранжевом фоне
         : (isLight
               ? AppColors
                     .textSecondary // более темный цвет для светлой темы
               : AppColors.disabledText); // в темной теме оставляем как было
-    final icon = text == 'Бронь' ? CupertinoIcons.lock : CupertinoIcons.cart;
+    // ── Определяем иконку: пузырь сообщения для "В чат", замок для "Бронь", корзина для остальных
+    final icon = text == 'В чат'
+        ? CupertinoIcons.chat_bubble
+        : (text == 'Бронь' ? CupertinoIcons.lock : CupertinoIcons.cart);
 
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: 72),

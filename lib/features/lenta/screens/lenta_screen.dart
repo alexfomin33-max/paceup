@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:health/health.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../domain/models/activity_lenta.dart';
@@ -62,9 +64,23 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   int? _actualUserId;
   // Ключ для кнопки создания поста (для выпадающего меню)
   final GlobalKey _createMenuKey = GlobalKey();
-  
+
   // Флаг для предотвращения двойного запуска синхронизации
   bool _isSyncingHealthData = false;
+
+  // Плагин Health (Health Connect/HealthKit) для запроса разрешений
+  final Health _health = Health();
+
+  // Типы данных Health, которые нам нужны
+  // Используем те же типы, что и в экране подключенных трекеров
+  static const List<HealthDataType> _healthTypes = <HealthDataType>[
+    HealthDataType.WORKOUT,
+    HealthDataType.STEPS,
+    HealthDataType.DISTANCE_DELTA,
+    HealthDataType.HEART_RATE,
+    HealthDataType.ACTIVE_ENERGY_BURNED,
+    HealthDataType.TOTAL_CALORIES_BURNED,
+  ];
 
   // ────────────────────────────────────────────────────────────────
   // 🖼️ PREFETCHING: отслеживаем предзагруженные индексы постов
@@ -134,7 +150,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
         // Запускаем polling для динамического обновления счетчика
         _startUnreadChatsPolling(userId);
-        
+
         // Проверка флага синхронизации от Broadcast Receiver
         _checkAndSyncHealthData();
       }
@@ -165,7 +181,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     _unreadChatsPollingTimer?.cancel(); // ✅ Очищаем таймер polling
     super.dispose();
   }
-  
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Проверяем флаг синхронизации при возврате приложения из фона
@@ -173,33 +189,104 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       _checkAndSyncHealthData();
     }
   }
-  
+
   // ─────────────────────────────────────────────────────────────────────────
   //  ПРОВЕРКА И СИНХРОНИЗАЦИЯ HEALTH CONNECT
   // ─────────────────────────────────────────────────────────────────────────
-  
+
+  /// Запрашивает разрешения на доступ к данным Health Connect/HealthKit
+  ///
+  /// Вызывается при первом запуске приложения для автоматического запроса
+  /// разрешений на чтение тренировок
+  Future<bool> _requestHealthPermissions() async {
+    try {
+      // Конфигурируем Health плагин
+      await _health.configure();
+      if (!mounted) return false;
+
+      // Проверяем доступность Health Connect на Android
+      if (Platform.isAndroid) {
+        final hasHC = await _health.isHealthConnectAvailable();
+        if (hasHC == false) {
+          debugPrint('Health Connect недоступен');
+          return false;
+        }
+      }
+
+      // Проверяем, есть ли уже разрешения
+      final hasPermissions = await _health.hasPermissions(
+        _healthTypes,
+        permissions: List.generate(
+          _healthTypes.length,
+          (_) => HealthDataAccess.READ,
+        ),
+      );
+
+      // Если разрешения уже есть — возвращаем true
+      if (hasPermissions == true) {
+        return true;
+      }
+
+      // Запрашиваем разрешения
+      final granted = await _health.requestAuthorization(
+        _healthTypes,
+        permissions: List.generate(
+          _healthTypes.length,
+          (_) => HealthDataAccess.READ,
+        ),
+      );
+
+      if (!mounted) return false;
+
+      return granted;
+    } catch (e) {
+      debugPrint('Ошибка при запросе разрешений Health: $e');
+      return false;
+    }
+  }
+
   /// Проверяет флаг синхронизации и запускает импорт новых тренировок
+  ///
+  /// При первом запуске автоматически запрашивает разрешения Health Connect
   Future<void> _checkAndSyncHealthData() async {
     // Предотвращаем двойной запуск синхронизации
     if (_isSyncingHealthData) return;
-    
+
     try {
+      // Запрашиваем разрешения перед синхронизацией
+      final hasPermissions = await _requestHealthPermissions();
+
+      if (!hasPermissions) {
+        debugPrint(
+          'Разрешения Health Connect не выданы, синхронизация пропущена',
+        );
+        return;
+      }
+
       final syncService = ref.read(healthSyncServiceProvider);
-      
+
       // Запускаем синхронизацию, если пользователь авторизован
       if (_actualUserId != null && mounted) {
         // Устанавливаем флаг, чтобы предотвратить повторный запуск
         _isSyncingHealthData = true;
-        
+
         // Запускаем синхронизацию в фоне
-        syncService.syncNewWorkouts(ref).then((result) {
-          _isSyncingHealthData = false;
-        }).catchError((error) {
-          _isSyncingHealthData = false;
-          debugPrint('Ошибка автоматической синхронизации: $error');
-        });
+        syncService
+            .syncNewWorkouts(ref)
+            .then((result) {
+              _isSyncingHealthData = false;
+              if (result.importedCount > 0) {
+                debugPrint(
+                  'Автоматически импортировано тренировок: ${result.importedCount}',
+                );
+              }
+            })
+            .catchError((error) {
+              _isSyncingHealthData = false;
+              debugPrint('Ошибка автоматической синхронизации: $error');
+            });
       }
-      } catch (e) {
+    } catch (e) {
       _isSyncingHealthData = false;
       debugPrint('Ошибка синхронизации: $e');
     }
@@ -299,10 +386,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     MoreMenuHub.hide();
 
-    final created = await Navigator.of(
-      context,
-      rootNavigator: true,
-    ).push<bool>(
+    final created = await Navigator.of(context, rootNavigator: true).push<bool>(
       TransparentPageRoute(
         builder: (_) => AddActivityScreen(currentUserId: _actualUserId!),
       ),
