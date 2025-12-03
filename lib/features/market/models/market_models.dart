@@ -14,7 +14,7 @@ class MarketItem {
   final int price; // Цена в рублях
   final Gender gender; // Для кого слот (М/Ж)
   final bool buttonEnabled; // Доступна ли кнопка (можно ли купить)
-  final String buttonText; // Текст на кнопке: «Купить» или «Бронь»
+  final String buttonText; // Текст на кнопке: «Купить» или «Бронь» или «Редактировать»
   final bool locked; // На будущее: заблокировано или нет
   final String imageUrl; // Путь к картинке-миниатюре ассета
 
@@ -23,6 +23,8 @@ class MarketItem {
   final String? placeText; // Город/место
   final String? typeText; // Тип (марафон/полумарафон и т.п.)
   final String? description; // Подробное описание (для раскрывающегося блока)
+  final int sellerId; // ID продавца
+  final int? eventId; // ID события (для редактирования)
 
   const MarketItem({
     required this.id,
@@ -38,6 +40,8 @@ class MarketItem {
     this.placeText,
     this.typeText,
     this.description,
+    required this.sellerId,
+    this.eventId,
   });
 }
 

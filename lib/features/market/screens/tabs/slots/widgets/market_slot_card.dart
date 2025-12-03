@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../models/market_models.dart';
 import '../tradechat_slots_screen.dart';
+import '../../../../../../core/services/auth_service.dart';
 import '../../../widgets/pills.dart';
 import '../../../../../../core/widgets/transparent_route.dart';
+import '../../../state/edit_slot/edit_slot_screen.dart';
 
 /// Отдельный виджет карточки СЛОТА.
 /// Миниатюра НЕ кликабельна.
@@ -114,16 +116,33 @@ class MarketSlotCard extends StatelessWidget {
                             text: item.buttonText,
                             enabled: item.buttonEnabled,
                             onPressed: () async {
-                              // Открываем экран чата и ждём возврата
-                              await Navigator.of(
-                                context,
-                                rootNavigator: true,
-                              ).push(
-                                TransparentPageRoute(
-                                  builder: (_) =>
-                                      TradeChatSlotsScreen(slotId: item.id),
-                                ),
-                              );
+                              // Проверяем, является ли пользователь продавцом
+                              final authService = AuthService();
+                              final currentUserId = await authService.getUserId();
+                              final isSeller = currentUserId != null && currentUserId == item.sellerId;
+                              
+                              if (isSeller && item.buttonText == 'Редактировать') {
+                                // Открываем экран редактирования для продавца
+                                await Navigator.of(
+                                  context,
+                                  rootNavigator: true,
+                                ).push(
+                                  TransparentPageRoute(
+                                    builder: (_) => EditSlotScreen(slotId: item.id),
+                                  ),
+                                );
+                              } else {
+                                // Открываем экран чата для покупателя
+                                await Navigator.of(
+                                  context,
+                                  rootNavigator: true,
+                                ).push(
+                                  TransparentPageRoute(
+                                    builder: (_) =>
+                                        TradeChatSlotsScreen(slotId: item.id),
+                                  ),
+                                );
+                              }
                               // После возврата обновляем список слотов
                               // Это нужно, чтобы обновить статусы слотов (например, если слот был куплен)
                               if (onChatClosed != null) {
