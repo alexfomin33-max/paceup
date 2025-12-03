@@ -1065,15 +1065,15 @@ class _EventMembersSliver extends ConsumerStatefulWidget {
       _EventMembersSliverState();
 }
 
-class _EventMembersSliverState
-    extends ConsumerState<_EventMembersSliver> {
+class _EventMembersSliverState extends ConsumerState<_EventMembersSliver> {
   final List<Map<String, dynamic>> _participants = [];
   bool _loading = false;
   bool _hasMore = true;
   String? _error;
   int _currentPage = 1;
   static const int _limit = 25;
-  final Map<int, bool> _togglingSubscriptions = {}; // Для отслеживания процесса подписки/отписки
+  final Map<int, bool> _togglingSubscriptions =
+      {}; // Для отслеживания процесса подписки/отписки
 
   @override
   void initState() {
@@ -1101,7 +1101,10 @@ class _EventMembersSliverState
   }
 
   /// ──────────────────────── Подписка/отписка на пользователя ────────────────────────
-  Future<void> _toggleSubscribe(int targetUserId, bool currentlySubscribed) async {
+  Future<void> _toggleSubscribe(
+    int targetUserId,
+    bool currentlySubscribed,
+  ) async {
     // Проверяем, не идет ли уже процесс подписки/отписки для этого пользователя
     if (_togglingSubscriptions[targetUserId] == true) return;
 
@@ -1116,10 +1119,7 @@ class _EventMembersSliverState
 
       final data = await api.post(
         '/toggle_subscribe.php',
-        body: {
-          'target_user_id': targetUserId.toString(),
-          'action': action,
-        },
+        body: {'target_user_id': targetUserId.toString(), 'action': action},
       );
 
       if (!mounted) return;
@@ -1129,7 +1129,9 @@ class _EventMembersSliverState
 
         // Обновляем статус подписки в списке участников
         setState(() {
-          final index = _participants.indexWhere((p) => (p['user_id'] as int?) == targetUserId);
+          final index = _participants.indexWhere(
+            (p) => (p['user_id'] as int?) == targetUserId,
+          );
           if (index != -1) {
             _participants[index]['is_subscribed'] = isSubscribed;
           }
@@ -1305,7 +1307,8 @@ class _EventMembersSliverState
         final userId = p['user_id'] as int?;
         final isCurrentUser = p['is_current_user'] as bool? ?? false;
         final isSubscribed = p['is_subscribed'] as bool? ?? false;
-        final isToggling = userId != null && (_togglingSubscriptions[userId] == true);
+        final isToggling =
+            userId != null && (_togglingSubscriptions[userId] == true);
 
         return Builder(
           builder: (context) => Container(
@@ -1361,7 +1364,8 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
   bool _hasMore = true;
   int _currentPage = 1;
   static const int _limit = 25;
-  final Map<int, bool> _togglingSubscriptions = {}; // Для отслеживания процесса подписки/отписки
+  final Map<int, bool> _togglingSubscriptions =
+      {}; // Для отслеживания процесса подписки/отписки
 
   @override
   void initState() {
@@ -1430,7 +1434,10 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
   }
 
   /// ──────────────────────── Подписка/отписка на пользователя ────────────────────────
-  Future<void> _toggleSubscribe(int targetUserId, bool currentlySubscribed) async {
+  Future<void> _toggleSubscribe(
+    int targetUserId,
+    bool currentlySubscribed,
+  ) async {
     // Проверяем, не идет ли уже процесс подписки/отписки для этого пользователя
     if (_togglingSubscriptions[targetUserId] == true) return;
 
@@ -1445,10 +1452,7 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
 
       final data = await api.post(
         '/toggle_subscribe.php',
-        body: {
-          'target_user_id': targetUserId.toString(),
-          'action': action,
-        },
+        body: {'target_user_id': targetUserId.toString(), 'action': action},
       );
 
       if (!mounted) return;
@@ -1458,7 +1462,9 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
 
         // Обновляем статус подписки в списке участников
         setState(() {
-          final index = _participants.indexWhere((p) => (p['user_id'] as int?) == targetUserId);
+          final index = _participants.indexWhere(
+            (p) => (p['user_id'] as int?) == targetUserId,
+          );
           if (index != -1) {
             _participants[index]['is_subscribed'] = isSubscribed;
           }
@@ -1523,7 +1529,8 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
         final userId = p['user_id'] as int?;
         final isCurrentUser = p['is_current_user'] as bool? ?? false;
         final isSubscribed = p['is_subscribed'] as bool? ?? false;
-        final isToggling = userId != null && (_togglingSubscriptions[userId] == true);
+        final isToggling =
+            userId != null && (_togglingSubscriptions[userId] == true);
 
         return Column(
           children: [
@@ -1639,17 +1646,12 @@ class _MemberRow extends StatelessWidget {
                   ? const SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Icon(
                       isSubscribed
-                          ? CupertinoIcons
-                              .person_crop_circle_badge_minus
-                          : member.roleIcon ??
-                              CupertinoIcons
-                                  .person_crop_circle_badge_plus,
+                          ? CupertinoIcons.person_crop_circle_badge_minus
+                          : CupertinoIcons.person_crop_circle_badge_plus,
                       size: 24,
                     ),
               style: IconButton.styleFrom(
@@ -1663,10 +1665,7 @@ class _MemberRow extends StatelessWidget {
             IconButton(
               onPressed: null,
               splashRadius: 22,
-              icon: Icon(
-                member.roleIcon,
-                size: 24,
-              ),
+              icon: Icon(member.roleIcon, size: 24),
               style: IconButton.styleFrom(
                 foregroundColor: AppColors.brandPrimary,
                 disabledForegroundColor: AppColors.disabledText,

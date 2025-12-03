@@ -403,47 +403,75 @@ class CommunicationListNotifier extends AutoDisposeFamilyAsyncNotifier<
     if (index == -1) return;
 
     final originalUser = current.users[index];
-    final desiredState = !originalUser.isSubscribedByMe;
+    final isUnsubscribing = originalUser.isSubscribedByMe;
+    
+    // Сохраняем исходное состояние для возможного отката
+    final originalState = current;
+    
+    // Если это отписка на вкладке подписок, сразу удаляем карточку оптимистично
+    final shouldRemoveOptimistically = args.tab == CommunicationTab.subscriptions &&
+        isUnsubscribing &&
+        args.sanitizedQuery.isEmpty;
 
-    final optimisticUsers = [...current.users];
-    optimisticUsers[index] =
-        originalUser.copyWith(isSubscribedByMe: desiredState);
-    state = AsyncData(
-      current.copyWith(users: optimisticUsers, clearError: true),
-    );
+    if (shouldRemoveOptimistically) {
+      // Оптимистично удаляем пользователя из списка
+      final optimisticUsers = [...current.users];
+      optimisticUsers.removeAt(index);
+      state = AsyncData(
+        current.copyWith(users: optimisticUsers, clearError: true),
+      );
+    } else {
+      // Для остальных случаев меняем состояние подписки
+      final desiredState = !originalUser.isSubscribedByMe;
+      final optimisticUsers = [...current.users];
+      optimisticUsers[index] =
+          originalUser.copyWith(isSubscribedByMe: desiredState);
+      state = AsyncData(
+        current.copyWith(users: optimisticUsers, clearError: true),
+      );
+    }
 
     try {
       final confirmedState = await _repository.toggleSubscription(
         targetUserId: userId,
-        shouldUnsubscribe: originalUser.isSubscribedByMe,
+        shouldUnsubscribe: isUnsubscribing,
       );
 
-      final syncedUsers = [...optimisticUsers];
-      if (index < syncedUsers.length) {
-        syncedUsers[index] =
-            syncedUsers[index].copyWith(isSubscribedByMe: confirmedState);
-      }
-
-      state = AsyncData(
-        current.copyWith(users: syncedUsers, clearError: true),
-      );
-
-      final shouldDropFromList =
-          args.tab == CommunicationTab.subscriptions &&
-              !confirmedState &&
-              args.sanitizedQuery.isEmpty;
-
-      if (shouldDropFromList) {
+      if (shouldRemoveOptimistically) {
+        // Если карточка уже удалена оптимистично, просто обновляем список
+        // для синхронизации (на случай, если есть еще данные)
         unawaited(_softRefresh());
+      } else {
+        // Обновляем состояние подписки после подтверждения
+        final currentAfterOptimistic = state.valueOrNull;
+        if (currentAfterOptimistic != null) {
+          final syncedUsers = [...currentAfterOptimistic.users];
+          final updatedIndex = syncedUsers.indexWhere((user) => user.id == userId);
+          if (updatedIndex != -1 && updatedIndex < syncedUsers.length) {
+            syncedUsers[updatedIndex] =
+                syncedUsers[updatedIndex].copyWith(isSubscribedByMe: confirmedState);
+          }
+
+          state = AsyncData(
+            currentAfterOptimistic.copyWith(users: syncedUsers, clearError: true),
+          );
+
+          // Проверяем, нужно ли удалить карточку после подтверждения
+          final shouldDropFromList =
+              args.tab == CommunicationTab.subscriptions &&
+                  !confirmedState &&
+                  args.sanitizedQuery.isEmpty;
+
+          if (shouldDropFromList) {
+            unawaited(_softRefresh());
+          }
+        }
       }
     } catch (error) {
-      final rollbackUsers = [...current.users];
-      rollbackUsers[index] = originalUser;
-
+      // Откатываем изменения при ошибке к исходному состоянию
       final message = ErrorHandler.format(error);
-
       state = AsyncData(
-        current.copyWith(users: rollbackUsers, lastError: message),
+        originalState.copyWith(lastError: message),
       );
     }
   }
