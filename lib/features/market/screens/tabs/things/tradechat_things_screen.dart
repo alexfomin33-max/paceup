@@ -210,7 +210,8 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.getTextSecondaryColor(context),
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.getTextPrimaryColor(context),
                           ),
                         ),
                       ],
@@ -724,7 +725,7 @@ class _Composer extends StatelessWidget {
                     maxLines: 5,
                     textInputAction: TextInputAction.newline,
                     keyboardType: TextInputType.multiline,
-                    style: TextStyle(
+                    style: AppTextStyles.h14w4.copyWith(
                       color: AppColors.getTextPrimaryColor(context),
                     ),
                     decoration: InputDecoration(

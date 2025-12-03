@@ -194,8 +194,8 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
     super.didChangeDependencies();
     // Обновляем данные при возврате на экран (если прошло больше 1 секунды с последнего показа)
     final now = DateTime.now();
-    if (_lastVisibleTime != null && 
-        _chatData != null && 
+    if (_lastVisibleTime != null &&
+        _chatData != null &&
         now.difference(_lastVisibleTime!).inSeconds > 1) {
       _refreshChatData();
     }
@@ -453,7 +453,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
   // ─── Обновление данных чата (для pull-to-refresh) ───
   Future<void> _refreshChatData() async {
     if (_chatData == null) return;
-    
+
     try {
       await _loadChatData(_chatData!.chatId);
     } catch (e) {
@@ -638,7 +638,8 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.getTextSecondaryColor(context),
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.getTextPrimaryColor(context),
                           ),
                         ),
                       ],
@@ -688,28 +689,31 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                                           Icon(
                                             CupertinoIcons.lock,
                                             size: 14,
-                                            color: AppColors
-                                                .getIconSecondaryColor(
-                                              context,
-                                            ),
+                                            color:
+                                                AppColors.getIconSecondaryColor(
+                                                  context,
+                                                ),
                                           ),
                                           const SizedBox(width: 6),
                                           Text(
                                             'Бронь',
                                             style: TextStyle(
                                               fontWeight:
-                                                  Theme.of(context).brightness ==
+                                                  Theme.of(
+                                                        context,
+                                                      ).brightness ==
                                                       Brightness.dark
                                                   ? FontWeight.w500
                                                   : FontWeight.w400,
                                               color:
-                                                  Theme.of(context).brightness ==
+                                                  Theme.of(
+                                                        context,
+                                                      ).brightness ==
                                                       Brightness.dark
                                                   ? AppColors.darkTextSecondary
-                                                  : AppColors
-                                                      .getTextPrimaryColor(
-                                                    context,
-                                                  ),
+                                                  : AppColors.getTextPrimaryColor(
+                                                      context,
+                                                    ),
                                             ),
                                           ),
                                         ],
@@ -721,7 +725,8 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                                   return _KVLine(
                                     k: 'Дистанция',
                                     v: _ChipNeutral(
-                                        child: Text(chatData.slotDistance)),
+                                      child: Text(chatData.slotDistance),
+                                    ),
                                   );
                                 }
                                 if (index == 3) {
@@ -759,31 +764,34 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
 
                                 return const SizedBox.shrink();
                               },
-                              childCount: 7, // 0-6: дата, 4 инфо-строки, 2 участника
+                              childCount:
+                                  7, // 0-6: дата, 4 инфо-строки, 2 участника
                             ),
                           ),
                         ),
 
-                        // ─── Закреплённый блок кнопок (для покупателя и продавца) ───
-                        SliverPersistentHeader(
-                          pinned: true,
-                          delegate: _ActionsHeaderDelegate(
-                            child: Container(
-                              color: Theme.of(context).brightness ==
-                                      Brightness.light
-                                  ? AppColors.getSurfaceColor(context)
-                                  : AppColors.getBackgroundColor(context),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              child: _ActionsWrap(
-                                dealStatus: chatData.dealStatus,
-                                onUpdateStatus: _updateDealStatus,
+                        // ─── Закреплённый блок кнопок (только для покупателя) ───
+                        if (!isSeller)
+                          SliverPersistentHeader(
+                            pinned: true,
+                            delegate: _ActionsHeaderDelegate(
+                              child: Container(
+                                color:
+                                    Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? AppColors.getSurfaceColor(context)
+                                    : AppColors.getBackgroundColor(context),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                child: _ActionsWrap(
+                                  dealStatus: chatData.dealStatus,
+                                  onUpdateStatus: _updateDealStatus,
+                                ),
                               ),
                             ),
                           ),
-                        ),
 
                         // ─── Divider ───
                         SliverToBoxAdapter(
@@ -807,63 +815,66 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                           padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
                           // bottom padding = 0, отступ создаётся через bottomSpacing последнего сообщения
                           sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final msg = _messages[index];
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final msg = _messages[index];
 
-                                // ─── Определяем отступы между пузырями ───
-                                // topSpacing: отступ сверху, если есть предыдущее сообщение
-                                final hasMessageAbove = index > 0;
-                                final topSpacing = hasMessageAbove ? 8.0 : 0.0;
-                                // bottomSpacing: отступ снизу только для последнего сообщения
-                                final isLastMessage =
-                                    index == _messages.length - 1;
-                                final bottomSpacing = isLastMessage ? 8.0 : 0.0;
+                              // ─── Определяем отступы между пузырями ───
+                              // topSpacing: отступ сверху, если есть предыдущее сообщение
+                              final hasMessageAbove = index > 0;
+                              final topSpacing = hasMessageAbove ? 8.0 : 0.0;
+                              // bottomSpacing: отступ снизу только для последнего сообщения
+                              final isLastMessage =
+                                  index == _messages.length - 1;
+                              final bottomSpacing = isLastMessage ? 8.0 : 0.0;
 
-                                // ─── Определяем аватар для сообщений от другого пользователя ───
-                                // Если sender_id совпадает с seller_id, то это сообщение от продавца
-                                // Если sender_id совпадает с buyer_id, то это сообщение от покупателя
-                                final isFromSeller = msg.senderId == chatData.sellerId;
-                                final otherUserAvatar = isFromSeller
-                                    ? chatData.sellerAvatar
-                                    : chatData.buyerAvatar;
+                              // ─── Определяем аватар для сообщений от другого пользователя ───
+                              // Если sender_id совпадает с seller_id, то это сообщение от продавца
+                              // Если sender_id совпадает с buyer_id, то это сообщение от покупателя
+                              final isFromSeller =
+                                  msg.senderId == chatData.sellerId;
+                              final otherUserAvatar = isFromSeller
+                                  ? chatData.sellerAvatar
+                                  : chatData.buyerAvatar;
 
-                                // Используем единые виджеты для текста и изображений
-                                return msg.isMine
-                                    ? _BubbleRight(
-                                        text: msg.text ?? '',
-                                        image: msg.messageType == 'image'
-                                            ? msg.imageUrl
-                                            : null,
-                                        time: _formatTime(msg.createdAt),
-                                        topSpacing: topSpacing,
-                                        bottomSpacing: bottomSpacing,
-                                        onImageTap:
-                                            msg.messageType == 'image' &&
-                                                    msg.imageUrl != null
-                                                ? () => _showFullscreenImage(
-                                                    msg.imageUrl!)
-                                                : null,
-                                      )
-                                    : _BubbleLeft(
-                                        text: msg.text ?? '',
-                                        image: msg.messageType == 'image'
-                                            ? msg.imageUrl
-                                            : null,
-                                        time: _formatTime(msg.createdAt),
-                                        avatarUrl: otherUserAvatar,
-                                        topSpacing: topSpacing,
-                                        bottomSpacing: bottomSpacing,
-                                        onImageTap:
-                                            msg.messageType == 'image' &&
-                                                    msg.imageUrl != null
-                                                ? () => _showFullscreenImage(
-                                                    msg.imageUrl!)
-                                                : null,
-                                      );
-                              },
-                              childCount: _messages.length,
-                            ),
+                              // Используем единые виджеты для текста и изображений
+                              return msg.isMine
+                                  ? _BubbleRight(
+                                      text: msg.text ?? '',
+                                      image: msg.messageType == 'image'
+                                          ? msg.imageUrl
+                                          : null,
+                                      time: _formatTime(msg.createdAt),
+                                      topSpacing: topSpacing,
+                                      bottomSpacing: bottomSpacing,
+                                      onImageTap:
+                                          msg.messageType == 'image' &&
+                                              msg.imageUrl != null
+                                          ? () => _showFullscreenImage(
+                                              msg.imageUrl!,
+                                            )
+                                          : null,
+                                    )
+                                  : _BubbleLeft(
+                                      text: msg.text ?? '',
+                                      image: msg.messageType == 'image'
+                                          ? msg.imageUrl
+                                          : null,
+                                      time: _formatTime(msg.createdAt),
+                                      avatarUrl: otherUserAvatar,
+                                      topSpacing: topSpacing,
+                                      bottomSpacing: bottomSpacing,
+                                      onImageTap:
+                                          msg.messageType == 'image' &&
+                                              msg.imageUrl != null
+                                          ? () => _showFullscreenImage(
+                                              msg.imageUrl!,
+                                            )
+                                          : null,
+                                    );
+                            }, childCount: _messages.length),
                           ),
                         ),
                       ],
@@ -1507,7 +1518,7 @@ class _Composer extends StatelessWidget {
                     maxLines: 5,
                     textInputAction: TextInputAction.newline,
                     keyboardType: TextInputType.multiline,
-                    style: TextStyle(
+                    style: AppTextStyles.h14w4.copyWith(
                       color: AppColors.getTextPrimaryColor(context),
                     ),
                     decoration: InputDecoration(
@@ -1524,7 +1535,8 @@ class _Composer extends StatelessWidget {
                         borderSide: BorderSide.none,
                       ),
                       filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.light
+                      fillColor:
+                          Theme.of(context).brightness == Brightness.light
                           ? AppColors.background
                           : AppColors.getSurfaceMutedColor(context),
                     ),

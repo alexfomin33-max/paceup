@@ -18,23 +18,15 @@ class SearchClubsContent extends ConsumerStatefulWidget {
 
 class _SearchClubsContentState extends ConsumerState<SearchClubsContent> {
   // ────────────────────────────────────────────────────────────────────────
-  // Обновление провайдеров при переключении вкладок:
-  // При каждом создании виджета (переключении вкладки) инвалидируем провайдеры,
-  // чтобы получить свежие данные
+  // Обновление провайдеров при переключении вкладок и возврате на экран:
+  // Отслеживаем видимость маршрута для обновления данных при возврате
   // ────────────────────────────────────────────────────────────────────────
-  bool _hasInvalidated = false;
+  bool _wasRouteActive = false;
 
   @override
   Widget build(BuildContext context) {
-    // Инвалидируем провайдеры при первом build (переключении вкладки)
-    if (!_hasInvalidated) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          ref.invalidate(recommendedClubsProvider);
-          _hasInvalidated = true;
-        }
-      });
-    }
+    // Проверяем видимость маршрута и обновляем данные при возврате на экран
+    _checkRouteVisibility();
     final trimmedQuery = widget.query.trim();
     final isSearching = trimmedQuery.isNotEmpty;
 
@@ -186,6 +178,39 @@ class _SearchClubsContentState extends ConsumerState<SearchClubsContent> {
       ),
     );
   }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Проверка видимости экрана и обновление данных при отображении
+  // Вызывается при каждом build для отслеживания видимости маршрута
+  // ────────────────────────────────────────────────────────────────────────
+  void _checkRouteVisibility() {
+    final route = ModalRoute.of(context);
+    final isRouteActive = route?.isCurrent ?? false;
+
+    // Если маршрут стал активным (видимым), обновляем данные
+    if (isRouteActive && !_wasRouteActive) {
+      _wasRouteActive = true;
+      
+      // Обновляем список рекомендованных клубов при возврате на экран
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        
+        final trimmedQuery = widget.query.trim();
+        final isSearching = trimmedQuery.isNotEmpty;
+        
+        if (isSearching) {
+          // При поиске инвалидируем провайдер поиска
+          ref.invalidate(searchClubsProvider(trimmedQuery));
+        } else {
+          // При просмотре рекомендованных клубов инвалидируем соответствующий провайдер
+          ref.invalidate(recommendedClubsProvider);
+        }
+      });
+    } else if (!isRouteActive) {
+      // Если маршрут стал неактивным, сбрасываем флаг для следующего отображения
+      _wasRouteActive = false;
+    }
+  }
 }
 
 class _ClubRow extends StatelessWidget {
@@ -211,18 +236,18 @@ class _ClubRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.xs),
               child: CachedNetworkImage(
                 imageUrl: club.logoUrl,
-                width: 80,
+                width: 55,
                 height: 55,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
-                  width: 80,
+                  width: 55,
                   height: 55,
                   color: AppColors.getSkeletonBaseColor(context),
                   alignment: Alignment.center,
                   child: const CupertinoActivityIndicator(),
                 ),
                 errorWidget: (context, url, error) => Container(
-                  width: 80,
+                  width: 55,
                   height: 55,
                   color: AppColors.getSkeletonBaseColor(context),
                   alignment: Alignment.center,

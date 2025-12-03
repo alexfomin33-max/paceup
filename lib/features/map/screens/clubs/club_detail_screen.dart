@@ -15,6 +15,7 @@ import 'coffeerun_vld/tabs/glory_content.dart';
 import 'edit_club_screen.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../profile/providers/user_clubs_provider.dart';
+import '../../providers/search/clubs_search_provider.dart';
 
 /// Детальная страница клуба (на основе event_detail_screen.dart)
 class ClubDetailScreen extends ConsumerStatefulWidget {
@@ -180,6 +181,10 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         // Инвалидируем provider клубов пользователя для обновления списка в clubs_tab.dart
         // userId гарантированно не null после проверки выше
         ref.invalidate(userClubsProvider(userId));
+        
+        // Инвалидируем провайдер рекомендованных клубов, чтобы обновить список
+        // в экране поиска клубов (clubs_content.dart)
+        ref.invalidate(recommendedClubsProvider);
       } else {
         final errorMessage =
             data['message'] as String? ?? 'Ошибка вступления в клуб';
@@ -251,6 +256,10 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         // Инвалидируем provider клубов пользователя для обновления списка в clubs_tab.dart
         // userId гарантированно не null после проверки выше
         ref.invalidate(userClubsProvider(userId));
+        
+        // Инвалидируем провайдер рекомендованных клубов, чтобы обновить список
+        // в экране поиска клубов (clubs_content.dart)
+        ref.invalidate(recommendedClubsProvider);
       } else {
         final errorMessage =
             data['message'] as String? ?? 'Ошибка выхода из клуба';
