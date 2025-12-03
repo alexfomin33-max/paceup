@@ -166,7 +166,8 @@ class _ChatData {
   }
 }
 
-class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
+class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
+    with WidgetsBindingObserver {
   final _ctrl = TextEditingController();
   final _picker = ImagePicker();
   final _api = ApiService();
@@ -179,18 +180,49 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
   int? _currentUserId;
   int? _lastMessageId;
   Timer? _pollTimer;
+  bool _wasPaused = false; // Флаг для отслеживания паузы приложения
+  DateTime? _lastVisibleTime; // Время последнего показа экрана
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeChat();
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Обновляем данные при возврате на экран (если прошло больше 1 секунды с последнего показа)
+    final now = DateTime.now();
+    if (_lastVisibleTime != null && 
+        _chatData != null && 
+        now.difference(_lastVisibleTime!).inSeconds > 1) {
+      _refreshChatData();
+    }
+    _lastVisibleTime = now;
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _ctrl.dispose();
     _pollTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Обновляем данные при возврате приложения из фонового режима
+    if (state == AppLifecycleState.resumed && _wasPaused) {
+      _wasPaused = false;
+      if (_chatData != null) {
+        _refreshChatData();
+      }
+    } else if (state == AppLifecycleState.paused) {
+      _wasPaused = true;
+    }
   }
 
   // ─── Инициализация чата: резервирование слота и загрузка данных ───
@@ -427,6 +459,17 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
     }
   }
 
+  // ─── Обновление данных чата (для pull-to-refresh) ───
+  Future<void> _refreshChatData() async {
+    if (_chatData == null) return;
+    
+    try {
+      await _loadChatData(_chatData!.chatId);
+    } catch (e) {
+      debugPrint('Ошибка обновления данных чата: $e');
+    }
+  }
+
   // ─── Обновление статуса сделки ───
   Future<void> _updateDealStatus(String dealStatus) async {
     if (_chatData == null) return;
@@ -598,10 +641,15 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
           child: Column(
             children: [
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
-                  itemCount: headerCount + _messages.length,
-                  itemBuilder: (_, index) {
+                child: RefreshIndicator(
+                  onRefresh: _refreshChatData,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    itemCount: headerCount + _messages.length,
+                    itemBuilder: (_, index) {
                     // 0 — дата
                     if (index == 0) {
                       return _DateSeparator(
@@ -676,16 +724,8 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
                       );
                     }
 
-                    // 7 — Кнопки действий (только для покупателя, не для продавца)
+                    // 7 — Кнопки действий (для покупателя и продавца)
                     if (index == 7) {
-                      // Проверяем, является ли текущий пользователь продавцом
-                      final isSeller = _currentUserId == chatData.sellerId;
-                      
-                      if (isSeller) {
-                        // Для продавца не показываем кнопки действий
-                        return const SizedBox.shrink();
-                      }
-                      
                       return Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -750,6 +790,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen> {
                             );
                     }
                   },
+                  ),
                 ),
               ),
 
