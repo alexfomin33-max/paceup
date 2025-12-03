@@ -204,7 +204,12 @@ Future<List<FriendUser>> _loadSubscriptionStatuses({
 }
 
 /// Провайдер для подписки/отписки на пользователя
-final toggleSubscribeProvider = FutureProvider.family<bool, ToggleSubscribeParams>(
+///
+/// ⚡ PERFORMANCE & RELIABILITY:
+/// - Использует autoDispose для автоматической очистки после использования
+/// - Каждый запрос уникален (не кэшируется) благодаря timestamp в параметрах
+/// - Правильная обработка ошибок с пробросом исключений
+final toggleSubscribeProvider = FutureProvider.autoDispose.family<bool, ToggleSubscribeParams>(
   (ref, params) async {
     final api = ref.watch(apiServiceProvider);
     
@@ -251,4 +256,56 @@ class ToggleSubscribeParams {
   @override
   int get hashCode => targetUserId.hashCode ^ isSubscribed.hashCode;
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+//  SUBSCRIPTION STATE CACHE
+//
+//  Провайдер для кэширования состояния подписок, чтобы оно сохранялось
+//  при прокрутке списка и пересоздании виджетов
+// ────────────────────────────────────────────────────────────────────────────
+
+/// Notifier для управления кэшем состояния подписок
+/// 
+/// Хранит актуальное состояние подписки для каждого пользователя,
+/// чтобы оно не терялось при прокрутке списка
+class SubscriptionStateNotifier extends StateNotifier<Map<int, bool>> {
+  SubscriptionStateNotifier() : super({});
+
+  /// Обновить состояние подписки для пользователя
+  void updateSubscription(int userId, bool isSubscribed) {
+    state = {...state, userId: isSubscribed};
+  }
+
+  /// Получить состояние подписки для пользователя
+  /// Возвращает null, если состояние не было установлено
+  bool? getSubscription(int userId) {
+    return state[userId];
+  }
+
+  /// Очистить кэш для конкретного пользователя
+  void clearSubscription(int userId) {
+    final newState = {...state};
+    newState.remove(userId);
+    state = newState;
+  }
+
+  /// Очистить весь кэш
+  void clearAll() {
+    state = {};
+  }
+}
+
+/// Provider для кэша состояния подписок
+/// 
+/// Использование:
+/// ```dart
+/// // Обновить состояние после подписки
+/// ref.read(subscriptionStateProvider.notifier).updateSubscription(userId, true);
+/// 
+/// // Получить состояние (или null, если не установлено)
+/// final isSubscribed = ref.read(subscriptionStateProvider.notifier).getSubscription(userId);
+/// ```
+final subscriptionStateProvider = StateNotifierProvider<SubscriptionStateNotifier, Map<int, bool>>(
+  (ref) => SubscriptionStateNotifier(),
+);
 
