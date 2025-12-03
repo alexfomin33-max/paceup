@@ -127,6 +127,7 @@ class _PaceUpAppState extends State<PaceUpApp> {
             backgroundColor: AppColors.surface,
             foregroundColor: AppColors.textPrimary,
             scrolledUnderElevation: 0,
+            surfaceTintColor: Colors.transparent,
           ),
           dividerTheme: const DividerThemeData(
             thickness: 0.5,
@@ -168,6 +169,7 @@ class _PaceUpAppState extends State<PaceUpApp> {
             backgroundColor: AppColors.darkSurface,
             foregroundColor: AppColors.darkTextPrimary,
             scrolledUnderElevation: 0,
+            surfaceTintColor: Colors.transparent,
           ),
           dividerTheme: const DividerThemeData(
             thickness: 0.5,

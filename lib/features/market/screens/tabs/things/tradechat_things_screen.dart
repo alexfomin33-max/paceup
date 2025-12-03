@@ -75,6 +75,8 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
     ),
   ].toList();
 
+  File? _fullscreenImageFile; // Файл изображения для полноэкранного просмотра
+
   @override
   void dispose() {
     _ctrl.dispose();
@@ -123,6 +125,20 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
     return '${b.toString()} ₽';
   }
 
+  // ─── Показать изображение в полноэкранном режиме ───
+  void _showFullscreenImage(File imageFile) {
+    setState(() {
+      _fullscreenImageFile = imageFile;
+    });
+  }
+
+  // ─── Скрыть полноэкранное изображение ───
+  void _hideFullscreenImage() {
+    setState(() {
+      _fullscreenImageFile = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // ─────────────────────────────────────────────────────────────
@@ -132,148 +148,203 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
     const int headerCount = 6;
 
     return InteractiveBackSwipe(
-      child: Scaffold(
-        backgroundColor: Theme.of(context).brightness == Brightness.light
-            ? AppColors.getSurfaceColor(context)
-            : AppColors.getBackgroundColor(context),
-        appBar: AppBar(
-          backgroundColor: AppColors.getSurfaceColor(context),
-          elevation: 0.5,
-          leadingWidth: 40,
-          leading: Transform.translate(
-            offset: const Offset(-4, 0),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-              icon: const Icon(CupertinoIcons.back),
-              onPressed: () => Navigator.pop(context),
-              splashRadius: 18,
-            ),
-          ),
-          titleSpacing: -8, // «чуть левее»
-          title: Row(
-            children: [
-              if (widget.itemThumb != null) ...[
-                Container(
-                  width: 36,
-                  height: 36,
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    image: DecorationImage(
-                      image: AssetImage(widget.itemThumb!),
-                      fit: BoxFit.cover,
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: Theme.of(context).brightness == Brightness.light
+                ? AppColors.getSurfaceColor(context)
+                : AppColors.getBackgroundColor(context),
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkSurface
+                  : AppColors.surface,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              leadingWidth: 40,
+              leading: Transform.translate(
+                offset: const Offset(-4, 0),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
+                  icon: const Icon(CupertinoIcons.back),
+                  onPressed: () => Navigator.pop(context),
+                  splashRadius: 18,
+                ),
+              ),
+              titleSpacing: -8, // «чуть левее»
+              title: Row(
+                children: [
+                  if (widget.itemThumb != null) ...[
+                    Container(
+                      width: 36,
+                      height: 36,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        image: DecorationImage(
+                          image: AssetImage(widget.itemThumb!),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Чат продажи вещи',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.itemTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.getTextSecondaryColor(context),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Чат продажи вещи',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.itemTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.getTextSecondaryColor(context),
-                      ),
-                    ),
-                  ],
-                ),
+                ],
               ),
-            ],
-          ),
-        ),
-        body: GestureDetector(
-          // Снятие фокуса с поля ввода при тапе на любое место экрана
-          onTap: () => FocusScope.of(context).unfocus(),
-          behavior: HitTestBehavior.translucent,
-          child: Column(
-            children: [
-              // ─────────────────────────────────────────────────────────
-              // Прокручиваемая область: headers + сообщения в одном ListView
-              // ─────────────────────────────────────────────────────────
-              Expanded(
-                child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
-                // bottom padding побольше, чтобы последний элемент не прятался за Composer
-                itemCount: headerCount + _messages.length,
-                itemBuilder: (_, index) {
-                  // 0..headerCount-1 — это наши «шапки», которые раньше были над списком.
-                  if (index == 0) {
-                    return _DateSeparator(
-                      text: '${_today()}, автоматическое создание чата',
-                    );
-                  }
-                  if (index == 1) {
-                    return _KVLine(
-                      k: 'Стоимость',
-                      v: PricePill(text: _formatPrice(widget.price)),
-                    );
-                  }
-                  if (index == 2) {
-                    return const _ParticipantRow(
-                      avatarAsset: 'assets/avatar_4.png',
-                      nameAndRole: 'Екатерина Виноградова - продавец',
-                    );
-                  }
-                  if (index == 3) {
-                    return const _ParticipantRow(
-                      avatarAsset: 'assets/avatar_9.png',
-                      nameAndRole: 'Анастасия Бутузова - покупатель',
-                    );
-                  }
-                  if (index == 4) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Divider(
-                        height: 16,
-                        thickness: 1,
-                        color: AppColors.getBorderColor(context),
-                      ),
-                    );
-                  }
-                  if (index == 5) {
-                    return const SizedBox(height: 8);
-                  }
-
-                  // дальше — сообщения
-                  final m = _messages[index - headerCount];
-                  if (m.kind == _MsgKind.image) {
-                    return m.side == _MsgSide.right
-                        ? _BubbleImageRight(file: m.imageFile!, time: m.time)
-                        : _BubbleImageLeft(file: m.imageFile!, time: m.time);
-                  } else {
-                    return m.side == _MsgSide.right
-                        ? _BubbleRight(text: m.text!, time: m.time)
-                        : _BubbleLeft(text: m.text!, time: m.time);
-                  }
-                },
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(0.5),
+                child: Divider(
+                  height: 0.5,
+                  thickness: 0.5,
+                  color: AppColors.getBorderColor(context),
+                ),
               ),
             ),
+            body: GestureDetector(
+              // Снятие фокуса с поля ввода при тапе на любое место экрана
+              onTap: () => FocusScope.of(context).unfocus(),
+              behavior: HitTestBehavior.translucent,
+              child: Column(
+                children: [
+                  // ─────────────────────────────────────────────────────────
+                  // Прокручиваемая область: headers + сообщения в одном ListView
+                  // ─────────────────────────────────────────────────────────
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                      // bottom padding = 0, отступ создаётся через bottomSpacing последнего сообщения
+                      itemCount: headerCount + _messages.length,
+                      itemBuilder: (_, index) {
+                        // 0..headerCount-1 — это наши «шапки», которые раньше были над списком.
+                        if (index == 0) {
+                          return _DateSeparator(
+                            text: '${_today()}, автоматическое создание чата',
+                          );
+                        }
+                        if (index == 1) {
+                          return _KVLine(
+                            k: 'Стоимость',
+                            v: PricePill(text: _formatPrice(widget.price)),
+                          );
+                        }
+                        if (index == 2) {
+                          return const _ParticipantRow(
+                            avatarAsset: 'assets/avatar_4.png',
+                            nameAndRole: 'Екатерина Виноградова - продавец',
+                          );
+                        }
+                        if (index == 3) {
+                          return const _ParticipantRow(
+                            avatarAsset: 'assets/avatar_9.png',
+                            nameAndRole: 'Анастасия Бутузова - покупатель',
+                          );
+                        }
+                        if (index == 4) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Divider(
+                              height: 16,
+                              thickness: 1,
+                              color: AppColors.getBorderColor(context),
+                            ),
+                          );
+                        }
+                        if (index == 5) {
+                          return const SizedBox(height: 8);
+                        }
 
-              // ─────────────────────────────────────────────────────────
-              // Неподвижная нижняя панель ввода (Composer)
-              // ─────────────────────────────────────────────────────────
-              _Composer(
-                controller: _ctrl,
-                onSend: _sendText,
-                onPickImage: _pickImage, // плюсик — выбор фото из галереи
+                        // дальше — сообщения
+                        final m = _messages[index - headerCount];
+
+                        // ─── Определяем отступы между пузырями ───
+                        // topSpacing: отступ сверху, если есть предыдущее сообщение
+                        final hasMessageAbove = index > headerCount;
+                        final topSpacing = hasMessageAbove ? 8.0 : 0.0;
+                        // bottomSpacing: отступ снизу только для последнего сообщения
+                        final isLastMessage =
+                            index == headerCount + _messages.length - 1;
+                        final bottomSpacing = isLastMessage ? 8.0 : 0.0;
+
+                        // Используем единые виджеты для текста и изображений
+                        return m.side == _MsgSide.right
+                            ? _BubbleRight(
+                                text: m.text ?? '',
+                                image: m.kind == _MsgKind.image
+                                    ? m.imageFile
+                                    : null,
+                                time: m.time,
+                                topSpacing: topSpacing,
+                                bottomSpacing: bottomSpacing,
+                                onImageTap:
+                                    m.kind == _MsgKind.image &&
+                                        m.imageFile != null
+                                    ? () => _showFullscreenImage(m.imageFile!)
+                                    : null,
+                              )
+                            : _BubbleLeft(
+                                text: m.text ?? '',
+                                image: m.kind == _MsgKind.image
+                                    ? m.imageFile
+                                    : null,
+                                time: m.time,
+                                topSpacing: topSpacing,
+                                bottomSpacing: bottomSpacing,
+                                onImageTap:
+                                    m.kind == _MsgKind.image &&
+                                        m.imageFile != null
+                                    ? () => _showFullscreenImage(m.imageFile!)
+                                    : null,
+                              );
+                      },
+                    ),
+                  ),
+
+                  // ─────────────────────────────────────────────────────────
+                  // Неподвижная нижняя панель ввода (Composer)
+                  // ─────────────────────────────────────────────────────────
+                  _Composer(
+                    controller: _ctrl,
+                    onSend: _sendText,
+                    onPickImage: _pickImage, // плюсик — выбор фото из галереи
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          // ─── Overlay для полноэкранного просмотра изображения ───
+          if (_fullscreenImageFile != null)
+            _FullscreenImageOverlay(
+              imageFile: _fullscreenImageFile!,
+              onClose: _hideFullscreenImage,
+            ),
+        ],
       ),
     );
   }
@@ -348,7 +419,7 @@ class _ParticipantRow extends StatelessWidget {
     final parts = nameAndRole.split(' - ');
     final name = parts.isNotEmpty ? parts[0] : nameAndRole;
     final role = parts.length > 1 ? ' - ${parts[1]}' : '';
-    
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
       child: Row(
@@ -387,15 +458,31 @@ class _ParticipantRow extends StatelessWidget {
 /// Левый «текстовый» пузырь продавца — без иконки справа
 class _BubbleLeft extends StatelessWidget {
   final String text;
+  final File? image;
   final String time;
-  const _BubbleLeft({required this.text, required this.time});
+  final double topSpacing;
+  final double bottomSpacing;
+  final VoidCallback? onImageTap;
+  const _BubbleLeft({
+    required this.text,
+    this.image,
+    required this.time,
+    this.topSpacing = 0.0,
+    this.bottomSpacing = 0.0,
+    this.onImageTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final max = MediaQuery.of(context).size.width * 0.75;
 
     return Padding(
-      padding: const EdgeInsets.only(right: 12, left: 0, bottom: 12),
+      padding: EdgeInsets.only(
+        right: 12,
+        left: 0,
+        top: topSpacing,
+        bottom: bottomSpacing,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -417,17 +504,47 @@ class _BubbleLeft extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: Text(
-                      text,
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.35,
-                        color: AppColors.getTextPrimaryColor(context),
+                  // ─── Изображение (если есть) ───
+                  if (image != null) ...[
+                    GestureDetector(
+                      onTap: onImageTap,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Image.file(
+                          image!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            final maxW = max * 0.9;
+                            return Container(
+                              width: maxW,
+                              height: 200,
+                              color: AppColors.getSurfaceMutedColor(context),
+                              child: Icon(
+                                CupertinoIcons.photo,
+                                size: 40,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
-                  ),
+                    if (text.isNotEmpty) const SizedBox(height: 8),
+                  ],
+                  // ─── Текст (если есть) ───
+                  if (text.isNotEmpty)
+                    SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        text,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.35,
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+                    ),
+                  // ─── Время ───
                   Padding(
                     padding: const EdgeInsets.only(top: 0),
                     child: Align(
@@ -436,9 +553,7 @@ class _BubbleLeft extends StatelessWidget {
                         time,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.getTextTertiaryColor(context),
+                          color: AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -456,15 +571,31 @@ class _BubbleLeft extends StatelessWidget {
 /// Правый «текстовый» пузырь покупателя — без аватарки
 class _BubbleRight extends StatelessWidget {
   final String text;
+  final File? image;
   final String time;
-  const _BubbleRight({required this.text, required this.time});
+  final double topSpacing;
+  final double bottomSpacing;
+  final VoidCallback? onImageTap;
+  const _BubbleRight({
+    required this.text,
+    this.image,
+    required this.time,
+    this.topSpacing = 0.0,
+    this.bottomSpacing = 0.0,
+    this.onImageTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final max = MediaQuery.of(context).size.width * 0.75;
 
     return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 0, bottom: 8),
+      padding: EdgeInsets.only(
+        left: 12,
+        right: 0,
+        top: topSpacing,
+        bottom: bottomSpacing,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -482,17 +613,47 @@ class _BubbleRight extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: Text(
-                      text,
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.35,
-                        color: AppColors.getTextPrimaryColor(context),
+                  // ─── Изображение (если есть) ───
+                  if (image != null) ...[
+                    GestureDetector(
+                      onTap: onImageTap,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Image.file(
+                          image!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            final maxW = max * 0.9;
+                            return Container(
+                              width: maxW,
+                              height: 200,
+                              color: AppColors.getSurfaceMutedColor(context),
+                              child: Icon(
+                                CupertinoIcons.photo,
+                                size: 40,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
-                  ),
+                    if (text.isNotEmpty) const SizedBox(height: 8),
+                  ],
+                  // ─── Текст (если есть) ───
+                  if (text.isNotEmpty)
+                    SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        text,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.35,
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+                    ),
+                  // ─── Время ───
                   Padding(
                     padding: const EdgeInsets.only(top: 0),
                     child: Align(
@@ -501,121 +662,7 @@ class _BubbleRight extends StatelessWidget {
                         time,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.getTextTertiaryColor(context),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Пузырь с изображением — слева
-class _BubbleImageLeft extends StatelessWidget {
-  final File file;
-  final String time;
-  const _BubbleImageLeft({required this.file, required this.time});
-
-  @override
-  Widget build(BuildContext context) {
-    final max = MediaQuery.of(context).size.width * 0.6;
-    return Padding(
-      padding: const EdgeInsets.only(right: 12, left: 8, bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          const CircleAvatar(
-            radius: 14,
-            backgroundImage: AssetImage('assets/avatar_4.png'),
-          ),
-          const SizedBox(width: 8),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: max),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Stack(
-                children: [
-                  Image.file(file, fit: BoxFit.cover),
-                  Positioned(
-                    right: 6,
-                    bottom: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.getTextSecondaryColor(context),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Text(
-                        time,
-                        style: TextStyle(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.getTextPrimaryColor(context),
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Пузырь с изображением — справа
-class _BubbleImageRight extends StatelessWidget {
-  final File file;
-  final String time;
-  const _BubbleImageRight({required this.file, required this.time});
-
-  @override
-  Widget build(BuildContext context) {
-    final max = MediaQuery.of(context).size.width * 0.6;
-    return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 12, bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: max),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Stack(
-                children: [
-                  Image.file(file, fit: BoxFit.cover),
-                  Positioned(
-                    right: 6,
-                    bottom: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.getTextSecondaryColor(context),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Text(
-                        time,
-                        style: TextStyle(
-                          color: AppColors.getSurfaceColor(context),
-                          fontSize: 11,
+                          color: AppColors.getTextTertiaryColor(context),
                         ),
                       ),
                     ),
@@ -694,7 +741,10 @@ class _Composer extends StatelessWidget {
                         borderSide: BorderSide.none,
                       ),
                       filled: true,
-                      fillColor: AppColors.getSurfaceMutedColor(context),
+                      fillColor:
+                          Theme.of(context).brightness == Brightness.light
+                          ? AppColors.background
+                          : AppColors.getSurfaceMutedColor(context),
                     ),
                   ),
                 ),
@@ -714,6 +764,85 @@ class _Composer extends StatelessWidget {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+/// ────────────────────────────────────────────────────────────────────────
+/// Overlay для полноэкранного просмотра изображения на той же странице
+/// ────────────────────────────────────────────────────────────────────────
+class _FullscreenImageOverlay extends StatelessWidget {
+  final File imageFile;
+  final VoidCallback onClose;
+
+  const _FullscreenImageOverlay({
+    required this.imageFile,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      // ─── Закрываем при тапе на фон ───
+      onTap: onClose,
+      child: Container(
+        color: AppColors.textPrimary.withValues(
+          alpha: 0.95,
+        ), // Чёрный фон с прозрачностью
+        child: Stack(
+          children: [
+            // ─── Изображение с возможностью зума ───
+            Center(
+              child: GestureDetector(
+                // ─── Предотвращаем закрытие при тапе на изображение ───
+                onTap: () {},
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: Image.file(
+                    imageFile,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: AppColors.getSurfaceMutedColor(context),
+                        child: Icon(
+                          CupertinoIcons.photo,
+                          size: 64,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+
+            // ─── Кнопка закрытия (крестик) в верхнем левом углу ───
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: IconButton(
+                  onPressed: onClose,
+                  icon: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface.withValues(alpha: 0.7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.xmark,
+                      color: AppColors.surface,
+                      size: 20,
+                    ),
+                  ),
+                  splashRadius: 24,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
