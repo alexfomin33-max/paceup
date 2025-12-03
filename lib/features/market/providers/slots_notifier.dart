@@ -190,6 +190,8 @@ class SlotsNotifier extends StateNotifier<SlotsState> {
       placeText: data['place_text'],
       typeText: data['type_text'],
       description: data['description'],
+      sellerId: data['seller_id'] ?? 0,
+      eventId: data['event_id'],
     );
   }
 }
