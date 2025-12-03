@@ -563,7 +563,7 @@ class _EventAutocompleteField extends StatelessWidget {
   final String label;
   final String hint;
   final TextEditingController controller;
-  final FocusNode? focusNode;
+  final FocusNode focusNode;
   final ValueChanged<_EventOption> onEventSelected;
   final Future<Iterable<_EventOption>> Function(String) searchFunction;
 
@@ -571,7 +571,7 @@ class _EventAutocompleteField extends StatelessWidget {
     required this.label,
     required this.hint,
     required this.controller,
-    this.focusNode,
+    required this.focusNode,
     required this.onEventSelected,
     required this.searchFunction,
   });

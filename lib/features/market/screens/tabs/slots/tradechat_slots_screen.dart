@@ -770,28 +770,27 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                           ),
                         ),
 
-                        // ─── Закреплённый блок кнопок (только для покупателя) ───
-                        if (!isSeller)
-                          SliverPersistentHeader(
-                            pinned: true,
-                            delegate: _ActionsHeaderDelegate(
-                              child: Container(
-                                color:
-                                    Theme.of(context).brightness ==
-                                        Brightness.light
-                                    ? AppColors.getSurfaceColor(context)
-                                    : AppColors.getBackgroundColor(context),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                child: _ActionsWrap(
-                                  dealStatus: chatData.dealStatus,
-                                  onUpdateStatus: _updateDealStatus,
-                                ),
+                        // ─── Закреплённый блок кнопок (для продавца и покупателя) ───
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: _ActionsHeaderDelegate(
+                            child: Container(
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.light
+                                  ? AppColors.getSurfaceColor(context)
+                                  : AppColors.getBackgroundColor(context),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              child: _ActionsWrap(
+                                dealStatus: chatData.dealStatus,
+                                onUpdateStatus: _updateDealStatus,
                               ),
                             ),
                           ),
+                        ),
 
                         // ─── Divider ───
                         SliverToBoxAdapter(
