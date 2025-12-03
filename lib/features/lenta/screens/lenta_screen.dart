@@ -826,6 +826,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                 Center(
                   child: Text('Пока в ленте пусто', style: AppTextStyles.h14w4),
                 ),
+                SizedBox(height: 32),
+                // ────────────────────────────────────────────────────────
+                // 📦 БЛОК РЕКОМЕНДАЦИЙ: показываем даже при пустой ленте
+                // ────────────────────────────────────────────────────────
+                RecommendedBlock(),
                 SizedBox(height: 120),
               ],
             ),
@@ -896,14 +901,21 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
                 final activity = items[i];
 
-                // Второй элемент с RecommendedBlock — всегда оборачиваем
-                // в RepaintBoundary (сложный виджет с каруселью)
-                if (i == 1) {
-                  final second = _buildFeedItem(items[1]);
+                // ────────────────────────────────────────────────────────
+                // 📦 БЛОК РЕКОМЕНДАЦИЙ: показываем всегда
+                // ────────────────────────────────────────────────────────
+                // Если карточек 1 или меньше — показываем после первой (i == 0)
+                // Если карточек 2 или больше — показываем после второй (i == 1)
+                final shouldShowRecommended = items.length <= 1
+                    ? i == 0
+                    : i == 1;
+
+                if (shouldShowRecommended) {
+                  final card = _buildFeedItem(activity);
                   return RepaintBoundary(
                     child: Column(
                       children: [
-                        second,
+                        card,
                         const SizedBox(height: 16),
                         const RecommendedBlock(),
                         const SizedBox(height: 16),
