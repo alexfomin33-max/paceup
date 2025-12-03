@@ -68,6 +68,7 @@ class _ChatData {
   final int slotPrice;
   final Gender slotGender;
   final String slotStatus;
+  final bool isSlotDeleted; // ─── Флаг удаления слота ───
   final String? slotImageUrl;
   final String? slotDateText;
   final String? slotPlaceText;
@@ -90,6 +91,7 @@ class _ChatData {
     required this.slotPrice,
     required this.slotGender,
     required this.slotStatus,
+    required this.isSlotDeleted,
     this.slotImageUrl,
     this.slotDateText,
     this.slotPlaceText,
@@ -113,6 +115,8 @@ class _ChatData {
 
     final genderStr = slot['gender'] ?? 'male';
     final gender = genderStr == 'female' ? Gender.female : Gender.male;
+    // ─── Проверяем, удален ли слот ───
+    final isDeleted = (slot['del'] as int? ?? 0) == 1;
 
     return _ChatData(
       chatId: chat['id'] ?? 0,
@@ -122,6 +126,7 @@ class _ChatData {
       slotPrice: slot['price'] ?? 0,
       slotGender: gender,
       slotStatus: slot['status'] ?? 'available',
+      isSlotDeleted: isDeleted,
       slotImageUrl: slot['image_url'],
       slotDateText: slot['date_text'],
       slotPlaceText: slot['place_text'],
@@ -138,7 +143,7 @@ class _ChatData {
     );
   }
 
-  _ChatData copyWith({DateTime? chatCreatedAt}) {
+  _ChatData copyWith({DateTime? chatCreatedAt, bool? isSlotDeleted}) {
     return _ChatData(
       chatId: chatId,
       slotId: slotId,
@@ -147,6 +152,7 @@ class _ChatData {
       slotPrice: slotPrice,
       slotGender: slotGender,
       slotStatus: slotStatus,
+      isSlotDeleted: isSlotDeleted ?? this.isSlotDeleted,
       slotImageUrl: slotImageUrl,
       slotDateText: slotDateText,
       slotPlaceText: slotPlaceText,
@@ -771,26 +777,28 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                         ),
 
                         // ─── Закреплённый блок кнопок (для продавца и покупателя) ───
-                        SliverPersistentHeader(
-                          pinned: true,
-                          delegate: _ActionsHeaderDelegate(
-                            child: Container(
-                              color:
-                                  Theme.of(context).brightness ==
-                                      Brightness.light
-                                  ? AppColors.getSurfaceColor(context)
-                                  : AppColors.getBackgroundColor(context),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              child: _ActionsWrap(
-                                dealStatus: chatData.dealStatus,
-                                onUpdateStatus: _updateDealStatus,
+                        // ─── Скрываем кнопки, если слот удален ───
+                        if (!chatData.isSlotDeleted)
+                          SliverPersistentHeader(
+                            pinned: true,
+                            delegate: _ActionsHeaderDelegate(
+                              child: Container(
+                                color:
+                                    Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? AppColors.getSurfaceColor(context)
+                                    : AppColors.getBackgroundColor(context),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                child: _ActionsWrap(
+                                  dealStatus: chatData.dealStatus,
+                                  onUpdateStatus: _updateDealStatus,
+                                ),
                               ),
                             ),
                           ),
-                        ),
 
                         // ─── Divider ───
                         SliverToBoxAdapter(
@@ -880,11 +888,12 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                     ),
                   ),
 
-                  // Composer
+                  // Composer (неактивен, если слот удален)
                   _Composer(
                     controller: _ctrl,
                     onSend: _sendText,
                     onPickImage: _pickImage,
+                    isDisabled: chatData.isSlotDeleted,
                   ),
                 ],
               ),
@@ -1475,11 +1484,13 @@ class _Composer extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
   final VoidCallback onPickImage;
+  final bool isDisabled; // ─── Флаг неактивности (для удаленных слотов) ───
 
   const _Composer({
     required this.controller,
     required this.onSend,
     required this.onPickImage,
+    this.isDisabled = false,
   });
 
   @override
@@ -1507,21 +1518,28 @@ class _Composer extends StatelessWidget {
               children: [
                 IconButton(
                   icon: const Icon(CupertinoIcons.plus_circle),
-                  onPressed: onPickImage,
-                  color: AppColors.getIconSecondaryColor(context),
+                  onPressed: isDisabled ? null : onPickImage,
+                  color: isDisabled
+                      ? AppColors.getTextPlaceholderColor(context)
+                      : AppColors.getIconSecondaryColor(context),
                 ),
                 Expanded(
                   child: TextField(
                     controller: controller,
+                    enabled: !isDisabled, // ─── Отключаем поле, если слот удален ───
                     minLines: 1,
                     maxLines: 5,
                     textInputAction: TextInputAction.newline,
                     keyboardType: TextInputType.multiline,
                     style: AppTextStyles.h14w4.copyWith(
-                      color: AppColors.getTextPrimaryColor(context),
+                      color: isDisabled
+                          ? AppColors.getTextPlaceholderColor(context)
+                          : AppColors.getTextPrimaryColor(context),
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Сообщение...',
+                      hintText: isDisabled
+                          ? 'Слот удален'
+                          : 'Сообщение...',
                       hintStyle: AppTextStyles.h14w4Place.copyWith(
                         color: AppColors.getTextPlaceholderColor(context),
                       ),
@@ -1543,13 +1561,13 @@ class _Composer extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 IconButton(
-                  onPressed: isEnabled ? onSend : null,
+                  onPressed: (isEnabled && !isDisabled) ? onSend : null,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   icon: Icon(
                     Icons.send,
                     size: 22,
-                    color: isEnabled
+                    color: (isEnabled && !isDisabled)
                         ? AppColors.brandPrimary
                         : AppColors.getTextPlaceholderColor(context),
                   ),
