@@ -10,9 +10,10 @@ import '../../../../../../core/services/auth_service.dart';
 import '../../../widgets/pills.dart';
 import '../../../../../../core/widgets/transparent_route.dart';
 import '../../../state/edit_slot/edit_slot_screen.dart';
+import '../../../../../map/screens/events/official_event_detail_screen.dart';
 
 /// Отдельный виджет карточки СЛОТА.
-/// Миниатюра НЕ кликабельна.
+/// Миниатюра кликабельна: при наличии eventId открывает страницу события.
 class MarketSlotCard extends StatelessWidget {
   final MarketItem item;
   final bool expanded; // сейчас используется только для «Алые Паруса» (пример)
@@ -59,8 +60,12 @@ class MarketSlotCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Миниатюра слева — НЕ кликабельна
-                _Thumb(imageUrl: item.imageUrl, heroGroup: item),
+                // Миниатюра слева — кликабельна (открывает страницу события)
+                _Thumb(
+                  imageUrl: item.imageUrl,
+                  heroGroup: item,
+                  eventId: item.eventId,
+                ),
                 const SizedBox(width: 8),
 
                 // Текстовая часть и чипы
@@ -118,17 +123,22 @@ class MarketSlotCard extends StatelessWidget {
                             onPressed: () async {
                               // Проверяем, является ли пользователь продавцом
                               final authService = AuthService();
-                              final currentUserId = await authService.getUserId();
-                              final isSeller = currentUserId != null && currentUserId == item.sellerId;
-                              
-                              if (isSeller && item.buttonText == 'Редактировать') {
+                              final currentUserId = await authService
+                                  .getUserId();
+                              final isSeller =
+                                  currentUserId != null &&
+                                  currentUserId == item.sellerId;
+
+                              if (isSeller &&
+                                  item.buttonText == 'Редактировать') {
                                 // Открываем экран редактирования для продавца
                                 await Navigator.of(
                                   context,
                                   rootNavigator: true,
                                 ).push(
                                   TransparentPageRoute(
-                                    builder: (_) => EditSlotScreen(slotId: item.id),
+                                    builder: (_) =>
+                                        EditSlotScreen(slotId: item.id),
                                   ),
                                 );
                               } else {
@@ -208,14 +218,16 @@ class MarketSlotCard extends StatelessWidget {
   }
 }
 
-/// НЕ кликабельная миниатюра слота.
+/// Кликабельная миниатюра слота.
+/// При клике открывает страницу события, если eventId указан.
 /// Оставил Hero для красивого появления/скролла, но без переходов.
 /// Поддерживает как AssetImage (для локальных ресурсов), так и NetworkImage (для URL из API).
 class _Thumb extends StatelessWidget {
   final String imageUrl;
   final Object? heroGroup;
+  final int? eventId; // ID события для открытия детальной страницы
 
-  const _Thumb({required this.imageUrl, this.heroGroup});
+  const _Thumb({required this.imageUrl, this.heroGroup, this.eventId});
 
   /// Определяет, является ли URL локальным ресурсом (assets) или сетевым URL
   bool get _isAsset => imageUrl.startsWith('assets/');
@@ -229,7 +241,7 @@ class _Thumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Hero(
+    final thumbContent = Hero(
       tag: Object.hash(heroGroup ?? imageUrl, 0),
       child: Container(
         width: 60,
@@ -304,6 +316,23 @@ class _Thumb extends StatelessWidget {
               ),
       ),
     );
+
+    // Если есть eventId, делаем миниатюру кликабельной
+    if (eventId != null) {
+      return GestureDetector(
+        onTap: () {
+          Navigator.of(context, rootNavigator: true).push(
+            TransparentPageRoute(
+              builder: (_) => OfficialEventDetailScreen(eventId: eventId!),
+            ),
+          );
+        },
+        child: thumbContent,
+      );
+    }
+
+    // Если eventId нет, возвращаем обычную миниатюру
+    return thumbContent;
   }
 }
 

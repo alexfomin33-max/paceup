@@ -406,11 +406,10 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-// ──────────────────────────── Список друзей в виде Sliver ────────────────────────────
+// ──────────────────────────── Список друзей ────────────────────────────
 //
-//  Используем SliverList вместо Column, чтобы не держать в памяти весь список сразу.
-//  Это снижает вероятность jank при большом числе элементов благодаря ленивой подгрузке.
-//  Структура соответствует стилю из CommunicationListView для единообразия UI.
+//  Структура соответствует стилю из clubs_content.dart для единообразия UI.
+//  Используем Container с границами сверху и снизу, Divider между элементами.
 class _FriendsListSliver extends StatelessWidget {
   final List<FriendUser> friends;
   const _FriendsListSliver({required this.friends});
@@ -421,37 +420,37 @@ class _FriendsListSliver extends StatelessWidget {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
-    final borderColor = AppColors.getBorderColor(context);
-    final dividerColor = AppColors.getDividerColor(context);
-    final surfaceColor = AppColors.getSurfaceColor(context);
-
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final friend = friends[index];
-          final isFirst = index == 0;
-          final isLast = index == friends.length - 1;
-
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              color: surfaceColor,
-              border: Border(
-                top: BorderSide(color: borderColor, width: isFirst ? 0.5 : 0),
-                bottom: BorderSide(color: borderColor, width: isLast ? 0.5 : 0),
-              ),
+    return SliverToBoxAdapter(
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          border: Border(
+            top: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 0.5,
             ),
-            child: Column(
+            bottom: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 0.5,
+            ),
+          ),
+        ),
+        child: Column(
+          children: List.generate(friends.length, (i) {
+            final friend = friends[i];
+            return Column(
               children: [
                 _FriendRow(friend: friend),
-                if (!isLast)
-                  Divider(height: 1, thickness: 0.5, color: dividerColor),
+                if (i != friends.length - 1)
+                  Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: AppColors.getDividerColor(context),
+                  ),
               ],
-            ),
-          );
-        },
-        childCount: friends.length,
-        addAutomaticKeepAlives: false,
-        addRepaintBoundaries: true,
+            );
+          }),
+        ),
       ),
     );
   }

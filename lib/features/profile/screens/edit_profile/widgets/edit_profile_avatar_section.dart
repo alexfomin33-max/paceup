@@ -27,12 +27,14 @@ class EditProfileAvatarEditable extends ConsumerWidget {
     required this.avatarUrl,
     required this.size,
     required this.onTap,
+    this.isLoading = false,
   });
 
   final Uint8List? bytes;
   final String? avatarUrl;
   final double size;
   final VoidCallback onTap;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,6 +55,7 @@ class EditProfileAvatarEditable extends ConsumerWidget {
               size: size,
               cacheWidth: cacheW,
               avatarVersion: avatarVersion,
+              isLoading: isLoading,
             ),
           ),
           Positioned(
@@ -87,7 +90,16 @@ class EditProfileAvatarEditable extends ConsumerWidget {
     required double size,
     required int cacheWidth,
     required int avatarVersion,
+    required bool isLoading,
   }) {
+    // Вспомогательная функция для создания пустого контейнера
+    Widget _buildEmpty() {
+      return SizedBox(
+        width: size,
+        height: size,
+      );
+    }
+
     // 1) Выбранные байты (превью выбранного изображения)
     if (bytes != null && bytes!.isNotEmpty) {
       try {
@@ -99,20 +111,10 @@ class EditProfileAvatarEditable extends ConsumerWidget {
           // НЕ используем cacheWidth/cacheHeight для Image.memory!
           // Они искажают пропорции, если оригинальное изображение не квадратное.
           // BoxFit.cover сам корректно обрежет изображение в квадрат 88×88.
-          errorBuilder: (context, error, stackTrace) => Image.asset(
-            'assets/avatar_0.png',
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-          ),
+          errorBuilder: (context, error, stackTrace) => _buildEmpty(),
         );
       } catch (error) {
-        return Image.asset(
-          'assets/avatar_0.png',
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-        );
+        return _buildEmpty();
       }
     }
 
@@ -135,29 +137,16 @@ class EditProfileAvatarEditable extends ConsumerWidget {
         fit: BoxFit.cover,
         memCacheWidth: w,
         maxWidthDiskCache: w,
-        placeholder: (context, url) => Container(
-          width: size,
-          height: size,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.darkSurfaceMuted
-              : AppColors.skeletonBase,
-        ),
-        errorWidget: (context, url, error) => Image.asset(
-          'assets/avatar_0.png',
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-        ),
+        // Добавляем fade-in эффект при загрузке
+        fadeInDuration: const Duration(milliseconds: 300),
+        fadeOutDuration: const Duration(milliseconds: 100),
+        placeholder: (context, url) => _buildEmpty(),
+        errorWidget: (context, url, error) => _buildEmpty(),
       );
     }
 
-    // 3) Фолбэк-ассет
-    return Image.asset(
-      'assets/avatar_0.png',
-      width: size,
-      height: size,
-      fit: BoxFit.cover,
-    );
+    // 3) Если нет аватарки - ничего не показываем
+    return _buildEmpty();
   }
 }
 

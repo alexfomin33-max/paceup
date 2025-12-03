@@ -58,7 +58,7 @@ final recommendedClubsProvider = FutureProvider<List<ClubSearch>>((ref) async {
   try {
     final response = await api.get(
       '/get_recommended_clubs.php',
-      queryParams: {'limit': '3'}, // Запрашиваем сразу 3 клуба
+      queryParams: {'limit': '5'}, // Запрашиваем сразу 5 клубов
     );
 
     debugPrint('📥 Ответ API рекомендованных клубов: $response');

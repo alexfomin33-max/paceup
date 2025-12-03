@@ -92,7 +92,7 @@ final recommendedFriendsProvider = FutureProvider.autoDispose<List<FriendUser>>(
     final response = await api.get(
       '/get_recommended_friends.php',
       queryParams: {
-        'limit': '3', // Запрашиваем сразу 3 друга
+        'limit': '5', // Запрашиваем сразу 5 друзей
         '_t': DateTime.now().millisecondsSinceEpoch.toString(), // Параметр для обхода кэша
       },
     );
@@ -106,8 +106,8 @@ final recommendedFriendsProvider = FutureProvider.autoDispose<List<FriendUser>>(
       
       // Бэкенд уже фильтрует пользователей, на которых не подписан
       // и возвращает их в случайном порядке (ORDER BY RAND())
-      // Просто берем первые 3 элемента
-      final result = users.take(3).toList();
+      // Просто берем первые 5 элементов
+      final result = users.take(5).toList();
       
       return result;
     }

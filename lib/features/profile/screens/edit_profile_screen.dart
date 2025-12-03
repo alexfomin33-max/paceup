@@ -235,6 +235,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       avatarUrl: profileState.avatarUrl,
       avatarBytes: profileState.avatarBytes,
       onPickAvatar: () => notifier.pickAvatar(context),
+      isLoading: formState.isLoading,
       firstName: _firstName,
       lastName: _lastName,
       nickname: _nickname,

@@ -21,6 +21,7 @@ class EditProfileFormPane extends StatelessWidget {
     required this.avatarUrl,
     required this.avatarBytes,
     required this.onPickAvatar,
+    required this.isLoading,
     required this.firstName,
     required this.lastName,
     required this.nickname,
@@ -40,6 +41,7 @@ class EditProfileFormPane extends StatelessWidget {
   final String? avatarUrl;
   final Uint8List? avatarBytes;
   final VoidCallback onPickAvatar;
+  final bool isLoading;
 
   final TextEditingController firstName;
   final TextEditingController lastName;
@@ -74,6 +76,7 @@ class EditProfileFormPane extends StatelessWidget {
             avatarUrl: avatarUrl,
             avatarBytes: avatarBytes,
             onPickAvatar: onPickAvatar,
+            isLoading: isLoading,
             firstName: firstName,
             lastName: lastName,
             nickname: nickname,

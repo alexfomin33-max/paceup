@@ -21,6 +21,7 @@ class EditProfilePersonalInfoSection extends StatelessWidget {
     required this.avatarUrl,
     required this.avatarBytes,
     required this.onPickAvatar,
+    required this.isLoading,
     required this.firstName,
     required this.lastName,
     required this.nickname,
@@ -37,6 +38,7 @@ class EditProfilePersonalInfoSection extends StatelessWidget {
   final String? avatarUrl;
   final Uint8List? avatarBytes;
   final VoidCallback onPickAvatar;
+  final bool isLoading;
 
   final TextEditingController firstName;
   final TextEditingController lastName;
@@ -75,6 +77,7 @@ class EditProfilePersonalInfoSection extends StatelessWidget {
               avatarUrl: avatarUrl,
               size: kEditProfileAvatarSize,
               onTap: onPickAvatar,
+              isLoading: isLoading,
             ),
             const SizedBox(width: 12),
             Expanded(

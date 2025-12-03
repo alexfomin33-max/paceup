@@ -610,11 +610,22 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   /// Выполняет фактическую предзагрузку изображений
   /// (вызывается после debounce timeout)
   void _executePrefetch(int currentIndex, List<Activity> items) {
+    // ────────── ЗАЩИТА: проверяем валидность данных ──────────
+    if (items.isEmpty) return;
+    if (currentIndex < 0 || currentIndex >= items.length) return;
+
     // Определяем диапазон для prefetch (следующие _prefetchCount постов)
     final startIdx = currentIndex + 1;
+    // ✅ Ограничиваем endIdx реальной длиной списка
     final endIdx = (startIdx + _prefetchCount).clamp(0, items.length);
 
+    // ────────── ЗАЩИТА: проверяем, что startIdx валиден ──────────
+    if (startIdx >= items.length) return;
+
     for (int i = startIdx; i < endIdx; i++) {
+      // ────────── ЗАЩИТА: дополнительная проверка индекса ──────────
+      if (i < 0 || i >= items.length) continue;
+
       // Пропускаем уже предзагруженные
       if (_prefetchedIndices.contains(i)) continue;
 
@@ -822,7 +833,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                 parent: BouncingScrollPhysics(),
               ),
               children: const [
-                SizedBox(height: 120),
+                SizedBox(height: 32),
                 Center(
                   child: Text('Пока в ленте пусто', style: AppTextStyles.h14w4),
                 ),
