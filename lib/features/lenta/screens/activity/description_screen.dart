@@ -161,36 +161,48 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
             ),
 
             // ───────── Карта маршрута (только если есть точки)
+            // Соотношение сторон 1.3:1 (как в постах и тренировках)
             if (a.points.isNotEmpty) ...[
               SliverToBoxAdapter(
-                child: Stack(
-                  children: [
-                    // Карта (с IgnorePointer внутри, поэтому неинтерактивна)
-                    ab.RouteCard(
-                      points: a.points.map((c) => ll.LatLng(c.lat, c.lng)).toList(),
-                      height:
-                          240, // Увеличена высота карты для лучшей видимости маршрута
-                    ),
-                    // Прозрачный слой для обработки кликов поверх карты
-                    Positioned.fill(
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            TransparentPageRoute(
-                              builder: (context) => FullscreenRouteMapScreen(
-                                points: a.points
-                                    .map((c) => ll.LatLng(c.lat, c.lng))
-                                    .toList(),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Вычисляем высоту для соотношения сторон 1.3:1
+                    final width = constraints.maxWidth;
+                    final height = width / 1.3;
+                    return SizedBox(
+                      height: height,
+                      child: Stack(
+                        children: [
+                          // Карта (с IgnorePointer внутри, поэтому неинтерактивна)
+                          ab.RouteCard(
+                            points: a.points
+                                .map((c) => ll.LatLng(c.lat, c.lng))
+                                .toList(),
+                            height: height,
+                          ),
+                          // Прозрачный слой для обработки кликов поверх карты
+                          Positioned.fill(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  TransparentPageRoute(
+                                    builder: (context) => FullscreenRouteMapScreen(
+                                      points: a.points
+                                          .map((c) => ll.LatLng(c.lat, c.lng))
+                                          .toList(),
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                color: Colors.transparent,
                               ),
                             ),
-                          );
-                        },
-                        child: Container(
-                          color: Colors.transparent,
-                        ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),

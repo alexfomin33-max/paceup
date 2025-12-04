@@ -256,15 +256,22 @@ class _PostCardState extends ConsumerState<PostCard> {
           ),
 
           // ──────────────────────────────────────────────────────────────
-          // МЕДИА-КАРУСЕЛЬ: картинки/видео, высота фиксирована (как у тебя)
+          // МЕДИА-КАРУСЕЛЬ: картинки/видео, соотношение сторон 1.3:1
           // ──────────────────────────────────────────────────────────────
-          SizedBox(
-            height: 300,
-            width: double.infinity,
-            child: PostMediaCarousel(
-              imageUrls: post.mediaImages,
-              videoUrls: post.mediaVideos,
-            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Вычисляем высоту для соотношения сторон 1.3:1
+              final width = constraints.maxWidth;
+              final height = width / 1.3;
+              return SizedBox(
+                height: height,
+                width: double.infinity,
+                child: PostMediaCarousel(
+                  imageUrls: post.mediaImages,
+                  videoUrls: post.mediaVideos,
+                ),
+              );
+            },
           ),
 
           // ──────────────────────────────────────────────────────────────
