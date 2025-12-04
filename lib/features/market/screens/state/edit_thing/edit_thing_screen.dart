@@ -163,6 +163,77 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
     });
   }
 
+  /// Удаляет объявление
+  Future<void> _handleDelete() async {
+    final formState = ref.read(formStateProvider);
+    if (formState.isSubmitting) return;
+
+    // ── показываем диалог подтверждения
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Удаление объявления'),
+        content: const Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: Text(
+            'Вы уверены, что хотите удалить это объявление? Это действие нельзя отменить.',
+            style: TextStyle(fontSize: 15),
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final authService = AuthService();
+    final userId = await authService.getUserId();
+    if (userId == null) {
+      _showError('Не удалось получить ID пользователя');
+      return;
+    }
+
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ref.read(apiServiceProvider);
+
+    await formNotifier.submit(
+      () async {
+        final data = await api.post(
+          '/delete_thing.php',
+          body: {
+            'thing_id': widget.thingId,
+            'user_id': userId,
+          },
+        );
+
+        if (data['success'] != true) {
+          final errorMessage = data['message']?.toString() ?? 'Ошибка сервера';
+          throw Exception(errorMessage);
+        }
+      },
+      onSuccess: () async {
+        if (!mounted) return;
+        Navigator.pop(context, true);
+      },
+      onError: (error) {
+        if (!mounted) return;
+        final formState = ref.read(formStateProvider);
+        _showError(formState.error ?? 'Ошибка при удалении объявления');
+      },
+    );
+  }
+
   /// Сохраняет изменения объявления на сервер
   Future<void> _submit() async {
     if (!_isValid) return;

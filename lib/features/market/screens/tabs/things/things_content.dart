@@ -97,13 +97,13 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
         await ref.read(thingsProvider.notifier).loadInitial();
       },
       child: ListView.separated(
-        key: const ValueKey('things_list'),
-        padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+      key: const ValueKey('things_list'),
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
         itemCount: items.length + headerCount + (thingsState.hasMore ? 1 : 0),
-        separatorBuilder: (_, _) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (_, index) {
         if (index == 0) {
           return _CategoryDropdown(
