@@ -12,6 +12,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/local_image_compressor.dart'
     show compressLocalImage, ImageCompressionPreset;
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/primary_button.dart';
@@ -1590,24 +1591,50 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
   /// Обработчик добавления фотографий к тренировке
   Future<void> _handleAddPhotos() async {
-    final picker = ImagePicker();
-
     try {
+      // ── выбираем и обрезаем изображения в соотношении 1.3:1
+      // Используем стандартный pickMultiImage, затем обрезаем каждое
+      final picker = ImagePicker();
       final pickedFiles = await picker.pickMultiImage();
-      if (pickedFiles.isEmpty) return;
+      if (pickedFiles.isEmpty || !mounted) return;
 
-      // ── сжимаем каждую выбранную фотографию перед сохранением
+      // ── обрезаем и сжимаем все выбранные изображения
       final compressedFiles = <File>[];
-      for (final file in pickedFiles) {
+      for (int i = 0; i < pickedFiles.length; i++) {
+        if (!mounted) return;
+        
+        final picked = pickedFiles[i];
+        // Обрезаем изображение в соотношении 1.3:1
+        final cropped = await ImagePickerHelper.cropPickedImage(
+          context: context,
+          source: picked,
+          aspectRatio: 1.3,
+          title: 'Обрезка фотографии ${i + 1}',
+        );
+        
+        if (cropped == null) continue; // Пропускаем, если пользователь отменил обрезку
+        
+        // Сжимаем обрезанное изображение
         final compressed = await compressLocalImage(
-          sourceFile: File(file.path),
+          sourceFile: cropped,
           maxSide: ImageCompressionPreset.activity.maxSide,
           jpegQuality: ImageCompressionPreset.activity.quality,
         );
+        
+        // Удаляем временный файл обрезки
+        if (cropped.path != compressed.path) {
+          try {
+            await cropped.delete();
+          } catch (_) {
+            // Игнорируем ошибки удаления
+          }
+        }
+        
         compressedFiles.add(compressed);
       }
 
-      if (!mounted) return;
+      if (compressedFiles.isEmpty || !mounted) return;
+      
       setState(() {
         _images.addAll(compressedFiles);
       });

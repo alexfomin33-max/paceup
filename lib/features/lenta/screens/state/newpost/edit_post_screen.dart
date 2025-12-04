@@ -11,6 +11,7 @@ import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/local_image_compressor.dart'
     show compressLocalImage, ImageCompressionPreset;
 import '../../../../../core/utils/error_handler.dart';
+import '../../../../../core/utils/image_picker_helper.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../core/widgets/primary_button.dart';
@@ -290,23 +291,19 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
               onTap: () async {
                 // По тапу можно заменить файл (станет НОВОЙ картинкой),
                 // а текущую пометим на удаление (keep=false)
-                final picker = ImagePicker();
-                final XFile? picked = await picker.pickImage(
-                  source: ImageSource.gallery,
-                );
-                if (picked == null) return;
-
-                // ── уменьшаем выбранное изображение перед добавлением в пост
-                final compressed = await compressLocalImage(
-                  sourceFile: File(picked.path),
+                // ── выбираем и обрезаем изображение в соотношении 1.3:1
+                final processed = await ImagePickerHelper.pickAndProcessImage(
+                  context: context,
+                  aspectRatio: 1.3,
                   maxSide: ImageCompressionPreset.post.maxSide,
                   jpegQuality: ImageCompressionPreset.post.quality,
+                  cropTitle: 'Обрезка фотографии',
                 );
-                if (!mounted) return;
+                if (processed == null || !mounted) return;
 
                 setState(() {
                   existing.keep = false;
-                  _newImages.add(compressed);
+                  _newImages.add(processed);
                   _updateSaveState();
                 });
               },
@@ -399,22 +396,18 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
             GestureDetector(
               onTap: () async {
                 // По тапу можно заменить картинку
-                final picker = ImagePicker();
-                final XFile? pickedFile = await picker.pickImage(
-                  source: ImageSource.gallery,
-                );
-                if (pickedFile == null) return;
-
-                // ── сжимаем выбранное фото перед заменой в локальном списке
-                final compressed = await compressLocalImage(
-                  sourceFile: File(pickedFile.path),
+                // ── выбираем и обрезаем изображение в соотношении 1.3:1
+                final processed = await ImagePickerHelper.pickAndProcessImage(
+                  context: context,
+                  aspectRatio: 1.3,
                   maxSide: ImageCompressionPreset.post.maxSide,
                   jpegQuality: ImageCompressionPreset.post.quality,
+                  cropTitle: 'Обрезка фотографии',
                 );
-                if (!mounted) return;
+                if (processed == null || !mounted) return;
 
                 setState(() {
-                  _newImages[photoIndex] = compressed;
+                  _newImages[photoIndex] = processed;
                   _updateSaveState();
                 });
               },
@@ -730,24 +723,50 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
 
   /// Обработчик добавления фотографий к посту
   Future<void> _handleAddPhotos() async {
-    final picker = ImagePicker();
-
     try {
+      // ── выбираем и обрезаем изображения в соотношении 1.3:1
+      // Используем стандартный pickMultiImage, затем обрезаем каждое
+      final picker = ImagePicker();
       final pickedFiles = await picker.pickMultiImage();
-      if (pickedFiles.isEmpty) return;
+      if (pickedFiles.isEmpty || !mounted) return;
 
-      // ── конвертируем и сжимаем все выбранные изображения
+      // ── обрезаем и сжимаем все выбранные изображения
       final compressedFiles = <File>[];
-      for (final file in pickedFiles) {
+      for (int i = 0; i < pickedFiles.length; i++) {
+        if (!mounted) return;
+        
+        final picked = pickedFiles[i];
+        // Обрезаем изображение в соотношении 1.3:1
+        final cropped = await ImagePickerHelper.cropPickedImage(
+          context: context,
+          source: picked,
+          aspectRatio: 1.3,
+          title: 'Обрезка фотографии ${i + 1}',
+        );
+        
+        if (cropped == null) continue; // Пропускаем, если пользователь отменил обрезку
+        
+        // Сжимаем обрезанное изображение
         final compressed = await compressLocalImage(
-          sourceFile: File(file.path),
+          sourceFile: cropped,
           maxSide: ImageCompressionPreset.post.maxSide,
           jpegQuality: ImageCompressionPreset.post.quality,
         );
+        
+        // Удаляем временный файл обрезки
+        if (cropped.path != compressed.path) {
+          try {
+            await cropped.delete();
+          } catch (_) {
+            // Игнорируем ошибки удаления
+          }
+        }
+        
         compressedFiles.add(compressed);
       }
 
-      if (!mounted) return;
+      if (compressedFiles.isEmpty || !mounted) return;
+      
       setState(() {
         _newImages.addAll(compressedFiles);
         _updateSaveState();

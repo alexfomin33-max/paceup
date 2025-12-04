@@ -32,6 +32,7 @@ import '../../../../../providers/services/auth_provider.dart';
 import '../../../../../core/services/api_service.dart'; // для ApiException
 import '../../../../../core/utils/local_image_compressor.dart'
     show compressLocalImage, ImageCompressionPreset;
+import '../../../../../core/utils/image_picker_helper.dart';
 
 // Меню с тремя точками
 import '../../../../../core/widgets/more_menu_overlay.dart';
@@ -214,15 +215,22 @@ class ActivityBlock extends ConsumerWidget {
 
           // ───────────────── МАРШРУТ С ФОТОГРАФИЯМИ ─────────────────
           // Показываем только если есть точки маршрута или есть изображения
+          // Соотношение сторон 1.3:1 (как в постах)
           if (updatedActivity.points.isNotEmpty ||
               updatedActivity.mediaImages.isNotEmpty)
-            ActivityRouteCarousel(
-              points: updatedActivity.points
-                  .map((c) => LatLng(c.lat, c.lng))
-                  .toList(),
-              imageUrls: updatedActivity.mediaImages,
-              height:
-                  240, // Увеличена высота карты для лучшей видимости маршрута
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // Вычисляем высоту для соотношения сторон 1.3:1
+                final width = constraints.maxWidth;
+                final height = width / 1.3;
+                return ActivityRouteCarousel(
+                  points: updatedActivity.points
+                      .map((c) => LatLng(c.lat, c.lng))
+                      .toList(),
+                  imageUrls: updatedActivity.mediaImages,
+                  height: height,
+                );
+              },
             ),
 
           // ────────────────────────────────────────────────────────────────
@@ -373,13 +381,36 @@ Future<void> _handleAddPhotos({
 
     final filesForUpload = <String, File>{};
     for (var i = 0; i < pickedFiles.length; i++) {
-      final path = pickedFiles[i].path;
-      if (path.isEmpty) continue;
+      if (!context.mounted) return;
+
+      final picked = pickedFiles[i];
+      // Обрезаем изображение в соотношении 1.3:1
+      final cropped = await ImagePickerHelper.cropPickedImage(
+        context: context,
+        source: picked,
+        aspectRatio: 1.3,
+        title: 'Обрезка фотографии ${i + 1}',
+      );
+
+      if (cropped == null)
+        continue; // Пропускаем, если пользователь отменил обрезку
+
+      // Сжимаем обрезанное изображение
       final compressed = await compressLocalImage(
-        sourceFile: File(path),
+        sourceFile: cropped,
         maxSide: ImageCompressionPreset.activity.maxSide,
         jpegQuality: ImageCompressionPreset.activity.quality,
       );
+
+      // Удаляем временный файл обрезки
+      if (cropped.path != compressed.path) {
+        try {
+          await cropped.delete();
+        } catch (_) {
+          // Игнорируем ошибки удаления
+        }
+      }
+
       filesForUpload['file$i'] = compressed;
     }
 

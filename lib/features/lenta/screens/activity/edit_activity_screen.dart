@@ -11,6 +11,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/local_image_compressor.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/primary_button.dart';
@@ -699,13 +700,35 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
       final filesForUpload = <String, File>{};
       for (var i = 0; i < pickedFiles.length; i++) {
-        final path = pickedFiles[i].path;
-        if (path.isEmpty) continue;
+        if (!mounted) return;
+        
+        final picked = pickedFiles[i];
+        // Обрезаем изображение в соотношении 1.3:1
+        final cropped = await ImagePickerHelper.cropPickedImage(
+          context: context,
+          source: picked,
+          aspectRatio: 1.3,
+          title: 'Обрезка фотографии ${i + 1}',
+        );
+        
+        if (cropped == null) continue; // Пропускаем, если пользователь отменил обрезку
+        
+        // Сжимаем обрезанное изображение
         final compressed = await compressLocalImage(
-          sourceFile: File(path),
+          sourceFile: cropped,
           maxSide: ImageCompressionPreset.activity.maxSide,
           jpegQuality: ImageCompressionPreset.activity.quality,
         );
+        
+        // Удаляем временный файл обрезки
+        if (cropped.path != compressed.path) {
+          try {
+            await cropped.delete();
+          } catch (_) {
+            // Игнорируем ошибки удаления
+          }
+        }
+        
         filesForUpload['file$i'] = compressed;
       }
 
@@ -750,7 +773,10 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
       if (images.isNotEmpty) {
         // Обновляем локальный список фотографий
+        // Сервер возвращает полный список всех фотографий активности,
+        // поэтому заменяем весь список, а не добавляем к существующему
         setState(() {
+          _imageUrls.clear();
           _imageUrls.addAll(images);
           _checkForChanges();
         });
