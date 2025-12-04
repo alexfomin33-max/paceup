@@ -84,10 +84,20 @@ class HealthSyncService {
       
       // Получаем время последней синхронизации
       final lastSyncTime = await getLastSyncTime();
-      final syncStartTime = lastSyncTime ?? DateTime.now().subtract(const Duration(days: 7));
       
       // Получаем тренировки с момента последней синхронизации
       final now = DateTime.now();
+      final DateTime syncStartTime;
+      
+      if (lastSyncTime != null) {
+        // При последующих синхронизациях загружаем с момента последней синхронизации
+        syncStartTime = lastSyncTime;
+      } else {
+        // При первой синхронизации загружаем за последние 7 дней
+        // (чтобы найти последнюю тренировку)
+        syncStartTime = now.subtract(const Duration(days: 7));
+      }
+      
       final workouts = await _health.getHealthDataFromTypes(
         types: types,
         startTime: syncStartTime,
@@ -102,18 +112,23 @@ class HealthSyncService {
         );
       }
       
-      // Сортируем по дате начала (старые первыми)
-      workouts.sort((a, b) => a.dateFrom.compareTo(b.dateFrom));
-      
       // Фильтруем только новые тренировки (после последней синхронизации)
       final List<dynamic> newWorkouts;
       
       if (lastSyncTime != null) {
+        // При последующих синхронизациях фильтруем только новые тренировки
         newWorkouts = workouts.where((w) {
           return w.dateTo.isAfter(lastSyncTime) || w.dateFrom.isAfter(lastSyncTime);
         }).toList();
+        
+        // Сортируем по дате начала (старые первыми)
+        newWorkouts.sort((a, b) => a.dateFrom.compareTo(b.dateFrom));
       } else {
-        newWorkouts = workouts;
+        // При первой синхронизации импортируем только последнюю тренировку
+        // Сортируем по дате начала по убыванию (новые первыми)
+        workouts.sort((a, b) => b.dateFrom.compareTo(a.dateFrom));
+        // Берем только самую последнюю тренировку
+        newWorkouts = workouts.take(1).toList();
       }
       
       if (newWorkouts.isEmpty) {

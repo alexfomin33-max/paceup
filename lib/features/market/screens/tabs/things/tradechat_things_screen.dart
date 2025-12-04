@@ -53,6 +53,9 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
   final _ctrl = TextEditingController();
   final _picker = ImagePicker();
 
+  String? _dealStatus; // Статус сделки: null или 'sold'
+  File? _fullscreenImageFile; // Файл изображения для полноэкранного просмотра
+
   String _today() {
     final now = DateTime.now();
     final dd = now.day.toString().padLeft(2, '0');
@@ -75,7 +78,12 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
     ),
   ].toList();
 
-  File? _fullscreenImageFile; // Файл изображения для полноэкранного просмотра
+  // ─── Обновление статуса сделки ───
+  void _updateDealStatus(String dealStatus) {
+    setState(() {
+      _dealStatus = dealStatus;
+    });
+  }
 
   @override
   void dispose() {
@@ -141,12 +149,6 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ─────────────────────────────────────────────────────────────
-    // ВАЖНО: теперь в списке есть «хедеры», которые тоже скроллятся.
-    // headerCount = 6 элементов (дата, Стоимость, 2 участника, Divider, SizedBox)
-    // ─────────────────────────────────────────────────────────────
-    const int headerCount = 6;
-
     return InteractiveBackSwipe(
       child: Stack(
         children: [
@@ -234,96 +236,153 @@ class _TradeChatScreenState extends State<TradeChatScreen> {
               behavior: HitTestBehavior.translucent,
               child: Column(
                 children: [
-                  // ─────────────────────────────────────────────────────────
-                  // Прокручиваемая область: headers + сообщения в одном ListView
-                  // ─────────────────────────────────────────────────────────
                   Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                      // bottom padding = 0, отступ создаётся через bottomSpacing последнего сообщения
-                      itemCount: headerCount + _messages.length,
-                      itemBuilder: (_, index) {
-                        // 0..headerCount-1 — это наши «шапки», которые раньше были над списком.
-                        if (index == 0) {
-                          return _DateSeparator(
-                            text: '${_today()}, автоматическое создание чата',
-                          );
-                        }
-                        if (index == 1) {
-                          return _KVLine(
-                            k: 'Стоимость',
-                            v: PricePill(text: _formatPrice(widget.price)),
-                          );
-                        }
-                        if (index == 2) {
-                          return const _ParticipantRow(
-                            avatarAsset: 'assets/avatar_4.png',
-                            nameAndRole: 'Екатерина Виноградова - продавец',
-                          );
-                        }
-                        if (index == 3) {
-                          return const _ParticipantRow(
-                            avatarAsset: 'assets/avatar_9.png',
-                            nameAndRole: 'Анастасия Бутузова - покупатель',
-                          );
-                        }
-                        if (index == 4) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Divider(
-                              height: 16,
-                              thickness: 1,
-                              color: AppColors.getBorderColor(context),
+                    child: CustomScrollView(
+                      slivers: [
+                        // ─── Основной контент (дата, инфо, участники) ───
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                // 0 — дата
+                                if (index == 0) {
+                                  return _DateSeparator(
+                                    text:
+                                        '${_today()}, автоматическое создание чата',
+                                  );
+                                }
+
+                                // 1 — стоимость
+                                if (index == 1) {
+                                  return _KVLine(
+                                    k: 'Стоимость',
+                                    v: PricePill(
+                                      text: _formatPrice(widget.price),
+                                    ),
+                                  );
+                                }
+
+                                // 2..3 — участники
+                                if (index == 2) {
+                                  return const _ParticipantRow(
+                                    avatarAsset: 'assets/avatar_4.png',
+                                    nameAndRole:
+                                        'Екатерина Виноградова - продавец',
+                                  );
+                                }
+                                if (index == 3) {
+                                  return const _ParticipantRow(
+                                    avatarAsset: 'assets/avatar_9.png',
+                                    nameAndRole:
+                                        'Анастасия Бутузова - покупатель',
+                                  );
+                                }
+
+                                return const SizedBox.shrink();
+                              },
+                              childCount: 4, // 0-3: дата, стоимость, 2 участника
                             ),
-                          );
-                        }
-                        if (index == 5) {
-                          return const SizedBox(height: 8);
-                        }
+                          ),
+                        ),
 
-                        // дальше — сообщения
-                        final m = _messages[index - headerCount];
+                        // ─── Закреплённый блок кнопок ───
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: _ActionsHeaderDelegate(
+                            child: Container(
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.light
+                                  ? AppColors.getSurfaceColor(context)
+                                  : AppColors.getBackgroundColor(context),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              child: _ActionsWrap(
+                                dealStatus: _dealStatus,
+                                onUpdateStatus: _updateDealStatus,
+                              ),
+                            ),
+                          ),
+                        ),
 
-                        // ─── Определяем отступы между пузырями ───
-                        // topSpacing: отступ сверху, если есть предыдущее сообщение
-                        final hasMessageAbove = index > headerCount;
-                        final topSpacing = hasMessageAbove ? 8.0 : 0.0;
-                        // bottomSpacing: отступ снизу только для последнего сообщения
-                        final isLastMessage =
-                            index == headerCount + _messages.length - 1;
-                        final bottomSpacing = isLastMessage ? 8.0 : 0.0;
+                        // ─── Divider ───
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Column(
+                              children: [
+                                Divider(
+                                  height: 16,
+                                  thickness: 0.5,
+                                  color: AppColors.getDividerColor(context),
+                                ),
+                                const SizedBox(height: 6),
+                              ],
+                            ),
+                          ),
+                        ),
 
-                        // Используем единые виджеты для текста и изображений
-                        return m.side == _MsgSide.right
-                            ? _BubbleRight(
-                                text: m.text ?? '',
-                                image: m.kind == _MsgKind.image
-                                    ? m.imageFile
-                                    : null,
-                                time: m.time,
-                                topSpacing: topSpacing,
-                                bottomSpacing: bottomSpacing,
-                                onImageTap:
-                                    m.kind == _MsgKind.image &&
-                                        m.imageFile != null
-                                    ? () => _showFullscreenImage(m.imageFile!)
-                                    : null,
-                              )
-                            : _BubbleLeft(
-                                text: m.text ?? '',
-                                image: m.kind == _MsgKind.image
-                                    ? m.imageFile
-                                    : null,
-                                time: m.time,
-                                topSpacing: topSpacing,
-                                bottomSpacing: bottomSpacing,
-                                onImageTap:
-                                    m.kind == _MsgKind.image &&
-                                        m.imageFile != null
-                                    ? () => _showFullscreenImage(m.imageFile!)
-                                    : null,
-                              );
-                      },
+                        // ─── Сообщения ───
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                          // bottom padding = 0, отступ создаётся через bottomSpacing последнего сообщения
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final m = _messages[index];
+
+                                // ─── Определяем отступы между пузырями ───
+                                // topSpacing: отступ сверху, если есть предыдущее сообщение
+                                final hasMessageAbove = index > 0;
+                                final topSpacing = hasMessageAbove ? 8.0 : 0.0;
+                                // bottomSpacing: отступ снизу только для последнего сообщения
+                                final isLastMessage =
+                                    index == _messages.length - 1;
+                                final bottomSpacing = isLastMessage ? 8.0 : 0.0;
+
+                                // Используем единые виджеты для текста и изображений
+                                return m.side == _MsgSide.right
+                                    ? _BubbleRight(
+                                        text: m.text ?? '',
+                                        image: m.kind == _MsgKind.image
+                                            ? m.imageFile
+                                            : null,
+                                        time: m.time,
+                                        topSpacing: topSpacing,
+                                        bottomSpacing: bottomSpacing,
+                                        onImageTap:
+                                            m.kind == _MsgKind.image &&
+                                                m.imageFile != null
+                                            ? () => _showFullscreenImage(
+                                                m.imageFile!,
+                                              )
+                                            : null,
+                                      )
+                                    : _BubbleLeft(
+                                        text: m.text ?? '',
+                                        image: m.kind == _MsgKind.image
+                                            ? m.imageFile
+                                            : null,
+                                        time: m.time,
+                                        topSpacing: topSpacing,
+                                        bottomSpacing: bottomSpacing,
+                                        onImageTap:
+                                            m.kind == _MsgKind.image &&
+                                                m.imageFile != null
+                                            ? () => _showFullscreenImage(
+                                                m.imageFile!,
+                                              )
+                                            : null,
+                                      );
+                              },
+                              childCount: _messages.length,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
@@ -847,5 +906,185 @@ class _FullscreenImageOverlay extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// ────────────────────────────────────────────────────────────────────────
+/// Компоненты для блока действий (кнопки статуса сделки)
+/// ────────────────────────────────────────────────────────────────────────
+
+class _ActionsWrap extends StatelessWidget {
+  final String? dealStatus;
+  final Function(String) onUpdateStatus;
+
+  const _ActionsWrap({
+    required this.dealStatus,
+    required this.onUpdateStatus,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Если товар уже продан
+    if (dealStatus == 'sold') {
+      return Center(
+        child: _PillFinal(
+          icon: CupertinoIcons.check_mark_circled,
+          text: 'Товар продан',
+          bg: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkSurfaceMuted
+              : AppColors.backgroundGreen,
+          border: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkBorder
+              : AppColors.borderaccept,
+          fg: AppColors.success,
+        ),
+      );
+    }
+
+    // Начальное состояние — только одна кнопка "Товар продан"
+    // Ширина кнопки должна быть такой же, как "Слот куплен" (половина ширины минус отступ)
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: (MediaQuery.of(context).size.width - 40 - 12) / 2,
+                  // 40 = padding horizontal * 2, 12 = отступ между кнопками
+                ),
+                child: _PillButton(
+                  text: 'Товар продан',
+                  bg: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkSurfaceMuted
+                      : AppColors.backgroundGreen,
+                  border: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkBorder
+                      : AppColors.borderaccept,
+                  fg: AppColors.success,
+                  onTap: () => onUpdateStatus('sold'),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PillButton extends StatelessWidget {
+  final String text;
+  final Color bg;
+  final Color border;
+  final Color fg;
+  final VoidCallback onTap;
+
+  const _PillButton({
+    required this.text,
+    required this.bg,
+    required this.border,
+    required this.fg,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      onTap: onTap,
+      child: Container(
+        height: 36,
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: border),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          style: TextStyle(
+            color: fg,
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PillFinal extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color bg;
+  final Color border;
+  final Color fg;
+
+  const _PillFinal({
+    required this.icon,
+    required this.text,
+    required this.bg,
+    required this.border,
+    required this.fg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: fg),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              color: fg,
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ────────────────────────────────────────────────────────────────────────
+/// Delegate для закреплённого заголовка с кнопками действий
+/// ────────────────────────────────────────────────────────────────────────
+class _ActionsHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+
+  _ActionsHeaderDelegate({required this.child});
+
+  @override
+  double get minExtent => 48.0; // Минимальная высота (padding + минимальная высота кнопок)
+
+  @override
+  double get maxExtent => 48.0; // Максимальная высота
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(_ActionsHeaderDelegate oldDelegate) {
+    return child != oldDelegate.child;
   }
 }
