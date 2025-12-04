@@ -235,93 +235,46 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                             child: Center(child: CupertinoActivityIndicator()),
                           )
                         else if (_isSeller)
-                          // ──── Кнопки для продавца ────
-                          Row(
-                            children: [
-                              Expanded(
-                                child: SizedBox(
-                                  height: 36,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () async {
-                                      // Переход на экран редактирования
-                                      final result = await Navigator.of(context, rootNavigator: true).push(
-                                        TransparentPageRoute(
-                                          builder: (_) => EditThingScreen(
-                                            thingId: widget.item.id,
-                                          ),
-                                        ),
-                                      );
-                                      // ── обновляем список после редактирования
-                                      if (result == true && mounted) {
-                                        ref.read(thingsProvider.notifier).loadInitial();
-                                      }
-                                    },
-                                    icon: const Icon(
-                                      CupertinoIcons.pencil,
-                                      size: 16,
+                          // ──── Кнопка для продавца ────
+                          SizedBox(
+                            height: 36,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                // Переход на экран редактирования
+                                final result = await Navigator.of(context, rootNavigator: true).push(
+                                  TransparentPageRoute(
+                                    builder: (_) => EditThingScreen(
+                                      thingId: widget.item.id,
                                     ),
-                                    label: const Text(
-                                      'Редактировать',
-                                      style: TextStyle(fontFamily: 'Inter'),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.brandPrimary,
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.sm,
-                                        ),
-                                      ),
-                                    ),
+                                  ),
+                                );
+                                // ── обновляем список после редактирования
+                                if (result == true && mounted) {
+                                  ref.read(thingsProvider.notifier).loadInitial();
+                                }
+                              },
+                              icon: const Icon(
+                                CupertinoIcons.pencil,
+                                size: 16,
+                              ),
+                              label: const Text(
+                                'Редактировать',
+                                style: TextStyle(fontFamily: 'Inter'),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.brandPrimary,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.sm,
                                   ),
                                 ),
                               ),
-                              if (widget.item.chatId != null) ...[
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: SizedBox(
-                                    height: 36,
-                                    child: ElevatedButton.icon(
-                                      onPressed: () {
-                                        // Переход в чат
-                                        Navigator.of(context, rootNavigator: true).push(
-                                          TransparentPageRoute(
-                                            builder: (_) => TradeChatThingsScreen(
-                                              thingId: widget.item.id,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      icon: const Icon(
-                                        CupertinoIcons.chat_bubble,
-                                        size: 16,
-                                      ),
-                                      label: const Text(
-                                        'В чат',
-                                        style: TextStyle(fontFamily: 'Inter'),
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.getSurfaceMutedColor(context),
-                                        foregroundColor: AppColors.getTextPrimaryColor(context),
-                                        elevation: 0,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            AppRadius.sm,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
+                            ),
                           )
                         else
                           // ──── Кнопка для покупателя ────

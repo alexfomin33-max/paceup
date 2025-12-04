@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/primary_button.dart';
+import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../core/services/api_service.dart';
 import '../../../../../core/services/auth_service.dart';
 import '../../../../../core/utils/error_handler.dart';
@@ -99,14 +100,16 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
       setState(() {
         priceCtrl.text = (slot['price'] ?? 0).toString();
         descCtrl.text = slot['description'] ?? '';
-        _gender = (slot['gender'] ?? 'male') == 'female' ? Gender.female : Gender.male;
+        _gender = (slot['gender'] ?? 'male') == 'female'
+            ? Gender.female
+            : Gender.male;
       });
 
       // Если есть event_id и event_name, "выбираем" событие
       // Это нужно, чтобы все параметры были установлены правильно
-      if (eventId != null && 
-          eventName != null && 
-          eventName.toString().isNotEmpty && 
+      if (eventId != null &&
+          eventName != null &&
+          eventName.toString().isNotEmpty &&
           eventId is int) {
         final eventOption = _EventOption(
           id: eventId,
@@ -114,18 +117,18 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
           place: eventPlace as String,
           eventDate: eventDate as String,
         );
-        
+
         // Устанавливаем название события в контроллер напрямую
         nameCtrl.text = eventOption.name;
-        
+
         setState(() {
           _selectedEventId = eventOption.id;
           _isLoading = false;
         });
-        
+
         // Загружаем дистанции для выбранного события
         await _loadEventDistances(eventOption.id);
-        
+
         // Находим индекс текущей дистанции
         final currentDistance = slot['distance'] ?? '';
         final index = _distances.indexWhere((d) => d == currentDistance);
@@ -140,7 +143,9 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
         final currentDistance = slot['distance'] ?? '';
         setState(() {
           _selectedEventId = null;
-          _currentDistance = currentDistance.isNotEmpty ? currentDistance : null;
+          _currentDistance = currentDistance.isNotEmpty
+              ? currentDistance
+              : null;
           _isLoading = false;
         });
       }
@@ -276,7 +281,8 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
         body: {
           'slot_id': widget.slotId,
           'user_id': userId,
-          'event_id': _selectedEventId, // Передаём null, если событие не выбрано
+          'event_id':
+              _selectedEventId, // Передаём null, если событие не выбрано
           'title': nameCtrl.text.trim(),
           'distance': distance,
           'price': price,
@@ -292,14 +298,13 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
           await slotsNotifier.loadInitial();
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Слот успешно обновлён'),
-            ),
+            const SnackBar(content: Text('Слот успешно обновлён')),
           );
           Navigator.pop(context);
         }
       } else {
-        final errorMsg = response['message']?.toString() ??
+        final errorMsg =
+            response['message']?.toString() ??
             'Не удалось обновить слот. Попробуйте ещё раз';
         setState(() {
           _errorMessage = errorMsg;
@@ -360,10 +365,7 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
       final api = ApiService();
       final response = await api.post(
         '/delete_slot.php',
-        body: {
-          'slot_id': widget.slotId,
-          'user_id': userId,
-        },
+        body: {'slot_id': widget.slotId, 'user_id': userId},
       );
 
       if (response['success'] == true) {
@@ -372,15 +374,14 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
           final slotsNotifier = ref.read(slotsProvider.notifier);
           await slotsNotifier.loadInitial();
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Слот успешно удалён'),
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Слот успешно удалён')));
           Navigator.pop(context);
         }
       } else {
-        final errorMsg = response['message']?.toString() ??
+        final errorMsg =
+            response['message']?.toString() ??
             'Не удалось удалить слот. Попробуйте ещё раз';
         setState(() {
           _errorMessage = errorMsg;
@@ -402,153 +403,160 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(
-          title: 'Редактирование',
-          showBack: true,
-          showBottomDivider: true,
+      return InteractiveBackSwipe(
+        child: Scaffold(
+          backgroundColor: AppColors.getBackgroundColor(context),
+          appBar: const PaceAppBar(
+            title: 'Редактирование слота',
+            showBack: true,
+            showBottomDivider: true,
+          ),
+          body: const Center(child: CupertinoActivityIndicator()),
         ),
-        body: const Center(child: CupertinoActivityIndicator()),
       );
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
-      appBar: const PaceAppBar(
-        title: 'Редактирование',
-        showBack: true,
-        showBottomDivider: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _EventAutocompleteField(
-              label: 'Название события',
-              hint: 'Начните вводить название события',
-              controller: nameCtrl,
-              focusNode: _nameFocusNode,
-              onEventSelected: (event) {
-                setState(() {
-                  _selectedEventId = event.id;
-                  nameCtrl.text = event.name;
-                });
-                _loadEventDistances(event.id);
-              },
-              searchFunction: _searchEvents,
-            ),
-            const SizedBox(height: 20),
-
-            const _SmallLabel('Пол'),
-            const SizedBox(height: 8),
-            _GenderRow(
-              maleSelected: _gender == Gender.male,
-              femaleSelected: _gender == Gender.female,
-              onMaleTap: () => setState(() => _gender = Gender.male),
-              onFemaleTap: () => setState(() => _gender = Gender.female),
-            ),
-            const SizedBox(height: 20),
-
-            // ─── Показываем список дистанций только если выбрано событие ───
-            if (_selectedEventId != null) ...[
-              const _SmallLabel('Дистанция'),
-              const SizedBox(height: 8),
-              if (_isLoadingDistances)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: CupertinoActivityIndicator(),
-                  ),
-                )
-              else if (_distances.isEmpty)
-                Text(
-                  'У этого события нет доступных дистанций',
-                  style: AppTextStyles.h14w4.copyWith(
-                    color: AppColors.getTextSecondaryColor(context),
-                  ),
-                )
-              else
-                _ChipsRow(
-                  items: _distances,
-                  selectedIndex: _distanceIndex,
-                  onSelected: (i) => setState(() => _distanceIndex = i),
-                ),
-              const SizedBox(height: 20),
-            ],
-
-            _PriceField(controller: priceCtrl, onChanged: (_) => setState(() {})),
-            const SizedBox(height: 20),
-
-            _LabeledTextField(
-              label: 'Описание',
-              hint:
-                  'Опишите варианты передачи слота, кластер и другую информацию',
-              controller: descCtrl,
-              maxLines: 5,
-            ),
-            const SizedBox(height: 24),
-
-            // ─── Отображение ошибки ───
-            if (_errorMessage != null) ...[
-              SelectableText.rich(
-                TextSpan(
-                  text: _errorMessage,
-                  style: const TextStyle(
-                    color: AppColors.error,
-                    fontSize: 14,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                textAlign: TextAlign.center,
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.getBackgroundColor(context),
+        appBar: const PaceAppBar(
+          title: 'Редактирование слота',
+          showBack: true,
+          showBottomDivider: true,
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _EventAutocompleteField(
+                label: 'Название события',
+                hint: 'Начните вводить название события',
+                controller: nameCtrl,
+                focusNode: _nameFocusNode,
+                onEventSelected: (event) {
+                  setState(() {
+                    _selectedEventId = event.id;
+                    nameCtrl.text = event.name;
+                  });
+                  _loadEventDistances(event.id);
+                },
+                searchFunction: _searchEvents,
               ),
-              const SizedBox(height: 16),
-            ],
+              const SizedBox(height: 20),
 
-            // ─── Кнопки Сохранить и Удалить ───
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                PrimaryButton(
-                  text: 'Сохранить',
-                  onPressed: _isSubmitting || _isDeleting
-                      ? () {}
-                      : () => _save(),
-                  width: 160,
-                  isLoading: _isSubmitting,
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 140,
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting || _isDeleting
-                        ? null
-                        : () => _delete(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: const StadiumBorder(),
-                      padding: const EdgeInsets.symmetric(horizontal: 30),
+              const _SmallLabel('Пол'),
+              const SizedBox(height: 8),
+              _GenderRow(
+                maleSelected: _gender == Gender.male,
+                femaleSelected: _gender == Gender.female,
+                onMaleTap: () => setState(() => _gender = Gender.male),
+                onFemaleTap: () => setState(() => _gender = Gender.female),
+              ),
+              const SizedBox(height: 20),
+
+              // ─── Показываем список дистанций только если выбрано событие ───
+              if (_selectedEventId != null) ...[
+                const _SmallLabel('Дистанция'),
+                const SizedBox(height: 8),
+                if (_isLoadingDistances)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CupertinoActivityIndicator(),
                     ),
-                    child: _isDeleting
-                        ? const CupertinoActivityIndicator(radius: 9)
-                        : const Text(
-                            'Удалить',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                  )
+                else if (_distances.isEmpty)
+                  Text(
+                    'У этого события нет доступных дистанций',
+                    style: AppTextStyles.h14w4.copyWith(
+                      color: AppColors.getTextSecondaryColor(context),
+                    ),
+                  )
+                else
+                  _ChipsRow(
+                    items: _distances,
+                    selectedIndex: _distanceIndex,
+                    onSelected: (i) => setState(() => _distanceIndex = i),
                   ),
-                ),
+                const SizedBox(height: 20),
               ],
-            ),
-          ],
+
+              _PriceField(
+                controller: priceCtrl,
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 20),
+
+              _LabeledTextField(
+                label: 'Описание',
+                hint:
+                    'Опишите варианты передачи слота, кластер и другую информацию',
+                controller: descCtrl,
+                maxLines: 5,
+              ),
+              const SizedBox(height: 24),
+
+              // ─── Отображение ошибки ───
+              if (_errorMessage != null) ...[
+                SelectableText.rich(
+                  TextSpan(
+                    text: _errorMessage,
+                    style: const TextStyle(
+                      color: AppColors.error,
+                      fontSize: 14,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // ─── Кнопки Сохранить и Удалить ───
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  PrimaryButton(
+                    text: 'Сохранить',
+                    onPressed: _isSubmitting || _isDeleting
+                        ? () {}
+                        : () => _save(),
+                    width: 160,
+                    isLoading: _isSubmitting,
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 140,
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting || _isDeleting
+                          ? null
+                          : () => _delete(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                      ),
+                      child: _isDeleting
+                          ? const CupertinoActivityIndicator(radius: 9)
+                          : const Text(
+                              'Удалить',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -608,117 +616,121 @@ class _EventAutocompleteField extends StatelessWidget {
           },
           onSelected: onEventSelected,
           displayStringForOption: (option) => option.name,
-          fieldViewBuilder: (
-            BuildContext context,
-            TextEditingController textEditingController,
-            FocusNode focusNode,
-            VoidCallback onFieldSubmitted,
-          ) {
-            return TextFormField(
-              controller: textEditingController,
-              focusNode: focusNode,
-              onFieldSubmitted: (String value) {
-                onFieldSubmitted();
+          fieldViewBuilder:
+              (
+                BuildContext context,
+                TextEditingController textEditingController,
+                FocusNode focusNode,
+                VoidCallback onFieldSubmitted,
+              ) {
+                return TextFormField(
+                  controller: textEditingController,
+                  focusNode: focusNode,
+                  onFieldSubmitted: (String value) {
+                    onFieldSubmitted();
+                  },
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: AppTextStyles.h14w4Place.copyWith(
+                      color: AppColors.getTextPlaceholderColor(context),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.getSurfaceColor(context),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 17,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      borderSide: BorderSide(
+                        color: AppColors.getBorderColor(context),
+                        width: 1,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      borderSide: BorderSide(
+                        color: AppColors.getBorderColor(context),
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      borderSide: BorderSide(
+                        color: AppColors.getBorderColor(context),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                );
               },
-              style: AppTextStyles.h14w4.copyWith(
-                color: AppColors.getTextPrimaryColor(context),
-              ),
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: AppTextStyles.h14w4Place.copyWith(
-                  color: AppColors.getTextPlaceholderColor(context),
-                ),
-                filled: true,
-                fillColor: AppColors.getSurfaceColor(context),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 17,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(
-                    color: AppColors.getBorderColor(context),
-                    width: 1,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(
-                    color: AppColors.getBorderColor(context),
-                    width: 1,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(
-                    color: AppColors.getBorderColor(context),
-                    width: 1,
-                  ),
-                ),
-              ),
-            );
-          },
-          optionsViewBuilder: (
-            BuildContext context,
-            AutocompleteOnSelected<_EventOption> onSelected,
-            Iterable<_EventOption> options,
-          ) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 200),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final option = options.elementAt(index);
-                      return InkWell(
-                        onTap: () => onSelected(option),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.getSurfaceColor(context),
-                            border: Border(
-                              bottom: BorderSide(
-                                color: AppColors.getBorderColor(context),
-                                width: 0.5,
-                              ),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                option.name,
-                                style: AppTextStyles.h14w5.copyWith(
-                                  color: AppColors.getTextPrimaryColor(context),
-                                ),
-                              ),
-                              if (option.place.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  option.place,
-                                  style: AppTextStyles.h14w4.copyWith(
-                                    color: AppColors.getTextSecondaryColor(
-                                      context,
-                                    ),
-                                    fontSize: 12,
+          optionsViewBuilder:
+              (
+                BuildContext context,
+                AutocompleteOnSelected<_EventOption> onSelected,
+                Iterable<_EventOption> options,
+              ) {
+                return Align(
+                  alignment: Alignment.topLeft,
+                  child: Material(
+                    elevation: 4.0,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 200),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: options.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final option = options.elementAt(index);
+                          return InkWell(
+                            onTap: () => onSelected(option),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.getSurfaceColor(context),
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: AppColors.getBorderColor(context),
+                                    width: 0.5,
                                   ),
                                 ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    option.name,
+                                    style: AppTextStyles.h14w5.copyWith(
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  ),
+                                  if (option.place.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      option.place,
+                                      style: AppTextStyles.h14w4.copyWith(
+                                        color: AppColors.getTextSecondaryColor(
+                                          context,
+                                        ),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            );
-          },
+                );
+              },
         ),
       ],
     );
@@ -1013,4 +1025,3 @@ class _OvalToggle extends StatelessWidget {
     );
   }
 }
-

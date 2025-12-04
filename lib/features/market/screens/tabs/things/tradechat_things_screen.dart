@@ -13,11 +13,15 @@ import '../../../../../core/utils/local_image_compressor.dart';
 import '../../../models/market_models.dart';
 import '../../widgets/pills.dart'; // GenderPill, PricePill, CityPill
 import '../../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../../core/widgets/transparent_route.dart';
+import '../../../../profile/screens/profile_screen.dart';
 
 class TradeChatThingsScreen extends ConsumerStatefulWidget {
   final int thingId;
+  final int?
+  chatId; // ─── Опциональный chatId для открытия конкретного чата ───
 
-  const TradeChatThingsScreen({super.key, required this.thingId});
+  const TradeChatThingsScreen({super.key, required this.thingId, this.chatId});
 
   @override
   ConsumerState<TradeChatThingsScreen> createState() =>
@@ -143,7 +147,8 @@ class _ChatData {
       buyerName: buyer['name'] ?? '',
       buyerAvatar: buyer['avatar'],
       dealStatus: chat['deal_status'],
-      chatCreatedAt: null, // Будет загружено из reserve_thing или get_thing_chat
+      chatCreatedAt:
+          null, // Будет загружено из reserve_thing или get_thing_chat
     );
   }
 
@@ -171,7 +176,8 @@ class _ChatData {
   }
 
   // ─── Получаем первый imageUrl для AppBar ───
-  String? get firstImageUrl => thingImages.isNotEmpty ? thingImages.first : null;
+  String? get firstImageUrl =>
+      thingImages.isNotEmpty ? thingImages.first : null;
 
   // ─── Форматируем города для отображения ───
   String get citiesDisplay {
@@ -255,16 +261,20 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
       }
       _currentUserId = userId;
 
-      // Создаём/получаем чат
+      // ─── Если chatId передан, загружаем данные напрямую ───
+      if (widget.chatId != null) {
+        await _loadChatData(widget.chatId!, null);
+        return;
+      }
+
+      // ─── Иначе создаём/получаем чат через reserve_thing.php ───
       final reserveResponse = await _api.post(
         '/reserve_thing.php',
         body: {'thing_id': widget.thingId, 'user_id': userId},
       );
 
       if (reserveResponse['success'] != true) {
-        throw Exception(
-          reserveResponse['message'] ?? 'Ошибка создания чата',
-        );
+        throw Exception(reserveResponse['message'] ?? 'Ошибка создания чата');
       }
 
       final chatId = reserveResponse['chat_id'] as int;
@@ -488,10 +498,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
 
       final response = await _api.post(
         '/update_thing_status.php',
-        body: {
-          'thing_id': _chatData!.thingId,
-          'user_id': userId,
-        },
+        body: {'thing_id': _chatData!.thingId, 'user_id': userId},
       );
 
       if (response['success'] == true) {
@@ -597,7 +604,8 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
     }
 
     final chatData = _chatData!;
-    final isSeller = _currentUserId != null && chatData.isSeller(_currentUserId!);
+    final isSeller =
+        _currentUserId != null && chatData.isSeller(_currentUserId!);
 
     return InteractiveBackSwipe(
       child: Stack(
@@ -695,75 +703,81 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                         SliverPadding(
                           padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                           sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                // 0 — дата
-                                if (index == 0) {
-                                  return _DateSeparator(
-                                    text:
-                                        '${_formatChatDate(chatData.chatCreatedAt)}, автоматическое создание чата',
-                                  );
-                                }
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              // 0 — дата
+                              if (index == 0) {
+                                return _DateSeparator(
+                                  text:
+                                      '${_formatChatDate(chatData.chatCreatedAt)}, автоматическое создание чата',
+                                );
+                              }
 
-                                // 1 — стоимость
-                                if (index == 1) {
-                                  return _KVLine(
-                                    k: 'Стоимость',
-                                    v: PricePill(
-                                      text: _formatPrice(chatData.thingPrice),
-                                    ),
-                                  );
-                                }
+                              // 1 — стоимость
+                              if (index == 1) {
+                                return _KVLine(
+                                  k: 'Стоимость',
+                                  v: PricePill(
+                                    text: _formatPrice(chatData.thingPrice),
+                                  ),
+                                );
+                              }
 
-                                // 2 — категория
-                                if (index == 2) {
-                                  return _KVLine(
-                                    k: 'Категория',
-                                    v: _ChipNeutral(
-                                      child: Text(chatData.thingCategory),
-                                    ),
-                                  );
-                                }
+                              // 2 — категория
+                              if (index == 2) {
+                                return _KVLine(
+                                  k: 'Категория',
+                                  v: _ChipNeutral(
+                                    child: Text(chatData.thingCategory),
+                                  ),
+                                );
+                              }
 
-                                // 3 — пол (если указан)
-                                if (index == 3 && chatData.thingGender != null) {
-                                  return _KVLine(
-                                    k: 'Пол',
-                                    v: chatData.thingGender == Gender.male
-                                        ? const GenderPill.male()
-                                        : const GenderPill.female(),
-                                  );
-                                }
+                              // 3 — пол (если указан)
+                              if (index == 3 && chatData.thingGender != null) {
+                                return _KVLine(
+                                  k: 'Пол',
+                                  v: chatData.thingGender == Gender.male
+                                      ? const GenderPill.male()
+                                      : const GenderPill.female(),
+                                );
+                              }
 
-                                // 4 — города передачи
-                                if (index == 4) {
-                                  return _KVLine(
-                                    k: 'Города передачи',
-                                    v: CityPill(text: chatData.citiesDisplay),
-                                  );
-                                }
+                              // 4 — города передачи (если пол указан, иначе индекс 3)
+                              final citiesIndex = chatData.thingGender != null
+                                  ? 4
+                                  : 3;
+                              if (index == citiesIndex) {
+                                return _KVLine(
+                                  k: 'Город передачи',
+                                  v: CityPill(text: chatData.citiesDisplay),
+                                );
+                              }
 
-                                // 5..6 — участники (с учетом того, что пол может быть пропущен)
-                                int participantIndex = chatData.thingGender != null ? 5 : 4;
-                                if (index == participantIndex) {
-                                  return _ParticipantRow(
-                                    avatarUrl: chatData.sellerAvatar,
-                                    nameAndRole:
-                                        '${chatData.sellerName} - продавец',
-                                  );
-                                }
-                                if (index == participantIndex + 1) {
-                                  return _ParticipantRow(
-                                    avatarUrl: chatData.buyerAvatar,
-                                    nameAndRole:
-                                        '${chatData.buyerName} - покупатель',
-                                  );
-                                }
+                              // 5..6 или 4..5 — участники (с учетом того, что пол может быть пропущен)
+                              final participantIndex =
+                                  chatData.thingGender != null ? 5 : 4;
+                              if (index == participantIndex) {
+                                return _ParticipantRow(
+                                  avatarUrl: chatData.sellerAvatar,
+                                  nameAndRole:
+                                      '${chatData.sellerName} - продавец',
+                                  userId: chatData.sellerId,
+                                );
+                              }
+                              if (index == participantIndex + 1) {
+                                return _ParticipantRow(
+                                  avatarUrl: chatData.buyerAvatar,
+                                  nameAndRole:
+                                      '${chatData.buyerName} - покупатель',
+                                  userId: chatData.buyerId,
+                                );
+                              }
 
-                                return const SizedBox.shrink();
-                              },
-                              childCount: chatData.thingGender != null ? 7 : 6,
-                            ),
+                              return const SizedBox.shrink();
+                            }, childCount: chatData.thingGender != null ? 7 : 6),
                           ),
                         ),
 
@@ -1117,56 +1131,72 @@ class _DateSeparator extends StatelessWidget {
 class _ParticipantRow extends StatelessWidget {
   final String? avatarUrl;
   final String nameAndRole;
-  const _ParticipantRow({required this.avatarUrl, required this.nameAndRole});
+  final int userId;
+  const _ParticipantRow({
+    required this.avatarUrl,
+    required this.nameAndRole,
+    required this.userId,
+  });
   @override
   Widget build(BuildContext context) {
     final parts = nameAndRole.split(' - ');
     final name = parts.isNotEmpty ? parts[0] : nameAndRole;
     final role = parts.length > 1 ? ' - ${parts[1]}' : '';
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 14,
-            backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
-                ? NetworkImage(avatarUrl!)
-                : null,
-            child: avatarUrl == null || avatarUrl!.isEmpty
-                ? Icon(
-                    CupertinoIcons.person_fill,
-                    size: 14,
-                    color: AppColors.getIconSecondaryColor(context),
-                  )
-                : null,
-            onBackgroundImageError: (_, __) {},
-          ),
-          const SizedBox(width: 8),
-          Text.rich(
-            TextSpan(
-              text: name,
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.getTextPrimaryColor(context),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            TransparentPageRoute(builder: (_) => ProfileScreen(userId: userId)),
+          );
+        },
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
+                    ? NetworkImage(avatarUrl!)
+                    : null,
+                child: avatarUrl == null || avatarUrl!.isEmpty
+                    ? Icon(
+                        CupertinoIcons.person_fill,
+                        size: 14,
+                        color: AppColors.getIconSecondaryColor(context),
+                      )
+                    : null,
+                onBackgroundImageError: (_, __) {},
               ),
-              children: [
-                if (role.isNotEmpty)
-                  TextSpan(
-                    text: role,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.getTextPrimaryColor(context),
-                    ),
+              const SizedBox(width: 8),
+              Text.rich(
+                TextSpan(
+                  text: name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.getTextPrimaryColor(context),
                   ),
-              ],
-            ),
+                  children: [
+                    if (role.isNotEmpty)
+                      TextSpan(
+                        text: role,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1479,9 +1509,7 @@ class _Composer extends StatelessWidget {
                           : AppColors.getTextPrimaryColor(context),
                     ),
                     decoration: InputDecoration(
-                      hintText: isDisabled
-                          ? 'Товар продан'
-                          : 'Сообщение...',
+                      hintText: isDisabled ? 'Товар продан' : 'Сообщение...',
                       hintStyle: AppTextStyles.h14w4Place.copyWith(
                         color: AppColors.getTextPlaceholderColor(context),
                       ),
@@ -1537,9 +1565,7 @@ class _FullscreenImageOverlay extends StatelessWidget {
     return GestureDetector(
       onTap: onClose,
       child: Container(
-        color: AppColors.textPrimary.withValues(
-          alpha: 0.95,
-        ),
+        color: AppColors.textPrimary.withValues(alpha: 0.95),
         child: Stack(
           children: [
             Center(

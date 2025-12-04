@@ -116,28 +116,38 @@ class ChatItem {
 /// ─── Обертка для навигации к TradeChatSlotsScreen ───
 class _SlotChatScreenWrapper extends StatelessWidget {
   final int slotId;
+  final int? chatId; // ─── chatId для открытия конкретного чата ───
 
   const _SlotChatScreenWrapper({
     required this.slotId,
+    this.chatId,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TradeChatSlotsScreen(slotId: slotId);
+    return TradeChatSlotsScreen(
+      slotId: slotId,
+      chatId: chatId,
+    );
   }
 }
 
 /// ─── Обертка для навигации к TradeChatThingsScreen ───
 class _ThingChatScreenWrapper extends StatelessWidget {
   final int thingId;
+  final int? chatId; // ─── chatId для открытия конкретного чата ───
 
   const _ThingChatScreenWrapper({
     required this.thingId,
+    this.chatId,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TradeChatThingsScreen(thingId: thingId);
+    return TradeChatThingsScreen(
+      thingId: thingId,
+      chatId: chatId,
+    );
   }
 }
 
@@ -224,15 +234,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             .map((json) => ChatItem.fromJson(json as Map<String, dynamic>))
             .toList();
 
+        // ─── Фильтруем пустые чаты (без сообщений) ───
+        final filteredChats = _filterEmptyChats(newChats);
+
         // ─── Обновляем список, сохраняя позицию скролла ───
         final currentScrollPosition = _scrollController.hasClients
             ? _scrollController.position.pixels
             : 0.0;
 
         setState(() {
-          _chats = newChats;
+          _chats = filteredChats;
           _hasMore = response['has_more'] as bool? ?? false;
-          _offset = newChats.length;
+          _offset = filteredChats.length;
         });
 
         // ─── Восстанавливаем позицию скролла после обновления ───
@@ -287,10 +300,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             .map((json) => ChatItem.fromJson(json as Map<String, dynamic>))
             .toList();
 
+        // ─── Фильтруем пустые чаты (без сообщений) ───
+        final filteredChats = _filterEmptyChats(chats);
+
         setState(() {
-          _chats = chats;
+          _chats = filteredChats;
           _hasMore = response['has_more'] as bool? ?? false;
-          _offset = chats.length;
+          _offset = filteredChats.length;
           _isLoading = false;
         });
       } else {
@@ -336,10 +352,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             .map((json) => ChatItem.fromJson(json as Map<String, dynamic>))
             .toList();
 
+        // ─── Фильтруем пустые чаты (без сообщений) ───
+        final filteredChats = _filterEmptyChats(newChats);
+
         setState(() {
-          _chats.addAll(newChats);
+          _chats.addAll(filteredChats);
           _hasMore = response['has_more'] as bool? ?? false;
-          _offset += newChats.length;
+          _offset += filteredChats.length;
           _isLoadingMore = false;
         });
       } else {
@@ -405,6 +424,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     } else {
       return chat.userName ?? 'Пользователь';
     }
+  }
+
+  /// ─── Проверка, является ли чат пустым (нет ни одного сообщения) ───
+  bool _isEmptyChat(ChatItem chat) {
+    return chat.lastMessage.isEmpty && !chat.lastMessageHasImage;
+  }
+
+  /// ─── Фильтрация пустых чатов из списка ───
+  List<ChatItem> _filterEmptyChats(List<ChatItem> chats) {
+    return chats.where((chat) => !_isEmptyChat(chat)).toList();
   }
 
   @override
@@ -699,6 +728,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                           TransparentPageRoute(
                             builder: (_) => _SlotChatScreenWrapper(
                               slotId: chat.slotId!,
+                              chatId: chat.id, // ─── Передаем chatId для открытия конкретного чата ───
                             ),
                           ),
                         );
@@ -710,6 +740,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                           TransparentPageRoute(
                             builder: (_) => _ThingChatScreenWrapper(
                               thingId: chat.thingId!,
+                              chatId: chat.id, // ─── Передаем chatId для открытия конкретного чата ───
                             ),
                           ),
                         );

@@ -12,11 +12,18 @@ import '../../../../../core/services/auth_service.dart';
 import '../../../models/market_models.dart';
 import '../../widgets/pills.dart'; // GenderPill, PricePill
 import '../../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../../core/widgets/transparent_route.dart';
+import '../../../../profile/screens/profile_screen.dart';
 
 class TradeChatSlotsScreen extends ConsumerStatefulWidget {
   final int slotId;
+  final int? chatId; // ─── Опциональный chatId для открытия конкретного чата ───
 
-  const TradeChatSlotsScreen({super.key, required this.slotId});
+  const TradeChatSlotsScreen({
+    super.key,
+    required this.slotId,
+    this.chatId,
+  });
 
   @override
   ConsumerState<TradeChatSlotsScreen> createState() =>
@@ -245,7 +252,13 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
       }
       _currentUserId = userId;
 
-      // Резервируем слот и создаём/получаем чат
+      // ─── Если chatId передан, загружаем данные напрямую ───
+      if (widget.chatId != null) {
+        await _loadChatData(widget.chatId!, null);
+        return;
+      }
+
+      // ─── Иначе резервируем слот и создаём/получаем чат ───
       final reserveResponse = await _api.post(
         '/reserve_slot.php',
         body: {'slot_id': widget.slotId, 'user_id': userId},
@@ -758,6 +771,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                                     avatarUrl: chatData.sellerAvatar,
                                     nameAndRole:
                                         '${chatData.sellerName} - продавец',
+                                    userId: chatData.sellerId,
                                   );
                                 }
                                 if (index == 6) {
@@ -765,6 +779,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                                     avatarUrl: chatData.buyerAvatar,
                                     nameAndRole:
                                         '${chatData.buyerName} - покупатель',
+                                    userId: chatData.buyerId,
                                   );
                                 }
 
@@ -1169,56 +1184,74 @@ class _DateSeparator extends StatelessWidget {
 class _ParticipantRow extends StatelessWidget {
   final String? avatarUrl;
   final String nameAndRole;
-  const _ParticipantRow({required this.avatarUrl, required this.nameAndRole});
+  final int userId;
+  const _ParticipantRow({
+    required this.avatarUrl,
+    required this.nameAndRole,
+    required this.userId,
+  });
   @override
   Widget build(BuildContext context) {
     final parts = nameAndRole.split(' - ');
     final name = parts.isNotEmpty ? parts[0] : nameAndRole;
     final role = parts.length > 1 ? ' - ${parts[1]}' : '';
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 14,
-            backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
-                ? NetworkImage(avatarUrl!)
-                : null,
-            child: avatarUrl == null || avatarUrl!.isEmpty
-                ? Icon(
-                    CupertinoIcons.person_fill,
-                    size: 14,
-                    color: AppColors.getIconSecondaryColor(context),
-                  )
-                : null,
-            onBackgroundImageError: (_, __) {},
-          ),
-          const SizedBox(width: 8),
-          Text.rich(
-            TextSpan(
-              text: name,
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.getTextPrimaryColor(context),
-              ),
-              children: [
-                if (role.isNotEmpty)
-                  TextSpan(
-                    text: role,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-              ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            TransparentPageRoute(
+              builder: (_) => ProfileScreen(userId: userId),
             ),
+          );
+        },
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
+                    ? NetworkImage(avatarUrl!)
+                    : null,
+                child: avatarUrl == null || avatarUrl!.isEmpty
+                    ? Icon(
+                        CupertinoIcons.person_fill,
+                        size: 14,
+                        color: AppColors.getIconSecondaryColor(context),
+                      )
+                    : null,
+                onBackgroundImageError: (_, __) {},
+              ),
+              const SizedBox(width: 8),
+              Text.rich(
+                TextSpan(
+                  text: name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.getTextPrimaryColor(context),
+                  ),
+                  children: [
+                    if (role.isNotEmpty)
+                      TextSpan(
+                        text: role,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -14,6 +14,7 @@ import '../../../../../core/utils/error_handler.dart';
 import '../../../../../core/services/auth_service.dart';
 import '../../../../../core/widgets/primary_button.dart';
 import '../../../../../core/widgets/app_bar.dart';
+import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../providers/services/api_provider.dart';
 import '../../../../../core/providers/form_state_provider.dart';
 import '../../../../../core/widgets/form_error_display.dart';
@@ -391,42 +392,46 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(
-          title: 'Редактирование объявления',
-          showBack: true,
-          showBottomDivider: true,
+      return InteractiveBackSwipe(
+        child: Scaffold(
+          backgroundColor: AppColors.getBackgroundColor(context),
+          appBar: const PaceAppBar(
+            title: 'Редактирование объявления',
+            showBack: true,
+            showBottomDivider: true,
+          ),
+          body: const Center(child: CupertinoActivityIndicator()),
         ),
-        body: const Center(child: CupertinoActivityIndicator()),
       );
     }
 
     if (_error != null) {
-      return Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(
-          title: 'Редактирование объявления',
-          showBack: true,
-          showBottomDivider: true,
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: SelectableText.rich(
-              TextSpan(
-                text: 'Ошибка загрузки:\n',
-                style: TextStyle(
-                  color: AppColors.getTextSecondaryColor(context),
-                ),
-                children: [
-                  TextSpan(
-                    text: _error ?? 'Неизвестная ошибка',
-                    style: const TextStyle(color: AppColors.error),
+      return InteractiveBackSwipe(
+        child: Scaffold(
+          backgroundColor: AppColors.getBackgroundColor(context),
+          appBar: const PaceAppBar(
+            title: 'Редактирование объявления',
+            showBack: true,
+            showBottomDivider: true,
+          ),
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: SelectableText.rich(
+                TextSpan(
+                  text: 'Ошибка загрузки:\n',
+                  style: TextStyle(
+                    color: AppColors.getTextSecondaryColor(context),
                   ),
-                ],
+                  children: [
+                    TextSpan(
+                      text: _error ?? 'Неизвестная ошибка',
+                      style: const TextStyle(color: AppColors.error),
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
           ),
         ),
@@ -439,184 +444,186 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
     final safeBottom = media.viewPadding.bottom; // «борода»/ноутч
     final bottomPad = (bottomInset > 0 ? bottomInset : safeBottom) + 20;
 
-    return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
-      appBar: const PaceAppBar(
-        title: 'Редактирование объявления',
-        showBack: true,
-        showBottomDivider: true,
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(12, 12, 12, bottomPad),
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ────────────────────────────────────────────────────────────────
-            // 📸 ФОТОГРАФИИ ВЕЩИ (горизонтальная карусель)
-            // ────────────────────────────────────────────────────────────────
-            Text(
-              'Фотографии вещи',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: AppColors.getTextPrimaryColor(context),
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.getBackgroundColor(context),
+        appBar: const PaceAppBar(
+          title: 'Редактирование объявления',
+          showBack: true,
+          showBottomDivider: true,
+        ),
+        body: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(12, 12, 12, bottomPad),
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ────────────────────────────────────────────────────────────────
+              // 📸 ФОТОГРАФИИ ВЕЩИ (горизонтальная карусель)
+              // ────────────────────────────────────────────────────────────────
+              Text(
+                'Фотографии вещи',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            _buildPhotoCarousel(),
+              const SizedBox(height: 2),
+              _buildPhotoCarousel(),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            _LabeledTextField(
-              label: 'Название вещи',
-              hint: 'Наименование продаваемого товара',
-              controller: titleCtrl,
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 20),
+              _LabeledTextField(
+                label: 'Название вещи',
+                hint: 'Наименование продаваемого товара',
+                controller: titleCtrl,
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 20),
 
-            _DropdownField(
-              label: 'Категория',
-              value: _category,
-              items: _categories,
-              onChanged: (v) => setState(() => _category = v ?? _category),
-            ),
-            const SizedBox(height: 20),
+              _DropdownField(
+                label: 'Категория',
+                value: _category,
+                items: _categories,
+                onChanged: (v) => setState(() => _category = v ?? _category),
+              ),
+              const SizedBox(height: 20),
 
-            const _SmallLabel('Пол'),
-            const SizedBox(height: 8),
-            _GenderAnyRow(
-              value: _gender,
-              onChanged: (g) =>
-                  setState(() => _gender = g), // g может быть null (= Любой)
-            ),
-            const SizedBox(height: 20),
+              const _SmallLabel('Пол'),
+              const SizedBox(height: 8),
+              _GenderAnyRow(
+                value: _gender,
+                onChanged: (g) =>
+                    setState(() => _gender = g), // g может быть null (= Любой)
+              ),
+              const SizedBox(height: 20),
 
-            _PriceField(
-              controller: priceCtrl,
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 20),
+              _PriceField(
+                controller: priceCtrl,
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 20),
 
-            // ── динамические поля для ввода городов передачи (в два столбца)
-            const _SmallLabel('Город передачи'),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: List.generate(_cityControllers.length, (index) {
-                return SizedBox(
-                  width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
-                  child: TextFormField(
-                    controller: _cityControllers[index],
-                    onChanged: (_) => setState(() {}),
-                    style: AppTextStyles.h14w4.copyWith(
-                      color: AppColors.getTextPrimaryColor(context),
+              // ── динамические поля для ввода городов передачи (в два столбца)
+              const _SmallLabel('Город передачи'),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: List.generate(_cityControllers.length, (index) {
+                  return SizedBox(
+                    width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
+                    child: TextFormField(
+                      controller: _cityControllers[index],
+                      onChanged: (_) => setState(() {}),
+                      style: AppTextStyles.h14w4.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Населенный пункт',
+                        hintStyle: AppTextStyles.h14w4Place.copyWith(
+                          color: AppColors.getTextPlaceholderColor(context),
+                        ),
+                        filled: true,
+                        fillColor: AppColors.getSurfaceColor(context),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 17,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                      ),
                     ),
-                    decoration: InputDecoration(
-                      hintText: 'Населенный пункт',
-                      hintStyle: AppTextStyles.h14w4Place.copyWith(
-                        color: AppColors.getTextPlaceholderColor(context),
-                      ),
-                      filled: true,
-                      fillColor: AppColors.getSurfaceColor(context),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 17,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(
-                          color: AppColors.getBorderColor(context),
-                          width: 1,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(
-                          color: AppColors.getBorderColor(context),
-                          width: 1,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(
-                          color: AppColors.getBorderColor(context),
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-            const SizedBox(height: 12),
-            // ── кнопка "добавить ещё"
-            GestureDetector(
-              onTap: _addCityField,
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    CupertinoIcons.add_circled,
-                    size: 20,
-                    color: AppColors.brandPrimary,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'добавить ещё',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
+                  );
+                }),
+              ),
+              const SizedBox(height: 12),
+              // ── кнопка "добавить ещё"
+              GestureDetector(
+                onTap: _addCityField,
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      CupertinoIcons.add_circled,
+                      size: 20,
                       color: AppColors.brandPrimary,
                     ),
-                  ),
-                ],
+                    SizedBox(width: 8),
+                    Text(
+                      'добавить ещё',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.brandPrimary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            _LabeledTextField(
-              label: 'Описание',
-              hint: 'Размер, отправка, передача и другая полезная информация',
-              controller: descCtrl,
-              maxLines: 5,
-            ),
-            const SizedBox(height: 24),
+              _LabeledTextField(
+                label: 'Описание',
+                hint: 'Размер, отправка, передача и другая полезная информация',
+                controller: descCtrl,
+                maxLines: 5,
+              ),
+              const SizedBox(height: 24),
 
-            // ── показываем ошибки, если есть
-            Builder(
-              builder: (context) {
-                final formState = ref.watch(formStateProvider);
-                if (formState.hasErrors) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: FormErrorDisplay(formState: formState),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-
-            // ────────────────────────────────────────────────────────────────
-            // 💾 КНОПКА СОХРАНЕНИЯ
-            // ────────────────────────────────────────────────────────────────
-            Center(
-              child: Builder(
+              // ── показываем ошибки, если есть
+              Builder(
                 builder: (context) {
                   final formState = ref.watch(formStateProvider);
-                  return PrimaryButton(
-                    text: 'Сохранить изменения',
-                    onPressed: !formState.isSubmitting ? _submit : () {},
-                    width: 240,
-                    isLoading: formState.isSubmitting,
-                    enabled: _isValid && !formState.isSubmitting,
-                  );
+                  if (formState.hasErrors) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: FormErrorDisplay(formState: formState),
+                    );
+                  }
+                  return const SizedBox.shrink();
                 },
               ),
-            ),
-          ],
+
+              // ────────────────────────────────────────────────────────────────
+              // 💾 КНОПКА СОХРАНЕНИЯ
+              // ────────────────────────────────────────────────────────────────
+              Center(
+                child: Builder(
+                  builder: (context) {
+                    final formState = ref.watch(formStateProvider);
+                    return PrimaryButton(
+                      text: 'Сохранить изменения',
+                      onPressed: !formState.isSubmitting ? _submit : () {},
+                      width: 240,
+                      isLoading: formState.isSubmitting,
+                      enabled: _isValid && !formState.isSubmitting,
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
