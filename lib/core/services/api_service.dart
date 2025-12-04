@@ -438,6 +438,11 @@ class ApiService {
       }
 
       try {
+        // ── проверяем, что ответ начинается с JSON (не HTML)
+        if (cleaned.trim().startsWith('<')) {
+          throw ApiException("Сервер вернул HTML вместо JSON. Возможно, произошла ошибка на сервере.");
+        }
+
         final decoded = json.decode(cleaned);
 
         // Если ответ — не объект, оборачиваем
@@ -458,6 +463,10 @@ class ApiService {
 
         return data;
       } on FormatException catch (e) {
+        // ── если ошибка парсинга JSON, проверяем, не HTML ли это
+        if (cleaned.trim().startsWith('<')) {
+          throw ApiException("Сервер вернул HTML вместо JSON. Возможно, произошла ошибка на сервере.");
+        }
         throw ApiException("Некорректный JSON: $e");
       }
     }
