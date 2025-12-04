@@ -155,7 +155,7 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                         ),
                         child: CachedNetworkImage(
                           imageUrl: img,
-                          fit: BoxFit.cover,
+                            fit: BoxFit.cover,
                           placeholder: (context, url) => Container(
                             color: AppColors.getBackgroundColor(context),
                             child: Center(
@@ -284,12 +284,12 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: SizedBox(
-                                    height: 36,
-                                    child: ElevatedButton.icon(
-                                      onPressed: () {
+                          height: 36,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
                                         // Переход в чат
-                                        Navigator.of(context, rootNavigator: true).push(
-                                          TransparentPageRoute(
+                              Navigator.of(context, rootNavigator: true).push(
+                                TransparentPageRoute(
                                             builder: (_) => TradeChatThingsScreen(
                                               thingId: widget.item.id,
                                             ),
@@ -334,33 +334,33 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                                   TransparentPageRoute(
                                     builder: (_) => TradeChatThingsScreen(
                                       thingId: widget.item.id,
-                                    ),
                                   ),
-                                );
-                              },
-                              icon: const Icon(
-                                CupertinoIcons.paperplane,
-                                size: 16,
-                              ),
-                              label: const Text(
-                                'Написать продавцу',
-                                style: TextStyle(fontFamily: 'Inter'),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.brandPrimary,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.sm,
-                                  ),
+                              );
+                            },
+                            icon: const Icon(
+                              CupertinoIcons.paperplane,
+                              size: 16,
+                            ),
+                            label: const Text(
+                              'Написать продавцу',
+                              style: TextStyle(fontFamily: 'Inter'),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.brandPrimary,
+                                foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
                                 ),
                               ),
                             ),
                           ),
+                        ),
                       ],
                     ),
                   ),

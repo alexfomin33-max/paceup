@@ -426,9 +426,9 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
               builder: (context) {
                 final formState = ref.watch(formStateProvider);
                 return PrimaryButton(
-                  text: 'Разместить продажу',
+              text: 'Разместить продажу',
                   onPressed: !formState.isSubmitting ? _submit : () {},
-                  width: 220,
+              width: 220,
                   isLoading: formState.isSubmitting,
                   enabled: _isValid && !formState.isSubmitting,
                 );

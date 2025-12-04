@@ -244,7 +244,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
   // ─── Инициализация чата: создание/получение чата и загрузка данных ───
   Future<void> _initializeChat() async {
     try {
-      setState(() {
+    setState(() {
         _isLoading = true;
         _error = null;
       });
@@ -435,8 +435,8 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
     if (_chatData == null) return;
 
     try {
-      final x = await _picker.pickImage(source: ImageSource.gallery);
-      if (x == null) return;
+    final x = await _picker.pickImage(source: ImageSource.gallery);
+    if (x == null) return;
 
       final userId = _currentUserId;
       if (userId == null) return;
@@ -635,9 +635,9 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                       borderRadius: BorderRadius.circular(AppRadius.xs),
                       child: CachedNetworkImage(
                         imageUrl: chatData.firstImageUrl!,
-                        width: 36,
-                        height: 36,
-                        fit: BoxFit.cover,
+                      width: 36,
+                      height: 36,
+                          fit: BoxFit.cover,
                         errorWidget: (_, __, ___) => Container(
                           width: 36,
                           height: 36,
@@ -769,26 +769,26 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
 
                         // ─── Закреплённый блок кнопок (только для продавца) ───
                         if (isSeller && chatData.thingStatus != 'sold')
-                          SliverPersistentHeader(
-                            pinned: true,
-                            delegate: _ActionsHeaderDelegate(
-                              child: Container(
-                                color:
-                                    Theme.of(context).brightness ==
-                                        Brightness.light
-                                    ? AppColors.getSurfaceColor(context)
-                                    : AppColors.getBackgroundColor(context),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                child: _ActionsWrap(
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: _ActionsHeaderDelegate(
+                            child: Container(
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.light
+                                  ? AppColors.getSurfaceColor(context)
+                                  : AppColors.getBackgroundColor(context),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              child: _ActionsWrap(
                                   dealStatus: chatData.dealStatus,
                                   onUpdateStatus: _updateThingStatus,
-                                ),
                               ),
                             ),
                           ),
+                        ),
 
                         // ─── Divider ───
                         SliverToBoxAdapter(
@@ -817,11 +817,11 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                             ) {
                               final msg = _messages[index];
 
-                              final hasMessageAbove = index > 0;
-                              final topSpacing = hasMessageAbove ? 8.0 : 0.0;
-                              final isLastMessage =
-                                  index == _messages.length - 1;
-                              final bottomSpacing = isLastMessage ? 8.0 : 0.0;
+                                final hasMessageAbove = index > 0;
+                                final topSpacing = hasMessageAbove ? 8.0 : 0.0;
+                                final isLastMessage =
+                                    index == _messages.length - 1;
+                                final bottomSpacing = isLastMessage ? 8.0 : 0.0;
 
                               final isFromSeller =
                                   msg.senderId == chatData.sellerId;
@@ -830,39 +830,39 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                                   : chatData.buyerAvatar;
 
                               return msg.isMine
-                                  ? _BubbleRight(
+                                    ? _BubbleRight(
                                       text: msg.text ?? '',
                                       image: msg.messageType == 'image'
                                           ? msg.imageUrl
-                                          : null,
+                                            : null,
                                       time: _formatTime(msg.createdAt),
-                                      topSpacing: topSpacing,
-                                      bottomSpacing: bottomSpacing,
-                                      onImageTap:
+                                        topSpacing: topSpacing,
+                                        bottomSpacing: bottomSpacing,
+                                        onImageTap:
                                           msg.messageType == 'image' &&
                                               msg.imageUrl != null
-                                          ? () => _showFullscreenImage(
+                                            ? () => _showFullscreenImage(
                                               msg.imageUrl!,
-                                            )
-                                          : null,
-                                    )
-                                  : _BubbleLeft(
+                                              )
+                                            : null,
+                                      )
+                                    : _BubbleLeft(
                                       text: msg.text ?? '',
                                       image: msg.messageType == 'image'
                                           ? msg.imageUrl
-                                          : null,
+                                            : null,
                                       time: _formatTime(msg.createdAt),
                                       avatarUrl: otherUserAvatar,
-                                      topSpacing: topSpacing,
-                                      bottomSpacing: bottomSpacing,
-                                      onImageTap:
+                                        topSpacing: topSpacing,
+                                        bottomSpacing: bottomSpacing,
+                                        onImageTap:
                                           msg.messageType == 'image' &&
                                               msg.imageUrl != null
-                                          ? () => _showFullscreenImage(
+                                            ? () => _showFullscreenImage(
                                               msg.imageUrl!,
-                                            )
-                                          : null,
-                                    );
+                                              )
+                                            : null,
+                                      );
                             }, childCount: _messages.length),
                           ),
                         ),
@@ -1102,16 +1102,16 @@ class _DateSeparator extends StatelessWidget {
   const _DateSeparator({required this.text});
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    alignment: Alignment.center,
-    child: Text(
-      text,
-      style: TextStyle(
-        fontSize: 12,
-        color: AppColors.getTextTertiaryColor(context),
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          color: AppColors.getTextTertiaryColor(context),
+        ),
       ),
-    ),
-  );
+    );
 }
 
 class _ParticipantRow extends StatelessWidget {
@@ -1248,19 +1248,19 @@ class _BubbleLeft extends StatelessWidget {
                               memCacheWidth: w,
                               maxWidthDiskCache: w,
                               errorWidget: (context, url, error) {
-                                return Container(
-                                  width: maxW,
-                                  height: 200,
+                            return Container(
+                              width: maxW,
+                              height: 200,
                                   color: AppColors.getSurfaceMutedColor(
                                     context,
                                   ),
-                                  child: Icon(
-                                    CupertinoIcons.photo,
-                                    size: 40,
+                              child: Icon(
+                                CupertinoIcons.photo,
+                                size: 40,
                                     color: AppColors.getIconSecondaryColor(
                                       context,
                                     ),
-                                  ),
+                              ),
                                 );
                               },
                             );
@@ -1365,19 +1365,19 @@ class _BubbleRight extends StatelessWidget {
                               memCacheWidth: w,
                               maxWidthDiskCache: w,
                               errorWidget: (context, url, error) {
-                                return Container(
-                                  width: maxW,
-                                  height: 200,
+                            return Container(
+                              width: maxW,
+                              height: 200,
                                   color: AppColors.getSurfaceMutedColor(
                                     context,
                                   ),
-                                  child: Icon(
-                                    CupertinoIcons.photo,
-                                    size: 40,
+                              child: Icon(
+                                CupertinoIcons.photo,
+                                size: 40,
                                     color: AppColors.getIconSecondaryColor(
                                       context,
                                     ),
-                                  ),
+                              ),
                                 );
                               },
                             );
