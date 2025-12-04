@@ -1,18 +1,31 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+
 import '../../../../../core/theme/app_theme.dart';
-import '../../../models/market_models.dart' show Gender;
+import '../../../../../core/utils/local_image_compressor.dart'
+    show compressLocalImage, ImageCompressionPreset;
+import '../../../../../core/utils/error_handler.dart';
+import '../../../../../core/services/auth_service.dart';
 import '../../../../../core/widgets/primary_button.dart';
+import '../../../../../providers/services/api_provider.dart';
+import '../../../../../core/providers/form_state_provider.dart';
+import '../../../../../core/widgets/form_error_display.dart';
+import '../../../models/market_models.dart' show Gender;
 
 /// Контент вкладки «Продажа вещи»
-class SaleThingsContent extends StatefulWidget {
+class SaleThingsContent extends ConsumerStatefulWidget {
   const SaleThingsContent({super.key});
 
   @override
-  State<SaleThingsContent> createState() => _SaleThingsContentState();
+  ConsumerState<SaleThingsContent> createState() => _SaleThingsContentState();
 }
 
-class _SaleThingsContentState extends State<SaleThingsContent> {
+class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
   final titleCtrl = TextEditingController();
   final priceCtrl = TextEditingController();
   // ── контроллеры для полей ввода городов передачи
@@ -29,6 +42,9 @@ class _SaleThingsContentState extends State<SaleThingsContent> {
 
   /// null = Любой
   Gender? _gender;
+
+  // ── список выбранных фотографий
+  final List<File> _images = [];
 
   bool get _isValid =>
       titleCtrl.text.trim().isNotEmpty && priceCtrl.text.trim().isNotEmpty;
@@ -62,14 +78,186 @@ class _SaleThingsContentState extends State<SaleThingsContent> {
     });
   }
 
-  void _submit() {
+  /// Сохраняет объявление о продаже вещи на сервер
+  Future<void> _submit() async {
     if (!_isValid) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Объявление о продаже вещи размещено (демо)'),
+
+    final formState = ref.read(formStateProvider);
+    if (formState.isSubmitting) return;
+
+    final authService = AuthService();
+    final userId = await authService.getUserId();
+    if (userId == null) {
+      _showError('Не удалось получить ID пользователя');
+      return;
+    }
+
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ref.read(apiServiceProvider);
+
+    await formNotifier.submit(
+      () async {
+        // ── собираем города передачи из контроллеров
+        final cities = _cityControllers
+            .map((ctrl) => ctrl.text.trim())
+            .where((city) => city.isNotEmpty)
+            .toList();
+
+        // ── формируем данные для отправки
+        final fields = <String, String>{
+          'user_id': userId.toString(),
+          'title': titleCtrl.text.trim(),
+          'category': _category,
+          'price': priceCtrl.text.trim(),
+          'description': descCtrl.text.trim(),
+        };
+
+        // ── добавляем пол (если указан)
+        if (_gender != null) {
+          fields['gender'] = _gender == Gender.male ? 'male' : 'female';
+        }
+
+        // ── добавляем города передачи (JSON массив)
+        if (cities.isNotEmpty) {
+          fields['cities'] = cities.toString(); // Будет передан как массив в multipart
+        }
+
+        Map<String, dynamic> data;
+
+        if (_images.isEmpty) {
+          // ── JSON-запрос (без файлов)
+          // Для JSON нужно передать cities как JSON строку
+          final jsonBody = <String, dynamic>{
+            'user_id': userId.toString(),
+            'title': titleCtrl.text.trim(),
+            'category': _category,
+            'price': int.tryParse(priceCtrl.text.trim()) ?? 0,
+            'description': descCtrl.text.trim(),
+          };
+          if (_gender != null) {
+            jsonBody['gender'] = _gender == Gender.male ? 'male' : 'female';
+          }
+          if (cities.isNotEmpty) {
+            jsonBody['cities'] = cities;
+          }
+
+          data = await api.post(
+            '/create_thing.php',
+            body: jsonBody,
+          );
+        } else {
+          // ── Multipart-запрос (с файлами)
+          final files = <String, File>{};
+          for (int i = 0; i < _images.length; i++) {
+            files['images[$i]'] = _images[i];
+          }
+
+          // ── для multipart cities передаем как JSON строку (PHP декодирует)
+          if (cities.isNotEmpty) {
+            // ── передаем как JSON строку, PHP декодирует в create_thing.php
+            fields['cities'] = jsonEncode(cities);
+          }
+
+          data = await api.postMultipart(
+            '/create_thing.php',
+            files: files,
+            fields: fields,
+            timeout: const Duration(seconds: 60),
+          );
+        }
+
+        // ── проверяем ответ API
+        if (data['success'] != true) {
+          final errorMessage = data['message']?.toString() ?? 'Ошибка сервера';
+          throw Exception(errorMessage);
+        }
+      },
+      onSuccess: () async {
+        // ── очищаем форму
+        titleCtrl.clear();
+        priceCtrl.clear();
+        descCtrl.clear();
+        for (final controller in _cityControllers) {
+          controller.clear();
+        }
+        setState(() {
+          _images.clear();
+          _category = 'Кроссовки';
+          _gender = null;
+        });
+
+        if (!mounted) return;
+        Navigator.pop(context, true);
+      },
+      onError: (error) {
+        if (!mounted) return;
+        final formState = ref.read(formStateProvider);
+        _showError(formState.error ?? 'Ошибка при создании объявления');
+      },
+    );
+  }
+
+  /// Обработчик добавления фотографий
+  Future<void> _handleAddPhotos() async {
+    final picker = ImagePicker();
+
+    try {
+      final pickedFiles = await picker.pickMultiImage();
+      if (pickedFiles.isEmpty) return;
+
+      // ── подготавливаем сжатые версии всех выбранных фотографий
+      final compressedFiles = <File>[];
+      for (final file in pickedFiles) {
+        final compressed = await compressLocalImage(
+          sourceFile: File(file.path),
+          maxSide: ImageCompressionPreset.post.maxSide,
+          jpegQuality: ImageCompressionPreset.post.quality,
+        );
+        compressedFiles.add(compressed);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _images.addAll(compressedFiles);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      _showError(e);
+    }
+  }
+
+  /// Обработчик удаления фотографии
+  void _handleDeletePhoto(File file) {
+    setState(() {
+      _images.remove(file);
+    });
+  }
+
+  /// Показывает ошибку
+  void _showError(dynamic error) {
+    final message = ErrorHandler.format(error);
+    showCupertinoDialog<void>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Ошибка'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: SelectableText.rich(
+            TextSpan(
+              text: message,
+              style: const TextStyle(color: AppColors.error, fontSize: 15),
+            ),
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Понятно'),
+          ),
+        ],
       ),
     );
-    Navigator.pop(context);
   }
 
   @override
@@ -86,6 +274,22 @@ class _SaleThingsContentState extends State<SaleThingsContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // ────────────────────────────────────────────────────────────────
+          // 📸 ФОТОГРАФИИ ВЕЩИ (горизонтальная карусель)
+          // ────────────────────────────────────────────────────────────────
+          Text(
+            'Фотографии вещи',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ),
+          const SizedBox(height: 2),
+          _buildPhotoCarousel(),
+
+          const SizedBox(height: 24),
+
           _LabeledTextField(
             label: 'Название вещи',
             hint: 'Наименование продаваемого товара',
@@ -200,14 +404,171 @@ class _SaleThingsContentState extends State<SaleThingsContent> {
           ),
           const SizedBox(height: 24),
 
+          // ── показываем ошибки, если есть
+          Builder(
+            builder: (context) {
+              final formState = ref.watch(formStateProvider);
+              if (formState.hasErrors) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: FormErrorDisplay(formState: formState),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+
+          // ────────────────────────────────────────────────────────────────
+          // 💾 КНОПКА РАЗМЕЩЕНИЯ
+          // ────────────────────────────────────────────────────────────────
           Center(
-            child: PrimaryButton(
-              text: 'Разместить продажу',
-              onPressed: _submit,
-              width: 220,
+            child: Builder(
+              builder: (context) {
+                final formState = ref.watch(formStateProvider);
+                return PrimaryButton(
+                  text: 'Разместить продажу',
+                  onPressed: !formState.isSubmitting ? _submit : () {},
+                  width: 220,
+                  isLoading: formState.isSubmitting,
+                  enabled: _isValid && !formState.isSubmitting,
+                );
+              },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Горизонтальная карусель фотографий
+  Widget _buildPhotoCarousel() {
+    // ── общее количество элементов: кнопка добавления + фотографии
+    final totalItems = 1 + _images.length;
+
+    return SizedBox(
+      height: 90,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: totalItems,
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          // ── первый элемент — кнопка добавления фото
+          if (index == 0) {
+            return _buildAddPhotoButton();
+          }
+          // ── остальные элементы — фотографии
+          final photoIndex = index - 1;
+          final file = _images[photoIndex];
+          return _buildPhotoItem(file, photoIndex);
+        },
+      ),
+    );
+  }
+
+  /// Кнопка добавления фотографии
+  Widget _buildAddPhotoButton() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Builder(
+        builder: (context) => GestureDetector(
+          onTap: _handleAddPhotos,
+          child: Container(
+            width: 90,
+            height: 90,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              color: AppColors.getSurfaceColor(context),
+              border: Border.all(color: AppColors.getBorderColor(context)),
+            ),
+            child: Center(
+              child: Icon(
+                CupertinoIcons.photo,
+                size: 28,
+                color: AppColors.getIconSecondaryColor(context),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Элемент фотографии с кнопкой удаления
+  Widget _buildPhotoItem(File file, int photoIndex) {
+    return Builder(
+      builder: (context) => Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            GestureDetector(
+              onTap: () async {
+                // ── по тапу можно заменить картинку
+                final picker = ImagePicker();
+                final XFile? pickedFile = await picker.pickImage(
+                  source: ImageSource.gallery,
+                );
+                if (pickedFile == null) return;
+
+                // ── сжимаем выбранное фото перед заменой
+                final compressed = await compressLocalImage(
+                  sourceFile: File(pickedFile.path),
+                  maxSide: ImageCompressionPreset.post.maxSide,
+                  jpegQuality: ImageCompressionPreset.post.quality,
+                );
+                if (!mounted) return;
+
+                setState(() {
+                  _images[photoIndex] = compressed;
+                });
+              },
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  color: AppColors.getBackgroundColor(context),
+                ),
+                clipBehavior: Clip.hardEdge,
+                child: Image.file(
+                  file,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: AppColors.getBackgroundColor(context),
+                    child: Icon(
+                      CupertinoIcons.photo,
+                      size: 24,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // ── кнопка удаления в правом верхнем углу
+            Positioned(
+              right: -6,
+              top: -6,
+              child: GestureDetector(
+                onTap: () => _handleDeletePhoto(file),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppColors.getSurfaceColor(context),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: AppColors.getBorderColor(context)),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.clear_circled_solid,
+                    size: 20,
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

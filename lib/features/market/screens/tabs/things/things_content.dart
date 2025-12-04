@@ -2,70 +2,156 @@
 // Всё, что относится к вкладке «Вещи»: выбор категории, список, раскрытие карточек.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/theme/app_theme.dart';
-import '../../../models/market_models.dart';
+import '../../../providers/things_provider.dart';
+import '../../../providers/things_notifier.dart';
 import 'widgets/market_things_card.dart';
 
-class ThingsContent extends StatefulWidget {
+class ThingsContent extends ConsumerStatefulWidget {
   const ThingsContent({super.key});
 
   @override
-  State<ThingsContent> createState() => _ThingsContentState();
+  ConsumerState<ThingsContent> createState() => _ThingsContentState();
 }
 
-class _ThingsContentState extends State<ThingsContent> {
-  final List<String> _categories = const ['Все', 'Обувь', 'Часы'];
+class _ThingsContentState extends ConsumerState<ThingsContent> {
+  final List<String> _categories = const ['Все', 'Кроссовки', 'Часы', 'Одежда', 'Аксессуары'];
   String _selected = 'Все';
 
   final Set<int> _expanded = {};
 
   @override
+  void initState() {
+    super.initState();
+    // ── обновляем фильтр при изменении категории
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateCategoryFilter();
+    });
+  }
+
+  void _updateCategoryFilter() {
+    final notifier = ref.read(thingsProvider.notifier);
+    
+    // ── преобразуем выбранную категорию в фильтр
+    String? categoryFilter;
+    if (_selected != 'Все') {
+      categoryFilter = _selected;
+    }
+    
+    // ── создаем новый фильтр
+    final newFilter = ThingsFilter(category: categoryFilter);
+    notifier.updateFilter(newFilter);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final items = _applyFilters(_demoGoods);
+    final thingsState = ref.watch(thingsProvider);
+    final items = thingsState.items;
 
     const headerCount = 1; // только селектор категории
 
-    return ListView.separated(
-      key: const ValueKey('things_list'),
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-      physics: const BouncingScrollPhysics(),
-      itemCount: items.length + headerCount,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
+    // ── показываем индикатор загрузки
+    if (thingsState.isLoading && items.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // ── показываем ошибку
+    if (thingsState.error != null && items.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Ошибка загрузки',
+                style: TextStyle(
+                  color: AppColors.error,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                thingsState.error!,
+                style: TextStyle(
+                  color: AppColors.getTextSecondaryColor(context),
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        await ref.read(thingsProvider.notifier).loadInitial();
+      },
+      child: ListView.separated(
+        key: const ValueKey('things_list'),
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        itemCount: items.length + headerCount + (thingsState.hasMore ? 1 : 0),
+        separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (_, index) {
         if (index == 0) {
           return _CategoryDropdown(
             value: _selected,
             options: _categories,
-            onChanged: (v) => setState(() => _selected = v ?? 'Все'),
+            onChanged: (v) {
+              setState(() => _selected = v ?? 'Все');
+              _updateCategoryFilter();
+            },
           );
         }
 
+        // ── кнопка загрузки следующей страницы
+        if (index == items.length + headerCount) {
+          if (thingsState.isLoadingMore) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+          if (thingsState.hasMore) {
+            return Center(
+              child: TextButton(
+                onPressed: () {
+                  ref.read(thingsProvider.notifier).loadMore();
+                },
+                child: const Text('Загрузить еще'),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }
+
         final i = index - headerCount;
-        final isOpen = _expanded.contains(i);
+        if (i >= items.length) return const SizedBox.shrink();
+        
+        final isOpen = _expanded.contains(items[i].id);
 
         return GoodsCard(
           item: items[i],
           expanded: isOpen,
-          onToggle: () => setState(() => _expanded.toggle(i)),
+          onToggle: () => setState(() => _expanded.toggle(items[i].id)),
         );
       },
+      ),
     );
-  }
-
-  // ————————————————— Фильтрация (только по категории) —————————————————
-
-  List<GoodsItem> _applyFilters(List<GoodsItem> source) {
-    return source.where((e) {
-      if (_selected == 'Все') return true;
-      return _categoryOf(e) == _selected;
-    }).toList();
-  }
-
-  String _categoryOf(GoodsItem item) {
-    final t = item.title.toLowerCase();
-    if (t.contains('часы')) return 'Часы';
-    return 'Обувь';
   }
 }
 
@@ -149,58 +235,3 @@ class _CategoryDropdown extends StatelessWidget {
 extension<T> on Set<T> {
   void toggle(T v) => contains(v) ? remove(v) : add(v);
 }
-
-// ————————————————— ДЕМО-ДАННЫЕ (без фильтра по gender) —————————————————
-final _demoGoods = <GoodsItem>[
-  const GoodsItem(
-    title: 'Трейловые кроссовки Ino8 Trailfly Ultra G300',
-    images: [
-      'assets/sneakers1_1.png',
-      'assets/sneakers1_2.png',
-      'assets/sneakers1_3.png',
-    ],
-    price: 12000,
-    gender: Gender.male,
-    city: 'Москва',
-    description:
-        'Размер евро 45 —29,5см по стельке.\n'
-        'Личная встреча в Липецке или Москве, отправка Сдэком, Почтой, Авито-доставкой.\n'
-        'Возможно привезти на Белые ночи или Кудыкину гору.',
-  ),
-  const GoodsItem(
-    title: 'Salomon XT-Rush 2',
-    images: [
-      'assets/sneakers2_1.png',
-      'assets/sneakers2_2.png',
-      'assets/sneakers2_3.png',
-      'assets/sneakers2_4.png',
-      'assets/sneakers2_5.png',
-    ],
-    price: 10500,
-    gender: Gender.female,
-    city: 'Москва',
-    description:
-        'Размер 36,5 \n'
-        'Куплены в Мюнхене, ни разу не носились.\n'
-        'Передача по договоренности в Москве.',
-  ),
-  const GoodsItem(
-    title: 'Часы Garmin Forerunner 255',
-    images: ['assets/watch_1.png', 'assets/watch_2.png', 'assets/watch_3.png'],
-    price: 20000,
-    gender: Gender.female,
-    city: 'Москва',
-  ),
-  const GoodsItem(
-    title: 'Adidas Boston 11',
-    images: [
-      'assets/sneakers3_1.png',
-      'assets/sneakers3_2.png',
-      'assets/sneakers3_3.png',
-      'assets/sneakers3_4.png',
-    ],
-    price: 10500,
-    gender: Gender.female,
-    city: 'Москва',
-  ),
-];

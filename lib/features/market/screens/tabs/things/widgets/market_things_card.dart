@@ -1,16 +1,21 @@
 // lib/widgets/goods_card.dart
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/theme/app_theme.dart';
+import '../../../../../../core/services/auth_service.dart';
 import '../../../../models/market_models.dart';
-import '../tradechat_things_screen.dart';
+import '../tradechat_things_screen.dart' show TradeChatThingsScreen;
 import '../../../widgets/image_gallery.dart';
 import '../../../widgets/pills.dart';
 import '../../../../../../core/widgets/transparent_route.dart';
+import '../../../state/edit_thing/edit_thing_screen.dart';
+import '../../../../providers/things_provider.dart';
 
 /// Отдельный виджет карточки ТОВАРА.
-class GoodsCard extends StatelessWidget {
+class GoodsCard extends ConsumerStatefulWidget {
   final GoodsItem item;
   final bool expanded; // если есть описание — показываем/скрываем его
   final VoidCallback onToggle;
@@ -22,15 +27,40 @@ class GoodsCard extends StatelessWidget {
     required this.onToggle,
   });
 
+  @override
+  ConsumerState<GoodsCard> createState() => _GoodsCardState();
+}
+
+class _GoodsCardState extends ConsumerState<GoodsCard> {
+  int? _currentUserId;
+  bool _isLoadingUser = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final auth = AuthService();
+    final userId = await auth.getUserId();
+    setState(() {
+      _currentUserId = userId;
+      _isLoadingUser = false;
+    });
+  }
+
   // Если описание пустое — не отображаем стрелку и не раскрываем
   bool get _hasDetails =>
-      (item.description != null && item.description!.trim().isNotEmpty);
+      (widget.item.description != null && widget.item.description!.trim().isNotEmpty);
+
+  bool get _isSeller => _currentUserId != null && _currentUserId == widget.item.sellerId;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: _hasDetails
-          ? onToggle
+          ? widget.onToggle
           : null, // клик по карточке — раскрыть описание
       child: Container(
         decoration: BoxDecoration(
@@ -58,7 +88,7 @@ class GoodsCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      item.title,
+                      widget.item.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -74,7 +104,7 @@ class GoodsCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     AnimatedRotation(
                       duration: const Duration(milliseconds: 150),
-                      turns: expanded ? 0.5 : 0.0,
+                      turns: widget.expanded ? 0.5 : 0.0,
                       child: Icon(
                         CupertinoIcons.chevron_down,
                         size: 18,
@@ -94,18 +124,18 @@ class GoodsCard extends StatelessWidget {
               height: 64,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: item.images.length,
+                itemCount: widget.item.images.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (_, i) {
-                  final img = item.images[i];
+                  final img = widget.item.images[i];
                   final heroGroup =
-                      item; // общий «ключ» для Hero в рамках карточки
+                      widget.item; // общий «ключ» для Hero в рамках карточки
                   return GestureDetector(
                     onTap: () {
                       // Открываем полноэкранную галерею и начинаем с выбранной миниатюры
                       showImageGallery(
                         context,
-                        images: item.images,
+                        images: widget.item.images,
                         initialIndex: i,
                         heroGroup: heroGroup,
                       );
@@ -122,9 +152,29 @@ class GoodsCard extends StatelessWidget {
                           border: Border.all(
                             color: AppColors.getBorderColor(context),
                           ),
-                          image: DecorationImage(
-                            image: AssetImage(img),
-                            fit: BoxFit.cover,
+                        ),
+                        child: CachedNetworkImage(
+                          imageUrl: img,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: AppColors.getBackgroundColor(context),
+                            child: Center(
+                              child: Icon(
+                                CupertinoIcons.photo,
+                                size: 24,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: AppColors.getBackgroundColor(context),
+                            child: Center(
+                              child: Icon(
+                                CupertinoIcons.photo,
+                                size: 24,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -138,18 +188,18 @@ class GoodsCard extends StatelessWidget {
             // Чипы: цена • пол • город
             Row(
               children: [
-                PricePill(text: _fmt(item.price)),
+                PricePill(text: _fmt(widget.item.price)),
                 const SizedBox(width: 6),
-                if (item.gender == Gender.female)
+                if (widget.item.gender == Gender.female)
                   const GenderPill.female()
                 else
                   const GenderPill.male(),
                 const SizedBox(width: 6),
-                CityPill(text: item.city),
+                CityPill(text: widget.item.city),
               ],
             ),
 
-            // Раскрывающийся блок: описание + кнопка «Написать продавцу»
+            // Раскрывающийся блок: описание + кнопки
             if (_hasDetails)
               AnimatedCrossFade(
                 firstChild: const SizedBox.shrink(),
@@ -169,7 +219,7 @@ class GoodsCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.description!,
+                          widget.item.description!,
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 13,
@@ -178,52 +228,144 @@ class GoodsCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        SizedBox(
-                          height: 36,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              // Переход в чат с продавцом (экран уже у вас есть)
-                              Navigator.of(context, rootNavigator: true).push(
-                                TransparentPageRoute(
-                                  builder: (_) => TradeChatScreen(
-                                    itemTitle: item.title,
-                                    itemThumb: item.images.isNotEmpty
-                                        ? item.images.first
-                                        : null,
-                                    price: item.price,
+                        // ──── Кнопки в зависимости от роли ────
+                        if (_isLoadingUser)
+                          const SizedBox(
+                            height: 36,
+                            child: Center(child: CupertinoActivityIndicator()),
+                          )
+                        else if (_isSeller)
+                          // ──── Кнопки для продавца ────
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 36,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () async {
+                                      // Переход на экран редактирования
+                                      final result = await Navigator.of(context, rootNavigator: true).push(
+                                        TransparentPageRoute(
+                                          builder: (_) => EditThingScreen(
+                                            thingId: widget.item.id,
+                                          ),
+                                        ),
+                                      );
+                                      // ── обновляем список после редактирования
+                                      if (result == true && mounted) {
+                                        ref.read(thingsProvider.notifier).loadInitial();
+                                      }
+                                    },
+                                    icon: const Icon(
+                                      CupertinoIcons.pencil,
+                                      size: 16,
+                                    ),
+                                    label: const Text(
+                                      'Редактировать',
+                                      style: TextStyle(fontFamily: 'Inter'),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.brandPrimary,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.sm,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              );
-                            },
-                            icon: const Icon(
-                              CupertinoIcons.paperplane,
-                              size: 16,
-                            ),
-                            label: const Text(
-                              'Написать продавцу',
-                              style: TextStyle(fontFamily: 'Inter'),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.brandPrimary,
-                              foregroundColor: Colors
-                                  .white, // белый цвет для иконки и текста на синем фоне
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
+                              if (widget.item.chatId != null) ...[
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 36,
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        // Переход в чат
+                                        Navigator.of(context, rootNavigator: true).push(
+                                          TransparentPageRoute(
+                                            builder: (_) => TradeChatThingsScreen(
+                                              thingId: widget.item.id,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(
+                                        CupertinoIcons.chat_bubble,
+                                        size: 16,
+                                      ),
+                                      label: const Text(
+                                        'В чат',
+                                        style: TextStyle(fontFamily: 'Inter'),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.getSurfaceMutedColor(context),
+                                        foregroundColor: AppColors.getTextPrimaryColor(context),
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.sm,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          )
+                        else
+                          // ──── Кнопка для покупателя ────
+                          SizedBox(
+                            height: 36,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                // Переход в чат с продавцом
+                                Navigator.of(context, rootNavigator: true).push(
+                                  TransparentPageRoute(
+                                    builder: (_) => TradeChatThingsScreen(
+                                      thingId: widget.item.id,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                CupertinoIcons.paperplane,
+                                size: 16,
+                              ),
+                              label: const Text(
+                                'Написать продавцу',
+                                style: TextStyle(fontFamily: 'Inter'),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.brandPrimary,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.sm,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
                 ),
-                crossFadeState: expanded
+                crossFadeState: widget.expanded
                     ? CrossFadeState.showSecond
                     : CrossFadeState.showFirst,
                 duration: const Duration(milliseconds: 180),

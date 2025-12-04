@@ -1,0 +1,1139 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/utils/local_image_compressor.dart'
+    show compressLocalImage, ImageCompressionPreset;
+import '../../../../../core/utils/error_handler.dart';
+import '../../../../../core/services/auth_service.dart';
+import '../../../../../core/widgets/primary_button.dart';
+import '../../../../../providers/services/api_provider.dart';
+import '../../../../../core/providers/form_state_provider.dart';
+import '../../../../../core/widgets/form_error_display.dart';
+import '../../../models/market_models.dart' show Gender;
+
+/// Экран редактирования объявления о продаже вещи
+class EditThingScreen extends ConsumerStatefulWidget {
+  final int thingId;
+
+  const EditThingScreen({
+    super.key,
+    required this.thingId,
+  });
+
+  @override
+  ConsumerState<EditThingScreen> createState() => _EditThingScreenState();
+}
+
+class _EditThingScreenState extends ConsumerState<EditThingScreen> {
+  final titleCtrl = TextEditingController();
+  final priceCtrl = TextEditingController();
+  // ── контроллеры для полей ввода городов передачи
+  final List<TextEditingController> _cityControllers = [];
+  final descCtrl = TextEditingController();
+
+  final List<String> _categories = const [
+    'Кроссовки',
+    'Часы',
+    'Одежда',
+    'Аксессуары',
+  ];
+  String _category = 'Кроссовки';
+
+  /// null = Любой
+  Gender? _gender;
+
+  // ── список существующих изображений (URL)
+  final List<String> _existingImages = [];
+  // ── список новых изображений (File)
+  final List<File> _newImages = [];
+
+  bool _isLoading = true;
+  String? _error;
+
+  bool get _isValid =>
+      titleCtrl.text.trim().isNotEmpty && priceCtrl.text.trim().isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    // ── создаём первое поле для ввода города передачи
+    _cityControllers.add(TextEditingController());
+    _cityControllers.last.addListener(() => setState(() {}));
+    _loadThingData();
+  }
+
+  @override
+  void dispose() {
+    titleCtrl.dispose();
+    priceCtrl.dispose();
+    // ── освобождаем все контроллеры городов
+    for (final controller in _cityControllers) {
+      controller.dispose();
+    }
+    descCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Загружает данные объявления из API
+  Future<void> _loadThingData() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+      if (userId == null) {
+        throw Exception('Не удалось получить ID пользователя');
+      }
+
+      final api = ref.read(apiServiceProvider);
+      final response = await api.get(
+        '/get_thing.php',
+        queryParams: {
+          'thing_id': widget.thingId.toString(),
+          'user_id': userId.toString(),
+        },
+      );
+
+      if (response['success'] != true) {
+        throw Exception(response['message'] ?? 'Ошибка загрузки данных');
+      }
+
+      final thing = response['thing'] as Map<String, dynamic>;
+
+      // ── заполняем форму данными
+      titleCtrl.text = thing['title'] ?? '';
+      priceCtrl.text = (thing['price'] ?? 0).toString();
+      _category = thing['category'] ?? 'Кроссовки';
+      
+      final genderStr = thing['gender'];
+      if (genderStr == 'male') {
+        _gender = Gender.male;
+      } else if (genderStr == 'female') {
+        _gender = Gender.female;
+      } else {
+        _gender = null;
+      }
+
+      descCtrl.text = thing['description'] ?? '';
+
+      // ── заполняем города
+      final cities = (thing['cities'] as List<dynamic>?) ?? [];
+      _cityControllers.clear();
+      if (cities.isEmpty) {
+        _cityControllers.add(TextEditingController());
+      } else {
+        for (final city in cities) {
+          final controller = TextEditingController(text: city.toString());
+          controller.addListener(() => setState(() {}));
+          _cityControllers.add(controller);
+        }
+      }
+
+      // ── заполняем существующие изображения
+      final images = (thing['images'] as List<dynamic>?) ?? [];
+      _existingImages.clear();
+      _existingImages.addAll(images.map((img) => img.toString()));
+
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  // ── добавление нового поля для ввода города передачи
+  void _addCityField() {
+    setState(() {
+      final newController = TextEditingController();
+      newController.addListener(() => setState(() {}));
+      _cityControllers.add(newController);
+    });
+  }
+
+  /// Сохраняет изменения объявления на сервер
+  Future<void> _submit() async {
+    if (!_isValid) return;
+
+    final formState = ref.read(formStateProvider);
+    if (formState.isSubmitting) return;
+
+    final authService = AuthService();
+    final userId = await authService.getUserId();
+    if (userId == null) {
+      _showError('Не удалось получить ID пользователя');
+      return;
+    }
+
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ref.read(apiServiceProvider);
+
+    await formNotifier.submit(
+      () async {
+        // ── собираем города передачи из контроллеров
+        final cities = _cityControllers
+            .map((ctrl) => ctrl.text.trim())
+            .where((city) => city.isNotEmpty)
+            .toList();
+
+        // ── формируем данные для отправки
+        final fields = <String, String>{
+          'thing_id': widget.thingId.toString(),
+          'user_id': userId.toString(),
+          'title': titleCtrl.text.trim(),
+          'category': _category,
+          'price': priceCtrl.text.trim(),
+          'description': descCtrl.text.trim(),
+        };
+
+        // ── добавляем пол (если указан)
+        if (_gender != null) {
+          fields['gender'] = _gender == Gender.male ? 'male' : 'female';
+        }
+
+        // ── добавляем существующие изображения (JSON массив URL)
+        if (_existingImages.isNotEmpty) {
+          fields['existing_images'] = jsonEncode(_existingImages);
+        }
+
+        // ── добавляем города передачи (JSON массив)
+        if (cities.isNotEmpty) {
+          fields['cities'] = jsonEncode(cities);
+        }
+
+        Map<String, dynamic> data;
+
+        if (_newImages.isEmpty) {
+          // ── JSON-запрос (без новых файлов)
+          final jsonBody = <String, dynamic>{
+            'thing_id': widget.thingId,
+            'user_id': userId,
+            'title': titleCtrl.text.trim(),
+            'category': _category,
+            'price': int.tryParse(priceCtrl.text.trim()) ?? 0,
+            'description': descCtrl.text.trim(),
+          };
+          if (_gender != null) {
+            jsonBody['gender'] = _gender == Gender.male ? 'male' : 'female';
+          }
+          if (_existingImages.isNotEmpty) {
+            jsonBody['existing_images'] = _existingImages;
+          }
+          if (cities.isNotEmpty) {
+            jsonBody['cities'] = cities;
+          }
+
+          data = await api.post(
+            '/update_thing.php',
+            body: jsonBody,
+          );
+        } else {
+          // ── Multipart-запрос (с новыми файлами)
+          final files = <String, File>{};
+          for (int i = 0; i < _newImages.length; i++) {
+            files['images[$i]'] = _newImages[i];
+          }
+
+          data = await api.postMultipart(
+            '/update_thing.php',
+            files: files,
+            fields: fields,
+            timeout: const Duration(seconds: 60),
+          );
+        }
+
+        // ── проверяем ответ API
+        if (data['success'] != true) {
+          final errorMessage = data['message']?.toString() ?? 'Ошибка сервера';
+          throw Exception(errorMessage);
+        }
+      },
+      onSuccess: () async {
+        if (!mounted) return;
+        Navigator.pop(context, true);
+      },
+      onError: (error) {
+        if (!mounted) return;
+        final formState = ref.read(formStateProvider);
+        _showError(formState.error ?? 'Ошибка при обновлении объявления');
+      },
+    );
+  }
+
+  /// Обработчик добавления фотографий
+  Future<void> _handleAddPhotos() async {
+    final picker = ImagePicker();
+
+    try {
+      final pickedFiles = await picker.pickMultiImage();
+      if (pickedFiles.isEmpty) return;
+
+      // ── подготавливаем сжатые версии всех выбранных фотографий
+      final compressedFiles = <File>[];
+      for (final file in pickedFiles) {
+        final compressed = await compressLocalImage(
+          sourceFile: File(file.path),
+          maxSide: ImageCompressionPreset.post.maxSide,
+          jpegQuality: ImageCompressionPreset.post.quality,
+        );
+        compressedFiles.add(compressed);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _newImages.addAll(compressedFiles);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      _showError(e);
+    }
+  }
+
+  /// Обработчик удаления существующего изображения
+  void _handleDeleteExistingImage(String url) {
+    setState(() {
+      _existingImages.remove(url);
+    });
+  }
+
+  /// Обработчик удаления нового изображения
+  void _handleDeleteNewImage(File file) {
+    setState(() {
+      _newImages.remove(file);
+    });
+  }
+
+  /// Обработчик замены существующего изображения
+  Future<void> _handleReplaceExistingImage(String url, int index) async {
+    final picker = ImagePicker();
+    try {
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile == null) return;
+
+      // ── сжимаем выбранное фото
+      final compressed = await compressLocalImage(
+        sourceFile: File(pickedFile.path),
+        maxSide: ImageCompressionPreset.post.maxSide,
+        jpegQuality: ImageCompressionPreset.post.quality,
+      );
+      if (!mounted) return;
+
+      setState(() {
+        // ── удаляем старое изображение и добавляем новое
+        _existingImages.removeAt(index);
+        _newImages.add(compressed);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      _showError(e);
+    }
+  }
+
+  /// Обработчик замены нового изображения
+  Future<void> _handleReplaceNewImage(File file, int index) async {
+    final picker = ImagePicker();
+    try {
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile == null) return;
+
+      // ── сжимаем выбранное фото
+      final compressed = await compressLocalImage(
+        sourceFile: File(pickedFile.path),
+        maxSide: ImageCompressionPreset.post.maxSide,
+        jpegQuality: ImageCompressionPreset.post.quality,
+      );
+      if (!mounted) return;
+
+      setState(() {
+        _newImages[index] = compressed;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      _showError(e);
+    }
+  }
+
+  /// Показывает ошибку
+  void _showError(dynamic error) {
+    final message = ErrorHandler.format(error);
+    showCupertinoDialog<void>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Ошибка'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: SelectableText.rich(
+            TextSpan(
+              text: message,
+              style: const TextStyle(color: AppColors.error, fontSize: 15),
+            ),
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Понятно'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.getSurfaceColor(context),
+        appBar: AppBar(
+          backgroundColor: AppColors.getSurfaceColor(context),
+          leading: IconButton(
+            icon: const Icon(CupertinoIcons.back),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text('Редактирование объявления'),
+        ),
+        body: const Center(
+          child: CupertinoActivityIndicator(),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        backgroundColor: AppColors.getSurfaceColor(context),
+        appBar: AppBar(
+          backgroundColor: AppColors.getSurfaceColor(context),
+          leading: IconButton(
+            icon: const Icon(CupertinoIcons.back),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text('Редактирование объявления'),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: SelectableText.rich(
+              TextSpan(
+                text: 'Ошибка загрузки:\n',
+                style: TextStyle(
+                  color: AppColors.getTextSecondaryColor(context),
+                ),
+                children: [
+                  TextSpan(
+                    text: _error ?? 'Неизвестная ошибка',
+                    style: const TextStyle(color: AppColors.error),
+                  ),
+                ],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // 🔻 умный нижний паддинг: клавиатура (viewInsets) > 0 ? берём её : берём safe-area
+    final media = MediaQuery.of(context);
+    final bottomInset = media.viewInsets.bottom; // клавиатура
+    final safeBottom = media.viewPadding.bottom; // «борода»/ноутч
+    final bottomPad = (bottomInset > 0 ? bottomInset : safeBottom) + 20;
+
+    return Scaffold(
+      backgroundColor: AppColors.getSurfaceColor(context),
+      appBar: AppBar(
+        backgroundColor: AppColors.getSurfaceColor(context),
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Редактирование объявления'),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(12, 12, 12, bottomPad),
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ────────────────────────────────────────────────────────────────
+            // 📸 ФОТОГРАФИИ ВЕЩИ (горизонтальная карусель)
+            // ────────────────────────────────────────────────────────────────
+            Text(
+              'Фотографии вещи',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+            ),
+            const SizedBox(height: 2),
+            _buildPhotoCarousel(),
+
+            const SizedBox(height: 24),
+
+            _LabeledTextField(
+              label: 'Название вещи',
+              hint: 'Наименование продаваемого товара',
+              controller: titleCtrl,
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 20),
+
+            _DropdownField(
+              label: 'Категория',
+              value: _category,
+              items: _categories,
+              onChanged: (v) => setState(() => _category = v ?? _category),
+            ),
+            const SizedBox(height: 20),
+
+            const _SmallLabel('Пол'),
+            const SizedBox(height: 8),
+            _GenderAnyRow(
+              value: _gender,
+              onChanged: (g) =>
+                  setState(() => _gender = g), // g может быть null (= Любой)
+            ),
+            const SizedBox(height: 20),
+
+            _PriceField(controller: priceCtrl, onChanged: (_) => setState(() {})),
+            const SizedBox(height: 20),
+
+            // ── динамические поля для ввода городов передачи (в два столбца)
+            const _SmallLabel('Город передачи'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: List.generate(_cityControllers.length, (index) {
+                return SizedBox(
+                  width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
+                  child: TextFormField(
+                    controller: _cityControllers[index],
+                    onChanged: (_) => setState(() {}),
+                    style: AppTextStyles.h14w4.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Населенный пункт',
+                      hintStyle: AppTextStyles.h14w4Place.copyWith(
+                        color: AppColors.getTextPlaceholderColor(context),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.getSurfaceColor(context),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 17,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: BorderSide(
+                          color: AppColors.getBorderColor(context),
+                          width: 1,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: BorderSide(
+                          color: AppColors.getBorderColor(context),
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderSide: BorderSide(
+                          color: AppColors.getBorderColor(context),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 12),
+            // ── кнопка "добавить ещё"
+            GestureDetector(
+              onTap: _addCityField,
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    CupertinoIcons.add_circled,
+                    size: 20,
+                    color: AppColors.brandPrimary,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'добавить ещё',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.brandPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            _LabeledTextField(
+              label: 'Описание',
+              hint: 'Размер, отправка, передача и другая полезная информация',
+              controller: descCtrl,
+              maxLines: 5,
+            ),
+            const SizedBox(height: 24),
+
+            // ── показываем ошибки, если есть
+            Builder(
+              builder: (context) {
+                final formState = ref.watch(formStateProvider);
+                if (formState.hasErrors) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: FormErrorDisplay(formState: formState),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+
+            // ────────────────────────────────────────────────────────────────
+            // 💾 КНОПКА СОХРАНЕНИЯ
+            // ────────────────────────────────────────────────────────────────
+            Center(
+              child: Builder(
+                builder: (context) {
+                  final formState = ref.watch(formStateProvider);
+                  return PrimaryButton(
+                    text: 'Сохранить изменения',
+                    onPressed: !formState.isSubmitting ? _submit : () {},
+                    width: 220,
+                    isLoading: formState.isSubmitting,
+                    enabled: _isValid && !formState.isSubmitting,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Горизонтальная карусель фотографий
+  Widget _buildPhotoCarousel() {
+    // ── общее количество элементов: кнопка добавления + существующие изображения + новые изображения
+    final totalItems = 1 + _existingImages.length + _newImages.length;
+
+    return SizedBox(
+      height: 90,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: totalItems,
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          // ── первый элемент — кнопка добавления фото
+          if (index == 0) {
+            return _buildAddPhotoButton();
+          }
+          
+          // ── существующие изображения
+          if (index <= _existingImages.length) {
+            final imageIndex = index - 1;
+            final url = _existingImages[imageIndex];
+            return _buildExistingPhotoItem(url, imageIndex);
+          }
+          
+          // ── новые изображения
+          final newImageIndex = index - 1 - _existingImages.length;
+          final file = _newImages[newImageIndex];
+          return _buildNewPhotoItem(file, newImageIndex);
+        },
+      ),
+    );
+  }
+
+  /// Кнопка добавления фотографии
+  Widget _buildAddPhotoButton() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: GestureDetector(
+        onTap: _handleAddPhotos,
+        child: Container(
+          width: 90,
+          height: 90,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            color: AppColors.getSurfaceColor(context),
+            border: Border.all(color: AppColors.getBorderColor(context)),
+          ),
+          child: Center(
+            child: Icon(
+              CupertinoIcons.photo,
+              size: 28,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Элемент существующего изображения с кнопкой удаления
+  Widget _buildExistingPhotoItem(String url, int index) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          GestureDetector(
+            onTap: () => _handleReplaceExistingImage(url, index),
+            child: Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                color: AppColors.getBackgroundColor(context),
+              ),
+              clipBehavior: Clip.hardEdge,
+              child: CachedNetworkImage(
+                imageUrl: url,
+                fit: BoxFit.cover,
+                errorWidget: (context, url, error) => Container(
+                  color: AppColors.getBackgroundColor(context),
+                  child: Icon(
+                    CupertinoIcons.photo,
+                    size: 24,
+                    color: AppColors.getIconSecondaryColor(context),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // ── кнопка удаления в правом верхнем углу
+          Positioned(
+            right: -6,
+            top: -6,
+            child: GestureDetector(
+              onTap: () => _handleDeleteExistingImage(url),
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.getBorderColor(context)),
+                ),
+                child: const Icon(
+                  CupertinoIcons.clear_circled_solid,
+                  size: 20,
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Элемент нового изображения с кнопкой удаления
+  Widget _buildNewPhotoItem(File file, int index) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          GestureDetector(
+            onTap: () => _handleReplaceNewImage(file, index),
+            child: Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                color: AppColors.getBackgroundColor(context),
+              ),
+              clipBehavior: Clip.hardEdge,
+              child: Image.file(
+                file,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: AppColors.getBackgroundColor(context),
+                  child: Icon(
+                    CupertinoIcons.photo,
+                    size: 24,
+                    color: AppColors.getIconSecondaryColor(context),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // ── кнопка удаления в правом верхнем углу
+          Positioned(
+            right: -6,
+            top: -6,
+            child: GestureDetector(
+              onTap: () => _handleDeleteNewImage(file),
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.getBorderColor(context)),
+                ),
+                child: const Icon(
+                  CupertinoIcons.clear_circled_solid,
+                  size: 20,
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ——— Локальные UI-компоненты ———
+
+class _SmallLabel extends StatelessWidget {
+  final String text;
+  const _SmallLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+    );
+  }
+}
+
+class _LabeledTextField extends StatelessWidget {
+  final String label;
+  final String hint;
+  final TextEditingController controller;
+  final int maxLines;
+  final ValueChanged<String>? onChanged;
+
+  const _LabeledTextField({
+    required this.label,
+    required this.hint,
+    required this.controller,
+    this.maxLines = 1,
+    this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (label.isNotEmpty) ...[
+          _SmallLabel(label),
+          const SizedBox(height: 8),
+        ],
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          onChanged: onChanged,
+          style: AppTextStyles.h14w4.copyWith(
+            color: AppColors.getTextPrimaryColor(context),
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: AppTextStyles.h14w4Place.copyWith(
+              color: AppColors.getTextPlaceholderColor(context),
+            ),
+            filled: true,
+            fillColor: AppColors.getSurfaceColor(context),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 17,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DropdownField extends StatelessWidget {
+  final String label;
+  final String value;
+  final List<String> items;
+  final ValueChanged<String?> onChanged;
+
+  const _DropdownField({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SmallLabel(label),
+        const SizedBox(height: 8),
+        InputDecorator(
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.getSurfaceColor(context),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
+            ),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              onChanged: onChanged,
+              dropdownColor: AppColors.getSurfaceColor(context),
+              menuMaxHeight: 300,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              icon: Icon(
+                Icons.arrow_drop_down,
+                color: AppColors.getIconSecondaryColor(context),
+              ),
+              style: AppTextStyles.h14w4.copyWith(
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+              items: items.map((o) {
+                return DropdownMenuItem<String>(
+                  value: o,
+                  child: Text(o, style: AppTextStyles.h14w4),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PriceField extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String>? onChanged;
+  const _PriceField({required this.controller, this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SmallLabel('Цена'),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            SizedBox(
+              width: 120,
+              child: TextFormField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                onChanged: onChanged,
+                style: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+                decoration: InputDecoration(
+                  hintText: '0',
+                  hintStyle: AppTextStyles.h14w4Place.copyWith(
+                    color: AppColors.getTextPlaceholderColor(context),
+                  ),
+                  filled: true,
+                  fillColor: AppColors.getSurfaceColor(context),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 17,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderSide: BorderSide(
+                      color: AppColors.getBorderColor(context),
+                      width: 1,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderSide: BorderSide(
+                      color: AppColors.getBorderColor(context),
+                      width: 1,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderSide: BorderSide(
+                      color: AppColors.getBorderColor(context),
+                      width: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.getSurfaceColor(context),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                '₽',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontFamily: 'Inter',
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _GenderAnyRow extends StatelessWidget {
+  final Gender? value; // null = Любой
+  final ValueChanged<Gender?> onChanged;
+  const _GenderAnyRow({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _OvalToggle(
+          label: 'Любой',
+          selected: value == null,
+          onTap: () => onChanged(null),
+        ),
+        const SizedBox(width: 8),
+        _OvalToggle(
+          label: 'Мужской',
+          selected: value == Gender.male,
+          onTap: () => onChanged(Gender.male),
+        ),
+        const SizedBox(width: 8),
+        _OvalToggle(
+          label: 'Женский',
+          selected: value == Gender.female,
+          onTap: () => onChanged(Gender.female),
+        ),
+      ],
+    );
+  }
+}
+
+class _OvalToggle extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _OvalToggle({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = selected
+        ? AppColors.brandPrimary
+        : AppColors.getSurfaceColor(context);
+    final fg = selected
+        ? (Theme.of(context).brightness == Brightness.dark
+              ? AppColors.surface
+              : AppColors.getSurfaceColor(context))
+        : AppColors.getTextPrimaryColor(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(
+            color: selected
+                ? AppColors.brandPrimary
+                : AppColors.getBorderColor(context),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: fg,
+          ),
+        ),
+      ),
+    );
+  }
+}
+

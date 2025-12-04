@@ -47,20 +47,26 @@ class MarketItem {
 
 /// Модель «Товар» — кроссовки, часы и т.п.
 class GoodsItem {
+  final int id; // ID вещи из базы данных
   final String title; // Название
-  final List<String> images; // Список картинок ассетов
+  final List<String> images; // Список URL картинок
   final int price; // Цена
   final Gender gender; // «Ж» или «М» (для фильтра/чипа)
-  final String city; // Город
+  final String city; // Города через запятую
   final String? description; // Описание (если пусто — раскрывать нечего)
+  final int sellerId; // ID продавца
+  final int? chatId; // ID чата (если есть, для продавца)
 
   const GoodsItem({
+    required this.id,
     required this.title,
     required this.images,
     required this.price,
     required this.gender,
     required this.city,
     this.description,
+    required this.sellerId,
+    this.chatId,
   });
 }
 

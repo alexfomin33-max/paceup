@@ -15,11 +15,12 @@ import '../../../../../../providers/services/auth_provider.dart';
 import 'personal_chat_screen.dart';
 import 'start_chat_screen.dart';
 import '../../../../../market/screens/tabs/slots/tradechat_slots_screen.dart';
+import '../../../../../market/screens/tabs/things/tradechat_things_screen.dart';
 
 /// Модель чата из API
 class ChatItem {
   final int id;
-  final String chatType; // 'regular' или 'slot'
+  final String chatType; // 'regular', 'slot' или 'thing'
   
   // Для обычных чатов
   final int? userId;
@@ -30,6 +31,11 @@ class ChatItem {
   final int? slotId;
   final String? slotTitle;
   final String? eventLogoUrl;
+  
+  // Для чатов по продаже вещей
+  final int? thingId;
+  final String? thingTitle;
+  final String? thingImageUrl;
   
   final String lastMessage;
   final bool
@@ -47,6 +53,9 @@ class ChatItem {
     this.slotId,
     this.slotTitle,
     this.eventLogoUrl,
+    this.thingId,
+    this.thingTitle,
+    this.thingImageUrl,
     required this.lastMessage,
     required this.lastMessageHasImage,
     required this.lastMessageAt,
@@ -70,6 +79,19 @@ class ChatItem {
         unread: json['unread'] as bool? ?? false,
         createdAt: DateTime.parse(json['created_at'] as String),
       );
+    } else if (chatType == 'thing') {
+      return ChatItem(
+        id: (json['id'] as num).toInt(),
+        chatType: chatType,
+        thingId: json['thing_id'] != null ? (json['thing_id'] as num).toInt() : null,
+        thingTitle: json['thing_title'] as String?,
+        thingImageUrl: json['thing_image_url'] as String?,
+        lastMessage: json['last_message'] as String? ?? '',
+        lastMessageHasImage: json['last_message_has_image'] as bool? ?? false,
+        lastMessageAt: DateTime.parse(json['last_message_at'] as String),
+        unread: json['unread'] as bool? ?? false,
+        createdAt: DateTime.parse(json['created_at'] as String),
+      );
     } else {
       return ChatItem(
         id: (json['id'] as num).toInt(),
@@ -87,6 +109,7 @@ class ChatItem {
   }
   
   bool get isSlotChat => chatType == 'slot';
+  bool get isThingChat => chatType == 'thing';
   bool get isRegularChat => chatType == 'regular';
 }
 
@@ -101,6 +124,20 @@ class _SlotChatScreenWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TradeChatSlotsScreen(slotId: slotId);
+  }
+}
+
+/// ─── Обертка для навигации к TradeChatThingsScreen ───
+class _ThingChatScreenWrapper extends StatelessWidget {
+  final int thingId;
+
+  const _ThingChatScreenWrapper({
+    required this.thingId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TradeChatThingsScreen(thingId: thingId);
   }
 }
 
@@ -343,6 +380,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     if (chat.isSlotChat) {
       // Для slot чатов возвращаем URL logo события
       return chat.eventLogoUrl;
+    } else if (chat.isThingChat) {
+      // Для thing чатов возвращаем URL изображения вещи
+      return chat.thingImageUrl;
     } else {
       // Для обычных чатов возвращаем URL аватара пользователя
       if (chat.userAvatar == null || chat.userAvatar!.isEmpty) {
@@ -360,6 +400,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   String _getDisplayName(ChatItem chat) {
     if (chat.isSlotChat) {
       return chat.slotTitle ?? 'Слот';
+    } else if (chat.isThingChat) {
+      return chat.thingTitle ?? 'Вещь';
     } else {
       return chat.userName ?? 'Пользователь';
     }
@@ -480,8 +522,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Аватар или logo события
-                      chat.isSlotChat
+                      // Аватар или logo события/вещи
+                      (chat.isSlotChat || chat.isThingChat)
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(22),
                               child: Builder(
@@ -493,15 +535,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                       width: 44,
                                       height: 44,
                                       color: AppColors.surfaceMuted,
-                                      child: const Icon(
-                                        CupertinoIcons.calendar,
+                                      child: Icon(
+                                        chat.isSlotChat
+                                            ? CupertinoIcons.calendar
+                                            : CupertinoIcons.bag,
                                         size: 24,
                                       ),
                                     );
                                   }
                                   return CachedNetworkImage(
                                     key: ValueKey(
-                                      'slot_logo_${chat.id}_$imageUrl',
+                                      '${chat.isSlotChat ? 'slot' : 'thing'}_logo_${chat.id}_$imageUrl',
                                     ),
                                     imageUrl: imageUrl,
                                     width: 44,
@@ -515,8 +559,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                         width: 44,
                                         height: 44,
                                         color: AppColors.surfaceMuted,
-                                        child: const Icon(
-                                          CupertinoIcons.calendar,
+                                        child: Icon(
+                                          chat.isSlotChat
+                                              ? CupertinoIcons.calendar
+                                              : CupertinoIcons.bag,
                                           size: 24,
                                         ),
                                       );
@@ -653,6 +699,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                           TransparentPageRoute(
                             builder: (_) => _SlotChatScreenWrapper(
                               slotId: chat.slotId!,
+                            ),
+                          ),
+                        );
+                      }
+                    } else if (chat.isThingChat) {
+                      // Для thing чатов открываем TradeChatThingsScreen
+                      if (chat.thingId != null) {
+                        result = await Navigator.of(context, rootNavigator: true).push(
+                          TransparentPageRoute(
+                            builder: (_) => _ThingChatScreenWrapper(
+                              thingId: chat.thingId!,
                             ),
                           ),
                         );
