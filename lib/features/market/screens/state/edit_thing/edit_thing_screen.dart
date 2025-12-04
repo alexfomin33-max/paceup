@@ -13,6 +13,7 @@ import '../../../../../core/utils/local_image_compressor.dart'
 import '../../../../../core/utils/error_handler.dart';
 import '../../../../../core/services/auth_service.dart';
 import '../../../../../core/widgets/primary_button.dart';
+import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../providers/services/api_provider.dart';
 import '../../../../../core/providers/form_state_provider.dart';
 import '../../../../../core/widgets/form_error_display.dart';
@@ -22,10 +23,7 @@ import '../../../models/market_models.dart' show Gender;
 class EditThingScreen extends ConsumerStatefulWidget {
   final int thingId;
 
-  const EditThingScreen({
-    super.key,
-    required this.thingId,
-  });
+  const EditThingScreen({super.key, required this.thingId});
 
   @override
   ConsumerState<EditThingScreen> createState() => _EditThingScreenState();
@@ -114,7 +112,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
       titleCtrl.text = thing['title'] ?? '';
       priceCtrl.text = (thing['price'] ?? 0).toString();
       _category = thing['category'] ?? 'Кроссовки';
-      
+
       final genderStr = thing['gender'];
       if (genderStr == 'male') {
         _gender = Gender.male;
@@ -236,10 +234,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
             jsonBody['cities'] = cities;
           }
 
-          data = await api.post(
-            '/update_thing.php',
-            body: jsonBody,
-          );
+          data = await api.post('/update_thing.php', body: jsonBody);
         } else {
           // ── Multipart-запрос (с новыми файлами)
           final files = <String, File>{};
@@ -397,31 +392,23 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: AppColors.getSurfaceColor(context),
-        appBar: AppBar(
-          backgroundColor: AppColors.getSurfaceColor(context),
-          leading: IconButton(
-            icon: const Icon(CupertinoIcons.back),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: const Text('Редактирование объявления'),
+        backgroundColor: AppColors.getBackgroundColor(context),
+        appBar: const PaceAppBar(
+          title: 'Редактирование объявления',
+          showBack: true,
+          showBottomDivider: true,
         ),
-        body: const Center(
-          child: CupertinoActivityIndicator(),
-        ),
+        body: const Center(child: CupertinoActivityIndicator()),
       );
     }
 
     if (_error != null) {
       return Scaffold(
-        backgroundColor: AppColors.getSurfaceColor(context),
-        appBar: AppBar(
-          backgroundColor: AppColors.getSurfaceColor(context),
-          leading: IconButton(
-            icon: const Icon(CupertinoIcons.back),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: const Text('Редактирование объявления'),
+        backgroundColor: AppColors.getBackgroundColor(context),
+        appBar: const PaceAppBar(
+          title: 'Редактирование объявления',
+          showBack: true,
+          showBottomDivider: true,
         ),
         body: Center(
           child: Padding(
@@ -453,14 +440,11 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
     final bottomPad = (bottomInset > 0 ? bottomInset : safeBottom) + 20;
 
     return Scaffold(
-      backgroundColor: AppColors.getSurfaceColor(context),
-      appBar: AppBar(
-        backgroundColor: AppColors.getSurfaceColor(context),
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Редактирование объявления'),
+      backgroundColor: AppColors.getBackgroundColor(context),
+      appBar: const PaceAppBar(
+        title: 'Редактирование объявления',
+        showBack: true,
+        showBottomDivider: true,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(12, 12, 12, bottomPad),
@@ -509,7 +493,10 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
             ),
             const SizedBox(height: 20),
 
-            _PriceField(controller: priceCtrl, onChanged: (_) => setState(() {})),
+            _PriceField(
+              controller: priceCtrl,
+              onChanged: (_) => setState(() {}),
+            ),
             const SizedBox(height: 20),
 
             // ── динамические поля для ввода городов передачи (в два столбца)
@@ -622,7 +609,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
                   return PrimaryButton(
                     text: 'Сохранить изменения',
                     onPressed: !formState.isSubmitting ? _submit : () {},
-                    width: 220,
+                    width: 240,
                     isLoading: formState.isSubmitting,
                     enabled: _isValid && !formState.isSubmitting,
                   );
@@ -652,14 +639,14 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
           if (index == 0) {
             return _buildAddPhotoButton();
           }
-          
+
           // ── существующие изображения
           if (index <= _existingImages.length) {
             final imageIndex = index - 1;
             final url = _existingImages[imageIndex];
             return _buildExistingPhotoItem(url, imageIndex);
           }
-          
+
           // ── новые изображения
           final newImageIndex = index - 1 - _existingImages.length;
           final file = _newImages[newImageIndex];
@@ -1136,4 +1123,3 @@ class _OvalToggle extends StatelessWidget {
     );
   }
 }
-

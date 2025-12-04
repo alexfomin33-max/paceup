@@ -1,4 +1,5 @@
 // lib/widgets/image_gallery.dart
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_theme.dart';
@@ -184,6 +185,9 @@ class _FullscreenGalleryState extends State<_FullscreenGallery>
                 itemBuilder: (_, i) {
                   final isCurrent = i == _index;
 
+                  final imageUrl = images[i];
+                  final isNetworkImage = _isNetworkUrl(imageUrl);
+
                   return Center(
                     // Hero — «красивый полёт» превью ↔ полноэкранная
                     child: Hero(
@@ -194,10 +198,37 @@ class _FullscreenGalleryState extends State<_FullscreenGallery>
                         child: Container(
                           // ключ только у текущего, чтобы измерения были корректными
                           key: isCurrent ? _imageKey : null,
-                          child: Image.asset(
-                            images[i],
-                            fit: BoxFit.contain, // показываем целиком
-                          ),
+                          child: isNetworkImage
+                              ? CachedNetworkImage(
+                                  imageUrl: imageUrl,
+                                  fit: BoxFit.contain,
+                                  placeholder: (context, url) => Container(
+                                    color: AppColors.getBackgroundColor(context),
+                                    child: Center(
+                                      child: CupertinoActivityIndicator(
+                                        color: AppColors.getIconSecondaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) => Container(
+                                    color: AppColors.getBackgroundColor(context),
+                                    child: Center(
+                                      child: Icon(
+                                        CupertinoIcons.photo,
+                                        size: 48,
+                                        color: AppColors.getIconSecondaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Image.asset(
+                                  imageUrl,
+                                  fit: BoxFit.contain, // показываем целиком
+                                ),
                         ),
                       ),
                     ),
@@ -279,5 +310,10 @@ class _FullscreenGalleryState extends State<_FullscreenGallery>
         });
       })
       ..forward();
+  }
+
+  /// Определяет, является ли строка URL-адресом сети
+  bool _isNetworkUrl(String url) {
+    return url.startsWith('http://') || url.startsWith('https://');
   }
 }
