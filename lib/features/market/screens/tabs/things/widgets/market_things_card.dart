@@ -52,9 +52,11 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
 
   // Если описание пустое — не отображаем стрелку и не раскрываем
   bool get _hasDetails =>
-      (widget.item.description != null && widget.item.description!.trim().isNotEmpty);
+      (widget.item.description != null &&
+      widget.item.description!.trim().isNotEmpty);
 
-  bool get _isSeller => _currentUserId != null && _currentUserId == widget.item.sellerId;
+  bool get _isSeller =>
+      _currentUserId != null && _currentUserId == widget.item.sellerId;
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +123,7 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
 
             // Горизонтальная лента миниатюр — каждая кликабельна
             SizedBox(
-              height: 64,
+              height: 80,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: widget.item.images.length,
@@ -143,25 +145,21 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                     child: Hero(
                       tag: Object.hash(heroGroup, i),
                       child: Container(
-                        width: 64,
-                        height: 64,
+                        width: 80,
+                        height: 80,
                         clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(AppRadius.xs),
-                          color: AppColors.getBackgroundColor(context),
-                          border: Border.all(
-                            color: AppColors.getBorderColor(context),
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                         child: CachedNetworkImage(
                           imageUrl: img,
-                            fit: BoxFit.cover,
+                          fit: BoxFit.contain,
                           placeholder: (context, url) => Container(
                             color: AppColors.getBackgroundColor(context),
                             child: Center(
                               child: Icon(
                                 CupertinoIcons.photo,
-                                size: 24,
+                                size: 28,
                                 color: AppColors.getIconSecondaryColor(context),
                               ),
                             ),
@@ -171,7 +169,7 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                             child: Center(
                               child: Icon(
                                 CupertinoIcons.photo,
-                                size: 24,
+                                size: 28,
                                 color: AppColors.getIconSecondaryColor(context),
                               ),
                             ),
@@ -241,22 +239,25 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                             child: ElevatedButton.icon(
                               onPressed: () async {
                                 // Переход на экран редактирования
-                                final result = await Navigator.of(context, rootNavigator: true).push(
-                                  TransparentPageRoute(
-                                    builder: (_) => EditThingScreen(
-                                      thingId: widget.item.id,
-                                    ),
-                                  ),
-                                );
+                                final result =
+                                    await Navigator.of(
+                                      context,
+                                      rootNavigator: true,
+                                    ).push(
+                                      TransparentPageRoute(
+                                        builder: (_) => EditThingScreen(
+                                          thingId: widget.item.id,
+                                        ),
+                                      ),
+                                    );
                                 // ── обновляем список после редактирования
                                 if (result == true && mounted) {
-                                  ref.read(thingsProvider.notifier).loadInitial();
+                                  ref
+                                      .read(thingsProvider.notifier)
+                                      .loadInitial();
                                 }
                               },
-                              icon: const Icon(
-                                CupertinoIcons.pencil,
-                                size: 16,
-                              ),
+                              icon: const Icon(CupertinoIcons.pencil, size: 16),
                               label: const Text(
                                 'Изменить',
                                 style: TextStyle(fontFamily: 'Inter'),
@@ -287,33 +288,33 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                                   TransparentPageRoute(
                                     builder: (_) => TradeChatThingsScreen(
                                       thingId: widget.item.id,
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                            icon: const Icon(
-                              CupertinoIcons.paperplane,
-                              size: 16,
-                            ),
-                            label: const Text(
-                              'Написать продавцу',
-                              style: TextStyle(fontFamily: 'Inter'),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.brandPrimary,
-                                foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
+                                );
+                              },
+                              icon: const Icon(
+                                CupertinoIcons.paperplane,
+                                size: 16,
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
+                              label: const Text(
+                                'Написать продавцу',
+                                style: TextStyle(fontFamily: 'Inter'),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.brandPrimary,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.sm,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
