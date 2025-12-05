@@ -192,6 +192,7 @@ class SlotsNotifier extends StateNotifier<SlotsState> {
       description: data['description'],
       sellerId: data['seller_id'] ?? 0,
       eventId: data['event_id'],
+      chatId: data['chat_id'],
     );
   }
 }

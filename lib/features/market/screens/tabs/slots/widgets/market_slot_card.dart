@@ -142,13 +142,16 @@ class MarketSlotCard extends StatelessWidget {
                                 );
                               } else {
                                 // Открываем экран чата для покупателя
+                                // Если chatId существует, передаем его для прямого открытия чата
                                 await Navigator.of(
                                   context,
                                   rootNavigator: true,
                                 ).push(
                                   TransparentPageRoute(
-                                    builder: (_) =>
-                                        TradeChatSlotsScreen(slotId: item.id),
+                                    builder: (_) => TradeChatSlotsScreen(
+                                      slotId: item.id,
+                                      chatId: item.chatId,
+                                    ),
                                   ),
                                 );
                               }
