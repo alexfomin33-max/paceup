@@ -847,7 +847,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                           ),
                         ),
 
-                        // ─── Закреплённый блок кнопок (для продавца и покупателя) ───
+                        // ─── Закреплённый блок кнопок (только для продавца) ───
                         // ─── Скрываем кнопки, если слот удален ───
                         if (!chatData.isSlotDeleted)
                           SliverPersistentHeader(
@@ -866,6 +866,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                                 child: _ActionsWrap(
                                   dealStatus: chatData.dealStatus,
                                   onUpdateStatus: _updateDealStatus,
+                                  isSeller: _currentUserId == chatData.sellerId,
                                 ),
                               ),
                             ),
@@ -1058,20 +1059,27 @@ class _ChipNeutral extends StatelessWidget {
 class _ActionsWrap extends StatelessWidget {
   final String? dealStatus;
   final Function(String) onUpdateStatus;
+  final bool isSeller;
 
-  const _ActionsWrap({required this.dealStatus, required this.onUpdateStatus});
+  const _ActionsWrap({
+    required this.dealStatus,
+    required this.onUpdateStatus,
+    required this.isSeller,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // ─── Кнопки действий работают одинаково для продавца и покупателя ───
-    // Обе стороны могут менять статус сделки: "Слот куплен" или "Отменить сделку"
-
+    // ─── Кнопка "Слот продан" показывается только продавцу ───
+    if (!isSeller) {
+      return const SizedBox.shrink();
+    }
+    
     // Если сделка уже завершена
     if (dealStatus == 'bought') {
       return Center(
         child: _PillFinal(
           icon: CupertinoIcons.check_mark_circled,
-          text: 'Слот куплен',
+          text: 'Слот продан',
           bg: Theme.of(context).brightness == Brightness.dark
               ? AppColors.darkSurfaceMuted
               : AppColors.backgroundGreen,
@@ -1099,40 +1107,21 @@ class _ActionsWrap extends StatelessWidget {
       );
     }
 
-    // Начальное состояние
+    // Начальное состояние - только кнопка "Слот продан" (только для продавца)
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: _PillButton(
-              text: 'Слот куплен',
-              bg: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkSurfaceMuted
-                  : AppColors.backgroundGreen,
-              border: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkBorder
-                  : AppColors.borderaccept,
-              fg: AppColors.success,
-              onTap: () => onUpdateStatus('bought'),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _PillButton(
-              text: 'Отменить сделку',
-              bg: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkSurfaceMuted
-                  : AppColors.bgfemale,
-              border: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkBorder
-                  : AppColors.bordercancel,
-              fg: AppColors.error,
-              onTap: () => onUpdateStatus('cancelled'),
-            ),
-          ),
-        ],
+      child: Center(
+        child: _PillButton(
+          text: 'Слот продан',
+          bg: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkSurfaceMuted
+              : AppColors.backgroundGreen,
+          border: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkBorder
+              : AppColors.borderaccept,
+          fg: AppColors.success,
+          onTap: () => onUpdateStatus('bought'),
+        ),
       ),
     );
   }
