@@ -3,12 +3,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/widgets/app_bar.dart'; // ← наш глобальный AppBar
+import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
-
-// ⬇️ наш полноэкранный шит с настройками уведомлений
 import 'settings_bottom_sheet.dart';
+import 'notifications_provider.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -19,12 +19,33 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
-  late final List<_Notif> _items;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _items = _demo();
+    // Загружаем уведомления при открытии экрана
+    Future.microtask(() {
+      ref.read(notificationsProvider.notifier).loadInitial();
+    });
+
+    // Автоматическая подгрузка при скролле
+    _scrollController.addListener(() {
+      final state = ref.read(notificationsProvider);
+      final pos = _scrollController.position;
+
+      if (state.hasMore &&
+          !state.isLoadingMore &&
+          pos.extentAfter < 400) {
+        ref.read(notificationsProvider.notifier).loadMore();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   String _formatWhen(DateTime d) {
@@ -39,27 +60,60 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     return DateFormat('dd.MM.yyyy').format(d);
   }
 
+  // Получение иконки по строковому коду
+  IconData _getIconData(String iconCode) {
+    switch (iconCode) {
+      case 'directions_run':
+        return Icons.directions_run;
+      case 'favorite':
+        return CupertinoIcons.heart;
+      case 'comment':
+        return CupertinoIcons.text_bubble;
+      case 'article':
+        return CupertinoIcons.square_pencil;
+      case 'event':
+        return CupertinoIcons.calendar_badge_plus;
+      case 'how_to_reg':
+        return Icons.emoji_events_outlined;
+      case 'person_add':
+        return CupertinoIcons.person_add;
+      default:
+        return CupertinoIcons.bell;
+    }
+  }
+
+  // Получение цвета из строки
+  Color _getColorFromString(String colorString) {
+    try {
+      return Color(int.parse(colorString.replaceFirst('#', '0xFF')));
+    } catch (e) {
+      return AppColors.brandPrimary;
+    }
+  }
+
   void _openSettingsSheet() {
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
-      isDismissible: true, // ← позволяет закрывать при клике вне окна
-      enableDrag: true, // ← позволяет закрывать свайпом вниз
+      isDismissible: true,
+      enableDrag: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const SettingsSheet(),
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(notificationsProvider);
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: Theme.of(context).brightness == Brightness.light
             ? AppColors.surface
             : AppColors.getBackgroundColor(context),
 
-        // ─── используем глобальную шапку ───
         appBar: PaceAppBar(
           title: 'Уведомления',
           actions: [
@@ -76,167 +130,167 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ],
         ),
 
-        body: ListView.separated(
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
-          itemCount: _items.length,
-          separatorBuilder: (_, _) => Divider(
-            height: 1,
-            thickness: 0.5,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.getBorderColor(context)
-                : AppColors.border,
-            indent: 57,
-            endIndent: 8,
-          ),
-          itemBuilder: (context, i) {
-            final n = _items[i];
-            final item = Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipOval(
-                    child: Image.asset(
-                      n.avatar,
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
+        body: RefreshIndicator.adaptive(
+          onRefresh: () async {
+            await ref.read(notificationsProvider.notifier).refresh();
+          },
+          child: () {
+            // Показываем ошибку, если есть
+            if (state.error != null && state.items.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Ошибка загрузки уведомлений',
+                      style: TextStyle(
+                        color: AppColors.error,
+                        fontSize: 14,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(n.icon, size: 16, color: n.color),
-                            const Spacer(),
-                            Text(
-                              _formatWhen(n.when),
-                              style: AppTextStyles.h11w4Ter,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          n.text,
-                          style: const TextStyle(fontSize: 13, height: 1.25),
-                        ),
-                      ],
+                    const SizedBox(height: 16),
+                    CupertinoButton(
+                      onPressed: () {
+                        ref.read(notificationsProvider.notifier).loadInitial();
+                      },
+                      child: const Text('Повторить'),
                     ),
-                  ),
-                ],
-              ),
-            );
-
-            // ─── Нижняя граница под самой последней карточкой ───
-            final isLastVisible = i == _items.length - 1;
-            if (isLastVisible) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  item,
-                  Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.getBorderColor(context)
-                        : AppColors.border,
-                  ),
-                ],
+                  ],
+                ),
               );
             }
 
-            return item;
-          },
+            // Показываем индикатор загрузки при первой загрузке
+            if (state.isLoading && state.items.isEmpty) {
+              return const Center(child: CupertinoActivityIndicator());
+            }
+
+            // Показываем пустое состояние
+            if (state.items.isEmpty) {
+              return Center(
+                child: Text(
+                  'Нет уведомлений',
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextSecondaryColor(context),
+                  ),
+                ),
+              );
+            }
+
+            // Список уведомлений
+            return ListView.separated(
+              controller: _scrollController,
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
+              separatorBuilder: (_, _) => Divider(
+                height: 1,
+                thickness: 0.5,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.getBorderColor(context)
+                    : AppColors.border,
+                indent: 57,
+                endIndent: 8,
+              ),
+              itemBuilder: (context, i) {
+                // Индикатор загрузки в конце списка
+                if (i == state.items.length) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(child: CupertinoActivityIndicator()),
+                  );
+                }
+
+                final notification = state.items[i];
+                final isRead = notification.isRead;
+
+                final item = Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Аватарка отправителя
+                      ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl: notification.senderAvatar,
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            width: 40,
+                            height: 40,
+                            color: AppColors.skeletonBase,
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            width: 40,
+                            height: 40,
+                            color: AppColors.skeletonBase,
+                            child: const Icon(CupertinoIcons.person),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  _getIconData(notification.icon),
+                                  size: 16,
+                                  color: _getColorFromString(notification.color),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  _formatWhen(notification.createdAt),
+                                  style: AppTextStyles.h11w4Ter,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              notification.text,
+                              style: TextStyle(
+                                fontSize: 13,
+                                height: 1.25,
+                                fontWeight: isRead ? FontWeight.normal : FontWeight.w600,
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+
+                // Нижняя граница под самой последней карточкой
+                final isLastVisible = i == state.items.length - 1;
+                if (isLastVisible) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      item,
+                      Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.getBorderColor(context)
+                            : AppColors.border,
+                      ),
+                    ],
+                  );
+                }
+
+                return item;
+              },
+            );
+          }(),
         ),
       ),
     );
   }
-}
-
-/// Демо-данные под макет
-List<_Notif> _demo() {
-  final now = DateTime.now();
-  DateTime onDay(DateTime base, int hour, int min, {int shiftDays = 0}) =>
-      DateTime(base.year, base.month, base.day + shiftDays, hour, min);
-
-  return [
-    _Notif(
-      avatar: 'assets/avatar_2.png',
-      icon: Icons.directions_run,
-      color: AppColors.brandPrimary,
-      text: 'Борис Жарких закончил забег 10,5 км.',
-      when: onDay(now, 7, 14),
-    ),
-    _Notif(
-      avatar: 'assets/avatar_1.png',
-      icon: Icons.directions_bike,
-      color: AppColors.brandPrimary,
-      text: 'Алексей Лукашин закончил заезд 54,2 км.',
-      when: onDay(now, 14, 32, shiftDays: -1),
-    ),
-    _Notif(
-      avatar: 'assets/avatar_9.png',
-      icon: CupertinoIcons.heart,
-      color: AppColors.error,
-      text: 'Анастасия Бутузова оценила вашу тренировку',
-      when: onDay(now, 10, 48, shiftDays: -1),
-    ),
-    _Notif(
-      avatar: 'assets/avatar_3.png',
-      icon: CupertinoIcons.square_pencil,
-      color: AppColors.success,
-      text: 'Татьяна Свиридова опубликовала новый пост',
-      when: onDay(now, 16, 26, shiftDays: -2),
-    ),
-    _Notif(
-      avatar: 'assets/coffeerun.png',
-      icon: CupertinoIcons.calendar_badge_plus,
-      color: AppColors.accentIndigo,
-      text: 'Клуб "Coffeerun" разместил новое событие',
-      when: DateTime(now.year, 3, 21),
-    ),
-    _Notif(
-      avatar: 'assets/avatar_4.png',
-      icon: CupertinoIcons.text_bubble,
-      color: AppColors.warning,
-      text: 'Екатерина Виноградова оставила комментарий к посту',
-      when: DateTime(now.year, 3, 20),
-    ),
-    _Notif(
-      avatar: 'assets/avatar_6.png',
-      icon: Icons.pool,
-      color: AppColors.brandPrimary,
-      text: 'Александр Палаткин закончил заплыв 3,8 км.',
-      when: DateTime(now.year, 3, 18),
-    ),
-    _Notif(
-      avatar: 'assets/avatar_1.png',
-      icon: Icons.emoji_events_outlined,
-      color: AppColors.accentPurple,
-      text:
-          'Алексей Лукашин зарегистрировался на забег "Ночь. Стрелка. Ярославль", 19 июля 2025. 42,2 км',
-      when: DateTime(now.year, 3, 16),
-    ),
-  ];
-}
-
-class _Notif {
-  final String avatar;
-  final IconData icon;
-  final Color color;
-  final String text;
-  final DateTime when;
-  const _Notif({
-    required this.avatar,
-    required this.icon,
-    required this.color,
-    required this.text,
-    required this.when,
-  });
 }

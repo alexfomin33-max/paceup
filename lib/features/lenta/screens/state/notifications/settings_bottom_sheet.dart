@@ -1,24 +1,132 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/theme/app_theme.dart';
+import 'notification_settings_provider.dart';
 
-class SettingsSheet extends StatefulWidget {
+class SettingsSheet extends ConsumerStatefulWidget {
   const SettingsSheet({super.key});
 
   @override
-  State<SettingsSheet> createState() => _SettingsSheetState();
+  ConsumerState<SettingsSheet> createState() => _SettingsSheetState();
 }
 
-class _SettingsSheetState extends State<SettingsSheet> {
-  bool tWorkouts = true;
-  bool tLikes = true;
-  bool tComments = true;
-  bool tPosts = true;
-  bool tEvents = true;
-  bool tRegistrations = true;
-  bool tFollowers = true;
+class _SettingsSheetState extends ConsumerState<SettingsSheet> {
+  // Локальное состояние для немедленного отображения изменений
+  NotificationSettings? _localSettings;
+  bool _isSaving = false;
+
+  // Обновляем локальное состояние при изменении данных из провайдера
+  void _updateLocalSettingsFromProvider() {
+    final settingsAsync = ref.read(notificationSettingsProvider);
+    settingsAsync.whenData((settings) {
+      if (mounted && _localSettings == null) {
+        setState(() {
+          _localSettings = settings;
+        });
+      }
+    });
+  }
+
+  // Загружаем настройки при открытии
+  @override
+  void initState() {
+    super.initState();
+    // Предзагружаем настройки
+    Future.microtask(_updateLocalSettingsFromProvider);
+  }
+
+  // Сохранение настроек на сервер
+  Future<void> _saveSettings(NotificationSettings settings) async {
+    if (_isSaving) return; // Предотвращаем множественные сохранения
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await saveNotificationSettings(ref, settings);
+      // После успешного сохранения обновляем локальное состояние
+      setState(() {
+        _localSettings = settings;
+        _isSaving = false;
+      });
+    } catch (e) {
+      // В случае ошибки показываем сообщение пользователю
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка сохранения: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
+  // Обновление конкретной настройки
+  void _updateSetting(String key, bool value) {
+    final current = _localSettings ??
+        const NotificationSettings(
+          workouts: true,
+          likes: true,
+          comments: true,
+          posts: true,
+          events: true,
+          registrations: true,
+          followers: true,
+        );
+
+    final updated = switch (key) {
+      'workouts' => current.copyWith(workouts: value),
+      'likes' => current.copyWith(likes: value),
+      'comments' => current.copyWith(comments: value),
+      'posts' => current.copyWith(posts: value),
+      'events' => current.copyWith(events: value),
+      'registrations' => current.copyWith(registrations: value),
+      'followers' => current.copyWith(followers: value),
+      _ => current,
+    };
+
+    setState(() {
+      _localSettings = updated;
+    });
+
+    // Сохраняем на сервер
+    _saveSettings(updated);
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Получаем настройки из провайдера
+    final settingsAsync = ref.watch(notificationSettingsProvider);
+
+    // Используем локальное состояние, если оно есть, иначе данные из провайдера
+    final NotificationSettings settings = _localSettings ??
+        settingsAsync.when(
+          data: (s) => s,
+          loading: () => const NotificationSettings(
+            workouts: true,
+            likes: true,
+            comments: true,
+            posts: true,
+            events: true,
+            registrations: true,
+            followers: true,
+          ),
+          error: (_, __) => const NotificationSettings(
+            workouts: true,
+            likes: true,
+            comments: true,
+            posts: true,
+            events: true,
+            registrations: true,
+            followers: true,
+          ),
+        );
+
     return Stack(
       children: [
         // ← барьер для закрытия при клике вне окна
@@ -60,48 +168,78 @@ class _SettingsSheetState extends State<SettingsSheet> {
                         ),
                         const SizedBox(height: 8),
 
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 0, 4, 0),
-                          child: _ToggleList(
-                            children: [
-                              _ToggleRow(
-                                label: 'Уведомления о новых тренировках',
-                                value: tWorkouts,
-                                onChanged: (v) => setState(() => tWorkouts = v),
+                        // Показываем состояние загрузки или ошибки
+                        settingsAsync.when(
+                          data: (_) => Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 4, 0),
+                            child: _ToggleList(
+                              children: [
+                                _ToggleRow(
+                                  label: 'Уведомления о новых тренировках',
+                                  value: settings.workouts,
+                                  onChanged: _isSaving
+                                      ? null
+                                      : (v) => _updateSetting('workouts', v),
+                                ),
+                                _ToggleRow(
+                                  label: 'Уведомления о новых лайках',
+                                  value: settings.likes,
+                                  onChanged: _isSaving
+                                      ? null
+                                      : (v) => _updateSetting('likes', v),
+                                ),
+                                _ToggleRow(
+                                  label: 'Уведомления о новых комментариях',
+                                  value: settings.comments,
+                                  onChanged: _isSaving
+                                      ? null
+                                      : (v) => _updateSetting('comments', v),
+                                ),
+                                _ToggleRow(
+                                  label: 'Уведомления о новых постах',
+                                  value: settings.posts,
+                                  onChanged: _isSaving
+                                      ? null
+                                      : (v) => _updateSetting('posts', v),
+                                ),
+                                _ToggleRow(
+                                  label: 'Уведомления о новых событиях',
+                                  value: settings.events,
+                                  onChanged: _isSaving
+                                      ? null
+                                      : (v) => _updateSetting('events', v),
+                                ),
+                                _ToggleRow(
+                                  label: 'Уведомления о регистрациях на события',
+                                  value: settings.registrations,
+                                  onChanged: _isSaving
+                                      ? null
+                                      : (v) =>
+                                          _updateSetting('registrations', v),
+                                ),
+                                _ToggleRow(
+                                  label: 'Уведомления о новых подписчиках',
+                                  value: settings.followers,
+                                  onChanged: _isSaving
+                                      ? null
+                                      : (v) => _updateSetting('followers', v),
+                                ),
+                              ],
+                            ),
+                          ),
+                          loading: () => const Padding(
+                            padding: EdgeInsets.all(20),
+                            child: CircularProgressIndicator(),
+                          ),
+                          error: (error, stack) => Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Text(
+                              'Ошибка загрузки настроек',
+                              style: TextStyle(
+                                color: AppColors.error,
+                                fontSize: 13,
                               ),
-                              _ToggleRow(
-                                label: 'Уведомления о новых лайках',
-                                value: tLikes,
-                                onChanged: (v) => setState(() => tLikes = v),
-                              ),
-                              _ToggleRow(
-                                label: 'Уведомления о новых комментариях',
-                                value: tComments,
-                                onChanged: (v) => setState(() => tComments = v),
-                              ),
-                              _ToggleRow(
-                                label: 'Уведомления о новых постах',
-                                value: tPosts,
-                                onChanged: (v) => setState(() => tPosts = v),
-                              ),
-                              _ToggleRow(
-                                label: 'Уведомления о новых событиях',
-                                value: tEvents,
-                                onChanged: (v) => setState(() => tEvents = v),
-                              ),
-                              _ToggleRow(
-                                label: 'Уведомления о регистрациях на события',
-                                value: tRegistrations,
-                                onChanged: (v) =>
-                                    setState(() => tRegistrations = v),
-                              ),
-                              _ToggleRow(
-                                label: 'Уведомления о новых подписчиках',
-                                value: tFollowers,
-                                onChanged: (v) =>
-                                    setState(() => tFollowers = v),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
 
@@ -151,7 +289,7 @@ class _ToggleList extends StatelessWidget {
 class _ToggleRow extends StatelessWidget {
   final String label;
   final bool value;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool>? onChanged;
 
   const _ToggleRow({
     required this.label,
@@ -182,7 +320,7 @@ class _ToggleRow extends StatelessWidget {
             scale: 0.85, // 90% от стандартного размера. Поиграйся: 0.85–1.15
             child: Switch(
               value: value,
-              onChanged: onChanged,
+              onChanged: onChanged, // Может быть null при сохранении
 
               // ↓ уменьшаем «обязательную» зону касания
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,

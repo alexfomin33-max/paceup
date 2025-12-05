@@ -8,7 +8,7 @@ import '../../../../core/utils/error_handler.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
-import 'coffeerun_vld/tabs/photo_content.dart';
+import 'tabs/club_photo_content.dart';
 import 'coffeerun_vld/tabs/members_content.dart';
 import 'coffeerun_vld/tabs/stats_content.dart';
 import 'coffeerun_vld/tabs/glory_content.dart';
@@ -690,9 +690,12 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                         ),
 
                         if (_tab == 0)
-                          const Padding(
-                            padding: EdgeInsets.all(2),
-                            child: CoffeeRunVldPhotoContent(),
+                          Padding(
+                            padding: const EdgeInsets.all(2),
+                            child: ClubPhotoContent(
+                              clubId: widget.clubId,
+                              canEdit: _canEdit,
+                            ),
                           )
                         else if (_tab == 1)
                           Padding(

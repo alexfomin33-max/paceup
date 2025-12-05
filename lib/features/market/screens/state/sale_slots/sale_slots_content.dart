@@ -43,6 +43,8 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
 
   // ─── Состояние выбранного события ───
   int? _selectedEventId;
+  bool _isEventSelectedFromDropdown = false; // Флаг: событие выбрано из выпадающего списка
+  bool _isSettingEventFromDropdown = false; // Флаг: сейчас устанавливаем событие программно
   bool _isLoadingDistances = false;
 
   // ─── Состояние загрузки и ошибок ───
@@ -51,6 +53,26 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
 
   bool get _isValid =>
       nameCtrl.text.trim().isNotEmpty && priceCtrl.text.trim().isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    // ─── Сбрасываем флаг выбора из списка, если пользователь редактирует текст вручную ───
+    nameCtrl.addListener(() {
+      // Если сейчас устанавливаем событие программно - игнорируем
+      if (_isSettingEventFromDropdown) return;
+      
+      // Если флаг установлен, но текст изменился - значит пользователь редактирует вручную
+      if (_isEventSelectedFromDropdown && mounted) {
+        setState(() {
+          _isEventSelectedFromDropdown = false;
+          _selectedEventId = null;
+          _distances = [];
+          _distanceIndex = 0;
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -136,6 +158,17 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
   Future<void> _submit() async {
     if (!_isValid || _isSubmitting) return;
 
+    // ─── Проверяем, что если введено название события, то оно выбрано из выпадающего списка ───
+    final eventNameText = nameCtrl.text.trim();
+    if (eventNameText.isNotEmpty && !_isEventSelectedFromDropdown) {
+      setState(() {
+        _errorMessage =
+            'Пожалуйста, выберите событие из списка предложенных вариантов';
+        _isSubmitting = false;
+      });
+      return;
+    }
+
     // ─── Сброс предыдущей ошибки ───
     setState(() {
       _errorMessage = null;
@@ -158,13 +191,15 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
         throw Exception('Некорректная цена. Введите число больше нуля');
       }
 
-      // ─── Проверяем, что дистанция выбрана ───
-      if (_distances.isEmpty || _distanceIndex >= _distances.length) {
-        throw Exception('Выберите дистанцию');
+      // ─── Проверяем, что дистанция выбрана (только если событие выбрано) ───
+      String? distance;
+      if (_selectedEventId != null) {
+        if (_distances.isEmpty || _distanceIndex >= _distances.length) {
+          throw Exception('Выберите дистанцию');
+        }
+        // ─── Получаем выбранную дистанцию ───
+        distance = _distances[_distanceIndex];
       }
-
-      // ─── Получаем выбранную дистанцию ───
-      final distance = _distances[_distanceIndex];
 
       // ─── Преобразуем Gender в строку для API ───
       final genderString = _gender == Gender.male ? 'male' : 'female';
@@ -177,7 +212,7 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
           'user_id': userId,
           if (_selectedEventId != null) 'event_id': _selectedEventId,
           'title': nameCtrl.text.trim(),
-          'distance': distance,
+          if (distance != null) 'distance': distance,
           'price': price,
           'gender': genderString,
           'description': descCtrl.text.trim(),
@@ -235,9 +270,19 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
             hint: 'Начните вводить название события',
             controller: nameCtrl,
             onEventSelected: (event) {
+              // Устанавливаем флаг, чтобы слушатель не сработал
+              _isSettingEventFromDropdown = true;
               setState(() {
                 _selectedEventId = event.id;
-                nameCtrl.text = event.name;
+                _isEventSelectedFromDropdown = true; // Устанавливаем флаг, что выбрано из списка
+                // Устанавливаем текст события
+                if (nameCtrl.text != event.name) {
+                  nameCtrl.text = event.name;
+                }
+              });
+              // Сбрасываем флаг после небольшой задержки
+              Future.microtask(() {
+                _isSettingEventFromDropdown = false;
               });
               _loadEventDistances(event.id);
             },
