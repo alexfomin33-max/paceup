@@ -1,7 +1,6 @@
 // lib/widgets/market_slot_card.dart
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../models/market_models.dart';
@@ -128,6 +127,8 @@ class MarketSlotCard extends StatelessWidget {
                               final isSeller =
                                   currentUserId != null &&
                                   currentUserId == item.sellerId;
+
+                              if (!context.mounted) return;
 
                               if (isSeller && item.buttonText == 'Изменить') {
                                 // Открываем экран редактирования для продавца

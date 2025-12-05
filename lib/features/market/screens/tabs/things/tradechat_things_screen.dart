@@ -251,6 +251,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
   // ─── Инициализация чата: создание/получение чата и загрузка данных ───
   Future<void> _initializeChat() async {
     try {
+      if (!mounted) return;
       setState(() {
         _isLoading = true;
         _error = null;
@@ -260,6 +261,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
       if (userId == null) {
         throw Exception('Пользователь не авторизован');
       }
+      if (!mounted) return;
       _currentUserId = userId;
 
       // ─── Если chatId передан, загружаем данные напрямую ───
@@ -284,10 +286,12 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
       // Загружаем данные чата
       await _loadChatData(chatId, chatCreatedAtStr);
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -331,22 +335,26 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
         _lastMessageId = messages.last.id;
       }
 
-      setState(() {
-        _chatData = chatCreatedAt != null
-            ? chatData.copyWith(chatCreatedAt: chatCreatedAt)
-            : chatData;
-        _messages = messages;
-        _isLoading = false;
-        _error = null;
-      });
+      if (mounted) {
+        setState(() {
+          _chatData = chatCreatedAt != null
+              ? chatData.copyWith(chatCreatedAt: chatCreatedAt)
+              : chatData;
+          _messages = messages;
+          _isLoading = false;
+          _error = null;
+        });
 
-      _markMessagesAsRead(chatId, userId);
-      _startPolling(chatId);
+        _markMessagesAsRead(chatId, userId);
+        _startPolling(chatId);
+      }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -417,6 +425,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
       );
 
       if (response['success'] == true) {
+        if (!mounted) return;
         _ctrl.clear();
         FocusScope.of(context).unfocus();
 
@@ -431,10 +440,12 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
           isRead: false,
         );
 
-        setState(() {
-          _messages.add(newMessage);
-          _lastMessageId = newMessage.id;
-        });
+        if (mounted) {
+          setState(() {
+            _messages.add(newMessage);
+            _lastMessageId = newMessage.id;
+          });
+        }
       }
     } catch (e) {
       debugPrint('Ошибка отправки сообщения: $e');
@@ -639,15 +650,16 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                           width: 36,
                           height: 36,
                           fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) => Container(
-                            width: 36,
-                            height: 36,
-                            color: AppColors.getSurfaceMutedColor(context),
-                          ),
+                          errorWidget: (context, error, stackTrace) =>
+                              Container(
+                                width: 36,
+                                height: 36,
+                                color: AppColors.getSurfaceMutedColor(context),
+                              ),
                         ),
                       ),
-                      const SizedBox(width: 8),
                     ],
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1161,7 +1173,7 @@ class _ParticipantRow extends StatelessWidget {
                         color: AppColors.getIconSecondaryColor(context),
                       )
                     : null,
-                onBackgroundImageError: (_, __) {},
+                onBackgroundImageError: (error, stackTrace) {},
               ),
               const SizedBox(width: 8),
               Text.rich(
@@ -1237,7 +1249,7 @@ class _BubbleLeft extends StatelessWidget {
                     color: AppColors.getIconSecondaryColor(context),
                   )
                 : null,
-            onBackgroundImageError: (_, __) {},
+            onBackgroundImageError: (error, stackTrace) {},
           ),
           const SizedBox(width: 8),
           ConstrainedBox(

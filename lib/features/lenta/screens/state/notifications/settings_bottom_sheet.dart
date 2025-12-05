@@ -68,7 +68,8 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
 
   // Обновление конкретной настройки
   void _updateSetting(String key, bool value) {
-    final current = _localSettings ??
+    final current =
+        _localSettings ??
         const NotificationSettings(
           workouts: true,
           likes: true,
@@ -104,7 +105,8 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
     final settingsAsync = ref.watch(notificationSettingsProvider);
 
     // Используем локальное состояние, если оно есть, иначе данные из провайдера
-    final NotificationSettings settings = _localSettings ??
+    final NotificationSettings settings =
+        _localSettings ??
         settingsAsync.when(
           data: (s) => s,
           loading: () => const NotificationSettings(
@@ -210,12 +212,13 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
                                       : (v) => _updateSetting('events', v),
                                 ),
                                 _ToggleRow(
-                                  label: 'Уведомления о регистрациях на события',
+                                  label:
+                                      'Уведомления о регистрациях на события',
                                   value: settings.registrations,
                                   onChanged: _isSaving
                                       ? null
                                       : (v) =>
-                                          _updateSetting('registrations', v),
+                                            _updateSetting('registrations', v),
                                 ),
                                 _ToggleRow(
                                   label: 'Уведомления о новых подписчиках',
@@ -231,8 +234,8 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
                             padding: EdgeInsets.all(20),
                             child: CircularProgressIndicator(),
                           ),
-                          error: (error, stack) => Padding(
-                            padding: const EdgeInsets.all(20),
+                          error: (error, stack) => const Padding(
+                            padding: EdgeInsets.all(20),
                             child: Text(
                               'Ошибка загрузки настроек',
                               style: TextStyle(
@@ -321,7 +324,6 @@ class _ToggleRow extends StatelessWidget {
             child: Switch(
               value: value,
               onChanged: onChanged, // Может быть null при сохранении
-
               // ↓ уменьшаем «обязательную» зону касания
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
 

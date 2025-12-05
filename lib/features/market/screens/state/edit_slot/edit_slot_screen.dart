@@ -297,10 +297,12 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
           final slotsNotifier = ref.read(slotsProvider.notifier);
           await slotsNotifier.loadInitial();
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Слот успешно обновлён')),
-          );
-          Navigator.pop(context);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Слот успешно обновлён')),
+            );
+            Navigator.pop(context);
+          }
         }
       } else {
         final errorMsg =
@@ -374,10 +376,12 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
           final slotsNotifier = ref.read(slotsProvider.notifier);
           await slotsNotifier.loadInitial();
 
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Слот успешно удалён')));
-          Navigator.pop(context);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Слот успешно удалён')),
+            );
+            Navigator.pop(context);
+          }
         }
       } else {
         final errorMsg =

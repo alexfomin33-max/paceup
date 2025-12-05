@@ -17,7 +17,13 @@ class ThingsContent extends ConsumerStatefulWidget {
 }
 
 class _ThingsContentState extends ConsumerState<ThingsContent> {
-  final List<String> _categories = const ['Все', 'Кроссовки', 'Часы', 'Одежда', 'Аксессуары'];
+  final List<String> _categories = const [
+    'Все',
+    'Кроссовки',
+    'Часы',
+    'Одежда',
+    'Аксессуары',
+  ];
   String _selected = 'Все';
 
   final Set<int> _expanded = {};
@@ -33,13 +39,13 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
 
   void _updateCategoryFilter() {
     final notifier = ref.read(thingsProvider.notifier);
-    
+
     // ── преобразуем выбранную категорию в фильтр
     String? categoryFilter;
     if (_selected != 'Все') {
       categoryFilter = _selected;
     }
-    
+
     // ── создаем новый фильтр
     final newFilter = ThingsFilter(category: categoryFilter);
     notifier.updateFilter(newFilter);
@@ -70,12 +76,9 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
+              const Text(
                 'Ошибка загрузки',
-                style: TextStyle(
-                  color: AppColors.error,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: AppColors.error, fontSize: 16),
               ),
               const SizedBox(height: 8),
               Text(
@@ -97,59 +100,59 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
         await ref.read(thingsProvider.notifier).loadInitial();
       },
       child: ListView.separated(
-      key: const ValueKey('things_list'),
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+        key: const ValueKey('things_list'),
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
         itemCount: items.length + headerCount + (thingsState.hasMore ? 1 : 0),
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (_, index) {
-        if (index == 0) {
-          return _CategoryDropdown(
-            value: _selected,
-            options: _categories,
-            onChanged: (v) {
-              setState(() => _selected = v ?? 'Все');
-              _updateCategoryFilter();
-            },
+        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        itemBuilder: (_, index) {
+          if (index == 0) {
+            return _CategoryDropdown(
+              value: _selected,
+              options: _categories,
+              onChanged: (v) {
+                setState(() => _selected = v ?? 'Все');
+                _updateCategoryFilter();
+              },
+            );
+          }
+
+          // ── кнопка загрузки следующей страницы
+          if (index == items.length + headerCount) {
+            if (thingsState.isLoadingMore) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+            if (thingsState.hasMore) {
+              return Center(
+                child: TextButton(
+                  onPressed: () {
+                    ref.read(thingsProvider.notifier).loadMore();
+                  },
+                  child: const Text('Загрузить еще'),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }
+
+          final i = index - headerCount;
+          if (i >= items.length) return const SizedBox.shrink();
+
+          final isOpen = _expanded.contains(items[i].id);
+
+          return GoodsCard(
+            item: items[i],
+            expanded: isOpen,
+            onToggle: () => setState(() => _expanded.toggle(items[i].id)),
           );
-        }
-
-        // ── кнопка загрузки следующей страницы
-        if (index == items.length + headerCount) {
-          if (thingsState.isLoadingMore) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: CircularProgressIndicator(),
-              ),
-            );
-          }
-          if (thingsState.hasMore) {
-            return Center(
-              child: TextButton(
-                onPressed: () {
-                  ref.read(thingsProvider.notifier).loadMore();
-                },
-                child: const Text('Загрузить еще'),
-              ),
-            );
-          }
-          return const SizedBox.shrink();
-        }
-
-        final i = index - headerCount;
-        if (i >= items.length) return const SizedBox.shrink();
-        
-        final isOpen = _expanded.contains(items[i].id);
-
-        return GoodsCard(
-          item: items[i],
-          expanded: isOpen,
-          onToggle: () => setState(() => _expanded.toggle(items[i].id)),
-        );
-      },
+        },
       ),
     );
   }

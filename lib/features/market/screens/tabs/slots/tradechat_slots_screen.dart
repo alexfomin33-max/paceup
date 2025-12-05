@@ -415,7 +415,9 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
 
       if (response['success'] == true) {
         _ctrl.clear();
-        FocusScope.of(context).unfocus();
+        if (mounted) {
+          FocusScope.of(context).unfocus();
+        }
 
         // Перезагружаем сообщения
         await _loadChatData(_chatData!.chatId);
@@ -608,54 +610,51 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                 ),
               ),
               titleSpacing: -8,
-              title: Transform.translate(
-                offset: const Offset(8, 0),
-                child: Row(
-                  children: [
-                    if (chatData.slotImageUrl != null &&
-                        chatData.slotImageUrl!.isNotEmpty) ...[
-                      Container(
-                        width: 36,
-                        height: 36,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(AppRadius.xs),
-                          image: DecorationImage(
-                            image: NetworkImage(chatData.slotImageUrl!),
-                            fit: BoxFit.cover,
-                            onError: (_, __) {},
-                          ),
+              title: Row(
+                children: [
+                  if (chatData.slotImageUrl != null &&
+                      chatData.slotImageUrl!.isNotEmpty) ...[
+                    Container(
+                      width: 36,
+                      height: 36,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.xs),
+                        image: DecorationImage(
+                          image: NetworkImage(chatData.slotImageUrl!),
+                          fit: BoxFit.cover,
+                          onError: (error, stackTrace) {},
                         ),
                       ),
-                      const SizedBox(width: 8),
-                    ],
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Чат продажи слота',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            chatData.slotTitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.getTextPrimaryColor(context),
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
+                    const SizedBox(width: 8),
                   ],
-                ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Чат продажи слота',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          chatData.slotTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(0.5),
@@ -867,7 +866,8 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                                 child: _ActionsWrap(
                                   dealStatus: chatData.dealStatus,
                                   onUpdateStatus: _updateDealStatus,
-                                  isSeller: true, // Всегда true здесь, т.к. уже проверили выше
+                                  isSeller:
+                                      true, // Всегда true здесь, т.к. уже проверили выше
                                 ),
                               ),
                             ),
@@ -1074,7 +1074,7 @@ class _ActionsWrap extends StatelessWidget {
     if (!isSeller) {
       return const SizedBox.shrink();
     }
-    
+
     // Если сделка уже завершена
     if (dealStatus == 'bought') {
       return Center(
@@ -1270,7 +1270,7 @@ class _ParticipantRow extends StatelessWidget {
                         color: AppColors.getIconSecondaryColor(context),
                       )
                     : null,
-                onBackgroundImageError: (_, __) {},
+                onBackgroundImageError: (error, stackTrace) {},
               ),
               const SizedBox(width: 8),
               Text.rich(
@@ -1346,7 +1346,7 @@ class _BubbleLeft extends StatelessWidget {
                     color: AppColors.getIconSecondaryColor(context),
                   )
                 : null,
-            onBackgroundImageError: (_, __) {},
+            onBackgroundImageError: (error, stackTrace) {},
           ),
           const SizedBox(width: 8),
           ConstrainedBox(

@@ -8,7 +8,6 @@ import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/theme/app_theme.dart';
@@ -93,11 +92,8 @@ class EditProfileAvatarEditable extends ConsumerWidget {
     required bool isLoading,
   }) {
     // Вспомогательная функция для создания пустого контейнера
-    Widget _buildEmpty() {
-      return SizedBox(
-        width: size,
-        height: size,
-      );
+    Widget buildEmpty() {
+      return SizedBox(width: size, height: size);
     }
 
     // 1) Выбранные байты (превью выбранного изображения)
@@ -111,10 +107,10 @@ class EditProfileAvatarEditable extends ConsumerWidget {
           // НЕ используем cacheWidth/cacheHeight для Image.memory!
           // Они искажают пропорции, если оригинальное изображение не квадратное.
           // BoxFit.cover сам корректно обрежет изображение в квадрат 88×88.
-          errorBuilder: (context, error, stackTrace) => _buildEmpty(),
+          errorBuilder: (context, error, stackTrace) => buildEmpty(),
         );
       } catch (error) {
-        return _buildEmpty();
+        return buildEmpty();
       }
     }
 
@@ -140,13 +136,12 @@ class EditProfileAvatarEditable extends ConsumerWidget {
         // Добавляем fade-in эффект при загрузке
         fadeInDuration: const Duration(milliseconds: 300),
         fadeOutDuration: const Duration(milliseconds: 100),
-        placeholder: (context, url) => _buildEmpty(),
-        errorWidget: (context, url, error) => _buildEmpty(),
+        placeholder: (context, url) => buildEmpty(),
+        errorWidget: (context, url, error) => buildEmpty(),
       );
     }
 
     // 3) Если нет аватарки - ничего не показываем
-    return _buildEmpty();
+    return buildEmpty();
   }
 }
-

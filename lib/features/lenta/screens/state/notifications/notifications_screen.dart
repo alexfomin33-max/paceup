@@ -34,9 +34,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       final state = ref.read(notificationsProvider);
       final pos = _scrollController.position;
 
-      if (state.hasMore &&
-          !state.isLoadingMore &&
-          pos.extentAfter < 400) {
+      if (state.hasMore && !state.isLoadingMore && pos.extentAfter < 400) {
         ref.read(notificationsProvider.notifier).loadMore();
       }
     });
@@ -103,7 +101,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(notificationsProvider);
@@ -141,12 +138,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    const Text(
                       'Ошибка загрузки уведомлений',
-                      style: TextStyle(
-                        color: AppColors.error,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: AppColors.error, fontSize: 14),
                     ),
                     const SizedBox(height: 16),
                     CupertinoButton(
@@ -206,7 +200,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 final isRead = notification.isRead;
 
                 final item = Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 10,
+                  ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -241,7 +238,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                 Icon(
                                   _getIconData(notification.icon),
                                   size: 16,
-                                  color: _getColorFromString(notification.color),
+                                  color: _getColorFromString(
+                                    notification.color,
+                                  ),
                                 ),
                                 const Spacer(),
                                 Text(
@@ -256,7 +255,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 height: 1.25,
-                                fontWeight: isRead ? FontWeight.normal : FontWeight.w600,
+                                fontWeight: isRead
+                                    ? FontWeight.normal
+                                    : FontWeight.w600,
                                 color: AppColors.getTextPrimaryColor(context),
                               ),
                             ),

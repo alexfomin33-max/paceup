@@ -19,7 +19,8 @@ class AddingSneakersContent extends ConsumerStatefulWidget {
   const AddingSneakersContent({super.key});
 
   @override
-  ConsumerState<AddingSneakersContent> createState() => _AddingSneakersContentState();
+  ConsumerState<AddingSneakersContent> createState() =>
+      _AddingSneakersContentState();
 }
 
 class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
@@ -34,6 +35,8 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
   final _picker = ImagePicker();
 
   // FocusNode для полей
+  // ВАЖНО: FocusNode управляются дочерними виджетами (AutocompleteTextField и _RightTextFieldState),
+  // поэтому НЕ нужно их dispose здесь, чтобы избежать ошибки "FocusNode was used after being disposed"
   FocusNode? _brandFocusNode;
   FocusNode? _modelFocusNode;
   FocusNode? _kmFocusNode;
@@ -45,9 +48,9 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
     _brandCtrl.dispose();
     _modelCtrl.dispose();
     _kmCtrl.dispose();
-    _brandFocusNode?.dispose();
-    _modelFocusNode?.dispose();
-    _kmFocusNode?.dispose();
+    // НЕ dispose FocusNode здесь - они управляются дочерними виджетами
+    // _brandFocusNode, _modelFocusNode и _kmFocusNode будут автоматически
+    // disposed когда их соответствующие виджеты будут disposed
     super.dispose();
   }
 
@@ -423,7 +426,14 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
               // строки полей
               _FieldRow(
                 title: 'Бренд',
-                onTap: () => _brandFocusNode?.requestFocus(),
+                onTap: () {
+                  // Безопасный вызов requestFocus - FocusNode управляется дочерним виджетом
+                  try {
+                    _brandFocusNode?.requestFocus();
+                  } catch (e) {
+                    // Игнорируем ошибки, если FocusNode уже disposed
+                  }
+                },
                 child: AutocompleteTextField(
                   controller: _brandCtrl,
                   hint: 'Введите бренд',
@@ -441,7 +451,14 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
               ),
               _FieldRow(
                 title: 'Модель',
-                onTap: () => _modelFocusNode?.requestFocus(),
+                onTap: () {
+                  // Безопасный вызов requestFocus - FocusNode управляется дочерним виджетом
+                  try {
+                    _modelFocusNode?.requestFocus();
+                  } catch (e) {
+                    // Игнорируем ошибки, если FocusNode уже disposed
+                  }
+                },
                 child: ValueListenableBuilder<TextEditingValue>(
                   valueListenable: _brandCtrl,
                   builder: (context, brandValue, child) {
@@ -471,7 +488,7 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
                         fontFamily: 'Inter',
                         fontSize: 14,
                         color: _inUseFrom == null
-                            ? AppColors.getTextPlaceholderColor(context)
+                            ? AppColors.getTextTertiaryColor(context)
                             : AppColors.getTextPrimaryColor(context),
                         fontWeight: _inUseFrom == null
                             ? FontWeight.w400
@@ -483,7 +500,14 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
               ),
               _FieldRow(
                 title: 'Добавленная дистанция, км',
-                onTap: () => _kmFocusNode?.requestFocus(),
+                onTap: () {
+                  // Безопасный вызов requestFocus - FocusNode управляется дочерним виджетом
+                  try {
+                    _kmFocusNode?.requestFocus();
+                  } catch (e) {
+                    // Игнорируем ошибки, если FocusNode уже disposed
+                  }
+                },
                 child: _RightTextField(
                   controller: _kmCtrl,
                   hint: '0',
@@ -527,7 +551,8 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
                     text: 'Сохранить',
                     onPressed: _saveEquipment,
                     isLoading: formState.isSubmitting,
-                    enabled: brandValue.text.trim().isNotEmpty &&
+                    enabled:
+                        brandValue.text.trim().isNotEmpty &&
                         !formState.isSubmitting,
                     width: 220, // ← единая ширина, как у «Пригласить»
                   );
@@ -564,9 +589,10 @@ class _FieldRow extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
-                        fontSize: 14, // 14 pt
+                        fontSize: 14,
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
                   ),
