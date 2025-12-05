@@ -11,7 +11,8 @@ import '../widgets/activity/stats/stats_row.dart';
 import '../widgets/activity/equipment/equipment_chip.dart'
     as ab
     show EquipmentChip;
-import '../../../../core/widgets/route_card.dart' as ab show RouteCard;
+// Карусель маршрута с фотографиями
+import '../../widgets/activity_route_carousel.dart';
 // Модель — через алиас, чтобы не конфликтовало имя Equipment
 import '../../../../domain/models/activity_lenta.dart' as al;
 import 'combining_screen.dart';
@@ -160,47 +161,38 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
               ),
             ),
 
-            // ───────── Карта маршрута (только если есть точки)
+            // ───────── Карта маршрута с фотографиями (как в ActivityBlock)
+            // Показываем только если есть точки маршрута или есть изображения
             // Соотношение сторон 1.3:1 (как в постах и тренировках)
-            if (a.points.isNotEmpty) ...[
+            if (a.points.isNotEmpty || a.mediaImages.isNotEmpty) ...[
               SliverToBoxAdapter(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     // Вычисляем высоту для соотношения сторон 1.3:1
                     final width = constraints.maxWidth;
                     final height = width / 1.3;
-                    return SizedBox(
+                    return ActivityRouteCarousel(
+                      points: a.points
+                          .map((c) => ll.LatLng(c.lat, c.lng))
+                          .toList(),
+                      imageUrls: a.mediaImages,
                       height: height,
-                      child: Stack(
-                        children: [
-                          // Карта (с IgnorePointer внутри, поэтому неинтерактивна)
-                          ab.RouteCard(
-                            points: a.points
-                                .map((c) => ll.LatLng(c.lat, c.lng))
-                                .toList(),
-                            height: height,
-                          ),
-                          // Прозрачный слой для обработки кликов поверх карты
-                          Positioned.fill(
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  TransparentPageRoute(
-                                    builder: (context) => FullscreenRouteMapScreen(
-                                      points: a.points
-                                          .map((c) => ll.LatLng(c.lat, c.lng))
-                                          .toList(),
-                                    ),
+                      // ────────────────────────────────────────────────────────────────
+                      // 🔹 ОТКРЫТИЕ ПОЛНОЭКРАННОЙ КАРТЫ: при клике на слайд с картой
+                      // ────────────────────────────────────────────────────────────────
+                      onMapTap: a.points.isNotEmpty
+                          ? () {
+                              Navigator.of(context).push(
+                                TransparentPageRoute(
+                                  builder: (context) => FullscreenRouteMapScreen(
+                                    points: a.points
+                                        .map((c) => ll.LatLng(c.lat, c.lng))
+                                        .toList(),
                                   ),
-                                );
-                              },
-                              child: Container(
-                                color: Colors.transparent,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                                ),
+                              );
+                            }
+                          : null,
                     );
                   },
                 ),

@@ -367,11 +367,11 @@ class _BuyButtonText extends StatelessWidget {
               ? AppColors
                     .textSecondary // более темный цвет для светлой темы
               : AppColors.disabledText); // в темной теме оставляем как было
-    // ── Определяем иконку: пузырь сообщения для "В чат", замок для "Бронь", корзина для остальных
+    // ── Определяем иконку: пузырь сообщения для "В чат", корзина для остальных
     // Для "Изменить" и "Купить" иконка не отображается
     final icon = text == 'В чат'
         ? CupertinoIcons.chat_bubble
-        : (text == 'Бронь' ? CupertinoIcons.lock : CupertinoIcons.cart);
+        : CupertinoIcons.cart;
     final showIcon = text != 'Изменить' && text != 'Купить';
 
     final buttonStyle = ElevatedButton.styleFrom(

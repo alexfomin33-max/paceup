@@ -79,7 +79,7 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
             ),
           ],
         ),
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.all(8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -150,6 +150,10 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                         clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(
+                            color: AppColors.getBorderColor(context),
+                            width: 0.5,
+                          ),
                         ),
                         child: CachedNetworkImage(
                           imageUrl: img,

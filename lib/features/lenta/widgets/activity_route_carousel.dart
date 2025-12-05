@@ -13,6 +13,7 @@ class ActivityRouteCarousel extends StatefulWidget {
     required this.points,
     required this.imageUrls,
     this.height = 240,
+    this.onMapTap,
   });
 
   /// Точки трека в порядке следования.
@@ -23,6 +24,9 @@ class ActivityRouteCarousel extends StatefulWidget {
 
   /// Высота карусели (по умолчанию 240).
   final double height;
+
+  /// Callback для клика на карту (вызывается только при клике на слайд с картой).
+  final VoidCallback? onMapTap;
 
   @override
   State<ActivityRouteCarousel> createState() => _ActivityRouteCarouselState();
@@ -96,9 +100,12 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
 
     // Если есть точки маршрута, но нет фотографий — показываем только карту
     if (widget.imageUrls.isEmpty) {
-      return RouteCard(
-        points: widget.points,
-        height: widget.height,
+      return GestureDetector(
+        onTap: widget.onMapTap,
+        child: RouteCard(
+          points: widget.points,
+          height: widget.height,
+        ),
       );
     }
 
@@ -133,9 +140,12 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
             itemBuilder: (context, index) {
               // Первый слайд — карта
               if (index == 0) {
-                return RouteCard(
-                  points: widget.points,
-                  height: widget.height,
+                return GestureDetector(
+                  onTap: widget.onMapTap,
+                  child: RouteCard(
+                    points: widget.points,
+                    height: widget.height,
+                  ),
                 );
               }
 
