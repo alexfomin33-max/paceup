@@ -470,7 +470,7 @@ class _AddingBikeContentState extends ConsumerState<AddingBikeContent> {
                         fontFamily: 'Inter',
                         fontSize: 14,
                         color: _inUseFrom == null
-                            ? AppColors.getTextPlaceholderColor(context)
+                            ? AppColors.getTextTertiaryColor(context)
                             : AppColors.getTextPrimaryColor(context),
                         fontWeight: _inUseFrom == null
                             ? FontWeight.w400
@@ -571,7 +571,11 @@ class _FieldRow extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),

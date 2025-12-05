@@ -21,10 +21,12 @@ class EditingSneakersContent extends ConsumerStatefulWidget {
   const EditingSneakersContent({super.key, required this.equipUserId});
 
   @override
-  ConsumerState<EditingSneakersContent> createState() => _EditingSneakersContentState();
+  ConsumerState<EditingSneakersContent> createState() =>
+      _EditingSneakersContentState();
 }
 
-class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent> {
+class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
+    with SingleTickerProviderStateMixin {
   // ─────────────────────────────────────────────────────────────────────
   //                             КОНТРОЛЛЕРЫ
   // ─────────────────────────────────────────────────────────────────────
@@ -36,16 +38,48 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
   String? _currentImageUrl; // URL текущего изображения из базы
   final _picker = ImagePicker();
 
+  // ── Локальное состояние загрузки данных (отдельно от formStateProvider,
+  //    чтобы избежать мерцания при переходе между экранами)
+  bool _isLoadingData = true;
+
+  // ── Контроллер анимации для плавного появления контента
+  late final AnimationController _fadeController;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<Offset> _slideAnimation;
+
   // Для автодополнения - используем провайдер
 
   @override
   void initState() {
     super.initState();
-    _loadEquipmentData();
+    // ── Инициализируем анимацию появления контента
+    //    Увеличена длительность и использована более плавная кривая для мягкого эффекта
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, 0.04),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
+
+    // ── Сбрасываем состояние формы при инициализации, чтобы избежать
+    //    отображения старого состояния из предыдущего экрана
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(formStateProvider.notifier).reset();
+        _loadEquipmentData();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _fadeController.dispose();
     _brandCtrl.dispose();
     _modelCtrl.dispose();
     _kmCtrl.dispose();
@@ -54,65 +88,67 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
 
   /// Загрузка данных снаряжения для редактирования
   Future<void> _loadEquipmentData() async {
-    final formNotifier = ref.read(formStateProvider.notifier);
-    final authService = ref.read(authServiceProvider);
+    if (!mounted) return;
 
-    await formNotifier.submitWithLoading(
-      () async {
-        final userId = await authService.getUserId();
+    try {
+      final authService = ref.read(authServiceProvider);
+      final userId = await authService.getUserId();
 
-        if (userId == null) {
-          throw Exception('Пользователь не авторизован');
-        }
+      if (userId == null) {
+        throw Exception('Пользователь не авторизован');
+      }
 
-        final api = ref.read(apiServiceProvider);
-        final data = await api.post(
-          '/get_equipment_item.php',
-          body: {
-            'user_id': userId.toString(),
-            'equip_user_id': widget.equipUserId.toString(),
-          },
-        );
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/get_equipment_item.php',
+        body: {
+          'user_id': userId.toString(),
+          'equip_user_id': widget.equipUserId.toString(),
+        },
+      );
 
-        if (data['success'] == true) {
-          if (!mounted) return;
-          setState(() {
-            _brandCtrl.text = data['brand'] ?? '';
-            _modelCtrl.text = data['name'] ?? '';
-            _kmCtrl.text = data['dist']?.toString() ?? '0';
-            _currentImageUrl = data['image'] as String?;
-            // Загружаем дату из базы
-            final inUseSinceStr = data['in_use_since'] as String?;
-            if (inUseSinceStr != null && inUseSinceStr.isNotEmpty) {
-              try {
-                _inUseFrom = DateTime.parse(inUseSinceStr);
-              } catch (e) {
-                // Если не удалось распарсить, оставляем текущую дату
-                _inUseFrom = DateTime.now();
-              }
+      if (!mounted) return;
+
+      if (data['success'] == true) {
+        setState(() {
+          _isLoadingData = false;
+          _brandCtrl.text = data['brand'] ?? '';
+          _modelCtrl.text = data['name'] ?? '';
+          _kmCtrl.text = data['dist']?.toString() ?? '0';
+          _currentImageUrl = data['image'] as String?;
+          // Загружаем дату из базы
+          final inUseSinceStr = data['in_use_since'] as String?;
+          if (inUseSinceStr != null && inUseSinceStr.isNotEmpty) {
+            try {
+              _inUseFrom = DateTime.parse(inUseSinceStr);
+            } catch (e) {
+              // Если не удалось распарсить, оставляем текущую дату
+              _inUseFrom = DateTime.now();
             }
-          });
-        } else {
-          throw Exception(data['message'] ?? 'Ошибка при загрузке данных');
-        }
-      },
-      onError: (error) {
-        if (!mounted) return;
-        final formState = ref.read(formStateProvider);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              formState.error ??
-                  ErrorHandler.formatWithContext(
-                    error,
-                    context: 'загрузке данных',
-                  ),
-            ),
+          }
+        });
+        // ── Запускаем анимацию появления контента после загрузки данных
+        //    Небольшая задержка для более естественного ощущения
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (mounted) {
+            _fadeController.forward();
+          }
+        });
+      } else {
+        throw Exception(data['message'] ?? 'Ошибка при загрузке данных');
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isLoadingData = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            ErrorHandler.formatWithContext(error, context: 'загрузке данных'),
           ),
-        );
-        Navigator.of(context).pop();
-      },
-    );
+        ),
+      );
+      Navigator.of(context).pop();
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -280,7 +316,9 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
       onSuccess: () {
         if (!mounted) return;
         // Закрываем экран после успешного сохранения
-        Navigator.of(context).pop(true); // Возвращаем true для обновления списка
+        Navigator.of(
+          context,
+        ).pop(true); // Возвращаем true для обновления списка
       },
       onError: (error) {
         if (!mounted) return;
@@ -388,224 +426,223 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
   // ─────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final formState = ref.watch(formStateProvider);
-    if (formState.isLoading) {
-      return const Center(child: CupertinoActivityIndicator(radius: 16));
+    // ── Показываем пустой контейнер во время загрузки (экран уже виден,
+    //    анимация перехода происходит на уровне навигации)
+    if (_isLoadingData) {
+      return const SizedBox.shrink();
     }
 
-    return Column(
-      children: [
-        // ───────────────────────── Карточка ─────────────────────────
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.getSurfaceColor(context),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: AppColors.getBorderColor(context),
-              width: 0.5,
+    // ── Анимированное появление контента с fade и slide эффектом
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Column(
+          children: [
+            // ───────────────────────── Карточка ─────────────────────────
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.getSurfaceColor(context),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(
+                  color: AppColors.getBorderColor(context),
+                  width: 0.5,
+                ),
+              ),
+              child: Column(
+                children: [
+                  // превью
+                  SizedBox(
+                    height: 170,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Center(
+                          child: Opacity(
+                            opacity: 0.5,
+                            child: Image.asset(
+                              'assets/add_boots.png',
+                              width: 150,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                        // Отображение текущего изображения из базы или выбранного нового
+                        if (_currentImageUrl != null && _imageFile == null)
+                          Center(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 240,
+                                  maxHeight: 140,
+                                ),
+                                child: Image.network(
+                                  _currentImageUrl!,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    // При ошибке загрузки показываем пустое место,
+                                    // чтобы оставалось только фоновое изображение
+                                    return const SizedBox.shrink();
+                                  },
+                                ),
+                              ),
+                            ),
+                          )
+                        else if (_imageFile != null)
+                          Center(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 240,
+                                  maxHeight: 140,
+                                ),
+                                child: Image.file(
+                                  _imageFile!,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    // При ошибке загрузки показываем пустое место,
+                                    // чтобы оставалось только фоновое изображение
+                                    return const SizedBox.shrink();
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        // кнопка «добавить фото» — снизу-справа
+                        Positioned(
+                          right: 70,
+                          bottom: 18,
+                          child: Material(
+                            color: AppColors.getSurfaceColor(context),
+                            shape: const CircleBorder(),
+                            child: IconButton(
+                              tooltip: 'Добавить фото',
+                              onPressed: _pickImage,
+                              icon: Icon(
+                                Icons.add_a_photo_outlined,
+                                size: 28,
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: AppColors.getDividerColor(context),
+                    indent: 12,
+                    endIndent: 12,
+                  ),
+
+                  // строки полей
+                  _FieldRow(
+                    title: 'Бренд',
+                    child: AutocompleteTextField(
+                      controller: _brandCtrl,
+                      hint: 'Введите бренд',
+                      onSearch: _searchBrands,
+                      onChanged: () {
+                        setState(() {
+                          _modelCtrl.clear();
+                        });
+                      },
+                    ),
+                  ),
+                  _FieldRow(
+                    title: 'Модель',
+                    child: ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _brandCtrl,
+                      builder: (context, brandValue, child) {
+                        return AutocompleteTextField(
+                          controller: _modelCtrl,
+                          hint: 'Введите модель',
+                          onSearch: _searchModels,
+                          enabled: brandValue.text.trim().isNotEmpty,
+                        );
+                      },
+                    ),
+                  ),
+                  _FieldRow(
+                    title: 'В использовании с',
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _pickDate,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: Text(
+                          _dateLabel,
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            color: AppColors.getTextPrimaryColor(context),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  _FieldRow(
+                    title: 'Добавленная дистанция, км',
+                    child: _RightTextField(
+                      controller: _kmCtrl,
+                      hint: '0',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: false,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          child: Column(
-            children: [
-              // превью
-              SizedBox(
-                height: 170,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Center(
-                      child: Opacity(
-                        opacity: 0.5,
-                        child: Image.asset(
-                          'assets/add_boots.png',
-                          width: 150,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                    // Отображение текущего изображения из базы или выбранного нового
-                    if (_currentImageUrl != null && _imageFile == null)
-                      Center(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              maxWidth: 240,
-                              maxHeight: 140,
-                            ),
-                            child: Image.network(
-                              _currentImageUrl!,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Center(
-                                  child: Icon(
-                                    Icons.error_outline,
-                                    color: AppColors.getTextSecondaryColor(
-                                      context,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      )
-                    else if (_imageFile != null)
-                      Center(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              maxWidth: 240,
-                              maxHeight: 140,
-                            ),
-                            child: Image.file(
-                              _imageFile!,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Center(
-                                  child: Icon(
-                                    Icons.error_outline,
-                                    color: AppColors.getTextSecondaryColor(
-                                      context,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    // кнопка «добавить фото» — снизу-справа
-                    Positioned(
-                      right: 70,
-                      bottom: 18,
-                      child: Material(
-                        color: AppColors.getSurfaceColor(context),
-                        shape: const CircleBorder(),
-                        child: IconButton(
-                          tooltip: 'Добавить фото',
-                          onPressed: _pickImage,
-                          icon: Icon(
-                            Icons.add_a_photo_outlined,
-                            size: 28,
-                            color: AppColors.getTextSecondaryColor(context),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
-              Divider(
-                height: 1,
-                thickness: 0.5,
-                color: AppColors.getDividerColor(context),
-                indent: 12,
-                endIndent: 12,
-              ),
+            const SizedBox(height: 25),
 
-              // строки полей
-              _FieldRow(
-                title: 'Бренд',
-                child: AutocompleteTextField(
-                  controller: _brandCtrl,
-                  hint: 'Введите бренд',
-                  onSearch: _searchBrands,
-                  onChanged: () {
-                    setState(() {
-                      _modelCtrl.clear();
-                    });
-                  },
-                ),
-              ),
-              _FieldRow(
-                title: 'Модель',
-                child: ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _brandCtrl,
-                  builder: (context, brandValue, child) {
-                    return AutocompleteTextField(
-                      controller: _modelCtrl,
-                      hint: 'Введите модель',
-                      onSearch: _searchModels,
-                      enabled: brandValue.text.trim().isNotEmpty,
-                    );
-                  },
-                ),
-              ),
-              _FieldRow(
-                title: 'В использовании с',
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: _pickDate,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Text(
-                      _dateLabel,
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        color: AppColors.getTextPrimaryColor(context),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              _FieldRow(
-                title: 'Добавленная дистанция, км',
-                child: _RightTextField(
-                  controller: _kmCtrl,
-                  hint: '0',
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: false,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+            // ─────────────────── Отображение ошибок ───────────────────
+            Builder(
+              builder: (context) {
+                final formState = ref.watch(formStateProvider);
+                if (formState.hasErrors) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: FormErrorDisplay(formState: formState),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
 
-        const SizedBox(height: 25),
-
-        // ─────────────────── Отображение ошибок ───────────────────
-        Builder(
-          builder: (context) {
-            final formState = ref.watch(formStateProvider);
-            if (formState.hasErrors) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: FormErrorDisplay(formState: formState),
-              );
-            }
-            return const SizedBox.shrink();
-          },
-        ),
-
-        // ─────────────────── Кнопка «Сохранить» ───────────────────
-        Center(
-          child: Builder(
-            builder: (context) {
-              final formState = ref.watch(formStateProvider);
-              return ValueListenableBuilder<TextEditingValue>(
-                valueListenable: _brandCtrl,
-                builder: (context, brandValue, child) {
-                  return PrimaryButton(
-                    text: 'Сохранить',
-                    onPressed: _saveEquipment,
-                    isLoading: formState.isSubmitting,
-                    enabled: brandValue.text.trim().isNotEmpty &&
-                        !formState.isSubmitting,
-                    width: 220,
+            // ─────────────────── Кнопка «Сохранить» ───────────────────
+            Center(
+              child: Builder(
+                builder: (context) {
+                  final formState = ref.watch(formStateProvider);
+                  return ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _brandCtrl,
+                    builder: (context, brandValue, child) {
+                      return PrimaryButton(
+                        text: 'Сохранить',
+                        onPressed: _saveEquipment,
+                        isLoading: formState.isSubmitting,
+                        enabled:
+                            brandValue.text.trim().isNotEmpty &&
+                            !formState.isSubmitting,
+                        width: 220,
+                      );
+                    },
                   );
                 },
-              );
-            },
-          ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -632,7 +669,7 @@ class _FieldRow extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 14,
-                      color: AppColors.getTextSecondaryColor(context),
+                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                 ),

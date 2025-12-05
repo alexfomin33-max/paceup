@@ -650,41 +650,43 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                           width: 36,
                           height: 36,
                           fit: BoxFit.cover,
-                        errorWidget: (context, error, stackTrace) => Container(
-                          width: 36,
-                          height: 36,
-                          color: AppColors.getSurfaceMutedColor(context),
+                          errorWidget: (context, error, stackTrace) =>
+                              Container(
+                                width: 36,
+                                height: 36,
+                                color: AppColors.getSurfaceMutedColor(context),
+                              ),
                         ),
                       ),
-                    ),
+                    ],
                     const SizedBox(width: 8),
-                  ],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Чат продажи вещи',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Чат продажи вещи',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          chatData.thingTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.getTextPrimaryColor(context),
+                          const SizedBox(height: 2),
+                          Text(
+                            chatData.thingTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(0.5),
