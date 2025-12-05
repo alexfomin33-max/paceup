@@ -17,6 +17,7 @@ import 'tabs/things/things_content.dart';
 import 'state/sale_screen.dart';
 import 'state/alert_creation_screen.dart';
 import '../../../core/widgets/transparent_route.dart';
+import '../providers/things_provider.dart';
 
 // Те же локальные константы, что и в tasks_screen.dart
 const _kTabAnim = Duration(milliseconds: 300);
@@ -56,11 +57,24 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
         showBack: false,
         leadingWidth: 90,
         leading: GestureDetector(
-          onTap: () {
-            Navigator.of(
+          onTap: () async {
+            // ── передаем текущую вкладку в SaleScreen
+            // если открываем из вкладки "Вещи" (_index == 1),
+            // то сразу активируем закладку "Продажа вещи"
+            final created = await Navigator.of(
               context,
               rootNavigator: true,
-            ).push(CupertinoPageRoute(builder: (_) => const SaleScreen()));
+            ).push<bool>(
+              CupertinoPageRoute(
+                builder: (_) => SaleScreen(initialTab: _index),
+              ),
+            );
+
+            // ── если из формы вернулись с успешным созданием и мы на вкладке «Вещи»,
+            //     автоматически перезагружаем список, чтобы показать новое объявление
+            if (created == true && mounted && _index == 1) {
+              await ref.read(thingsProvider.notifier).loadInitial();
+            }
           },
           child: Padding(
             padding: const EdgeInsets.only(left: 16),

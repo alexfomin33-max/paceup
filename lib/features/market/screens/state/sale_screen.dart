@@ -13,15 +13,32 @@ const _kTabCurve = Curves.easeOut;
 
 /// Экран продажи: каркас + пилюля + PageView со свайпом
 class SaleScreen extends ConsumerStatefulWidget {
-  const SaleScreen({super.key});
+  /// Начальная закладка: 0 — Продажа слота, 1 — Продажа вещи
+  final int? initialTab;
+
+  const SaleScreen({
+    super.key,
+    this.initialTab,
+  });
 
   @override
   ConsumerState<SaleScreen> createState() => _SaleScreenState();
 }
 
 class _SaleScreenState extends ConsumerState<SaleScreen> {
-  int _index = 0; // 0 — Продажа слота, 1 — Продажа вещи
-  late final PageController _page = PageController(initialPage: _index);
+  late int _index; // 0 — Продажа слота, 1 — Продажа вещи
+  late final PageController _page;
+
+  @override
+  void initState() {
+    super.initState();
+    // ── устанавливаем начальную закладку из параметра или по умолчанию 0
+    _index = widget.initialTab ?? 0;
+    // ── ограничиваем значение в допустимых пределах
+    if (_index < 0) _index = 0;
+    if (_index > 1) _index = 1;
+    _page = PageController(initialPage: _index);
+  }
 
   @override
   void dispose() {
