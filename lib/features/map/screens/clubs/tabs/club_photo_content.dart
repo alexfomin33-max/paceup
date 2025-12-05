@@ -76,32 +76,52 @@ class _ClubPhotoContentState extends State<ClubPhotoContent> {
   Widget build(BuildContext context) {
     // ───── Если не владелец и фото нет — показываем пустое состояние ─────
     if (!widget.canEdit && _localPhotos.isEmpty) {
-      return Builder(
-        builder: (context) => Container(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  CupertinoIcons.photo_on_rectangle,
-                  size: 64,
-                  color: AppColors.getIconSecondaryColor(context),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Фотографий пока нет',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 16,
-                    color: AppColors.getTextSecondaryColor(context),
-                    fontWeight: FontWeight.w500,
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          const columns = 3;
+          const spacing = 2.0;
+          final cellW =
+              (constraints.maxWidth - spacing * (columns - 1)) / columns;
+
+          // Минимальная высота: три строки фотографий
+          // 3 ячейки по высоте cellW + 2 промежутка между строками
+          final minHeight = (3 * cellW) + (2 * spacing);
+
+          return ConstrainedBox(
+            constraints: BoxConstraints(minHeight: minHeight),
+            child: Builder(
+              builder: (context) => Container(
+                padding: const EdgeInsets.all(24),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 40),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.photo_on_rectangle,
+                          size: 32,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Фотографий пока нет',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            color: AppColors.getTextSecondaryColor(context),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       );
     }
 
