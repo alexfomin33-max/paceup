@@ -1,0 +1,35 @@
+workflows:
+  ios-release:
+    name: iOS Release Build
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      groups:
+        - app_store_credentials  # Настройте в Codemagic UI
+      vars:
+        BUNDLE_ID: "com.paceup.app"  # Замените на ваш Bundle ID
+    scripts:
+      - name: Get dependencies
+        script: |
+          flutter pub get
+      - name: Install pods
+        script: |
+          cd ios && pod install && cd ..
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          flutter build ipa --release
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      email:
+        recipients:
+          - your-email@example.com
+        notify:
+          success: true
+          failure: false
