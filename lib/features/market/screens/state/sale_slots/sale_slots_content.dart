@@ -192,12 +192,14 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
           final slotsNotifier = ref.read(slotsProvider.notifier);
           await slotsNotifier.loadInitial();
           
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Объявление о продаже слота успешно размещено'),
-            ),
-          );
-          Navigator.pop(context);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Объявление о продаже слота успешно размещено'),
+              ),
+            );
+            Navigator.pop(context);
+          }
         }
       } else {
         // ─── Ошибка от сервера ───

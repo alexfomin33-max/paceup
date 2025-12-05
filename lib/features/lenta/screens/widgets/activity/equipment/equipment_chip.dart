@@ -77,6 +77,19 @@ class _EquipmentChipState extends State<EquipmentChip> {
       return const SizedBox.shrink();
     }
 
+    // ────────────────────────────────────────────────────────────────
+    // 🖼️ ДЕФОЛТНОЕ ИЗОБРАЖЕНИЕ: определяем тип экипировки по activityType
+    // ────────────────────────────────────────────────────────────────
+    final bool isBike = widget.activityType.toLowerCase() == 'bike';
+    final String defaultImageAsset = isBike
+        ? 'assets/add_bike.png'
+        : 'assets/add_boots.png';
+
+    // Проверяем, является ли img валидным URL
+    final bool hasValidImageUrl =
+        img.isNotEmpty &&
+        (img.startsWith('http://') || img.startsWith('https://'));
+
     return Padding(
       // как было в исходном Equipment: внутренний паддинг 10
       padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -118,7 +131,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                   shape: BoxShape.circle,
                 ),
                 child: ClipOval(
-                  child: img.isNotEmpty
+                  child: hasValidImageUrl
                       ? Builder(
                           builder: (context) {
                             final dpr = MediaQuery.of(context).devicePixelRatio;
@@ -130,61 +143,49 @@ class _EquipmentChipState extends State<EquipmentChip> {
                               fit: BoxFit.contain,
                               memCacheWidth: w,
                               maxWidthDiskCache: w,
-                              placeholder: (context, url) => Container(
-                                width: 50,
-                                height: 50,
+                              placeholder: (context, url) {
                                 // ────────────────────────────────────────────────────────────────
-                                // 🌓 ТЕМНАЯ ТЕМА: светлый фон placeholder
+                                // 🖼️ ДЕФОЛТНОЕ ИЗОБРАЖЕНИЕ: во время загрузки показываем asset
                                 // ────────────────────────────────────────────────────────────────
-                                color:
-                                    Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? AppColors.surface
-                                    : AppColors.getSurfaceColor(context),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  // ────────────────────────────────────────────────────────────────
-                                  // 🌓 ТЕМНАЯ ТЕМА: светлый фон error widget
-                                  // ────────────────────────────────────────────────────────────────
-                                  color:
-                                      Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? AppColors.surface
-                                      : AppColors.getSurfaceColor(context),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  CupertinoIcons.sportscourt,
-                                  size: 24,
-                                  color: AppColors.getIconSecondaryColor(
-                                    context,
-                                  ),
-                                ),
-                              ),
+                                final image = Image.asset(
+                                  defaultImageAsset,
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit
+                                      .contain, // длинная сторона помещается полностью
+                                );
+                                return image;
+                              },
+                              errorWidget: (context, url, error) {
+                                // ────────────────────────────────────────────────────────────────
+                                // 🖼️ ДЕФОЛТНОЕ ИЗОБРАЖЕНИЕ: при ошибке загрузки показываем asset
+                                // ────────────────────────────────────────────────────────────────
+                                final image = Image.asset(
+                                  defaultImageAsset,
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit
+                                      .contain, // длинная сторона помещается полностью
+                                );
+                                return image;
+                              },
                             );
                           },
                         )
-                      : Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
+                      : Builder(
+                          builder: (context) {
                             // ────────────────────────────────────────────────────────────────
-                            // 🌓 ТЕМНАЯ ТЕМА: светлый фон заглушки
+                            // 🖼️ ДЕФОЛТНОЕ ИЗОБРАЖЕНИЕ: если нет URL, показываем asset
                             // ────────────────────────────────────────────────────────────────
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                ? AppColors.surface
-                                : AppColors.getSurfaceColor(context),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            CupertinoIcons.sportscourt,
-                            size: 24,
-                            color: AppColors.getIconSecondaryColor(context),
-                          ),
+                            final image = Image.asset(
+                              defaultImageAsset,
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit
+                                  .contain, // длинная сторона помещается полностью
+                            );
+                            return image;
+                          },
                         ),
                 ),
               ),

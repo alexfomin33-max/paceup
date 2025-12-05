@@ -466,10 +466,21 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
       return InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.getBackgroundColor(context),
-          appBar: const PaceAppBar(
+          appBar: PaceAppBar(
             title: 'Редактирование объявления',
             showBack: true,
             showBottomDivider: true,
+            actions: [
+              IconButton(
+                splashRadius: 22,
+                icon: Icon(
+                  CupertinoIcons.delete,
+                  size: 20,
+                  color: AppColors.getIconPrimaryColor(context),
+                ),
+                onPressed: _handleDelete,
+              ),
+            ],
           ),
           body: const Center(child: CupertinoActivityIndicator()),
         ),
@@ -480,10 +491,21 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
       return InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.getBackgroundColor(context),
-          appBar: const PaceAppBar(
+          appBar: PaceAppBar(
             title: 'Редактирование объявления',
             showBack: true,
             showBottomDivider: true,
+            actions: [
+              IconButton(
+                splashRadius: 22,
+                icon: Icon(
+                  CupertinoIcons.delete,
+                  size: 20,
+                  color: AppColors.getIconPrimaryColor(context),
+                ),
+                onPressed: _handleDelete,
+              ),
+            ],
           ),
           body: Center(
             child: Padding(
@@ -518,10 +540,21 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(
+        appBar: PaceAppBar(
           title: 'Редактирование объявления',
           showBack: true,
           showBottomDivider: true,
+          actions: [
+            IconButton(
+              splashRadius: 22,
+              icon: Icon(
+                CupertinoIcons.delete,
+                size: 20,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
+              onPressed: _handleDelete,
+            ),
+          ],
         ),
         body: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(12, 12, 12, bottomPad),

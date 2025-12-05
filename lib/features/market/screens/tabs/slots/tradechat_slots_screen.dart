@@ -417,7 +417,9 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
 
       if (response['success'] == true) {
         _ctrl.clear();
-        FocusScope.of(context).unfocus();
+        if (mounted) {
+          FocusScope.of(context).unfocus();
+        }
 
         // Перезагружаем сообщения
         await _loadChatData(_chatData!.chatId);
@@ -633,7 +635,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                         image: DecorationImage(
                           image: NetworkImage(chatData.slotImageUrl!),
                           fit: BoxFit.cover,
-                          onError: (_, __) {},
+                          onError: (error, stackTrace) {},
                         ),
                       ),
                     ),
@@ -1223,7 +1225,7 @@ class _ParticipantRow extends StatelessWidget {
                         color: AppColors.getIconSecondaryColor(context),
                       )
                     : null,
-                onBackgroundImageError: (_, __) {},
+                onBackgroundImageError: (error, stackTrace) {},
               ),
               const SizedBox(width: 8),
               Text.rich(
@@ -1299,7 +1301,7 @@ class _BubbleLeft extends StatelessWidget {
                     color: AppColors.getIconSecondaryColor(context),
                   )
                 : null,
-            onBackgroundImageError: (_, __) {},
+            onBackgroundImageError: (error, stackTrace) {},
           ),
           const SizedBox(width: 8),
           ConstrainedBox(

@@ -573,71 +573,80 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
               ),
             ),
 
-          // ── Изображение (из базы данных или локальный asset)
+          // ── Изображение (из базы данных или дефолтное)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Center(
               child: SizedBox(
                 width: 220,
                 height: 150,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                    color: AppColors.surface,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                    child:
-                        widget.imageUrl != null && widget.imageUrl!.isNotEmpty
-                        ? Image.network(
-                            widget.imageUrl!,
-                            width: 220,
-                            height: 150,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              // При ошибке загрузки показываем дефолтное изображение
-                              if (widget.asset != null) {
-                                return Image.asset(
-                                  widget.asset!,
-                                  width: 220,
-                                  height: 150,
-                                  fit: BoxFit.contain,
-                                );
-                              }
-                              return Container(
+                child: Builder(
+                  builder: (context) {
+                    // ────────────────────────────────────────────────────────────────
+                    // 🖼️ ДЕФОЛТНОЕ ИЗОБРАЖЕНИЕ: определяем тип экипировки
+                    // ────────────────────────────────────────────────────────────────
+                    final String defaultImageAsset =
+                        widget.equipmentType == 'bike'
+                        ? 'assets/add_bike.png'
+                        : 'assets/add_boots.png';
+
+                    // Проверяем, является ли imageUrl валидным URL
+                    final bool hasValidImageUrl =
+                        widget.imageUrl != null &&
+                        widget.imageUrl!.isNotEmpty &&
+                        (widget.imageUrl!.startsWith('http://') ||
+                            widget.imageUrl!.startsWith('https://'));
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        color: AppColors.surface,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        child: hasValidImageUrl
+                            ? Image.network(
+                                widget.imageUrl!,
                                 width: 220,
                                 height: 150,
-                                color: Colors.white,
-                                child: Center(
-                                  child: Icon(
-                                    CupertinoIcons.photo,
-                                    color: AppColors.getTextSecondaryColor(
-                                      context,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          )
-                        : widget.asset != null
-                        ? Image.asset(
-                            widget.asset!,
-                            width: 220,
-                            height: 150,
-                            fit: BoxFit.contain,
-                          )
-                        : Container(
-                            width: 220,
-                            height: 150,
-                            color: Colors.white,
-                            child: Center(
-                              child: Icon(
-                                CupertinoIcons.photo,
-                                color: AppColors.getTextSecondaryColor(context),
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  // ────────────────────────────────────────────────────────────────
+                                  // 🖼️ ДЕФОЛТНОЕ ИЗОБРАЖЕНИЕ: при ошибке загрузки показываем asset
+                                  // ────────────────────────────────────────────────────────────────
+                                  final image = Image.asset(
+                                    defaultImageAsset,
+                                    width: 220,
+                                    height: 150,
+                                    fit: BoxFit.contain,
+                                  );
+                                  return image;
+                                },
+                              )
+                            : widget.asset != null
+                            ? Image.asset(
+                                widget.asset!,
+                                width: 220,
+                                height: 150,
+                                fit: BoxFit.contain,
+                              )
+                            : Builder(
+                                builder: (context) {
+                                  // ────────────────────────────────────────────────────────────────
+                                  // 🖼️ ДЕФОЛТНОЕ ИЗОБРАЖЕНИЕ: если нет URL, показываем asset
+                                  // ────────────────────────────────────────────────────────────────
+                                  final image = Image.asset(
+                                    defaultImageAsset,
+                                    width: 220,
+                                    height: 150,
+                                    fit: BoxFit.contain,
+                                  );
+                                  return image;
+                                },
                               ),
-                            ),
-                          ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
