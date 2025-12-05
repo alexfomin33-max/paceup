@@ -689,12 +689,14 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                           sliver: Builder(
                             builder: (context) {
                               // ─── Определяем, нужно ли показывать строку статуса ───
+                              // Логика одинакова для продавца и покупателя
                               // Показываем ТОЛЬКО в трех случаях:
-                              // 1. Слот продан (status == 'sold')
+                              // 1. Слот продан (status == 'sold' или dealStatus == 'bought')
                               // 2. Сделка отменена (dealStatus == 'cancelled')
                               // 3. Слот снят с продажи (isSlotDeleted == true)
                               // НЕ показываем для 'available', 'reserved' и других обычных статусов
                               final showStatusLine = chatData.slotStatus == 'sold' ||
+                                  chatData.dealStatus == 'bought' ||
                                   chatData.dealStatus == 'cancelled' ||
                                   chatData.isSlotDeleted;
 
@@ -725,7 +727,8 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                                       String statusText;
                                       IconData statusIcon;
                                       
-                                      if (chatData.slotStatus == 'sold') {
+                                      // ─── Определяем текст и иконку статуса (одинаково для продавца и покупателя) ───
+                                      if (chatData.slotStatus == 'sold' || chatData.dealStatus == 'bought') {
                                         statusText = 'Продано';
                                         statusIcon = CupertinoIcons.check_mark_circled;
                                       } else if (chatData.isSlotDeleted) {
@@ -1053,6 +1056,9 @@ class _ActionsWrap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ─── Кнопки действий работают одинаково для продавца и покупателя ───
+    // Обе стороны могут менять статус сделки: "Слот куплен" или "Отменить сделку"
+    
     // Если сделка уже завершена
     if (dealStatus == 'bought') {
       return Center(
