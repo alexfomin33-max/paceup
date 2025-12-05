@@ -364,11 +364,11 @@ class _BuyButtonText extends StatelessWidget {
                     .textSecondary // более темный цвет для светлой темы
               : AppColors.disabledText); // в темной теме оставляем как было
     // ── Определяем иконку: пузырь сообщения для "В чат", замок для "Бронь", корзина для остальных
-    // Для "Изменить" иконка не отображается
+    // Для "Изменить" и "Купить" иконка не отображается
     final icon = text == 'В чат'
         ? CupertinoIcons.chat_bubble
         : (text == 'Бронь' ? CupertinoIcons.lock : CupertinoIcons.cart);
-    final showIcon = text != 'Изменить';
+    final showIcon = text != 'Изменить' && text != 'Купить';
 
     final buttonStyle = ElevatedButton.styleFrom(
       backgroundColor: bg,
@@ -391,23 +391,30 @@ class _BuyButtonText extends StatelessWidget {
       ),
     );
 
+    // ── Фиксированная ширина для кнопок "В чат", "Купить" и "Изменить"
+    final isFixedWidthButton =
+        text == 'В чат' || text == 'Купить' || text == 'Изменить';
+
+    final button = showIcon
+        ? ElevatedButton.icon(
+            onPressed: enabled ? onPressed : null,
+            style: buttonStyle,
+            icon: Icon(icon, size: 14, color: fg),
+            label: textWidget,
+          )
+        : ElevatedButton(
+            onPressed: enabled ? onPressed : null,
+            style: buttonStyle,
+            child: textWidget,
+          );
+
+    if (isFixedWidthButton) {
+      return SizedBox(width: 80, height: 28, child: button);
+    }
+
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: 72),
-      child: SizedBox(
-        height: 28,
-        child: showIcon
-            ? ElevatedButton.icon(
-                onPressed: enabled ? onPressed : null,
-                style: buttonStyle,
-                icon: Icon(icon, size: 14, color: fg),
-                label: textWidget,
-              )
-            : ElevatedButton(
-                onPressed: enabled ? onPressed : null,
-                style: buttonStyle,
-                child: textWidget,
-              ),
-      ),
+      child: SizedBox(height: 28, child: button),
     );
   }
 }
