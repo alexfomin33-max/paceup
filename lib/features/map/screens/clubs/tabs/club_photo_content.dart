@@ -11,10 +11,12 @@ import '../../../../../core/utils/local_image_compressor.dart'
 /// Пока без API функционала — структура готова для будущей интеграции
 class ClubPhotoContent extends StatefulWidget {
   final int clubId;
+  final bool canEdit; // Является ли пользователь владельцем клуба
 
   const ClubPhotoContent({
     super.key,
     required this.clubId,
+    required this.canEdit,
   });
 
   @override
@@ -43,11 +45,18 @@ class _ClubPhotoContentState extends State<ClubPhotoContent> {
     });
   }
 
+  /// ──────────────────────── Удаление фото ────────────────────────
+  void _deletePhoto(int index) {
+    setState(() {
+      _localPhotos.removeAt(index);
+    });
+  }
+
   /// ──────────────────────── Открытие галереи ────────────────────────
   void _openGallery(BuildContext context, int index) {
     // Преобразуем File в String (путь) для галереи
     final photoPaths = _localPhotos.map((f) => f.path).toList();
-    
+
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: true,
@@ -65,7 +74,38 @@ class _ClubPhotoContentState extends State<ClubPhotoContent> {
 
   @override
   Widget build(BuildContext context) {
-    // ───── Всегда показываем сетку: первая ячейка — плейсхолдер, остальные — фото ─────
+    // ───── Если не владелец и фото нет — показываем пустое состояние ─────
+    if (!widget.canEdit && _localPhotos.isEmpty) {
+      return Builder(
+        builder: (context) => Container(
+          padding: const EdgeInsets.all(24),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  CupertinoIcons.photo_on_rectangle,
+                  size: 64,
+                  color: AppColors.getIconSecondaryColor(context),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Фотографий пока нет',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    color: AppColors.getTextSecondaryColor(context),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ───── Показываем сетку: для владельца — с плейсхолдером, для остальных — без ─────
     return ClipRRect(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -76,74 +116,56 @@ class _ClubPhotoContentState extends State<ClubPhotoContent> {
           final dpr = MediaQuery.of(context).devicePixelRatio;
           final cacheWidth = (cellW * dpr).round();
 
-          // Количество элементов: плейсхолдер + фото
-          final itemCount = 1 + _localPhotos.length;
+          // Минимальная высота: три строки фотографий
+          // 3 ячейки по высоте cellW + 2 промежутка между строками
+          final minHeight = (3 * cellW) + (2 * spacing);
 
-          return GridView.builder(
-            shrinkWrap: true,
-            primary: false,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.zero,
-            itemCount: itemCount,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columns,
-              mainAxisSpacing: spacing,
-              crossAxisSpacing: spacing,
-              childAspectRatio: 1.0,
-            ),
-            itemBuilder: (_, i) {
-              // Первая ячейка (index 0) — плейсхолдер для добавления фото
-              if (i == 0) {
-                return _AddPhotoPlaceholder(
+          // Количество элементов:
+          // - Для владельца: плейсхолдер + фото
+          // - Для остальных: только фото
+          final itemCount = (widget.canEdit ? 1 : 0) + _localPhotos.length;
+
+          return ConstrainedBox(
+            constraints: BoxConstraints(minHeight: minHeight),
+            child: GridView.builder(
+              shrinkWrap: true,
+              primary: false,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
+              itemCount: itemCount,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                mainAxisSpacing: spacing,
+                crossAxisSpacing: spacing,
+                childAspectRatio: 1.0,
+              ),
+              itemBuilder: (_, i) {
+                // Для владельца: первая ячейка (index 0) — плейсхолдер для добавления фото
+                if (widget.canEdit && i == 0) {
+                  return _AddPhotoPlaceholder(
+                    cellSize: cellW,
+                    onTap: _addPhoto,
+                  );
+                }
+
+                // Остальные ячейки — фото
+                // Для владельца: смещаем индекс на 1 (пропускаем плейсхолдер)
+                // Для остальных: используем индекс как есть
+                final photoIndex = widget.canEdit ? i - 1 : i;
+                final photoFile = _localPhotos[photoIndex];
+
+                return _PhotoItem(
+                  photoFile: photoFile,
+                  photoIndex: photoIndex,
+                  clubId: widget.clubId,
                   cellSize: cellW,
-                  onTap: _addPhoto,
+                  cacheWidth: cacheWidth,
+                  canEdit: widget.canEdit,
+                  onTap: () => _openGallery(context, photoIndex),
+                  onDelete: () => _deletePhoto(photoIndex),
                 );
-              }
-
-              // Остальные ячейки — фото
-              final photoIndex = i - 1; // Смещаем индекс на 1 (пропускаем плейсхолдер)
-              final photoFile = _localPhotos[photoIndex];
-              
-              return GestureDetector(
-                onTap: () => _openGallery(context, photoIndex),
-                child: Hero(
-                  tag: 'club-photo-${widget.clubId}-$photoIndex',
-                  flightShuttleBuilder: (
-                    BuildContext flightContext,
-                    Animation<double> animation,
-                    HeroFlightDirection flightDirection,
-                    BuildContext fromHeroContext,
-                    BuildContext toHeroContext,
-                  ) {
-                    final Hero toHero = toHeroContext.widget as Hero;
-                    return toHero.child;
-                  },
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    child: Image.file(
-                      photoFile,
-                      fit: BoxFit.cover,
-                      width: cellW,
-                      height: cellW,
-                      cacheWidth: cacheWidth,
-                      filterQuality: FilterQuality.low,
-                      errorBuilder: (context, error, stackTrace) => Builder(
-                        builder: (context) => Container(
-                          width: cellW,
-                          height: cellW,
-                          color: AppColors.getBorderColor(context),
-                          child: Icon(
-                            Icons.broken_image,
-                            size: 24,
-                            color: AppColors.getIconSecondaryColor(context),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
+              },
+            ),
           );
         },
       ),
@@ -157,10 +179,7 @@ class _AddPhotoPlaceholder extends StatelessWidget {
   final double cellSize;
   final VoidCallback onTap;
 
-  const _AddPhotoPlaceholder({
-    required this.cellSize,
-    required this.onTap,
-  });
+  const _AddPhotoPlaceholder({required this.cellSize, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -171,7 +190,7 @@ class _AddPhotoPlaceholder extends StatelessWidget {
           width: cellSize,
           height: cellSize,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             color: AppColors.getSurfaceColor(context),
             border: Border.all(
               color: AppColors.getBorderColor(context),
@@ -180,13 +199,111 @@ class _AddPhotoPlaceholder extends StatelessWidget {
           ),
           child: Center(
             child: Icon(
-              CupertinoIcons.add_circled,
+              CupertinoIcons.photo_camera,
               size: 32,
               color: AppColors.getIconSecondaryColor(context),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// ──────────────────────── Элемент фото в сетке ────────────────────────
+/// Фото с возможностью удаления для владельца клуба
+class _PhotoItem extends StatelessWidget {
+  final File photoFile;
+  final int photoIndex;
+  final int clubId;
+  final double cellSize;
+  final int cacheWidth;
+  final bool canEdit;
+  final VoidCallback onTap;
+  final VoidCallback onDelete;
+
+  const _PhotoItem({
+    required this.photoFile,
+    required this.photoIndex,
+    required this.clubId,
+    required this.cellSize,
+    required this.cacheWidth,
+    required this.canEdit,
+    required this.onTap,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Hero(
+            tag: 'club-photo-$clubId-$photoIndex',
+            flightShuttleBuilder:
+                (
+                  BuildContext flightContext,
+                  Animation<double> animation,
+                  HeroFlightDirection flightDirection,
+                  BuildContext fromHeroContext,
+                  BuildContext toHeroContext,
+                ) {
+                  final Hero toHero = toHeroContext.widget as Hero;
+                  return toHero.child;
+                },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: Image.file(
+                photoFile,
+                fit: BoxFit.cover,
+                width: cellSize,
+                height: cellSize,
+                cacheWidth: cacheWidth,
+                filterQuality: FilterQuality.low,
+                errorBuilder: (context, error, stackTrace) => Builder(
+                  builder: (context) => Container(
+                    width: cellSize,
+                    height: cellSize,
+                    color: AppColors.getBorderColor(context),
+                    child: Icon(
+                      Icons.broken_image,
+                      size: 24,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Иконка удаления (только для владельца)
+        if (canEdit)
+          Positioned(
+            right: 2,
+            top: 2,
+            child: GestureDetector(
+              onTap: onDelete,
+              child: Builder(
+                builder: (context) => Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.surface, width: 1),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.clear,
+                    size: 16,
+                    color: AppColors.surface,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -274,10 +391,7 @@ class _CircleIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _CircleIconButton({
-    required this.icon,
-    required this.onTap,
-  });
+  const _CircleIconButton({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -388,4 +502,3 @@ class _ZoomableImageState extends State<_ZoomableImage> {
     );
   }
 }
-

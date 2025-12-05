@@ -694,6 +694,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                             padding: const EdgeInsets.all(2),
                             child: ClubPhotoContent(
                               clubId: widget.clubId,
+                              canEdit: _canEdit,
                             ),
                           )
                         else if (_tab == 1)
