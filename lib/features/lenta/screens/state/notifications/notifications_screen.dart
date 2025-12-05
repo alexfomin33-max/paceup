@@ -103,12 +103,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     );
   }
 
-  // Отметка уведомления как прочитанного при клике
-  void _onNotificationTap(NotificationItem notification) {
-    if (!notification.isRead) {
-      ref.read(notificationsProvider.notifier).markAsRead([notification.id]);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -211,68 +205,65 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 final notification = state.items[i];
                 final isRead = notification.isRead;
 
-                final item = InkWell(
-                  onTap: () => _onNotificationTap(notification),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Аватарка отправителя
-                        ClipOval(
-                          child: CachedNetworkImage(
-                            imageUrl: notification.senderAvatar,
+                final item = Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Аватарка отправителя
+                      ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl: notification.senderAvatar,
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
                             width: 40,
                             height: 40,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              width: 40,
-                              height: 40,
-                              color: AppColors.skeletonBase,
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              width: 40,
-                              height: 40,
-                              color: AppColors.skeletonBase,
-                              child: const Icon(CupertinoIcons.person),
-                            ),
+                            color: AppColors.skeletonBase,
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            width: 40,
+                            height: 40,
+                            color: AppColors.skeletonBase,
+                            child: const Icon(CupertinoIcons.person),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                      ),
+                      const SizedBox(width: 10),
 
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    _getIconData(notification.icon),
-                                    size: 16,
-                                    color: _getColorFromString(notification.color),
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    _formatWhen(notification.createdAt),
-                                    style: AppTextStyles.h11w4Ter,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                notification.text,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  height: 1.25,
-                                  fontWeight: isRead ? FontWeight.normal : FontWeight.w600,
-                                  color: AppColors.getTextPrimaryColor(context),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  _getIconData(notification.icon),
+                                  size: 16,
+                                  color: _getColorFromString(notification.color),
                                 ),
+                                const Spacer(),
+                                Text(
+                                  _formatWhen(notification.createdAt),
+                                  style: AppTextStyles.h11w4Ter,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              notification.text,
+                              style: TextStyle(
+                                fontSize: 13,
+                                height: 1.25,
+                                fontWeight: isRead ? FontWeight.normal : FontWeight.w600,
+                                color: AppColors.getTextPrimaryColor(context),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 );
 

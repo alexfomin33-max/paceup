@@ -100,6 +100,10 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   // 🔔 POLLING: динамическое обновление счетчика непрочитанных чатов
   // ────────────────────────────────────────────────────────────────
   Timer? _unreadChatsPollingTimer;
+  // ────────────────────────────────────────────────────────────────
+  // 🔔 POLLING: динамическое обновление счетчика непрочитанных уведомлений
+  // ────────────────────────────────────────────────────────────────
+  Timer? _unreadNotificationsPollingTimer;
   static const Duration _pollingInterval = Duration(
     seconds: 5,
   ); // обновляем каждые 5 секунд
@@ -153,6 +157,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         _startUnreadChatsPolling(userId);
         // Загружаем уведомления для получения счетчика непрочитанных
         ref.read(notificationsProvider.notifier).loadInitial();
+        // Запускаем polling для динамического обновления счетчика уведомлений
+        _startUnreadNotificationsPolling(userId);
 
         // Проверка флага синхронизации от Broadcast Receiver
         _checkAndSyncHealthData();
@@ -181,7 +187,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     WidgetsBinding.instance.removeObserver(this);
     _scrollController.dispose();
     _prefetchDebounceTimer?.cancel(); // ✅ Очищаем таймер prefetch
-    _unreadChatsPollingTimer?.cancel(); // ✅ Очищаем таймер polling
+    _unreadChatsPollingTimer?.cancel(); // ✅ Очищаем таймер polling чатов
+    _unreadNotificationsPollingTimer?.cancel(); // ✅ Очищаем таймер polling уведомлений
     super.dispose();
   }
 
@@ -336,6 +343,29 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
       // Обновляем счетчик непрочитанных чатов
       ref.read(unreadChatsProvider(_actualUserId!).notifier).loadUnreadCount();
+    });
+  }
+
+  /// Запускает периодическое обновление счетчика непрочитанных уведомлений
+  ///
+  /// ⚡ PERFORMANCE OPTIMIZATION:
+  /// - Интервал 5 секунд — баланс между актуальностью и нагрузкой на сервер
+  /// - Автоматическая остановка при dispose — предотвращает утечки памяти
+  /// - Проверка mounted перед обновлением — безопасность при закрытии экрана
+  ///
+  /// Обновляет счетчик каждые 5 секунд, чтобы пользователь видел
+  /// новые непрочитанные уведомления в реальном времени.
+  void _startUnreadNotificationsPolling(int userId) {
+    _unreadNotificationsPollingTimer?.cancel(); // Отменяем предыдущий таймер, если есть
+
+    _unreadNotificationsPollingTimer = Timer.periodic(_pollingInterval, (_) {
+      if (!mounted || _actualUserId == null) {
+        _unreadNotificationsPollingTimer?.cancel();
+        return;
+      }
+
+      // Обновляем счетчик непрочитанных уведомлений
+      ref.read(notificationsProvider.notifier).updateUnreadCount();
     });
   }
 

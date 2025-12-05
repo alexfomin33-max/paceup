@@ -146,6 +146,47 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
       );
 
       _offset = notifications.length;
+
+      // ─── Автоматически отмечаем все уведомления как прочитанные ───
+      // при загрузке экрана
+      if (notifications.isNotEmpty) {
+        // Отмечаем все уведомления как прочитанные на сервере
+        try {
+          final userId = await _auth.getUserId();
+          if (userId != null) {
+            await _api.post(
+              '/mark_notifications_read.php',
+              body: {'user_id': userId}, // без notification_ids = отметить все
+            );
+          }
+        } catch (e) {
+          // Игнорируем ошибки при отметке как прочитанных
+        }
+
+        // Обновляем локальное состояние - все уведомления теперь прочитаны
+        final updatedItems = notifications.map((notif) {
+          return NotificationItem(
+            id: notif.id,
+            senderId: notif.senderId,
+            senderName: notif.senderName,
+            senderAvatar: notif.senderAvatar,
+            notificationType: notif.notificationType,
+            notificationTypeName: notif.notificationTypeName,
+            icon: notif.icon,
+            color: notif.color,
+            objectType: notif.objectType,
+            objectId: notif.objectId,
+            text: notif.text,
+            isRead: true, // Все помечаем как прочитанные
+            createdAt: notif.createdAt,
+          );
+        }).toList();
+
+        state = state.copyWith(
+          items: updatedItems,
+          unreadCount: 0, // После отметки всех как прочитанных, непрочитанных нет
+        );
+      }
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -197,6 +238,7 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
   /// Обновление уведомлений (pull-to-refresh)
   Future<void> refresh() async {
     await loadInitial();
+    // После обновления все уведомления уже отмечены как прочитанные в loadInitial()
   }
 
   /// Отметка уведомлений как прочитанных
@@ -261,6 +303,27 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
       return data['unread_count'] as int? ?? 0;
     } catch (e) {
       return 0;
+    }
+  }
+
+  /// Обновление только счетчика непрочитанных уведомлений (для polling)
+  /// Не загружает все уведомления, только обновляет счетчик
+  Future<void> updateUnreadCount() async {
+    try {
+      final userId = await _auth.getUserId();
+      if (userId == null) return;
+
+      final data = await _api.post(
+        '/get_unread_notifications_count.php',
+        body: {'user_id': userId},
+      );
+
+      final unreadCount = data['unread_count'] as int? ?? 0;
+
+      // Обновляем только счетчик, не трогая список уведомлений
+      state = state.copyWith(unreadCount: unreadCount);
+    } catch (e) {
+      // Игнорируем ошибки при обновлении счетчика
     }
   }
 }
