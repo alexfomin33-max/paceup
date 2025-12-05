@@ -533,7 +533,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
               // 📸 ФОТОГРАФИИ ВЕЩИ (горизонтальная карусель)
               // ────────────────────────────────────────────────────────────────
               Text(
-                'Фотографии вещи',
+                'Фотографии товара',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
@@ -546,7 +546,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
               const SizedBox(height: 24),
 
               _LabeledTextField(
-                label: 'Название вещи',
+                label: 'Название товара',
                 hint: 'Наименование продаваемого товара',
                 controller: titleCtrl,
                 onChanged: (_) => setState(() {}),

@@ -119,7 +119,8 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
 
         // ── добавляем города передачи (JSON массив)
         if (cities.isNotEmpty) {
-          fields['cities'] = cities.toString(); // Будет передан как массив в multipart
+          fields['cities'] = cities
+              .toString(); // Будет передан как массив в multipart
         }
 
         Map<String, dynamic> data;
@@ -141,10 +142,7 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
             jsonBody['cities'] = cities;
           }
 
-          data = await api.post(
-            '/create_thing.php',
-            body: jsonBody,
-          );
+          data = await api.post('/create_thing.php', body: jsonBody);
         } else {
           // ── Multipart-запрос (с файлами)
           final files = <String, File>{};
@@ -278,7 +276,7 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
           // 📸 ФОТОГРАФИИ ВЕЩИ (горизонтальная карусель)
           // ────────────────────────────────────────────────────────────────
           Text(
-            'Фотографии вещи',
+            'Фотографии товара',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
@@ -291,7 +289,7 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
           const SizedBox(height: 24),
 
           _LabeledTextField(
-            label: 'Название вещи',
+            label: 'Название товара',
             hint: 'Наименование продаваемого товара',
             controller: titleCtrl,
             onChanged: (_) => setState(() {}),
@@ -426,9 +424,9 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
               builder: (context) {
                 final formState = ref.watch(formStateProvider);
                 return PrimaryButton(
-              text: 'Разместить продажу',
+                  text: 'Разместить продажу',
                   onPressed: !formState.isSubmitting ? _submit : () {},
-              width: 220,
+                  width: 220,
                   isLoading: formState.isSubmitting,
                   enabled: _isValid && !formState.isSubmitting,
                 );
@@ -557,7 +555,9 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
                   decoration: BoxDecoration(
                     color: AppColors.getSurfaceColor(context),
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: AppColors.getBorderColor(context)),
+                    border: Border.all(
+                      color: AppColors.getBorderColor(context),
+                    ),
                   ),
                   child: const Icon(
                     CupertinoIcons.clear_circled_solid,
