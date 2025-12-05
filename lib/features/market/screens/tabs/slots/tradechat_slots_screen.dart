@@ -9,6 +9,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/services/api_service.dart';
 import '../../../../../core/services/auth_service.dart';
+import '../../../../../core/utils/feed_date.dart';
 import '../../../models/market_models.dart';
 import '../../widgets/pills.dart'; // GenderPill, PricePill
 import '../../../../../core/widgets/interactive_back_swipe.dart';
@@ -17,13 +18,10 @@ import '../../../../profile/screens/profile_screen.dart';
 
 class TradeChatSlotsScreen extends ConsumerStatefulWidget {
   final int slotId;
-  final int? chatId; // ─── Опциональный chatId для открытия конкретного чата ───
+  final int?
+  chatId; // ─── Опциональный chatId для открытия конкретного чата ───
 
-  const TradeChatSlotsScreen({
-    super.key,
-    required this.slotId,
-    this.chatId,
-  });
+  const TradeChatSlotsScreen({super.key, required this.slotId, this.chatId});
 
   @override
   ConsumerState<TradeChatSlotsScreen> createState() =>
@@ -532,19 +530,9 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
     });
   }
 
-  // ─── Форматирование даты создания чата ───
+  // ─── Форматирование даты и времени создания чата ───
   String _formatChatDate(DateTime? date) {
-    if (date == null) {
-      final now = DateTime.now();
-      final dd = now.day.toString().padLeft(2, '0');
-      final mm = now.month.toString().padLeft(2, '0');
-      final yyyy = now.year.toString();
-      return '$dd.$mm.$yyyy';
-    }
-    final dd = date.day.toString().padLeft(2, '0');
-    final mm = date.month.toString().padLeft(2, '0');
-    final yyyy = date.year.toString();
-    return '$dd.$mm.$yyyy';
+    return formatFeedDateText(date: date);
   }
 
   @override
@@ -607,7 +595,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
               elevation: 0,
               leadingWidth: 40,
               leading: Transform.translate(
-                offset: const Offset(-4, 0),
+                offset: const Offset(0, 0),
                 child: IconButton(
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
@@ -620,51 +608,54 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                 ),
               ),
               titleSpacing: -8,
-              title: Row(
-                children: [
-                  if (chatData.slotImageUrl != null &&
-                      chatData.slotImageUrl!.isNotEmpty) ...[
-                    Container(
-                      width: 36,
-                      height: 36,
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppRadius.xs),
-                        image: DecorationImage(
-                          image: NetworkImage(chatData.slotImageUrl!),
-                          fit: BoxFit.cover,
-                          onError: (_, __) {},
+              title: Transform.translate(
+                offset: const Offset(8, 0),
+                child: Row(
+                  children: [
+                    if (chatData.slotImageUrl != null &&
+                        chatData.slotImageUrl!.isNotEmpty) ...[
+                      Container(
+                        width: 36,
+                        height: 36,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
+                          image: DecorationImage(
+                            image: NetworkImage(chatData.slotImageUrl!),
+                            fit: BoxFit.cover,
+                            onError: (_, __) {},
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Чат продажи слота',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            chatData.slotTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 8),
                   ],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Чат продажи слота',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          chatData.slotTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.getTextPrimaryColor(context),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(0.5),
@@ -695,7 +686,8 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                               // 2. Сделка отменена (dealStatus == 'cancelled')
                               // 3. Слот снят с продажи (isSlotDeleted == true)
                               // НЕ показываем для 'available', 'reserved' и других обычных статусов
-                              final showStatusLine = chatData.slotStatus == 'sold' ||
+                              final showStatusLine =
+                                  chatData.slotStatus == 'sold' ||
                                   chatData.dealStatus == 'bought' ||
                                   chatData.dealStatus == 'cancelled' ||
                                   chatData.isSlotDeleted;
@@ -704,137 +696,152 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                               // 0 - дата
                               // 1 - статус (опционально)
                               // 2-4 - дистанция, пол, стоимость (3 элемента)
-                              // 5-6 - участники (2 элемента)
-                              final itemCount = 1 + // дата
-                                  (showStatusLine ? 1 : 0) + // статус (опционально)
+                              // 5-6 - участники (2 элемента: продавец и покупатель)
+                              final itemCount =
+                                  1 + // дата
+                                  (showStatusLine
+                                      ? 1
+                                      : 0) + // статус (опционально)
                                   3 + // дистанция, пол, стоимость
-                                  2; // участники
+                                  2; // участники (продавец и покупатель)
 
                               return SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) {
-                                    // 0 — дата
-                                    if (index == 0) {
-                                      return _DateSeparator(
-                                        text:
-                                            '${_formatChatDate(chatData.chatCreatedAt)}, автоматическое создание чата',
-                                      );
+                                delegate: SliverChildBuilderDelegate((
+                                  context,
+                                  index,
+                                ) {
+                                  // 0 — дата
+                                  if (index == 0) {
+                                    return _DateSeparator(
+                                      text: _formatChatDate(
+                                        chatData.chatCreatedAt,
+                                      ),
+                                    );
+                                  }
+
+                                  // ─── 1 — строка статуса (показываем только если нужно) ───
+                                  if (showStatusLine && index == 1) {
+                                    // ─── Определяем текст статуса ───
+                                    String statusText;
+                                    IconData statusIcon;
+
+                                    // ─── Определяем текст и иконку статуса (одинаково для продавца и покупателя) ───
+                                    if (chatData.slotStatus == 'sold' ||
+                                        chatData.dealStatus == 'bought') {
+                                      statusText = 'Продано';
+                                      statusIcon =
+                                          CupertinoIcons.check_mark_circled;
+                                    } else if (chatData.isSlotDeleted) {
+                                      statusText = 'Снят с продажи';
+                                      statusIcon =
+                                          CupertinoIcons.xmark_circle_fill;
+                                    } else if (chatData.dealStatus ==
+                                        'cancelled') {
+                                      statusText = 'Отменено';
+                                      statusIcon = CupertinoIcons.clear_circled;
+                                    } else {
+                                      // Не должно происходить, но на всякий случай
+                                      return const SizedBox.shrink();
                                     }
 
-                                    // ─── 1 — строка статуса (показываем только если нужно) ───
-                                    if (showStatusLine && index == 1) {
-                                      // ─── Определяем текст статуса ───
-                                      String statusText;
-                                      IconData statusIcon;
-                                      
-                                      // ─── Определяем текст и иконку статуса (одинаково для продавца и покупателя) ───
-                                      if (chatData.slotStatus == 'sold' || chatData.dealStatus == 'bought') {
-                                        statusText = 'Продано';
-                                        statusIcon = CupertinoIcons.check_mark_circled;
-                                      } else if (chatData.isSlotDeleted) {
-                                        statusText = 'Снят с продажи';
-                                        statusIcon = CupertinoIcons.xmark_circle_fill;
-                                      } else if (chatData.dealStatus == 'cancelled') {
-                                        statusText = 'Отменено';
-                                        statusIcon = CupertinoIcons.clear_circled;
-                                      } else {
-                                        // Не должно происходить, но на всякий случай
-                                        return const SizedBox.shrink();
-                                      }
-
-                                      return _KVLine(
-                                        k: 'Слот переведён в статус',
-                                        v: _ChipNeutral(
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                statusIcon,
-                                                size: 14,
-                                                color:
-                                                    AppColors.getIconSecondaryColor(
-                                                  context,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                statusText,
-                                                style: TextStyle(
-                                                  fontWeight:
-                                                      Theme.of(
-                                                            context,
-                                                          ).brightness ==
-                                                          Brightness.dark
-                                                      ? FontWeight.w500
-                                                      : FontWeight.w400,
-                                                  color:
-                                                      Theme.of(
-                                                            context,
-                                                          ).brightness ==
-                                                          Brightness.dark
-                                                      ? AppColors.darkTextSecondary
-                                                      : AppColors.getTextPrimaryColor(
+                                    return _KVLine(
+                                      k: 'Слот переведён в статус',
+                                      v: _ChipNeutral(
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              statusIcon,
+                                              size: 14,
+                                              color:
+                                                  AppColors.getIconSecondaryColor(
+                                                    context,
+                                                  ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              statusText,
+                                              style: TextStyle(
+                                                fontWeight:
+                                                    Theme.of(
                                                           context,
-                                                        ),
-                                                ),
+                                                        ).brightness ==
+                                                        Brightness.dark
+                                                    ? FontWeight.w500
+                                                    : FontWeight.w400,
+                                                color:
+                                                    Theme.of(
+                                                          context,
+                                                        ).brightness ==
+                                                        Brightness.dark
+                                                    ? AppColors
+                                                          .darkTextSecondary
+                                                    : AppColors.getTextPrimaryColor(
+                                                        context,
+                                                      ),
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
-                                      );
-                                    }
-                                    
-                                    // ─── Корректируем индекс: вычитаем 1 для даты, и еще 1 если есть строка статуса ───
-                                    final adjustedIndex = index - 1 - (showStatusLine ? 1 : 0);
+                                      ),
+                                    );
+                                  }
 
-                                    // ─── 2-4 — инфо-строки (дистанция, пол, стоимость) ───
-                                    if (adjustedIndex == 1) {
-                                      return _KVLine(
-                                        k: 'Дистанция',
-                                        v: _ChipNeutral(
-                                          child: Text(chatData.slotDistance),
-                                        ),
-                                      );
-                                    }
-                                    if (adjustedIndex == 2) {
-                                      return _KVLine(
-                                        k: 'Пол',
-                                        v: chatData.slotGender == Gender.male
-                                            ? const GenderPill.male()
-                                            : const GenderPill.female(),
-                                      );
-                                    }
-                                    if (adjustedIndex == 3) {
-                                      return _KVLine(
-                                        k: 'Стоимость',
-                                        v: PricePill(
-                                          text: _formatPrice(chatData.slotPrice),
-                                        ),
-                                      );
-                                    }
+                                  // ─── Вычисляем смещение для инфо-строк и участников ───
+                                  // После даты (index 0) и опциональной строки статуса (index 1)
+                                  final contentStartIndex = showStatusLine
+                                      ? 2
+                                      : 1;
 
-                                    // ─── 5-6 — участники ───
-                                    if (adjustedIndex == 4) {
-                                      return _ParticipantRow(
-                                        avatarUrl: chatData.sellerAvatar,
-                                        nameAndRole:
-                                            '${chatData.sellerName} - продавец',
-                                        userId: chatData.sellerId,
-                                      );
-                                    }
-                                    if (adjustedIndex == 5) {
-                                      return _ParticipantRow(
-                                        avatarUrl: chatData.buyerAvatar,
-                                        nameAndRole:
-                                            '${chatData.buyerName} - покупатель',
-                                        userId: chatData.buyerId,
-                                      );
-                                    }
+                                  // ─── Инфо-строки (дистанция, пол, стоимость) ───
+                                  // Они идут сразу после даты/статуса
+                                  if (index == contentStartIndex) {
+                                    return _KVLine(
+                                      k: 'Дистанция',
+                                      v: _ChipNeutral(
+                                        child: Text(chatData.slotDistance),
+                                      ),
+                                    );
+                                  }
+                                  if (index == contentStartIndex + 1) {
+                                    return _KVLine(
+                                      k: 'Пол',
+                                      v: chatData.slotGender == Gender.male
+                                          ? const GenderPill.male()
+                                          : const GenderPill.female(),
+                                    );
+                                  }
+                                  if (index == contentStartIndex + 2) {
+                                    return _KVLine(
+                                      k: 'Стоимость',
+                                      v: PricePill(
+                                        text: _formatPrice(chatData.slotPrice),
+                                      ),
+                                    );
+                                  }
 
-                                    return const SizedBox.shrink();
-                                  },
-                                  childCount: itemCount,
-                                ),
+                                  // ─── Участники (продавец и покупатель) ───
+                                  // Идут после инфо-строк
+                                  if (index == contentStartIndex + 3) {
+                                    return _ParticipantRow(
+                                      avatarUrl: chatData.sellerAvatar,
+                                      nameAndRole:
+                                          '${chatData.sellerName} - продавец',
+                                      userId: chatData.sellerId,
+                                    );
+                                  }
+                                  if (index == contentStartIndex + 4) {
+                                    // ─── Показываем покупателя ───
+                                    return _ParticipantRow(
+                                      avatarUrl: chatData.buyerAvatar,
+                                      nameAndRole:
+                                          '${chatData.buyerName} - покупатель',
+                                      userId: chatData.buyerId,
+                                    );
+                                  }
+
+                                  return const SizedBox.shrink();
+                                }, childCount: itemCount),
                               );
                             },
                           ),
@@ -1058,7 +1065,7 @@ class _ActionsWrap extends StatelessWidget {
   Widget build(BuildContext context) {
     // ─── Кнопки действий работают одинаково для продавца и покупателя ───
     // Обе стороны могут менять статус сделки: "Слот куплен" или "Отменить сделку"
-    
+
     // Если сделка уже завершена
     if (dealStatus == 'bought') {
       return Center(
@@ -1253,9 +1260,7 @@ class _ParticipantRow extends StatelessWidget {
       child: InkWell(
         onTap: () {
           Navigator.of(context).push(
-            TransparentPageRoute(
-              builder: (_) => ProfileScreen(userId: userId),
-            ),
+            TransparentPageRoute(builder: (_) => ProfileScreen(userId: userId)),
           );
         },
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -1611,7 +1616,8 @@ class _Composer extends StatelessWidget {
                 Expanded(
                   child: TextField(
                     controller: controller,
-                    enabled: !isDisabled, // ─── Отключаем поле, если слот удален ───
+                    enabled:
+                        !isDisabled, // ─── Отключаем поле, если слот удален ───
                     minLines: 1,
                     maxLines: 5,
                     textInputAction: TextInputAction.newline,
@@ -1622,9 +1628,7 @@ class _Composer extends StatelessWidget {
                           : AppColors.getTextPrimaryColor(context),
                     ),
                     decoration: InputDecoration(
-                      hintText: isDisabled
-                          ? 'Слот удален'
-                          : 'Сообщение...',
+                      hintText: isDisabled ? 'Слот удален' : 'Сообщение...',
                       hintStyle: AppTextStyles.h14w4Place.copyWith(
                         color: AppColors.getTextPlaceholderColor(context),
                       ),
