@@ -461,7 +461,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       if (uploadResponse['success'] == true) {
         final imagePath = uploadResponse['image_path'] as String;
         // Получаем полный URL изображения для оптимистичного обновления
-        final imageUrl = uploadResponse['image_url'] as String? ??
+        final imageUrl =
+            uploadResponse['image_url'] as String? ??
             'http://uploads.paceup.ru/$imagePath';
 
         // ─── Оптимистичное обновление: добавляем временное сообщение ───
@@ -837,257 +838,281 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       child: Stack(
         children: [
           Scaffold(
-        backgroundColor: Theme.of(context).brightness == Brightness.light
-            ? AppColors.surface
-            : AppColors.getBackgroundColor(context),
-        resizeToAvoidBottomInset: true,
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.getSurfaceColor(context)
-              : AppColors.surface,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0.5,
-          scrolledUnderElevation: 0, // ─── Убираем тень при скролле ───
-          leadingWidth: 40,
-          leading: Transform.translate(
-            offset: const Offset(-4, 0),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-              icon: const Icon(CupertinoIcons.back),
-              onPressed: () async {
-                // Отмечаем сообщения как прочитанные перед закрытием
-                await _markMessagesAsRead();
-                if (!context.mounted) return;
-                Navigator.pop(
-                  context,
-                  true,
-                ); // Возвращаем true для обновления списка
-              },
-              splashRadius: 18,
-            ),
-          ),
-          titleSpacing: -8,
-          title: Row(
-            children: [
-              // Аватар пользователя
-              ClipOval(
-                child: Builder(
-                  builder: (context) {
-                    final dpr = MediaQuery.of(context).devicePixelRatio;
-                    final w = (36 * dpr).round();
-                    final url = _getAvatarUrl(widget.userAvatar);
-                    return CachedNetworkImage(
-                      imageUrl: url,
-                      width: 36,
-                      height: 36,
-                      fit: BoxFit.cover,
-                      fadeInDuration: const Duration(milliseconds: 120),
-                      memCacheWidth: w,
-                      maxWidthDiskCache: w,
-                      errorWidget: (context, imageUrl, error) {
-                        return Image.asset(
-                          'assets/${widget.userAvatar}',
-                          width: 36,
-                          height: 36,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 36,
-                              height: 36,
-                              color: AppColors.getSurfaceMutedColor(context),
-                              child: Icon(
-                                CupertinoIcons.person,
-                                size: 20,
-                                color: AppColors.getIconSecondaryColor(context),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    );
+            backgroundColor: Theme.of(context).brightness == Brightness.light
+                ? AppColors.surface
+                : AppColors.getBackgroundColor(context),
+            resizeToAvoidBottomInset: true,
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.getSurfaceColor(context)
+                  : AppColors.surface,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0.5,
+              scrolledUnderElevation: 0, // ─── Убираем тень при скролле ───
+              leadingWidth: 40,
+              leading: Transform.translate(
+                offset: const Offset(0, 0),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
+                  icon: const Icon(CupertinoIcons.back),
+                  onPressed: () async {
+                    // Отмечаем сообщения как прочитанные перед закрытием
+                    await _markMessagesAsRead();
+                    if (!context.mounted) return;
+                    Navigator.pop(
+                      context,
+                      true,
+                    ); // Возвращаем true для обновления списка
                   },
+                  splashRadius: 18,
                 ),
               ),
-              const SizedBox(width: 8),
-              // Имя и статус "Был N минут назад"
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              titleSpacing: -8,
+              title: Transform.translate(
+                offset: const Offset(8, 0),
+                child: Row(
                   children: [
-                    Text(
-                      widget.userName,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.getTextPrimaryColor(context),
+                    // Аватар пользователя
+                    ClipOval(
+                      child: Builder(
+                        builder: (context) {
+                          final dpr = MediaQuery.of(context).devicePixelRatio;
+                          final w = (36 * dpr).round();
+                          final url = _getAvatarUrl(widget.userAvatar);
+                          return CachedNetworkImage(
+                            imageUrl: url,
+                            width: 36,
+                            height: 36,
+                            fit: BoxFit.cover,
+                            fadeInDuration: const Duration(milliseconds: 120),
+                            memCacheWidth: w,
+                            maxWidthDiskCache: w,
+                            errorWidget: (context, imageUrl, error) {
+                              return Image.asset(
+                                'assets/${widget.userAvatar}',
+                                width: 36,
+                                height: 36,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 36,
+                                    height: 36,
+                                    color: AppColors.getSurfaceMutedColor(
+                                      context,
+                                    ),
+                                    child: Icon(
+                                      CupertinoIcons.person,
+                                      size: 20,
+                                      color: AppColors.getIconSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        },
                       ),
                     ),
-                    if (widget.lastSeen != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        widget.lastSeen!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.getTextSecondaryColor(context),
-                        ),
+                    const SizedBox(width: 8),
+                    // Имя и статус "Был N минут назад"
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.userName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                          if (widget.lastSeen != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.lastSeen!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
-            ],
-          ),
-          // ─── Нижняя граница под AppBar ───
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(0.5),
-            child: Divider(
-              height: 0.5,
-              thickness: 0.5,
-              color: AppColors.getBorderColor(context),
+              // ─── Нижняя граница под AppBar ───
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(0.5),
+                child: Divider(
+                  height: 0.5,
+                  thickness: 0.5,
+                  color: AppColors.getBorderColor(context),
+                ),
+              ),
+            ),
+            body: GestureDetector(
+              // ─── Убираем фокус с поля ввода при тапе на экран ───
+              onTap: () {
+                FocusScope.of(context).unfocus();
+              },
+              behavior: HitTestBehavior.translucent,
+              child: Column(
+                children: [
+                  // ─── Прокручиваемая область с сообщениями ───
+                  Expanded(
+                    child: () {
+                      if (_error != null && _messages.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Ошибка: $_error',
+                                  style: const TextStyle(
+                                    color: AppColors.error,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 12),
+                                OutlinedButton(
+                                  onPressed: _loadInitial,
+                                  child: const Text('Повторить'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (_isLoading && _messages.isEmpty) {
+                        return const Center(
+                          child: CupertinoActivityIndicator(),
+                        );
+                      }
+
+                      return NotificationListener<ScrollNotification>(
+                        onNotification: (notification) {
+                          if (notification is ScrollStartNotification) {
+                            // При reverse: true старые сообщения загружаются при прокрутке вверх
+                            // (к позиции maxScrollExtent)
+                            if (_scrollController.hasClients) {
+                              final isNearTop =
+                                  _scrollController.position.pixels >=
+                                  _scrollController.position.maxScrollExtent -
+                                      100;
+                              if (isNearTop && _hasMore && !_isLoadingMore) {
+                                _loadMore();
+                              }
+                            }
+                          }
+                          return false;
+                        },
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          reverse: true,
+                          // ─── Padding: прижимаем сообщения к нижней панели ввода ───
+                          // Верхний padding для панели ввода, нижний минимальный
+                          padding: const EdgeInsets.fromLTRB(
+                            12,
+                            // Базовый отступ для панели ввода
+                            8,
+                            12,
+                            0,
+                          ),
+                          itemCount:
+                              _messages.length + (_isLoadingMore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            // При reverse: true индексы идут в обратном порядке
+                            if (index == _messages.length && _isLoadingMore) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                child: Center(
+                                  child: CupertinoActivityIndicator(),
+                                ),
+                              );
+                            }
+
+                            // При reverse: true последний элемент списка - это первый в массиве
+                            final messageIndex = _messages.length - 1 - index;
+                            final message = _messages[messageIndex];
+
+                            // ─── Фиксированный отступ между всеми пузырями ───
+                            // При reverse: true выше на экране = меньший messageIndex в массиве
+                            // Проверяем, есть ли сообщение с меньшим messageIndex (которое выше на экране)
+                            final hasMessageAbove = messageIndex > 0;
+                            final topSpacing = hasMessageAbove ? 8.0 : 0.0;
+                            // Нижний отступ только для самого нижнего пузыря (index == 0)
+                            final bottomSpacing = index == 0 ? 8.0 : 0.0;
+
+                            return message.isMine
+                                ? _BubbleRight(
+                                    text: message.text,
+                                    image: message.image,
+                                    time: _formatTime(message.createdAt),
+                                    topSpacing: topSpacing,
+                                    bottomSpacing: bottomSpacing,
+                                    onImageTap:
+                                        message.image != null &&
+                                            message.image!.isNotEmpty
+                                        ? () => _showFullscreenImage(
+                                            message.image!,
+                                          )
+                                        : null,
+                                  )
+                                : _BubbleLeft(
+                                    text: message.text,
+                                    image: message.image,
+                                    time: _formatTime(message.createdAt),
+                                    avatarUrl: _getAvatarUrl(widget.userAvatar),
+                                    topSpacing: topSpacing,
+                                    bottomSpacing: bottomSpacing,
+                                    onImageTap:
+                                        message.image != null &&
+                                            message.image!.isNotEmpty
+                                        ? () => _showFullscreenImage(
+                                            message.image!,
+                                          )
+                                        : null,
+                                  );
+                          },
+                        ),
+                      );
+                    }(),
+                  ),
+
+                  // ─── Неподвижная нижняя панель ввода ───
+                  _Composer(
+                    controller: _ctrl,
+                    onSend: _sendText,
+                    onPickImage: _pickImage,
+                    onFocus: () {
+                      // ─── Прокручиваем вниз при фокусе на поле ввода ───
+                      // Небольшая задержка, чтобы клавиатура успела появиться
+                      // force = true, чтобы всегда прокручивать при фокусе
+                      Future.delayed(const Duration(milliseconds: 150), () {
+                        if (mounted) {
+                          _scrollToBottom(force: true);
+                        }
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        body: GestureDetector(
-          // ─── Убираем фокус с поля ввода при тапе на экран ───
-          onTap: () {
-            FocusScope.of(context).unfocus();
-          },
-          behavior: HitTestBehavior.translucent,
-          child: Column(
-            children: [
-              // ─── Прокручиваемая область с сообщениями ───
-              Expanded(
-                child: () {
-                  if (_error != null && _messages.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Ошибка: $_error',
-                              style: const TextStyle(color: AppColors.error),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 12),
-                            OutlinedButton(
-                              onPressed: _loadInitial,
-                              child: const Text('Повторить'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-
-                  if (_isLoading && _messages.isEmpty) {
-                    return const Center(child: CupertinoActivityIndicator());
-                  }
-
-                  return NotificationListener<ScrollNotification>(
-                    onNotification: (notification) {
-                      if (notification is ScrollStartNotification) {
-                        // При reverse: true старые сообщения загружаются при прокрутке вверх
-                        // (к позиции maxScrollExtent)
-                        if (_scrollController.hasClients) {
-                          final isNearTop =
-                              _scrollController.position.pixels >=
-                              _scrollController.position.maxScrollExtent - 100;
-                          if (isNearTop && _hasMore && !_isLoadingMore) {
-                            _loadMore();
-                          }
-                        }
-                      }
-                      return false;
-                    },
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      reverse: true,
-                      // ─── Padding: прижимаем сообщения к нижней панели ввода ───
-                      // Верхний padding для панели ввода, нижний минимальный
-                      padding: const EdgeInsets.fromLTRB(
-                        12,
-                        // Базовый отступ для панели ввода
-                        8,
-                        12,
-                        0,
-                      ),
-                      itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        // При reverse: true индексы идут в обратном порядке
-                        if (index == _messages.length && _isLoadingMore) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            child: Center(child: CupertinoActivityIndicator()),
-                          );
-                        }
-
-                        // При reverse: true последний элемент списка - это первый в массиве
-                        final messageIndex = _messages.length - 1 - index;
-                        final message = _messages[messageIndex];
-
-                        // ─── Фиксированный отступ между всеми пузырями ───
-                        // При reverse: true выше на экране = меньший messageIndex в массиве
-                        // Проверяем, есть ли сообщение с меньшим messageIndex (которое выше на экране)
-                        final hasMessageAbove = messageIndex > 0;
-                        final topSpacing = hasMessageAbove ? 8.0 : 0.0;
-                        // Нижний отступ только для самого нижнего пузыря (index == 0)
-                        final bottomSpacing = index == 0 ? 8.0 : 0.0;
-
-                        return message.isMine
-                            ? _BubbleRight(
-                                text: message.text,
-                                image: message.image,
-                                time: _formatTime(message.createdAt),
-                                topSpacing: topSpacing,
-                                bottomSpacing: bottomSpacing,
-                                onImageTap: message.image != null &&
-                                        message.image!.isNotEmpty
-                                    ? () => _showFullscreenImage(message.image!)
-                                    : null,
-                              )
-                            : _BubbleLeft(
-                                text: message.text,
-                                image: message.image,
-                                time: _formatTime(message.createdAt),
-                                avatarUrl: _getAvatarUrl(widget.userAvatar),
-                                topSpacing: topSpacing,
-                                bottomSpacing: bottomSpacing,
-                                onImageTap: message.image != null &&
-                                        message.image!.isNotEmpty
-                                    ? () => _showFullscreenImage(message.image!)
-                                    : null,
-                              );
-                      },
-                    ),
-                  );
-                }(),
-              ),
-
-              // ─── Неподвижная нижняя панель ввода ───
-              _Composer(
-                controller: _ctrl,
-                onSend: _sendText,
-                onPickImage: _pickImage,
-                onFocus: () {
-                  // ─── Прокручиваем вниз при фокусе на поле ввода ───
-                  // Небольшая задержка, чтобы клавиатура успела появиться
-                  // force = true, чтобы всегда прокручивать при фокусе
-                  Future.delayed(const Duration(milliseconds: 150), () {
-                    if (mounted) {
-                      _scrollToBottom(force: true);
-                    }
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
           // ─── Overlay для полноэкранного просмотра изображения ───
           if (_fullscreenImageUrl != null)
             _FullscreenImageOverlay(
@@ -1524,7 +1549,9 @@ class _FullscreenImageOverlay extends StatelessWidget {
       // ─── Закрываем при тапе на фон ───
       onTap: onClose,
       child: Container(
-        color: AppColors.textPrimary.withValues(alpha: 0.95), // Чёрный фон с прозрачностью
+        color: AppColors.textPrimary.withValues(
+          alpha: 0.95,
+        ), // Чёрный фон с прозрачностью
         child: Stack(
           children: [
             // ─── Изображение с возможностью зума ───
