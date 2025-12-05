@@ -76,7 +76,6 @@ class AddOfficialEventState {
       place.trim().isNotEmpty &&
       activity != null &&
       date != null &&
-      time != null &&
       selectedLocation != null;
 
   /// Создание копии с обновлёнными полями

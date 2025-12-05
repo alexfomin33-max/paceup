@@ -57,7 +57,10 @@ class SubmitEventNotifier extends AsyncNotifier<void> {
       fields['latitude'] = formState.selectedLocation!.latitude.toString();
       fields['longitude'] = formState.selectedLocation!.longitude.toString();
       fields['event_date'] = _formatDate(formState.date!);
-      fields['event_time'] = _formatTime(formState.time!);
+      // ── время опционально (если не указано, отправляем дефолтное значение 00:00)
+      fields['event_time'] = formState.time != null
+          ? _formatTime(formState.time!)
+          : '00:00';
       fields['description'] = formState.description.trim();
 
       // Собираем дистанции (только непустые)
@@ -89,7 +92,7 @@ class SubmitEventNotifier extends AsyncNotifier<void> {
           'latitude': fields['latitude'],
           'longitude': fields['longitude'],
           'event_date': fields['event_date'],
-          'event_time': fields['event_time'],
+          'event_time': fields['event_time'], // дефолтное значение 00:00, если не указано
           'description': fields['description'],
           'event_link': fields['event_link'] ?? '',
           'template_name': fields['template_name'] ?? '',
