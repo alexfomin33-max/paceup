@@ -841,8 +841,9 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                         ),
 
                         // ─── Закреплённый блок кнопок (только для продавца) ───
-                        // ─── Скрываем кнопки, если слот удален ───
-                        if (!chatData.isSlotDeleted)
+                        // ─── Скрываем кнопки, если слот удален или пользователь не продавец ───
+                        if (!chatData.isSlotDeleted &&
+                            _currentUserId == chatData.sellerId)
                           SliverPersistentHeader(
                             pinned: true,
                             delegate: _ActionsHeaderDelegate(
@@ -859,7 +860,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                                 child: _ActionsWrap(
                                   dealStatus: chatData.dealStatus,
                                   onUpdateStatus: _updateDealStatus,
-                                  isSeller: _currentUserId == chatData.sellerId,
+                                  isSeller: true, // Всегда true здесь, т.к. уже проверили выше
                                 ),
                               ),
                             ),
