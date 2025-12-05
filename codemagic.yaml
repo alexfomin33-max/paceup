@@ -1,29 +1,45 @@
 workflows:
   ios-release:
-    name: iOS Release Build
+    name: iOS Release Build (Development)
     max_build_duration: 120
     instance_type: mac_mini_m1
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
-      groups:
-        - app_store_credentials  # Настройте в Codemagic UI
       vars:
-        BUNDLE_ID: "com.paceup.app"  # Замените на ваш Bundle ID
+        BUNDLE_ID: "com.paceup.app"
     scripts:
-      - name: Get dependencies
+      - name: Get Flutter dependencies
         script: |
           flutter pub get
-      - name: Install pods
+      - name: Install CocoaPods dependencies
         script: |
           cd ios && pod install && cd ..
-      - name: Set up code signing
+      - name: Set up automatic code signing
         script: |
           xcode-project use-profiles
-      - name: Build IPA
+      - name: Build IPA for Development
         script: |
-          flutter build ipa --release
+          cat > ios/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>development</string>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <false/>
+              <key>compileBitcode</key>
+              <false/>
+          </dict>
+          </plist>
+          EOF
+          
+          flutter build ipa --release \
+            --export-options-plist=ios/ExportOptions.plist
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
@@ -32,4 +48,4 @@ workflows:
           - your-email@example.com
         notify:
           success: true
-          failure: false
+          failure: true
