@@ -686,108 +686,154 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                         // ─── Основной контент (дата, инфо, участники) ───
                         SliverPadding(
                           padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                // 0 — дата
-                                if (index == 0) {
-                                  return _DateSeparator(
-                                    text:
-                                        '${_formatChatDate(chatData.chatCreatedAt)}, автоматическое создание чата',
-                                  );
-                                }
+                          sliver: Builder(
+                            builder: (context) {
+                              // ─── Определяем, нужно ли показывать строку статуса ───
+                              // Показываем ТОЛЬКО в трех случаях:
+                              // 1. Слот продан (status == 'sold')
+                              // 2. Сделка отменена (dealStatus == 'cancelled')
+                              // 3. Слот снят с продажи (isSlotDeleted == true)
+                              // НЕ показываем для 'available', 'reserved' и других обычных статусов
+                              final showStatusLine = chatData.slotStatus == 'sold' ||
+                                  chatData.dealStatus == 'cancelled' ||
+                                  chatData.isSlotDeleted;
 
-                                // 1..4 — инфо-строки
-                                if (index == 1) {
-                                  return _KVLine(
-                                    k: 'Слот переведён в статус',
-                                    v: _ChipNeutral(
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            CupertinoIcons.lock,
-                                            size: 14,
-                                            color:
-                                                AppColors.getIconSecondaryColor(
+                              // ─── Вычисляем количество элементов списка ───
+                              // 0 - дата
+                              // 1 - статус (опционально)
+                              // 2-4 - дистанция, пол, стоимость (3 элемента)
+                              // 5-6 - участники (2 элемента)
+                              final itemCount = 1 + // дата
+                                  (showStatusLine ? 1 : 0) + // статус (опционально)
+                                  3 + // дистанция, пол, стоимость
+                                  2; // участники
+
+                              return SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    // 0 — дата
+                                    if (index == 0) {
+                                      return _DateSeparator(
+                                        text:
+                                            '${_formatChatDate(chatData.chatCreatedAt)}, автоматическое создание чата',
+                                      );
+                                    }
+
+                                    // ─── 1 — строка статуса (показываем только если нужно) ───
+                                    if (showStatusLine && index == 1) {
+                                      // ─── Определяем текст статуса ───
+                                      String statusText;
+                                      IconData statusIcon;
+                                      
+                                      if (chatData.slotStatus == 'sold') {
+                                        statusText = 'Продано';
+                                        statusIcon = CupertinoIcons.check_mark_circled;
+                                      } else if (chatData.isSlotDeleted) {
+                                        statusText = 'Снят с продажи';
+                                        statusIcon = CupertinoIcons.xmark_circle_fill;
+                                      } else if (chatData.dealStatus == 'cancelled') {
+                                        statusText = 'Отменено';
+                                        statusIcon = CupertinoIcons.clear_circled;
+                                      } else {
+                                        // Не должно происходить, но на всякий случай
+                                        return const SizedBox.shrink();
+                                      }
+
+                                      return _KVLine(
+                                        k: 'Слот переведён в статус',
+                                        v: _ChipNeutral(
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                statusIcon,
+                                                size: 14,
+                                                color:
+                                                    AppColors.getIconSecondaryColor(
                                                   context,
                                                 ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                statusText,
+                                                style: TextStyle(
+                                                  fontWeight:
+                                                      Theme.of(
+                                                            context,
+                                                          ).brightness ==
+                                                          Brightness.dark
+                                                      ? FontWeight.w500
+                                                      : FontWeight.w400,
+                                                  color:
+                                                      Theme.of(
+                                                            context,
+                                                          ).brightness ==
+                                                          Brightness.dark
+                                                      ? AppColors.darkTextSecondary
+                                                      : AppColors.getTextPrimaryColor(
+                                                          context,
+                                                        ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            'Бронь',
-                                            style: TextStyle(
-                                              fontWeight:
-                                                  Theme.of(
-                                                        context,
-                                                      ).brightness ==
-                                                      Brightness.dark
-                                                  ? FontWeight.w500
-                                                  : FontWeight.w400,
-                                              color:
-                                                  Theme.of(
-                                                        context,
-                                                      ).brightness ==
-                                                      Brightness.dark
-                                                  ? AppColors.darkTextSecondary
-                                                  : AppColors.getTextPrimaryColor(
-                                                      context,
-                                                    ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }
-                                if (index == 2) {
-                                  return _KVLine(
-                                    k: 'Дистанция',
-                                    v: _ChipNeutral(
-                                      child: Text(chatData.slotDistance),
-                                    ),
-                                  );
-                                }
-                                if (index == 3) {
-                                  return _KVLine(
-                                    k: 'Пол',
-                                    v: chatData.slotGender == Gender.male
-                                        ? const GenderPill.male()
-                                        : const GenderPill.female(),
-                                  );
-                                }
-                                if (index == 4) {
-                                  return _KVLine(
-                                    k: 'Стоимость',
-                                    v: PricePill(
-                                      text: _formatPrice(chatData.slotPrice),
-                                    ),
-                                  );
-                                }
+                                        ),
+                                      );
+                                    }
+                                    
+                                    // ─── Корректируем индекс: вычитаем 1 для даты, и еще 1 если есть строка статуса ───
+                                    final adjustedIndex = index - 1 - (showStatusLine ? 1 : 0);
 
-                                // 5..6 — участники
-                                if (index == 5) {
-                                  return _ParticipantRow(
-                                    avatarUrl: chatData.sellerAvatar,
-                                    nameAndRole:
-                                        '${chatData.sellerName} - продавец',
-                                    userId: chatData.sellerId,
-                                  );
-                                }
-                                if (index == 6) {
-                                  return _ParticipantRow(
-                                    avatarUrl: chatData.buyerAvatar,
-                                    nameAndRole:
-                                        '${chatData.buyerName} - покупатель',
-                                    userId: chatData.buyerId,
-                                  );
-                                }
+                                    // ─── 2-4 — инфо-строки (дистанция, пол, стоимость) ───
+                                    if (adjustedIndex == 1) {
+                                      return _KVLine(
+                                        k: 'Дистанция',
+                                        v: _ChipNeutral(
+                                          child: Text(chatData.slotDistance),
+                                        ),
+                                      );
+                                    }
+                                    if (adjustedIndex == 2) {
+                                      return _KVLine(
+                                        k: 'Пол',
+                                        v: chatData.slotGender == Gender.male
+                                            ? const GenderPill.male()
+                                            : const GenderPill.female(),
+                                      );
+                                    }
+                                    if (adjustedIndex == 3) {
+                                      return _KVLine(
+                                        k: 'Стоимость',
+                                        v: PricePill(
+                                          text: _formatPrice(chatData.slotPrice),
+                                        ),
+                                      );
+                                    }
 
-                                return const SizedBox.shrink();
-                              },
-                              childCount:
-                                  7, // 0-6: дата, 4 инфо-строки, 2 участника
-                            ),
+                                    // ─── 5-6 — участники ───
+                                    if (adjustedIndex == 4) {
+                                      return _ParticipantRow(
+                                        avatarUrl: chatData.sellerAvatar,
+                                        nameAndRole:
+                                            '${chatData.sellerName} - продавец',
+                                        userId: chatData.sellerId,
+                                      );
+                                    }
+                                    if (adjustedIndex == 5) {
+                                      return _ParticipantRow(
+                                        avatarUrl: chatData.buyerAvatar,
+                                        nameAndRole:
+                                            '${chatData.buyerName} - покупатель',
+                                        userId: chatData.buyerId,
+                                      );
+                                    }
+
+                                    return const SizedBox.shrink();
+                                  },
+                                  childCount: itemCount,
+                                ),
+                              );
+                            },
                           ),
                         ),
 

@@ -259,7 +259,7 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                               },
                               icon: const Icon(CupertinoIcons.pencil, size: 16),
                               label: const Text(
-                                'Редактировать',
+                                'Изменить',
                                 style: TextStyle(fontFamily: 'Inter'),
                               ),
                               style: ElevatedButton.styleFrom(
