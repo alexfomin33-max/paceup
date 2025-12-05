@@ -25,6 +25,7 @@ class MarketItem {
   final String? description; // Подробное описание (для раскрывающегося блока)
   final int sellerId; // ID продавца
   final int? eventId; // ID события (для редактирования)
+  final int? chatId; // ID чата (если существует)
 
   const MarketItem({
     required this.id,
@@ -42,6 +43,7 @@ class MarketItem {
     this.description,
     required this.sellerId,
     this.eventId,
+    this.chatId,
   });
 }
 

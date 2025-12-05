@@ -10,6 +10,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../domain/models/activity_lenta.dart';
 import '../providers/lenta_provider.dart';
 import 'state/chat/providers/unread_chats_provider.dart';
+import 'state/notifications/notifications_provider.dart';
 import '../../../../core/utils/image_cache_manager.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/health_sync_service.dart';
@@ -150,6 +151,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
         // Запускаем polling для динамического обновления счетчика
         _startUnreadChatsPolling(userId);
+        // Загружаем уведомления для получения счетчика непрочитанных
+        ref.read(notificationsProvider.notifier).loadInitial();
 
         // Проверка флага синхронизации от Broadcast Receiver
         _checkAndSyncHealthData();
@@ -359,8 +362,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       context,
     ).push(TransparentPageRoute(builder: (_) => const NotificationsScreen()));
     if (!mounted) return;
-    // Сбрасываем счётчик непрочитанных через Riverpod
-    ref.read(lentaProvider(_actualUserId!).notifier).setUnreadCount(0);
+    // Обновляем уведомления после возврата из экрана
+    ref.read(notificationsProvider.notifier).refresh();
   }
 
   /// Показывает выпадающее меню для кнопки создания поста
@@ -702,6 +705,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     final unreadChatsState = _actualUserId != null
         ? ref.watch(unreadChatsProvider(_actualUserId!))
         : null;
+    // Читаем состояние уведомлений для счетчика
+    final notificationsState = ref.watch(notificationsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
@@ -773,11 +778,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                 icon: CupertinoIcons.bell,
                 onPressed: _openNotifications,
               ),
-              if (lentaState.unreadCount > 0)
+              if (notificationsState.unreadCount > 0)
                 Positioned(
                   right: 4,
                   top: 4,
-                  child: _Badge(count: lentaState.unreadCount),
+                  child: _Badge(count: notificationsState.unreadCount),
                 ),
             ],
           ),
