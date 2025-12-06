@@ -373,7 +373,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         id: _clusterLayerId,
         sourceId: _geoJsonSourceId,
         circleColor: markerColor.toARGB32(),
-        circleRadius: 18.0,
+        circleRadius:
+            12.0, // Размер кластера такой же, как у отдельных маркеров
         circleStrokeWidth: 1.0,
         circleStrokeColor: AppColors.border.toARGB32(),
       );
@@ -391,7 +392,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         id: _clusterTextLayerId,
         sourceId: _geoJsonSourceId,
         textField: '{point_count}', // Формат строки для отображения количества
-        textSize: 17.0,
+        textSize: 14.0,
         textColor: AppColors.surface.toARGB32(),
         textFont: ['Open Sans Semibold', 'Arial Unicode MS Bold'],
       );
