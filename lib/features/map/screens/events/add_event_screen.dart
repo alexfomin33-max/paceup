@@ -30,7 +30,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
   final placeCtrl = TextEditingController();
   final descCtrl = TextEditingController();
   final clubCtrl = TextEditingController(text: 'CoffeeRun_vld');
-  final templateCtrl = TextEditingController(text: 'Субботний коферан');
+  final templateCtrl = TextEditingController();
 
   // выборы
   String? activity;

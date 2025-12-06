@@ -49,7 +49,7 @@ class _AddOfficialEventScreenState
     placeCtrl = TextEditingController();
     descCtrl = TextEditingController();
     linkCtrl = TextEditingController();
-    templateCtrl = TextEditingController(text: 'Субботний коферан');
+    templateCtrl = TextEditingController();
 
     // ── создаём первое поле для ввода дистанции
     _distanceControllers.add(TextEditingController());
