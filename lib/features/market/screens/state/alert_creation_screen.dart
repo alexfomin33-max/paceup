@@ -116,9 +116,15 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
           showBack: true,
           showBottomDivider: true,
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(0, 0, 0, 20),
-          child: Column(
+        body: GestureDetector(
+          // ── снимаем фокус с текстовых полей при клике вне их
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          behavior: HitTestBehavior.opaque,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 20),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ─── Контейнер формы с фоном surface ───
@@ -212,6 +218,7 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
                 ),
               ],
             ],
+            ),
           ),
         ),
       ),

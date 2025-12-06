@@ -428,9 +428,15 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
           showBack: true,
           showBottomDivider: true,
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
-          child: Column(
+        body: GestureDetector(
+          // ── снимаем фокус с текстовых полей при клике вне их
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          behavior: HitTestBehavior.opaque,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _EventAutocompleteField(
@@ -560,6 +566,7 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
                 ],
               ),
             ],
+          ),
           ),
         ),
       ),

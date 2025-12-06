@@ -321,9 +321,15 @@ class _AddingBikeContentState extends ConsumerState<AddingBikeContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
+    // ── снимаем фокус с текстовых полей при клике вне их
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        children: [
+          Container(
           decoration: BoxDecoration(
             color: AppColors.getSurfaceColor(context),
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -544,6 +550,7 @@ class _AddingBikeContentState extends ConsumerState<AddingBikeContent> {
           ),
         ),
       ],
+      ),
     );
   }
 }

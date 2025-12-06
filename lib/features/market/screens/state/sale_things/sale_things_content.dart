@@ -266,10 +266,16 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
     final safeBottom = media.viewPadding.bottom; // «борода»/ноутч
     final bottomPad = (bottomInset > 0 ? bottomInset : safeBottom) + 20;
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(12, 12, 12, bottomPad),
-      physics: const BouncingScrollPhysics(),
-      child: Column(
+    // ── снимаем фокус с текстовых полей при клике вне их
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(12, 12, 12, bottomPad),
+        physics: const BouncingScrollPhysics(),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // ────────────────────────────────────────────────────────────────
@@ -434,6 +440,7 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

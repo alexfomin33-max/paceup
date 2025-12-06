@@ -260,9 +260,15 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
-      child: Column(
+    // ── снимаем фокус с текстовых полей при клике вне их
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _EventAutocompleteField(
@@ -365,6 +371,7 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

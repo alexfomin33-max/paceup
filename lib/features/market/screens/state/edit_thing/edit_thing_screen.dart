@@ -556,10 +556,16 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
             ),
           ],
         ),
-        body: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(12, 12, 12, bottomPad),
-          physics: const BouncingScrollPhysics(),
-          child: Column(
+        body: GestureDetector(
+          // ── снимаем фокус с текстовых полей при клике вне их
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          behavior: HitTestBehavior.opaque,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(12, 12, 12, bottomPad),
+            physics: const BouncingScrollPhysics(),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ────────────────────────────────────────────────────────────────
@@ -727,6 +733,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),

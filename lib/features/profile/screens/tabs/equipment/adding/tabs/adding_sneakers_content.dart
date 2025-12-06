@@ -336,232 +336,239 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
   // ─────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // ───────────────────────── Карточка ─────────────────────────
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.getSurfaceColor(context),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: AppColors.getBorderColor(context),
-              width: 0.5,
+    // ── снимаем фокус с текстовых полей при клике вне их
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        children: [
+          // ───────────────────────── Карточка ─────────────────────────
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.getSurfaceColor(context),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(
+                color: AppColors.getBorderColor(context),
+                width: 0.5,
+              ),
+            ),
+            child: Column(
+              children: [
+                // превью
+                SizedBox(
+                  height: 170,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Center(
+                        child: Opacity(
+                          opacity: 0.5,
+                          child: Image.asset(
+                            'assets/add_boots.png',
+                            width: 150,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                      // Отображение выбранного изображения или заглушки
+                      if (_imageFile != null)
+                        Center(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: 240,
+                                maxHeight: 140,
+                              ),
+                              child: Image.file(
+                                _imageFile!,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Center(
+                                    child: Icon(
+                                      Icons.error_outline,
+                                      color: AppColors.getTextSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      // кнопка «добавить фото» — снизу-справа
+                      Positioned(
+                        right: 70,
+                        bottom: 18,
+                        child: Material(
+                          color: AppColors.getSurfaceColor(context),
+                          shape: const CircleBorder(),
+                          child: IconButton(
+                            tooltip: 'Добавить фото',
+                            onPressed: _pickImage,
+                            icon: Icon(
+                              Icons.add_a_photo_outlined,
+                              size: 28,
+                              color: AppColors.getTextSecondaryColor(context),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  color: AppColors.getDividerColor(context),
+                  indent: 12,
+                  endIndent: 12,
+                ),
+
+                // строки полей
+                _FieldRow(
+                  title: 'Бренд',
+                  onTap: () {
+                    // Безопасный вызов requestFocus - FocusNode управляется дочерним виджетом
+                    try {
+                      _brandFocusNode?.requestFocus();
+                    } catch (e) {
+                      // Игнорируем ошибки, если FocusNode уже disposed
+                    }
+                  },
+                  child: AutocompleteTextField(
+                    controller: _brandCtrl,
+                    hint: 'Введите бренд',
+                    onSearch: _searchBrands,
+                    onChanged: () {
+                      // Очищаем модель при изменении бренда
+                      setState(() {
+                        _modelCtrl.clear();
+                      });
+                    },
+                    onFocusNodeCreated: (node) {
+                      _brandFocusNode = node;
+                    },
+                  ),
+                ),
+                _FieldRow(
+                  title: 'Модель',
+                  onTap: () {
+                    // Безопасный вызов requestFocus - FocusNode управляется дочерним виджетом
+                    try {
+                      _modelFocusNode?.requestFocus();
+                    } catch (e) {
+                      // Игнорируем ошибки, если FocusNode уже disposed
+                    }
+                  },
+                  child: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _brandCtrl,
+                    builder: (context, brandValue, child) {
+                      return AutocompleteTextField(
+                        controller: _modelCtrl,
+                        hint: 'Введите модель',
+                        onSearch: _searchModels,
+                        enabled: brandValue.text.trim().isNotEmpty,
+                        onFocusNodeCreated: (node) {
+                          _modelFocusNode = node;
+                        },
+                      );
+                    },
+                  ),
+                ),
+                _FieldRow(
+                  title: 'В использовании с',
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _pickDate,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: Text(
+                        _dateLabel,
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          color: _inUseFrom == null
+                              ? AppColors.getTextTertiaryColor(context)
+                              : AppColors.getTextPrimaryColor(context),
+                          fontWeight: _inUseFrom == null
+                              ? FontWeight.w400
+                              : FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                _FieldRow(
+                  title: 'Добавленная дистанция, км',
+                  onTap: () {
+                    // Безопасный вызов requestFocus - FocusNode управляется дочерним виджетом
+                    try {
+                      _kmFocusNode?.requestFocus();
+                    } catch (e) {
+                      // Игнорируем ошибки, если FocusNode уже disposed
+                    }
+                  },
+                  child: _RightTextField(
+                    controller: _kmCtrl,
+                    hint: '0',
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: false,
+                    ),
+                    onFocusNodeCreated: (node) {
+                      _kmFocusNode = node;
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Column(
-            children: [
-              // превью
-              SizedBox(
-                height: 170,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Center(
-                      child: Opacity(
-                        opacity: 0.5,
-                        child: Image.asset(
-                          'assets/add_boots.png',
-                          width: 150,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                    // Отображение выбранного изображения или заглушки
-                    if (_imageFile != null)
-                      Center(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              maxWidth: 240,
-                              maxHeight: 140,
-                            ),
-                            child: Image.file(
-                              _imageFile!,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Center(
-                                  child: Icon(
-                                    Icons.error_outline,
-                                    color: AppColors.getTextSecondaryColor(
-                                      context,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    // кнопка «добавить фото» — снизу-справа
-                    Positioned(
-                      right: 70,
-                      bottom: 18,
-                      child: Material(
-                        color: AppColors.getSurfaceColor(context),
-                        shape: const CircleBorder(),
-                        child: IconButton(
-                          tooltip: 'Добавить фото',
-                          onPressed: _pickImage,
-                          icon: Icon(
-                            Icons.add_a_photo_outlined,
-                            size: 28,
-                            color: AppColors.getTextSecondaryColor(context),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
-              Divider(
-                height: 1,
-                thickness: 0.5,
-                color: AppColors.getDividerColor(context),
-                indent: 12,
-                endIndent: 12,
-              ),
+          const SizedBox(height: 25),
 
-              // строки полей
-              _FieldRow(
-                title: 'Бренд',
-                onTap: () {
-                  // Безопасный вызов requestFocus - FocusNode управляется дочерним виджетом
-                  try {
-                    _brandFocusNode?.requestFocus();
-                  } catch (e) {
-                    // Игнорируем ошибки, если FocusNode уже disposed
-                  }
-                },
-                child: AutocompleteTextField(
-                  controller: _brandCtrl,
-                  hint: 'Введите бренд',
-                  onSearch: _searchBrands,
-                  onChanged: () {
-                    // Очищаем модель при изменении бренда
-                    setState(() {
-                      _modelCtrl.clear();
-                    });
-                  },
-                  onFocusNodeCreated: (node) {
-                    _brandFocusNode = node;
-                  },
-                ),
-              ),
-              _FieldRow(
-                title: 'Модель',
-                onTap: () {
-                  // Безопасный вызов requestFocus - FocusNode управляется дочерним виджетом
-                  try {
-                    _modelFocusNode?.requestFocus();
-                  } catch (e) {
-                    // Игнорируем ошибки, если FocusNode уже disposed
-                  }
-                },
-                child: ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _brandCtrl,
-                  builder: (context, brandValue, child) {
-                    return AutocompleteTextField(
-                      controller: _modelCtrl,
-                      hint: 'Введите модель',
-                      onSearch: _searchModels,
-                      enabled: brandValue.text.trim().isNotEmpty,
-                      onFocusNodeCreated: (node) {
-                        _modelFocusNode = node;
-                      },
-                    );
-                  },
-                ),
-              ),
-              _FieldRow(
-                title: 'В использовании с',
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: _pickDate,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Text(
-                      _dateLabel,
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        color: _inUseFrom == null
-                            ? AppColors.getTextTertiaryColor(context)
-                            : AppColors.getTextPrimaryColor(context),
-                        fontWeight: _inUseFrom == null
-                            ? FontWeight.w400
-                            : FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              _FieldRow(
-                title: 'Добавленная дистанция, км',
-                onTap: () {
-                  // Безопасный вызов requestFocus - FocusNode управляется дочерним виджетом
-                  try {
-                    _kmFocusNode?.requestFocus();
-                  } catch (e) {
-                    // Игнорируем ошибки, если FocusNode уже disposed
-                  }
-                },
-                child: _RightTextField(
-                  controller: _kmCtrl,
-                  hint: '0',
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: false,
-                  ),
-                  onFocusNodeCreated: (node) {
-                    _kmFocusNode = node;
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 25),
-
-        // ─────────────────── Отображение ошибок ───────────────────
-        Builder(
-          builder: (context) {
-            final formState = ref.watch(formStateProvider);
-            if (formState.hasErrors) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: FormErrorDisplay(formState: formState),
-              );
-            }
-            return const SizedBox.shrink();
-          },
-        ),
-
-        // ─────────────────── Кнопка «Сохранить» (унифицированная) ───────────────────
-        Center(
-          child: Builder(
+          // ─────────────────── Отображение ошибок ───────────────────
+          Builder(
             builder: (context) {
               final formState = ref.watch(formStateProvider);
-              return ValueListenableBuilder<TextEditingValue>(
-                valueListenable: _brandCtrl,
-                builder: (context, brandValue, child) {
-                  return PrimaryButton(
-                    text: 'Сохранить',
-                    onPressed: _saveEquipment,
-                    isLoading: formState.isSubmitting,
-                    enabled:
-                        brandValue.text.trim().isNotEmpty &&
-                        !formState.isSubmitting,
-                    width: 220, // ← единая ширина, как у «Пригласить»
-                  );
-                },
-              );
+              if (formState.hasErrors) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: FormErrorDisplay(formState: formState),
+                );
+              }
+              return const SizedBox.shrink();
             },
           ),
-        ),
-      ],
+
+          // ─────────────────── Кнопка «Сохранить» (унифицированная) ───────────────────
+          Center(
+            child: Builder(
+              builder: (context) {
+                final formState = ref.watch(formStateProvider);
+                return ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _brandCtrl,
+                  builder: (context, brandValue, child) {
+                    return PrimaryButton(
+                      text: 'Сохранить',
+                      onPressed: _saveEquipment,
+                      isLoading: formState.isSubmitting,
+                      enabled:
+                          brandValue.text.trim().isNotEmpty &&
+                          !formState.isSubmitting,
+                      width: 220, // ← единая ширина, как у «Пригласить»
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

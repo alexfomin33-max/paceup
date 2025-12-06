@@ -423,8 +423,14 @@ class _EditingBikeContentState extends ConsumerState<EditingBikeContent>
       opacity: _fadeAnimation,
       child: SlideTransition(
         position: _slideAnimation,
-        child: Column(
-          children: [
+        child: GestureDetector(
+          // ── снимаем фокус с текстовых полей при клике вне их
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Column(
+            children: [
             Container(
               decoration: BoxDecoration(
                 color: AppColors.getSurfaceColor(context),
@@ -624,6 +630,7 @@ class _EditingBikeContentState extends ConsumerState<EditingBikeContent>
               ),
             ),
           ],
+          ),
         ),
       ),
     );
