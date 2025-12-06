@@ -38,7 +38,7 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
     'Одежда',
     'Аксессуары',
   ];
-  String _category = 'Кроссовки';
+  String? _category;
 
   /// null = Любой
   Gender? _gender;
@@ -47,7 +47,9 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
   final List<File> _images = [];
 
   bool get _isValid =>
-      titleCtrl.text.trim().isNotEmpty && priceCtrl.text.trim().isNotEmpty;
+      titleCtrl.text.trim().isNotEmpty &&
+      priceCtrl.text.trim().isNotEmpty &&
+      _category != null;
 
   @override
   void initState() {
@@ -103,11 +105,16 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
             .where((city) => city.isNotEmpty)
             .toList();
 
+        // ── проверяем наличие категории
+        if (_category == null) {
+          throw Exception('Необходимо выбрать категорию товара');
+        }
+
         // ── формируем данные для отправки
         final fields = <String, String>{
           'user_id': userId.toString(),
           'title': titleCtrl.text.trim(),
-          'category': _category,
+          'category': _category!,
           'price': priceCtrl.text.trim(),
           'description': descCtrl.text.trim(),
         };
@@ -131,7 +138,7 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
           final jsonBody = <String, dynamic>{
             'user_id': userId.toString(),
             'title': titleCtrl.text.trim(),
-            'category': _category,
+            'category': _category!,
             'price': int.tryParse(priceCtrl.text.trim()) ?? 0,
             'description': descCtrl.text.trim(),
           };
@@ -180,7 +187,7 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
         }
         setState(() {
           _images.clear();
-          _category = 'Кроссовки';
+          _category = null;
           _gender = null;
         });
 
@@ -306,7 +313,8 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
             label: 'Категория',
             value: _category,
             items: _categories,
-            onChanged: (v) => setState(() => _category = v ?? _category),
+            hint: 'Выберите категорию товара',
+            onChanged: (v) => setState(() => _category = v),
           ),
           const SizedBox(height: 20),
 
@@ -668,14 +676,16 @@ class _LabeledTextField extends StatelessWidget {
 
 class _DropdownField extends StatelessWidget {
   final String label;
-  final String value;
+  final String? value;
   final List<String> items;
+  final String? hint;
   final ValueChanged<String?> onChanged;
 
   const _DropdownField({
     required this.label,
     required this.value,
     required this.items,
+    this.hint,
     required this.onChanged,
   });
 
@@ -721,6 +731,14 @@ class _DropdownField extends StatelessWidget {
               value: value,
               isExpanded: true,
               onChanged: onChanged,
+              hint: hint != null
+                  ? Text(
+                      hint!,
+                      style: AppTextStyles.h14w4Place.copyWith(
+                        color: AppColors.getTextPlaceholderColor(context),
+                      ),
+                    )
+                  : null,
               dropdownColor: AppColors.getSurfaceColor(context),
               menuMaxHeight: 300,
               borderRadius: BorderRadius.circular(AppRadius.md),
