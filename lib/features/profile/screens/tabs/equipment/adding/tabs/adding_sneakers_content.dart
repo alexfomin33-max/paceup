@@ -33,6 +33,7 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
   DateTime? _inUseFrom;
   File? _imageFile;
   final _picker = ImagePicker();
+  final _pickerFocusNode = FocusNode(debugLabel: 'sneakersPickerFocus');
 
   // FocusNode для полей
   // ВАЖНО: FocusNode управляются дочерними виджетами (AutocompleteTextField и _RightTextFieldState),
@@ -48,10 +49,17 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
     _brandCtrl.dispose();
     _modelCtrl.dispose();
     _kmCtrl.dispose();
+    _pickerFocusNode.dispose();
     // НЕ dispose FocusNode здесь - они управляются дочерними виджетами
     // _brandFocusNode, _modelFocusNode и _kmFocusNode будут автоматически
     // disposed когда их соответствующие виджеты будут disposed
     super.dispose();
+  }
+
+  // ── снимаем фокус перед показом пикера, чтобы клавиатура не возвращалась
+  void _unfocusKeyboard() {
+    FocusScope.of(context).requestFocus(_pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -243,6 +251,7 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
   //                           ВЫБОР ДАТЫ (iOS)
   // ─────────────────────────────────────────────────────────────────────
   Future<void> _pickDate() async {
+    _unfocusKeyboard();
     // Переменная для хранения выбранной даты, объявлена вне builder
     // чтобы сохраняться между перестроениями
     DateTime selectedDate = _inUseFrom ?? DateTime.now();

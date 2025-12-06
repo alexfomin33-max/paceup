@@ -32,6 +32,7 @@ class _AddOfficialEventScreenState
   late final TextEditingController linkCtrl;
   late final TextEditingController templateCtrl;
   final List<TextEditingController> _distanceControllers = [];
+  final _pickerFocusNode = FocusNode(debugLabel: 'officialPickerFocus');
 
   // ── состояние блока загрузки шаблона
   bool _showTemplateBlock = false;
@@ -94,7 +95,14 @@ class _AddOfficialEventScreenState
     for (final controller in _distanceControllers) {
       controller.dispose();
     }
+    _pickerFocusNode.dispose();
     super.dispose();
+  }
+
+  // ──────────── снимаем фокус перед модалками, чтобы клавиатура не возвращалась ────────────
+  void _unfocusKeyboard() {
+    FocusScope.of(context).requestFocus(_pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   // ── добавление нового поля для ввода дистанции
@@ -144,6 +152,7 @@ class _AddOfficialEventScreenState
 
   /// Открыть экран выбора места на карте
   Future<void> _pickLocation() async {
+    _unfocusKeyboard();
     final formState = ref.read(addOfficialEventFormProvider);
     final result = await Navigator.of(context).push<LocationResult?>(
       MaterialPageRoute(
@@ -164,6 +173,7 @@ class _AddOfficialEventScreenState
   }
 
   Future<void> _pickDateCupertino() async {
+    _unfocusKeyboard();
     final formState = ref.read(addOfficialEventFormProvider);
     final today = DateUtils.dateOnly(DateTime.now());
     DateTime temp = DateUtils.dateOnly(formState.date ?? today);

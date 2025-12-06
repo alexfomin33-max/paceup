@@ -50,6 +50,8 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
   File? backgroundFile;
   String? backgroundUrl; // URL для отображения существующей фоновой картинки
   String? backgroundFilename; // Имя файла существующей фоновой картинки
+  // ── отдельный фокус для пикеров, чтобы не поднимать клавиатуру после закрытия
+  final _pickerFocusNode = FocusNode(debugLabel: 'editClubPickerFocus');
 
   // ──────────── фиксированные пропорции для обрезки медиа ────────────
   static const double _logoAspectRatio = 1;
@@ -239,7 +241,14 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
     nameCtrl.dispose();
     cityCtrl.dispose();
     descCtrl.dispose();
+    _pickerFocusNode.dispose();
     super.dispose();
+  }
+
+  // ── снимаем фокус перед показом пикера, чтобы клавиатура не возвращалась
+  void _unfocusKeyboard() {
+    FocusScope.of(context).requestFocus(_pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   void _refresh() => setState(() {});
@@ -284,6 +293,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
   }
 
   Future<void> _pickDateCupertino() async {
+    _unfocusKeyboard();
     final today = DateUtils.dateOnly(DateTime.now());
     DateTime temp = DateUtils.dateOnly(foundationDate ?? today);
 

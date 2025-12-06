@@ -49,6 +49,9 @@ class _EditOfficialEventScreenState
   // чекбоксы
   bool saveTemplate = false;
 
+  // ── отдельный фокус для пикеров, чтобы не поднимать клавиатуру после закрытия
+  final _pickerFocusNode = FocusNode(debugLabel: 'editOfficialPickerFocus');
+
   // медиа
   File? logoFile;
   String? logoUrl; // URL для отображения существующего логотипа
@@ -93,6 +96,7 @@ class _EditOfficialEventScreenState
     descCtrl.dispose();
     linkCtrl.dispose();
     templateCtrl.dispose();
+    _pickerFocusNode.dispose();
     // ── освобождаем все контроллеры дистанций
     for (final controller in _distanceControllers) {
       controller.dispose();
@@ -101,6 +105,12 @@ class _EditOfficialEventScreenState
   }
 
   void _refresh() => setState(() {});
+
+  // ── снимаем фокус перед показом пикеров, чтобы клавиатура не возвращалась
+  void _unfocusKeyboard() {
+    FocusScope.of(context).requestFocus(_pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
 
   // ── добавление нового поля для ввода дистанции
   void _addDistanceField() {
@@ -285,6 +295,7 @@ class _EditOfficialEventScreenState
 
   /// Открыть экран выбора места на карте
   Future<void> _pickLocation() async {
+    _unfocusKeyboard();
     final result = await Navigator.of(context).push<LocationResult?>(
       MaterialPageRoute(
         builder: (_) => LocationPickerScreen(initialPosition: selectedLocation),
@@ -302,6 +313,7 @@ class _EditOfficialEventScreenState
   }
 
   Future<void> _pickDateCupertino() async {
+    _unfocusKeyboard();
     final today = DateUtils.dateOnly(DateTime.now());
     DateTime temp = DateUtils.dateOnly(date ?? today);
 

@@ -26,6 +26,8 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
   final TextEditingController surnameController = TextEditingController();
   final TextEditingController dobController = TextEditingController();
   final TextEditingController cityController = TextEditingController();
+  // ── отдельный фокус для пикера, чтобы клавиатура не возвращалась
+  final FocusNode _pickerFocusNode = FocusNode(debugLabel: 'regstep1Picker');
 
   // 🔹 Выбранные значения для dropdown
   String? selectedGender;
@@ -119,6 +121,7 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
     surnameController.dispose();
     dobController.dispose();
     cityController.dispose();
+    _pickerFocusNode.dispose();
     super.dispose();
   }
 
@@ -176,6 +179,7 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
                   CustomDateField(
                     controller: dobController,
                     label: 'Дата рождения*',
+                    pickerFocusNode: _pickerFocusNode,
                   ),
                   const SizedBox(height: 22),
                   CustomDropdownField(
@@ -238,15 +242,19 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
 class CustomDateField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
+  final FocusNode pickerFocusNode;
 
   const CustomDateField({
     super.key,
     required this.controller,
     required this.label,
+    required this.pickerFocusNode,
   });
 
   /// 🔹 Открытие DatePicker снизу (Cupertino стиль)
   Future<void> _selectDate(BuildContext context) async {
+    FocusScope.of(context).requestFocus(pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
     // 🔹 Переменная для хранения выбранной даты, объявлена вне builder
     // чтобы сохраняться между перестроениями
     DateTime selectedDate = DateTime(2000);

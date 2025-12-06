@@ -37,6 +37,7 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
   File? _imageFile;
   String? _currentImageUrl; // URL текущего изображения из базы
   final _picker = ImagePicker();
+  final _pickerFocusNode = FocusNode(debugLabel: 'sneakersEditPickerFocus');
 
   // ── Локальное состояние загрузки данных (отдельно от formStateProvider,
   //    чтобы избежать мерцания при переходе между экранами)
@@ -83,7 +84,14 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
     _brandCtrl.dispose();
     _modelCtrl.dispose();
     _kmCtrl.dispose();
+    _pickerFocusNode.dispose();
     super.dispose();
+  }
+
+  // ── снимаем фокус перед показом пикера, чтобы клавиатура не возвращалась
+  void _unfocusKeyboard() {
+    FocusScope.of(context).requestFocus(_pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   /// Загрузка данных снаряжения для редактирования
@@ -342,6 +350,7 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
   //                           ВЫБОР ДАТЫ (iOS)
   // ─────────────────────────────────────────────────────────────────────
   Future<void> _pickDate() async {
+    _unfocusKeyboard();
     DateTime selectedDate = _inUseFrom;
 
     await showCupertinoModalPopup(

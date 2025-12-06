@@ -42,6 +42,9 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
   /// Дата окончания периода
   DateTime? _endDate;
 
+  // ── отдельный фокус для пикеров, чтобы клавиатура не возвращалась после закрытия
+  final _pickerFocusNode = FocusNode(debugLabel: 'eventsFiltersPickerFocus');
+
   // ──── Инициализация фильтров ────
   @override
   void initState() {
@@ -62,6 +65,18 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
       _startDate = DateTime(today.year, today.month, today.day);
       _endDate = DateTime(today.year + 1, today.month, today.day);
     }
+  }
+
+  @override
+  void dispose() {
+    _pickerFocusNode.dispose();
+    super.dispose();
+  }
+
+  // ── снимаем фокус перед показом пикера, чтобы клавиатура не возвращалась
+  void _unfocusKeyboard() {
+    FocusScope.of(context).requestFocus(_pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   // ──── Применение фильтров ────
@@ -89,6 +104,7 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
 
   // ──── Выбор даты начала ────
   Future<void> _pickStartDate() async {
+    _unfocusKeyboard();
     final today = DateTime.now();
     final initial = _startDate ?? today;
 
@@ -125,6 +141,7 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
 
   // ──── Выбор даты окончания ────
   Future<void> _pickEndDate() async {
+    _unfocusKeyboard();
     final today = DateTime.now();
     final initial = _endDate ?? _startDate ?? today;
     final firstDate = _startDate ?? DateTime(today.year - 1);

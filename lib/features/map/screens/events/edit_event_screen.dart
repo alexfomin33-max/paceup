@@ -56,6 +56,8 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
   String? logoUrl; // URL для отображения существующего логотипа
   String? logoFilename; // Имя файла существующего логотипа
   final List<File?> photos = [null, null, null];
+  // ── отдельный фокус для пикеров, чтобы не поднимать клавиатуру после закрытия
+  final _pickerFocusNode = FocusNode(debugLabel: 'editEventPickerFocus');
 
   // ──────────── фиксированные пропорции для обрезки логотипа ────────────
   static const double _logoAspectRatio = 1;
@@ -101,6 +103,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     descCtrl.dispose();
     clubCtrl.dispose();
     templateCtrl.dispose();
+    _pickerFocusNode.dispose();
     super.dispose();
   }
 
@@ -327,6 +330,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
 
   /// Открыть экран выбора места на карте
   Future<void> _pickLocation() async {
+    _unfocusKeyboard();
     final result = await Navigator.of(context).push<LocationResult?>(
       MaterialPageRoute(
         builder: (_) => LocationPickerScreen(initialPosition: selectedLocation),
@@ -343,7 +347,14 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     }
   }
 
+  // ── снимаем фокус перед показом пикеров, чтобы клавиатура не возвращалась
+  void _unfocusKeyboard() {
+    FocusScope.of(context).requestFocus(_pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
   Future<void> _pickDateCupertino() async {
+    _unfocusKeyboard();
     final today = DateUtils.dateOnly(DateTime.now());
     DateTime temp = DateUtils.dateOnly(date ?? today);
 
@@ -362,6 +373,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
   }
 
   Future<void> _pickTimeCupertino() async {
+    _unfocusKeyboard();
     DateTime temp = DateTime(
       DateTime.now().year,
       DateTime.now().month,

@@ -40,6 +40,8 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
   // ── медиа
   File? logoFile;
   File? backgroundFile;
+  // ── отдельный фокус для пикеров, чтобы не поднимать клавиатуру после закрытия
+  final _pickerFocusNode = FocusNode(debugLabel: 'createClubPickerFocus');
 
   // ──────────── фиксированные пропорции для обрезки медиа ────────────
   static const double _logoAspectRatio = 1;
@@ -100,7 +102,14 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
     nameCtrl.dispose();
     cityCtrl.dispose();
     descCtrl.dispose();
+    _pickerFocusNode.dispose();
     super.dispose();
+  }
+
+  // ── снимаем фокус перед показом пикера, чтобы клавиатура не возвращалась
+  void _unfocusKeyboard() {
+    FocusScope.of(context).requestFocus(_pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   void _refresh() => setState(() {});
@@ -139,6 +148,7 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
   }
 
   Future<void> _pickDateCupertino() async {
+    _unfocusKeyboard();
     final today = DateUtils.dateOnly(DateTime.now());
     DateTime temp = DateUtils.dateOnly(foundationDate ?? today);
 

@@ -36,6 +36,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _height;
   late final TextEditingController _weight;
   late final TextEditingController _hrMax;
+  // ── отдельный фокус для пикера даты рождения, чтобы не возвращалась клавиатура
+  final _pickerFocusNode = FocusNode(debugLabel: 'editProfilePickerFocus');
 
   @override
   void initState() {
@@ -63,6 +65,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _height.dispose();
     _weight.dispose();
     _hrMax.dispose();
+    _pickerFocusNode.dispose();
     super.dispose();
   }
 
@@ -114,6 +117,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   /// Показ пикера даты рождения
   Future<void> _pickBirthDate() async {
+    _unfocusKeyboard();
     final state = ref.read(editProfileProvider(widget.userId));
     final notifier = ref.read(editProfileProvider(widget.userId).notifier);
     final initial = state.birthDate ?? DateTime(1990, 1, 1);
@@ -140,6 +144,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         );
       },
     );
+  }
+
+  // ── снимаем фокус перед показом пикера, чтобы клавиатура не возвращалась
+  void _unfocusKeyboard() {
+    FocusScope.of(context).requestFocus(_pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   @override

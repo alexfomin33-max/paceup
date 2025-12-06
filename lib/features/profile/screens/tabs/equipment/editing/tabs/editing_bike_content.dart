@@ -33,6 +33,7 @@ class _EditingBikeContentState extends ConsumerState<EditingBikeContent>
   File? _imageFile;
   String? _currentImageUrl; // URL текущего изображения из базы
   final _picker = ImagePicker();
+  final _pickerFocusNode = FocusNode(debugLabel: 'bikeEditPickerFocus');
 
   // ── Локальное состояние загрузки данных (отдельно от formStateProvider,
   //    чтобы избежать мерцания при переходе между экранами)
@@ -79,7 +80,14 @@ class _EditingBikeContentState extends ConsumerState<EditingBikeContent>
     _brandCtrl.dispose();
     _modelCtrl.dispose();
     _kmCtrl.dispose();
+    _pickerFocusNode.dispose();
     super.dispose();
+  }
+
+  // ── снимаем фокус перед показом пикера, чтобы клавиатура не возвращалась
+  void _unfocusKeyboard() {
+    FocusScope.of(context).requestFocus(_pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   /// Загрузка данных снаряжения для редактирования
@@ -205,6 +213,7 @@ class _EditingBikeContentState extends ConsumerState<EditingBikeContent>
   }
 
   Future<void> _pickDate() async {
+    _unfocusKeyboard();
     DateTime selectedDate = _inUseFrom;
 
     await showCupertinoModalPopup(

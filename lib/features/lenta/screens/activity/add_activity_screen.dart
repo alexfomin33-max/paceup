@@ -65,6 +65,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   DateTime? _activityDate;
   TimeOfDay? _startTime;
   Duration? _duration; // По умолчанию не выбрана
+  // ── отдельный фокус для пикеров, чтобы не поднимать клавиатуру после закрытия
+  final _pickerFocusNode = FocusNode(debugLabel: 'addActivityPickerFocus');
 
   // Дистанция тренировки (в километрах)
   final TextEditingController _distanceController = TextEditingController();
@@ -97,7 +99,14 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     _descriptionController.dispose();
     _descriptionFocusNode.dispose();
     _distanceController.dispose();
+    _pickerFocusNode.dispose();
     super.dispose();
+  }
+
+  // ── снимаем фокус перед показом пикеров, чтобы клавиатура не возвращалась
+  void _unfocusKeyboard() {
+    FocusScope.of(context).requestFocus(_pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   @override
@@ -1170,6 +1179,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
   /// Показывает пикер для выбора даты
   Future<void> _pickDate() async {
+    _unfocusKeyboard();
     final today = DateUtils.dateOnly(DateTime.now());
     DateTime temp = DateUtils.dateOnly(_activityDate ?? today);
     // Если выбранная дата в будущем, устанавливаем сегодняшнюю дату
@@ -1195,6 +1205,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
   /// Показывает пикер для выбора времени начала
   Future<void> _pickTime() async {
+    _unfocusKeyboard();
     DateTime temp = DateTime(
       DateTime.now().year,
       DateTime.now().month,
@@ -1220,6 +1231,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
   /// Показывает пикер для выбора длительности (часы, минуты, секунды)
   Future<void> _pickDuration() async {
+    _unfocusKeyboard();
     int tempHours = _duration?.inHours.clamp(0, 23) ?? 0;
     int tempMinutes = _duration?.inMinutes.remainder(60) ?? 0;
     int tempSeconds = _duration?.inSeconds.remainder(60) ?? 0;

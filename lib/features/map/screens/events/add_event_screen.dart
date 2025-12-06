@@ -31,6 +31,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
   final descCtrl = TextEditingController();
   final clubCtrl = TextEditingController(text: 'CoffeeRun_vld');
   final templateCtrl = TextEditingController();
+  final _pickerFocusNode = FocusNode(debugLabel: 'pickerFocus');
 
   // выборы
   String? activity;
@@ -84,10 +85,17 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     descCtrl.dispose();
     clubCtrl.dispose();
     templateCtrl.dispose();
+    _pickerFocusNode.dispose();
     super.dispose();
   }
 
   void _refresh() => setState(() {});
+
+  // ──────────── снимаем фокус перед открытием модалок, чтобы клавиатура не возвращалась ────────────
+  void _unfocusKeyboard() {
+    FocusScope.of(context).requestFocus(_pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
 
   Future<void> _pickLogo() async {
     // ── выбираем логотип с обрезкой в фиксированную пропорцию 1:1
@@ -116,6 +124,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
 
   /// Открыть экран выбора места на карте
   Future<void> _pickLocation() async {
+    _unfocusKeyboard();
     final result = await Navigator.of(context).push<LocationResult?>(
       MaterialPageRoute(
         builder: (_) => LocationPickerScreen(initialPosition: selectedLocation),
@@ -134,6 +143,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
   }
 
   Future<void> _pickDateCupertino() async {
+    _unfocusKeyboard();
     final today = DateUtils.dateOnly(DateTime.now());
     DateTime temp = DateUtils.dateOnly(date ?? today);
 
@@ -154,6 +164,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
   }
 
   Future<void> _pickTimeCupertino() async {
+    _unfocusKeyboard();
     DateTime temp = DateTime(
       DateTime.now().year,
       DateTime.now().month,

@@ -24,9 +24,18 @@ class MembersRouteScreen extends ConsumerStatefulWidget {
 
 class _MembersRouteScreenState extends ConsumerState<MembersRouteScreen> {
   DateTime? _date;
+  // ── отдельный фокус для пикера, чтобы не возвращалась клавиатура
+  final _pickerFocusNode = FocusNode(debugLabel: 'membersRoutePickerFocus');
+
+  @override
+  void dispose() {
+    _pickerFocusNode.dispose();
+    super.dispose();
+  }
 
   // ── выбор даты через Cupertino-календарь (как в add_event_screen)
   Future<void> _pickDate() async {
+    _unfocusKeyboard();
     final now = DateTime.now();
     final today = DateUtils.dateOnly(now);
     DateTime temp = DateUtils.dateOnly(_date ?? today);
@@ -114,6 +123,12 @@ class _MembersRouteScreenState extends ConsumerState<MembersRouteScreen> {
         ),
       ),
     );
+  }
+
+  // ── снимаем фокус перед показом пикера, чтобы клавиатура не возвращалась
+  void _unfocusKeyboard() {
+    FocusScope.of(context).requestFocus(_pickerFocusNode);
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   static String _fmtDate(DateTime d) =>
