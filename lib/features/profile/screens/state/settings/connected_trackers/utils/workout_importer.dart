@@ -28,6 +28,24 @@ Future<ImportResult> importWorkout(
   WidgetRef ref,
 ) async {
   try {
+    // ──────────────────────────────────────────────────────────────
+    // Извлекаем калории из WorkoutHealthValue
+    // ──────────────────────────────────────────────────────────────
+    double? caloriesFromWorkout;
+
+    if (workout.value is WorkoutHealthValue) {
+      final wv = workout.value as WorkoutHealthValue;
+
+      // Извлекаем калории (totalEnergyBurned может быть int или double)
+      final burned = wv.totalEnergyBurned;
+      if (burned != null) {
+        final burnedValue = burned.toDouble();
+        if (burnedValue > 0) {
+          caloriesFromWorkout = burnedValue;
+        }
+      }
+    }
+
     final wStart = workout.dateFrom;
     final wEnd = workout.dateTo;
 
@@ -80,6 +98,36 @@ Future<ImportResult> importWorkout(
     // ─── Длительность ───
     final duration = wEnd.difference(wStart);
 
+    // ─── Загружаем каденс за период тренировки ───
+    // Вычисляем каденс из шагов (шагов в минуту)
+    // Также сохраняем totalSteps для отправки на сервер
+    double? cadenceAvg;
+    int? totalStepsFromHealth;
+    try {
+      final stepsPoints = await health.getHealthDataFromTypes(
+        types: const [HealthDataType.STEPS],
+        startTime: wStart,
+        endTime: wEnd,
+      );
+      if (stepsPoints.isNotEmpty) {
+        int totalSteps = 0;
+        for (final p in stepsPoints) {
+          final v = p.value;
+          if (v is NumericHealthValue) {
+            totalSteps += v.numericValue.toInt();
+          }
+        }
+        totalStepsFromHealth = totalSteps;
+        // Вычисляем средний каденс: шаги / (длительность в минутах)
+        final durationMinutes = duration.inMinutes;
+        if (totalSteps > 0 && durationMinutes > 0) {
+          cadenceAvg = totalSteps / durationMinutes;
+        }
+      }
+    } catch (_) {
+      // Каденс недоступен — продолжаем без него
+    }
+
     // ─── Загружаем маршрут (только для Android) ───
     List<LatLng> route = const [];
     List<Map<String, dynamic>> routeData = const [];
@@ -126,6 +174,10 @@ Future<ImportResult> importWorkout(
     if (hrAvg != null) stats['avgHeartRate'] = hrAvg;
     if (hrMin != null) stats['minHeartRate'] = hrMin;
     if (hrMax != null) stats['maxHeartRate'] = hrMax;
+    if (cadenceAvg != null) stats['avgCadence'] = cadenceAvg;
+    if (caloriesFromWorkout != null) stats['calories'] = caloriesFromWorkout;
+    if (totalStepsFromHealth != null)
+      stats['totalSteps'] = totalStepsFromHealth;
 
     stats['startedAt'] = wStart.toIso8601String();
     stats['finishedAt'] = wEnd.toIso8601String();

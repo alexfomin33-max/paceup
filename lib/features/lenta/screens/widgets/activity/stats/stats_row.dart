@@ -83,7 +83,12 @@ class StatsRow extends StatelessWidget {
   final double? elevationGainM;
   final double? avgPaceMinPerKm;
   final double? avgHeartRate;
+  final double? avgCadence; // шагов в минуту (spm)
+  final double? calories; // калории (ккал)
+  final int? totalSteps; // общее количество шагов
   final bool isManuallyAdded;
+  final bool
+  showExtendedStats; // показывать ли третью строку (Калории | Шаги | Скорость)
 
   const StatsRow({
     super.key,
@@ -92,7 +97,11 @@ class StatsRow extends StatelessWidget {
     required this.elevationGainM,
     required this.avgPaceMinPerKm,
     required this.avgHeartRate,
+    this.avgCadence,
+    this.calories,
+    this.totalSteps,
     this.isManuallyAdded = false,
+    this.showExtendedStats = false,
   });
 
   @override
@@ -113,6 +122,28 @@ class StatsRow extends StatelessWidget {
     final hrText = avgHeartRate != null
         ? avgHeartRate!.toStringAsFixed(0)
         : '—';
+    final cadenceText = avgCadence != null
+        ? avgCadence!.toStringAsFixed(0)
+        : '—';
+    final caloriesText = calories != null ? calories!.toStringAsFixed(0) : '—';
+    final stepsText = totalSteps != null ? totalSteps.toString() : '—';
+
+    // ──────────────────────────────────────────────────────────────
+    // Вычисляем скорость из расстояния и времени (км/ч)
+    // ──────────────────────────────────────────────────────────────
+    double? speedKmh;
+    if (distanceMeters != null &&
+        durationSec != null &&
+        distanceMeters! > 0 &&
+        (durationSec as num).toDouble() > 0) {
+      final duration = (durationSec as num).toDouble();
+      speedKmh = (distanceMeters! / duration) * 3.6;
+    }
+    final speedText = speedKmh != null
+        ? '${speedKmh.toStringAsFixed(1)} км/ч'
+        : '—';
+
+    final hasCaloriesOrSteps = calories != null || totalSteps != null;
 
     return Padding(
       // ──────────────────────────────────────────────────────────────
@@ -120,96 +151,167 @@ class StatsRow extends StatelessWidget {
       // (аватар 50px + отступ 12px = 62px)
       // ──────────────────────────────────────────────────────────────
       padding: const EdgeInsets.only(left: 62),
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ──────────────────────────────────────────────────────────────
-          // ПЕРВАЯ КОЛОНКА: Расстояние / Набор высоты (фиксированная ширина)
+          // ПЕРВАЯ СТРОКА: Расстояние | Время | Темп
           // ──────────────────────────────────────────────────────────────
-          SizedBox(
-            width: 120,
-            child: MetricVertical(
-              mainTitle: 'Расстояние, км',
-              mainValue: distanceText,
-              subTitle: isManuallyAdded ? '' : 'Набор высоты, м',
-              subValue: isManuallyAdded ? '' : elevationText,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 120,
+                child: MetricVertical(
+                  mainTitle: 'Расстояние, км',
+                  mainValue: distanceText,
+                  subTitle: '',
+                  subValue: '',
+                ),
+              ),
+              SizedBox(
+                width: 90,
+                child: MetricVertical(
+                  mainTitle: 'Время',
+                  mainValue: durationText,
+                  subTitle: '',
+                  subValue: '',
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Темп, мин/км',
+                      style: AppTextStyles.h11w4Sec.copyWith(
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      paceText,
+                      style: AppTextStyles.h14w6.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           // ──────────────────────────────────────────────────────────────
-          // ВТОРАЯ КОЛОНКА: Время / Каденс (фиксированная ширина)
+          // ВТОРАЯ СТРОКА: Набор высоты | Каденс | Пульс
           // ──────────────────────────────────────────────────────────────
-          SizedBox(
-            width: 90,
-            child: MetricVertical(
-              mainTitle: 'Время',
-              mainValue: durationText,
-              subTitle: isManuallyAdded ? '' : 'Каденс',
-              subValue: isManuallyAdded ? '' : '—',
-            ),
-          ),
-          // ──────────────────────────────────────────────────────────────
-          // ТРЕТЬЯ КОЛОНКА: Темп / Ср. пульс (занимает оставшееся пространство)
-          // ──────────────────────────────────────────────────────────────
-          Expanded(
-            child: Column(
+          if (!isManuallyAdded) ...[
+            const SizedBox(height: 12),
+            Row(
+              mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ──────────────────────────────────────────────────────────────
-                // ЗАГОЛОВОК ТЕМПА СВЕРХУ: сначала отображаем заголовок
-                // ──────────────────────────────────────────────────────────────
-                Text(
-                  'Темп, мин/км',
-                  style: AppTextStyles.h11w4Sec.copyWith(
-                    color: AppColors.getTextSecondaryColor(context),
+                SizedBox(
+                  width: 120,
+                  child: MetricVertical(
+                    mainTitle: 'Набор высоты, м',
+                    mainValue: elevationText,
+                    subTitle: '',
+                    subValue: '',
                   ),
                 ),
-                const SizedBox(height: 1),
-                // ──────────────────────────────────────────────────────────────
-                // ЗНАЧЕНИЕ ТЕМПА СНИЗУ: затем отображаем значение
-                // ──────────────────────────────────────────────────────────────
-                Text(
-                  paceText,
-                  style: AppTextStyles.h14w6.copyWith(
-                    color: AppColors.getTextPrimaryColor(context),
+                SizedBox(
+                  width: 90,
+                  child: MetricVertical(
+                    mainTitle: 'Каденс',
+                    mainValue: cadenceText,
+                    subTitle: '',
+                    subValue: '',
                   ),
                 ),
-                if (!isManuallyAdded) ...[
-                  const SizedBox(height: 10),
-                  // ──────────────────────────────────────────────────────────────
-                  // ЗАГОЛОВОК ПУЛЬСА СВЕРХУ: сначала отображаем заголовок
-                  // ──────────────────────────────────────────────────────────────
-                  Text(
-                    'Ср. пульс',
-                    style: AppTextStyles.h11w4Sec.copyWith(
-                      color: AppColors.getTextSecondaryColor(context),
-                    ),
-                  ),
-                  const SizedBox(height: 1),
-                  // ──────────────────────────────────────────────────────────────
-                  // ЗНАЧЕНИЕ ПУЛЬСА СНИЗУ: затем отображаем значение с иконкой
-                  // ──────────────────────────────────────────────────────────────
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        hrText,
+                        'Ср. пульс',
+                        style: AppTextStyles.h11w4Sec.copyWith(
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            hrText,
+                            style: AppTextStyles.h14w6.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          const Icon(
+                            CupertinoIcons.heart_fill,
+                            color: AppColors.error,
+                            size: 11,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+          // ──────────────────────────────────────────────────────────────
+          // ТРЕТЬЯ СТРОКА: Калории | Шаги | Скорость (если доступны)
+          // ──────────────────────────────────────────────────────────────
+          if (showExtendedStats && hasCaloriesOrSteps && !isManuallyAdded) ...[
+            const SizedBox(height: 12),
+            Row(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 120,
+                  child: MetricVertical(
+                    mainTitle: 'Калории, ккал',
+                    mainValue: caloriesText,
+                    subTitle: '',
+                    subValue: '',
+                  ),
+                ),
+                SizedBox(
+                  width: 90,
+                  child: MetricVertical(
+                    mainTitle: 'Шаги',
+                    mainValue: stepsText,
+                    subTitle: '',
+                    subValue: '',
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Скорость',
+                        style: AppTextStyles.h11w4Sec.copyWith(
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        speedText,
                         style: AppTextStyles.h14w6.copyWith(
                           color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
-                      const SizedBox(width: 2),
-                      const Icon(
-                        CupertinoIcons.heart_fill,
-                        color: AppColors.error,
-                        size: 11,
-                      ),
                     ],
                   ),
-                ],
+                ),
               ],
             ),
-          ),
+          ],
         ],
       ),
     );

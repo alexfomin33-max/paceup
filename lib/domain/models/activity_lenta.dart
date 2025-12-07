@@ -251,6 +251,9 @@ class ActivityStats {
   final int duration; // seconds
   final List<Coord> bounds; // usually 2 points
   final double? avgHeartRate;
+  final double? avgCadence; // шагов в минуту (spm)
+  final double? calories; // калории (ккал)
+  final int? totalSteps; // общее количество шагов
   final Map<String, double> heartRatePerKm;
   final Map<String, double> pacePerKm;
 
@@ -272,41 +275,51 @@ class ActivityStats {
     required this.duration,
     required this.bounds,
     required this.avgHeartRate,
+    this.avgCadence,
+    this.calories,
+    this.totalSteps,
     required this.heartRatePerKm,
     required this.pacePerKm,
   });
 
-  factory ActivityStats.fromJson(Map<String, dynamic> j) => ActivityStats(
-    distance: _asDouble(j['distance']),
-    realDistance: _asDouble(j['realDistance']),
-    avgSpeed: _asDouble(j['avgSpeed']),
-    avgPace: _asDouble(j['avgPace']),
-    minAltitude: _asDouble(j['minAltitude']),
-    minAltitudeCoords: j['minAltitudeCoords'] is Map<String, dynamic>
-        ? Coord.fromJson(j['minAltitudeCoords'] as Map<String, dynamic>)
-        : null,
-    maxAltitude: _asDouble(j['maxAltitude']),
-    maxAltitudeCoords: j['maxAltitudeCoords'] is Map<String, dynamic>
-        ? Coord.fromJson(j['maxAltitudeCoords'] as Map<String, dynamic>)
-        : null,
-    cumulativeElevationGain: _asDouble(j['cumulativeElevationGain']),
-    cumulativeElevationLoss: _asDouble(j['cumulativeElevationLoss']),
-    startedAt: _parseIsoDateTime(j['startedAt']?.toString()),
-    startedAtCoords: j['startedAtCoords'] is Map<String, dynamic>
-        ? Coord.fromJson(j['startedAtCoords'] as Map<String, dynamic>)
-        : null,
-    finishedAt: _parseIsoDateTime(j['finishedAt']?.toString()),
-    finishedAtCoords: j['finishedAtCoords'] is Map<String, dynamic>
-        ? Coord.fromJson(j['finishedAtCoords'] as Map<String, dynamic>)
-        : null,
-    duration: _asInt(j['duration']),
-    bounds: _parseCoordList(j['bounds']),
-    avgHeartRate: j['avgHeartRate'] == null
-        ? null
-        : _asDouble(j['avgHeartRate']),
-    heartRatePerKm: _parseNumMap(j['heartRatePerKm']),
-    pacePerKm: _parseNumMap(j['pacePerKm']),
-  );
+  factory ActivityStats.fromJson(Map<String, dynamic> j) {
+    final stats = ActivityStats(
+      distance: _asDouble(j['distance']),
+      realDistance: _asDouble(j['realDistance']),
+      avgSpeed: _asDouble(j['avgSpeed']),
+      avgPace: _asDouble(j['avgPace']),
+      minAltitude: _asDouble(j['minAltitude']),
+      minAltitudeCoords: j['minAltitudeCoords'] is Map<String, dynamic>
+          ? Coord.fromJson(j['minAltitudeCoords'] as Map<String, dynamic>)
+          : null,
+      maxAltitude: _asDouble(j['maxAltitude']),
+      maxAltitudeCoords: j['maxAltitudeCoords'] is Map<String, dynamic>
+          ? Coord.fromJson(j['maxAltitudeCoords'] as Map<String, dynamic>)
+          : null,
+      cumulativeElevationGain: _asDouble(j['cumulativeElevationGain']),
+      cumulativeElevationLoss: _asDouble(j['cumulativeElevationLoss']),
+      startedAt: _parseIsoDateTime(j['startedAt']?.toString()),
+      startedAtCoords: j['startedAtCoords'] is Map<String, dynamic>
+          ? Coord.fromJson(j['startedAtCoords'] as Map<String, dynamic>)
+          : null,
+      finishedAt: _parseIsoDateTime(j['finishedAt']?.toString()),
+      finishedAtCoords: j['finishedAtCoords'] is Map<String, dynamic>
+          ? Coord.fromJson(j['finishedAtCoords'] as Map<String, dynamic>)
+          : null,
+      duration: _asInt(j['duration']),
+      bounds: _parseCoordList(j['bounds']),
+      avgHeartRate: j['avgHeartRate'] == null
+          ? null
+          : _asDouble(j['avgHeartRate']),
+      avgCadence: j['avgCadence'] == null ? null : _asDouble(j['avgCadence']),
+      calories: j['calories'] == null ? null : _asDouble(j['calories']),
+      totalSteps: j['totalSteps'] == null ? null : _asInt(j['totalSteps']),
+      heartRatePerKm: _parseNumMap(j['heartRatePerKm']),
+      pacePerKm: _parseNumMap(j['pacePerKm']),
+    );
+
+    return stats;
+  }
 }
 
 // ======== NETWORK ========

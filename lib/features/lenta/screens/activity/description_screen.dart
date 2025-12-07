@@ -119,10 +119,21 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                           elevationGainM: stats?.cumulativeElevationGain,
                           avgPaceMinPerKm: stats?.avgPace,
                           avgHeartRate: stats?.avgHeartRate,
+                          avgCadence: stats?.avgCadence,
+                          calories: stats?.calories,
+                          totalSteps: stats?.totalSteps,
                           // ────────────────────────────────────────────────────────────────
-                          // Тренировка добавлена вручную, если нет GPS-трека (points пустой)
+                          // Тренировка добавлена вручную только если нет GPS-трека
+                          // И нет данных о пульсе/каденсе (значит действительно вручную)
                           // ────────────────────────────────────────────────────────────────
-                          isManuallyAdded: a.points.isEmpty,
+                          isManuallyAdded:
+                              a.points.isEmpty &&
+                              (stats?.avgHeartRate == null &&
+                                  stats?.avgCadence == null),
+                          // ────────────────────────────────────────────────────────────────
+                          // Показываем третью строку (Калории | Шаги | Скорость) на экране описания
+                          // ────────────────────────────────────────────────────────────────
+                          showExtendedStats: true,
                         ),
                         bottomGap: 12.0,
                       ),
@@ -184,11 +195,12 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                           ? () {
                               Navigator.of(context).push(
                                 TransparentPageRoute(
-                                  builder: (context) => FullscreenRouteMapScreen(
-                                    points: a.points
-                                        .map((c) => ll.LatLng(c.lat, c.lng))
-                                        .toList(),
-                                  ),
+                                  builder: (context) =>
+                                      FullscreenRouteMapScreen(
+                                        points: a.points
+                                            .map((c) => ll.LatLng(c.lat, c.lng))
+                                            .toList(),
+                                      ),
                                 ),
                               );
                             }
