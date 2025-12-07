@@ -25,6 +25,13 @@ class LentaNotifier extends StateNotifier<LentaState> {
   final int userId;
   final int limit;
 
+  // ────────────────────────────────────────────────────────────────────────────
+  // 🔒 ЗАЩИТА ОТ ОДНОВРЕМЕННОГО ВЫПОЛНЕНИЯ
+  // ────────────────────────────────────────────────────────────────────────────
+  // Флаг для предотвращения race condition при одновременном вызове
+  // loadInitial(), refresh() и forceRefresh()
+  bool _isLoading = false;
+
   LentaNotifier({
     required ApiService api,
     required CacheService cache,
@@ -38,6 +45,25 @@ class LentaNotifier extends StateNotifier<LentaState> {
   int _getId(Activity a) => a.lentaId;
 
   // ────────────────────────── ПРИВАТНЫЕ МЕТОДЫ ──────────────────────────
+
+  /// Дедупликация списка активностей по lentaId
+  ///
+  /// Удаляет дубликаты, сохраняя порядок (первые вхождения остаются)
+  /// Используется для защиты от дубликатов, которые могут вернуться из API
+  List<Activity> _deduplicateItems(List<Activity> items) {
+    final seenIds = <int>{};
+    final result = <Activity>[];
+
+    for (final item in items) {
+      final itemId = _getId(item);
+      if (!seenIds.contains(itemId)) {
+        seenIds.add(itemId);
+        result.add(item);
+      }
+    }
+
+    return result;
+  }
 
   /// Загрузка активностей через API
   ///
@@ -88,29 +114,11 @@ class LentaNotifier extends StateNotifier<LentaState> {
   /// 3. Плавно обновляем UI и сохраняем в кэш
   /// 4. Если ошибка сети — показываем кэш (работа без интернета)
   Future<void> loadInitial() async {
-    try {
-      // ────────── ШАГ 1: Показываем кэш (мгновенно) ──────────
-      // ✅ ОТКЛЮЧЕНО: раскомментировать для включения кеша
-      /*
-      final cachedItems = await _cache.getCachedActivities(
-        userId: userId,
-        limit: limit,
-      );
+    // 🔒 Защита от одновременного выполнения
+    if (_isLoading) return;
 
-      if (cachedItems.isNotEmpty) {
-        final cachedSeenIds = cachedItems.map(_getId).toSet();
-        state = state.copyWith(
-          items: cachedItems,
-          currentPage: 1,
-          hasMore: true, // предполагаем что есть ещё
-          seenIds: cachedSeenIds,
-          isRefreshing: false,
-        );
-      } else {
-        // Если кэша нет — показываем индикатор загрузки
-        state = state.copyWith(isRefreshing: true, error: null);
-      }
-      */
+    try {
+      _isLoading = true;
 
       // Показываем индикатор загрузки
       state = state.copyWith(isRefreshing: true, error: null);
@@ -118,39 +126,29 @@ class LentaNotifier extends StateNotifier<LentaState> {
       // ────────── ШАГ 2: Загружаем свежие данные ──────────
       final freshItems = await _loadActivities(page: 1, limit: limit);
 
-      // Сохраняем в кэш (для возможного использования в будущем)
-      await _cache.cacheActivities(freshItems, userId: userId);
+      // ✅ Дедупликация на случай, если API вернет дубликаты
+      final deduplicatedItems = _deduplicateItems(freshItems);
 
-      final newSeenIds = freshItems.map(_getId).toSet();
+      // Сохраняем в кэш (для возможного использования в будущем)
+      await _cache.cacheActivities(deduplicatedItems, userId: userId);
+
+      final newSeenIds = deduplicatedItems.map(_getId).toSet();
 
       state = state.copyWith(
-        items: freshItems,
+        items: deduplicatedItems,
         currentPage: 1,
-        hasMore: freshItems.length == limit,
+        hasMore: deduplicatedItems.length == limit,
         seenIds: newSeenIds,
         isRefreshing: false,
         error: null,
       );
     } catch (e) {
-      // ✅ ОТКЛЮЧЕНО: fallback на кеш при ошибке
-      /*
-      // Если ошибка сети — показываем кэш (offline mode)
-      if (state.items.isNotEmpty) {
-        state = state.copyWith(
-          error: 'Показаны сохранённые данные',
-          isRefreshing: false,
-        );
-      } else {
-        state = state.copyWith(
-        error: ErrorHandler.format(e),
-        isRefreshing: false,
-      );
-      }
-      */
       state = state.copyWith(
         error: ErrorHandler.format(e),
         isRefreshing: false,
       );
+    } finally {
+      _isLoading = false;
     }
   }
 
@@ -159,32 +157,46 @@ class LentaNotifier extends StateNotifier<LentaState> {
   /// Обновляет данные с сервера и сохраняет в кэш
   /// ✅ Обновляет существующие элементы свежими данными (включая счетчики комментариев)
   Future<void> refresh() async {
+    // 🔒 Защита от одновременного выполнения
+    if (_isLoading) return;
+
     try {
+      _isLoading = true;
       state = state.copyWith(isRefreshing: true, error: null);
 
       final freshItems = await _loadActivities(page: 1, limit: limit);
 
+      // ✅ Дедупликация на случай, если API вернет дубликаты
+      final deduplicatedFreshItems = _deduplicateItems(freshItems);
+
       // Сохраняем в кэш
-      await _cache.cacheActivities(freshItems, userId: userId);
+      await _cache.cacheActivities(deduplicatedFreshItems, userId: userId);
 
       // Создаем Map для быстрого поиска свежих элементов по lentaId
-      final freshItemsMap = {for (var item in freshItems) _getId(item): item};
+      final freshItemsMap = {
+        for (var item in deduplicatedFreshItems) _getId(item): item,
+      };
 
       // Обновляем существующие элементы свежими данными и добавляем новые
       final updatedItems = <Activity>[];
       final updatedSeenIds = <int>{};
 
       // Сначала добавляем свежие элементы (новые и обновленные)
-      for (final freshItem in freshItems) {
+      for (final freshItem in deduplicatedFreshItems) {
         final itemId = _getId(freshItem);
-        updatedItems.add(freshItem); // Используем свежие данные с сервера
-        updatedSeenIds.add(itemId);
+        // ✅ Дополнительная проверка на дубликаты
+        if (!updatedSeenIds.contains(itemId)) {
+          updatedItems.add(freshItem);
+          updatedSeenIds.add(itemId);
+        }
       }
 
       // Затем добавляем старые элементы, которых нет в свежих данных
       for (final oldItem in state.items) {
         final itemId = _getId(oldItem);
-        if (!freshItemsMap.containsKey(itemId)) {
+        // ✅ Проверяем, что элемент не в свежих данных И не добавлен уже
+        if (!freshItemsMap.containsKey(itemId) &&
+            !updatedSeenIds.contains(itemId)) {
           updatedItems.add(oldItem);
           updatedSeenIds.add(itemId);
         }
@@ -193,7 +205,7 @@ class LentaNotifier extends StateNotifier<LentaState> {
       state = state.copyWith(
         items: updatedItems,
         seenIds: updatedSeenIds,
-        hasMore: freshItems.length == limit,
+        hasMore: deduplicatedFreshItems.length == limit,
         isRefreshing: false,
       );
     } catch (e) {
@@ -201,6 +213,8 @@ class LentaNotifier extends StateNotifier<LentaState> {
         error: ErrorHandler.format(e),
         isRefreshing: false,
       );
+    } finally {
+      _isLoading = false;
     }
   }
 
@@ -210,7 +224,11 @@ class LentaNotifier extends StateNotifier<LentaState> {
   /// Используется после создания нового поста для гарантированного
   /// отображения обновленных данных
   Future<void> forceRefresh() async {
+    // 🔒 Защита от одновременного выполнения
+    if (_isLoading) return;
+
     try {
+      _isLoading = true;
       state = state.copyWith(isRefreshing: true, error: null);
 
       // Очищаем кэш активностей перед обновлением
@@ -219,17 +237,20 @@ class LentaNotifier extends StateNotifier<LentaState> {
       // Загружаем свежие данные с сервера
       final freshItems = await _loadActivities(page: 1, limit: limit);
 
+      // ✅ Дедупликация на случай, если API вернет дубликаты
+      final deduplicatedItems = _deduplicateItems(freshItems);
+
       // Сохраняем в кэш
-      await _cache.cacheActivities(freshItems, userId: userId);
+      await _cache.cacheActivities(deduplicatedItems, userId: userId);
 
       // Полностью заменяем список (новые посты должны быть в начале)
-      final newSeenIds = freshItems.map(_getId).toSet();
+      final newSeenIds = deduplicatedItems.map(_getId).toSet();
 
       state = state.copyWith(
-        items: freshItems,
+        items: deduplicatedItems,
         currentPage: 1,
         seenIds: newSeenIds,
-        hasMore: freshItems.length == limit,
+        hasMore: deduplicatedItems.length == limit,
         isRefreshing: false,
         error: null,
       );
@@ -238,6 +259,8 @@ class LentaNotifier extends StateNotifier<LentaState> {
         error: ErrorHandler.format(e),
         isRefreshing: false,
       );
+    } finally {
+      _isLoading = false;
     }
   }
 
