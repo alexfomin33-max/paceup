@@ -151,7 +151,7 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
                   child: Center(
                     child: Text(
                       data.activities.isEmpty
-                          ? 'Нет тренировок за выбранные виды спорта'
+                          ? 'Нет тренировок за выбранный месяц'
                           : 'Нет тренировок в ${_MonthToolbar._monthTitle(_month)}',
                       style: TextStyle(
                         fontFamily: 'Inter',

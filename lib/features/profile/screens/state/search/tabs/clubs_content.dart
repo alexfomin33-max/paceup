@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../../core/theme/app_theme.dart';
+import '../../../../../../core/widgets/transparent_route.dart';
 import '../../../../../../features/map/providers/search/clubs_search_provider.dart';
 import '../../../../../../features/map/screens/clubs/club_detail_screen.dart';
 
@@ -190,14 +191,14 @@ class _SearchClubsContentState extends ConsumerState<SearchClubsContent> {
     // Если маршрут стал активным (видимым), обновляем данные
     if (isRouteActive && !_wasRouteActive) {
       _wasRouteActive = true;
-      
+
       // Обновляем список рекомендованных клубов при возврате на экран
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        
+
         final trimmedQuery = widget.query.trim();
         final isSearching = trimmedQuery.isNotEmpty;
-        
+
         if (isSearching) {
           // При поиске инвалидируем провайдер поиска
           ref.invalidate(searchClubsProvider(trimmedQuery));
@@ -219,7 +220,7 @@ class _ClubRow extends StatelessWidget {
 
   void _onTap(BuildContext context) {
     Navigator.of(context).push(
-      CupertinoPageRoute(builder: (_) => ClubDetailScreen(clubId: club.id)),
+      TransparentPageRoute(builder: (_) => ClubDetailScreen(clubId: club.id)),
     );
   }
 

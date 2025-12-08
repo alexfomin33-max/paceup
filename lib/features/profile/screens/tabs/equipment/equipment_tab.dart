@@ -219,9 +219,7 @@ class _GearTabState extends ConsumerState<GearTab>
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             ErrorHandler.formatWithContext(e, context: 'обновлении снаряжения'),
@@ -418,7 +416,7 @@ class _AdaptiveGearImage extends StatefulWidget {
 }
 
 class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
-  BoxFit _fit = BoxFit.cover;
+  BoxFit _fit = BoxFit.contain;
   ImageStreamListener? _listener;
   ImageStream? _imageStream;
 
@@ -466,23 +464,28 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
         final image = imageInfo.image;
         final width = image.width.toDouble();
         final height = image.height.toDouble();
-        final aspectRatio = width / height;
+        final imageAspectRatio = width / height;
+        // Контейнер имеет размер 63x42, его соотношение сторон ≈ 1.5
+        final containerAspectRatio = 63.0 / 42.0;
 
-        // Если соотношение меньше 1.5, используем fitHeight
-        // (фиксированная высота, ширина подстраивается)
-        // Иначе используем cover (как было)
+        // Если изображение шире контейнера (по соотношению сторон),
+        // используем fitWidth (помещается по ширине)
+        // Иначе используем fitHeight (помещается по высоте)
+        // Это обеспечивает, что изображение помещается по длинной стороне
         if (mounted) {
           setState(() {
-            _fit = aspectRatio < 1.5 ? BoxFit.fitHeight : BoxFit.cover;
+            _fit = imageAspectRatio > containerAspectRatio
+                ? BoxFit.fitWidth
+                : BoxFit.fitHeight;
           });
         }
         _cleanupListener();
       },
       onError: (exception, stackTrace) {
-        // При ошибке используем cover по умолчанию
+        // При ошибке используем contain по умолчанию
         if (mounted) {
           setState(() {
-            _fit = BoxFit.cover;
+            _fit = BoxFit.contain;
           });
         }
         _cleanupListener();
@@ -495,48 +498,24 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
   @override
   Widget build(BuildContext context) {
     if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty) {
-      // Для fitHeight ограничиваем ширину, чтобы изображение не выходило за границы
-      return _fit == BoxFit.fitHeight
-          ? SizedBox(
+      // Изображение помещается по длинной стороне (fitWidth или fitHeight)
+      return SizedBox(
+        width: 63,
+        height: 42,
+        child: Image.network(
+          widget.imageUrl!,
+          fit: _fit,
+          errorBuilder: (context, error, stackTrace) {
+            final image = Image.asset(
+              widget.isBoots ? 'assets/add_boots.png' : 'assets/add_bike.png',
               width: 63,
               height: 42,
-              child: Image.network(
-                widget.imageUrl!,
-                fit: _fit,
-                errorBuilder: (context, error, stackTrace) {
-                  final image = Image.asset(
-                    widget.isBoots
-                        ? 'assets/add_boots.png'
-                        : 'assets/add_bike.png',
-                    width: 63,
-                    height: 42,
-                    fit: BoxFit.cover,
-                  );
-                  return widget.isBoots
-                      ? Opacity(opacity: 0.9, child: image)
-                      : image;
-                },
-              ),
-            )
-          : Image.network(
-              widget.imageUrl!,
-              width: 63,
-              height: 42,
-              fit: _fit,
-              errorBuilder: (context, error, stackTrace) {
-                final image = Image.asset(
-                  widget.isBoots
-                      ? 'assets/add_boots.png'
-                      : 'assets/add_bike.png',
-                  width: 63,
-                  height: 42,
-                  fit: BoxFit.cover,
-                );
-                return widget.isBoots
-                    ? Opacity(opacity: 0.9, child: image)
-                    : image;
-              },
+              fit: BoxFit.contain,
             );
+            return widget.isBoots ? Opacity(opacity: 0.9, child: image) : image;
+          },
+        ),
+      );
     }
 
     // Дефолтное изображение
@@ -544,7 +523,7 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
       widget.isBoots ? 'assets/add_boots.png' : 'assets/add_bike.png',
       width: 63,
       height: 42,
-      fit: BoxFit.cover,
+      fit: BoxFit.contain,
     );
     return widget.isBoots ? Opacity(opacity: 0.9, child: image) : image;
   }
