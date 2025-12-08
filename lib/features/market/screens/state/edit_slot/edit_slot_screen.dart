@@ -329,25 +329,31 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
   }
 
   /// Удаление слота
-  Future<void> _delete() async {
-    if (_isDeleting) return;
+  Future<void> _handleDelete() async {
+    if (_isDeleting || _isSubmitting) return;
 
     // ─── Подтверждение удаления ───
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showCupertinoDialog<bool>(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Удалить слот?'),
-        content: const Text('Вы уверены, что хотите удалить этот слот?'),
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Удаление слота'),
+        content: const Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: Text(
+            'Вы уверены, что хотите удалить этот слот? Это действие нельзя отменить.',
+            style: TextStyle(fontSize: 15),
+          ),
+        ),
         actions: [
           CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Удалить'),
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Отмена'),
           ),
           CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Отмена'),
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Удалить'),
           ),
         ],
       ),
@@ -413,23 +419,51 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
       return InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.getBackgroundColor(context),
-          appBar: const PaceAppBar(
+          appBar: PaceAppBar(
             title: 'Редактирование слота',
             showBack: true,
             showBottomDivider: true,
+            actions: [
+              IconButton(
+                splashRadius: 22,
+                icon: const Icon(
+                  CupertinoIcons.delete,
+                  size: 20,
+                  color: AppColors.error,
+                ),
+                onPressed: _handleDelete,
+              ),
+            ],
           ),
           body: const Center(child: CupertinoActivityIndicator()),
         ),
       );
     }
 
+    // 🔻 умный нижний паддинг: клавиатура (viewInsets) > 0 ? берём её : берём safe-area
+    final media = MediaQuery.of(context);
+    final bottomInset = media.viewInsets.bottom; // клавиатура
+    final safeBottom = media.viewPadding.bottom; // «борода»/ноутч
+    final bottomPad = (bottomInset > 0 ? bottomInset : safeBottom) + 20;
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(
+        appBar: PaceAppBar(
           title: 'Редактирование слота',
           showBack: true,
           showBottomDivider: true,
+          actions: [
+            IconButton(
+              splashRadius: 22,
+              icon: const Icon(
+                CupertinoIcons.delete,
+                size: 20,
+                color: AppColors.error,
+              ),
+              onPressed: _handleDelete,
+            ),
+          ],
         ),
         body: GestureDetector(
           // ── снимаем фокус с текстовых полей при клике вне их
@@ -438,7 +472,8 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
           },
           behavior: HitTestBehavior.opaque,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+            padding: EdgeInsets.fromLTRB(12, 20, 12, bottomPad),
+            physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -512,61 +547,36 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
 
                 // ─── Отображение ошибки ───
                 if (_errorMessage != null) ...[
-                  SelectableText.rich(
-                    TextSpan(
-                      text: _errorMessage,
-                      style: const TextStyle(
-                        color: AppColors.error,
-                        fontSize: 14,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w400,
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: SelectableText.rich(
+                      TextSpan(
+                        text: _errorMessage,
+                        style: const TextStyle(
+                          color: AppColors.error,
+                          fontSize: 14,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
                 ],
 
-                // ─── Кнопки Сохранить и Удалить ───
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    PrimaryButton(
-                      text: 'Сохранить',
-                      onPressed: _isSubmitting || _isDeleting
-                          ? () {}
-                          : () => _save(),
-                      width: 160,
-                      isLoading: _isSubmitting,
-                    ),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 140,
-                      height: 44,
-                      child: ElevatedButton(
-                        onPressed: _isSubmitting || _isDeleting
-                            ? null
-                            : () => _delete(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.error,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: const StadiumBorder(),
-                          padding: const EdgeInsets.symmetric(horizontal: 30),
-                        ),
-                        child: _isDeleting
-                            ? const CupertinoActivityIndicator(radius: 9)
-                            : const Text(
-                                'Удалить',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
+                // ────────────────────────────────────────────────────────────────
+                // 💾 КНОПКА СОХРАНЕНИЯ
+                // ────────────────────────────────────────────────────────────────
+                Center(
+                  child: PrimaryButton(
+                    text: 'Сохранить изменения',
+                    onPressed: _isSubmitting || _isDeleting
+                        ? () {}
+                        : () => _save(),
+                    width: 230,
+                    isLoading: _isSubmitting,
+                    enabled: _isValid && !_isSubmitting && !_isDeleting,
+                  ),
                 ),
               ],
             ),

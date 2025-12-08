@@ -563,7 +563,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
           },
           behavior: HitTestBehavior.opaque,
           child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(12, 12, 12, bottomPad),
+            padding: EdgeInsets.fromLTRB(12, 20, 12, bottomPad),
             physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -727,7 +727,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
                       return PrimaryButton(
                         text: 'Сохранить изменения',
                         onPressed: !formState.isSubmitting ? _submit : () {},
-                        width: 240,
+                        width: 230,
                         isLoading: formState.isSubmitting,
                         enabled: _isValid && !formState.isSubmitting,
                       );
