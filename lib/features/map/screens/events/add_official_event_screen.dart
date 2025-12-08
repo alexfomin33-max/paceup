@@ -45,6 +45,13 @@ class _AddOfficialEventScreenState
   @override
   void initState() {
     super.initState();
+    // ── сбрасываем состояние провайдера при открытии экрана (отложено до завершения построения виджета)
+    Future.microtask(() {
+      if (mounted) {
+        ref.read(addOfficialEventFormProvider.notifier).reset();
+      }
+    });
+
     // ── инициализируем контроллеры
     nameCtrl = TextEditingController();
     placeCtrl = TextEditingController();
@@ -192,7 +199,6 @@ class _AddOfficialEventScreenState
     }
   }
 
-
   Future<T?> _showCupertinoSheet<T>({required Widget child}) {
     return showCupertinoModalPopup<T>(
       context: context,
@@ -282,7 +288,6 @@ class _AddOfficialEventScreenState
     final yy = d.year.toString();
     return '$dd.$mm.$yy';
   }
-
 
   // ── загрузка данных выбранного шаблона
   Future<void> _loadTemplateData(String templateName) async {
@@ -388,7 +393,8 @@ class _AddOfficialEventScreenState
 
     try {
       await ref.read(submitEventProvider.notifier).submit(formState);
-      // ── успешная отправка — закрываем экран
+      // ── успешная отправка — сбрасываем состояние и закрываем экран
+      ref.read(addOfficialEventFormProvider.notifier).reset();
       if (mounted) {
         Navigator.of(context).pop('created');
       }
@@ -1044,14 +1050,11 @@ class _AddOfficialEventScreenState
                             child: InputDecorator(
                               decoration: InputDecoration(
                                 filled: true,
-                                fillColor: AppColors.getSurfaceColor(
-                                  context,
+                                fillColor: AppColors.getSurfaceColor(context),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 18,
                                 ),
-                                contentPadding:
-                                    const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 18,
-                                    ),
                                 prefixIcon: Padding(
                                   padding: const EdgeInsets.only(
                                     left: 12,
@@ -1065,19 +1068,16 @@ class _AddOfficialEventScreenState
                                     ),
                                   ),
                                 ),
-                                prefixIconConstraints:
-                                    const BoxConstraints(
-                                      minWidth: 18 + 14,
-                                      minHeight: 18,
-                                    ),
+                                prefixIconConstraints: const BoxConstraints(
+                                  minWidth: 18 + 14,
+                                  minHeight: 18,
+                                ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.sm,
                                   ),
                                   borderSide: BorderSide(
-                                    color: AppColors.getBorderColor(
-                                      context,
-                                    ),
+                                    color: AppColors.getBorderColor(context),
                                     width: 1,
                                   ),
                                 ),
@@ -1086,9 +1086,7 @@ class _AddOfficialEventScreenState
                                     AppRadius.sm,
                                   ),
                                   borderSide: BorderSide(
-                                    color: AppColors.getBorderColor(
-                                      context,
-                                    ),
+                                    color: AppColors.getBorderColor(context),
                                     width: 1,
                                   ),
                                 ),
@@ -1097,9 +1095,7 @@ class _AddOfficialEventScreenState
                                     AppRadius.sm,
                                   ),
                                   borderSide: BorderSide(
-                                    color: AppColors.getBorderColor(
-                                      context,
-                                    ),
+                                    color: AppColors.getBorderColor(context),
                                     width: 1,
                                   ),
                                 ),
@@ -1110,10 +1106,9 @@ class _AddOfficialEventScreenState
                                     : 'Выберите дату',
                                 style: formState.date != null
                                     ? AppTextStyles.h14w4.copyWith(
-                                        color:
-                                            AppColors.getTextPrimaryColor(
-                                              context,
-                                            ),
+                                        color: AppColors.getTextPrimaryColor(
+                                          context,
+                                        ),
                                       )
                                     : AppTextStyles.h14w4Place,
                               ),

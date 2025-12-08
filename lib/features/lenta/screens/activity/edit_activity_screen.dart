@@ -160,17 +160,42 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                   const SizedBox(height: 8),
                   _buildDescriptionInput(),
 
-                  const SizedBox(height: 24),
+                  // ────────────────────────────────────────────────────────────────
+                  // 👟 3. СМЕНА ЭКИПИРОВКИ (показываем только если есть экипировка)
+                  // ────────────────────────────────────────────────────────────────
+                  Builder(
+                    builder: (context) {
+                      // Получаем обновленную активность из провайдера для проверки
+                      final lentaState = ref.watch(
+                        lentaProvider(widget.currentUserId),
+                      );
+                      final updatedActivity = lentaState.items.firstWhere(
+                        (a) => a.lentaId == widget.activity.lentaId,
+                        orElse: () => widget.activity,
+                      );
 
-                  // ────────────────────────────────────────────────────────────────
-                  // 👟 3. СМЕНА ЭКИПИРОВКИ
-                  // ────────────────────────────────────────────────────────────────
-                  const Text(
-                    'Экипировка',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                      // Показываем блок только если есть экипировка
+                      if (updatedActivity.equipments.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Экипировка',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildEquipmentSection(),
+                        ],
+                      );
+                    },
                   ),
-                  const SizedBox(height: 8),
-                  _buildEquipmentSection(),
 
                   const SizedBox(height: 24),
 
