@@ -94,7 +94,10 @@ class _OfficialEventDetailScreenState
         // ───── После успешной загрузки — лёгкий префетч логотипа и фото ─────
         if (mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            _prefetchImages(context);
+            // ── проверяем mounted внутри callback, так как виджет может быть размонтирован к моменту выполнения
+            if (mounted) {
+              _prefetchImages(context);
+            }
           });
         }
       } else {
@@ -169,9 +172,12 @@ class _OfficialEventDetailScreenState
       return;
     }
 
-    // Если событие было обновлено, перезагружаем данные
+    // Если событие было обновлено, перезагружаем данные и возвращаем сигнал на карту
     if (result == true) {
       await _loadEvent();
+      if (!mounted) return;
+      // ── возвращаем сигнал об обновлении, чтобы карта обновила маркеры
+      Navigator.of(context).pop('updated');
     }
   }
 
@@ -1148,7 +1154,8 @@ class _EventMembersSliverState extends ConsumerState<_EventMembersSliver> {
   String? _error;
   int _currentPage = 1;
   static const int _limit = 25;
-  final Map<int, bool> _togglingSubscriptions = {}; // Для отслеживания процесса подписки/отписки
+  final Map<int, bool> _togglingSubscriptions =
+      {}; // Для отслеживания процесса подписки/отписки
 
   @override
   void initState() {
@@ -1175,7 +1182,10 @@ class _EventMembersSliverState extends ConsumerState<_EventMembersSliver> {
   }
 
   /// ──────────────────────── Подписка/отписка на пользователя ────────────────────────
-  Future<void> _toggleSubscribe(int targetUserId, bool currentlySubscribed) async {
+  Future<void> _toggleSubscribe(
+    int targetUserId,
+    bool currentlySubscribed,
+  ) async {
     // Проверяем, не идет ли уже процесс подписки/отписки для этого пользователя
     if (_togglingSubscriptions[targetUserId] == true) return;
 
@@ -1190,10 +1200,7 @@ class _EventMembersSliverState extends ConsumerState<_EventMembersSliver> {
 
       final data = await api.post(
         '/toggle_subscribe.php',
-        body: {
-          'target_user_id': targetUserId.toString(),
-          'action': action,
-        },
+        body: {'target_user_id': targetUserId.toString(), 'action': action},
       );
 
       if (!mounted) return;
@@ -1203,7 +1210,9 @@ class _EventMembersSliverState extends ConsumerState<_EventMembersSliver> {
 
         // Обновляем статус подписки в списке участников
         setState(() {
-          final index = _participants.indexWhere((p) => (p['user_id'] as int?) == targetUserId);
+          final index = _participants.indexWhere(
+            (p) => (p['user_id'] as int?) == targetUserId,
+          );
           if (index != -1) {
             _participants[index]['is_subscribed'] = isSubscribed;
           }
@@ -1378,7 +1387,8 @@ class _EventMembersSliverState extends ConsumerState<_EventMembersSliver> {
         final userId = p['user_id'] as int?;
         final isCurrentUser = p['is_current_user'] as bool? ?? false;
         final isSubscribed = p['is_subscribed'] as bool? ?? false;
-        final isToggling = userId != null && (_togglingSubscriptions[userId] == true);
+        final isToggling =
+            userId != null && (_togglingSubscriptions[userId] == true);
 
         return Builder(
           builder: (context) => Container(
@@ -1497,17 +1507,13 @@ class _MemberRow extends StatelessWidget {
                   ? const SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Icon(
                       isSubscribed
-                          ? CupertinoIcons
-                              .person_crop_circle_badge_minus
+                          ? CupertinoIcons.person_crop_circle_badge_minus
                           : member.roleIcon ??
-                              CupertinoIcons
-                                  .person_crop_circle_badge_plus,
+                                CupertinoIcons.person_crop_circle_badge_plus,
                       size: 24,
                     ),
               style: IconButton.styleFrom(
@@ -1521,10 +1527,7 @@ class _MemberRow extends StatelessWidget {
             IconButton(
               onPressed: null,
               splashRadius: 22,
-              icon: Icon(
-                member.roleIcon,
-                size: 24,
-              ),
+              icon: Icon(member.roleIcon, size: 24),
               style: IconButton.styleFrom(
                 foregroundColor: AppColors.brandPrimary,
                 disabledForegroundColor: AppColors.disabledText,

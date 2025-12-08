@@ -109,7 +109,10 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
         // ───── После успешной загрузки — лёгкий префетч логотипа и фото ─────
         if (mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            _prefetchImages(context);
+            // ── проверяем mounted внутри callback, так как виджет может быть размонтирован к моменту выполнения
+            if (mounted) {
+              _prefetchImages(context);
+            }
           });
         }
       } else {
@@ -177,9 +180,12 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       return;
     }
 
-    // Если событие было обновлено, перезагружаем данные
+    // Если событие было обновлено, перезагружаем данные и возвращаем сигнал на карту
     if (result == true) {
       await _loadEvent();
+      if (!mounted) return;
+      // ── возвращаем сигнал об обновлении, чтобы карта обновила маркеры
+      Navigator.of(context).pop('updated');
     }
   }
 

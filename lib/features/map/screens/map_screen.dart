@@ -1138,7 +1138,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => sheet,
     ).then((result) {
-      // Если событие было удалено, обновляем маркеры на карте
+      // ── если событие было удалено, обновляем маркеры на карте
       if (result == 'event_deleted' && mounted) {
         setState(() {
           _mapInitialized = false;
@@ -1147,7 +1147,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           );
         });
       }
-      // Если клуб был удалён, обновляем маркеры на карте
+      // ── если событие было обновлено (изменены координаты/адрес), обновляем маркеры на карте
+      if (result == 'event_updated' && mounted) {
+        setState(() {
+          _mapInitialized = false;
+          _eventsMarkersKey = ValueKey(
+            'events_markers_${DateTime.now().millisecondsSinceEpoch}',
+          );
+        });
+      }
+      // ── если клуб был удалён, обновляем маркеры на карте
       if (result == 'club_deleted' && mounted) {
         setState(() {
           _mapInitialized = false;

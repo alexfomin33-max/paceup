@@ -415,9 +415,13 @@ class EventsListFromApi extends StatelessWidget {
                           : EventDetailScreen(eventId: eventId),
                     ),
                   );
-                  // Если событие было удалено, закрываем bottom sheet с результатом
+                  // ── если событие было удалено, закрываем bottom sheet с результатом
                   if (result == true && context.mounted) {
                     Navigator.of(context).pop('event_deleted');
+                  }
+                  // ── если событие было обновлено, закрываем bottom sheet с результатом
+                  if (result == 'updated' && context.mounted) {
+                    Navigator.of(context).pop('event_updated');
                   }
                 }
               : null,
