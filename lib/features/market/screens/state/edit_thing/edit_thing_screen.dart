@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -111,7 +112,9 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
 
       // ── заполняем форму данными
       titleCtrl.text = thing['title'] ?? '';
-      priceCtrl.text = (thing['price'] ?? 0).toString();
+      // ── форматируем цену с пробелами
+      final price = (thing['price'] ?? 0) as int;
+      priceCtrl.text = _formatPrice(price);
       _category = thing['category'] ?? 'Кроссовки';
 
       final genderStr = thing['gender'];
@@ -182,12 +185,12 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
         ),
         actions: [
           CupertinoDialogAction(
-            isDestructiveAction: true,
+            isDefaultAction: true,
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('Отмена'),
           ),
           CupertinoDialogAction(
-            isDefaultAction: true,
+            isDestructiveAction: true,
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Удалить'),
           ),
@@ -211,10 +214,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
       () async {
         final data = await api.post(
           '/delete_thing.php',
-          body: {
-            'thing_id': widget.thingId,
-            'user_id': userId,
-          },
+          body: {'thing_id': widget.thingId, 'user_id': userId},
         );
 
         if (data['success'] != true) {
@@ -265,7 +265,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
           'user_id': userId.toString(),
           'title': titleCtrl.text.trim(),
           'category': _category,
-          'price': priceCtrl.text.trim(),
+          'price': priceCtrl.text.replaceAll(' ', ''),
           'description': descCtrl.text.trim(),
         };
 
@@ -293,7 +293,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
             'user_id': userId,
             'title': titleCtrl.text.trim(),
             'category': _category,
-            'price': int.tryParse(priceCtrl.text.trim()) ?? 0,
+            'price': int.tryParse(priceCtrl.text.replaceAll(' ', '')) ?? 0,
             'description': descCtrl.text.trim(),
           };
           if (_gender != null) {
@@ -473,10 +473,10 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
             actions: [
               IconButton(
                 splashRadius: 22,
-                icon: Icon(
+                icon: const Icon(
                   CupertinoIcons.delete,
                   size: 20,
-                  color: AppColors.getIconPrimaryColor(context),
+                  color: AppColors.error,
                 ),
                 onPressed: _handleDelete,
               ),
@@ -498,10 +498,10 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
             actions: [
               IconButton(
                 splashRadius: 22,
-                icon: Icon(
+                icon: const Icon(
                   CupertinoIcons.delete,
                   size: 20,
-                  color: AppColors.getIconPrimaryColor(context),
+                  color: AppColors.error,
                 ),
                 onPressed: _handleDelete,
               ),
@@ -547,10 +547,10 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
           actions: [
             IconButton(
               splashRadius: 22,
-              icon: Icon(
+              icon: const Icon(
                 CupertinoIcons.delete,
                 size: 20,
-                color: AppColors.getIconPrimaryColor(context),
+                color: AppColors.error,
               ),
               onPressed: _handleDelete,
             ),
@@ -566,174 +566,176 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
             padding: EdgeInsets.fromLTRB(12, 12, 12, bottomPad),
             physics: const BouncingScrollPhysics(),
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ────────────────────────────────────────────────────────────────
-              // 📸 ФОТОГРАФИИ ВЕЩИ (горизонтальная карусель)
-              // ────────────────────────────────────────────────────────────────
-              Text(
-                'Фотографии товара',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.getTextPrimaryColor(context),
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ────────────────────────────────────────────────────────────────
+                // 📸 ФОТОГРАФИИ ВЕЩИ (горизонтальная карусель)
+                // ────────────────────────────────────────────────────────────────
+                Text(
+                  'Фотографии товара',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              _buildPhotoCarousel(),
+                const SizedBox(height: 2),
+                _buildPhotoCarousel(),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              _LabeledTextField(
-                label: 'Название товара',
-                hint: 'Наименование продаваемого товара',
-                controller: titleCtrl,
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 20),
+                _LabeledTextField(
+                  label: 'Название товара',
+                  hint: 'Наименование продаваемого товара',
+                  controller: titleCtrl,
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: 20),
 
-              _DropdownField(
-                label: 'Категория',
-                value: _category,
-                items: _categories,
-                onChanged: (v) => setState(() => _category = v ?? _category),
-              ),
-              const SizedBox(height: 20),
+                _DropdownField(
+                  label: 'Категория',
+                  value: _category,
+                  items: _categories,
+                  onChanged: (v) => setState(() => _category = v ?? _category),
+                ),
+                const SizedBox(height: 20),
 
-              const _SmallLabel('Пол'),
-              const SizedBox(height: 8),
-              _GenderAnyRow(
-                value: _gender,
-                onChanged: (g) =>
-                    setState(() => _gender = g), // g может быть null (= Любой)
-              ),
-              const SizedBox(height: 20),
+                const _SmallLabel('Пол'),
+                const SizedBox(height: 8),
+                _GenderAnyRow(
+                  value: _gender,
+                  onChanged: (g) => setState(
+                    () => _gender = g,
+                  ), // g может быть null (= Любой)
+                ),
+                const SizedBox(height: 20),
 
-              _PriceField(
-                controller: priceCtrl,
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 20),
+                _PriceField(
+                  controller: priceCtrl,
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: 20),
 
-              // ── динамические поля для ввода городов передачи (в два столбца)
-              const _SmallLabel('Город передачи'),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: List.generate(_cityControllers.length, (index) {
-                  return SizedBox(
-                    width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
-                    child: TextFormField(
-                      controller: _cityControllers[index],
-                      onChanged: (_) => setState(() {}),
-                      style: AppTextStyles.h14w4.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
+                // ── динамические поля для ввода городов передачи (в два столбца)
+                const _SmallLabel('Город передачи'),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: List.generate(_cityControllers.length, (index) {
+                    return SizedBox(
+                      width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
+                      child: TextFormField(
+                        controller: _cityControllers[index],
+                        onChanged: (_) => setState(() {}),
+                        style: AppTextStyles.h14w4.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Населенный пункт',
+                          hintStyle: AppTextStyles.h14w4Place.copyWith(
+                            color: AppColors.getTextPlaceholderColor(context),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.getSurfaceColor(context),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 17,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide(
+                              color: AppColors.getBorderColor(context),
+                              width: 1,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide(
+                              color: AppColors.getBorderColor(context),
+                              width: 1,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide(
+                              color: AppColors.getBorderColor(context),
+                              width: 1,
+                            ),
+                          ),
+                        ),
                       ),
-                      decoration: InputDecoration(
-                        hintText: 'Населенный пункт',
-                        hintStyle: AppTextStyles.h14w4Place.copyWith(
-                          color: AppColors.getTextPlaceholderColor(context),
-                        ),
-                        filled: true,
-                        fillColor: AppColors.getSurfaceColor(context),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 17,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-              const SizedBox(height: 12),
-              // ── кнопка "добавить ещё"
-              GestureDetector(
-                onTap: _addCityField,
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      CupertinoIcons.add_circled,
-                      size: 20,
-                      color: AppColors.brandPrimary,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'добавить ещё',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
+                    );
+                  }),
+                ),
+                const SizedBox(height: 12),
+                // ── кнопка "добавить ещё"
+                GestureDetector(
+                  onTap: _addCityField,
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        CupertinoIcons.add_circled,
+                        size: 20,
                         color: AppColors.brandPrimary,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 8),
+                      Text(
+                        'добавить ещё',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.brandPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              _LabeledTextField(
-                label: 'Описание',
-                hint: 'Размер, отправка, передача и другая полезная информация',
-                controller: descCtrl,
-                maxLines: 5,
-              ),
-              const SizedBox(height: 24),
+                _LabeledTextField(
+                  label: 'Описание',
+                  hint:
+                      'Размер, отправка, передача и другая полезная информация',
+                  controller: descCtrl,
+                  maxLines: 5,
+                ),
+                const SizedBox(height: 24),
 
-              // ── показываем ошибки, если есть
-              Builder(
-                builder: (context) {
-                  final formState = ref.watch(formStateProvider);
-                  if (formState.hasErrors) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: FormErrorDisplay(formState: formState),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-
-              // ────────────────────────────────────────────────────────────────
-              // 💾 КНОПКА СОХРАНЕНИЯ
-              // ────────────────────────────────────────────────────────────────
-              Center(
-                child: Builder(
+                // ── показываем ошибки, если есть
+                Builder(
                   builder: (context) {
                     final formState = ref.watch(formStateProvider);
-                    return PrimaryButton(
-                      text: 'Сохранить изменения',
-                      onPressed: !formState.isSubmitting ? _submit : () {},
-                      width: 240,
-                      isLoading: formState.isSubmitting,
-                      enabled: _isValid && !formState.isSubmitting,
-                    );
+                    if (formState.hasErrors) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: FormErrorDisplay(formState: formState),
+                      );
+                    }
+                    return const SizedBox.shrink();
                   },
                 ),
-              ),
-            ],
-          ),
+
+                // ────────────────────────────────────────────────────────────────
+                // 💾 КНОПКА СОХРАНЕНИЯ
+                // ────────────────────────────────────────────────────────────────
+                Center(
+                  child: Builder(
+                    builder: (context) {
+                      final formState = ref.watch(formStateProvider);
+                      return PrimaryButton(
+                        text: 'Сохранить изменения',
+                        onPressed: !formState.isSubmitting ? _submit : () {},
+                        width: 240,
+                        isLoading: formState.isSubmitting,
+                        enabled: _isValid && !formState.isSubmitting,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1081,6 +1083,51 @@ class _DropdownField extends StatelessWidget {
   }
 }
 
+/// Форматирует цену с пробелами каждые 3 цифры
+String _formatPrice(int price) {
+  final s = price.toString();
+  final buffer = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    final pos = s.length - i;
+    buffer.write(s[i]);
+    if (pos > 1 && pos % 3 == 1) {
+      buffer.write(' ');
+    }
+  }
+  return buffer.toString();
+}
+
+/// Форматтер для форматирования цены с пробелами каждые 3 цифры
+class _PriceInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // ── удаляем все нецифровые символы
+    final digitsOnly = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
+
+    if (digitsOnly.isEmpty) {
+      return const TextEditingValue(text: '');
+    }
+
+    // ── форматируем число с пробелами каждые 3 цифры
+    final buffer = StringBuffer();
+    for (int i = 0; i < digitsOnly.length; i++) {
+      final pos = digitsOnly.length - i;
+      buffer.write(digitsOnly[i]);
+      if (pos > 1 && pos % 3 == 1) {
+        buffer.write(' ');
+      }
+    }
+
+    return TextEditingValue(
+      text: buffer.toString(),
+      selection: TextSelection.collapsed(offset: buffer.length),
+    );
+  }
+}
+
 class _PriceField extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String>? onChanged;
@@ -1093,71 +1140,54 @@ class _PriceField extends StatelessWidget {
       children: [
         const _SmallLabel('Цена'),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            SizedBox(
-              width: 120,
-              child: TextFormField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                onChanged: onChanged,
-                style: AppTextStyles.h14w4.copyWith(
-                  color: AppColors.getTextPrimaryColor(context),
+        SizedBox(
+          width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
+          child: TextFormField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [_PriceInputFormatter()],
+            onChanged: onChanged,
+            style: AppTextStyles.h14w4.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+            decoration: InputDecoration(
+              hintText: '0',
+              hintStyle: AppTextStyles.h14w4Place.copyWith(
+                color: AppColors.getTextPlaceholderColor(context),
+              ),
+              suffixText: '₽',
+              suffixStyle: AppTextStyles.h14w4.copyWith(
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+              filled: true,
+              fillColor: AppColors.getSurfaceColor(context),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 17,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
                 ),
-                decoration: InputDecoration(
-                  hintText: '0',
-                  hintStyle: AppTextStyles.h14w4Place.copyWith(
-                    color: AppColors.getTextPlaceholderColor(context),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.getSurfaceColor(context),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 17,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(
-                      color: AppColors.getBorderColor(context),
-                      width: 1,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(
-                      color: AppColors.getBorderColor(context),
-                      width: 1,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(
-                      color: AppColors.getBorderColor(context),
-                      width: 1,
-                    ),
-                  ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.getSurfaceColor(context),
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                '₽',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontFamily: 'Inter',
-                  color: AppColors.getTextPrimaryColor(context),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ],
     );

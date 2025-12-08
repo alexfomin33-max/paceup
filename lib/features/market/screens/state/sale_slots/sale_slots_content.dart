@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../models/market_models.dart' show Gender;
@@ -43,8 +44,10 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
 
   // ─── Состояние выбранного события ───
   int? _selectedEventId;
-  bool _isEventSelectedFromDropdown = false; // Флаг: событие выбрано из выпадающего списка
-  bool _isSettingEventFromDropdown = false; // Флаг: сейчас устанавливаем событие программно
+  bool _isEventSelectedFromDropdown =
+      false; // Флаг: событие выбрано из выпадающего списка
+  bool _isSettingEventFromDropdown =
+      false; // Флаг: сейчас устанавливаем событие программно
   bool _isLoadingDistances = false;
 
   // ─── Состояние загрузки и ошибок ───
@@ -61,7 +64,7 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
     nameCtrl.addListener(() {
       // Если сейчас устанавливаем событие программно - игнорируем
       if (_isSettingEventFromDropdown) return;
-      
+
       // Если флаг установлен, но текст изменился - значит пользователь редактирует вручную
       if (_isEventSelectedFromDropdown && mounted) {
         setState(() {
@@ -185,7 +188,7 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
       }
 
       // ─── Парсим цену ───
-      final priceText = priceCtrl.text.trim();
+      final priceText = priceCtrl.text.replaceAll(' ', '');
       final price = int.tryParse(priceText);
       if (price == null || price <= 0) {
         throw Exception('Некорректная цена. Введите число больше нуля');
@@ -226,7 +229,7 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
           // ─── Обновляем список слотов без перезагрузки экрана ───
           final slotsNotifier = ref.read(slotsProvider.notifier);
           await slotsNotifier.loadInitial();
-          
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -238,7 +241,8 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
         }
       } else {
         // ─── Ошибка от сервера ───
-        final errorMsg = response['message']?.toString() ??
+        final errorMsg =
+            response['message']?.toString() ??
             'Не удалось создать слот. Попробуйте ещё раз';
         setState(() {
           _errorMessage = errorMsg;
@@ -269,109 +273,113 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _EventAutocompleteField(
-            label: 'Название события',
-            hint: 'Начните вводить название события',
-            controller: nameCtrl,
-            onEventSelected: (event) {
-              // Устанавливаем флаг, чтобы слушатель не сработал
-              _isSettingEventFromDropdown = true;
-              setState(() {
-                _selectedEventId = event.id;
-                _isEventSelectedFromDropdown = true; // Устанавливаем флаг, что выбрано из списка
-                // Устанавливаем текст события
-                if (nameCtrl.text != event.name) {
-                  nameCtrl.text = event.name;
-                }
-              });
-              // Сбрасываем флаг после небольшой задержки
-              Future.microtask(() {
-                _isSettingEventFromDropdown = false;
-              });
-              _loadEventDistances(event.id);
-            },
-            searchFunction: _searchEvents,
-          ),
-          const SizedBox(height: 20),
-
-          const _SmallLabel('Пол'),
-          const SizedBox(height: 8),
-          _GenderRow(
-            maleSelected: _gender == Gender.male,
-            femaleSelected: _gender == Gender.female,
-            onMaleTap: () => setState(() => _gender = Gender.male),
-            onFemaleTap: () => setState(() => _gender = Gender.female),
-          ),
-          const SizedBox(height: 20),
-
-          // ─── Показываем список дистанций только если выбрано событие ───
-          if (_selectedEventId != null) ...[
-            const _SmallLabel('Дистанция'),
-            const SizedBox(height: 8),
-            if (_isLoadingDistances)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: CupertinoActivityIndicator(),
-                ),
-              )
-            else if (_distances.isEmpty)
-              Text(
-                'У этого события нет доступных дистанций',
-                style: AppTextStyles.h14w4.copyWith(
-                  color: AppColors.getTextSecondaryColor(context),
-                ),
-              )
-            else
-              _ChipsRow(
-                items: _distances,
-                selectedIndex: _distanceIndex,
-                onSelected: (i) => setState(() => _distanceIndex = i),
-              ),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _EventAutocompleteField(
+              label: 'Название события',
+              hint: 'Начните вводить название события',
+              controller: nameCtrl,
+              onEventSelected: (event) {
+                // Устанавливаем флаг, чтобы слушатель не сработал
+                _isSettingEventFromDropdown = true;
+                setState(() {
+                  _selectedEventId = event.id;
+                  _isEventSelectedFromDropdown =
+                      true; // Устанавливаем флаг, что выбрано из списка
+                  // Устанавливаем текст события
+                  if (nameCtrl.text != event.name) {
+                    nameCtrl.text = event.name;
+                  }
+                });
+                // Сбрасываем флаг после небольшой задержки
+                Future.microtask(() {
+                  _isSettingEventFromDropdown = false;
+                });
+                _loadEventDistances(event.id);
+              },
+              searchFunction: _searchEvents,
+            ),
             const SizedBox(height: 20),
-          ],
 
-          _PriceField(controller: priceCtrl, onChanged: (_) => setState(() {})),
-          const SizedBox(height: 20),
+            const _SmallLabel('Пол'),
+            const SizedBox(height: 8),
+            _GenderRow(
+              maleSelected: _gender == Gender.male,
+              femaleSelected: _gender == Gender.female,
+              onMaleTap: () => setState(() => _gender = Gender.male),
+              onFemaleTap: () => setState(() => _gender = Gender.female),
+            ),
+            const SizedBox(height: 20),
 
-          _LabeledTextField(
-            label: 'Описание',
-            hint:
-                'Опишите варианты передачи слота, кластер и другую информацию',
-            controller: descCtrl,
-            maxLines: 5,
-          ),
-          const SizedBox(height: 24),
-
-          // ─── Отображение ошибки ───
-          if (_errorMessage != null) ...[
-            SelectableText.rich(
-              TextSpan(
-                text: _errorMessage,
-                style: const TextStyle(
-                  color: AppColors.error,
-                  fontSize: 14,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w400,
+            // ─── Показываем список дистанций только если выбрано событие ───
+            if (_selectedEventId != null) ...[
+              const _SmallLabel('Дистанция'),
+              const SizedBox(height: 8),
+              if (_isLoadingDistances)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CupertinoActivityIndicator(),
+                  ),
+                )
+              else if (_distances.isEmpty)
+                Text(
+                  'У этого события нет доступных дистанций',
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextSecondaryColor(context),
+                  ),
+                )
+              else
+                _ChipsRow(
+                  items: _distances,
+                  selectedIndex: _distanceIndex,
+                  onSelected: (i) => setState(() => _distanceIndex = i),
                 ),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 20),
+            ],
 
-          Center(
-            child: PrimaryButton(
-              text: 'Разместить продажу',
-              onPressed: _isSubmitting ? () {} : () => _submit(),
-              width: 220,
-              isLoading: _isSubmitting,
+            _PriceField(
+              controller: priceCtrl,
+              onChanged: (_) => setState(() {}),
             ),
-          ),
-        ],
-      ),
+            const SizedBox(height: 20),
+
+            _LabeledTextField(
+              label: 'Описание',
+              hint:
+                  'Опишите варианты передачи слота, кластер и другую информацию',
+              controller: descCtrl,
+              maxLines: 5,
+            ),
+            const SizedBox(height: 24),
+
+            // ─── Отображение ошибки ───
+            if (_errorMessage != null) ...[
+              SelectableText.rich(
+                TextSpan(
+                  text: _errorMessage,
+                  style: const TextStyle(
+                    color: AppColors.error,
+                    fontSize: 14,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            Center(
+              child: PrimaryButton(
+                text: 'Разместить продажу',
+                onPressed: _isSubmitting ? () {} : () => _submit(),
+                width: 220,
+                isLoading: _isSubmitting,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -411,117 +419,121 @@ class _EventAutocompleteField extends StatelessWidget {
           },
           onSelected: onEventSelected,
           displayStringForOption: (option) => option.name,
-          fieldViewBuilder: (
-            BuildContext context,
-            TextEditingController textEditingController,
-            FocusNode focusNode,
-            VoidCallback onFieldSubmitted,
-          ) {
-            return TextFormField(
-              controller: textEditingController,
-              focusNode: focusNode,
-              onFieldSubmitted: (String value) {
-                onFieldSubmitted();
+          fieldViewBuilder:
+              (
+                BuildContext context,
+                TextEditingController textEditingController,
+                FocusNode focusNode,
+                VoidCallback onFieldSubmitted,
+              ) {
+                return TextFormField(
+                  controller: textEditingController,
+                  focusNode: focusNode,
+                  onFieldSubmitted: (String value) {
+                    onFieldSubmitted();
+                  },
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: AppTextStyles.h14w4Place.copyWith(
+                      color: AppColors.getTextPlaceholderColor(context),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.getSurfaceColor(context),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 17,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      borderSide: BorderSide(
+                        color: AppColors.getBorderColor(context),
+                        width: 1,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      borderSide: BorderSide(
+                        color: AppColors.getBorderColor(context),
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      borderSide: BorderSide(
+                        color: AppColors.getBorderColor(context),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                );
               },
-              style: AppTextStyles.h14w4.copyWith(
-                color: AppColors.getTextPrimaryColor(context),
-              ),
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: AppTextStyles.h14w4Place.copyWith(
-                  color: AppColors.getTextPlaceholderColor(context),
-                ),
-                filled: true,
-                fillColor: AppColors.getSurfaceColor(context),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 17,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(
-                    color: AppColors.getBorderColor(context),
-                    width: 1,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(
-                    color: AppColors.getBorderColor(context),
-                    width: 1,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(
-                    color: AppColors.getBorderColor(context),
-                    width: 1,
-                  ),
-                ),
-              ),
-            );
-          },
-          optionsViewBuilder: (
-            BuildContext context,
-            AutocompleteOnSelected<_EventOption> onSelected,
-            Iterable<_EventOption> options,
-          ) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 200),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final option = options.elementAt(index);
-                      return InkWell(
-                        onTap: () => onSelected(option),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.getSurfaceColor(context),
-                            border: Border(
-                              bottom: BorderSide(
-                                color: AppColors.getBorderColor(context),
-                                width: 0.5,
-                              ),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                option.name,
-                                style: AppTextStyles.h14w5.copyWith(
-                                  color: AppColors.getTextPrimaryColor(context),
-                                ),
-                              ),
-                              if (option.place.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  option.place,
-                                  style: AppTextStyles.h14w4.copyWith(
-                                    color: AppColors.getTextSecondaryColor(
-                                      context,
-                                    ),
-                                    fontSize: 12,
+          optionsViewBuilder:
+              (
+                BuildContext context,
+                AutocompleteOnSelected<_EventOption> onSelected,
+                Iterable<_EventOption> options,
+              ) {
+                return Align(
+                  alignment: Alignment.topLeft,
+                  child: Material(
+                    elevation: 4.0,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 200),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: options.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final option = options.elementAt(index);
+                          return InkWell(
+                            onTap: () => onSelected(option),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.getSurfaceColor(context),
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: AppColors.getBorderColor(context),
+                                    width: 0.5,
                                   ),
                                 ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    option.name,
+                                    style: AppTextStyles.h14w5.copyWith(
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  ),
+                                  if (option.place.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      option.place,
+                                      style: AppTextStyles.h14w4.copyWith(
+                                        color: AppColors.getTextSecondaryColor(
+                                          context,
+                                        ),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            );
-          },
+                );
+              },
         ),
       ],
     );
@@ -606,6 +618,37 @@ class _LabeledTextField extends StatelessWidget {
   }
 }
 
+/// Форматтер для форматирования цены с пробелами каждые 3 цифры
+class _PriceInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // ── удаляем все нецифровые символы
+    final digitsOnly = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
+
+    if (digitsOnly.isEmpty) {
+      return const TextEditingValue(text: '');
+    }
+
+    // ── форматируем число с пробелами каждые 3 цифры
+    final buffer = StringBuffer();
+    for (int i = 0; i < digitsOnly.length; i++) {
+      final pos = digitsOnly.length - i;
+      buffer.write(digitsOnly[i]);
+      if (pos > 1 && pos % 3 == 1) {
+        buffer.write(' ');
+      }
+    }
+
+    return TextEditingValue(
+      text: buffer.toString(),
+      selection: TextSelection.collapsed(offset: buffer.length),
+    );
+  }
+}
+
 class _PriceField extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String>? onChanged;
@@ -618,71 +661,54 @@ class _PriceField extends StatelessWidget {
       children: [
         const _SmallLabel('Цена'),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            SizedBox(
-              width: 120,
-              child: TextFormField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                onChanged: onChanged,
-                style: AppTextStyles.h14w4.copyWith(
-                  color: AppColors.getTextPrimaryColor(context),
+        SizedBox(
+          width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
+          child: TextFormField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [_PriceInputFormatter()],
+            onChanged: onChanged,
+            style: AppTextStyles.h14w4.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+            decoration: InputDecoration(
+              hintText: '0',
+              hintStyle: AppTextStyles.h14w4Place.copyWith(
+                color: AppColors.getTextPlaceholderColor(context),
+              ),
+              suffixText: '₽',
+              suffixStyle: AppTextStyles.h14w4.copyWith(
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+              filled: true,
+              fillColor: AppColors.getSurfaceColor(context),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 17,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
                 ),
-                decoration: InputDecoration(
-                  hintText: '0',
-                  hintStyle: AppTextStyles.h14w4Place.copyWith(
-                    color: AppColors.getTextPlaceholderColor(context),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.getSurfaceColor(context),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 17,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(
-                      color: AppColors.getBorderColor(context),
-                      width: 1,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(
-                      color: AppColors.getBorderColor(context),
-                      width: 1,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(
-                      color: AppColors.getBorderColor(context),
-                      width: 1,
-                    ),
-                  ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.getSurfaceColor(context),
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                '₽',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontFamily: 'Inter',
-                  color: AppColors.getTextPrimaryColor(context),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ],
     );

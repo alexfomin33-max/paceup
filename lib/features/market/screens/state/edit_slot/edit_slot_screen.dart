@@ -1,6 +1,7 @@
 // lib/screens/market/state/edit_slot/edit_slot_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/app_bar.dart';
@@ -98,7 +99,9 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
 
       // Устанавливаем базовые данные формы
       setState(() {
-        priceCtrl.text = (slot['price'] ?? 0).toString();
+        // ── форматируем цену с пробелами
+        final price = (slot['price'] ?? 0) as int;
+        priceCtrl.text = _formatPrice(price);
         descCtrl.text = slot['description'] ?? '';
         _gender = (slot['gender'] ?? 'male') == 'female'
             ? Gender.female
@@ -246,7 +249,7 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
       }
 
       // ─── Парсим цену ───
-      final priceText = priceCtrl.text.trim();
+      final priceText = priceCtrl.text.replaceAll(' ', '');
       final price = int.tryParse(priceText);
       if (price == null || price <= 0) {
         throw Exception('Некорректная цена. Введите число больше нуля');
@@ -437,136 +440,136 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _EventAutocompleteField(
-                label: 'Название события',
-                hint: 'Начните вводить название события',
-                controller: nameCtrl,
-                focusNode: _nameFocusNode,
-                onEventSelected: (event) {
-                  setState(() {
-                    _selectedEventId = event.id;
-                    nameCtrl.text = event.name;
-                  });
-                  _loadEventDistances(event.id);
-                },
-                searchFunction: _searchEvents,
-              ),
-              const SizedBox(height: 20),
-
-              const _SmallLabel('Пол'),
-              const SizedBox(height: 8),
-              _GenderRow(
-                maleSelected: _gender == Gender.male,
-                femaleSelected: _gender == Gender.female,
-                onMaleTap: () => setState(() => _gender = Gender.male),
-                onFemaleTap: () => setState(() => _gender = Gender.female),
-              ),
-              const SizedBox(height: 20),
-
-              // ─── Показываем список дистанций только если выбрано событие ───
-              if (_selectedEventId != null) ...[
-                const _SmallLabel('Дистанция'),
-                const SizedBox(height: 8),
-                if (_isLoadingDistances)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: CupertinoActivityIndicator(),
-                    ),
-                  )
-                else if (_distances.isEmpty)
-                  Text(
-                    'У этого события нет доступных дистанций',
-                    style: AppTextStyles.h14w4.copyWith(
-                      color: AppColors.getTextSecondaryColor(context),
-                    ),
-                  )
-                else
-                  _ChipsRow(
-                    items: _distances,
-                    selectedIndex: _distanceIndex,
-                    onSelected: (i) => setState(() => _distanceIndex = i),
-                  ),
-                const SizedBox(height: 20),
-              ],
-
-              _PriceField(
-                controller: priceCtrl,
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 20),
-
-              _LabeledTextField(
-                label: 'Описание',
-                hint:
-                    'Опишите варианты передачи слота, кластер и другую информацию',
-                controller: descCtrl,
-                maxLines: 5,
-              ),
-              const SizedBox(height: 24),
-
-              // ─── Отображение ошибки ───
-              if (_errorMessage != null) ...[
-                SelectableText.rich(
-                  TextSpan(
-                    text: _errorMessage,
-                    style: const TextStyle(
-                      color: AppColors.error,
-                      fontSize: 14,
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  textAlign: TextAlign.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _EventAutocompleteField(
+                  label: 'Название события',
+                  hint: 'Начните вводить название события',
+                  controller: nameCtrl,
+                  focusNode: _nameFocusNode,
+                  onEventSelected: (event) {
+                    setState(() {
+                      _selectedEventId = event.id;
+                      nameCtrl.text = event.name;
+                    });
+                    _loadEventDistances(event.id);
+                  },
+                  searchFunction: _searchEvents,
                 ),
-                const SizedBox(height: 16),
-              ],
+                const SizedBox(height: 20),
 
-              // ─── Кнопки Сохранить и Удалить ───
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  PrimaryButton(
-                    text: 'Сохранить',
-                    onPressed: _isSubmitting || _isDeleting
-                        ? () {}
-                        : () => _save(),
-                    width: 160,
-                    isLoading: _isSubmitting,
-                  ),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    width: 140,
-                    height: 44,
-                    child: ElevatedButton(
-                      onPressed: _isSubmitting || _isDeleting
-                          ? null
-                          : () => _delete(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.error,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: const StadiumBorder(),
-                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                const _SmallLabel('Пол'),
+                const SizedBox(height: 8),
+                _GenderRow(
+                  maleSelected: _gender == Gender.male,
+                  femaleSelected: _gender == Gender.female,
+                  onMaleTap: () => setState(() => _gender = Gender.male),
+                  onFemaleTap: () => setState(() => _gender = Gender.female),
+                ),
+                const SizedBox(height: 20),
+
+                // ─── Показываем список дистанций только если выбрано событие ───
+                if (_selectedEventId != null) ...[
+                  const _SmallLabel('Дистанция'),
+                  const SizedBox(height: 8),
+                  if (_isLoadingDistances)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: CupertinoActivityIndicator(),
                       ),
-                      child: _isDeleting
-                          ? const CupertinoActivityIndicator(radius: 9)
-                          : const Text(
-                              'Удалить',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                    )
+                  else if (_distances.isEmpty)
+                    Text(
+                      'У этого события нет доступных дистанций',
+                      style: AppTextStyles.h14w4.copyWith(
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
+                    )
+                  else
+                    _ChipsRow(
+                      items: _distances,
+                      selectedIndex: _distanceIndex,
+                      onSelected: (i) => setState(() => _distanceIndex = i),
                     ),
-                  ),
+                  const SizedBox(height: 20),
                 ],
-              ),
-            ],
-          ),
+
+                _PriceField(
+                  controller: priceCtrl,
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: 20),
+
+                _LabeledTextField(
+                  label: 'Описание',
+                  hint:
+                      'Опишите варианты передачи слота, кластер и другую информацию',
+                  controller: descCtrl,
+                  maxLines: 5,
+                ),
+                const SizedBox(height: 24),
+
+                // ─── Отображение ошибки ───
+                if (_errorMessage != null) ...[
+                  SelectableText.rich(
+                    TextSpan(
+                      text: _errorMessage,
+                      style: const TextStyle(
+                        color: AppColors.error,
+                        fontSize: 14,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // ─── Кнопки Сохранить и Удалить ───
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    PrimaryButton(
+                      text: 'Сохранить',
+                      onPressed: _isSubmitting || _isDeleting
+                          ? () {}
+                          : () => _save(),
+                      width: 160,
+                      isLoading: _isSubmitting,
+                    ),
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: 140,
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting || _isDeleting
+                            ? null
+                            : () => _delete(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.error,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(horizontal: 30),
+                        ),
+                        child: _isDeleting
+                            ? const CupertinoActivityIndicator(radius: 9)
+                            : const Text(
+                                'Удалить',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -826,6 +829,51 @@ class _LabeledTextField extends StatelessWidget {
   }
 }
 
+/// Форматирует цену с пробелами каждые 3 цифры
+String _formatPrice(int price) {
+  final s = price.toString();
+  final buffer = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    final pos = s.length - i;
+    buffer.write(s[i]);
+    if (pos > 1 && pos % 3 == 1) {
+      buffer.write(' ');
+    }
+  }
+  return buffer.toString();
+}
+
+/// Форматтер для форматирования цены с пробелами каждые 3 цифры
+class _PriceInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // ── удаляем все нецифровые символы
+    final digitsOnly = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
+
+    if (digitsOnly.isEmpty) {
+      return const TextEditingValue(text: '');
+    }
+
+    // ── форматируем число с пробелами каждые 3 цифры
+    final buffer = StringBuffer();
+    for (int i = 0; i < digitsOnly.length; i++) {
+      final pos = digitsOnly.length - i;
+      buffer.write(digitsOnly[i]);
+      if (pos > 1 && pos % 3 == 1) {
+        buffer.write(' ');
+      }
+    }
+
+    return TextEditingValue(
+      text: buffer.toString(),
+      selection: TextSelection.collapsed(offset: buffer.length),
+    );
+  }
+}
+
 class _PriceField extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String>? onChanged;
@@ -838,71 +886,54 @@ class _PriceField extends StatelessWidget {
       children: [
         const _SmallLabel('Цена'),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            SizedBox(
-              width: 120,
-              child: TextFormField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                onChanged: onChanged,
-                style: AppTextStyles.h14w4.copyWith(
-                  color: AppColors.getTextPrimaryColor(context),
+        SizedBox(
+          width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
+          child: TextFormField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [_PriceInputFormatter()],
+            onChanged: onChanged,
+            style: AppTextStyles.h14w4.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+            decoration: InputDecoration(
+              hintText: '0',
+              hintStyle: AppTextStyles.h14w4Place.copyWith(
+                color: AppColors.getTextPlaceholderColor(context),
+              ),
+              suffixText: '₽',
+              suffixStyle: AppTextStyles.h14w4.copyWith(
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+              filled: true,
+              fillColor: AppColors.getSurfaceColor(context),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 17,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
                 ),
-                decoration: InputDecoration(
-                  hintText: '0',
-                  hintStyle: AppTextStyles.h14w4Place.copyWith(
-                    color: AppColors.getTextPlaceholderColor(context),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.getSurfaceColor(context),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 17,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(
-                      color: AppColors.getBorderColor(context),
-                      width: 1,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(
-                      color: AppColors.getBorderColor(context),
-                      width: 1,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(
-                      color: AppColors.getBorderColor(context),
-                      width: 1,
-                    ),
-                  ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.getSurfaceColor(context),
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                '₽',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontFamily: 'Inter',
-                  color: AppColors.getTextPrimaryColor(context),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ],
     );
