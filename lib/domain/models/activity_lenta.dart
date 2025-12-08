@@ -320,6 +320,27 @@ class ActivityStats {
 
     return stats;
   }
+
+  // ────────────────────────────────────────────────────────────────
+  // Вспомогательные методы для проверки наличия данных о сегментах
+  // ────────────────────────────────────────────────────────────────
+
+  /// Проверяет, есть ли данные о сегментах (отрезках по километрам)
+  bool hasSplitsData() {
+    return pacePerKm.isNotEmpty || heartRatePerKm.isNotEmpty;
+  }
+
+  /// Возвращает количество сегментов (километров) с данными
+  int get splitsCount {
+    final allKeys = <String>{...pacePerKm.keys, ...heartRatePerKm.keys};
+    return allKeys.length;
+  }
+
+  /// Проверяет, есть ли данные о темпе для сегментов
+  bool hasPaceSplits() => pacePerKm.isNotEmpty;
+
+  /// Проверяет, есть ли данные о пульсе для сегментов
+  bool hasHeartRateSplits() => heartRatePerKm.isNotEmpty;
 }
 
 // ======== NETWORK ========

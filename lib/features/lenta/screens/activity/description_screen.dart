@@ -226,7 +226,7 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                       ),
                     ),
                   ),
-                  const _SplitsTableFull(),
+                  _SplitsTableFull(stats: stats),
                 ],
               ),
             ),
@@ -362,54 +362,163 @@ class _WatchPill extends StatelessWidget {
 }
 
 /// Таблица «Отрезки» — на всю ширину, белый фон с тонкими линиями
+/// Использует реальные данные из Garmin Connect (pacePerKm и heartRatePerKm)
+///
+/// Как проверить наличие данных о сегментах:
+/// 1. В логах (developer.log) будет видно количество сегментов
+/// 2. Используйте stats?.hasSplitsData() для проверки наличия данных
+/// 3. Используйте stats?.splitsCount для получения количества сегментов
+/// 4. Данные приходят из API в формате Map<String, double>:
+///    - pacePerKm: {"1": 355.0, "2": 333.0, ...} (секунды на километр)
+///    - heartRatePerKm: {"1": 128.0, "2": 135.0, ...} (пульс в bpm)
 class _SplitsTableFull extends StatelessWidget {
-  const _SplitsTableFull();
+  final al.ActivityStats? stats;
+
+  const _SplitsTableFull({this.stats});
 
   @override
   Widget build(BuildContext context) {
-    // демо-данные (как на макете — 16 км)
-    const pace = [
-      355,
-      333,
-      350,
-      330,
-      334,
-      334,
-      313,
-      319,
-      334,
-      323,
-      332,
-      313,
-      316,
-      298,
-      302,
-      314,
-    ]; // сек/км
-    const hr = [
-      128,
-      135,
-      134,
-      134,
-      133,
-      143,
-      158,
-      149,
-      145,
-      152,
-      153,
-      157,
-      158,
-      162,
-      160,
-      158,
-    ];
-    final slowest = pace.reduce((a, b) => a > b ? a : b);
+    // ────────────────────────────────────────────────────────────────
+    // Извлекаем данные о сегментах из stats
+    // pacePerKm и heartRatePerKm — это Map<String, double>
+    // где ключи — номера километров ("1", "2", "3" и т.д.)
+    // ────────────────────────────────────────────────────────────────
+    final pacePerKm = stats?.pacePerKm ?? <String, double>{};
+    final heartRatePerKm = stats?.heartRatePerKm ?? <String, double>{};
 
-    String fmtPaceSec(int sec) {
-      final m = sec ~/ 60;
-      final s = sec % 60;
-      return '$m:${s.toString().padLeft(2, '0')}';
+    // ────────────────────────────────────────────────────────────────
+    // Если данных нет, показываем пустую таблицу с заголовками
+    // ────────────────────────────────────────────────────────────────
+    if (pacePerKm.isEmpty && heartRatePerKm.isEmpty) {
+      return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          border: Border(
+            top: BorderSide(color: AppColors.getBorderColor(context), width: 1),
+            bottom: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 28,
+                    child: Text(
+                      'Км',
+                      style: AppTextStyles.h12w4.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 52,
+                    child: Text(
+                      'Темп',
+                      style: AppTextStyles.h12w4.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                  ),
+                  const Expanded(child: SizedBox()),
+                  SizedBox(
+                    width: 40,
+                    child: Text(
+                      'Пульс',
+                      textAlign: TextAlign.right,
+                      style: AppTextStyles.h12w4.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(
+              height: 1,
+              thickness: 0.5,
+              color: AppColors.getBorderColor(context),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Text(
+                    'Нет данных о сегментах',
+                    style: AppTextStyles.h13w4.copyWith(
+                      color: AppColors.getTextSecondaryColor(context),
+                    ),
+                  ),
+                  if (stats == null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Статистика тренировки недоступна',
+                        style: AppTextStyles.h12w4.copyWith(
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Garmin Connect не передал данные о сегментах',
+                        style: AppTextStyles.h12w4.copyWith(
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Собираем все ключи (номера километров) и сортируем их
+    // ────────────────────────────────────────────────────────────────
+    final allKeys = <String>{...pacePerKm.keys, ...heartRatePerKm.keys};
+    final sortedKeys = allKeys.toList()
+      ..sort((a, b) {
+        // Сортируем по числовому значению ключа
+        final aNum = int.tryParse(a) ?? 0;
+        final bNum = int.tryParse(b) ?? 0;
+        return aNum.compareTo(bNum);
+      });
+
+    if (sortedKeys.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Находим самый медленный темп для нормализации визуальных полос
+    // ────────────────────────────────────────────────────────────────
+    final paceValues = sortedKeys
+        .map((k) => pacePerKm[k] ?? 0.0)
+        .where((v) => v > 0)
+        .toList();
+    final slowestPace = paceValues.isEmpty
+        ? 1.0
+        : paceValues.reduce((a, b) => a > b ? a : b);
+
+    // ────────────────────────────────────────────────────────────────
+    // Форматирование темпа из секунд в ММ:СС
+    // ────────────────────────────────────────────────────────────────
+    String fmtPaceSec(double sec) {
+      if (sec <= 0) return '-';
+      final s = sec.round();
+      final m = s ~/ 60;
+      final r = s % 60;
+      return '$m:${r.toString().padLeft(2, '0')}';
     }
 
     return Container(
@@ -469,9 +578,21 @@ class _SplitsTableFull extends StatelessWidget {
             color: AppColors.getBorderColor(context),
           ),
 
-          // ───── Строки данных
-          ...List.generate(pace.length, (i) {
-            final frac = (pace[i] / slowest).clamp(0.05, 1.0);
+          // ───── Строки данных из реальных данных Garmin Connect
+          ...List.generate(sortedKeys.length, (i) {
+            final kmKey = sortedKeys[i];
+            final paceSec = pacePerKm[kmKey] ?? 0.0;
+            final hr = heartRatePerKm[kmKey] ?? 0.0;
+
+            // ────────────────────────────────────────────────────────────────
+            // Вычисляем долю для визуальной полосы темпа
+            // Чем быстрее темп (меньше секунд), тем длиннее полоса
+            // Используем обратную пропорцию: slowestPace / paceSec
+            // ────────────────────────────────────────────────────────────────
+            final visualFrac = paceSec > 0 && slowestPace > 0
+                ? (slowestPace / paceSec).clamp(0.05, 1.0)
+                : 0.05;
+
             return Column(
               children: [
                 Padding(
@@ -481,7 +602,7 @@ class _SplitsTableFull extends StatelessWidget {
                       SizedBox(
                         width: 28,
                         child: Text(
-                          '${i + 1}',
+                          kmKey,
                           style: AppTextStyles.h12w4.copyWith(
                             color: AppColors.getTextPrimaryColor(context),
                           ),
@@ -490,7 +611,7 @@ class _SplitsTableFull extends StatelessWidget {
                       SizedBox(
                         width: 40,
                         child: Text(
-                          fmtPaceSec(pace[i]),
+                          fmtPaceSec(paceSec),
                           style: AppTextStyles.h12w4.copyWith(
                             color: AppColors.getTextPrimaryColor(context),
                           ),
@@ -511,7 +632,7 @@ class _SplitsTableFull extends StatelessWidget {
                                 ),
                               ),
                               Container(
-                                width: c.maxWidth * frac,
+                                width: c.maxWidth * visualFrac,
                                 height: 8,
                                 decoration: BoxDecoration(
                                   color: AppColors.brandPrimary,
@@ -528,7 +649,7 @@ class _SplitsTableFull extends StatelessWidget {
                       SizedBox(
                         width: 40,
                         child: Text(
-                          '${hr[i]}',
+                          hr > 0 ? hr.round().toString() : '-',
                           textAlign: TextAlign.right,
                           style: AppTextStyles.h12w4.copyWith(
                             color: AppColors.getTextPrimaryColor(context),
@@ -538,7 +659,7 @@ class _SplitsTableFull extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (i != pace.length - 1)
+                if (i != sortedKeys.length - 1)
                   Divider(
                     height: 1,
                     thickness: 0.5,
