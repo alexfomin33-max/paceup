@@ -181,6 +181,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
   final _picker = ImagePicker();
   final _api = ApiService();
   final _auth = AuthService();
+  final _scrollController = ScrollController();
 
   _ChatData? _chatData;
   List<_ChatMessage> _messages = [];
@@ -217,6 +218,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _ctrl.dispose();
+    _scrollController.dispose();
     _pollTimer?.cancel();
     super.dispose();
   }
@@ -337,6 +339,17 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
 
       // Запускаем периодический опрос новых сообщений
       _startPolling(chatId);
+
+      // ─── Прокручиваем вниз после загрузки сообщений ───
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients && _messages.isNotEmpty) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -391,6 +404,17 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
 
             // Отмечаем новые сообщения как прочитанные, так как чат открыт
             await _markMessagesAsRead(chatId, userId);
+
+            // ─── Прокручиваем вниз при получении новых сообщений ───
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (_scrollController.hasClients) {
+                _scrollController.animateTo(
+                  _scrollController.position.maxScrollExtent,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                );
+              }
+            });
           }
         }
       } catch (e) {
@@ -421,6 +445,17 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
 
         // Перезагружаем сообщения
         await _loadChatData(_chatData!.chatId);
+
+        // ─── Прокручиваем вниз после отправки сообщения ───
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
       }
     } catch (e) {
       debugPrint('Ошибка отправки сообщения: $e');
@@ -463,6 +498,17 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
 
         // Перезагружаем сообщения
         await _loadChatData(_chatData!.chatId);
+
+        // ─── Прокручиваем вниз после отправки изображения ───
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
       }
     } catch (e) {
       debugPrint('Ошибка отправки изображения: $e');
@@ -696,6 +742,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                 children: [
                   Expanded(
                     child: CustomScrollView(
+                      controller: _scrollController,
                       slivers: [
                         // ─── Основной контент (дата, инфо, участники) ───
                         SliverPadding(
@@ -1102,32 +1149,19 @@ class _ActionsWrap extends StatelessWidget {
     // Если сделка уже завершена
     if (dealStatus == 'bought') {
       return Center(
-        child: _PillFinal(
-          icon: CupertinoIcons.check_mark_circled,
-          text: 'Слот продан',
-          bg: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.darkSurfaceMuted
-              : AppColors.backgroundGreen,
-          border: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.darkBorder
-              : AppColors.borderaccept,
-          fg: AppColors.success,
-        ),
-      );
-    }
-
-    if (dealStatus == 'cancelled') {
-      return Center(
-        child: _PillFinal(
-          icon: CupertinoIcons.clear_circled,
-          text: 'Сделка отменена',
-          bg: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.darkSurfaceMuted
-              : AppColors.bgfemale,
-          border: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.darkBorder
-              : AppColors.bordercancel,
-          fg: AppColors.error,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 180),
+          child: _PillFinal(
+            icon: CupertinoIcons.check_mark_circled,
+            text: 'Слот продан',
+            bg: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkSurfaceMuted
+                : AppColors.backgroundGreen,
+            border: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkBorder
+                : AppColors.borderaccept,
+            fg: AppColors.success,
+          ),
         ),
       );
     }
@@ -1136,16 +1170,19 @@ class _ActionsWrap extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Center(
-        child: _PillButton(
-          text: 'Слот продан',
-          bg: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.darkSurfaceMuted
-              : AppColors.backgroundGreen,
-          border: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.darkBorder
-              : AppColors.borderaccept,
-          fg: AppColors.success,
-          onTap: () => onUpdateStatus('bought'),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 180),
+          child: _PillButton(
+            text: 'Слот продан',
+            bg: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkSurfaceMuted
+                : AppColors.backgroundGreen,
+            border: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkBorder
+                : AppColors.borderaccept,
+            fg: AppColors.success,
+            onTap: () => onUpdateStatus('bought'),
+          ),
         ),
       ),
     );

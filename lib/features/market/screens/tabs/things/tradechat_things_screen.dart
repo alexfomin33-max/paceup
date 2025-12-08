@@ -196,6 +196,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
   final _picker = ImagePicker();
   final _api = ApiService();
   final _auth = AuthService();
+  final _scrollController = ScrollController();
 
   _ChatData? _chatData;
   List<_ChatMessage> _messages = [];
@@ -231,6 +232,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _ctrl.dispose();
+    _scrollController.dispose();
     _pollTimer?.cancel();
     super.dispose();
   }
@@ -347,6 +349,17 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
 
         _markMessagesAsRead(chatId, userId);
         _startPolling(chatId);
+
+        // ─── Прокручиваем вниз после загрузки сообщений ───
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients && _messages.isNotEmpty) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -402,6 +415,17 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
             });
 
             await _markMessagesAsRead(chatId, userId);
+
+            // ─── Прокручиваем вниз при получении новых сообщений ───
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (_scrollController.hasClients) {
+                _scrollController.animateTo(
+                  _scrollController.position.maxScrollExtent,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                );
+              }
+            });
           }
         }
       } catch (e) {
@@ -445,6 +469,17 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
             _messages.add(newMessage);
             _lastMessageId = newMessage.id;
           });
+
+          // ─── Прокручиваем вниз после отправки сообщения ───
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_scrollController.hasClients) {
+              _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            }
+          });
         }
       }
     } catch (e) {
@@ -484,6 +519,17 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
       if (response['success'] == true) {
         // Перезагружаем сообщения для получения правильного URL изображения
         await _loadChatData(_chatData!.chatId);
+
+        // ─── Прокручиваем вниз после отправки изображения ───
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
       }
     } catch (e) {
       debugPrint('Ошибка отправки изображения: $e');
@@ -723,6 +769,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                 children: [
                   Expanded(
                     child: CustomScrollView(
+                      controller: _scrollController,
                       slivers: [
                         // ─── Основной контент (дата, инфо, участники) ───
                         SliverPadding(
