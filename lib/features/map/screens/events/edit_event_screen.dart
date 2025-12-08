@@ -691,7 +691,22 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     if (_loadingData) {
       return Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Редактирование события'),
+        appBar: PaceAppBar(
+          title: 'Редактирование события',
+          showBack: true,
+          showBottomDivider: true,
+          actions: [
+            IconButton(
+              splashRadius: 22,
+              icon: const Icon(
+                CupertinoIcons.delete,
+                size: 20,
+                color: AppColors.error,
+              ),
+              onPressed: _deleteEvent,
+            ),
+          ],
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -699,7 +714,22 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Редактирование события'),
+        appBar: PaceAppBar(
+          title: 'Редактирование события',
+          showBack: true,
+          showBottomDivider: true,
+          actions: [
+            IconButton(
+              splashRadius: 22,
+              icon: const Icon(
+                CupertinoIcons.delete,
+                size: 20,
+                color: AppColors.error,
+              ),
+              onPressed: _deleteEvent,
+            ),
+          ],
+        ),
         body: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.translucent,
@@ -1279,40 +1309,22 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                     FormErrorDisplay(formState: formState),
                     const SizedBox(height: 16),
                   ],
-
-                  // ── Кнопки: Сохранить и Удалить событие
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Flexible(
-                        child: PrimaryButton(
-                          text: 'Сохранить',
-                          onPressed: () {
-                            if (!formState.isSubmitting && !_deleting) {
-                              _submit();
-                            }
-                          },
-                          expanded: true,
+                  // ────────────────────────────────────────────────────────────────
+                  // 💾 КНОПКА СОХРАНЕНИЯ
+                  // ────────────────────────────────────────────────────────────────
+                  Center(
+                    child: Builder(
+                      builder: (context) {
+                        final formState = ref.watch(formStateProvider);
+                        return PrimaryButton(
+                          text: 'Сохранить изменения',
+                          onPressed: !formState.isSubmitting ? _submit : () {},
+                          width: 230,
                           isLoading: formState.isSubmitting,
                           enabled: isFormValid && !formState.isSubmitting,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      TextButton(
-                        onPressed: _deleting || formState.isSubmitting
-                            ? null
-                            : _deleteEvent,
-                        child: const Text(
-                          'Удалить событие',
-                          style: TextStyle(
-                            color: AppColors.error,
-                            fontFamily: 'Inter',
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),

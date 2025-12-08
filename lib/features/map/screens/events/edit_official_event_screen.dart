@@ -183,7 +183,6 @@ class _EditOfficialEventScreenState
             }
           }
 
-
           // Координаты
           final lat = event['latitude'] as num?;
           final lng = event['longitude'] as num?;
@@ -331,7 +330,6 @@ class _EditOfficialEventScreenState
     }
   }
 
-
   Future<T?> _showCupertinoSheet<T>({required Widget child}) {
     return showCupertinoModalPopup<T>(
       context: context,
@@ -416,7 +414,6 @@ class _EditOfficialEventScreenState
     final yy = d.year.toString();
     return '$dd.$mm.$yy';
   }
-
 
   /// ──────────────────────── Удаление события ────────────────────────
   /// Показываем диалог подтверждения удаления
@@ -647,7 +644,22 @@ class _EditOfficialEventScreenState
     if (formState.isLoading) {
       return Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Редактирование события'),
+        appBar: PaceAppBar(
+          title: 'Редактирование события',
+          showBack: true,
+          showBottomDivider: true,
+          actions: [
+            IconButton(
+              splashRadius: 22,
+              icon: const Icon(
+                CupertinoIcons.delete,
+                size: 20,
+                color: AppColors.error,
+              ),
+              onPressed: _deleteEvent,
+            ),
+          ],
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -655,7 +667,22 @@ class _EditOfficialEventScreenState
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Редактирование события'),
+        appBar: PaceAppBar(
+          title: 'Редактирование события',
+          showBack: true,
+          showBottomDivider: true,
+          actions: [
+            IconButton(
+              splashRadius: 22,
+              icon: const Icon(
+                CupertinoIcons.delete,
+                size: 20,
+                color: AppColors.error,
+              ),
+              onPressed: _deleteEvent,
+            ),
+          ],
+        ),
         body: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.translucent,
@@ -1038,14 +1065,11 @@ class _EditOfficialEventScreenState
                             child: InputDecorator(
                               decoration: InputDecoration(
                                 filled: true,
-                                fillColor: AppColors.getSurfaceColor(
-                                  context,
+                                fillColor: AppColors.getSurfaceColor(context),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 18,
                                 ),
-                                contentPadding:
-                                    const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 18,
-                                    ),
                                 prefixIcon: Padding(
                                   padding: const EdgeInsets.only(
                                     left: 12,
@@ -1059,19 +1083,16 @@ class _EditOfficialEventScreenState
                                     ),
                                   ),
                                 ),
-                                prefixIconConstraints:
-                                    const BoxConstraints(
-                                      minWidth: 18 + 14,
-                                      minHeight: 18,
-                                    ),
+                                prefixIconConstraints: const BoxConstraints(
+                                  minWidth: 18 + 14,
+                                  minHeight: 18,
+                                ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.sm,
                                   ),
                                   borderSide: BorderSide(
-                                    color: AppColors.getBorderColor(
-                                      context,
-                                    ),
+                                    color: AppColors.getBorderColor(context),
                                     width: 1,
                                   ),
                                 ),
@@ -1080,9 +1101,7 @@ class _EditOfficialEventScreenState
                                     AppRadius.sm,
                                   ),
                                   borderSide: BorderSide(
-                                    color: AppColors.getBorderColor(
-                                      context,
-                                    ),
+                                    color: AppColors.getBorderColor(context),
                                     width: 1,
                                   ),
                                 ),
@@ -1091,9 +1110,7 @@ class _EditOfficialEventScreenState
                                     AppRadius.sm,
                                   ),
                                   borderSide: BorderSide(
-                                    color: AppColors.getBorderColor(
-                                      context,
-                                    ),
+                                    color: AppColors.getBorderColor(context),
                                     width: 1,
                                   ),
                                 ),
@@ -1104,10 +1121,9 @@ class _EditOfficialEventScreenState
                                     : 'Выберите дату',
                                 style: date != null
                                     ? AppTextStyles.h14w4.copyWith(
-                                        color:
-                                            AppColors.getTextPrimaryColor(
-                                              context,
-                                            ),
+                                        color: AppColors.getTextPrimaryColor(
+                                          context,
+                                        ),
                                       )
                                     : AppTextStyles.h14w4Place,
                               ),
@@ -1274,40 +1290,22 @@ class _EditOfficialEventScreenState
                     FormErrorDisplay(formState: formState),
                     const SizedBox(height: 16),
                   ],
-                  // ── Кнопки: Сохранить и Удалить событие
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Flexible(
-                        child: PrimaryButton(
-                          text: 'Сохранить',
-                          onPressed: () {
-                            if (!formState.isSubmitting &&
-                                !formState.isLoading) {
-                              _submit();
-                            }
-                          },
-                          expanded: true,
+                  // ────────────────────────────────────────────────────────────────
+                  // 💾 КНОПКА СОХРАНЕНИЯ
+                  // ────────────────────────────────────────────────────────────────
+                  Center(
+                    child: Builder(
+                      builder: (context) {
+                        final formState = ref.watch(formStateProvider);
+                        return PrimaryButton(
+                          text: 'Сохранить изменения',
+                          onPressed: !formState.isSubmitting ? _submit : () {},
+                          width: 230,
                           isLoading: formState.isSubmitting,
                           enabled: isFormValid && !formState.isSubmitting,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      TextButton(
-                        onPressed: formState.isSubmitting || formState.isLoading
-                            ? null
-                            : _deleteEvent,
-                        child: const Text(
-                          'Удалить событие',
-                          style: TextStyle(
-                            color: AppColors.error,
-                            fontFamily: 'Inter',
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
