@@ -61,7 +61,7 @@ class EventsBottomSheet extends StatelessWidget {
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 10, top: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.getBorderColor(context),
+                      color: AppColors.getOutlineColor(context),
                       borderRadius: BorderRadius.circular(AppRadius.xs),
                     ),
                   ),
@@ -139,7 +139,7 @@ class EventsSheetText extends StatelessWidget {
 }
 
 /// Список событий из API (для отображения в bottom sheet)
-class EventsListFromApi extends StatelessWidget {
+class EventsListFromApi extends StatefulWidget {
   final List<dynamic> events;
   final double? latitude;
   final double? longitude;
@@ -150,6 +150,45 @@ class EventsListFromApi extends StatelessWidget {
     this.latitude,
     this.longitude,
   });
+
+  @override
+  State<EventsListFromApi> createState() => _EventsListFromApiState();
+}
+
+class _EventsListFromApiState extends State<EventsListFromApi> {
+  late List<dynamic> _events;
+
+  @override
+  void initState() {
+    super.initState();
+    // ── Создаем копию списка для локального обновления
+    _events = List.from(widget.events);
+  }
+
+  @override
+  void didUpdateWidget(EventsListFromApi oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // ── Обновляем список, если изменился исходный список
+    if (oldWidget.events != widget.events) {
+      _events = List.from(widget.events);
+    }
+  }
+
+  /// ──────────────────────── Обновление количества участников ────────────────────────
+  void _updateParticipantsCount(int eventId, int newCount) {
+    setState(() {
+      for (var i = 0; i < _events.length; i++) {
+        final event = _events[i] as Map<String, dynamic>;
+        final id = event['id'] as int?;
+        if (id != null && id == eventId) {
+          final updatedEvent = Map<String, dynamic>.from(event);
+          updatedEvent['participants_count'] = newCount;
+          _events[i] = updatedEvent;
+          break;
+        }
+      }
+    });
+  }
 
   /// Форматирует дату, убирая год, если это текущий год
   /// Работает с форматом "10 июня 2025" → "10 июня" (если 2025 = текущий год)
@@ -213,7 +252,7 @@ class EventsListFromApi extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (events.isEmpty) {
+    if (_events.isEmpty) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 40),
         child: Text(
@@ -233,9 +272,9 @@ class EventsListFromApi extends StatelessWidget {
       final dpr = MediaQuery.of(context).devicePixelRatio;
       final targetW = (55 * dpr).round();
       final targetH = (55 * dpr).round();
-      final int limit = events.length < 8 ? events.length : 8;
+      final int limit = _events.length < 8 ? _events.length : 8;
       for (var i = 0; i < limit; i++) {
-        final e = events[i] as Map<String, dynamic>;
+        final e = _events[i] as Map<String, dynamic>;
         final logoUrl = e['logo_url'] as String?;
         if (logoUrl != null && logoUrl.isNotEmpty) {
           // precacheImage не блокирует UI; повторные вызовы недороги благодаря кэшу
@@ -380,10 +419,10 @@ class EventsListFromApi extends StatelessWidget {
       shrinkWrap: true,
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
       physics: const BouncingScrollPhysics(),
-      itemCount: events.length,
+      itemCount: _events.length,
       separatorBuilder: (context, index) => const SizedBox(height: 2),
       itemBuilder: (context, index) {
-        final event = events[index] as Map<String, dynamic>;
+        final event = _events[index] as Map<String, dynamic>;
         final eventId = event['id'] as int?;
         final name = event['name'] as String? ?? '';
         final logoUrl = event['logo_url'] as String?;
@@ -415,6 +454,17 @@ class EventsListFromApi extends StatelessWidget {
                           : EventDetailScreen(eventId: eventId),
                     ),
                   );
+                  // ── если количество участников было обновлено, обновляем локально
+                  if (result is Map<String, dynamic> &&
+                      result['participants_count_updated'] == true &&
+                      context.mounted) {
+                    final updatedCount =
+                        result['participants_count'] as int? ?? 0;
+                    final updatedEventId = result['event_id'] as int?;
+                    if (updatedEventId != null) {
+                      _updateParticipantsCount(updatedEventId, updatedCount);
+                    }
+                  }
                   // ── если событие было удалено, закрываем bottom sheet с результатом
                   if (result == true && context.mounted) {
                     Navigator.of(context).pop('event_deleted');

@@ -37,6 +37,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       ScrollController(); // Контроллер для отслеживания прокрутки
   final GlobalKey<_EventMembersSliverState> _membersSliverKey =
       GlobalKey(); // Ключ для доступа к состоянию участников
+  int?
+  _updatedParticipantsCount; // Обновленное количество участников (если было изменено)
 
   @override
   void initState() {
@@ -317,6 +319,10 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
             _membersSliverKey.currentState?.reloadParticipants();
           });
         }
+
+        // ── Сохраняем информацию об обновлении для передачи при возврате
+        // Это будет использовано при закрытии экрана для обновления списка событий
+        _updatedParticipantsCount = participantsCount;
       } else {
         final errorMessage = data['message'] as String? ?? 'Неизвестная ошибка';
         setState(() {
@@ -401,236 +407,33 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     final place = _eventData!['place'] as String? ?? '';
     final photos = _eventData!['photos'] as List<dynamic>? ?? [];
 
-    return InteractiveBackSwipe(
-      child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        body: SafeArea(
-          top: false,
-          bottom: false,
-          child: Stack(
-            children: [
-              // ───────── Скроллируемый контент
-              CustomScrollView(
-                controller: _scrollController,
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  // ───────── Шапка без AppBar: SafeArea + кнопки у краёв + логотип по центру
-                  SliverToBoxAdapter(
-                    child: Builder(
-                      builder: (context) => Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.getSurfaceColor(context),
-                          border: Border(
-                            bottom: BorderSide(
-                              color: AppColors.getBorderColor(context),
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            SafeArea(
-                              bottom: false,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                child: SizedBox(
-                                  height: 100,
-                                  child: Row(
-                                    children: [
-                                      _CircleIconBtn(
-                                        icon: CupertinoIcons.back,
-                                        semantic: 'Назад',
-                                        onTap: () =>
-                                            Navigator.of(context).maybePop(),
-                                      ),
-                                      Expanded(
-                                        child: Center(
-                                          child: logoUrl.isNotEmpty
-                                              ? ClipOval(
-                                                  child: _HeaderLogo(
-                                                    url: logoUrl,
-                                                  ),
-                                                )
-                                              : Container(
-                                                  width: 100,
-                                                  height: 100,
-                                                  decoration:
-                                                      const BoxDecoration(
-                                                        color: AppColors.border,
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                  child: const Icon(
-                                                    Icons.event,
-                                                    size: 48,
-                                                  ),
-                                                ),
-                                        ),
-                                      ),
-                                      // Показываем карандаш для создателя, закладку для остальных
-                                      _canEdit
-                                          ? _CircleIconBtn(
-                                              icon: CupertinoIcons.pencil,
-                                              semantic: 'Редактировать',
-                                              onTap: _openEditScreen,
-                                            )
-                                          : _CircleIconBtn(
-                                              icon: CupertinoIcons.star_fill,
-                                              semantic: _isBookmarked
-                                                  ? 'Удалить из закладок'
-                                                  : 'Добавить в закладки',
-                                              onTap: _isTogglingBookmark
-                                                  ? null
-                                                  : _toggleBookmark,
-                                              color: _isBookmarked
-                                                  ? AppColors.orange
-                                                  : null,
-                                            ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            // Остальная часть шапки
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    name,
-                                    textAlign: TextAlign.center,
-                                    style: AppTextStyles.h17w6,
-                                  ),
-                                  const SizedBox(height: 10),
-
-                                  _InfoRow(
-                                    icon: CupertinoIcons.person_crop_circle,
-                                    text: organizerName,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  _InfoRow(
-                                    icon: CupertinoIcons.calendar_today,
-                                    text: '$dateFormatted, $time',
-                                  ),
-                                  const SizedBox(height: 6),
-                                  _InfoRow(
-                                    icon: CupertinoIcons.location_solid,
-                                    text: place,
-                                  ),
-
-                                  if (photos.isNotEmpty) ...[
-                                    const SizedBox(height: 12),
-
-                                    // Фотографии: всегда 3 ячейки для одинакового размера
-                                    Row(
-                                      children: () {
-                                        final widgets = <Widget>[];
-                                        for (
-                                          var index = 0;
-                                          index < 3;
-                                          index++
-                                        ) {
-                                          final hasPhoto =
-                                              index < photos.length;
-                                          final photoUrl = hasPhoto
-                                              ? photos[index] as String
-                                              : '';
-
-                                          widgets.add(
-                                            Expanded(
-                                              child: hasPhoto
-                                                  ? _SquarePhoto(
-                                                      photoUrl,
-                                                      onTap: () =>
-                                                          _openGallery(index),
-                                                    )
-                                                  : const SizedBox.shrink(),
-                                            ),
-                                          );
-
-                                          if (index < 2) {
-                                            widgets.add(
-                                              const SizedBox(width: 10),
-                                            );
-                                          }
-                                        }
-                                        return widgets;
-                                      }(),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                  // ───────── Вкладки: каждая — в своей половине, центрирование текста
-                  SliverToBoxAdapter(
-                    child: Builder(
-                      builder: (context) => Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.getSurfaceColor(context),
-                          border: Border(
-                            top: BorderSide(
-                              color: AppColors.getBorderColor(context),
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                        child: SizedBox(
-                          height: 52,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _HalfTab(
-                                  text: 'Описание',
-                                  selected: _tab == 0,
-                                  onTap: () => setState(() => _tab = 0),
-                                ),
-                              ),
-                              Container(
-                                width: 1,
-                                height: 24,
-                                color: AppColors.border,
-                              ),
-                              Expanded(
-                                child: _HalfTab(
-                                  text:
-                                      'Участники (${_eventData?['participants_count'] ?? 0})',
-                                  selected: _tab == 1,
-                                  onTap: () => setState(() => _tab = 1),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // ───────── Разделитель
-                  SliverToBoxAdapter(
-                    child: Builder(
-                      builder: (context) => Divider(
-                        height: 1,
-                        color: AppColors.getBorderColor(context),
-                      ),
-                    ),
-                  ),
-
-                  // ───────── Контент активной вкладки
-                  if (_tab == 0)
-                    // Вкладка "Описание" — фиксированный контент
-                    SliverFillRemaining(
-                      hasScrollBody: false,
+    return PopScope(
+      canPop: _updatedParticipantsCount == null,
+      onPopInvoked: (didPop) {
+        // ── Если количество участников было обновлено и pop еще не произошел, возвращаем результат
+        if (!didPop && _updatedParticipantsCount != null && mounted) {
+          Navigator.of(context).pop({
+            'participants_count_updated': true,
+            'participants_count': _updatedParticipantsCount,
+            'event_id': widget.eventId,
+          });
+        }
+      },
+      child: InteractiveBackSwipe(
+        child: Scaffold(
+          backgroundColor: AppColors.getBackgroundColor(context),
+          body: SafeArea(
+            top: false,
+            bottom: false,
+            child: Stack(
+              children: [
+                // ───────── Скроллируемый контент
+                CustomScrollView(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    // ───────── Шапка без AppBar: SafeArea + кнопки у краёв + логотип по центру
+                    SliverToBoxAdapter(
                       child: Builder(
                         builder: (context) => Container(
                           decoration: BoxDecoration(
@@ -642,89 +445,332 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                               ),
                             ),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                            child: EventDescriptionContent(
-                              description:
-                                  _eventData!['description'] as String? ?? '',
+                          child: Column(
+                            children: [
+                              SafeArea(
+                                bottom: false,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  child: SizedBox(
+                                    height: 100,
+                                    child: Row(
+                                      children: [
+                                        _CircleIconBtn(
+                                          icon: CupertinoIcons.back,
+                                          semantic: 'Назад',
+                                          onTap: () {
+                                            // ── Если количество участников было обновлено, возвращаем результат
+                                            if (_updatedParticipantsCount !=
+                                                null) {
+                                              Navigator.of(context).pop({
+                                                'participants_count_updated':
+                                                    true,
+                                                'participants_count':
+                                                    _updatedParticipantsCount,
+                                                'event_id': widget.eventId,
+                                              });
+                                            } else {
+                                              Navigator.of(context).maybePop();
+                                            }
+                                          },
+                                        ),
+                                        Expanded(
+                                          child: Center(
+                                            child: logoUrl.isNotEmpty
+                                                ? ClipOval(
+                                                    child: _HeaderLogo(
+                                                      url: logoUrl,
+                                                    ),
+                                                  )
+                                                : Container(
+                                                    width: 100,
+                                                    height: 100,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                          color:
+                                                              AppColors.border,
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                    child: const Icon(
+                                                      Icons.event,
+                                                      size: 48,
+                                                    ),
+                                                  ),
+                                          ),
+                                        ),
+                                        // Показываем карандаш для создателя, закладку для остальных
+                                        _canEdit
+                                            ? _CircleIconBtn(
+                                                icon: CupertinoIcons.pencil,
+                                                semantic: 'Редактировать',
+                                                onTap: _openEditScreen,
+                                              )
+                                            : _CircleIconBtn(
+                                                icon: CupertinoIcons.star_fill,
+                                                semantic: _isBookmarked
+                                                    ? 'Удалить из закладок'
+                                                    : 'Добавить в закладки',
+                                                onTap: _isTogglingBookmark
+                                                    ? null
+                                                    : _toggleBookmark,
+                                                color: _isBookmarked
+                                                    ? AppColors.orange
+                                                    : null,
+                                              ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              // Остальная часть шапки
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  12,
+                                  8,
+                                  12,
+                                  12,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      name,
+                                      textAlign: TextAlign.center,
+                                      style: AppTextStyles.h17w6,
+                                    ),
+                                    const SizedBox(height: 10),
+
+                                    _InfoRow(
+                                      icon: CupertinoIcons.person_crop_circle,
+                                      text: organizerName,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    _InfoRow(
+                                      icon: CupertinoIcons.calendar_today,
+                                      text: '$dateFormatted, $time',
+                                    ),
+                                    const SizedBox(height: 6),
+                                    _InfoRow(
+                                      icon: CupertinoIcons.location_solid,
+                                      text: place,
+                                    ),
+
+                                    if (photos.isNotEmpty) ...[
+                                      const SizedBox(height: 12),
+
+                                      // Фотографии: всегда 3 ячейки для одинакового размера
+                                      Row(
+                                        children: () {
+                                          final widgets = <Widget>[];
+                                          for (
+                                            var index = 0;
+                                            index < 3;
+                                            index++
+                                          ) {
+                                            final hasPhoto =
+                                                index < photos.length;
+                                            final photoUrl = hasPhoto
+                                                ? photos[index] as String
+                                                : '';
+
+                                            widgets.add(
+                                              Expanded(
+                                                child: hasPhoto
+                                                    ? _SquarePhoto(
+                                                        photoUrl,
+                                                        onTap: () =>
+                                                            _openGallery(index),
+                                                      )
+                                                    : const SizedBox.shrink(),
+                                              ),
+                                            );
+
+                                            if (index < 2) {
+                                              widgets.add(
+                                                const SizedBox(width: 10),
+                                              );
+                                            }
+                                          }
+                                          return widgets;
+                                        }(),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                    // ───────── Вкладки: каждая — в своей половине, центрирование текста
+                    SliverToBoxAdapter(
+                      child: Builder(
+                        builder: (context) => Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.getSurfaceColor(context),
+                            border: Border(
+                              top: BorderSide(
+                                color: AppColors.getBorderColor(context),
+                                width: 1,
+                              ),
+                            ),
+                          ),
+                          child: SizedBox(
+                            height: 52,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _HalfTab(
+                                    text: 'Описание',
+                                    selected: _tab == 0,
+                                    onTap: () => setState(() => _tab = 0),
+                                  ),
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 24,
+                                  color: AppColors.border,
+                                ),
+                                Expanded(
+                                  child: _HalfTab(
+                                    text:
+                                        'Участники (${_eventData?['participants_count'] ?? 0})',
+                                    selected: _tab == 1,
+                                    onTap: () => setState(() => _tab = 1),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ),
-                    )
-                  else
-                    // Вкладка "Участники" — скроллируемый список
-                    _EventMembersSliver(
-                      key: _membersSliverKey,
-                      eventId: widget.eventId,
                     ),
-                ],
-              ),
 
-              // ───────── Плавающая кнопка поверх контента
-              Positioned(
-                bottom: 20,
-                left: 0,
-                right: 0,
-                child: SafeArea(
-                  top: false,
-                  child: Center(
-                    child: Material(
-                      color: _isParticipant
-                          ? AppColors.red
-                          : AppColors.brandPrimary,
-                      borderRadius: BorderRadius.circular(AppRadius.xxl),
-                      elevation: 0,
-                      child: InkWell(
-                        onTap: _isTogglingParticipation
-                            ? null
-                            : _toggleParticipation,
-                        borderRadius: BorderRadius.circular(AppRadius.xxl),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 40,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _isParticipant
-                                ? AppColors.red
-                                : AppColors.brandPrimary,
-                            borderRadius: BorderRadius.circular(AppRadius.xxl),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: AppColors.shadowMedium,
-                                blurRadius: 1,
-                                offset: Offset(0, 1),
+                    // ───────── Разделитель
+                    SliverToBoxAdapter(
+                      child: Builder(
+                        builder: (context) => Divider(
+                          height: 1,
+                          color: AppColors.getBorderColor(context),
+                        ),
+                      ),
+                    ),
+
+                    // ───────── Контент активной вкладки
+                    if (_tab == 0)
+                      // Вкладка "Описание" — фиксированный контент
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Builder(
+                          builder: (context) => Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.getSurfaceColor(context),
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
                               ),
-                            ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                12,
+                                12,
+                                12,
+                                12,
+                              ),
+                              child: EventDescriptionContent(
+                                description:
+                                    _eventData!['description'] as String? ?? '',
+                              ),
+                            ),
                           ),
-                          child: _isTogglingParticipation
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.surface,
+                        ),
+                      )
+                    else
+                      // Вкладка "Участники" — скроллируемый список
+                      _EventMembersSliver(
+                        key: _membersSliverKey,
+                        eventId: widget.eventId,
+                      ),
+                  ],
+                ),
+
+                // ───────── Плавающая кнопка поверх контента
+                Positioned(
+                  bottom: 20,
+                  left: 0,
+                  right: 0,
+                  child: SafeArea(
+                    top: false,
+                    child: Center(
+                      child: Material(
+                        color: _isParticipant
+                            ? AppColors.red
+                            : AppColors.brandPrimary,
+                        borderRadius: BorderRadius.circular(AppRadius.xxl),
+                        elevation: 0,
+                        child: InkWell(
+                          onTap: _isTogglingParticipation
+                              ? null
+                              : _toggleParticipation,
+                          borderRadius: BorderRadius.circular(AppRadius.xxl),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 40,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _isParticipant
+                                  ? AppColors.red
+                                  : AppColors.brandPrimary,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.xxl,
+                              ),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: AppColors.shadowMedium,
+                                  blurRadius: 1,
+                                  offset: Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: _isTogglingParticipation
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.surface,
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    _isParticipant ? 'Выйти' : 'Присоединиться',
+                                    style: const TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.surface,
                                     ),
                                   ),
-                                )
-                              : Text(
-                                  _isParticipant ? 'Выйти' : 'Присоединиться',
-                                  style: const TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.surface,
-                                  ),
-                                ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
