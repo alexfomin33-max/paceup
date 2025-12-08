@@ -645,21 +645,40 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                         chatData.firstImageUrl!.isNotEmpty) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.xs),
-                        child: CachedNetworkImage(
-                          imageUrl: chatData.firstImageUrl!,
-                          width: 36,
-                          height: 36,
-                          fit: BoxFit.cover,
-                          errorWidget: (context, error, stackTrace) =>
-                              Container(
-                                width: 36,
-                                height: 36,
-                                color: AppColors.getSurfaceMutedColor(context),
-                              ),
+                        child: Builder(
+                          builder: (context) {
+                            final dpr = MediaQuery.of(context).devicePixelRatio;
+                            final w = (36 * dpr).round();
+                            return CachedNetworkImage(
+                              imageUrl: chatData.firstImageUrl!,
+                              width: 36,
+                              height: 36,
+                              fit: BoxFit.cover,
+                              fadeInDuration: const Duration(milliseconds: 120),
+                              memCacheWidth: w,
+                              maxWidthDiskCache: w,
+                              errorWidget: (context, imageUrl, error) {
+                                return Container(
+                                  width: 36,
+                                  height: 36,
+                                  color: AppColors.getSurfaceMutedColor(
+                                    context,
+                                  ),
+                                  child: Icon(
+                                    CupertinoIcons.photo,
+                                    size: 20,
+                                    color: AppColors.getIconSecondaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         ),
                       ),
+                      const SizedBox(width: 8),
                     ],
-                    const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

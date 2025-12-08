@@ -610,51 +610,75 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                 ),
               ),
               titleSpacing: -8,
-              title: Row(
-                children: [
-                  if (chatData.slotImageUrl != null &&
-                      chatData.slotImageUrl!.isNotEmpty) ...[
-                    Container(
-                      width: 36,
-                      height: 36,
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
+              title: Transform.translate(
+                offset: const Offset(8, 0),
+                child: Row(
+                  children: [
+                    if (chatData.slotImageUrl != null &&
+                        chatData.slotImageUrl!.isNotEmpty) ...[
+                      ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.xs),
-                        image: DecorationImage(
-                          image: NetworkImage(chatData.slotImageUrl!),
-                          fit: BoxFit.cover,
-                          onError: (error, stackTrace) {},
+                        child: Builder(
+                          builder: (context) {
+                            final dpr = MediaQuery.of(context).devicePixelRatio;
+                            final w = (36 * dpr).round();
+                            return CachedNetworkImage(
+                              imageUrl: chatData.slotImageUrl!,
+                              width: 36,
+                              height: 36,
+                              fit: BoxFit.cover,
+                              fadeInDuration: const Duration(milliseconds: 120),
+                              memCacheWidth: w,
+                              maxWidthDiskCache: w,
+                              errorWidget: (context, imageUrl, error) {
+                                return Container(
+                                  width: 36,
+                                  height: 36,
+                                  color: AppColors.getSurfaceMutedColor(
+                                    context,
+                                  ),
+                                  child: Icon(
+                                    CupertinoIcons.photo,
+                                    size: 20,
+                                    color: AppColors.getIconSecondaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         ),
                       ),
+                      const SizedBox(width: 8),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Чат продажи слота',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            chatData.slotTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 8),
                   ],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Чат продажи слота',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          chatData.slotTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.getTextPrimaryColor(context),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(0.5),
