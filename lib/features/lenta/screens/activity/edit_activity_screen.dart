@@ -492,6 +492,20 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       activityId: updatedActivity.id,
       activityDistance: (updatedActivity.stats?.distance ?? 0.0) / 1000.0,
       showMenuButton: true,
+      // ────────────────────────────────────────────────────────────────
+      // 🔹 ФОН ПЛАШКИ: в светлой теме используем surface вместо background
+      // ────────────────────────────────────────────────────────────────
+      // Только для светлой темы на этой странице
+      backgroundColor: Theme.of(context).brightness == Brightness.light
+          ? AppColors.getSurfaceColor(context)
+          : null, // В темной теме используем дефолтное поведение
+      // ────────────────────────────────────────────────────────────────
+      // 🔹 ФОН КНОПКИ МЕНЮ: в светлой теме используем background вместо surface
+      // ────────────────────────────────────────────────────────────────
+      // Только для светлой темы на этой странице
+      menuButtonColor: Theme.of(context).brightness == Brightness.light
+          ? AppColors.getBackgroundColor(context)
+          : null, // В темной теме используем дефолтное поведение
       onEquipmentChanged: () async {
         // Обновляем ленту после замены эквипа
         await ref
@@ -701,7 +715,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       final filesForUpload = <String, File>{};
       for (var i = 0; i < pickedFiles.length; i++) {
         if (!mounted) return;
-        
+
         final picked = pickedFiles[i];
         // Обрезаем изображение в соотношении 1.3:1
         final cropped = await ImagePickerHelper.cropPickedImage(
@@ -710,16 +724,17 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           aspectRatio: 1.3,
           title: 'Обрезка фотографии ${i + 1}',
         );
-        
-        if (cropped == null) continue; // Пропускаем, если пользователь отменил обрезку
-        
+
+        if (cropped == null)
+          continue; // Пропускаем, если пользователь отменил обрезку
+
         // Сжимаем обрезанное изображение
         final compressed = await compressLocalImage(
           sourceFile: cropped,
           maxSide: ImageCompressionPreset.activity.maxSide,
           jpegQuality: ImageCompressionPreset.activity.quality,
         );
-        
+
         // Удаляем временный файл обрезки
         if (cropped.path != compressed.path) {
           try {
@@ -728,7 +743,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
             // Игнорируем ошибки удаления
           }
         }
-        
+
         filesForUpload['file$i'] = compressed;
       }
 
