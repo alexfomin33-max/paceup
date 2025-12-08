@@ -49,7 +49,7 @@ class ClubSearch {
 final recommendedClubsProvider = FutureProvider<List<ClubSearch>>((ref) async {
   final api = ref.watch(apiServiceProvider);
   final auth = ref.watch(authServiceProvider);
-  
+
   final userId = await auth.getUserId();
   if (userId == null) {
     return [];
@@ -58,28 +58,29 @@ final recommendedClubsProvider = FutureProvider<List<ClubSearch>>((ref) async {
   try {
     final response = await api.get(
       '/get_recommended_clubs.php',
-      queryParams: {'limit': '5'}, // Запрашиваем сразу 5 клубов
+      queryParams: {'limit': '7'}, // Запрашиваем сразу 7 клубов
     );
 
     debugPrint('📥 Ответ API рекомендованных клубов: $response');
 
     if (response['success'] == true) {
-      final clubs = (response['clubs'] as List<dynamic>?)
+      final clubs =
+          (response['clubs'] as List<dynamic>?)
               ?.map((e) => ClubSearch.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [];
-      
+
       if (response['message'] != null) {
         debugPrint('ℹ️ Сообщение от API: ${response['message']}');
       }
-      
+
       // Бэкенд уже фильтрует клубы, в которые пользователь не вступил
       // и возвращает их в случайном порядке (ORDER BY RAND())
       debugPrint('✅ Получено клубов: ${clubs.length}');
-      
+
       return clubs;
     }
-    
+
     final errorMessage = response['message'] as String? ?? 'Неизвестная ошибка';
     debugPrint('❌ API вернул ошибку: $errorMessage');
     return [];
@@ -91,41 +92,39 @@ final recommendedClubsProvider = FutureProvider<List<ClubSearch>>((ref) async {
 });
 
 /// Провайдер для поиска клубов по запросу
-final searchClubsProvider = FutureProvider.family<List<ClubSearch>, String>(
-  (ref, query) async {
-    if (query.trim().isEmpty) {
-      return [];
+final searchClubsProvider = FutureProvider.family<List<ClubSearch>, String>((
+  ref,
+  query,
+) async {
+  if (query.trim().isEmpty) {
+    return [];
+  }
+
+  final api = ref.watch(apiServiceProvider);
+  final auth = ref.watch(authServiceProvider);
+
+  final userId = await auth.getUserId();
+  if (userId == null) {
+    return [];
+  }
+
+  try {
+    final response = await api.get(
+      '/search_clubs.php',
+      queryParams: {'query': query.trim(), 'limit': '50'},
+    );
+
+    if (response['success'] == true) {
+      final clubs =
+          (response['clubs'] as List<dynamic>?)
+              ?.map((e) => ClubSearch.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [];
+      return clubs;
     }
-
-    final api = ref.watch(apiServiceProvider);
-    final auth = ref.watch(authServiceProvider);
-    
-    final userId = await auth.getUserId();
-    if (userId == null) {
-      return [];
-    }
-
-    try {
-      final response = await api.get(
-        '/search_clubs.php',
-        queryParams: {
-          'query': query.trim(),
-          'limit': '50',
-        },
-      );
-
-      if (response['success'] == true) {
-        final clubs = (response['clubs'] as List<dynamic>?)
-                ?.map((e) => ClubSearch.fromJson(e as Map<String, dynamic>))
-                .toList() ??
-            [];
-        return clubs;
-      }
-      return [];
-    } catch (e) {
-      debugPrint('❌ Ошибка поиска клубов: $e');
-      return [];
-    }
-  },
-);
-
+    return [];
+  } catch (e) {
+    debugPrint('❌ Ошибка поиска клубов: $e');
+    return [];
+  }
+});

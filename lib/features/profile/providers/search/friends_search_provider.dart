@@ -19,7 +19,8 @@ class FriendUser {
   final int age;
   final String city;
   final String avatar;
-  final bool isSubscribed; // Статус подписки текущего пользователя на этого пользователя
+  final bool
+  isSubscribed; // Статус подписки текущего пользователя на этого пользователя
 
   FriendUser({
     required this.id,
@@ -72,106 +73,110 @@ class FriendUser {
 /// Провайдер для получения рекомендованных друзей (рандомные пользователи)
 /// Использует AutoDisposeFutureProvider для автоматической инвалидации при dispose
 /// и добавляет параметр _t для обхода кэша и получения новых рандомных пользователей
-final recommendedFriendsProvider = FutureProvider.autoDispose<List<FriendUser>>((ref) async {
-  final api = ref.watch(apiServiceProvider);
-  final auth = ref.watch(authServiceProvider);
-  
-  final userId = await auth.getUserId();
-  if (userId == null) {
-    // Если userId не получен, возвращаем пустой список
-    return [];
-  }
-
-  try {
-    // ────────────────────────────────────────────────────────────────
-    // 🎲 ОБХОД КЭША: добавляем параметр _t (timestamp) для получения
-    // новых рандомных пользователей при каждом запросе
-    // ────────────────────────────────────────────────────────────────
-    // Параметр _t игнорируется на сервере, но заставляет Flutter
-    // делать новый запрос вместо использования кэшированного результата
-    final response = await api.get(
-      '/get_recommended_friends.php',
-      queryParams: {
-        'limit': '5', // Запрашиваем сразу 5 друзей
-        '_t': DateTime.now().millisecondsSinceEpoch.toString(), // Параметр для обхода кэша
-      },
-    );
-
-    // Проверяем успешность ответа
-    if (response['success'] == true) {
-      final users = (response['users'] as List<dynamic>?)
-              ?.map((e) => FriendUser.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [];
-      
-      // Бэкенд уже фильтрует пользователей, на которых не подписан
-      // и возвращает их в случайном порядке (ORDER BY RAND())
-      // Просто берем первые 5 элементов
-      final result = users.take(5).toList();
-      
-      return result;
-    }
-    
-    // Если success != true, логируем сообщение об ошибке
-    final errorMessage = response['message'] as String? ?? 'Неизвестная ошибка';
-    debugPrint('❌ API вернул ошибку: $errorMessage');
-    return [];
-  } catch (e, stackTrace) {
-    // В случае ошибки логируем подробности
-    debugPrint('❌ Ошибка загрузки рекомендованных друзей: $e');
-    debugPrint('Stack trace: $stackTrace');
-    return [];
-  }
-});
-
-/// Провайдер для поиска друзей по запросу
-final searchFriendsProvider = FutureProvider.family<List<FriendUser>, String>(
-  (ref, query) async {
-    if (query.trim().isEmpty) {
-      return [];
-    }
-
+final recommendedFriendsProvider = FutureProvider.autoDispose<List<FriendUser>>(
+  (ref) async {
     final api = ref.watch(apiServiceProvider);
     final auth = ref.watch(authServiceProvider);
-    
+
     final userId = await auth.getUserId();
     if (userId == null) {
+      // Если userId не получен, возвращаем пустой список
       return [];
     }
 
     try {
+      // ────────────────────────────────────────────────────────────────
+      // 🎲 ОБХОД КЭША: добавляем параметр _t (timestamp) для получения
+      // новых рандомных пользователей при каждом запросе
+      // ────────────────────────────────────────────────────────────────
+      // Параметр _t игнорируется на сервере, но заставляет Flutter
+      // делать новый запрос вместо использования кэшированного результата
       final response = await api.get(
-        '/search_friends.php',
+        '/get_recommended_friends.php',
         queryParams: {
-          'query': query.trim(),
-          'limit': '50',
+          'limit': '6', // Запрашиваем сразу 6 друзей
+          '_t': DateTime.now().millisecondsSinceEpoch
+              .toString(), // Параметр для обхода кэша
         },
       );
 
+      // Проверяем успешность ответа
       if (response['success'] == true) {
-        final users = (response['users'] as List<dynamic>?)
+        final users =
+            (response['users'] as List<dynamic>?)
                 ?.map((e) => FriendUser.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [];
-        
-        // Загружаем статусы подписок для всех пользователей
-        if (users.isNotEmpty) {
-          final usersWithSubscriptions = await _loadSubscriptionStatuses(
-            api: api,
-            users: users,
-          );
-          return usersWithSubscriptions;
-        }
-        
-        return users;
+
+        // Бэкенд уже фильтрует пользователей, на которых не подписан
+        // и возвращает их в случайном порядке (ORDER BY RAND())
+        // Просто берем первые 6 элементов
+        final result = users.take(6).toList();
+
+        return result;
       }
+
+      // Если success != true, логируем сообщение об ошибке
+      final errorMessage =
+          response['message'] as String? ?? 'Неизвестная ошибка';
+      debugPrint('❌ API вернул ошибку: $errorMessage');
       return [];
-    } catch (e) {
-      // В случае ошибки возвращаем пустой список
+    } catch (e, stackTrace) {
+      // В случае ошибки логируем подробности
+      debugPrint('❌ Ошибка загрузки рекомендованных друзей: $e');
+      debugPrint('Stack trace: $stackTrace');
       return [];
     }
   },
 );
+
+/// Провайдер для поиска друзей по запросу
+final searchFriendsProvider = FutureProvider.family<List<FriendUser>, String>((
+  ref,
+  query,
+) async {
+  if (query.trim().isEmpty) {
+    return [];
+  }
+
+  final api = ref.watch(apiServiceProvider);
+  final auth = ref.watch(authServiceProvider);
+
+  final userId = await auth.getUserId();
+  if (userId == null) {
+    return [];
+  }
+
+  try {
+    final response = await api.get(
+      '/search_friends.php',
+      queryParams: {'query': query.trim(), 'limit': '50'},
+    );
+
+    if (response['success'] == true) {
+      final users =
+          (response['users'] as List<dynamic>?)
+              ?.map((e) => FriendUser.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [];
+
+      // Загружаем статусы подписок для всех пользователей
+      if (users.isNotEmpty) {
+        final usersWithSubscriptions = await _loadSubscriptionStatuses(
+          api: api,
+          users: users,
+        );
+        return usersWithSubscriptions;
+      }
+
+      return users;
+    }
+    return [];
+  } catch (e) {
+    // В случае ошибки возвращаем пустой список
+    return [];
+  }
+});
 
 /// Вспомогательная функция для загрузки статусов подписок
 Future<List<FriendUser>> _loadSubscriptionStatuses({
@@ -180,22 +185,23 @@ Future<List<FriendUser>> _loadSubscriptionStatuses({
 }) async {
   try {
     final userIds = users.map((u) => u.id).toList();
-    
+
     final response = await api.post(
       '/check_subscription.php',
       body: {'user_ids': userIds},
     );
 
     if (response['success'] == true) {
-      final subscriptions = response['subscriptions'] as Map<String, dynamic>? ?? {};
-      
+      final subscriptions =
+          response['subscriptions'] as Map<String, dynamic>? ?? {};
+
       // Обновляем статус подписки для каждого пользователя
       return users.map((user) {
         final isSubscribed = subscriptions['${user.id}'] as bool? ?? false;
         return user.copyWith(isSubscribed: isSubscribed);
       }).toList();
     }
-    
+
     return users;
   } catch (e) {
     debugPrint('❌ Ошибка загрузки статусов подписок: $e');
@@ -209,31 +215,30 @@ Future<List<FriendUser>> _loadSubscriptionStatuses({
 /// - Использует autoDispose для автоматической очистки после использования
 /// - Каждый запрос уникален (не кэшируется) благодаря timestamp в параметрах
 /// - Правильная обработка ошибок с пробросом исключений
-final toggleSubscribeProvider = FutureProvider.autoDispose.family<bool, ToggleSubscribeParams>(
-  (ref, params) async {
-    final api = ref.watch(apiServiceProvider);
-    
-    try {
-      final response = await api.post(
-        '/toggle_subscribe.php',
-        body: {
-          'target_user_id': params.targetUserId,
-          'action': params.isSubscribed ? 'unsubscribe' : 'subscribe',
-        },
-      );
+final toggleSubscribeProvider = FutureProvider.autoDispose
+    .family<bool, ToggleSubscribeParams>((ref, params) async {
+      final api = ref.watch(apiServiceProvider);
 
-      if (response['success'] == true) {
-        final isSubscribed = response['is_subscribed'] as bool? ?? false;
-        return isSubscribed;
+      try {
+        final response = await api.post(
+          '/toggle_subscribe.php',
+          body: {
+            'target_user_id': params.targetUserId,
+            'action': params.isSubscribed ? 'unsubscribe' : 'subscribe',
+          },
+        );
+
+        if (response['success'] == true) {
+          final isSubscribed = response['is_subscribed'] as bool? ?? false;
+          return isSubscribed;
+        }
+
+        throw Exception(response['message'] as String? ?? 'Ошибка подписки');
+      } catch (e) {
+        debugPrint('❌ Ошибка подписки/отписки: $e');
+        rethrow;
       }
-      
-      throw Exception(response['message'] as String? ?? 'Ошибка подписки');
-    } catch (e) {
-      debugPrint('❌ Ошибка подписки/отписки: $e');
-      rethrow;
-    }
-  },
-);
+    });
 
 /// Параметры для провайдера подписки
 class ToggleSubscribeParams {
@@ -265,7 +270,7 @@ class ToggleSubscribeParams {
 // ────────────────────────────────────────────────────────────────────────────
 
 /// Notifier для управления кэшем состояния подписок
-/// 
+///
 /// Хранит актуальное состояние подписки для каждого пользователя,
 /// чтобы оно не терялось при прокрутке списка
 class SubscriptionStateNotifier extends StateNotifier<Map<int, bool>> {
@@ -296,16 +301,16 @@ class SubscriptionStateNotifier extends StateNotifier<Map<int, bool>> {
 }
 
 /// Provider для кэша состояния подписок
-/// 
+///
 /// Использование:
 /// ```dart
 /// // Обновить состояние после подписки
 /// ref.read(subscriptionStateProvider.notifier).updateSubscription(userId, true);
-/// 
+///
 /// // Получить состояние (или null, если не установлено)
 /// final isSubscribed = ref.read(subscriptionStateProvider.notifier).getSubscription(userId);
 /// ```
-final subscriptionStateProvider = StateNotifierProvider<SubscriptionStateNotifier, Map<int, bool>>(
-  (ref) => SubscriptionStateNotifier(),
-);
-
+final subscriptionStateProvider =
+    StateNotifierProvider<SubscriptionStateNotifier, Map<int, bool>>(
+      (ref) => SubscriptionStateNotifier(),
+    );

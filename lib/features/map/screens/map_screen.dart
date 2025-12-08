@@ -91,7 +91,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Цвета маркеров по вкладкам
   final markerColors = const {
     0: AppColors.accentBlue, // события
-    1: AppColors.error, // клубы
+    1: AppColors.accentPurple, // клубы
     // 2: AppColors.success, // тренеры - временно закомментировано
     // 3: AppColors.accentPurple, // попутчики - временно закомментировано
   };
