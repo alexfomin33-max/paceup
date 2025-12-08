@@ -451,7 +451,6 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
       if (response['success'] == true) {
         if (!mounted) return;
         _ctrl.clear();
-        FocusScope.of(context).unfocus();
 
         // Добавляем сообщение сразу в список
         final newMessage = _ChatMessage(
@@ -579,9 +578,101 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
     }
   }
 
+  // ─── Форматирование даты сообщения (без времени) ───
+  String _formatMessageDate(String dateTimeStr) {
+    try {
+      final dt = DateTime.parse(dateTimeStr);
+      final now = DateTime.now();
+      final messageDate = DateTime(dt.year, dt.month, dt.day);
+      final today = DateTime(now.year, now.month, now.day);
+      final yesterday = today.subtract(const Duration(days: 1));
+
+      if (messageDate == today) {
+        return 'Сегодня';
+      }
+      if (messageDate == yesterday) {
+        return 'Вчера';
+      }
+
+      // Иначе — полная дата с месяцем (родительный падеж)
+      final monthName = _getMonthNameGenitive(dt.month);
+
+      // Если тот же год — год не показываем
+      if (dt.year == now.year) {
+        return '${dt.day} $monthName';
+      }
+
+      // Если другой год — показываем год
+      return '${dt.day} $monthName ${dt.year}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  // ─── Получение названия месяца в родительном падеже ───
+  String _getMonthNameGenitive(int month) {
+    const months = [
+      'января',
+      'февраля',
+      'марта',
+      'апреля',
+      'мая',
+      'июня',
+      'июля',
+      'августа',
+      'сентября',
+      'октября',
+      'ноября',
+      'декабря',
+    ];
+    if (month < 1 || month > 12) return '';
+    return months[month - 1];
+  }
+
+  // ─── Проверка, нужно ли показывать разделитель даты между сообщениями ───
+  bool _shouldShowDateSeparator(int currentIndex) {
+    if (currentIndex == 0) return false; // Первое сообщение
+    if (currentIndex >= _messages.length) return false;
+
+    try {
+      final currentMsg = _messages[currentIndex];
+      final previousMsg = _messages[currentIndex - 1];
+
+      final currentDate = DateTime.parse(currentMsg.createdAt);
+      final previousDate = DateTime.parse(previousMsg.createdAt);
+
+      final currentDay = DateTime(
+        currentDate.year,
+        currentDate.month,
+        currentDate.day,
+      );
+      final previousDay = DateTime(
+        previousDate.year,
+        previousDate.month,
+        previousDate.day,
+      );
+
+      return currentDay != previousDay;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // ─── Форматирование даты и времени создания чата ───
   String _formatChatDate(DateTime? date) {
     return formatFeedDateText(date: date);
+  }
+
+  // ─── Подсчет общего количества элементов (сообщения + разделители дат) ───
+  int _calculateTotalItemsCount() {
+    int count = _messages.length;
+    // Добавляем разделители дат перед каждым сообщением, кроме первого
+    for (int i = 1; i < _messages.length; i++) {
+      if (_shouldShowDateSeparator(i)) {
+        count++;
+      }
+    }
+    return count;
   }
 
   // ─── Форматирование цены ───
@@ -900,12 +991,52 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                               context,
                               index,
                             ) {
-                              final msg = _messages[index];
+                              // ─── Вычисляем, какой элемент показывать ───
+                              int messageIndex = 0;
+                              int currentItem = 0;
 
-                              final hasMessageAbove = index > 0;
+                              for (int i = 0; i < _messages.length; i++) {
+                                // ─── Показываем разделитель даты перед сообщением (кроме первого) ───
+                                if (i > 0 && _shouldShowDateSeparator(i)) {
+                                  if (currentItem == index) {
+                                    // Это разделитель даты
+                                    return _DateSeparator(
+                                      text: _formatMessageDate(
+                                        _messages[i].createdAt,
+                                      ),
+                                    );
+                                  }
+                                  currentItem++;
+                                }
+
+                                // ─── Показываем само сообщение ───
+                                if (currentItem == index) {
+                                  messageIndex = i;
+                                  break;
+                                }
+                                currentItem++;
+                              }
+
+                              if (messageIndex >= _messages.length) {
+                                return const SizedBox.shrink();
+                              }
+
+                              final msg = _messages[messageIndex];
+
+                              // ─── Определяем отступы между пузырями ───
+                              // Проверяем, есть ли предыдущее сообщение (не разделитель даты)
+                              bool hasMessageAbove = false;
+                              for (int i = messageIndex - 1; i >= 0; i--) {
+                                if (!_shouldShowDateSeparator(i)) {
+                                  hasMessageAbove = true;
+                                  break;
+                                }
+                              }
                               final topSpacing = hasMessageAbove ? 8.0 : 0.0;
+
+                              // ─── Проверяем, является ли это последним сообщением ───
                               final isLastMessage =
-                                  index == _messages.length - 1;
+                                  messageIndex == _messages.length - 1;
                               final bottomSpacing = isLastMessage ? 8.0 : 0.0;
 
                               final isFromSeller =
@@ -948,7 +1079,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                                             )
                                           : null,
                                     );
-                            }, childCount: _messages.length),
+                            }, childCount: _calculateTotalItemsCount()),
                           ),
                         ),
                       ],
@@ -1186,14 +1317,16 @@ class _DateSeparator extends StatelessWidget {
   final String text;
   const _DateSeparator({required this.text});
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    alignment: Alignment.center,
-    child: Text(
-      text,
-      style: TextStyle(
-        fontSize: 12,
-        color: AppColors.getTextTertiaryColor(context),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 16, bottom: 4),
+    child: Container(
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          color: AppColors.getTextTertiaryColor(context),
+        ),
       ),
     ),
   );

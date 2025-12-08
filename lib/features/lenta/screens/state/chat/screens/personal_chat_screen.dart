@@ -583,7 +583,6 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
     final messageText = text;
     _ctrl.clear();
-    FocusScope.of(context).unfocus();
 
     // Оптимистичное обновление UI
     final tempMessage = ChatMessage(
@@ -806,6 +805,90 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
   /// ─── Форматирование времени ───
   String _formatTime(DateTime dt) {
     return DateFormat('H:mm').format(dt);
+  }
+
+  /// ─── Форматирование даты сообщения (без времени) ───
+  String _formatMessageDate(DateTime dt) {
+    final now = DateTime.now();
+    final messageDate = DateTime(dt.year, dt.month, dt.day);
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    if (messageDate == today) {
+      return 'Сегодня';
+    }
+    if (messageDate == yesterday) {
+      return 'Вчера';
+    }
+
+    // Иначе — полная дата с месяцем (родительный падеж)
+    final monthName = _getMonthNameGenitive(dt.month);
+
+    // Если тот же год — год не показываем
+    if (dt.year == now.year) {
+      return '${dt.day} $monthName';
+    }
+
+    // Если другой год — показываем год
+    return '${dt.day} $monthName ${dt.year}';
+  }
+
+  /// ─── Получение названия месяца в родительном падеже ───
+  String _getMonthNameGenitive(int month) {
+    const months = [
+      'января',
+      'февраля',
+      'марта',
+      'апреля',
+      'мая',
+      'июня',
+      'июля',
+      'августа',
+      'сентября',
+      'октября',
+      'ноября',
+      'декабря',
+    ];
+    if (month < 1 || month > 12) return '';
+    return months[month - 1];
+  }
+
+  /// ─── Проверка, нужно ли показывать разделитель даты между сообщениями ───
+  bool _shouldShowDateSeparator(int currentIndex) {
+    if (currentIndex == 0) return false; // Первое сообщение
+    if (currentIndex >= _messages.length) return false;
+
+    try {
+      final currentMsg = _messages[currentIndex];
+      final previousMsg = _messages[currentIndex - 1];
+
+      final currentDay = DateTime(
+        currentMsg.createdAt.year,
+        currentMsg.createdAt.month,
+        currentMsg.createdAt.day,
+      );
+      final previousDay = DateTime(
+        previousMsg.createdAt.year,
+        previousMsg.createdAt.month,
+        previousMsg.createdAt.day,
+      );
+
+      return currentDay != previousDay;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// ─── Подсчет общего количества элементов (сообщения + разделители дат) ───
+  int _calculateTotalItemsCount() {
+    int count = _messages.length;
+    // Добавляем разделители дат перед каждым сообщением, кроме первого
+    for (int i = 1; i < _messages.length; i++) {
+      if (_shouldShowDateSeparator(i)) {
+        count++;
+      }
+    }
+    return count;
   }
 
   /// ─── Получение URL аватара ───
@@ -1033,10 +1116,12 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                             0,
                           ),
                           itemCount:
-                              _messages.length + (_isLoadingMore ? 1 : 0),
+                              _calculateTotalItemsCount() +
+                              (_isLoadingMore ? 1 : 0),
                           itemBuilder: (context, index) {
                             // При reverse: true индексы идут в обратном порядке
-                            if (index == _messages.length && _isLoadingMore) {
+                            final totalItems = _calculateTotalItemsCount();
+                            if (index == totalItems && _isLoadingMore) {
                               return const Padding(
                                 padding: EdgeInsets.symmetric(vertical: 16),
                                 child: Center(
@@ -1045,14 +1130,48 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                               );
                             }
 
+                            // ─── Вычисляем, какой элемент показывать ───
+                            int messageIndex = 0;
+                            int currentItem = 0;
+
+                            for (int i = 0; i < _messages.length; i++) {
+                              // ─── Показываем разделитель даты перед сообщением (кроме первого) ───
+                              if (i > 0 && _shouldShowDateSeparator(i)) {
+                                if (currentItem == index) {
+                                  // Это разделитель даты
+                                  return _DateSeparator(
+                                    text: _formatMessageDate(
+                                      _messages[i].createdAt,
+                                    ),
+                                  );
+                                }
+                                currentItem++;
+                              }
+
+                              // ─── Показываем само сообщение ───
+                              if (currentItem == index) {
+                                messageIndex = i;
+                                break;
+                              }
+                              currentItem++;
+                            }
+
+                            if (messageIndex >= _messages.length) {
+                              return const SizedBox.shrink();
+                            }
+
                             // При reverse: true последний элемент списка - это первый в массиве
-                            final messageIndex = _messages.length - 1 - index;
                             final message = _messages[messageIndex];
 
                             // ─── Фиксированный отступ между всеми пузырями ───
-                            // При reverse: true выше на экране = меньший messageIndex в массиве
-                            // Проверяем, есть ли сообщение с меньшим messageIndex (которое выше на экране)
-                            final hasMessageAbove = messageIndex > 0;
+                            // Проверяем, есть ли предыдущее сообщение (не разделитель даты)
+                            bool hasMessageAbove = false;
+                            for (int i = messageIndex - 1; i >= 0; i--) {
+                              if (!_shouldShowDateSeparator(i)) {
+                                hasMessageAbove = true;
+                                break;
+                              }
+                            }
                             final topSpacing = hasMessageAbove ? 8.0 : 0.0;
                             // Нижний отступ только для самого нижнего пузыря (index == 0)
                             final bottomSpacing = index == 0 ? 8.0 : 0.0;
@@ -1128,6 +1247,26 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 /// ────────────────────────────────────────────────────────────────────────
 /// Вспомогательные виджеты
 /// ────────────────────────────────────────────────────────────────────────
+
+/// ─── Разделитель даты между сообщениями ───
+class _DateSeparator extends StatelessWidget {
+  final String text;
+  const _DateSeparator({required this.text});
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 16, bottom: 4),
+    child: Container(
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          color: AppColors.getTextTertiaryColor(context),
+        ),
+      ),
+    ),
+  );
+}
 
 /// Левый пузырь (сообщения собеседника) — с аватаром
 class _BubbleLeft extends StatelessWidget {
