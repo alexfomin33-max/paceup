@@ -240,7 +240,7 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                           // ──── Кнопка для продавца ────
                           SizedBox(
                             height: 36,
-                            child: ElevatedButton.icon(
+                            child: ElevatedButton(
                               onPressed: () async {
                                 // Переход на экран редактирования
                                 final result =
@@ -261,11 +261,6 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                                       .loadInitial();
                                 }
                               },
-                              icon: const Icon(CupertinoIcons.pencil, size: 16),
-                              label: const Text(
-                                'Изменить',
-                                style: TextStyle(fontFamily: 'Inter'),
-                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.brandPrimary,
                                 foregroundColor: Colors.white,
@@ -278,6 +273,10 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                                     AppRadius.sm,
                                   ),
                                 ),
+                              ),
+                              child: const Text(
+                                'Изменить',
+                                style: TextStyle(fontFamily: 'Inter'),
                               ),
                             ),
                           )
@@ -305,7 +304,7 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                                 style: TextStyle(fontFamily: 'Inter'),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.brandPrimary,
+                                backgroundColor: AppColors.success,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 padding: const EdgeInsets.symmetric(

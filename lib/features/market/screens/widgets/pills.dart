@@ -72,7 +72,7 @@ class GenderPill extends StatelessWidget {
   }
 }
 
-/// Пилюля цены (жёлтая), узкая фикс. ширина.
+/// Пилюля цены (жёлтая), с минимальной шириной, текст полностью влезает.
 class PricePill extends StatelessWidget {
   final String text;
   const PricePill({super.key, required this.text});
@@ -89,8 +89,9 @@ class PricePill extends StatelessWidget {
         : AppColors.getTextPrimaryColor(context);
 
     return Container(
-      width: 76,
+      constraints: const BoxConstraints(minWidth: 76),
       height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -99,7 +100,6 @@ class PricePill extends StatelessWidget {
       child: Text(
         text,
         maxLines: 1,
-        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 13,
