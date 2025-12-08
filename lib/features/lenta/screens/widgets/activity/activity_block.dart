@@ -240,22 +240,67 @@ class ActivityBlock extends ConsumerWidget {
           // ───────────────── МАРШРУТ С ФОТОГРАФИЯМИ ─────────────────
           // Показываем только если есть точки маршрута или есть изображения
           // Соотношение сторон 1.3:1 (как в постах)
-          if (updatedActivity.points.isNotEmpty ||
-              updatedActivity.mediaImages.isNotEmpty)
-            LayoutBuilder(
-              builder: (context, constraints) {
-                // Вычисляем высоту для соотношения сторон 1.3:1
-                final width = constraints.maxWidth;
-                final height = width / 1.3;
-                return ActivityRouteCarousel(
-                  points: updatedActivity.points
-                      .map((c) => LatLng(c.lat, c.lng))
-                      .toList(),
-                  imageUrls: updatedActivity.mediaImages,
-                  height: height,
+          // Для импортированных тренировок без маршрута показываем дефолтную картинку
+          Builder(
+            builder: (context) {
+              // ────────────────────────────────────────────────────────────────
+              // 🔍 ПРОВЕРКА НА ИМПОРТИРОВАННУЮ ТРЕНИРОВКУ БЕЗ МАРШРУТА:
+              // Если тренировка импортирована (есть пульс/каденс), но нет маршрута
+              // и нет изображений — показываем дефолтную картинку
+              // ────────────────────────────────────────────────────────────────
+              final hasHeartRateOrCadence =
+                  stats?.avgHeartRate != null || stats?.avgCadence != null;
+              final isImportedWithoutRoute =
+                  hasHeartRateOrCadence &&
+                  updatedActivity.points.isEmpty &&
+                  updatedActivity.mediaImages.isEmpty;
+
+              // Показываем блок, если есть маршрут, изображения или импортированная тренировка без маршрута
+              if (updatedActivity.points.isNotEmpty ||
+                  updatedActivity.mediaImages.isNotEmpty ||
+                  isImportedWithoutRoute) {
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Вычисляем высоту для соотношения сторон 1.3:1
+                    final width = constraints.maxWidth;
+                    final height = width / 1.3;
+
+                    if (isImportedWithoutRoute) {
+                      return SizedBox(
+                        height: height,
+                        width: double.infinity,
+                        child: Image.asset(
+                          'assets/nogps.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                color: AppColors.disabled,
+                                child: const Center(
+                                  child: Icon(
+                                    CupertinoIcons.photo,
+                                    size: 48,
+                                    color: AppColors.textTertiary,
+                                  ),
+                                ),
+                              ),
+                        ),
+                      );
+                    }
+
+                    return ActivityRouteCarousel(
+                      points: updatedActivity.points
+                          .map((c) => LatLng(c.lat, c.lng))
+                          .toList(),
+                      imageUrls: updatedActivity.mediaImages,
+                      height: height,
+                    );
+                  },
                 );
-              },
-            ),
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
 
           // ────────────────────────────────────────────────────────────────
           // 📝 ОПИСАНИЕ ТРЕНИРОВКИ: после карты, до лайков/комментариев
