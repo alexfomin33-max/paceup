@@ -15,22 +15,30 @@ class SlotsFilter {
   final String? search;
   final Gender? gender;
   final String? status; // 'available', 'reserved', 'sold'
+  final int? eventId; // Фильтр по ID события
+  final int? userId; // Фильтр по ID пользователя (для "Мои")
 
   const SlotsFilter({
     this.search,
     this.gender,
     this.status,
+    this.eventId,
+    this.userId,
   });
 
   SlotsFilter copyWith({
     String? search,
     Gender? gender,
     String? status,
+    int? eventId,
+    int? userId,
   }) {
     return SlotsFilter(
       search: search ?? this.search,
       gender: gender ?? this.gender,
       status: status ?? this.status,
+      eventId: eventId ?? this.eventId,
+      userId: userId ?? this.userId,
     );
   }
 
@@ -41,11 +49,13 @@ class SlotsFilter {
     return other is SlotsFilter &&
         other.search == search &&
         other.gender == gender &&
-        other.status == status;
+        other.status == status &&
+        other.eventId == eventId &&
+        other.userId == userId;
   }
 
   @override
-  int get hashCode => Object.hash(search, gender, status);
+  int get hashCode => Object.hash(search, gender, status, eventId, userId);
 }
 
 /// StateNotifier для управления списком слотов
@@ -146,6 +156,14 @@ class SlotsNotifier extends StateNotifier<SlotsState> {
     }
     if (_filter.status != null && _filter.status!.isNotEmpty) {
       params['status'] = _filter.status;
+    }
+    // Фильтр по ID события
+    if (_filter.eventId != null && _filter.eventId! > 0) {
+      params['event_id'] = _filter.eventId;
+    }
+    // Фильтр по ID пользователя (для "Мои")
+    if (_filter.userId != null && _filter.userId! > 0) {
+      params['user_id'] = _filter.userId;
     }
 
     // Выполняем запрос к API

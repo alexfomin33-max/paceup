@@ -2,12 +2,16 @@
 // Всё, что относится к вкладке «Слоты»: поиск, фильтрация, список, раскрытие карточек.
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/services/auth_service.dart';
+import '../../../../../core/services/api_service.dart';
 import '../../../providers/slots_provider.dart';
 import '../../../providers/slots_notifier.dart';
+import '../../../models/event_option.dart';
 import 'widgets/market_slot_card.dart';
 
 class SlotsContent extends ConsumerStatefulWidget {
@@ -18,11 +22,13 @@ class SlotsContent extends ConsumerStatefulWidget {
 }
 
 class _SlotsContentState extends ConsumerState<SlotsContent> {
-  // Поиск по названию события
+  // Поиск событий
   final TextEditingController _searchCtrl = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  String _debouncedSearchQuery = ''; // Для debounce поиска
-
+  
+  // Выбранное событие (null = все слоты, EventOption.mySlots() = мои слоты)
+  EventOption? _selectedEvent;
+  
   // Раскрытые карточки (по индексу)
   final Set<int> _expanded = {};
 
@@ -32,33 +38,57 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
   @override
   void initState() {
     super.initState();
-    // Debounce для поиска - обновляем _debouncedSearchQuery через 500ms после последнего изменения
-    _searchCtrl.addListener(_onSearchChanged);
-
     // Отслеживаем прокрутку для подгрузки данных
     _scrollController.addListener(_onScroll);
   }
 
-  void _onSearchChanged() {
-    final newQuery = _searchCtrl.text.trim().toLowerCase();
-    // Обновляем debounced query через 500ms
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted && _searchCtrl.text.trim().toLowerCase() == newQuery) {
-        // Проверяем, изменился ли запрос
-        if (_debouncedSearchQuery != newQuery) {
-          _debouncedSearchQuery = newQuery;
-          
-          // Обновляем фильтр через notifier (без пересоздания provider)
-          final newFilter = SlotsFilter(
-            search: newQuery.isNotEmpty ? newQuery : null,
-          );
-          
-          // Обновляем фильтр в notifier - это не вызовет пересоздание виджета
-          final notifier = ref.read(slotsProvider.notifier);
-          notifier.updateFilter(newFilter);
-        }
-      }
+  /// Обработка выбора события из списка
+  void _onEventSelected(EventOption event) {
+    setState(() {
+      _selectedEvent = event;
+      _searchCtrl.text = event.name;
     });
+    
+    // Обновляем фильтр через notifier
+    final notifier = ref.read(slotsProvider.notifier);
+    
+    if (event.isMySlots) {
+      // Для "Мои" получаем user_id из AuthService
+      _loadMySlots(notifier);
+    } else {
+      // Для выбранного события фильтруем по event_id
+      final newFilter = SlotsFilter(eventId: event.id);
+      notifier.updateFilter(newFilter);
+    }
+    
+    // Снимаем фокус с поля поиска
+    _searchFocusNode.unfocus();
+  }
+
+  /// Загрузка слотов пользователя
+  Future<void> _loadMySlots(SlotsNotifier notifier) async {
+    final authService = AuthService();
+    final userId = await authService.getUserId();
+    
+    if (userId != null) {
+      final newFilter = SlotsFilter(userId: userId);
+      notifier.updateFilter(newFilter);
+    } else {
+      // Если не удалось получить user_id, показываем все слоты
+      notifier.updateFilter(const SlotsFilter());
+    }
+  }
+
+  /// Очистка выбранного события
+  void _onClear() {
+    setState(() {
+      _selectedEvent = null;
+      _searchCtrl.clear();
+    });
+    
+    // Показываем все слоты
+    final notifier = ref.read(slotsProvider.notifier);
+    notifier.updateFilter(const SlotsFilter());
   }
 
   void _onScroll() {
@@ -78,6 +108,40 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
     super.dispose();
   }
 
+  /// Поиск событий для автозаполнения
+  Future<Iterable<EventOption>> _searchEvents(String query) async {
+    if (query.trim().length < 2) {
+      // Если запрос короткий, возвращаем только "Мои"
+      return [EventOption.mySlots()];
+    }
+
+    try {
+      // Прямой вызов API для поиска событий
+      final api = ApiService();
+      final response = await api.post(
+        '/search_events.php',
+        body: {'query': query.trim()},
+      );
+
+      if (response['success'] == true) {
+        final List<dynamic> eventsData = response['events'] ?? [];
+        final searchResults = eventsData
+            .map((e) => EventOption.fromApi(e as Map<String, dynamic>))
+            .toList();
+        
+        // Всегда добавляем "Мои" в начало списка
+        return [EventOption.mySlots(), ...searchResults];
+      }
+
+      // В случае ошибки возвращаем только "Мои"
+      return [EventOption.mySlots()];
+    } catch (e) {
+      // В случае ошибки возвращаем только "Мои"
+      debugPrint('❌ Ошибка поиска событий: $e');
+      return [EventOption.mySlots()];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Получаем состояние из provider (теперь один стабильный provider без family)
@@ -90,21 +154,14 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
     if (slotsState.isLoading && slotsState.items.isEmpty) {
       return Column(
         children: [
-          _SearchField(
+          _EventDropdownField(
             controller: _searchCtrl,
             focusNode: _searchFocusNode,
-            hintText: 'Название спортивного мероприятия',
-            onChanged: (value) {
-              // Изменение обрабатывается через listener в initState
-            },
-            onClear: () {
-              _searchCtrl.clear();
-              setState(() {
-                _debouncedSearchQuery = '';
-              });
-              final notifier = ref.read(slotsProvider.notifier);
-              notifier.updateFilter(const SlotsFilter());
-            },
+            hintText: 'Поиск события',
+            selectedEvent: _selectedEvent,
+            onEventSelected: _onEventSelected,
+            onClear: _onClear,
+            searchFunction: _searchEvents,
           ),
           const SizedBox(height: 40),
           const CupertinoActivityIndicator(),
@@ -123,21 +180,14 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
     if (slotsState.error != null && slotsState.items.isEmpty) {
       return Column(
         children: [
-          _SearchField(
+          _EventDropdownField(
             controller: _searchCtrl,
             focusNode: _searchFocusNode,
-            hintText: 'Название спортивного мероприятия',
-            onChanged: (value) {
-              // Изменение обрабатывается через listener в initState
-            },
-            onClear: () {
-              _searchCtrl.clear();
-              setState(() {
-                _debouncedSearchQuery = '';
-              });
-              final notifier = ref.read(slotsProvider.notifier);
-              notifier.updateFilter(const SlotsFilter());
-            },
+            hintText: 'Поиск события',
+            selectedEvent: _selectedEvent,
+            onEventSelected: _onEventSelected,
+            onClear: _onClear,
+            searchFunction: _searchEvents,
           ),
           const SizedBox(height: 40),
           Icon(
@@ -179,21 +229,14 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
     if (slotsState.items.isEmpty) {
       return Column(
         children: [
-          _SearchField(
+          _EventDropdownField(
             controller: _searchCtrl,
             focusNode: _searchFocusNode,
-            hintText: 'Название спортивного мероприятия',
-            onChanged: (value) {
-              // Изменение обрабатывается через listener в initState
-            },
-            onClear: () {
-              _searchCtrl.clear();
-              setState(() {
-                _debouncedSearchQuery = '';
-              });
-              final notifier = ref.read(slotsProvider.notifier);
-              notifier.updateFilter(const SlotsFilter());
-            },
+            hintText: 'Поиск события',
+            selectedEvent: _selectedEvent,
+            onEventSelected: _onEventSelected,
+            onClear: _onClear,
+            searchFunction: _searchEvents,
           ),
           const SizedBox(height: 40),
           Text(
@@ -224,21 +267,14 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
         separatorBuilder: (_, _) => const SizedBox(height: 10),
         itemBuilder: (_, index) {
         if (index == 0) {
-          return _SearchField(
+          return _EventDropdownField(
             controller: _searchCtrl,
             focusNode: _searchFocusNode,
-            hintText: 'Название спортивного мероприятия',
-            onChanged: (value) {
-              // Изменение обрабатывается через listener в initState
-            },
-            onClear: () {
-              _searchCtrl.clear();
-              setState(() {
-                _debouncedSearchQuery = '';
-              });
-              final notifier = ref.read(slotsProvider.notifier);
-              notifier.updateFilter(const SlotsFilter());
-            },
+            hintText: 'Поиск события',
+            selectedEvent: _selectedEvent,
+            onEventSelected: _onEventSelected,
+            onClear: _onClear,
+            searchFunction: _searchEvents,
           );
         }
 
@@ -274,109 +310,219 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
 
 // ————————————————— Внутренние UI-компоненты —————————————————
 
-class _SearchField extends StatefulWidget {
+/// Поле выпадающего списка с поиском событий
+class _EventDropdownField extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final String hintText;
-  final ValueChanged<String> onChanged;
+  final EventOption? selectedEvent;
+  final ValueChanged<EventOption> onEventSelected;
   final VoidCallback onClear;
+  final Future<Iterable<EventOption>> Function(String) searchFunction;
 
-  const _SearchField({
+  const _EventDropdownField({
     required this.controller,
     required this.focusNode,
     required this.hintText,
-    required this.onChanged,
+    required this.selectedEvent,
+    required this.onEventSelected,
     required this.onClear,
+    required this.searchFunction,
   });
 
   @override
-  State<_SearchField> createState() => _SearchFieldState();
-}
-
-class _SearchFieldState extends State<_SearchField> {
-  @override
   Widget build(BuildContext context) {
-    final hasText = widget.controller.text.isNotEmpty;
-    return Listener(
-      // При повторном тапе на поле, если оно уже в фокусе, снимаем фокус
-      onPointerDown: (_) {
-        // Сохраняем состояние фокуса ДО обработки тапа TextField
-        final wasFocused = widget.focusNode.hasFocus;
-
-        // Если поле уже было в фокусе, снимаем фокус после обработки тапа
-        if (wasFocused) {
-          // Используем небольшую задержку, чтобы дать TextField обработать тап
-          // (например, для установки курсора), затем снимаем фокус
-          Future.delayed(const Duration(milliseconds: 200), () {
-            if (!mounted || !context.mounted || !widget.focusNode.hasFocus) {
-              return;
+    return Autocomplete<EventOption>(
+      optionsBuilder: (TextEditingValue textEditingValue) async {
+        if (textEditingValue.text.length < 2) {
+          // Если запрос короткий, возвращаем только "Мои"
+          return [EventOption.mySlots()];
+        }
+        return await searchFunction(textEditingValue.text);
+      },
+      onSelected: onEventSelected,
+      displayStringForOption: (option) => option.name,
+      fieldViewBuilder: (
+        BuildContext context,
+        TextEditingController textEditingController,
+        FocusNode focusNode,
+        VoidCallback onFieldSubmitted,
+      ) {
+        // Синхронизируем контроллер Autocomplete с внешним контроллером
+        // при изменении selectedEvent
+        if (selectedEvent != null && textEditingController.text != selectedEvent!.name) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (textEditingController.text != selectedEvent!.name) {
+              textEditingController.text = selectedEvent!.name;
             }
-            FocusScope.of(context).unfocus();
           });
         }
+        
+        final hasText = textEditingController.text.isNotEmpty || selectedEvent != null;
+        
+        return TextField(
+          key: const ValueKey('event_search_field'),
+          controller: textEditingController,
+          focusNode: focusNode,
+          onSubmitted: (String value) {
+            onFieldSubmitted();
+          },
+          cursorColor: AppColors.getTextSecondaryColor(context),
+          textInputAction: TextInputAction.search,
+          enableInteractiveSelection: true,
+          style: AppTextStyles.h14w4.copyWith(
+            color: AppColors.getTextPrimaryColor(context),
+          ),
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: AppTextStyles.h14w4Place.copyWith(
+              color: AppColors.getTextPlaceholderColor(context),
+            ),
+            isDense: true,
+            filled: true,
+            fillColor: AppColors.getSurfaceColor(context),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 17,
+            ),
+            prefixIcon: Icon(
+              CupertinoIcons.search,
+              size: 18,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+            suffixIcon: hasText
+                ? IconButton(
+                    icon: Icon(
+                      CupertinoIcons.xmark_circle_fill,
+                      size: 18,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
+                    onPressed: onClear,
+                  )
+                : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide(
+                color: AppColors.getBorderColor(context),
+                width: 1,
+              ),
+            ),
+          ),
+        );
       },
-      child: TextField(
-        key: const ValueKey('search_field'), // Ключ для сохранения состояния
-        controller: widget.controller,
-        focusNode: widget.focusNode,
-        onChanged: widget.onChanged,
-        cursorColor: AppColors.getTextSecondaryColor(context),
-        textInputAction: TextInputAction.search,
-        // Отключаем автоматическое снятие фокуса при изменении
-        enableInteractiveSelection: true,
-        style: AppTextStyles.h14w4.copyWith(
-          color: AppColors.getTextPrimaryColor(context),
-        ),
-        decoration: InputDecoration(
-          hintText: widget.hintText,
-          hintStyle: AppTextStyles.h14w4Place.copyWith(
-            color: AppColors.getTextPlaceholderColor(context),
-          ),
-          isDense: true,
-          filled: true,
-          fillColor: AppColors.getSurfaceColor(context),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 17,
-          ),
-          prefixIcon: Icon(
-            CupertinoIcons.search,
-            size: 18,
-            color: AppColors.getIconSecondaryColor(context),
-          ),
-          suffixIcon: hasText
-              ? IconButton(
-                  icon: Icon(
-                    CupertinoIcons.xmark_circle_fill,
-                    size: 18,
-                    color: AppColors.getIconSecondaryColor(context),
-                  ),
-                  onPressed: widget.onClear,
-                )
-              : null,
-          border: OutlineInputBorder(
+      optionsViewBuilder: (
+        BuildContext context,
+        AutocompleteOnSelected<EventOption> onSelected,
+        Iterable<EventOption> options,
+      ) {
+        // Если список пустой, не показываем ничего
+        if (options.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 4.0,
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                itemCount: options.length,
+                itemBuilder: (BuildContext context, int index) {
+                  final option = options.elementAt(index);
+                  final isMySlots = option.isMySlots;
+                  
+                  return InkWell(
+                    onTap: () => onSelected(option),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          // Изображение события или иконка
+                          if (isMySlots)
+                            Icon(
+                              CupertinoIcons.person_fill,
+                              size: 18,
+                              color: AppColors.getIconSecondaryColor(context),
+                            )
+                          else if (option.logoUrl != null && option.logoUrl!.isNotEmpty)
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(AppRadius.xs),
+                                color: AppColors.getBackgroundColor(context),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: Image.network(
+                                option.logoUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(
+                                    CupertinoIcons.calendar,
+                                    size: 18,
+                                    color: AppColors.getIconSecondaryColor(context),
+                                  );
+                                },
+                              ),
+                            )
+                          else
+                            Icon(
+                              CupertinoIcons.calendar,
+                              size: 18,
+                              color: AppColors.getIconSecondaryColor(context),
+                            ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  option.name,
+                                  style: AppTextStyles.h14w4.copyWith(
+                                    color: AppColors.getTextPrimaryColor(context),
+                                  ),
+                                ),
+                                if (!isMySlots && option.place.isNotEmpty)
+                                  Text(
+                                    option.place,
+                                    style: AppTextStyles.h12w4.copyWith(
+                                      color: AppColors.getTextSecondaryColor(context),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
