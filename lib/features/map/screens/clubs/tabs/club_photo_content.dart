@@ -1,61 +1,303 @@
 // lib/features/map/screens/clubs/tabs/club_photo_content.dart
-import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/image_picker_helper.dart';
 import '../../../../../core/utils/local_image_compressor.dart'
-    show ImageCompressionPreset;
+    show ImageCompressionPreset, compressLocalImage;
+import '../../../../../core/utils/error_handler.dart';
+import '../../../../../providers/services/api_provider.dart';
+import '../../../../../providers/services/auth_provider.dart';
 
 /// Контент вкладки "Фото" для детальной страницы клуба
-/// Пока без API функционала — структура готова для будущей интеграции
-class ClubPhotoContent extends StatefulWidget {
+/// Работает с API для загрузки, отображения и удаления фотографий
+class ClubPhotoContent extends ConsumerStatefulWidget {
   final int clubId;
   final bool canEdit; // Является ли пользователь владельцем клуба
+  final Map<String, dynamic>? clubData; // Данные клуба с фотографиями
+  final VoidCallback? onPhotosUpdated; // Callback для обновления данных после загрузки/удаления
 
   const ClubPhotoContent({
     super.key,
     required this.clubId,
     required this.canEdit,
+    this.clubData,
+    this.onPhotosUpdated,
   });
 
   @override
-  State<ClubPhotoContent> createState() => _ClubPhotoContentState();
+  ConsumerState<ClubPhotoContent> createState() => _ClubPhotoContentState();
 }
 
-class _ClubPhotoContentState extends State<ClubPhotoContent> {
-  // ───── Локальное хранилище выбранных фото (пока без API) ─────
-  // TODO: Заменить на загрузку фото через API по clubId
-  final List<File> _localPhotos = [];
+class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
+  // ───── Список фотографий из API ─────
+  List<Map<String, dynamic>> _photos = [];
+  bool _isLoading = false;
+  bool _isDeleting = false;
 
-  /// ──────────────────────── Добавление фото ────────────────────────
-  /// Открывает галерею с обрезкой фото в соотношении 1:1
-  Future<void> _addPhoto() async {
-    final processed = await ImagePickerHelper.pickAndProcessImage(
-      context: context,
-      aspectRatio: 1.0, // Квадратное фото, как логотип
-      maxSide: ImageCompressionPreset.eventPhoto.maxSide,
-      jpegQuality: ImageCompressionPreset.eventPhoto.quality,
-      cropTitle: 'Обрезка фото',
-    );
-    if (processed == null || !mounted) return;
+  @override
+  void initState() {
+    super.initState();
+    _loadPhotos();
+  }
 
+  @override
+  void didUpdateWidget(ClubPhotoContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Обновляем фото, если изменились данные клуба
+    if (oldWidget.clubData != widget.clubData) {
+      _loadPhotos();
+    }
+  }
+
+  /// ──────────────────────── Загрузка фотографий из данных клуба ────────────────────────
+  void _loadPhotos() {
+    if (widget.clubData == null) return;
+
+    final photosList = widget.clubData!['photos'] as List<dynamic>? ?? [];
     setState(() {
-      _localPhotos.add(processed);
+      _photos = photosList
+          .map((p) => {
+                'id': p['id'] as int? ?? 0,
+                'url': p['url'] as String? ?? '',
+              })
+          .where((p) => p['url'] != null && (p['url'] as String).isNotEmpty)
+          .toList();
     });
   }
 
+  /// ──────────────────────── Добавление фото ────────────────────────
+  /// Открывает галерею с обрезкой фото в соотношении 1:1 и загружает на сервер
+  Future<void> _addPhoto() async {
+    if (_isLoading || !widget.canEdit) return;
+
+    try {
+      setState(() => _isLoading = true);
+
+      // Выбираем и обрабатываем изображение
+      final processed = await ImagePickerHelper.pickAndProcessImage(
+        context: context,
+        aspectRatio: 1.0, // Квадратное фото
+        maxSide: ImageCompressionPreset.eventPhoto.maxSide,
+        jpegQuality: ImageCompressionPreset.eventPhoto.quality,
+        cropTitle: 'Обрезка фото',
+      );
+      if (processed == null || !mounted) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Сжимаем изображение (на случай, если pickAndProcessImage не сжал)
+      final compressed = await compressLocalImage(
+        sourceFile: processed,
+        maxSide: ImageCompressionPreset.eventPhoto.maxSide,
+        jpegQuality: ImageCompressionPreset.eventPhoto.quality,
+      );
+
+      // Получаем userId для загрузки
+      final authService = ref.read(authServiceProvider);
+      final userId = await authService.getUserId();
+      if (userId == null || !mounted) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Необходимо войти в систему'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Загружаем на сервер
+      final api = ref.read(apiServiceProvider);
+      final response = await api.postMultipart(
+        '/upload_club_photo.php',
+        files: {'file0': compressed},
+        fields: {
+          'user_id': userId.toString(),
+          'club_id': widget.clubId.toString(),
+        },
+        timeout: const Duration(minutes: 2),
+      );
+
+      if (!mounted) return;
+
+      if (response['success'] == true) {
+        // Обновляем список фотографий из ответа
+        final photosList = response['photos'] as List<dynamic>? ?? [];
+        setState(() {
+          _photos = photosList
+              .map((p) => {
+                    'id': p['id'] as int? ?? 0,
+                    'url': p['url'] as String? ?? '',
+                  })
+              .where((p) => p['url'] != null && (p['url'] as String).isNotEmpty)
+              .toList();
+        });
+
+        // Вызываем callback для обновления данных клуба
+        widget.onPhotosUpdated?.call();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Фотография загружена'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        final errorMessage =
+            response['message'] as String? ?? 'Ошибка загрузки фотографии';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorHandler.format(e)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   /// ──────────────────────── Удаление фото ────────────────────────
-  void _deletePhoto(int index) {
-    setState(() {
-      _localPhotos.removeAt(index);
-    });
+  Future<void> _deletePhoto(int index) async {
+    if (_isDeleting || !widget.canEdit || index < 0 || index >= _photos.length) {
+      return;
+    }
+
+    final photo = _photos[index];
+    final photoId = photo['id'] as int?;
+    if (photoId == null || photoId <= 0) return;
+
+    // Показываем диалог подтверждения
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Удалить фотографию?'),
+        content: const Text('Это действие нельзя отменить.'),
+        actions: [
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      setState(() => _isDeleting = true);
+
+      // Получаем userId для удаления
+      final authService = ref.read(authServiceProvider);
+      final userId = await authService.getUserId();
+      if (userId == null || !mounted) {
+        setState(() => _isDeleting = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Необходимо войти в систему'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Удаляем на сервере
+      final api = ref.read(apiServiceProvider);
+      final response = await api.post(
+        '/delete_club_photo.php',
+        body: {
+          'user_id': userId.toString(),
+          'club_id': widget.clubId.toString(),
+          'photo_id': photoId.toString(),
+        },
+      );
+
+      if (!mounted) return;
+
+      if (response['success'] == true) {
+        // Обновляем список фотографий из ответа
+        final photosList = response['photos'] as List<dynamic>? ?? [];
+        setState(() {
+          _photos = photosList
+              .map((p) => {
+                    'id': p['id'] as int? ?? 0,
+                    'url': p['url'] as String? ?? '',
+                  })
+              .where((p) => p['url'] != null && (p['url'] as String).isNotEmpty)
+              .toList();
+        });
+
+        // Вызываем callback для обновления данных клуба
+        widget.onPhotosUpdated?.call();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Фотография удалена'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        final errorMessage =
+            response['message'] as String? ?? 'Ошибка удаления фотографии';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorHandler.format(e)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
   }
 
   /// ──────────────────────── Открытие галереи ────────────────────────
   void _openGallery(BuildContext context, int index) {
-    // Преобразуем File в String (путь) для галереи
-    final photoPaths = _localPhotos.map((f) => f.path).toList();
+    // Преобразуем URL в список строк для галереи
+    final photoUrls = _photos.map((p) => p['url'] as String).toList();
 
     Navigator.of(context).push(
       PageRouteBuilder(
@@ -63,7 +305,7 @@ class _ClubPhotoContentState extends State<ClubPhotoContent> {
         barrierColor: AppColors.scrim40,
         pageBuilder: (_, __, ___) => _FullscreenGallery(
           initialIndex: index,
-          photoPaths: photoPaths,
+          photoUrls: photoUrls,
           clubId: widget.clubId,
         ),
         transitionsBuilder: (_, animation, __, child) =>
@@ -75,7 +317,7 @@ class _ClubPhotoContentState extends State<ClubPhotoContent> {
   @override
   Widget build(BuildContext context) {
     // ───── Если не владелец и фото нет — показываем пустое состояние ─────
-    if (!widget.canEdit && _localPhotos.isEmpty) {
+    if (!widget.canEdit && _photos.isEmpty) {
       return LayoutBuilder(
         builder: (context, constraints) {
           const columns = 3;
@@ -84,7 +326,6 @@ class _ClubPhotoContentState extends State<ClubPhotoContent> {
               (constraints.maxWidth - spacing * (columns - 1)) / columns;
 
           // Минимальная высота: три строки фотографий
-          // 3 ячейки по высоте cellW + 2 промежутка между строками
           final minHeight = (3 * cellW) + (2 * spacing);
 
           return ConstrainedBox(
@@ -137,13 +378,12 @@ class _ClubPhotoContentState extends State<ClubPhotoContent> {
           final cacheWidth = (cellW * dpr).round();
 
           // Минимальная высота: три строки фотографий
-          // 3 ячейки по высоте cellW + 2 промежутка между строками
           final minHeight = (3 * cellW) + (2 * spacing);
 
           // Количество элементов:
           // - Для владельца: плейсхолдер + фото
           // - Для остальных: только фото
-          final itemCount = (widget.canEdit ? 1 : 0) + _localPhotos.length;
+          final itemCount = (widget.canEdit ? 1 : 0) + _photos.length;
 
           return ConstrainedBox(
             constraints: BoxConstraints(minHeight: minHeight),
@@ -164,7 +404,8 @@ class _ClubPhotoContentState extends State<ClubPhotoContent> {
                 if (widget.canEdit && i == 0) {
                   return _AddPhotoPlaceholder(
                     cellSize: cellW,
-                    onTap: _addPhoto,
+                    onTap: _isLoading ? null : _addPhoto,
+                    isLoading: _isLoading,
                   );
                 }
 
@@ -172,10 +413,14 @@ class _ClubPhotoContentState extends State<ClubPhotoContent> {
                 // Для владельца: смещаем индекс на 1 (пропускаем плейсхолдер)
                 // Для остальных: используем индекс как есть
                 final photoIndex = widget.canEdit ? i - 1 : i;
-                final photoFile = _localPhotos[photoIndex];
+                if (photoIndex < 0 || photoIndex >= _photos.length) {
+                  return const SizedBox.shrink();
+                }
+                final photo = _photos[photoIndex];
+                final photoUrl = photo['url'] as String? ?? '';
 
                 return _PhotoItem(
-                  photoFile: photoFile,
+                  photoUrl: photoUrl,
                   photoIndex: photoIndex,
                   clubId: widget.clubId,
                   cellSize: cellW,
@@ -197,9 +442,14 @@ class _ClubPhotoContentState extends State<ClubPhotoContent> {
 /// Квадратный плейсхолдер с иконкой добавления фото
 class _AddPhotoPlaceholder extends StatelessWidget {
   final double cellSize;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool isLoading;
 
-  const _AddPhotoPlaceholder({required this.cellSize, required this.onTap});
+  const _AddPhotoPlaceholder({
+    required this.cellSize,
+    required this.onTap,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -218,11 +468,22 @@ class _AddPhotoPlaceholder extends StatelessWidget {
             ),
           ),
           child: Center(
-            child: Icon(
-              CupertinoIcons.photo_camera,
-              size: 32,
-              color: AppColors.getIconSecondaryColor(context),
-            ),
+            child: isLoading
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.getIconSecondaryColor(context),
+                      ),
+                    ),
+                  )
+                : Icon(
+                    CupertinoIcons.photo_camera,
+                    size: 32,
+                    color: AppColors.getIconSecondaryColor(context),
+                  ),
           ),
         ),
       ),
@@ -233,7 +494,7 @@ class _AddPhotoPlaceholder extends StatelessWidget {
 /// ──────────────────────── Элемент фото в сетке ────────────────────────
 /// Фото с возможностью удаления для владельца клуба
 class _PhotoItem extends StatelessWidget {
-  final File photoFile;
+  final String photoUrl;
   final int photoIndex;
   final int clubId;
   final double cellSize;
@@ -243,7 +504,7 @@ class _PhotoItem extends StatelessWidget {
   final VoidCallback onDelete;
 
   const _PhotoItem({
-    required this.photoFile,
+    required this.photoUrl,
     required this.photoIndex,
     required this.clubId,
     required this.cellSize,
@@ -275,14 +536,14 @@ class _PhotoItem extends StatelessWidget {
                 },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              child: Image.file(
-                photoFile,
-                fit: BoxFit.cover,
+              child: CachedNetworkImage(
+                imageUrl: photoUrl,
                 width: cellSize,
                 height: cellSize,
-                cacheWidth: cacheWidth,
-                filterQuality: FilterQuality.low,
-                errorBuilder: (context, error, stackTrace) => Builder(
+                fit: BoxFit.cover,
+                memCacheWidth: cacheWidth,
+                fadeInDuration: const Duration(milliseconds: 120),
+                errorWidget: (context, url, error) => Builder(
                   builder: (context) => Container(
                     width: cellSize,
                     height: cellSize,
@@ -291,6 +552,21 @@ class _PhotoItem extends StatelessWidget {
                       Icons.broken_image,
                       size: 24,
                       color: AppColors.getIconSecondaryColor(context),
+                    ),
+                  ),
+                ),
+                placeholder: (context, url) => Builder(
+                  builder: (context) => Container(
+                    width: cellSize,
+                    height: cellSize,
+                    color: AppColors.getBorderColor(context),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.getIconSecondaryColor(context),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -330,15 +606,15 @@ class _PhotoItem extends StatelessWidget {
 
 /// ──────────────────────── Полноэкранная галерея ────────────────────────
 /// Полноэкранная галерея с перелистыванием, Hero-анимацией и зумом
-/// Работает с локальными файлами (File.path) и URL (для будущего API)
+/// Работает с URL из API
 class _FullscreenGallery extends StatefulWidget {
   final int initialIndex;
-  final List<String> photoPaths; // Пути к фото (локальные или URL)
+  final List<String> photoUrls; // URL фотографий
   final int clubId;
 
   const _FullscreenGallery({
     required this.initialIndex,
-    required this.photoPaths,
+    required this.photoUrls,
     required this.clubId,
   });
 
@@ -370,16 +646,16 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
             controller: _controller,
             physics: const BouncingScrollPhysics(),
             onPageChanged: (i) => setState(() => _index = i),
-            itemCount: widget.photoPaths.length,
+            itemCount: widget.photoUrls.length,
             itemBuilder: (_, i) {
-              final photoPath = widget.photoPaths[i];
+              final photoUrl = widget.photoUrls[i];
               return GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: _close, // Закрываем по тапу
                 child: Center(
                   child: Hero(
                     tag: 'club-photo-${widget.clubId}-$i',
-                    child: _ZoomableImage(photoPath: photoPath),
+                    child: _ZoomableImage(photoUrl: photoUrl),
                   ),
                 ),
               );
@@ -393,7 +669,7 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
                   _CircleIconButton(icon: Icons.close, onTap: _close),
                   const Spacer(),
                   _CounterBadge(
-                    text: '${_index + 1}/${widget.photoPaths.length}',
+                    text: '${_index + 1}/${widget.photoUrls.length}',
                   ),
                 ],
               ),
@@ -460,11 +736,11 @@ class _CounterBadge extends StatelessWidget {
 
 /// ──────────────────────── Картинка с зумом ────────────────────────
 /// Картинка с pinch-to-zoom и перетаскиванием
-/// Поддерживает как локальные файлы, так и URL (для будущего API)
+/// Работает с URL из API
 class _ZoomableImage extends StatefulWidget {
-  final String photoPath; // Путь к фото (локальный File.path или URL)
+  final String photoUrl; // URL фотографии
 
-  const _ZoomableImage({required this.photoPath});
+  const _ZoomableImage({required this.photoUrl});
 
   @override
   State<_ZoomableImage> createState() => _ZoomableImageState();
@@ -479,9 +755,6 @@ class _ZoomableImageState extends State<_ZoomableImage> {
     super.dispose();
   }
 
-  /// Определяет, является ли путь локальным файлом или URL
-  bool get _isLocalFile => !widget.photoPath.startsWith('http');
-
   @override
   Widget build(BuildContext context) {
     return InteractiveViewer(
@@ -490,35 +763,33 @@ class _ZoomableImageState extends State<_ZoomableImage> {
       maxScale: 4.0,
       panEnabled: true,
       scaleEnabled: true,
-      child: _isLocalFile
-          ? Image.file(
-              File(widget.photoPath),
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Builder(
-                builder: (context) => Container(
-                  color: AppColors.getBorderColor(context),
-                  child: Icon(
-                    Icons.broken_image,
-                    size: 48,
-                    color: AppColors.getIconSecondaryColor(context),
-                  ),
-                ),
-              ),
-            )
-          : Image.network(
-              widget.photoPath,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Builder(
-                builder: (context) => Container(
-                  color: AppColors.getBorderColor(context),
-                  child: Icon(
-                    Icons.broken_image,
-                    size: 48,
-                    color: AppColors.getIconSecondaryColor(context),
-                  ),
+      child: CachedNetworkImage(
+        imageUrl: widget.photoUrl,
+        fit: BoxFit.contain,
+        errorWidget: (context, url, error) => Builder(
+          builder: (context) => Container(
+            color: AppColors.getBorderColor(context),
+            child: Icon(
+              Icons.broken_image,
+              size: 48,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+          ),
+        ),
+        placeholder: (context, url) => Builder(
+          builder: (context) => Container(
+            color: AppColors.getBorderColor(context),
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.getIconSecondaryColor(context),
                 ),
               ),
             ),
+          ),
+        ),
+      ),
     );
   }
 }

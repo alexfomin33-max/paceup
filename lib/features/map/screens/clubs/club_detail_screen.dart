@@ -695,6 +695,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                             child: ClubPhotoContent(
                               clubId: widget.clubId,
                               canEdit: _canEdit,
+                              clubData: _clubData,
+                              onPhotosUpdated: _loadClub,
                             ),
                           )
                         else if (_tab == 1)
