@@ -46,20 +46,23 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
 
   /// Обработка выбора события из списка
   void _onEventSelected(EventOption event) {
-    // КРИТИЧНО: Autocomplete вызывает onSelected синхронно во время обработки
-    // событий ввода, поэтому все операции нужно отложить, чтобы не блокировать UI.
-    // Используем Future.microtask для немедленного отложения на следующий тик event loop,
-    // что позволяет Autocomplete корректно завершить свою работу.
-    Future.microtask(() {
+    // КРИТИЧНО: Autocomplete вызывает onSelected синхронно во время обработки событий ввода.
+    // Проблема: если мы вызываем setState слишком рано, это вызывает перестроение виджета,
+    // и Autocomplete пытается скрыть overlay, который уже был удален.
+    // 
+    // Решение: откладываем setState на следующий кадр, чтобы Autocomplete успел
+    // корректно закрыть overlay. НЕ вызываем unfocus() здесь, так как Autocomplete
+    // сам управляет фокусом и overlay - это предотвращает конфликты.
+    
+    // Используем addPostFrameCallback для отложения на следующий кадр рендеринга
+    // Это гарантирует, что Autocomplete успеет закрыть overlay до любых изменений
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       
       // Обновляем локальное состояние выбранного события
       setState(() {
         _selectedEvent = event;
       });
-      
-      // Снимаем фокус с поля поиска
-      _searchFocusNode.unfocus();
     });
     
     // Асинхронные операции запускаем отдельно, чтобы не блокировать обновление UI
