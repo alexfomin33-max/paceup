@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../providers/services/api_provider.dart';
@@ -365,6 +366,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     final backgroundUrl = _clubData!['background_url'] as String? ?? '';
     final membersCount = _clubData!['members_count'] as int? ?? 0;
     final isOpen = _clubData!['is_open'] as bool? ?? true;
+    final link = _clubData!['link'] as String? ?? '';
 
     final description = _clubData!['description'] as String? ?? '';
 
@@ -600,6 +602,13 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                               icon: CupertinoIcons.person_2_fill,
                               text: 'Участников: $membersCount',
                             ),
+                            // Ссылка на сайт клуба (если указана)
+                            if (link.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              _LinkRow(
+                                link: link,
+                              ),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -842,6 +851,73 @@ class _InfoRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Строка со ссылкой на сайт клуба (кликабельная)
+class _LinkRow extends StatelessWidget {
+  final String link;
+  const _LinkRow({required this.link});
+
+  Future<void> _openLink(BuildContext context) async {
+    try {
+      final uri = Uri.parse(link);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Не удалось открыть ссылку'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка при открытии ссылки: ${ErrorHandler.format(e)}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => _openLink(context),
+      child: Row(
+        children: [
+          Icon(
+            CupertinoIcons.link,
+            size: 14,
+            color: AppColors.brandPrimary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              link,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                color: AppColors.brandPrimary,
+                decoration: TextDecoration.underline,
+                decorationColor: AppColors.brandPrimary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

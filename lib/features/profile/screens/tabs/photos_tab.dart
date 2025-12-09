@@ -1,43 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../providers/user_photos_provider.dart';
 
-class PhotosTab extends StatefulWidget {
-  const PhotosTab({super.key});
+/// Вкладка с фотографиями пользователя
+///
+/// Отображает все фотографии из активностей и постов пользователя,
+/// отсортированные по дате создания (свежие сверху)
+class PhotosTab extends ConsumerStatefulWidget {
+  /// ID пользователя, чьи фотографии нужно отобразить
+  final int userId;
+  const PhotosTab({super.key, required this.userId});
+
   @override
-  State<PhotosTab> createState() => _PhotosTabState();
+  ConsumerState<PhotosTab> createState() => _PhotosTabState();
 }
 
-class _PhotosTabState extends State<PhotosTab>
+class _PhotosTabState extends ConsumerState<PhotosTab>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
-  static const _assets = <String>[
-    'assets/foto_1.png',
-    'assets/foto_2.png',
-    'assets/foto_3.png',
-    'assets/foto_4.png',
-    'assets/foto_5.png',
-    'assets/foto_6.png',
-    'assets/foto_7.png',
-    'assets/foto_8.png',
-    'assets/foto_9.png',
-    'assets/foto_10.png',
-    'assets/foto_11.png',
-    'assets/foto_12.png',
-    // новые 3 фото ниже
-    'assets/foto_13.png',
-    'assets/foto_14.png',
-    'assets/foto_15.png',
-  ];
-
-  void _openGallery(int index) {
+  void _openGallery(int index, List<String> photoUrls) {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: true,
         barrierColor: AppColors.scrim40,
-        pageBuilder: (_, _, _) =>
-            _FullscreenGallery(initialIndex: index, assets: _assets),
+        pageBuilder: (_, _, _) => _FullscreenGallery(
+          initialIndex: index,
+          photoUrls: photoUrls,
+          userId: widget.userId,
+        ),
         transitionsBuilder: (_, animation, _, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -48,6 +42,92 @@ class _PhotosTabState extends State<PhotosTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    // ──────────────── Получаем состояние фотографий из провайдера ────────────────
+    final photosState = ref.watch(userPhotosProvider(widget.userId));
+
+    // ──────────────── Состояние загрузки ────────────────
+    if (photosState.isLoading && photosState.photos.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    // ──────────────── Состояние ошибки ────────────────
+    if (photosState.error != null && photosState.photos.isEmpty) {
+      return CustomScrollView(
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        slivers: [
+          const SliverToBoxAdapter(child: SizedBox(height: 32)),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: AppColors.error,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    photosState.error ?? 'Ошибка загрузки фотографий',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      color: AppColors.error,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {
+                      ref
+                          .read(userPhotosProvider(widget.userId).notifier)
+                          .refresh();
+                    },
+                    child: const Text('Повторить'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final photos = photosState.photos;
+    final photoUrls = photos.map((p) => p.url).toList();
+
+    // ──────────────── Пустое состояние ────────────────
+    if (photos.isEmpty && !photosState.isLoading) {
+      return CustomScrollView(
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        slivers: [
+          const SliverToBoxAdapter(child: SizedBox(height: 32)),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Text(
+                'Нет фотографий',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.getTextSecondaryColor(context),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // ──────────────── Сетка фотографий ────────────────
     return CustomScrollView(
       physics: const BouncingScrollPhysics(
         parent: AlwaysScrollableScrollPhysics(),
@@ -64,25 +144,24 @@ class _PhotosTabState extends State<PhotosTab>
               crossAxisSpacing: 3,
               childAspectRatio: 1.0, // квадратные превью
             ),
-            itemCount: _assets.length,
+            itemCount: photos.length,
             itemBuilder: (context, i) {
-              final path = _assets[i];
+              final photo = photos[i];
               return GestureDetector(
-                onTap: () => _openGallery(i),
+                onTap: () => _openGallery(i, photoUrls),
                 child: Hero(
-                  tag: 'photo-$i',
-                  flightShuttleBuilder:
-                      (
-                        BuildContext flightContext,
-                        Animation<double> animation,
-                        HeroFlightDirection flightDirection,
-                        BuildContext fromHeroContext,
-                        BuildContext toHeroContext,
-                      ) {
-                        // Берём виджет-ребёнок у целевого Hero
-                        final Hero toHero = toHeroContext.widget as Hero;
-                        return toHero.child;
-                      },
+                  tag: 'photo-${widget.userId}-$i-${photo.url}',
+                  flightShuttleBuilder: (
+                    BuildContext flightContext,
+                    Animation<double> animation,
+                    HeroFlightDirection flightDirection,
+                    BuildContext fromHeroContext,
+                    BuildContext toHeroContext,
+                  ) {
+                    // Берём виджет-ребёнок у целевого Hero
+                    final Hero toHero = toHeroContext.widget as Hero;
+                    return toHero.child;
+                  },
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final dpr = MediaQuery.of(context).devicePixelRatio;
@@ -92,8 +171,7 @@ class _PhotosTabState extends State<PhotosTab>
                       final columns = 3;
                       const sidePadding = 8.0;
                       const spacing = 6.0;
-                      final cellW =
-                          (screenW -
+                      final cellW = (screenW -
                               sidePadding * 2 -
                               spacing * (columns - 1)) /
                           columns;
@@ -102,11 +180,29 @@ class _PhotosTabState extends State<PhotosTab>
 
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
-                        child: Image.asset(
-                          path,
+                        child: CachedNetworkImage(
+                          imageUrl: photo.url,
                           fit: BoxFit.cover,
-                          cacheWidth: cacheWidth, // 👈 дешёвое превью
+                          memCacheWidth: cacheWidth,
                           filterQuality: FilterQuality.low,
+                          placeholder: (context, url) => Container(
+                            color: AppColors.getDividerColor(context),
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: AppColors.getDividerColor(context),
+                            child: Icon(
+                              Icons.broken_image,
+                              color: AppColors.getTextSecondaryColor(
+                                context,
+                              ),
+                              size: 32,
+                            ),
+                          ),
                         ),
                       );
                     },
@@ -125,8 +221,13 @@ class _PhotosTabState extends State<PhotosTab>
 /// Полноэкранная галерея с перелистыванием, Hero и зумом
 class _FullscreenGallery extends StatefulWidget {
   final int initialIndex;
-  final List<String> assets;
-  const _FullscreenGallery({required this.initialIndex, required this.assets});
+  final List<String> photoUrls;
+  final int userId;
+  const _FullscreenGallery({
+    required this.initialIndex,
+    required this.photoUrls,
+    required this.userId,
+  });
 
   @override
   State<_FullscreenGallery> createState() => _FullscreenGalleryState();
@@ -157,19 +258,24 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
             controller: _controller,
             physics: const BouncingScrollPhysics(),
             onPageChanged: (i) => setState(() => _index = i),
-            itemCount: widget.assets.length,
+            itemCount: widget.photoUrls.length,
             itemBuilder: (_, i) {
-              final path = widget.assets[i];
+              final photoUrl = widget.photoUrls[i];
+              final isInitial = i == widget.initialIndex;
 
               // Для корректного HERO при зуме — свой InteractiveViewer на каждый слайд
+              // Hero используется только для начального изображения
+              // Тег должен совпадать с тегом в сетке: 'photo-${userId}-${initialIndex}-${photoUrl}'
               return GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: _close, // закрытие одиночным тапом
                 child: Center(
-                  child: Hero(
-                    tag: 'photo-$i',
-                    child: _ZoomableImage(path: path),
-                  ),
+                  child: isInitial
+                      ? Hero(
+                          tag: 'photo-${widget.userId}-${widget.initialIndex}-${photoUrl}',
+                          child: _ZoomableImage(photoUrl: photoUrl),
+                        )
+                      : _ZoomableImage(photoUrl: photoUrl),
                 ),
               );
             },
@@ -183,7 +289,9 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
                 children: [
                   _CircleIconButton(icon: Icons.close, onTap: _close),
                   const Spacer(),
-                  _CounterBadge(text: '${_index + 1}/${widget.assets.length}'),
+                  _CounterBadge(
+                    text: '${_index + 1}/${widget.photoUrls.length}',
+                  ),
                 ],
               ),
             ),
@@ -245,8 +353,8 @@ class _CounterBadge extends StatelessWidget {
 
 /// Картинка с поддержкой pinch-to-zoom и перетаскиванием
 class _ZoomableImage extends StatefulWidget {
-  final String path;
-  const _ZoomableImage({required this.path});
+  final String photoUrl;
+  const _ZoomableImage({required this.photoUrl});
 
   @override
   State<_ZoomableImage> createState() => _ZoomableImageState();
@@ -270,7 +378,28 @@ class _ZoomableImageState extends State<_ZoomableImage> {
       maxScale: 4.0,
       panEnabled: true,
       scaleEnabled: true,
-      child: Image.asset(widget.path, fit: BoxFit.contain),
+      child: CachedNetworkImage(
+        imageUrl: widget.photoUrl,
+        fit: BoxFit.contain,
+        placeholder: (context, url) => Container(
+          color: AppColors.textPrimary,
+          child: const Center(
+            child: CircularProgressIndicator(
+              color: AppColors.surface,
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: AppColors.textPrimary,
+          child: Center(
+            child: Icon(
+              Icons.broken_image,
+              color: AppColors.surface,
+              size: 48,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
