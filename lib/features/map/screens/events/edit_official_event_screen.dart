@@ -531,8 +531,6 @@ class _EditOfficialEventScreenState
         fields['latitude'] = selectedLocation!.latitude.toString();
         fields['longitude'] = selectedLocation!.longitude.toString();
         fields['event_date'] = _fmtDate(date!);
-        // ── время опционально (если не указано, отправляем дефолтное значение 00:00)
-        fields['event_time'] = '00:00';
         fields['description'] = descCtrl.text.trim();
 
         // Флаги для сохранения существующих изображений
@@ -574,7 +572,6 @@ class _EditOfficialEventScreenState
             'latitude': fields['latitude'],
             'longitude': fields['longitude'],
             'event_date': fields['event_date'],
-            'event_time': fields['event_time'], // дефолтное значение 00:00
             'description': fields['description'],
             'event_link': fields['event_link'] ?? '',
             'template_name': fields['template_name'] ?? '',

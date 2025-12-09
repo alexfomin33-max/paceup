@@ -5,7 +5,6 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'add_official_event_state.dart';
@@ -42,11 +41,6 @@ class AddOfficialEventNotifier extends StateNotifier<AddOfficialEventState> {
   /// Обновление даты
   void updateDate(DateTime? value) {
     state = state.copyWith(date: value);
-  }
-
-  /// Обновление времени
-  void updateTime(TimeOfDay? value) {
-    state = state.copyWith(time: value);
   }
 
   /// Добавление нового поля дистанции
@@ -102,7 +96,6 @@ class AddOfficialEventNotifier extends StateNotifier<AddOfficialEventState> {
     required String link,
     String? activity,
     DateTime? date,
-    TimeOfDay? time,
     LatLng? location,
     List<String>? distances,
   }) {
@@ -113,7 +106,6 @@ class AddOfficialEventNotifier extends StateNotifier<AddOfficialEventState> {
       link: link,
       activity: activity,
       date: date,
-      time: time,
       selectedLocation: location,
       distances: distances ?? [''],
     );
