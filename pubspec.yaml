@@ -280,3 +280,9 @@ flutter:
   
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# ────────────────────────────────────────────────────────────────
+# Переопределение зависимостей для совместимости с macOS 10.15
+# ────────────────────────────────────────────────────────────────
+dependency_overrides:
+  sqlite3_flutter_libs: 0.5.15  # Используем старую версию для совместимости с sqlite3 3.50.4

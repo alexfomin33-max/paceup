@@ -182,6 +182,26 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
           throw Exception('Пользователь не авторизован');
         }
 
+        // ── Проверяем наличие основного снаряжения данного типа
+        // Если основного снаряжения нет, новое станет основным
+        bool hasMainEquipment = false;
+        try {
+          final equipmentData = await api.post(
+            '/get_equipment.php',
+            body: {'user_id': userId.toString()},
+          );
+          if (equipmentData['success'] == true) {
+            final bootsList = equipmentData['boots'] as List<dynamic>? ?? [];
+            // Проверяем, есть ли хотя бы одно основное снаряжение (main == 1)
+            hasMainEquipment = bootsList.any(
+              (item) => (item['main'] as int? ?? 0) == 1,
+            );
+          }
+        } catch (e) {
+          // Если не удалось проверить, считаем что основное есть (безопасный вариант)
+          hasMainEquipment = true;
+        }
+
         // Формируем данные
         final files = <String, File>{};
         final fields = <String, String>{
@@ -190,7 +210,7 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
           'name': model,
           'brand': brand,
           'dist': km.toString(),
-          'main': '0', // По умолчанию не на главном экране
+          'main': hasMainEquipment ? '0' : '1', // Основное, если нет основного снаряжения
           'in_use_since': _formatDateForApi(
             _inUseFrom ?? DateTime.now(),
           ), // Дата в формате DD.MM.YYYY
