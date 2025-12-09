@@ -4,7 +4,6 @@
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -27,15 +26,15 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
   // Поиск событий
   final TextEditingController _searchCtrl = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  
+
   // Выбранное событие (null = все слоты, EventOption.mySlots() = мои слоты)
   // Используем ValueNotifier для безопасного обновления без setState
-  final ValueNotifier<EventOption?> _selectedEventNotifier = 
+  final ValueNotifier<EventOption?> _selectedEventNotifier =
       ValueNotifier<EventOption?>(null);
-  
+
   // Геттер для обратной совместимости
   EventOption? get _selectedEvent => _selectedEventNotifier.value;
-  
+
   // Раскрытые карточки (по индексу)
   final Set<int> _expanded = {};
 
@@ -54,16 +53,16 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
     // КРИТИЧНО: Autocomplete вызывает onSelected синхронно во время обработки событий ввода.
     // Проблема: любые синхронные изменения состояния (setState) вызывают перестроение виджета,
     // что удаляет Autocomplete до того, как он успевает закрыть overlay, вызывая ошибку.
-    // 
+    //
     // Решение: НЕ вызываем setState в onSelected вообще. Используем ValueNotifier,
     // который обновляет состояние асинхронно и безопасно, не вызывая немедленного перестроения.
-    
+
     // Обновляем состояние через ValueNotifier (безопасно, не вызывает перестроение)
     _selectedEventNotifier.value = event;
-    
+
     // Асинхронные операции запускаем отдельно
     final notifier = ref.read(slotsProvider.notifier);
-    
+
     if (event.isMySlots) {
       // Для "Мои" получаем user_id из AuthService
       unawaited(
@@ -86,7 +85,7 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
   Future<void> _loadMySlots(SlotsNotifier notifier) async {
     final authService = AuthService();
     final userId = await authService.getUserId();
-    
+
     if (userId != null) {
       final newFilter = SlotsFilter(userId: userId);
       notifier.updateFilter(newFilter);
@@ -100,7 +99,7 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
   void _onClear() {
     _selectedEventNotifier.value = null;
     _searchCtrl.clear();
-    
+
     // Показываем все слоты
     final notifier = ref.read(slotsProvider.notifier);
     notifier.updateFilter(const SlotsFilter());
@@ -144,7 +143,7 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
         final searchResults = eventsData
             .map((e) => EventOption.fromApi(e as Map<String, dynamic>))
             .toList();
-        
+
         // Всегда добавляем "Мои" в начало списка
         return [EventOption.mySlots(), ...searchResults];
       }
@@ -223,22 +222,20 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
               children: [
                 TextSpan(
                   text: slotsState.error!,
-                  style: AppTextStyles.h14w4.copyWith(
-                    color: Colors.red,
-                  ),
+                  style: AppTextStyles.h14w4.copyWith(color: Colors.red),
                 ),
               ],
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-            CupertinoButton(
-              onPressed: () {
-                final notifier = ref.read(slotsProvider.notifier);
-                notifier.loadInitial();
-              },
-              child: const Text('Повторить'),
-            ),
+          CupertinoButton(
+            onPressed: () {
+              final notifier = ref.read(slotsProvider.notifier);
+              notifier.loadInitial();
+            },
+            child: const Text('Повторить'),
+          ),
         ],
       );
     }
@@ -282,49 +279,52 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
-        itemCount: slotsState.items.length + headerCount + (slotsState.hasMore ? 1 : 0),
+        itemCount:
+            slotsState.items.length +
+            headerCount +
+            (slotsState.hasMore ? 1 : 0),
         separatorBuilder: (_, _) => const SizedBox(height: 10),
         itemBuilder: (_, index) {
-        if (index == 0) {
-          return RepaintBoundary(
-            child: _EventDropdownField(
-              key: const ValueKey('event_dropdown_field'),
-              controller: _searchCtrl,
-              focusNode: _searchFocusNode,
-              hintText: 'Поиск события',
-              selectedEvent: _selectedEvent,
-              onEventSelected: _onEventSelected,
-              onClear: _onClear,
-              searchFunction: _searchEvents,
-            ),
+          if (index == 0) {
+            return RepaintBoundary(
+              child: _EventDropdownField(
+                key: const ValueKey('event_dropdown_field'),
+                controller: _searchCtrl,
+                focusNode: _searchFocusNode,
+                hintText: 'Поиск события',
+                selectedEvent: _selectedEvent,
+                onEventSelected: _onEventSelected,
+                onClear: _onClear,
+                searchFunction: _searchEvents,
+              ),
+            );
+          }
+
+          // Индикатор загрузки следующей страницы в конце списка
+          if (index == slotsState.items.length + headerCount) {
+            return slotsState.isLoadingMore
+                ? const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Center(child: CupertinoActivityIndicator()),
+                  )
+                : const SizedBox.shrink();
+          }
+
+          final i = index - headerCount;
+          final item = slotsState.items[i];
+          final isOpen = _expanded.contains(i);
+
+          return MarketSlotCard(
+            item: item,
+            expanded: isOpen,
+            onToggle: () => setState(() => _expanded.toggle(i)),
+            onChatClosed: () {
+              // Обновляем список слотов после возврата из экрана чата
+              final notifier = ref.read(slotsProvider.notifier);
+              notifier.loadInitial();
+            },
           );
-        }
-
-        // Индикатор загрузки следующей страницы в конце списка
-        if (index == slotsState.items.length + headerCount) {
-          return slotsState.isLoadingMore
-              ? const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Center(child: CupertinoActivityIndicator()),
-                )
-              : const SizedBox.shrink();
-        }
-
-        final i = index - headerCount;
-        final item = slotsState.items[i];
-        final isOpen = _expanded.contains(i);
-
-        return MarketSlotCard(
-          item: item,
-          expanded: isOpen,
-          onToggle: () => setState(() => _expanded.toggle(i)),
-          onChatClosed: () {
-            // Обновляем список слотов после возврата из экрана чата
-            final notifier = ref.read(slotsProvider.notifier);
-            notifier.loadInitial();
-          },
-        );
-      },
+        },
       ),
     );
   }
@@ -344,7 +344,7 @@ class _EventDropdownField extends StatefulWidget {
   final VoidCallback onClear;
   final Future<Iterable<EventOption>> Function(String) searchFunction;
 
-  _EventDropdownField({
+  const _EventDropdownField({
     super.key,
     required this.controller,
     required this.focusNode,
@@ -363,13 +363,13 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
   // Результаты поиска
   List<EventOption> _options = [];
   bool _isLoading = false;
-  
+
   // OverlayEntry для отображения списка результатов
   OverlayEntry? _overlayEntry;
-  
+
   // LayerLink для позиционирования overlay относительно TextField
   final LayerLink _layerLink = LayerLink();
-  
+
   // GlobalKey для получения позиции TextField
   final GlobalKey _fieldKey = GlobalKey();
 
@@ -384,7 +384,7 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
         }
       });
     }
-    
+
     // Слушаем изменения текста для поиска
     widget.controller.addListener(_onTextChanged);
     widget.focusNode.addListener(_onFocusChanged);
@@ -415,7 +415,7 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
 
   void _onTextChanged() {
     final query = widget.controller.text.trim();
-    
+
     if (query.isEmpty) {
       // Если поле пустое, скрываем overlay
       setState(() {
@@ -425,7 +425,7 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
       _hideOptions();
       return;
     }
-    
+
     if (query.length < 2) {
       // Если запрос короткий, показываем только "Мои"
       setState(() {
@@ -482,7 +482,9 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
       debugPrint('❌ Ошибка поиска событий: $e');
       if (mounted && widget.controller.text.trim() == query) {
         setState(() {
-          _options = [EventOption.mySlots()]; // Показываем хотя бы "Мои" при ошибке
+          _options = [
+            EventOption.mySlots(),
+          ]; // Показываем хотя бы "Мои" при ошибке
           _isLoading = false;
         });
         _showOptionsIfFocused();
@@ -518,9 +520,10 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
     return OverlayEntry(
       builder: (context) {
         // Получаем размер TextField динамически
-        final RenderBox? renderBox = _fieldKey.currentContext?.findRenderObject() as RenderBox?;
+        final RenderBox? renderBox =
+            _fieldKey.currentContext?.findRenderObject() as RenderBox?;
         final size = renderBox?.size ?? const Size(200, 50); // Fallback размер
-        
+
         return Positioned(
           width: size.width,
           child: CompositedTransformFollower(
@@ -539,89 +542,109 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
                         child: Center(child: CupertinoActivityIndicator()),
                       )
                     : _options.isEmpty
-                        ? const SizedBox.shrink()
-                        : ListView.builder(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            itemCount: _options.length,
-                            itemBuilder: (BuildContext context, int index) {
-                        final option = _options[index];
-                        final isMySlots = option.isMySlots;
-                        
-                        return InkWell(
-                          onTap: () {
-                            _hideOptions();
-                            widget.focusNode.unfocus();
-                            widget.onEventSelected(option);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            child: Row(
-                              children: [
-                                // Изображение события или иконка
-                                if (isMySlots)
-                                  Icon(
-                                    CupertinoIcons.person_fill,
-                                    size: 18,
-                                    color: AppColors.getIconSecondaryColor(context),
-                                  )
-                                else if (option.logoUrl != null && option.logoUrl!.isNotEmpty)
-                                  Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(AppRadius.xs),
-                                      color: AppColors.getBackgroundColor(context),
-                                    ),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: Image.network(
-                                      option.logoUrl!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Icon(
-                                          CupertinoIcons.calendar,
-                                          size: 18,
-                                          color: AppColors.getIconSecondaryColor(context),
-                                        );
-                                      },
-                                    ),
-                                  )
-                                else
-                                  Icon(
-                                    CupertinoIcons.calendar,
-                                    size: 18,
-                                    color: AppColors.getIconSecondaryColor(context),
-                                  ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        option.name,
-                                        style: AppTextStyles.h14w4.copyWith(
-                                          color: AppColors.getTextPrimaryColor(context),
+                    ? const SizedBox.shrink()
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: _options.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final option = _options[index];
+                          final isMySlots = option.isMySlots;
+
+                          return InkWell(
+                            onTap: () {
+                              _hideOptions();
+                              widget.focusNode.unfocus();
+                              widget.onEventSelected(option);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                children: [
+                                  // Изображение события или иконка
+                                  if (isMySlots)
+                                    Icon(
+                                      CupertinoIcons.person_fill,
+                                      size: 18,
+                                      color: AppColors.getIconSecondaryColor(
+                                        context,
+                                      ),
+                                    )
+                                  else if (option.logoUrl != null &&
+                                      option.logoUrl!.isNotEmpty)
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.xs,
+                                        ),
+                                        color: AppColors.getBackgroundColor(
+                                          context,
                                         ),
                                       ),
-                                      if (!isMySlots && option.place.isNotEmpty)
+                                      clipBehavior: Clip.antiAlias,
+                                      child: Image.network(
+                                        option.logoUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Icon(
+                                            CupertinoIcons.calendar,
+                                            size: 18,
+                                            color:
+                                                AppColors.getIconSecondaryColor(
+                                                  context,
+                                                ),
+                                          );
+                                        },
+                                      ),
+                                    )
+                                  else
+                                    Icon(
+                                      CupertinoIcons.calendar,
+                                      size: 18,
+                                      color: AppColors.getIconSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
                                         Text(
-                                          option.place,
-                                          style: AppTextStyles.h12w4.copyWith(
-                                            color: AppColors.getTextSecondaryColor(context),
+                                          option.name,
+                                          style: AppTextStyles.h14w4.copyWith(
+                                            color:
+                                                AppColors.getTextPrimaryColor(
+                                                  context,
+                                                ),
                                           ),
                                         ),
-                                    ],
+                                        if (!isMySlots &&
+                                            option.place.isNotEmpty)
+                                          Text(
+                                            option.place,
+                                            style: AppTextStyles.h12w4.copyWith(
+                                              color:
+                                                  AppColors.getTextSecondaryColor(
+                                                    context,
+                                                  ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                            },
-                          ),
+                          );
+                        },
+                      ),
               ),
             ),
           ),
@@ -632,8 +655,9 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
 
   @override
   Widget build(BuildContext context) {
-    final hasText = widget.controller.text.isNotEmpty || widget.selectedEvent != null;
-    
+    final hasText =
+        widget.controller.text.isNotEmpty || widget.selectedEvent != null;
+
     return CompositedTransformTarget(
       link: _layerLink,
       child: TextField(

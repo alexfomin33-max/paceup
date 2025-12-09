@@ -6,7 +6,6 @@
 
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Состояние формы создания официального события
@@ -124,20 +123,18 @@ class AddOfficialEventState {
           templateName == other.templateName;
 
   @override
-  int get hashCode =>
-      Object.hash(
-        name,
-        place,
-        description,
-        link,
-        activity,
-        date,
-        distances,
-        logoFile,
-        backgroundFile,
-        selectedLocation,
-        saveTemplate,
-        templateName,
-      );
+  int get hashCode => Object.hash(
+    name,
+    place,
+    description,
+    link,
+    activity,
+    date,
+    distances,
+    logoFile,
+    backgroundFile,
+    selectedLocation,
+    saveTemplate,
+    templateName,
+  );
 }
-

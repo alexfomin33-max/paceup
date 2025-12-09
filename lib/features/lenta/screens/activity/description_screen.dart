@@ -368,6 +368,7 @@ class _WatchPill extends StatelessWidget {
 /// 1. В логах (developer.log) будет видно количество сегментов
 /// 2. Используйте stats?.hasSplitsData() для проверки наличия данных
 /// 3. Используйте stats?.splitsCount для получения количества сегментов
+// ignore: unintended_html_in_doc_comment
 /// 4. Данные приходят из API в формате Map<String, double>:
 ///    - pacePerKm: {"1": 355.0, "2": 333.0, ...} (секунды на километр)
 ///    - heartRatePerKm: {"1": 128.0, "2": 135.0, ...} (пульс в bpm)

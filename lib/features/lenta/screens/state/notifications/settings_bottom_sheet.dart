@@ -118,7 +118,7 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
             registrations: true,
             followers: true,
           ),
-          error: (_, __) => const NotificationSettings(
+          error: (_, _) => const NotificationSettings(
             workouts: true,
             likes: true,
             comments: true,

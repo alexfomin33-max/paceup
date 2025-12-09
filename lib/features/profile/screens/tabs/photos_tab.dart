@@ -48,9 +48,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
 
     // ──────────────── Состояние загрузки ────────────────
     if (photosState.isLoading && photosState.photos.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     // ──────────────── Состояние ошибки ────────────────
@@ -67,7 +65,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.error_outline,
                     size: 48,
                     color: AppColors.error,
@@ -75,7 +73,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                   const SizedBox(height: 16),
                   Text(
                     photosState.error ?? 'Ошибка загрузки фотографий',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 16,
                       color: AppColors.error,
@@ -151,17 +149,18 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                 onTap: () => _openGallery(i, photoUrls),
                 child: Hero(
                   tag: 'photo-${widget.userId}-$i-${photo.url}',
-                  flightShuttleBuilder: (
-                    BuildContext flightContext,
-                    Animation<double> animation,
-                    HeroFlightDirection flightDirection,
-                    BuildContext fromHeroContext,
-                    BuildContext toHeroContext,
-                  ) {
-                    // Берём виджет-ребёнок у целевого Hero
-                    final Hero toHero = toHeroContext.widget as Hero;
-                    return toHero.child;
-                  },
+                  flightShuttleBuilder:
+                      (
+                        BuildContext flightContext,
+                        Animation<double> animation,
+                        HeroFlightDirection flightDirection,
+                        BuildContext fromHeroContext,
+                        BuildContext toHeroContext,
+                      ) {
+                        // Берём виджет-ребёнок у целевого Hero
+                        final Hero toHero = toHeroContext.widget as Hero;
+                        return toHero.child;
+                      },
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final dpr = MediaQuery.of(context).devicePixelRatio;
@@ -171,7 +170,8 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                       final columns = 3;
                       const sidePadding = 8.0;
                       const spacing = 6.0;
-                      final cellW = (screenW -
+                      final cellW =
+                          (screenW -
                               sidePadding * 2 -
                               spacing * (columns - 1)) /
                           columns;
@@ -188,18 +188,14 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                           placeholder: (context, url) => Container(
                             color: AppColors.getDividerColor(context),
                             child: const Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                           ),
                           errorWidget: (context, url, error) => Container(
                             color: AppColors.getDividerColor(context),
                             child: Icon(
                               Icons.broken_image,
-                              color: AppColors.getTextSecondaryColor(
-                                context,
-                              ),
+                              color: AppColors.getTextSecondaryColor(context),
                               size: 32,
                             ),
                           ),
@@ -272,7 +268,8 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
                 child: Center(
                   child: isInitial
                       ? Hero(
-                          tag: 'photo-${widget.userId}-${widget.initialIndex}-${photoUrl}',
+                          tag:
+                              'photo-$widget.userId-$widget.initialIndex-$photoUrl',
                           child: _ZoomableImage(photoUrl: photoUrl),
                         )
                       : _ZoomableImage(photoUrl: photoUrl),
@@ -384,19 +381,13 @@ class _ZoomableImageState extends State<_ZoomableImage> {
         placeholder: (context, url) => Container(
           color: AppColors.textPrimary,
           child: const Center(
-            child: CircularProgressIndicator(
-              color: AppColors.surface,
-            ),
+            child: CircularProgressIndicator(color: AppColors.surface),
           ),
         ),
         errorWidget: (context, url, error) => Container(
           color: AppColors.textPrimary,
-          child: Center(
-            child: Icon(
-              Icons.broken_image,
-              color: AppColors.surface,
-              size: 48,
-            ),
+          child: const Center(
+            child: Icon(Icons.broken_image, color: AppColors.surface, size: 48),
           ),
         ),
       ),

@@ -17,7 +17,8 @@ class ClubPhotoContent extends ConsumerStatefulWidget {
   final int clubId;
   final bool canEdit; // Является ли пользователь владельцем клуба
   final Map<String, dynamic>? clubData; // Данные клуба с фотографиями
-  final VoidCallback? onPhotosUpdated; // Callback для обновления данных после загрузки/удаления
+  final VoidCallback?
+  onPhotosUpdated; // Callback для обновления данных после загрузки/удаления
 
   const ClubPhotoContent({
     super.key,
@@ -59,10 +60,12 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
     final photosList = widget.clubData!['photos'] as List<dynamic>? ?? [];
     setState(() {
       _photos = photosList
-          .map((p) => {
-                'id': p['id'] as int? ?? 0,
-                'url': p['url'] as String? ?? '',
-              })
+          .map(
+            (p) => {
+              'id': p['id'] as int? ?? 0,
+              'url': p['url'] as String? ?? '',
+            },
+          )
           .where((p) => p['url'] != null && (p['url'] as String).isNotEmpty)
           .toList();
     });
@@ -131,10 +134,12 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
         final photosList = response['photos'] as List<dynamic>? ?? [];
         setState(() {
           _photos = photosList
-              .map((p) => {
-                    'id': p['id'] as int? ?? 0,
-                    'url': p['url'] as String? ?? '',
-                  })
+              .map(
+                (p) => {
+                  'id': p['id'] as int? ?? 0,
+                  'url': p['url'] as String? ?? '',
+                },
+              )
               .where((p) => p['url'] != null && (p['url'] as String).isNotEmpty)
               .toList();
         });
@@ -180,7 +185,10 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
 
   /// ──────────────────────── Удаление фото ────────────────────────
   Future<void> _deletePhoto(int index) async {
-    if (_isDeleting || !widget.canEdit || index < 0 || index >= _photos.length) {
+    if (_isDeleting ||
+        !widget.canEdit ||
+        index < 0 ||
+        index >= _photos.length) {
       return;
     }
 
@@ -247,10 +255,12 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
         final photosList = response['photos'] as List<dynamic>? ?? [];
         setState(() {
           _photos = photosList
-              .map((p) => {
-                    'id': p['id'] as int? ?? 0,
-                    'url': p['url'] as String? ?? '',
-                  })
+              .map(
+                (p) => {
+                  'id': p['id'] as int? ?? 0,
+                  'url': p['url'] as String? ?? '',
+                },
+              )
               .where((p) => p['url'] != null && (p['url'] as String).isNotEmpty)
               .toList();
         });
@@ -303,12 +313,12 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
       PageRouteBuilder(
         opaque: true,
         barrierColor: AppColors.scrim40,
-        pageBuilder: (_, __, ___) => _FullscreenGallery(
+        pageBuilder: (_, _, _) => _FullscreenGallery(
           initialIndex: index,
           photoUrls: photoUrls,
           clubId: widget.clubId,
         ),
-        transitionsBuilder: (_, animation, __, child) =>
+        transitionsBuilder: (_, animation, _, child) =>
             FadeTransition(opacity: animation, child: child),
       ),
     );

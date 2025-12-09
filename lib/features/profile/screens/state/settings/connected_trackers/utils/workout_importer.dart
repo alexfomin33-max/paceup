@@ -210,8 +210,9 @@ Future<ImportResult> importWorkout(
     if (hrMax != null) stats['maxHeartRate'] = hrMax;
     if (cadenceAvg != null) stats['avgCadence'] = cadenceAvg;
     if (caloriesFromWorkout != null) stats['calories'] = caloriesFromWorkout;
-    if (totalStepsFromHealth != null)
+    if (totalStepsFromHealth != null) {
       stats['totalSteps'] = totalStepsFromHealth;
+    }
 
     stats['startedAt'] = wStart.toIso8601String();
     stats['finishedAt'] = wEnd.toIso8601String();

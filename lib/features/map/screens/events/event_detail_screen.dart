@@ -409,7 +409,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
     return PopScope(
       canPop: _updatedParticipantsCount == null,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         // ── Если количество участников было обновлено и pop еще не произошел, возвращаем результат
         if (!didPop && _updatedParticipantsCount != null && mounted) {
           Navigator.of(context).pop({

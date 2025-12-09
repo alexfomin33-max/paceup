@@ -750,8 +750,9 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           title: 'Обрезка фотографии ${i + 1}',
         );
 
-        if (cropped == null)
+        if (cropped == null) {
           continue; // Пропускаем, если пользователь отменил обрезку
+        }
 
         // Сжимаем обрезанное изображение
         final compressed = await compressLocalImage(

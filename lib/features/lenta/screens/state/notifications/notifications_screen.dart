@@ -112,7 +112,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   // ─────────────────────────────────────────────────────────────────────────────
   // ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ: загрузка активности по ID
   // ─────────────────────────────────────────────────────────────────────────────
-  Future<al.Activity?> _loadActivityById(int activityId, int currentUserId) async {
+  Future<al.Activity?> _loadActivityById(
+    int activityId,
+    int currentUserId,
+  ) async {
     // Сначала пытаемся найти в ленте
     final lentaState = ref.read(lentaProvider(currentUserId));
     try {
@@ -126,7 +129,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     // Загружаем через API, проверяя несколько страниц
     try {
       final api = ref.read(apiServiceProvider);
-      
+
       // Проверяем первые 3 страницы (до 300 активностей)
       for (int page = 1; page <= 3; page++) {
         try {
@@ -169,20 +172,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   // НАВИГАЦИЯ: обработка клика на уведомление
   // ─────────────────────────────────────────────────────────────────────────────
   Future<void> _handleNotificationTap(NotificationItem notification) async {
-    final currentUserIdAsync = ref.read(currentUserIdProvider);
-    final currentUserId = await currentUserIdAsync.when(
-      data: (id) => id,
-      loading: () => null,
-      error: (_, __) => null,
-    );
+    // Получаем userId из FutureProvider через .future для await
+    final currentUserId = await ref.read(currentUserIdProvider.future);
+
+    // Проверяем, что виджет все еще смонтирован после async операции
+    if (!mounted) return;
 
     if (currentUserId == null) return;
 
     // Отмечаем уведомление как прочитанное
     if (!notification.isRead) {
-      ref
-          .read(notificationsProvider.notifier)
-          .markAsRead([notification.id]);
+      ref.read(notificationsProvider.notifier).markAsRead([notification.id]);
     }
 
     // Определяем тип объекта и выполняем навигацию
@@ -191,7 +191,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final notificationType = notification.notificationType.toLowerCase();
 
     // ─── Переход на профиль пользователя (клик на аватарку обрабатывается отдельно)
-    if (objectType == 'user' || notificationType.contains('follow') || notificationType.contains('подпис')) {
+    if (objectType == 'user' ||
+        notificationType.contains('follow') ||
+        notificationType.contains('подпис')) {
+      if (!mounted) return;
       Navigator.of(context).push(
         TransparentPageRoute(
           builder: (_) => ProfileScreen(userId: notification.senderId),
@@ -205,6 +208,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       // Проверяем, является ли это официальным событием (топ событие)
       // Для простоты используем обычный экран события
       // Если нужно различать, можно добавить дополнительное поле в уведомление
+      if (!mounted) return;
       Navigator.of(context).push(
         TransparentPageRoute(
           builder: (_) => EventDetailScreen(eventId: objectId),
@@ -215,7 +219,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     // ─── Переход на тренировку/активность
     // Проверяем и objectType и notificationType для надежности
-    final isActivityNotification = objectType == 'activity' ||
+    final isActivityNotification =
+        objectType == 'activity' ||
         objectType == 'training' ||
         notificationType == 'workouts' ||
         notificationType.contains('workout') ||
@@ -223,6 +228,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     if (isActivityNotification) {
       final foundActivity = await _loadActivityById(objectId, currentUserId);
+
+      // Проверяем, что виджет все еще смонтирован после async операции
+      if (!mounted) return;
 
       if (foundActivity != null) {
         Navigator.of(context).push(
@@ -250,7 +258,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     // ─── Переход на комментарий
     // Для комментария objectType и objectId указывают на объект (activity/post),
     // к которому был оставлен комментарий, а не на сам комментарий
-    final isCommentNotification = notificationType == 'comments' ||
+    final isCommentNotification =
+        notificationType == 'comments' ||
         notificationType.contains('comment') ||
         notificationType.contains('комментар');
 
@@ -258,6 +267,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       // Открываем экран объекта, к которому относится комментарий
       if (objectType == 'activity') {
         final foundActivity = await _loadActivityById(objectId, currentUserId);
+
+        // Проверяем, что виджет все еще смонтирован после async операции
+        if (!mounted) return;
 
         if (foundActivity != null) {
           Navigator.of(context).push(
@@ -277,13 +289,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     // ─── Переход на лайк
     // Для лайка открываем экран объекта, которому поставили лайк
-    final isLikeNotification = notificationType == 'likes' ||
+    final isLikeNotification =
+        notificationType == 'likes' ||
         notificationType.contains('like') ||
         notificationType.contains('лайк');
 
     if (isLikeNotification) {
       if (objectType == 'activity') {
         final foundActivity = await _loadActivityById(objectId, currentUserId);
+
+        // Проверяем, что виджет все еще смонтирован после async операции
+        if (!mounted) return;
 
         if (foundActivity != null) {
           Navigator.of(context).push(
@@ -306,11 +322,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   // НАВИГАЦИЯ: обработка клика на аватарку пользователя
   // ─────────────────────────────────────────────────────────────────────────────
   void _handleAvatarTap(int userId) {
-    Navigator.of(context).push(
-      TransparentPageRoute(
-        builder: (_) => ProfileScreen(userId: userId),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(TransparentPageRoute(builder: (_) => ProfileScreen(userId: userId)));
   }
 
   @override
