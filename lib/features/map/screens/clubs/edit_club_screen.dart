@@ -31,6 +31,7 @@ class EditClubScreen extends ConsumerStatefulWidget {
 class _EditClubScreenState extends ConsumerState<EditClubScreen> {
   // ── контроллеры
   final nameCtrl = TextEditingController();
+  final linkCtrl = TextEditingController();
   final cityCtrl = TextEditingController();
   final descCtrl = TextEditingController();
 
@@ -135,6 +136,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
 
         // Заполняем текстовые поля
         nameCtrl.text = club['name'] as String? ?? '';
+        linkCtrl.text = club['link'] as String? ?? '';
         cityCtrl.text = club['city'] as String? ?? '';
         descCtrl.text = club['description'] as String? ?? '';
 
@@ -239,6 +241,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
   @override
   void dispose() {
     nameCtrl.dispose();
+    linkCtrl.dispose();
     cityCtrl.dispose();
     descCtrl.dispose();
     _pickerFocusNode.dispose();
@@ -552,6 +555,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
       fields['club_id'] = widget.clubId.toString();
       fields['user_id'] = userId.toString();
       fields['name'] = nameCtrl.text.trim();
+      fields['link'] = linkCtrl.text.trim();
       fields['city'] = cityCtrl.text.trim();
       fields['description'] = descCtrl.text.trim();
       fields['activity'] = activity!;
@@ -736,6 +740,59 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                             color: formState.fieldErrors.containsKey('name')
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ---------- Страница клуба ----------
+                  Text(
+                    'Страница клуба',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Builder(
+                    builder: (context) => TextField(
+                      controller: linkCtrl,
+                      keyboardType: TextInputType.url,
+                      textInputAction: TextInputAction.next,
+                      style: AppTextStyles.h14w4.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'https://example.com/club',
+                        hintStyle: AppTextStyles.h14w4Place,
+                        filled: true,
+                        fillColor: AppColors.getSurfaceColor(context),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 17,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: AppColors.getBorderColor(context),
                             width: 1,
                           ),
                         ),

@@ -8,6 +8,7 @@ import '../../../../core/utils/error_handler.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../core/widgets/expandable_text.dart';
 import 'tabs/club_photo_content.dart';
 import 'coffeerun_vld/tabs/members_content.dart';
 import 'coffeerun_vld/tabs/stats_content.dart';
@@ -512,12 +513,12 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                         ),
                         const SizedBox(height: 8),
 
-                        // Описание
+                        // Описание с возможностью раскрытия
                         if (description.isNotEmpty)
                           Builder(
-                            builder: (context) => Text(
-                              description,
-                              style: TextStyle(
+                            builder: (context) => ExpandableText(
+                              text: description,
+                              textStyle: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 14,
                                 height: 1.5,
