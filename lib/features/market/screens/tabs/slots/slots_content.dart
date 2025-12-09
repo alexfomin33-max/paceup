@@ -29,7 +29,12 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
   final FocusNode _searchFocusNode = FocusNode();
   
   // Выбранное событие (null = все слоты, EventOption.mySlots() = мои слоты)
-  EventOption? _selectedEvent;
+  // Используем ValueNotifier для безопасного обновления без setState
+  final ValueNotifier<EventOption?> _selectedEventNotifier = 
+      ValueNotifier<EventOption?>(null);
+  
+  // Геттер для обратной совместимости
+  EventOption? get _selectedEvent => _selectedEventNotifier.value;
   
   // Раскрытые карточки (по индексу)
   final Set<int> _expanded = {};
@@ -47,25 +52,16 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
   /// Обработка выбора события из списка
   void _onEventSelected(EventOption event) {
     // КРИТИЧНО: Autocomplete вызывает onSelected синхронно во время обработки событий ввода.
-    // Проблема: если мы вызываем setState слишком рано, это вызывает перестроение виджета,
-    // и Autocomplete пытается скрыть overlay, который уже был удален.
+    // Проблема: любые синхронные изменения состояния (setState) вызывают перестроение виджета,
+    // что удаляет Autocomplete до того, как он успевает закрыть overlay, вызывая ошибку.
     // 
-    // Решение: откладываем setState на следующий кадр, чтобы Autocomplete успел
-    // корректно закрыть overlay. НЕ вызываем unfocus() здесь, так как Autocomplete
-    // сам управляет фокусом и overlay - это предотвращает конфликты.
+    // Решение: НЕ вызываем setState в onSelected вообще. Используем ValueNotifier,
+    // который обновляет состояние асинхронно и безопасно, не вызывая немедленного перестроения.
     
-    // Используем addPostFrameCallback для отложения на следующий кадр рендеринга
-    // Это гарантирует, что Autocomplete успеет закрыть overlay до любых изменений
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      
-      // Обновляем локальное состояние выбранного события
-      setState(() {
-        _selectedEvent = event;
-      });
-    });
+    // Обновляем состояние через ValueNotifier (безопасно, не вызывает перестроение)
+    _selectedEventNotifier.value = event;
     
-    // Асинхронные операции запускаем отдельно, чтобы не блокировать обновление UI
+    // Асинхронные операции запускаем отдельно
     final notifier = ref.read(slotsProvider.notifier);
     
     if (event.isMySlots) {
@@ -102,10 +98,8 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
 
   /// Очистка выбранного события
   void _onClear() {
-    setState(() {
-      _selectedEvent = null;
-      _searchCtrl.clear();
-    });
+    _selectedEventNotifier.value = null;
+    _searchCtrl.clear();
     
     // Показываем все слоты
     final notifier = ref.read(slotsProvider.notifier);
@@ -126,6 +120,7 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
     _searchCtrl.dispose();
     _searchFocusNode.dispose();
     _scrollController.dispose();
+    _selectedEventNotifier.dispose();
     super.dispose();
   }
 
@@ -176,6 +171,7 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
       return Column(
         children: [
           _EventDropdownField(
+            key: const ValueKey('event_dropdown_field'),
             controller: _searchCtrl,
             focusNode: _searchFocusNode,
             hintText: 'Поиск события',
@@ -202,6 +198,7 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
       return Column(
         children: [
           _EventDropdownField(
+            key: const ValueKey('event_dropdown_field'),
             controller: _searchCtrl,
             focusNode: _searchFocusNode,
             hintText: 'Поиск события',
@@ -251,6 +248,7 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
       return Column(
         children: [
           _EventDropdownField(
+            key: const ValueKey('event_dropdown_field'),
             controller: _searchCtrl,
             focusNode: _searchFocusNode,
             hintText: 'Поиск события',
@@ -288,14 +286,17 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
         separatorBuilder: (_, _) => const SizedBox(height: 10),
         itemBuilder: (_, index) {
         if (index == 0) {
-          return _EventDropdownField(
-            controller: _searchCtrl,
-            focusNode: _searchFocusNode,
-            hintText: 'Поиск события',
-            selectedEvent: _selectedEvent,
-            onEventSelected: _onEventSelected,
-            onClear: _onClear,
-            searchFunction: _searchEvents,
+          return RepaintBoundary(
+            child: _EventDropdownField(
+              key: const ValueKey('event_dropdown_field'),
+              controller: _searchCtrl,
+              focusNode: _searchFocusNode,
+              hintText: 'Поиск события',
+              selectedEvent: _selectedEvent,
+              onEventSelected: _onEventSelected,
+              onClear: _onClear,
+              searchFunction: _searchEvents,
+            ),
           );
         }
 
@@ -332,7 +333,9 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
 // ————————————————— Внутренние UI-компоненты —————————————————
 
 /// Поле выпадающего списка с поиском событий
-class _EventDropdownField extends StatelessWidget {
+/// Использует TextField с ручным управлением overlay вместо Autocomplete
+/// для предотвращения ошибок overlay
+class _EventDropdownField extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final String hintText;
@@ -341,7 +344,8 @@ class _EventDropdownField extends StatelessWidget {
   final VoidCallback onClear;
   final Future<Iterable<EventOption>> Function(String) searchFunction;
 
-  const _EventDropdownField({
+  _EventDropdownField({
+    super.key,
     required this.controller,
     required this.focusNode,
     required this.hintText,
@@ -352,195 +356,353 @@ class _EventDropdownField extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Autocomplete<EventOption>(
-      optionsBuilder: (TextEditingValue textEditingValue) async {
-        if (textEditingValue.text.length < 2) {
-          // Если запрос короткий, возвращаем только "Мои"
-          return [EventOption.mySlots()];
+  State<_EventDropdownField> createState() => _EventDropdownFieldState();
+}
+
+class _EventDropdownFieldState extends State<_EventDropdownField> {
+  // Результаты поиска
+  List<EventOption> _options = [];
+  bool _isLoading = false;
+  
+  // OverlayEntry для отображения списка результатов
+  OverlayEntry? _overlayEntry;
+  
+  // LayerLink для позиционирования overlay относительно TextField
+  final LayerLink _layerLink = LayerLink();
+  
+  // GlobalKey для получения позиции TextField
+  final GlobalKey _fieldKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    // Синхронизируем текст контроллера с selectedEvent
+    if (widget.selectedEvent != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.controller.text != widget.selectedEvent!.name) {
+          widget.controller.text = widget.selectedEvent!.name;
         }
-        return await searchFunction(textEditingValue.text);
-      },
-      onSelected: onEventSelected,
-      displayStringForOption: (option) => option.name,
-      fieldViewBuilder: (
-        BuildContext context,
-        TextEditingController textEditingController,
-        FocusNode focusNode,
-        VoidCallback onFieldSubmitted,
-      ) {
-        // УБРАНА синхронизация контроллера - Autocomplete сам управляет своим
-        // контроллером при выборе. Синхронизация вызывала бесконечные циклы
-        // перестроения и зависания на мобильных устройствах.
-        // Autocomplete автоматически обновляет textEditingController при выборе
-        // через onSelected, поэтому дополнительная синхронизация не нужна.
-        
-        final hasText = textEditingController.text.isNotEmpty || 
-            selectedEvent != null;
-        
-        return TextField(
-          key: const ValueKey('event_search_field'),
-          controller: textEditingController,
-          focusNode: focusNode,
-          onSubmitted: (String value) {
-            onFieldSubmitted();
-          },
-          cursorColor: AppColors.getTextSecondaryColor(context),
-          textInputAction: TextInputAction.search,
-          enableInteractiveSelection: true,
-          style: AppTextStyles.h14w4.copyWith(
-            color: AppColors.getTextPrimaryColor(context),
-          ),
-          decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: AppTextStyles.h14w4Place.copyWith(
-              color: AppColors.getTextPlaceholderColor(context),
-            ),
-            isDense: true,
-            filled: true,
-            fillColor: AppColors.getSurfaceColor(context),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 17,
-            ),
-            prefixIcon: Icon(
-              CupertinoIcons.search,
-              size: 18,
-              color: AppColors.getIconSecondaryColor(context),
-            ),
-            suffixIcon: hasText
-                ? IconButton(
-                    icon: Icon(
-                      CupertinoIcons.xmark_circle_fill,
-                      size: 18,
-                      color: AppColors.getIconSecondaryColor(context),
-                    ),
-                    onPressed: onClear,
-                  )
-                : null,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-          ),
-        );
-      },
-      optionsViewBuilder: (
-        BuildContext context,
-        AutocompleteOnSelected<EventOption> onSelected,
-        Iterable<EventOption> options,
-      ) {
-        // Если список пустой, не показываем ничего
-        if (options.isEmpty) {
-          return const SizedBox.shrink();
+      });
+    }
+    
+    // Слушаем изменения текста для поиска
+    widget.controller.addListener(_onTextChanged);
+    widget.focusNode.addListener(_onFocusChanged);
+  }
+
+  @override
+  void didUpdateWidget(_EventDropdownField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Синхронизируем текст при изменении selectedEvent
+    if (widget.selectedEvent != oldWidget.selectedEvent) {
+      if (widget.selectedEvent != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && widget.controller.text != widget.selectedEvent!.name) {
+            widget.controller.text = widget.selectedEvent!.name;
+          }
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTextChanged);
+    widget.focusNode.removeListener(_onFocusChanged);
+    _hideOptions();
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    final query = widget.controller.text.trim();
+    
+    if (query.isEmpty) {
+      // Если поле пустое, скрываем overlay
+      setState(() {
+        _options = [];
+        _isLoading = false;
+      });
+      _hideOptions();
+      return;
+    }
+    
+    if (query.length < 2) {
+      // Если запрос короткий, показываем только "Мои"
+      setState(() {
+        _options = [EventOption.mySlots()];
+        _isLoading = false;
+      });
+      _showOptionsIfFocused();
+      return;
+    }
+
+    // Запускаем поиск
+    _performSearch(query);
+  }
+
+  void _onFocusChanged() {
+    if (widget.focusNode.hasFocus) {
+      // При получении фокуса показываем "Мои" сразу, если поле пустое
+      if (widget.controller.text.trim().isEmpty) {
+        setState(() {
+          _options = [EventOption.mySlots()];
+          _isLoading = false;
+        });
+      }
+      _showOptionsIfFocused();
+    } else {
+      // Скрываем overlay при потере фокуса
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (mounted && !widget.focusNode.hasFocus) {
+          _hideOptions();
         }
+      });
+    }
+  }
+
+  Future<void> _performSearch(String query) async {
+    // Показываем индикатор загрузки
+    setState(() {
+      _isLoading = true;
+      _options = []; // Очищаем старые результаты
+    });
+    _showOptionsIfFocused(); // Показываем overlay с индикатором загрузки
+
+    try {
+      final results = await widget.searchFunction(query);
+      if (mounted && widget.controller.text.trim() == query) {
+        // Проверяем, что текст не изменился во время поиска
+        setState(() {
+          _options = results.toList();
+          _isLoading = false;
+        });
+        _showOptionsIfFocused(); // Обновляем overlay с результатами
+      }
+    } catch (e) {
+      debugPrint('❌ Ошибка поиска событий: $e');
+      if (mounted && widget.controller.text.trim() == query) {
+        setState(() {
+          _options = [EventOption.mySlots()]; // Показываем хотя бы "Мои" при ошибке
+          _isLoading = false;
+        });
+        _showOptionsIfFocused();
+      }
+    }
+  }
+
+  void _showOptionsIfFocused() {
+    if (!widget.focusNode.hasFocus) {
+      _hideOptions();
+      return;
+    }
+
+    // Если overlay уже показан, обновляем его (пересоздаем)
+    if (_overlayEntry != null) {
+      _overlayEntry!.remove();
+      _overlayEntry = null;
+    }
+
+    // Показываем overlay только если есть результаты или идет загрузка
+    if (_options.isNotEmpty || _isLoading) {
+      _overlayEntry = _createOverlayEntry();
+      Overlay.of(context).insert(_overlayEntry!);
+    }
+  }
+
+  void _hideOptions() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  OverlayEntry _createOverlayEntry() {
+    return OverlayEntry(
+      builder: (context) {
+        // Получаем размер TextField динамически
+        final RenderBox? renderBox = _fieldKey.currentContext?.findRenderObject() as RenderBox?;
+        final size = renderBox?.size ?? const Size(200, 50); // Fallback размер
         
-        return Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 4.0,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 200),
-              child: ListView.builder(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                itemCount: options.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final option = options.elementAt(index);
-                  final isMySlots = option.isMySlots;
-                  
-                  return InkWell(
-                    onTap: () => onSelected(option),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: Row(
-                        children: [
-                          // Изображение события или иконка
-                          if (isMySlots)
-                            Icon(
-                              CupertinoIcons.person_fill,
-                              size: 18,
-                              color: AppColors.getIconSecondaryColor(context),
-                            )
-                          else if (option.logoUrl != null && option.logoUrl!.isNotEmpty)
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(AppRadius.xs),
-                                color: AppColors.getBackgroundColor(context),
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: Image.network(
-                                option.logoUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Icon(
+        return Positioned(
+          width: size.width,
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            offset: Offset(0, size.height + 4),
+            child: Material(
+              elevation: 4.0,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              color: AppColors.getSurfaceColor(context),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 200),
+                child: _isLoading
+                    ? const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Center(child: CupertinoActivityIndicator()),
+                      )
+                    : _options.isEmpty
+                        ? const SizedBox.shrink()
+                        : ListView.builder(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            itemCount: _options.length,
+                            itemBuilder: (BuildContext context, int index) {
+                        final option = _options[index];
+                        final isMySlots = option.isMySlots;
+                        
+                        return InkWell(
+                          onTap: () {
+                            _hideOptions();
+                            widget.focusNode.unfocus();
+                            widget.onEventSelected(option);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              children: [
+                                // Изображение события или иконка
+                                if (isMySlots)
+                                  Icon(
+                                    CupertinoIcons.person_fill,
+                                    size: 18,
+                                    color: AppColors.getIconSecondaryColor(context),
+                                  )
+                                else if (option.logoUrl != null && option.logoUrl!.isNotEmpty)
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                                      color: AppColors.getBackgroundColor(context),
+                                    ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: Image.network(
+                                      option.logoUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Icon(
+                                          CupertinoIcons.calendar,
+                                          size: 18,
+                                          color: AppColors.getIconSecondaryColor(context),
+                                        );
+                                      },
+                                    ),
+                                  )
+                                else
+                                  Icon(
                                     CupertinoIcons.calendar,
                                     size: 18,
                                     color: AppColors.getIconSecondaryColor(context),
-                                  );
-                                },
-                              ),
-                            )
-                          else
-                            Icon(
-                              CupertinoIcons.calendar,
-                              size: 18,
-                              color: AppColors.getIconSecondaryColor(context),
-                            ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  option.name,
-                                  style: AppTextStyles.h14w4.copyWith(
-                                    color: AppColors.getTextPrimaryColor(context),
+                                  ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        option.name,
+                                        style: AppTextStyles.h14w4.copyWith(
+                                          color: AppColors.getTextPrimaryColor(context),
+                                        ),
+                                      ),
+                                      if (!isMySlots && option.place.isNotEmpty)
+                                        Text(
+                                          option.place,
+                                          style: AppTextStyles.h12w4.copyWith(
+                                            color: AppColors.getTextSecondaryColor(context),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
-                                if (!isMySlots && option.place.isNotEmpty)
-                                  Text(
-                                    option.place,
-                                    style: AppTextStyles.h12w4.copyWith(
-                                      color: AppColors.getTextSecondaryColor(context),
-                                    ),
-                                  ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                        );
+                            },
+                          ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasText = widget.controller.text.isNotEmpty || widget.selectedEvent != null;
+    
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: TextField(
+        key: _fieldKey,
+        controller: widget.controller,
+        focusNode: widget.focusNode,
+        onSubmitted: (String value) {
+          _hideOptions();
+        },
+        cursorColor: AppColors.getTextSecondaryColor(context),
+        textInputAction: TextInputAction.search,
+        enableInteractiveSelection: true,
+        style: AppTextStyles.h14w4.copyWith(
+          color: AppColors.getTextPrimaryColor(context),
+        ),
+        decoration: InputDecoration(
+          hintText: widget.hintText,
+          hintStyle: AppTextStyles.h14w4Place.copyWith(
+            color: AppColors.getTextPlaceholderColor(context),
+          ),
+          isDense: true,
+          filled: true,
+          fillColor: AppColors.getSurfaceColor(context),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 17,
+          ),
+          prefixIcon: Icon(
+            CupertinoIcons.search,
+            size: 18,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+          suffixIcon: hasText
+              ? IconButton(
+                  icon: Icon(
+                    CupertinoIcons.xmark_circle_fill,
+                    size: 18,
+                    color: AppColors.getIconSecondaryColor(context),
+                  ),
+                  onPressed: () {
+                    widget.controller.clear();
+                    _hideOptions();
+                    widget.onClear();
+                  },
+                )
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
