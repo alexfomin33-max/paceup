@@ -2,14 +2,11 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/error_handler.dart';
 import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../core/widgets/primary_button.dart';
-import '../../../../../../core/providers/form_state_provider.dart';
-import '../../../../../../core/widgets/form_error_display.dart';
 
 import 'package:local_auth/local_auth.dart';
 
@@ -23,17 +20,20 @@ bool get _isLocalAuthAvailable {
 }
 
 /// Экран настройки биометрии (Face ID / Touch ID / код-пароль)
-class BiometricScreen extends ConsumerStatefulWidget {
+class BiometricScreen extends StatefulWidget {
   const BiometricScreen({super.key});
 
   @override
-  ConsumerState<BiometricScreen> createState() => _BiometricScreenState();
+  State<BiometricScreen> createState() => _BiometricScreenState();
 }
 
-class _BiometricScreenState extends ConsumerState<BiometricScreen> {
+class _BiometricScreenState extends State<BiometricScreen> {
   late final LocalAuthentication _localAuth;
   bool _isEnabled = false;
   bool _isAvailable = false;
+  bool _isLoading = false;
+  bool _isSubmitting = false;
+  String? _error;
   List<BiometricType> _availableBiometrics = [];
 
   @override
@@ -42,58 +42,70 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
     if (_isLocalAuthAvailable) {
       _localAuth = LocalAuthentication();
     }
-    _checkAvailability();
-    _loadSettings();
+    // Откладываем проверку доступности до завершения построения виджета
+    Future.microtask(() {
+      _checkAvailability();
+      _loadSettings();
+    });
   }
 
   /// Проверка доступности биометрии
   Future<void> _checkAvailability() async {
-    final formNotifier = ref.read(formStateProvider.notifier);
+    if (_isLoading) return;
 
-    await formNotifier.submitWithLoading(
-      () async {
-        // Проверяем доступность платформы
-        if (!_isLocalAuthAvailable) {
-          throw Exception(
-            Platform.isMacOS
-                ? 'Биометрия недоступна на macOS. Используйте iOS или Android устройство.'
-                : 'Биометрия недоступна на этой платформе.',
-          );
-        }
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
-        final canCheckBiometrics = await _localAuth.canCheckBiometrics;
-        final isDeviceSupported = await _localAuth.isDeviceSupported();
+    try {
+      // Проверяем доступность платформы
+      if (!_isLocalAuthAvailable) {
+        throw Exception(
+          Platform.isMacOS
+              ? 'Биометрия недоступна на macOS. Используйте iOS или Android устройство.'
+              : 'Биометрия недоступна на этой платформе.',
+        );
+      }
 
-        if (canCheckBiometrics && isDeviceSupported) {
-          final availableBiometrics = await _localAuth.getAvailableBiometrics();
+      final canCheckBiometrics = await _localAuth.canCheckBiometrics;
+      final isDeviceSupported = await _localAuth.isDeviceSupported();
 
-          if (!mounted) return;
-          setState(() {
-            _isAvailable = availableBiometrics.isNotEmpty;
-            _availableBiometrics = availableBiometrics;
-          });
-        } else {
-          if (!mounted) return;
-          setState(() {
-            _isAvailable = false;
-          });
-        }
-      },
-      onError: (error) {
+      if (canCheckBiometrics && isDeviceSupported) {
+        final availableBiometrics = await _localAuth.getAvailableBiometrics();
+
         if (!mounted) return;
-        final formState = ref.read(formStateProvider);
-        final errorMsg = formState.error ?? ErrorHandler.format(error);
-        if (errorMsg.contains('MissingPluginException') ||
-            errorMsg.contains('No implementation found')) {
-          ref.read(formStateProvider.notifier).setError(
-                'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.',
-              );
-        }
+        setState(() {
+          _isAvailable = availableBiometrics.isNotEmpty;
+          _availableBiometrics = availableBiometrics;
+          _isLoading = false;
+        });
+      } else {
+        if (!mounted) return;
         setState(() {
           _isAvailable = false;
+          _isLoading = false;
         });
-      },
-    );
+      }
+    } catch (error) {
+      if (!mounted) return;
+      final errorMsg = ErrorHandler.format(error);
+      if (errorMsg.contains('MissingPluginException') ||
+          errorMsg.contains('No implementation found')) {
+        setState(() {
+          _error =
+              'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.';
+          _isAvailable = false;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = errorMsg;
+          _isAvailable = false;
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   /// Загрузка сохранённых настроек
@@ -150,54 +162,61 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
       return;
     }
 
-    final formNotifier = ref.read(formStateProvider.notifier);
+    if (_isSubmitting) return;
 
-    await formNotifier.submit(
-      () async {
-        final authenticated = await _localAuth.authenticate(
-          localizedReason:
-              'Подтвердите включение биометрии для защиты приложения',
-          /*options: const AuthenticationOptions(
-            biometricOnly: false,
-            stickyAuth: true,
-          ),*/
+    setState(() {
+      _isSubmitting = true;
+      _error = null;
+    });
+
+    try {
+      final authenticated = await _localAuth.authenticate(
+        localizedReason:
+            'Подтвердите включение биометрии для защиты приложения',
+        /*options: const AuthenticationOptions(
+          biometricOnly: false,
+          stickyAuth: true,
+        ),*/
+      );
+
+      if (!authenticated) {
+        throw Exception('Аутентификация не пройдена');
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _isEnabled = true;
+        _isSubmitting = false;
+      });
+      await _saveSettings(true);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Биометрия включена'),
+            backgroundColor: AppColors.success,
+          ),
         );
-
-        if (!authenticated) {
-          throw Exception('Аутентификация не пройдена');
-        }
-      },
-      onSuccess: () async {
-        if (!mounted) return;
+      }
+    } catch (error) {
+      if (!mounted) return;
+      final errorMsg = ErrorHandler.format(error);
+      if (errorMsg.contains('MissingPluginException') ||
+          errorMsg.contains('No implementation found')) {
         setState(() {
-          _isEnabled = true;
-        });
-        await _saveSettings(true);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Биометрия включена'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
-      },
-      onError: (error) {
-        if (!mounted) return;
-        final formState = ref.read(formStateProvider);
-        final errorMsg = formState.error ?? ErrorHandler.format(error);
-        if (errorMsg.contains('MissingPluginException') ||
-            errorMsg.contains('No implementation found')) {
-          ref.read(formStateProvider.notifier).setError(
-                'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.',
-              );
-        }
-        setState(() {
+          _error =
+              'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.';
           _isEnabled = false;
+          _isSubmitting = false;
         });
-      },
-    );
+      } else {
+        setState(() {
+          _error = errorMsg;
+          _isEnabled = false;
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   /// Получение названия типа биометрии
@@ -218,19 +237,18 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final formState = ref.watch(formStateProvider);
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Код-пароль и Face ID'),
         body: SafeArea(
-          child: formState.isLoading
+          child: _isLoading
               ? const Center(
                   child: CircularProgressIndicator(
                     color: AppColors.brandPrimary,
                   ),
                 )
-              : formState.hasErrors && !_isAvailable
+              : _error != null && !_isAvailable
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -243,7 +261,17 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
                           color: AppColors.error,
                         ),
                         const SizedBox(height: 16),
-                        FormErrorDisplay(formState: formState),
+                        SelectableText.rich(
+                          TextSpan(
+                            text: _error!,
+                            style: const TextStyle(
+                              color: AppColors.error,
+                              fontSize: 14,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                         const SizedBox(height: 24),
                         PrimaryButton(
                           text: 'Повторить',
@@ -426,17 +454,12 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
                                 ],
                               ),
                             ),
-                            Builder(
-                              builder: (context) {
-                                final formState = ref.watch(formStateProvider);
-                                return CupertinoSwitch(
-                                  value: _isEnabled,
-                                  onChanged: formState.isSubmitting
-                                      ? null
-                                      : (value) => _toggleBiometric(value),
-                                  activeTrackColor: AppColors.brandPrimary,
-                                );
-                              },
+                            CupertinoSwitch(
+                              value: _isEnabled,
+                              onChanged: _isSubmitting
+                                  ? null
+                                  : (value) => _toggleBiometric(value),
+                              activeTrackColor: AppColors.brandPrimary,
                             ),
                           ],
                         ),

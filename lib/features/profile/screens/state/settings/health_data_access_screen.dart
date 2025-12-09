@@ -2,24 +2,24 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:health/health.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../core/widgets/primary_button.dart';
-import '../../../../../../core/providers/form_state_provider.dart';
-import '../../../../../../core/widgets/form_error_display.dart';
+import '../../../../../../core/utils/error_handler.dart';
 
 /// Экран доступа к данным о здоровье
-class HealthDataAccessScreen extends ConsumerStatefulWidget {
+class HealthDataAccessScreen extends StatefulWidget {
   const HealthDataAccessScreen({super.key});
 
   @override
-  ConsumerState<HealthDataAccessScreen> createState() => _HealthDataAccessScreenState();
+  State<HealthDataAccessScreen> createState() => _HealthDataAccessScreenState();
 }
 
-class _HealthDataAccessScreenState extends ConsumerState<HealthDataAccessScreen> {
+class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
   bool _hasAccess = false;
+  bool _isLoading = false;
+  String? _error;
   Health? _health;
 
   // Типы данных для запроса
@@ -34,99 +34,120 @@ class _HealthDataAccessScreenState extends ConsumerState<HealthDataAccessScreen>
   @override
   void initState() {
     super.initState();
-    _initializeHealth();
+    // Откладываем инициализацию до завершения построения виджета
+    Future.microtask(() => _initializeHealth());
   }
 
   /// Инициализация Health
   Future<void> _initializeHealth() async {
-    final formNotifier = ref.read(formStateProvider.notifier);
+    if (_isLoading) return;
 
-    await formNotifier.submitWithLoading(
-      () async {
-        _health = Health();
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
-        // Проверяем доступность Health на платформе
-        bool? available = await _health!.hasPermissions(_types);
+    try {
+      _health = Health();
 
-        if (!mounted) return;
-        setState(() {
-          _hasAccess = available ?? false;
-        });
-      },
-    );
+      // Проверяем доступность Health на платформе
+      bool? available = await _health!.hasPermissions(_types);
+
+      if (!mounted) return;
+      setState(() {
+        _hasAccess = available ?? false;
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = ErrorHandler.format(error);
+        _isLoading = false;
+      });
+    }
   }
 
   /// Запрос разрешений
   Future<void> _requestPermissions() async {
+    if (_isLoading) return;
+
     if (_health == null) {
       await _initializeHealth();
       if (_health == null) return;
     }
 
-    final formNotifier = ref.read(formStateProvider.notifier);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
-    await formNotifier.submit(
-      () async {
-        // Проверяем текущий статус
-        bool? hasPermissions = await _health!.hasPermissions(_types);
+    try {
+      // Проверяем текущий статус
+      bool? hasPermissions = await _health!.hasPermissions(_types);
 
-        if (hasPermissions == true) {
-          if (!mounted) return;
-          setState(() {
-            _hasAccess = true;
-          });
-          return;
-        }
-
-        // Запрашиваем разрешения
-        final bool granted = await _health!.requestAuthorization(_types);
-
+      if (hasPermissions == true) {
         if (!mounted) return;
         setState(() {
-          _hasAccess = granted;
+          _hasAccess = true;
+          _isLoading = false;
         });
+        return;
+      }
 
-        if (!granted) {
-          // Показываем диалог с инструкциями
-          if (mounted) {
-            await showDialog(
-              context: context,
-              builder: (dialogContext) => AlertDialog(
-                title: const Text('Нужен доступ к данным'),
-                content: Text(
-                  Platform.isIOS
-                      ? 'Разрешите доступ к данным о здоровье в настройках iPhone:\n\nНастройки → Конфиденциальность → Здоровье → PaceUp'
-                      : 'Откройте Health Connect и предоставьте разрешения на чтение данных о тренировках, шагах, пульсе и калориях.',
-                ),
-                actions: [
-                  PrimaryButton(
-                    text: 'Понятно',
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                  ),
-                ],
+      // Запрашиваем разрешения
+      final bool granted = await _health!.requestAuthorization(_types);
+
+      if (!mounted) return;
+      setState(() {
+        _hasAccess = granted;
+        _isLoading = false;
+      });
+
+      if (!granted) {
+        // Показываем диалог с инструкциями
+        if (mounted) {
+          await showDialog(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+              title: const Text('Нужен доступ к данным'),
+              content: Text(
+                Platform.isIOS
+                    ? 'Разрешите доступ к данным о здоровье в настройках iPhone:\n\nНастройки → Конфиденциальность → Здоровье → PaceUp'
+                    : 'Откройте Health Connect и предоставьте разрешения на чтение данных о тренировках, шагах, пульсе и калориях.',
               ),
-            );
-          }
+              actions: [
+                PrimaryButton(
+                  text: 'Понятно',
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                ),
+              ],
+            ),
+          );
         }
-      },
-    );
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = ErrorHandler.format(error);
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final formState = ref.watch(formStateProvider);
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Доступ к данным'),
         body: SafeArea(
-          child: formState.isLoading
+          child: _isLoading
               ? const Center(
                   child: CircularProgressIndicator(
                     color: AppColors.brandPrimary,
                   ),
                 )
-              : formState.hasErrors
+              : _error != null
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -139,11 +160,21 @@ class _HealthDataAccessScreenState extends ConsumerState<HealthDataAccessScreen>
                           color: AppColors.error,
                         ),
                         const SizedBox(height: 16),
-                        FormErrorDisplay(formState: formState),
+                        SelectableText.rich(
+                          TextSpan(
+                            text: _error!,
+                            style: const TextStyle(
+                              color: AppColors.error,
+                              fontSize: 14,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                         const SizedBox(height: 24),
                         PrimaryButton(
                           text: 'Повторить',
-                          onPressed: () => _initializeHealth(),
+                          onPressed: _initializeHealth,
                         ),
                       ],
                     ),
@@ -238,20 +269,15 @@ class _HealthDataAccessScreenState extends ConsumerState<HealthDataAccessScreen>
                     const SizedBox(height: 24),
 
                     // Кнопка запроса разрешений
-                    Builder(
-                      builder: (context) {
-                        final formState = ref.watch(formStateProvider);
-                        return Center(
-                          child: PrimaryButton(
-                            text: _hasAccess
-                                ? 'Обновить разрешения'
-                                : 'Запросить доступ',
-                            onPressed: () => _requestPermissions(),
-                            isLoading: formState.isSubmitting,
-                            enabled: !formState.isSubmitting,
-                          ),
-                        );
-                      },
+                    Center(
+                      child: PrimaryButton(
+                        text: _hasAccess
+                            ? 'Обновить разрешения'
+                            : 'Запросить доступ',
+                        onPressed: _requestPermissions,
+                        isLoading: _isLoading,
+                        enabled: !_isLoading,
+                      ),
                     ),
 
                     const SizedBox(height: 16),

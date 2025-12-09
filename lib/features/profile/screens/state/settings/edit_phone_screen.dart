@@ -6,8 +6,7 @@ import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../core/widgets/primary_button.dart';
-import '../../../../../../core/providers/form_state_provider.dart';
-import '../../../../../../core/widgets/form_error_display.dart';
+import '../../../../../../core/utils/error_handler.dart';
 import 'package:mask_input_formatter/mask_input_formatter.dart';
 
 /// Экран редактирования телефона
@@ -24,15 +23,16 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
   final _phoneController = TextEditingController();
   final _focusNode = FocusNode();
   final _maskFormatter = MaskInputFormatter(mask: '+# (###) ###-##-##');
+  bool _isSubmitting = false;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
     _phoneController.text = widget.currentPhone;
-    Future.microtask(() {
-      final formNotifier = ref.read(formStateProvider.notifier);
-      _phoneController.addListener(() {
-        formNotifier.clearGeneralError();
+    _phoneController.addListener(() {
+      setState(() {
+        _error = null; // Очищаем ошибку при изменении текста
       });
     });
     _focusNode.addListener(() => setState(() {}));
@@ -53,35 +53,42 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
   /// Сохранение нового телефона
   Future<void> _savePhone() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_isSubmitting) return;
 
-    final formNotifier = ref.read(formStateProvider.notifier);
     final authService = ref.read(authServiceProvider);
     final userId = await authService.getUserId();
     if (userId == null) {
-      formNotifier.setError('Пользователь не авторизован');
+      setState(() {
+        _error = 'Пользователь не авторизован';
+      });
       return;
     }
 
-    final api = ref.read(apiServiceProvider);
+    setState(() {
+      _isSubmitting = true;
+      _error = null;
+    });
 
-    await formNotifier.submit(
-      () async {
-        await api.post(
-          '/update_user_settings.php',
-          body: {'user_id': userId, 'phone': _phoneController.text},
-        );
-      },
-      onSuccess: () {
-        if (!mounted) return;
-        Navigator.of(context).pop(_phoneController.text);
-      },
-    );
+    try {
+      final api = ref.read(apiServiceProvider);
+      await api.post(
+        '/update_user_settings.php',
+        body: {'user_id': userId, 'phone': _phoneController.text},
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pop(_phoneController.text);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = ErrorHandler.format(error);
+        _isSubmitting = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final formState = ref.watch(formStateProvider);
-
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
@@ -120,7 +127,7 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
                       hintStyle: TextStyle(
                         color: AppColors.getTextPlaceholderColor(context),
                       ),
-                      errorText: formState.error,
+                      errorText: _error,
                       filled: true,
                       fillColor: AppColors.getBackgroundColor(context),
                       border: OutlineInputBorder(
@@ -163,15 +170,29 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
                   const SizedBox(height: 30),
 
                   // Показываем ошибку, если есть
-                  FormErrorDisplay(formState: formState),
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: SelectableText.rich(
+                        TextSpan(
+                          text: _error!,
+                          style: const TextStyle(
+                            color: AppColors.error,
+                            fontSize: 14,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
 
                   // Кнопка сохранения
                   Center(
                     child: PrimaryButton(
                       text: 'Сохранить',
                       onPressed: _savePhone,
-                      isLoading: formState.isSubmitting,
-                      enabled: _isFormValid && !formState.isSubmitting,
+                      isLoading: _isSubmitting,
+                      enabled: _isFormValid && !_isSubmitting,
                       horizontalPadding: 68,
                     ),
                   ),

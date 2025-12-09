@@ -7,8 +7,7 @@ import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../core/widgets/primary_button.dart';
-import '../../../../../../core/providers/form_state_provider.dart';
-import '../../../../../../core/widgets/form_error_display.dart';
+import '../../../../../../core/utils/error_handler.dart';
 
 /// Экран настроек Push-уведомлений
 class PushNotificationsScreen extends ConsumerStatefulWidget {
@@ -29,44 +28,57 @@ class _PushNotificationsScreenState
   bool _eventReminders = true;
   bool _achievements = true;
   bool _weeklyStats = false;
+  bool _isLoading = false;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadSettings();
+    // Откладываем загрузку настроек до завершения построения виджета
+    Future.microtask(() => _loadSettings());
   }
 
   /// Загрузка настроек уведомлений
   Future<void> _loadSettings() async {
-    final formNotifier = ref.read(formStateProvider.notifier);
+    if (_isLoading) return;
 
-    await formNotifier.submitWithLoading(
-      () async {
-        final authService = ref.read(authServiceProvider);
-        final userId = await authService.getUserId();
-        if (userId == null) {
-          throw Exception('Пользователь не авторизован');
-        }
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
-        final api = ref.read(apiServiceProvider);
-        final data = await api.post(
-          '/get_push_settings.php',
-          body: {'user_id': userId},
-        );
+    try {
+      final authService = ref.read(authServiceProvider);
+      final userId = await authService.getUserId();
+      if (userId == null) {
+        throw Exception('Пользователь не авторизован');
+      }
 
-        if (!mounted) return;
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/get_push_settings.php',
+        body: {'user_id': userId},
+      );
 
-        setState(() {
-          _newFollowers = data['new_followers'] ?? true;
-          _newLikes = data['new_likes'] ?? true;
-          _newComments = data['new_comments'] ?? true;
-          _newMessages = data['new_messages'] ?? true;
-          _eventReminders = data['event_reminders'] ?? true;
-          _achievements = data['achievements'] ?? true;
-          _weeklyStats = data['weekly_stats'] ?? false;
-        });
-      },
-    );
+      if (!mounted) return;
+
+      setState(() {
+        _newFollowers = data['new_followers'] ?? true;
+        _newLikes = data['new_likes'] ?? true;
+        _newComments = data['new_comments'] ?? true;
+        _newMessages = data['new_messages'] ?? true;
+        _eventReminders = data['event_reminders'] ?? true;
+        _achievements = data['achievements'] ?? true;
+        _weeklyStats = data['weekly_stats'] ?? false;
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = ErrorHandler.format(error);
+        _isLoading = false;
+      });
+    }
   }
 
   /// Сохранение настройки уведомления
@@ -115,19 +127,18 @@ class _PushNotificationsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final formState = ref.watch(formStateProvider);
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
         appBar: const PaceAppBar(title: 'Push-уведомления'),
         body: SafeArea(
-          child: formState.isLoading
+          child: _isLoading
               ? const Center(
                   child: CircularProgressIndicator(
                     color: AppColors.brandPrimary,
                   ),
                 )
-              : formState.hasErrors
+              : _error != null
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -140,11 +151,21 @@ class _PushNotificationsScreenState
                           color: AppColors.error,
                         ),
                         const SizedBox(height: 16),
-                        FormErrorDisplay(formState: formState),
+                        SelectableText.rich(
+                          TextSpan(
+                            text: _error!,
+                            style: const TextStyle(
+                              color: AppColors.error,
+                              fontSize: 14,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                         const SizedBox(height: 24),
                         PrimaryButton(
                           text: 'Повторить',
-                          onPressed: () => _loadSettings(),
+                          onPressed: _loadSettings,
                         ),
                       ],
                     ),

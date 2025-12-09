@@ -7,8 +7,7 @@ import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../core/widgets/primary_button.dart';
-import '../../../../../../core/providers/form_state_provider.dart';
-import '../../../../../../core/widgets/form_error_display.dart';
+import '../../../../../../core/utils/error_handler.dart';
 
 /// Экран редактирования пароля
 class EditPasswordScreen extends ConsumerStatefulWidget {
@@ -30,6 +29,8 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
   bool _obscureOldPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isSubmitting = false;
+  String? _error;
 
   @override
   void initState() {
@@ -38,9 +39,21 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
     _oldPasswordFocusNode.addListener(() => setState(() {}));
     _newPasswordFocusNode.addListener(() => setState(() {}));
     _confirmPasswordFocusNode.addListener(() => setState(() {}));
-    _oldPasswordController.addListener(() => setState(() {}));
-    _newPasswordController.addListener(() => setState(() {}));
-    _confirmPasswordController.addListener(() => setState(() {}));
+    _oldPasswordController.addListener(() {
+      setState(() {
+        _error = null; // Очищаем ошибку при изменении текста
+      });
+    });
+    _newPasswordController.addListener(() {
+      setState(() {
+        _error = null;
+      });
+    });
+    _confirmPasswordController.addListener(() {
+      setState(() {
+        _error = null;
+      });
+    });
   }
 
   @override
@@ -72,39 +85,46 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
   /// Сохранение нового пароля
   Future<void> _savePassword() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_isSubmitting) return;
 
-    final formNotifier = ref.read(formStateProvider.notifier);
     final authService = ref.read(authServiceProvider);
     final userId = await authService.getUserId();
     if (userId == null) {
-      formNotifier.setError('Пользователь не авторизован');
+      setState(() {
+        _error = 'Пользователь не авторизован';
+      });
       return;
     }
 
-    final api = ref.read(apiServiceProvider);
+    setState(() {
+      _isSubmitting = true;
+      _error = null;
+    });
 
-    await formNotifier.submit(
-      () async {
-        await api.post(
-          '/update_user_settings.php',
-          body: {
-            'user_id': userId,
-            'password': _newPasswordController.text,
-            if (widget.hasPassword) 'old_password': _oldPasswordController.text,
-          },
-        );
-      },
-      onSuccess: () {
-        if (!mounted) return;
-        Navigator.of(context).pop(true);
-      },
-    );
+    try {
+      final api = ref.read(apiServiceProvider);
+      await api.post(
+        '/update_user_settings.php',
+        body: {
+          'user_id': userId,
+          'password': _newPasswordController.text,
+          if (widget.hasPassword) 'old_password': _oldPasswordController.text,
+        },
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = ErrorHandler.format(error);
+        _isSubmitting = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final formState = ref.watch(formStateProvider);
-
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
@@ -133,7 +153,7 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                           _obscureOldPassword = !_obscureOldPassword;
                         });
                       },
-                      errorText: formState.error,
+                      errorText: _error,
                       textInputAction: TextInputAction.next,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -197,15 +217,29 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                   const SizedBox(height: 30),
 
                   // Показываем ошибку, если есть
-                  FormErrorDisplay(formState: formState),
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: SelectableText.rich(
+                        TextSpan(
+                          text: _error!,
+                          style: const TextStyle(
+                            color: AppColors.error,
+                            fontSize: 14,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
 
                   // Кнопка сохранения
                   Center(
                     child: PrimaryButton(
                       text: 'Сохранить',
                       onPressed: _savePassword,
-                      isLoading: formState.isSubmitting,
-                      enabled: _isFormValid && !formState.isSubmitting,
+                      isLoading: _isSubmitting,
+                      enabled: _isFormValid && !_isSubmitting,
                       horizontalPadding: 68,
                     ),
                   ),

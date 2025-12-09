@@ -7,8 +7,7 @@ import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../core/widgets/primary_button.dart';
-import '../../../../../../core/providers/form_state_provider.dart';
-import '../../../../../../core/widgets/form_error_display.dart';
+import '../../../../../../core/utils/error_handler.dart';
 
 /// Экран предложений по улучшению
 class FeedbackScreen extends ConsumerStatefulWidget {
@@ -23,6 +22,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
   bool _isSubmitted = false;
+  bool _isSubmitting = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -34,46 +35,54 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   /// Отправка предложения
   Future<void> _submitFeedback() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_isSubmitting) return;
 
-    final formNotifier = ref.read(formStateProvider.notifier);
     final authService = ref.read(authServiceProvider);
     final userId = await authService.getUserId();
     if (userId == null) {
-      formNotifier.setError('Пользователь не авторизован');
+      setState(() {
+        _error = 'Пользователь не авторизован';
+      });
       return;
     }
 
-    final api = ref.read(apiServiceProvider);
+    setState(() {
+      _isSubmitting = true;
+      _error = null;
+    });
 
-    await formNotifier.submit(
-      () async {
-        await api.post(
-          '/submit_feedback.php',
-          body: {'user_id': userId, 'text': _textController.text.trim()},
-        );
-      },
-      onSuccess: () {
-        if (!mounted) return;
-        setState(() {
-          _isSubmitted = true;
-          _textController.clear();
-        });
-        // Показываем сообщение об успехе
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Спасибо за ваше предложение!'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      },
-    );
+    try {
+      final api = ref.read(apiServiceProvider);
+      await api.post(
+        '/submit_feedback.php',
+        body: {'user_id': userId, 'text': _textController.text.trim()},
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _isSubmitted = true;
+        _isSubmitting = false;
+        _textController.clear();
+      });
+      // Показываем сообщение об успехе
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Спасибо за ваше предложение!'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = ErrorHandler.format(error);
+        _isSubmitting = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final formState = ref.watch(formStateProvider);
-
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
@@ -196,7 +205,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                             hintStyle: TextStyle(
                               color: AppColors.getTextPlaceholderColor(context),
                             ),
-                            errorText: formState.error,
+                            errorText: _error,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.md),
                               borderSide: BorderSide(
@@ -239,14 +248,29 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                         const SizedBox(height: 30),
 
                         // Показываем ошибку, если есть
-                        FormErrorDisplay(formState: formState),
+                        if (_error != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: SelectableText.rich(
+                              TextSpan(
+                                text: _error!,
+                                style: const TextStyle(
+                                  color: AppColors.error,
+                                  fontSize: 14,
+                                  fontFamily: 'Inter',
+                                ),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
 
                         // Кнопка отправки
                         Center(
                           child: PrimaryButton(
                             text: 'Отправить',
                             onPressed: _submitFeedback,
-                            isLoading: formState.isSubmitting,
+                            isLoading: _isSubmitting,
+                            enabled: !_isSubmitting,
                             horizontalPadding: 60,
                           ),
                         ),
