@@ -1,6 +1,8 @@
 // lib/screens/market/tabs/slots/slots_content.dart
 // Всё, что относится к вкладке «Слоты»: поиск, фильтрация, список, раскрытие карточек.
 
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -44,30 +46,40 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
 
   /// Обработка выбора события из списка
   void _onEventSelected(EventOption event) {
-    // Обновляем только локальное состояние выбранного события
-    // НЕ обновляем _searchCtrl.text здесь, чтобы избежать конфликта
-    // с внутренним контроллером Autocomplete
-    setState(() {
-      _selectedEvent = event;
+    // КРИТИЧНО: Autocomplete вызывает onSelected синхронно во время обработки
+    // событий ввода, поэтому все операции нужно отложить, чтобы не блокировать UI.
+    // Используем Future.microtask для немедленного отложения на следующий тик event loop,
+    // что позволяет Autocomplete корректно завершить свою работу.
+    Future.microtask(() {
+      if (!mounted) return;
+      
+      // Обновляем локальное состояние выбранного события
+      setState(() {
+        _selectedEvent = event;
+      });
+      
+      // Снимаем фокус с поля поиска
+      _searchFocusNode.unfocus();
     });
     
-    // Снимаем фокус с поля поиска сразу
-    _searchFocusNode.unfocus();
-    
-    // Затем асинхронно обновляем фильтр через notifier
+    // Асинхронные операции запускаем отдельно, чтобы не блокировать обновление UI
     final notifier = ref.read(slotsProvider.notifier);
     
     if (event.isMySlots) {
       // Для "Мои" получаем user_id из AuthService
-      _loadMySlots(notifier).catchError((error) {
-        debugPrint('❌ Ошибка загрузки моих слотов: $error');
-      });
+      unawaited(
+        _loadMySlots(notifier).catchError((error) {
+          debugPrint('❌ Ошибка загрузки моих слотов: $error');
+        }),
+      );
     } else {
       // Для выбранного события фильтруем по event_id
       final newFilter = SlotsFilter(eventId: event.id);
-      notifier.updateFilter(newFilter).catchError((error) {
-        debugPrint('❌ Ошибка обновления фильтра: $error');
-      });
+      unawaited(
+        notifier.updateFilter(newFilter).catchError((error) {
+          debugPrint('❌ Ошибка обновления фильтра: $error');
+        }),
+      );
     }
   }
 
@@ -354,28 +366,11 @@ class _EventDropdownField extends StatelessWidget {
         FocusNode focusNode,
         VoidCallback onFieldSubmitted,
       ) {
-        // Синхронизируем внутренний контроллер Autocomplete с selectedEvent
-        // Используем addPostFrameCallback для безопасного обновления после рендера
-        // Это предотвращает конфликты между setState и обновлениями Autocomplete
-        if (selectedEvent != null) {
-          final expectedText = selectedEvent!.name;
-          final currentText = textEditingController.text;
-          
-          // Обновляем только если текст действительно отличается
-          if (currentText != expectedText) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              // Двойная проверка для предотвращения гонок
-              if (textEditingController.text != expectedText) {
-                textEditingController.value = TextEditingValue(
-                  text: expectedText,
-                  selection: TextSelection.collapsed(
-                    offset: expectedText.length,
-                  ),
-                );
-              }
-            });
-          }
-        }
+        // УБРАНА синхронизация контроллера - Autocomplete сам управляет своим
+        // контроллером при выборе. Синхронизация вызывала бесконечные циклы
+        // перестроения и зависания на мобильных устройствах.
+        // Autocomplete автоматически обновляет textEditingController при выборе
+        // через onSelected, поэтому дополнительная синхронизация не нужна.
         
         final hasText = textEditingController.text.isNotEmpty || 
             selectedEvent != null;
