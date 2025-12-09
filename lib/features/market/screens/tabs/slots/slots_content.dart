@@ -44,25 +44,31 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
 
   /// Обработка выбора события из списка
   void _onEventSelected(EventOption event) {
+    // Обновляем только локальное состояние выбранного события
+    // НЕ обновляем _searchCtrl.text здесь, чтобы избежать конфликта
+    // с внутренним контроллером Autocomplete
     setState(() {
       _selectedEvent = event;
-      _searchCtrl.text = event.name;
     });
     
-    // Обновляем фильтр через notifier
+    // Снимаем фокус с поля поиска сразу
+    _searchFocusNode.unfocus();
+    
+    // Затем асинхронно обновляем фильтр через notifier
     final notifier = ref.read(slotsProvider.notifier);
     
     if (event.isMySlots) {
       // Для "Мои" получаем user_id из AuthService
-      _loadMySlots(notifier);
+      _loadMySlots(notifier).catchError((error) {
+        debugPrint('❌ Ошибка загрузки моих слотов: $error');
+      });
     } else {
       // Для выбранного события фильтруем по event_id
       final newFilter = SlotsFilter(eventId: event.id);
-      notifier.updateFilter(newFilter);
+      notifier.updateFilter(newFilter).catchError((error) {
+        debugPrint('❌ Ошибка обновления фильтра: $error');
+      });
     }
-    
-    // Снимаем фокус с поля поиска
-    _searchFocusNode.unfocus();
   }
 
   /// Загрузка слотов пользователя
@@ -348,17 +354,31 @@ class _EventDropdownField extends StatelessWidget {
         FocusNode focusNode,
         VoidCallback onFieldSubmitted,
       ) {
-        // Синхронизируем контроллер Autocomplete с внешним контроллером
-        // при изменении selectedEvent
-        if (selectedEvent != null && textEditingController.text != selectedEvent!.name) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (textEditingController.text != selectedEvent!.name) {
-              textEditingController.text = selectedEvent!.name;
-            }
-          });
+        // Синхронизируем внутренний контроллер Autocomplete с selectedEvent
+        // Используем addPostFrameCallback для безопасного обновления после рендера
+        // Это предотвращает конфликты между setState и обновлениями Autocomplete
+        if (selectedEvent != null) {
+          final expectedText = selectedEvent!.name;
+          final currentText = textEditingController.text;
+          
+          // Обновляем только если текст действительно отличается
+          if (currentText != expectedText) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              // Двойная проверка для предотвращения гонок
+              if (textEditingController.text != expectedText) {
+                textEditingController.value = TextEditingValue(
+                  text: expectedText,
+                  selection: TextSelection.collapsed(
+                    offset: expectedText.length,
+                  ),
+                );
+              }
+            });
+          }
         }
         
-        final hasText = textEditingController.text.isNotEmpty || selectedEvent != null;
+        final hasText = textEditingController.text.isNotEmpty || 
+            selectedEvent != null;
         
         return TextField(
           key: const ValueKey('event_search_field'),
