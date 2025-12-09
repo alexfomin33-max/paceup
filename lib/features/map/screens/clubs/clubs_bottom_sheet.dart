@@ -138,7 +138,7 @@ class ClubsSheetText extends StatelessWidget {
 }
 
 /// Список клубов из API (для отображения в bottom sheet)
-class ClubsListFromApi extends StatelessWidget {
+class ClubsListFromApi extends StatefulWidget {
   final List<dynamic> clubs;
   final double? latitude;
   final double? longitude;
@@ -151,8 +151,47 @@ class ClubsListFromApi extends StatelessWidget {
   });
 
   @override
+  State<ClubsListFromApi> createState() => _ClubsListFromApiState();
+}
+
+class _ClubsListFromApiState extends State<ClubsListFromApi> {
+  late List<dynamic> _clubs;
+
+  @override
+  void initState() {
+    super.initState();
+    // ── Создаем копию списка для локального обновления
+    _clubs = List.from(widget.clubs);
+  }
+
+  @override
+  void didUpdateWidget(ClubsListFromApi oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // ── Обновляем список, если изменился исходный список
+    if (oldWidget.clubs != widget.clubs) {
+      _clubs = List.from(widget.clubs);
+    }
+  }
+
+  /// ──────────────────────── Обновление количества участников ────────────────────────
+  void _updateMembersCount(int clubId, int newCount) {
+    setState(() {
+      for (var i = 0; i < _clubs.length; i++) {
+        final club = _clubs[i] as Map<String, dynamic>;
+        final id = club['id'] as int?;
+        if (id != null && id == clubId) {
+          final updatedClub = Map<String, dynamic>.from(club);
+          updatedClub['members_count'] = newCount;
+          _clubs[i] = updatedClub;
+          break;
+        }
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (clubs.isEmpty) {
+    if (_clubs.isEmpty) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 40),
         child: Text(
@@ -172,9 +211,9 @@ class ClubsListFromApi extends StatelessWidget {
       final dpr = MediaQuery.of(context).devicePixelRatio;
       final targetW = (55 * dpr).round();
       final targetH = (55 * dpr).round();
-      final int limit = clubs.length < 8 ? clubs.length : 8;
+      final int limit = _clubs.length < 8 ? _clubs.length : 8;
       for (var i = 0; i < limit; i++) {
-        final c = clubs[i] as Map<String, dynamic>;
+        final c = _clubs[i] as Map<String, dynamic>;
         final logoUrl = c['logo_url'] as String?;
         if (logoUrl != null && logoUrl.isNotEmpty) {
           // precacheImage не блокирует UI; повторные вызовы недороги благодаря кэшу
@@ -318,10 +357,10 @@ class ClubsListFromApi extends StatelessWidget {
       shrinkWrap: true,
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
       physics: const BouncingScrollPhysics(),
-      itemCount: clubs.length,
+      itemCount: _clubs.length,
       separatorBuilder: (context, index) => const SizedBox(height: 2),
       itemBuilder: (context, index) {
-        final club = clubs[index] as Map<String, dynamic>;
+        final club = _clubs[index] as Map<String, dynamic>;
         final clubId = club['id'] as int?;
         final name = club['name'] as String? ?? '';
         final logoUrl = club['logo_url'] as String?;
@@ -334,12 +373,23 @@ class ClubsListFromApi extends StatelessWidget {
           subtitle: subtitle,
           onTap: clubId != null
               ? () async {
-                  final result = await Navigator.of(context).push(
+                  final result = await Navigator.of(context).push<dynamic>(
                     TransparentPageRoute(
                       builder: (_) => ClubDetailScreen(clubId: clubId),
                     ),
                   );
-                  // Если клуб был удалён, закрываем bottom sheet и обновляем данные
+                  // ── если количество участников было обновлено, обновляем локально
+                  if (result is Map<String, dynamic> &&
+                      result['members_count_updated'] == true &&
+                      context.mounted) {
+                    final updatedCount =
+                        result['members_count'] as int? ?? 0;
+                    final updatedClubId = result['club_id'] as int?;
+                    if (updatedClubId != null) {
+                      _updateMembersCount(updatedClubId, updatedCount);
+                    }
+                  }
+                  // ── если клуб был удалён, закрываем bottom sheet с результатом
                   if (result == 'deleted' && context.mounted) {
                     Navigator.of(context).pop('club_deleted');
                   }

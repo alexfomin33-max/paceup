@@ -36,6 +36,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
   bool _isMember = false; // Является ли пользователь участником
   bool _isRequest = false; // Подана ли заявка (для закрытых клубов)
   bool _isJoining = false; // Идёт ли процесс вступления
+  int? _updatedMembersCount; // Обновленное количество участников (если было изменено)
 
   @override
   void initState() {
@@ -169,6 +170,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
       if (data['success'] == true && mounted) {
         final isMember = data['is_member'] as bool? ?? false;
         final isRequest = data['is_request'] as bool? ?? false;
+        final membersCount = data['members_count'] as int?;
 
         setState(() {
           _isMember = isMember;
@@ -177,7 +179,16 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         });
 
         // Обновляем данные клуба (чтобы обновилось количество участников)
-        _loadClub();
+        await _loadClub();
+
+        // ── Сохраняем информацию об обновлении для передачи при возврате
+        // Это будет использовано при закрытии экрана для обновления списка клубов
+        // Используем значение из ответа API или из обновленного _clubData
+        if (membersCount != null) {
+          _updatedMembersCount = membersCount;
+        } else if (_clubData != null) {
+          _updatedMembersCount = _clubData!['members_count'] as int? ?? 0;
+        }
 
         // Инвалидируем provider клубов пользователя для обновления списка в clubs_tab.dart
         // userId гарантированно не null после проверки выше
@@ -245,6 +256,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
       );
 
       if (data['success'] == true && mounted) {
+        final membersCount = data['members_count'] as int?;
+
         setState(() {
           _isMember = false;
           _isRequest = false;
@@ -252,7 +265,16 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         });
 
         // Обновляем данные клуба (чтобы обновилось количество участников)
-        _loadClub();
+        await _loadClub();
+
+        // ── Сохраняем информацию об обновлении для передачи при возврате
+        // Это будет использовано при закрытии экрана для обновления списка клубов
+        // Используем значение из ответа API или из обновленного _clubData
+        if (membersCount != null) {
+          _updatedMembersCount = membersCount;
+        } else if (_clubData != null) {
+          _updatedMembersCount = _clubData!['members_count'] as int? ?? 0;
+        }
 
         // Инвалидируем provider клубов пользователя для обновления списка в clubs_tab.dart
         // userId гарантированно не null после проверки выше
@@ -346,8 +368,20 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
     final description = _clubData!['description'] as String? ?? '';
 
-    return InteractiveBackSwipe(
-      child: Scaffold(
+    return PopScope(
+      canPop: _updatedMembersCount == null,
+      onPopInvoked: (didPop) {
+        // ── Если количество участников было обновлено и pop еще не произошел, возвращаем результат
+        if (!didPop && _updatedMembersCount != null && mounted) {
+          Navigator.of(context).pop({
+            'members_count_updated': true,
+            'members_count': _updatedMembersCount,
+            'club_id': widget.clubId,
+          });
+        }
+      },
+      child: InteractiveBackSwipe(
+        child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
         body: SafeArea(
           top: false,
@@ -399,7 +433,18 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                 _CircleIconBtn(
                                   icon: CupertinoIcons.back,
                                   semantic: 'Назад',
-                                  onTap: () => Navigator.of(context).maybePop(),
+                                  onTap: () {
+                                    // ── Если количество участников было обновлено, возвращаем результат
+                                    if (_updatedMembersCount != null) {
+                                      Navigator.of(context).pop({
+                                        'members_count_updated': true,
+                                        'members_count': _updatedMembersCount,
+                                        'club_id': widget.clubId,
+                                      });
+                                    } else {
+                                      Navigator.of(context).maybePop();
+                                    }
+                                  },
                                 ),
                                 const Spacer(),
                                 if (_canEdit)
@@ -422,6 +467,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                         _loadClub();
                                       }
                                       // Если клуб был удалён, возвращаемся назад с результатом
+                                      // (приоритет удаления выше, чем обновление участников)
                                       if (result == 'deleted') {
                                         Navigator.of(context).pop('deleted');
                                       }
@@ -727,6 +773,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
