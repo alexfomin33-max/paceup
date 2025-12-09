@@ -5,6 +5,8 @@ import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../providers/services/api_provider.dart';
 import '../../../../../../core/utils/error_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../../../core/widgets/transparent_route.dart';
+import '../../../../../../features/profile/screens/profile_screen.dart';
 
 /// ──────────────────────── Контент участников клуба из API с пагинацией ────────────────────────
 class CoffeeRunVldMembersContent extends ConsumerStatefulWidget {
@@ -205,45 +207,75 @@ class _CoffeeRunVldMembersContentState
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
                 children: [
-                  ClipOval(
-                    child: avatarUrl.isNotEmpty
-                        ? _Avatar40(url: avatarUrl)
-                        : Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              color: AppColors.border,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.person, size: 24),
-                          ),
-                  ),
-                  const SizedBox(width: 12),
+                  // ──────────────────────── Кликабельная левая часть (аватар + имя + роль) ────────────────────────
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: userId != null
+                            ? () {
+                                Navigator.of(context).push(
+                                  TransparentPageRoute(
+                                    builder: (_) => ProfileScreen(
+                                      userId: userId,
+                                    ),
+                                  ),
+                                );
+                              }
+                            : null,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 4,
+                          ),
+                          child: Row(
+                            children: [
+                              ClipOval(
+                                child: avatarUrl.isNotEmpty
+                                    ? _Avatar40(url: avatarUrl)
+                                    : Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: const BoxDecoration(
+                                          color: AppColors.border,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(Icons.person, size: 24),
+                                      ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      name,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    if (role != null) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        role,
+                                        style: const TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 12,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        if (role != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            role,
-                            style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ],
+                      ),
                     ),
                   ),
                   // Иконка подписки: не показываем для текущего пользователя и владельца

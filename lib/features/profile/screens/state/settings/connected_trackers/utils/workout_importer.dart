@@ -114,14 +114,48 @@ Future<ImportResult> importWorkout(
         for (final p in stepsPoints) {
           final v = p.value;
           if (v is NumericHealthValue) {
-            totalSteps += v.numericValue.toInt();
+            // Health API может возвращать шаги как дельты (изменения за период)
+            // или как накопительные значения. Суммируем все значения.
+            final stepValue = v.numericValue.toInt();
+            // Игнорируем отрицательные значения (могут быть артефактами)
+            if (stepValue > 0) {
+              totalSteps += stepValue;
+            }
           }
         }
-        totalStepsFromHealth = totalSteps;
+
         // Вычисляем средний каденс: шаги / (длительность в минутах)
-        final durationMinutes = duration.inMinutes;
+        // Используем дробные минуты для точности (не duration.inMinutes)
+        final durationMinutes = duration.inSeconds / 60.0;
+
+        // Проверяем разумность значений
+        // Для бега каденс обычно 150-180 шагов/минуту
+        // Если каденс получается слишком маленьким (< 50), возможно данные некорректны
         if (totalSteps > 0 && durationMinutes > 0) {
-          cadenceAvg = totalSteps / durationMinutes;
+          final calculatedCadence = totalSteps / durationMinutes;
+
+          // Если каденс разумный (>= 50 шагов/минуту), используем его
+          // Иначе пытаемся вычислить шаги из дистанции (примерно 1300 шагов/км для бега)
+          if (calculatedCadence >= 50) {
+            cadenceAvg = calculatedCadence;
+            totalStepsFromHealth = totalSteps;
+          } else {
+            // Каденс слишком маленький - возможно данные Health API некорректны
+            // Вычисляем шаги из дистанции как альтернативу
+            // Для бега: примерно 1300 шагов на километр
+            final estimatedSteps = (distanceMeters / 1000.0 * 1300).round();
+            if (estimatedSteps > 0 && durationMinutes > 0) {
+              final estimatedCadence = estimatedSteps / durationMinutes;
+              // Используем оценку только если она разумная
+              if (estimatedCadence >= 50 && estimatedCadence <= 250) {
+                cadenceAvg = estimatedCadence;
+                totalStepsFromHealth = estimatedSteps;
+              }
+            }
+          }
+        } else if (totalSteps > 0) {
+          // Если есть шаги, но длительность = 0, используем их как есть
+          totalStepsFromHealth = totalSteps;
         }
       }
     } catch (_) {
