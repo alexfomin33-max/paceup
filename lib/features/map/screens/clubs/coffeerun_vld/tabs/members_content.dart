@@ -15,10 +15,10 @@ class CoffeeRunVldMembersContent extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<CoffeeRunVldMembersContent> createState() =>
-      _CoffeeRunVldMembersContentState();
+      CoffeeRunVldMembersContentState();
 }
 
-class _CoffeeRunVldMembersContentState
+class CoffeeRunVldMembersContentState
     extends ConsumerState<CoffeeRunVldMembersContent> {
   final List<Map<String, dynamic>> _members = [];
   final ScrollController _scrollController = ScrollController();
@@ -33,6 +33,18 @@ class _CoffeeRunVldMembersContentState
     super.initState();
     _loadMembers();
     _scrollController.addListener(_onScroll);
+  }
+
+  /// ──────────────────────── Обновление списка участников (сброс и перезагрузка) ────────────────────────
+  void refreshMembers() {
+    if (!mounted) return;
+    setState(() {
+      _members.clear();
+      _currentPage = 1;
+      _hasMore = true;
+      _loading = false;
+    });
+    _loadMembers();
   }
 
   @override

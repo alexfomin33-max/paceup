@@ -136,6 +136,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
   }
 
   int _tab = 0; // 0 — Фото, 1 — Участники, 2 — Статистика, 3 — Зал славы
+  final GlobalKey<CoffeeRunVldMembersContentState> _membersContentKey =
+      GlobalKey<CoffeeRunVldMembersContentState>();
 
   /// ──────────────────────── Вступление в клуб ────────────────────────
   Future<void> _joinClub() async {
@@ -199,6 +201,11 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         // Инвалидируем провайдер рекомендованных клубов, чтобы обновить список
         // в экране поиска клубов (clubs_content.dart)
         ref.invalidate(recommendedClubsProvider);
+
+        // ── Обновляем список участников на вкладке "Участники", если она открыта
+        if (_tab == 1 && _membersContentKey.currentState != null) {
+          _membersContentKey.currentState!.refreshMembers();
+        }
       } else {
         final errorMessage =
             data['message'] as String? ?? 'Ошибка вступления в клуб';
@@ -285,6 +292,11 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         // Инвалидируем провайдер рекомендованных клубов, чтобы обновить список
         // в экране поиска клубов (clubs_content.dart)
         ref.invalidate(recommendedClubsProvider);
+
+        // ── Обновляем список участников на вкладке "Участники", если она открыта
+        if (_tab == 1 && _membersContentKey.currentState != null) {
+          _membersContentKey.currentState!.refreshMembers();
+        }
       } else {
         final errorMessage =
             data['message'] as String? ?? 'Ошибка выхода из клуба';
@@ -763,6 +775,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                             Padding(
                               padding: const EdgeInsets.only(top: 0, bottom: 0),
                               child: CoffeeRunVldMembersContent(
+                                key: _membersContentKey,
                                 clubId: widget.clubId,
                               ),
                             )
@@ -912,8 +925,6 @@ class _LinkRow extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 14,
                 color: AppColors.brandPrimary,
-                decoration: TextDecoration.underline,
-                decorationColor: AppColors.brandPrimary,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

@@ -169,15 +169,18 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
     if (slotsState.isLoading && slotsState.items.isEmpty) {
       return Column(
         children: [
-          _EventDropdownField(
-            key: const ValueKey('event_dropdown_field'),
-            controller: _searchCtrl,
-            focusNode: _searchFocusNode,
-            hintText: 'Поиск события',
-            selectedEvent: _selectedEvent,
-            onEventSelected: _onEventSelected,
-            onClear: _onClear,
-            searchFunction: _searchEvents,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: _EventDropdownField(
+              key: const ValueKey('event_dropdown_field'),
+              controller: _searchCtrl,
+              focusNode: _searchFocusNode,
+              hintText: 'Поиск события',
+              selectedEvent: _selectedEvent,
+              onEventSelected: _onEventSelected,
+              onClear: _onClear,
+              searchFunction: _searchEvents,
+            ),
           ),
           const SizedBox(height: 40),
           const CupertinoActivityIndicator(),
@@ -196,15 +199,18 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
     if (slotsState.error != null && slotsState.items.isEmpty) {
       return Column(
         children: [
-          _EventDropdownField(
-            key: const ValueKey('event_dropdown_field'),
-            controller: _searchCtrl,
-            focusNode: _searchFocusNode,
-            hintText: 'Поиск события',
-            selectedEvent: _selectedEvent,
-            onEventSelected: _onEventSelected,
-            onClear: _onClear,
-            searchFunction: _searchEvents,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: _EventDropdownField(
+              key: const ValueKey('event_dropdown_field'),
+              controller: _searchCtrl,
+              focusNode: _searchFocusNode,
+              hintText: 'Поиск события',
+              selectedEvent: _selectedEvent,
+              onEventSelected: _onEventSelected,
+              onClear: _onClear,
+              searchFunction: _searchEvents,
+            ),
           ),
           const SizedBox(height: 40),
           Icon(
@@ -244,15 +250,18 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
     if (slotsState.items.isEmpty) {
       return Column(
         children: [
-          _EventDropdownField(
-            key: const ValueKey('event_dropdown_field'),
-            controller: _searchCtrl,
-            focusNode: _searchFocusNode,
-            hintText: 'Поиск события',
-            selectedEvent: _selectedEvent,
-            onEventSelected: _onEventSelected,
-            onClear: _onClear,
-            searchFunction: _searchEvents,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: _EventDropdownField(
+              key: const ValueKey('event_dropdown_field'),
+              controller: _searchCtrl,
+              focusNode: _searchFocusNode,
+              hintText: 'Поиск события',
+              selectedEvent: _selectedEvent,
+              onEventSelected: _onEventSelected,
+              onClear: _onClear,
+              searchFunction: _searchEvents,
+            ),
           ),
           const SizedBox(height: 40),
           Text(

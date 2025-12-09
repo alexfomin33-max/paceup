@@ -204,11 +204,11 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
         content: const Text('Это действие нельзя отменить.'),
         actions: [
           CupertinoDialogAction(
-            isDestructiveAction: true,
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Отмена'),
           ),
           CupertinoDialogAction(
+            isDestructiveAction: true,
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Удалить'),
           ),

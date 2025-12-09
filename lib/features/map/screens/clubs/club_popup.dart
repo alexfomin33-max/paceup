@@ -339,43 +339,57 @@ class _ClubRow extends StatelessWidget {
                 ? AppColors.darkSurfaceMuted
                 : AppColors.getSurfaceColor(context),
             padding: const EdgeInsets.only(left: 3, top: 8, right: 8),
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: "$name\n",
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      height: 1.7,
-                      // ────────────────────────────────────────────────────────────────
-                      // 🌓 ТЕМНАЯ ТЕМА: адаптивный цвет основного текста
-                      // ────────────────────────────────────────────────────────────────
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ────────────────────────────────────────────────────────────────
+                // Название клуба в одну строку с ellipsis
+                // ────────────────────────────────────────────────────────────────
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    height: 1.7,
+                    // ────────────────────────────────────────────────────────────────
+                    // 🌓 ТЕМНАЯ ТЕМА: адаптивный цвет основного текста
+                    // ────────────────────────────────────────────────────────────────
+                    color: AppColors.getTextPrimaryColor(context),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                // ────────────────────────────────────────────────────────────────
+                // Вторая строка: "Участников: X"
+                // ────────────────────────────────────────────────────────────────
+                Text.rich(
                   TextSpan(
-                    text: "Участников: ",
-                    style: AppTextStyles.h11w4Sec.copyWith(
-                      // ────────────────────────────────────────────────────────────────
-                      // 🌓 ТЕМНАЯ ТЕМА: адаптивный цвет вторичного текста
-                      // ────────────────────────────────────────────────────────────────
-                      color: AppColors.getTextSecondaryColor(context),
-                    ),
+                    children: [
+                      TextSpan(
+                        text: "Участников: ",
+                        style: AppTextStyles.h11w4Sec.copyWith(
+                          // ────────────────────────────────────────────────────────────────
+                          // 🌓 ТЕМНАЯ ТЕМА: адаптивный цвет вторичного текста
+                          // ────────────────────────────────────────────────────────────────
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                      ),
+                      TextSpan(
+                        text: "$membersCount",
+                        style: AppTextStyles.h12w5.copyWith(
+                          // ────────────────────────────────────────────────────────────────
+                          // 🌓 ТЕМНАЯ ТЕМА: адаптивный цвет основного текста
+                          // ────────────────────────────────────────────────────────────────
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+                    ],
                   ),
-                  TextSpan(
-                    text: "$membersCount",
-                    style: AppTextStyles.h12w5.copyWith(
-                      // ────────────────────────────────────────────────────────────────
-                      // 🌓 ТЕМНАЯ ТЕМА: адаптивный цвет основного текста
-                      // ────────────────────────────────────────────────────────────────
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                ],
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ),

@@ -665,7 +665,10 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
 
   // ─── Подсчет общего количества элементов (сообщения + разделители дат) ───
   int _calculateTotalItemsCount() {
+    if (_messages.isEmpty) return 0;
     int count = _messages.length;
+    // Добавляем разделитель даты перед первым сообщением
+    count++;
     // Добавляем разделители дат перед каждым сообщением, кроме первого
     for (int i = 1; i < _messages.length; i++) {
       if (_shouldShowDateSeparator(i)) {
@@ -864,7 +867,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                       slivers: [
                         // ─── Основной контент (дата, инфо, участники) ───
                         SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                          padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
                           sliver: SliverList(
                             delegate: SliverChildBuilderDelegate((
                               context,
@@ -996,6 +999,21 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                               int currentItem = 0;
 
                               for (int i = 0; i < _messages.length; i++) {
+                                // ─── Показываем разделитель даты перед первым сообщением ───
+                                if (i == 0) {
+                                  if (currentItem == index) {
+                                    // Это разделитель даты перед первым сообщением
+                                    return _DateSeparator(
+                                      text: _formatMessageDate(
+                                        _messages[i].createdAt,
+                                      ),
+                                      topPadding: 4,
+                                      bottomPadding: 12,
+                                    );
+                                  }
+                                  currentItem++;
+                                }
+
                                 // ─── Показываем разделитель даты перед сообщением (кроме первого) ───
                                 if (i > 0 && _shouldShowDateSeparator(i)) {
                                   if (currentItem == index) {
@@ -1004,6 +1022,8 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                                       text: _formatMessageDate(
                                         _messages[i].createdAt,
                                       ),
+                                      topPadding: 16,
+                                      bottomPadding: 4,
                                     );
                                   }
                                   currentItem++;
@@ -1315,10 +1335,19 @@ class _PillFinal extends StatelessWidget {
 
 class _DateSeparator extends StatelessWidget {
   final String text;
-  const _DateSeparator({required this.text});
+  final double? topPadding;
+  final double? bottomPadding;
+  const _DateSeparator({
+    required this.text,
+    this.topPadding,
+    this.bottomPadding,
+  });
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 16, bottom: 4),
+    padding: EdgeInsets.only(
+      top: topPadding ?? 12,
+      bottom: bottomPadding ?? 12,
+    ),
     child: Container(
       alignment: Alignment.center,
       child: Text(

@@ -609,7 +609,22 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
     if (_loadingData) {
       return Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Редактирование клуба'),
+        appBar: PaceAppBar(
+          title: 'Редактирование клуба',
+          showBack: true,
+          showBottomDivider: true,
+          actions: [
+            IconButton(
+              splashRadius: 22,
+              icon: const Icon(
+                CupertinoIcons.delete,
+                size: 20,
+                color: AppColors.error,
+              ),
+              onPressed: _deleteClub,
+            ),
+          ],
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -617,7 +632,22 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Редактирование клуба'),
+        appBar: PaceAppBar(
+          title: 'Редактирование клуба',
+          showBack: true,
+          showBottomDivider: true,
+          actions: [
+            IconButton(
+              splashRadius: 22,
+              icon: const Icon(
+                CupertinoIcons.delete,
+                size: 20,
+                color: AppColors.error,
+              ),
+              onPressed: _deleteClub,
+            ),
+          ],
+        ),
         body: GestureDetector(
           // ── скрываем клавиатуру при нажатии на пустую область экрана
           onTap: () => FocusScope.of(context).unfocus(),
@@ -1106,36 +1136,17 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                  // ── Кнопки: Сохранить и Удалить сообщество
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Flexible(
-                        child: PrimaryButton(
-                          text: 'Сохранить',
-                          onPressed: () {
-                            if (!formState.isSubmitting && !_deleting) _submit();
-                          },
-                          expanded: true,
-                          isLoading: formState.isSubmitting,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      TextButton(
-                        onPressed: _deleting || formState.isSubmitting
-                            ? null
-                            : _deleteClub,
-                        child: const Text(
-                          'Удалить сообщество',
-                          style: TextStyle(
-                            color: AppColors.error,
-                            fontFamily: 'Inter',
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
+                  // ── Кнопка сохранения
+                  Center(
+                    child: PrimaryButton(
+                      text: 'Сохранить',
+                      onPressed: () {
+                        if (!formState.isSubmitting && !_deleting) _submit();
+                      },
+                      width: 230,
+                      isLoading: formState.isSubmitting,
+                      enabled: isFormValid && !formState.isSubmitting,
+                    ),
                   ),
                 ],
               ),
