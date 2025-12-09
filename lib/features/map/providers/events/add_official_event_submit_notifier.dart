@@ -5,7 +5,6 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
@@ -57,10 +56,6 @@ class SubmitEventNotifier extends AsyncNotifier<void> {
       fields['latitude'] = formState.selectedLocation!.latitude.toString();
       fields['longitude'] = formState.selectedLocation!.longitude.toString();
       fields['event_date'] = _formatDate(formState.date!);
-      // ── время опционально (если не указано, отправляем дефолтное значение 00:00)
-      fields['event_time'] = formState.time != null
-          ? _formatTime(formState.time!)
-          : '00:00';
       fields['description'] = formState.description.trim();
 
       // Собираем дистанции (только непустые)
@@ -92,7 +87,6 @@ class SubmitEventNotifier extends AsyncNotifier<void> {
           'latitude': fields['latitude'],
           'longitude': fields['longitude'],
           'event_date': fields['event_date'],
-          'event_time': fields['event_time'], // дефолтное значение 00:00, если не указано
           'description': fields['description'],
           'event_link': fields['event_link'] ?? '',
           'template_name': fields['template_name'] ?? '',
@@ -139,13 +133,6 @@ class SubmitEventNotifier extends AsyncNotifier<void> {
     final mm = date.month.toString().padLeft(2, '0');
     final yy = date.year.toString();
     return '$dd.$mm.$yy';
-  }
-
-  /// Форматирование времени (hh:mm)
-  String _formatTime(TimeOfDay time) {
-    final hh = time.hour.toString().padLeft(2, '0');
-    final mm = time.minute.toString().padLeft(2, '0');
-    return '$hh:$mm';
   }
 }
 

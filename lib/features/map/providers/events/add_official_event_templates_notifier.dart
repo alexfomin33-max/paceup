@@ -4,7 +4,6 @@
 //  AsyncNotifier для загрузки шаблонов событий
 // ────────────────────────────────────────────────────────────────────────────
 
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../providers/services/api_provider.dart';
@@ -18,7 +17,6 @@ class EventTemplate {
   final String? link;
   final String? activity;
   final DateTime? date;
-  final TimeOfDay? time;
   final double? latitude;
   final double? longitude;
   final List<String> distances;
@@ -30,7 +28,6 @@ class EventTemplate {
     this.link,
     this.activity,
     this.date,
-    this.time,
     this.latitude,
     this.longitude,
     this.distances = const [],
@@ -48,23 +45,6 @@ class EventTemplate {
             int.parse(parts[2]),
             int.parse(parts[1]),
             int.parse(parts[0]),
-          );
-        }
-      } catch (_) {
-        // Игнорируем ошибку парсинга
-      }
-    }
-
-    // Парсинг времени (формат: "hh:mm")
-    TimeOfDay? parsedTime;
-    final timeStr = data['event_time'] as String?;
-    if (timeStr != null && timeStr.isNotEmpty) {
-      try {
-        final parts = timeStr.split(':');
-        if (parts.length == 2) {
-          parsedTime = TimeOfDay(
-            hour: int.parse(parts[0]),
-            minute: int.parse(parts[1]),
           );
         }
       } catch (_) {
@@ -90,7 +70,6 @@ class EventTemplate {
       link: data['event_link'] as String?,
       activity: data['activity'] as String?,
       date: parsedDate,
-      time: parsedTime,
       latitude: data['latitude'] as double?,
       longitude: data['longitude'] as double?,
       distances: parsedDistances,
