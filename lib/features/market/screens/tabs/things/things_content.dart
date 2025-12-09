@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/theme/app_theme.dart';
+import '../../../../../providers/services/auth_provider.dart';
 import '../../../providers/things_provider.dart';
 import '../../../providers/things_notifier.dart';
 import 'widgets/market_things_card.dart';
@@ -19,6 +20,7 @@ class ThingsContent extends ConsumerStatefulWidget {
 class _ThingsContentState extends ConsumerState<ThingsContent> {
   final List<String> _categories = const [
     'Все',
+    'Мои',
     'Кроссовки',
     'Часы',
     'Одежда',
@@ -37,18 +39,30 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
     });
   }
 
-  void _updateCategoryFilter() {
+  Future<void> _updateCategoryFilter() async {
     final notifier = ref.read(thingsProvider.notifier);
 
     // ── преобразуем выбранную категорию в фильтр
     String? categoryFilter;
-    if (_selected != 'Все') {
+    int? sellerId;
+    
+    if (_selected == 'Мои') {
+      // ── при выборе "Мои" получаем userId из AuthService
+      final authService = ref.read(authServiceProvider);
+      final userId = await authService.getUserId();
+      if (userId != null) {
+        sellerId = userId;
+      }
+    } else if (_selected != 'Все') {
       categoryFilter = _selected;
     }
 
     // ── создаем новый фильтр
-    final newFilter = ThingsFilter(category: categoryFilter);
-    notifier.updateFilter(newFilter);
+    final newFilter = ThingsFilter(
+      category: categoryFilter,
+      sellerId: sellerId,
+    );
+    await notifier.updateFilter(newFilter);
   }
 
   @override
@@ -112,9 +126,9 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
             return _CategoryDropdown(
               value: _selected,
               options: _categories,
-              onChanged: (v) {
+              onChanged: (v) async {
                 setState(() => _selected = v ?? 'Все');
-                _updateCategoryFilter();
+                await _updateCategoryFilter();
               },
             );
           }

@@ -15,22 +15,26 @@ class ThingsFilter {
   final String? search;
   final String? category; // 'Кроссовки', 'Часы', 'Одежда', 'Аксессуары'
   final Gender? gender;
+  final int? sellerId; // ID продавца для фильтрации "Мои объявления"
 
   const ThingsFilter({
     this.search,
     this.category,
     this.gender,
+    this.sellerId,
   });
 
   ThingsFilter copyWith({
     String? search,
     String? category,
     Gender? gender,
+    int? sellerId,
   }) {
     return ThingsFilter(
       search: search ?? this.search,
       category: category ?? this.category,
       gender: gender ?? this.gender,
+      sellerId: sellerId ?? this.sellerId,
     );
   }
 
@@ -41,11 +45,12 @@ class ThingsFilter {
     return other is ThingsFilter &&
         other.search == search &&
         other.category == category &&
-        other.gender == gender;
+        other.gender == gender &&
+        other.sellerId == sellerId;
   }
 
   @override
-  int get hashCode => Object.hash(search, category, gender);
+  int get hashCode => Object.hash(search, category, gender, sellerId);
 }
 
 /// StateNotifier для управления списком вещей
@@ -146,6 +151,9 @@ class ThingsNotifier extends StateNotifier<ThingsState> {
     }
     if (_filter.gender != null) {
       params['gender'] = _filter.gender == Gender.male ? 'male' : 'female';
+    }
+    if (_filter.sellerId != null) {
+      params['seller_id'] = _filter.sellerId;
     }
 
     // Выполняем запрос к API
