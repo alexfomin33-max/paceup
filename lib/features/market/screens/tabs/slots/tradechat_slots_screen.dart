@@ -9,6 +9,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/services/api_service.dart';
 import '../../../../../core/services/auth_service.dart';
+import '../../../../../core/utils/local_image_compressor.dart';
 import '../../../../../core/utils/feed_date.dart';
 import '../../../models/market_models.dart';
 import '../../widgets/pills.dart'; // GenderPill, PricePill
@@ -470,10 +471,17 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
       final userId = _currentUserId;
       if (userId == null) return;
 
+      // ─── Сжимаем изображение на клиенте ───
+      final compressedFile = await compressLocalImage(
+        sourceFile: File(x.path),
+        maxSide: ImageCompressionPreset.chat.maxSide,
+        jpegQuality: ImageCompressionPreset.chat.quality,
+      );
+
       // Загружаем изображение
       final uploadResponse = await _api.postMultipart(
         '/upload_slot_chat_image.php',
-        files: {'image': File(x.path)},
+        files: {'image': compressedFile},
         fields: {
           'chat_id': _chatData!.chatId.toString(),
           'user_id': userId.toString(),
