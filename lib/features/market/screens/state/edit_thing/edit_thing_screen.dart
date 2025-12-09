@@ -1072,7 +1072,12 @@ class _DropdownField extends StatelessWidget {
               items: items.map((o) {
                 return DropdownMenuItem<String>(
                   value: o,
-                  child: Text(o, style: AppTextStyles.h14w4),
+                  child: Text(
+                    o,
+                    style: AppTextStyles.h14w4.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
                 );
               }).toList(),
             ),
