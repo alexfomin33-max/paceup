@@ -549,10 +549,16 @@ class _OfficialEventDetailScreenState
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Название события выровнено по левому краю
-                              Text(
-                                name,
-                                textAlign: TextAlign.left,
-                                style: AppTextStyles.h17w6,
+                              Builder(
+                                builder: (context) => Text(
+                                  name,
+                                  textAlign: TextAlign.left,
+                                  style: AppTextStyles.h17w6.copyWith(
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                ),
                               ),
                               const SizedBox(height: 10),
 
@@ -667,10 +673,12 @@ class _OfficialEventDetailScreenState
                               onTap: () => setState(() => _tab = 0),
                             ),
                           ),
-                          Container(
-                            width: 1,
-                            height: 24,
-                            color: AppColors.border,
+                          Builder(
+                            builder: (context) => Container(
+                              width: 0.5,
+                              height: 24,
+                              color: AppColors.getBorderColor(context),
+                            ),
                           ),
                           Expanded(
                             child: _HalfTab(
@@ -768,6 +776,11 @@ class _CircleIconBtn extends StatelessWidget {
             ? Colors.white
             : AppColors.getIconPrimaryColor(context));
 
+    // В темной теме увеличиваем непрозрачность кружочка
+    final backgroundColor = brightness == Brightness.dark
+        ? AppColors.scrim60
+        : AppColors.scrim40;
+
     return Semantics(
       label: semantic,
       button: true,
@@ -776,8 +789,8 @@ class _CircleIconBtn extends StatelessWidget {
         child: Container(
           width: 34,
           height: 34,
-          decoration: const BoxDecoration(
-            color: AppColors.scrim40,
+          decoration: BoxDecoration(
+            color: backgroundColor,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,

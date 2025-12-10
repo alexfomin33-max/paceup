@@ -826,6 +826,11 @@ class _CircleIconBtn extends StatelessWidget {
         ? Colors.white
         : AppColors.getIconPrimaryColor(context);
 
+    // В темной теме увеличиваем непрозрачность кружочка
+    final backgroundColor = brightness == Brightness.dark
+        ? AppColors.scrim60
+        : AppColors.scrim40;
+
     return Semantics(
       label: semantic,
       button: true,
@@ -834,8 +839,8 @@ class _CircleIconBtn extends StatelessWidget {
         child: Container(
           width: 34,
           height: 34,
-          decoration: const BoxDecoration(
-            color: AppColors.scrim40,
+          decoration: BoxDecoration(
+            color: backgroundColor,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,

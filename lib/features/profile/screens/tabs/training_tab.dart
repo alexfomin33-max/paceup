@@ -535,7 +535,9 @@ class _MonthGrid extends StatelessWidget {
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 11,
-                              color: AppColors.getSurfaceColor(context),
+                              // Цвет всегда светлый, чтобы в тёмной теме текст был
+                              // читаемым на синем фоне
+                              color: AppColors.surface,
                             ),
                           ),
                         ),

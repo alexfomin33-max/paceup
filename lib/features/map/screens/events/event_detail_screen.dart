@@ -537,10 +537,16 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Text(
-                                      name,
-                                      textAlign: TextAlign.center,
-                                      style: AppTextStyles.h17w6,
+                                    Builder(
+                                      builder: (context) => Text(
+                                        name,
+                                        textAlign: TextAlign.center,
+                                        style: AppTextStyles.h17w6.copyWith(
+                                          color: AppColors.getTextPrimaryColor(
+                                            context,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                     const SizedBox(height: 10),
 
@@ -636,10 +642,12 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                     onTap: () => setState(() => _tab = 0),
                                   ),
                                 ),
-                                Container(
-                                  width: 1,
-                                  height: 24,
-                                  color: AppColors.border,
+                                Builder(
+                                  builder: (context) => Container(
+                                    width: 0.5,
+                                    height: 24,
+                                    color: AppColors.getBorderColor(context),
+                                  ),
                                 ),
                                 Expanded(
                                   child: _HalfTab(
@@ -801,6 +809,12 @@ class _CircleIconBtn extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    // В темной теме увеличиваем непрозрачность кружочка
+    final brightness = Theme.of(context).brightness;
+    final backgroundColor = brightness == Brightness.dark
+        ? AppColors.scrim60
+        : AppColors.scrim20;
+
     return Semantics(
       label: semantic,
       button: true,
@@ -809,8 +823,8 @@ class _CircleIconBtn extends StatelessWidget {
         child: Container(
           width: 34,
           height: 34,
-          decoration: const BoxDecoration(
-            color: AppColors.scrim20,
+          decoration: BoxDecoration(
+            color: backgroundColor,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
@@ -1425,12 +1439,6 @@ class _EventMembersSliverState extends ConsumerState<_EventMembersSliver> {
                       ? () => _toggleSubscribe(userId, isSubscribed)
                       : null,
                 ),
-                if (index < _participants.length - 1)
-                  Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    color: AppColors.getBorderColor(context),
-                  ),
               ],
             ),
           ),
@@ -1674,14 +1682,6 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
                   ? () => _toggleSubscribe(userId, isSubscribed)
                   : null,
             ),
-            if (index < _participants.length - 1)
-              Builder(
-                builder: (context) => Divider(
-                  height: 1,
-                  thickness: 0.5,
-                  color: AppColors.getBorderColor(context),
-                ),
-              ),
           ],
         );
       },
@@ -1761,9 +1761,10 @@ class _MemberRow extends StatelessWidget {
           ),
 
           // Иконка действий/роли.
-          // ── Для текущего пользователя полностью убираем любую иконку.
+          // ── Для текущего пользователя показываем пустое место того же размера,
+          //    чтобы высота карточки совпадала с другими пользователями.
           if (isCurrentUser)
-            const SizedBox.shrink()
+            const SizedBox(width: 48, height: 48)
           else if (userId != null)
             IconButton(
               onPressed: isToggling ? null : onToggleSubscribe,
