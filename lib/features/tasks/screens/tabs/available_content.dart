@@ -1,46 +1,77 @@
 // lib/screens/tabs/available_content.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../description/swim_trip_screen.dart';
+import '../description/task_detail_screen.dart';
 import '../../../../core/widgets/transparent_route.dart';
+import '../../providers/tasks_provider.dart';
 
-class AvailableContent extends StatelessWidget {
+class AvailableContent extends ConsumerWidget {
   const AvailableContent({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Загружаем задачи из API
+    final tasksAsync = ref.watch(tasksProvider);
+
     // Скролл + внутренние горизонтальные отступы
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _MonthLabel('Июнь 2025'),
-            const SizedBox(height: 8),
+        child: tasksAsync.when(
+          data: (tasksByMonth) {
+            if (tasksByMonth.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Text(
+                    'Нет доступных задач',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      color: AppColors.darkTextSecondary,
+                    ),
+                  ),
+                ),
+              );
+            }
 
-            const _AvailableGrid(
+            return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AvailableTaskCard(
-                  imageProvider: AssetImage('assets/ride200.jpg'),
-                  title: 'Проехать 200 км на велосипеде за июнь',
-                ),
-                AvailableTaskCard(
-                  imageProvider: AssetImage('assets/swim10.jpg'),
-                  title: 'Проплыть в июне 10 км',
-                ),
-                AvailableTaskCard(
-                  imageProvider: AssetImage('assets/run50.jpg'),
-                  title: 'Пробежать 50 км за июнь',
-                ),
-              ],
+                // Отображаем задачи по месяцам
+                ...tasksByMonth.map((monthGroup) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _MonthLabel(monthGroup.monthYearLabel),
+                      const SizedBox(height: 8),
+                      _AvailableGrid(
+                        children: monthGroup.tasks.map((task) {
+                          return AvailableTaskCard(
+                            imageUrl: task.imageUrl,
+                            title: task.formattedTitle,
+                            onPressed: () {
+                              Navigator.of(context, rootNavigator: true).push(
+                                TransparentPageRoute(
+                                  builder: (_) => TaskDetailScreen(taskId: task.id),
+                                ),
+                              );
+                            },
+                          );
+                        }).toList(),
             ),
             const SizedBox(height: 20),
+                    ],
+                  );
+                }).toList(),
 
+                // Секция экспедиций (оставляем как есть)
             const _SectionLabel('Экспедиции'),
             const SizedBox(height: 8),
-
             _ExpeditionGrid(
               children: [
                 const AvailableExpeditionCard(
@@ -63,6 +94,28 @@ class AvailableContent extends StatelessWidget {
 
             const SizedBox(height: 16),
           ],
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          error: (error, stack) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Text(
+                'Ошибка загрузки задач: ${error.toString()}',
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  color: Colors.red,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -149,13 +202,13 @@ class _ExpeditionGrid extends StatelessWidget {
 }
 
 class AvailableTaskCard extends StatelessWidget {
-  final ImageProvider imageProvider;
+  final String? imageUrl;
   final String title;
   final VoidCallback? onPressed;
 
   const AvailableTaskCard({
     super.key,
-    required this.imageProvider,
+    this.imageUrl,
     required this.title,
     this.onPressed,
   });
@@ -184,10 +237,25 @@ class AvailableTaskCard extends StatelessWidget {
             // Картинка занимает 2/3 верхней части карточки
             Expanded(
               flex: 2,
-              child: Image(
-                image: imageProvider,
+              child: imageUrl != null && imageUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: imageUrl!,
                 fit: BoxFit.cover,
                 width: double.infinity,
+                      placeholder: (context, url) => Container(
+                        color: AppColors.getBorderColor(context),
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: AppColors.getBorderColor(context),
+                        child: const Icon(Icons.image_not_supported),
+                      ),
+                    )
+                  : Container(
+                      color: AppColors.getBorderColor(context),
+                      child: const Icon(Icons.fitness_center),
               ),
             ),
             // Текст занимает 1/3 нижней части карточки
