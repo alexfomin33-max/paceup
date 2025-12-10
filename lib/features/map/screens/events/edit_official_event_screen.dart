@@ -42,6 +42,7 @@ class _EditOfficialEventScreenState
   // выборы
   String? activity;
   DateTime? date;
+  TimeOfDay? time; // ── время (необязательное для официальных событий, не показываем в UI)
 
   // ── контроллеры для полей ввода дистанций
   final List<TextEditingController> _distanceControllers = [];
@@ -166,7 +167,7 @@ class _EditOfficialEventScreenState
 
           saveTemplate = (event['template_name'] as String? ?? '').isNotEmpty;
 
-          // Заполняем дату и время
+          // Заполняем дату
           final eventDateStr = event['event_date'] as String? ?? '';
           if (eventDateStr.isNotEmpty) {
             try {
@@ -176,6 +177,22 @@ class _EditOfficialEventScreenState
                   int.parse(parts[2]),
                   int.parse(parts[1]),
                   int.parse(parts[0]),
+                );
+              }
+            } catch (e) {
+              // Игнорируем ошибку парсинга
+            }
+          }
+
+          // ── Заполняем время (необязательное для официальных событий, не показываем в UI)
+          final eventTimeStr = event['event_time'] as String? ?? '';
+          if (eventTimeStr.isNotEmpty) {
+            try {
+              final parts = eventTimeStr.split(':');
+              if (parts.length >= 2) {
+                time = TimeOfDay(
+                  hour: int.parse(parts[0]),
+                  minute: int.parse(parts[1]),
                 );
               }
             } catch (e) {
@@ -415,6 +432,13 @@ class _EditOfficialEventScreenState
     return '$dd.$mm.$yy';
   }
 
+  String _fmtTime(TimeOfDay? t) {
+    if (t == null) return '';
+    final hh = t.hour.toString().padLeft(2, '0');
+    final mm = t.minute.toString().padLeft(2, '0');
+    return '$hh:$mm';
+  }
+
   /// ──────────────────────── Удаление события ────────────────────────
   /// Показываем диалог подтверждения удаления
   Future<bool> _confirmDelete() async {
@@ -531,6 +555,10 @@ class _EditOfficialEventScreenState
         fields['latitude'] = selectedLocation!.latitude.toString();
         fields['longitude'] = selectedLocation!.longitude.toString();
         fields['event_date'] = _fmtDate(date!);
+        // ── Время необязательное для официальных событий, отправляем только если указано
+        if (time != null) {
+          fields['event_time'] = _fmtTime(time!);
+        }
         fields['description'] = descCtrl.text.trim();
 
         // Флаги для сохранения существующих изображений
@@ -576,6 +604,10 @@ class _EditOfficialEventScreenState
             'event_link': fields['event_link'] ?? '',
             'template_name': fields['template_name'] ?? '',
           };
+          // ── Время необязательное для официальных событий, добавляем только если указано
+          if (fields.containsKey('event_time') && fields['event_time']!.isNotEmpty) {
+            jsonBody['event_time'] = fields['event_time'];
+          }
           if (distanceValues.isNotEmpty) {
             jsonBody['distance'] = distanceValues;
           }

@@ -335,6 +335,12 @@ class _AddOfficialEventScreenState
       ref
           .read(addOfficialEventFormProvider.notifier)
           .updateDate(templateAsync.date);
+      // ── Время необязательное для официальных событий, обновляем только если есть
+      if (templateAsync.time != null) {
+        ref
+            .read(addOfficialEventFormProvider.notifier)
+            .updateTime(templateAsync.time);
+      }
 
       // Координаты
       if (templateAsync.latitude != null && templateAsync.longitude != null) {
@@ -357,6 +363,7 @@ class _AddOfficialEventScreenState
             link: linkValue,
             activity: templateAsync.activity,
             date: templateAsync.date,
+            time: templateAsync.time, // ── время из шаблона (может быть null)
             location:
                 templateAsync.latitude != null &&
                     templateAsync.longitude != null

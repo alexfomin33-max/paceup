@@ -412,7 +412,9 @@ class _OfficialEventDetailScreenState
     final photos = _eventData!['photos'] as List<dynamic>? ?? [];
 
     // ── Форматируем дату с добавлением года, если это не текущий год
-    final dateFormatted = _formatDateWithYear(dateFormattedShort);
+    // ── Убираем запятую, если она есть (для официальных событий время не показываем)
+    final dateFormattedRaw = _formatDateWithYear(dateFormattedShort);
+    final dateFormatted = dateFormattedRaw.replaceAll(', ', ' ').replaceAll(',', '');
 
     // ── Извлекаем ссылку на регистрацию (поддерживаем оба варианта названия)
     dynamic linkRaw = _eventData!['registration_link'];

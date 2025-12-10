@@ -6,6 +6,7 @@
 
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Состояние формы создания официального события
@@ -28,6 +29,9 @@ class AddOfficialEventState {
 
   /// Дата проведения
   final DateTime? date;
+
+  /// Время начала (необязательное для официальных событий)
+  final TimeOfDay? time;
 
   /// Дистанции (в метрах)
   final List<String> distances;
@@ -54,6 +58,7 @@ class AddOfficialEventState {
     this.link = '',
     this.activity,
     this.date,
+    this.time, // ── время необязательное для официальных событий
     this.distances = const [''],
     this.logoFile,
     this.backgroundFile,
@@ -81,6 +86,7 @@ class AddOfficialEventState {
     String? link,
     String? activity,
     DateTime? date,
+    TimeOfDay? time, // ── время необязательное для официальных событий
     List<String>? distances,
     File? logoFile,
     File? backgroundFile,
@@ -95,6 +101,7 @@ class AddOfficialEventState {
       link: link ?? this.link,
       activity: activity ?? this.activity,
       date: date ?? this.date,
+      time: time ?? this.time,
       distances: distances ?? this.distances,
       logoFile: logoFile ?? this.logoFile,
       backgroundFile: backgroundFile ?? this.backgroundFile,
@@ -115,6 +122,7 @@ class AddOfficialEventState {
           link == other.link &&
           activity == other.activity &&
           date == other.date &&
+          time == other.time &&
           listEquals(distances, other.distances) &&
           logoFile == other.logoFile &&
           backgroundFile == other.backgroundFile &&
@@ -130,6 +138,7 @@ class AddOfficialEventState {
     link,
     activity,
     date,
+    time,
     distances,
     logoFile,
     backgroundFile,

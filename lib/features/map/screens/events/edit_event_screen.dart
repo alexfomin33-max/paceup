@@ -226,19 +226,25 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
           }
         }
 
-        final eventTimeStr = event['event_time'] as String? ?? '';
-        if (eventTimeStr.isNotEmpty) {
-          try {
-            final parts = eventTimeStr.split(':');
-            if (parts.length >= 2) {
-              time = TimeOfDay(
-                hour: int.parse(parts[0]),
-                minute: int.parse(parts[1]),
-              );
+        // ── безопасное чтение времени (колонка может отсутствовать в старых записях)
+        try {
+          final eventTimeStr = event['event_time'] as String? ?? '';
+          if (eventTimeStr.isNotEmpty) {
+            try {
+              final parts = eventTimeStr.split(':');
+              if (parts.length >= 2) {
+                time = TimeOfDay(
+                  hour: int.parse(parts[0]),
+                  minute: int.parse(parts[1]),
+                );
+              }
+            } catch (e) {
+              // Игнорируем ошибку парсинга
             }
-          } catch (e) {
-            // Игнорируем ошибку парсинга
           }
+        } catch (e) {
+          // Игнорируем ошибку, если поле отсутствует в ответе
+          time = null;
         }
 
         // Координаты

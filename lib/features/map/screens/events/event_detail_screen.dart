@@ -551,7 +551,9 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                     const SizedBox(height: 6),
                                     _InfoRow(
                                       icon: CupertinoIcons.calendar_today,
-                                      text: '$dateFormatted, $time',
+                                      text: time.isNotEmpty
+                                          ? '$dateFormatted, $time'
+                                          : dateFormatted,
                                     ),
                                     const SizedBox(height: 6),
                                     _InfoRow(
