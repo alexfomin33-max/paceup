@@ -20,13 +20,7 @@ class _ByTypeContent extends StatefulWidget {
 
 class _ByTypeContentState extends State<_ByTypeContent> {
   // Периоды
-  static const _periods = [
-    'За неделю',
-    'За месяц',
-    'За 3 месяца',
-    'За 6 месяцев',
-    'За год',
-  ];
+  static const _periods = ['За неделю', 'За месяц', 'За год'];
   String _period = 'За год';
 
   // Вид спорта: 0 бег, 1 вело, 2 плавание (single-select)
@@ -82,10 +76,6 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         return 0.06; // ~1/16
       case 'За месяц':
         return 0.10; // ~1/10
-      case 'За 3 месяца':
-        return 0.28;
-      case 'За 6 месяцев':
-        return 0.55;
       default:
         return 1.0; // За год
     }
@@ -117,12 +107,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           'Расстояние',
           '${(2976 * s).toStringAsFixed(0)} км',
         ),
-        const _MetricRowData(
-          Icons.favorite_border,
-          'Средний пульс',
-          '152',
-          color: AppColors.error, // красный для пульса
-        ),
+        const _MetricRowData(Icons.favorite_border, 'Средний пульс', '152'),
         const _MetricRowData(Icons.speed, 'Средний темп', '5:15 /км'),
         const _MetricRowData(
           Icons.directions_walk_outlined,
@@ -180,11 +165,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     }
   }
 
-  Color _barColor() => _sport == 0
-      ? AppColors.male
-      : _sport == 1
-      ? AppColors.accentMint
-      : AppColors.female;
+  Color _barColor() => AppColors.accentMint;
   double _maxY() => _sport == 0
       ? 1000
       : _sport == 1
@@ -282,6 +263,17 @@ class _ByTypeContentState extends State<_ByTypeContent> {
             ],
           ),
         ),
+        const SizedBox(height: 12),
+
+        // ── Метрики
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: _MetricsList(metrics: metrics),
+        ),
+        const SizedBox(height: 12),
+
+        // ── Заголовок графика
+        const _SectionTitle('Расстояние, км'),
         const SizedBox(height: 8),
 
         // ── Карточка с графиком
@@ -296,12 +288,54 @@ class _ByTypeContentState extends State<_ByTypeContent> {
             values: values,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
-        // ── Метрики
+        // ── Заголовок графика "Дней активности"
+        const _SectionTitle('Дней активности'),
+        const SizedBox(height: 8),
+
+        // ── Карточка с графиком "Дней активности"
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: _MetricsList(metrics: metrics),
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+          child: _YearChartCard(
+            initialYear: 2024,
+            color: AppColors.male,
+            maxY: 30,
+            tick: 5,
+            height: 170,
+            values: const [6, 10, 14, 19, 22, 28, 30, 25, 24, 22, 18, 12],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // ── Заголовок графика "Время активности"
+        const _SectionTitle('Время активности, мин'),
+        const SizedBox(height: 8),
+
+        // ── Карточка с графиком "Время активности"
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+          child: _YearChartCard(
+            initialYear: 2024,
+            color: AppColors.female,
+            maxY: 3000,
+            tick: 500,
+            height: 190,
+            values: const [
+              1500,
+              1450,
+              1400,
+              2200,
+              2900,
+              2400,
+              1700,
+              2500,
+              3000,
+              2700,
+              2500,
+              1700,
+            ],
+          ),
         ),
       ],
     );
@@ -309,6 +343,30 @@ class _ByTypeContentState extends State<_ByTypeContent> {
 }
 
 // ───── UI helpers
+
+class _SectionTitle extends StatelessWidget {
+  final String text;
+  const _SectionTitle(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          text,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppColors.getTextSecondaryColor(context),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _SportIcon extends StatelessWidget {
   final bool selected;
@@ -520,14 +578,23 @@ class _MetricsList extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  r.value,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.getTextPrimaryColor(context),
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      r.value,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                    if (r.title == 'Средний пульс') ...[
+                      const SizedBox(width: 4),
+                      Icon(Icons.favorite, size: 11, color: AppColors.error),
+                    ],
+                  ],
                 ),
               ],
             ),

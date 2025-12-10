@@ -609,7 +609,7 @@ extension EventTypeExtension on EventType {
   IconData get icon {
     switch (this) {
       case EventType.official:
-        return Icons.emoji_events; // трофей/награда
+        return Icons.emoji_events_outlined; // трофей/награда (без заливки)
       case EventType.amateur:
         return CupertinoIcons.person;
     }
