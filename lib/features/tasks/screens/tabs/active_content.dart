@@ -1,27 +1,74 @@
 // lib/screens/tabs/active_content.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../description/run_200k_screen.dart';
 import '../description/suzdal_screen.dart';
+import '../description/task_detail_screen.dart';
 import '../../../../core/widgets/transparent_route.dart';
+import '../../providers/tasks_provider.dart';
 
-class ActiveContent extends StatelessWidget {
+class ActiveContent extends ConsumerWidget {
   const ActiveContent({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Загружаем активные задачи пользователя из API
+    final userTasksAsync = ref.watch(userTasksProvider);
+
     // Вертикальный скролл + горизонтальные поля внутри контента
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-        child: Column(
+        child: userTasksAsync.when(
+          data: (tasksByMonth) {
+            // Объединяем задачи из базы данных с захардкоженными задачами
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Задачи из базы данных, сгруппированные по месяцам
+                ...tasksByMonth.map((monthGroup) {
+                  return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+                      _MonthLabel(monthGroup.monthYearLabel),
+                      const SizedBox(height: 8),
+                      ...monthGroup.tasks.map((task) {
+                        return Column(
+                          children: [
+                            TaskCard(
+                              title: task.name,
+                              progressText: task.formattedProgress,
+                              percent: task.progressPercent ?? 0.0,
+                              image: task.imageUrl != null && task.imageUrl!.isNotEmpty
+                                  ? _RectImage(
+                                      imageUrl: task.imageUrl!,
+                                    )
+                                  : null,
+                              onTap: () {
+                                Navigator.of(context, rootNavigator: true).push(
+                                  TransparentPageRoute(
+                                    builder: (_) => TaskDetailScreen(taskId: task.id),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                        );
+                      }),
+                    ],
+                  );
+                }).toList(),
+
+                // Захардкоженные задачи (пока оставляем)
+                if (tasksByMonth.isEmpty) ...[
             const _MonthLabel('Июнь 2025'),
             const SizedBox(height: 8),
-
+                ],
             const TaskCard(
               title: '10 дней активности',
               progressText: '6 / 10 дней',
@@ -90,6 +137,82 @@ class ActiveContent extends StatelessWidget {
 
             const SizedBox(height: 16),
           ],
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          error: (error, stack) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Показываем захардкоженные задачи даже при ошибке
+              const _MonthLabel('Июнь 2025'),
+              const SizedBox(height: 8),
+              const TaskCard(
+                title: '10 дней активности',
+                progressText: '6 / 10 дней',
+                percent: 0.60,
+                image: _RectImage(provider: AssetImage('assets/activity10.png')),
+              ),
+              const SizedBox(height: 12),
+              TaskCard(
+                title: '200 км бега',
+                progressText: '145,8 / 200 км',
+                percent: 0.729,
+                image: const _RectImage(
+                  provider: AssetImage('assets/card200run.jpg'),
+                ),
+                onTap: () {
+                  Navigator.of(context, rootNavigator: true).push(
+                    TransparentPageRoute(builder: (_) => const Run200kScreen()),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              const TaskCard(
+                title: '1000 метров набора высоты',
+                progressText: '537 / 1000 м',
+                percent: 0.537,
+                image: _RectImage(provider: AssetImage('assets/height1000.jpg')),
+              ),
+              const SizedBox(height: 12),
+              const TaskCard(
+                title: '1000 минут активности',
+                progressText: '618 / 1000 мин',
+                percent: 0.618,
+                image: _RectImage(
+                  provider: AssetImage('assets/activity1000.png'),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const _SectionLabel('Экспедиции'),
+              const SizedBox(height: 8),
+              ExpeditionCard(
+                title: 'Суздаль',
+                progressText: '21 784 / 110 033 шагов',
+                percent: 0.198,
+                image: const _RoundImage(
+                  provider: AssetImage('assets/Suzdal.png'),
+                ),
+                onTap: () {
+                  Navigator.of(context, rootNavigator: true).push(
+                    TransparentPageRoute(builder: (_) => const SuzdalScreen()),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              const ExpeditionCard(
+                title: 'Монблан',
+                progressText: '3 521 / 4 810 метров',
+                percent: 0.732,
+                image: _RoundImage(provider: AssetImage('assets/Monblan.png')),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -453,12 +576,33 @@ class _RoundImage extends StatelessWidget {
 /// Прямоугольное изображение для карточек задач
 class _RectImage extends StatelessWidget {
   final ImageProvider? provider;
-  const _RectImage({this.provider});
+  final String? imageUrl;
+
+  const _RectImage({this.provider, this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
-    if (provider == null) {
-      return Container(
+    // Если передан URL, используем CachedNetworkImage
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      return ClipOval(
+        child: SizedBox(
+          width: 64,
+          height: 64,
+          child: CachedNetworkImage(
+            imageUrl: imageUrl!,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.skeletonBase,
+                borderRadius: BorderRadius.circular(AppRadius.xxl),
+              ),
+              child: const Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+            errorWidget: (context, url, error) => Container(
         width: 64,
         height: 64,
         decoration: BoxDecoration(
@@ -469,10 +613,15 @@ class _RectImage extends StatelessWidget {
           CupertinoIcons.photo,
           size: 22,
           color: AppColors.getIconSecondaryColor(context),
+              ),
+            ),
+          ),
         ),
       );
     }
 
+    // Если передан provider, используем его
+    if (provider != null) {
     return ClipOval(
       child: SizedBox(
         width: 64,
@@ -496,6 +645,22 @@ class _RectImage extends StatelessWidget {
             );
           },
         ),
+        ),
+      );
+    }
+
+    // Если ничего не передано, показываем placeholder
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: AppColors.skeletonBase,
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+      ),
+      child: Icon(
+        CupertinoIcons.photo,
+        size: 22,
+        color: AppColors.getIconSecondaryColor(context),
       ),
     );
   }
