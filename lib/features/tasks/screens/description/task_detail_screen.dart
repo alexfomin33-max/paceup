@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -6,6 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../providers/services/auth_provider.dart';
 import '../../providers/tasks_provider.dart';
 
 class TaskDetailScreen extends ConsumerStatefulWidget {
@@ -106,7 +108,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         debugPrint('═══════════════════════════════════════════════════════');
       }
       
-      // Обновляем провайдеры - сначала инвалидируем, чтобы принудительно обновить
+      // Обновляем провайдеры - инвалидируем для принудительного обновления
       ref.invalidate(taskParticipantsProvider(widget.taskId));
       ref.invalidate(taskParticipationProvider(widget.taskId));
       // Обновляем детали задачи, чтобы получить актуальный прогресс
@@ -115,9 +117,14 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       ref.invalidate(tasksProvider);
       ref.invalidate(userTasksProvider);
       
-      // Принудительно обновляем состояние виджета
+      // Принудительно перестраиваем виджет после обновления провайдеров
       if (mounted) {
-        setState(() {});
+        // Небольшая задержка, чтобы дать время провайдерам обновиться
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            setState(() {});
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -443,19 +450,48 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                                       ),
                                     ),
                                   )
-                                : Column(
-                                    children: List.generate(participants.length, (i) {
-                                      final participant = participants[i];
+                                : Builder(
+                                    builder: (context) {
+                                      // Получаем текущего пользователя из провайдера
+                                      final currentUserIdAsync = ref.watch(currentUserIdProvider);
                                       
-                                      return _ParticipantRow(
-                                        rank: i + 1,
-                                        name: participant.fullName,
-                                        value: participant.valueText,
-                                        avatarUrl: participant.avatar,
-                                        highlight: false, // TODO: Определить, является ли текущий пользователь
-                                        isLast: i == participants.length - 1,
+                                      return currentUserIdAsync.when(
+                                        data: (currentUserId) {
+                                          return Column(
+                                            children: List.generate(participants.length, (i) {
+                                              final participant = participants[i];
+                                              
+                                              // Определяем, является ли это текущим пользователем
+                                              final isCurrentUser = currentUserId != null && 
+                                                  participant.userId == currentUserId;
+                                              
+                                              return _ParticipantRow(
+                                                rank: i + 1,
+                                                name: participant.fullName,
+                                                value: participant.valueText,
+                                                avatarUrl: participant.avatar,
+                                                highlight: isCurrentUser,
+                                                isLast: i == participants.length - 1,
+                                              );
+                                            }),
+                                          );
+                                        },
+                                        loading: () => const SizedBox.shrink(),
+                                        error: (_, __) => Column(
+                                          children: List.generate(participants.length, (i) {
+                                            final participant = participants[i];
+                                            return _ParticipantRow(
+                                              rank: i + 1,
+                                              name: participant.fullName,
+                                              value: participant.valueText,
+                                              avatarUrl: participant.avatar,
+                                              highlight: false,
+                                              isLast: i == participants.length - 1,
+                                            );
+                                          }),
+                                        ),
                                       );
-                                    }),
+                                    },
                                   ),
                           ),
                         ],
