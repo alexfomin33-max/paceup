@@ -1119,6 +1119,15 @@ class _EventMembersSliver extends ConsumerStatefulWidget {
       _EventMembersSliverState();
 }
 
+/// ──────────────────────── Утилита: безопасный парс user_id из API ────────────────────────
+/// Используется для обеих реализаций списков участников.
+// ignore: unused_element
+int? _parseUserId(dynamic raw) {
+  if (raw is int) return raw;
+  if (raw is String) return int.tryParse(raw);
+  return null;
+}
+
 class _EventMembersSliverState extends ConsumerState<_EventMembersSliver> {
   final List<Map<String, dynamic>> _participants = [];
   bool _loading = false;
@@ -1126,13 +1135,38 @@ class _EventMembersSliverState extends ConsumerState<_EventMembersSliver> {
   String? _error;
   int _currentPage = 1;
   static const int _limit = 25;
+  int?
+  _currentUserId; // ID текущего пользователя для скрытия собственной иконки
   final Map<int, bool> _togglingSubscriptions =
       {}; // Для отслеживания процесса подписки/отписки
+  /// ──────────────────────── Безопасный парс user_id из API ────────────────────────
+  int? _parseUserId(dynamic raw) {
+    if (raw is int) return raw;
+    if (raw is String) return int.tryParse(raw);
+    return null;
+  }
 
   @override
   void initState() {
     super.initState();
-    _loadParticipants();
+    // ── Сначала узнаём userId, затем грузим участников, чтобы скрывать иконку у себя
+    Future.microtask(_init);
+  }
+
+  /// ──────────────────────── Инициализация списка участников ────────────────────────
+  Future<void> _init() async {
+    await _loadCurrentUserId();
+    if (!mounted) return;
+    await _loadParticipants();
+  }
+
+  /// ──────────────────────── Получение ID текущего пользователя ────────────────────────
+  Future<void> _loadCurrentUserId() async {
+    // Неблокирующее сохранение ID пользователя; нужно, чтобы прятать иконку у себя
+    final authService = ref.read(authServiceProvider);
+    final id = await authService.getUserId();
+    if (!mounted) return;
+    setState(() => _currentUserId = id);
   }
 
   /// Проверка и загрузка новых участников (вызывается из родительского ScrollController)
@@ -1358,11 +1392,16 @@ class _EventMembersSliverState extends ConsumerState<_EventMembersSliver> {
         final name = (p['name'] as String?)?.trim() ?? 'Пользователь';
         final avatarUrl = (p['avatar_url'] as String?)?.trim() ?? '';
         final isOrganizer = p['is_organizer'] as bool? ?? false;
-        final userId = p['user_id'] as int?;
-        final isCurrentUser = p['is_current_user'] as bool? ?? false;
+        // ── user_id может прийти числом или строкой, приводим к int для сравнения
+        final rawUserId = p['user_id'];
+        final userId = _parseUserId(rawUserId);
         final isSubscribed = p['is_subscribed'] as bool? ?? false;
         final isToggling =
             userId != null && (_togglingSubscriptions[userId] == true);
+        // ── Скрываем иконку действий для себя: используем флаг с бэка или сравнение с currentUserId
+        final backendCurrent = p['is_current_user'] as bool? ?? false;
+        final isCurrentUser =
+            backendCurrent || (userId != null && userId == _currentUserId);
 
         return Builder(
           builder: (context) => Container(
@@ -1418,13 +1457,23 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
   bool _hasMore = true;
   int _currentPage = 1;
   static const int _limit = 25;
+  int?
+  _currentUserId; // ID текущего пользователя для скрытия собственной иконки
   final Map<int, bool> _togglingSubscriptions =
       {}; // Для отслеживания процесса подписки/отписки
+
+  /// ──────────────────────── Безопасный парс user_id из API ────────────────────────
+  int? _parseUserId(dynamic raw) {
+    if (raw is int) return raw;
+    if (raw is String) return int.tryParse(raw);
+    return null;
+  }
 
   @override
   void initState() {
     super.initState();
-    _loadParticipants();
+    // ── Ждём userId перед первой загрузкой, чтобы сразу скрыть иконку у себя
+    Future.microtask(_init);
     _scrollController.addListener(_onScroll);
   }
 
@@ -1485,6 +1534,22 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
         _loading = false;
       });
     }
+  }
+
+  /// ──────────────────────── Получение ID текущего пользователя ────────────────────────
+  Future<void> _loadCurrentUserId() async {
+    // Нужен для того, чтобы не показывать иконку действий у собственной карточки
+    final authService = ref.read(authServiceProvider);
+    final id = await authService.getUserId();
+    if (!mounted) return;
+    setState(() => _currentUserId = id);
+  }
+
+  /// ──────────────────────── Инициализация: userId -> участники ────────────────────────
+  Future<void> _init() async {
+    await _loadCurrentUserId();
+    if (!mounted) return;
+    await _loadParticipants();
   }
 
   /// ──────────────────────── Подписка/отписка на пользователя ────────────────────────
@@ -1580,8 +1645,12 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
         final name = p['name'] as String? ?? 'Пользователь';
         final avatarUrl = p['avatar_url'] as String? ?? '';
         final isOrganizer = p['is_organizer'] as bool? ?? false;
-        final userId = p['user_id'] as int?;
-        final isCurrentUser = p['is_current_user'] as bool? ?? false;
+        final rawUserId = p['user_id'];
+        // ── user_id может прийти числом или строкой, приводим к int для сравнения
+        final userId = _parseUserId(rawUserId);
+        final backendCurrent = p['is_current_user'] as bool? ?? false;
+        final isCurrentUser =
+            backendCurrent || (userId != null && userId == _currentUserId);
         final isSubscribed = p['is_subscribed'] as bool? ?? false;
         final isToggling =
             userId != null && (_togglingSubscriptions[userId] == true);
@@ -1691,8 +1760,11 @@ class _MemberRow extends StatelessWidget {
             ),
           ),
 
-          // Иконка подписки: не показываем для текущего пользователя и организатора
-          if (!isCurrentUser && userId != null)
+          // Иконка действий/роли.
+          // ── Для текущего пользователя полностью убираем любую иконку.
+          if (isCurrentUser)
+            const SizedBox.shrink()
+          else if (userId != null)
             IconButton(
               onPressed: isToggling ? null : onToggleSubscribe,
               splashRadius: 22,
