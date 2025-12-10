@@ -78,6 +78,7 @@ abstract class AppColors {
   static const Color scrim10 = Color(0x19000000); // 10% — очень лёгкий
   static const Color scrim20 = Color(0x33000000); // 20% — стандартный скрим
   static const Color scrim40 = Color(0x66000000); // 40% — для модалок
+  static const Color scrim60 = Color(0x99000000); // 60% — средний скрим
   static const Color scrim90 = Color(0xE6000000); // ≈90% — почти чёрный экран
 
   // Тени (мягкие iOS-лайк)

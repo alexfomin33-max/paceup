@@ -10,6 +10,7 @@ import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../core/widgets/transparent_route.dart';
 import 'personal_chat_screen.dart';
+import '../../../../../profile/screens/profile_screen.dart';
 
 /// Страница для начала нового чата с поиском пользователей
 class StartChatScreen extends ConsumerStatefulWidget {
@@ -288,10 +289,17 @@ class _PeopleList extends StatelessWidget {
 }
 
 /// ─── Строка в списке людей ───
-class _RowTile extends StatelessWidget {
+class _RowTile extends StatefulWidget {
   final ChatUser user;
 
   const _RowTile({required this.user});
+
+  @override
+  State<_RowTile> createState() => _RowTileState();
+}
+
+class _RowTileState extends State<_RowTile> {
+  bool _suppressChatTap = false;
 
   /// Формирование URL для аватара
   String _getAvatarUrl(String avatar, int userId) {
@@ -302,97 +310,124 @@ class _RowTile extends StatelessWidget {
     return 'http://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
   }
 
+  /// ─── Открытие чата с выбранным пользователем ───
+  Future<void> _openChat(BuildContext context) async {
+    if (_suppressChatTap) return;
+
+    final result = await Navigator.of(context, rootNavigator: true).push(
+      TransparentPageRoute(
+        builder: (_) => PersonalChatScreen(
+          chatId: 0, // Новый чат, будет создан на сервере
+          userId: widget.user.id,
+          userName: widget.user.fullName,
+          userAvatar: widget.user.avatar,
+        ),
+      ),
+    );
+
+    if (result == true && mounted) {
+      Navigator.of(context).pop(true);
+    }
+  }
+
+  /// ─── Переход в профиль пользователя ───
+  Future<void> _openProfile(BuildContext context) async {
+    _suppressChatTap = true;
+    await Navigator.of(context).push(
+      TransparentPageRoute(
+        builder: (_) => ProfileScreen(userId: widget.user.id),
+      ),
+    );
+    Future.microtask(() => _suppressChatTap = false);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final avatarUrl = _getAvatarUrl(user.avatar, user.id);
+    final avatarUrl = _getAvatarUrl(widget.user.avatar, widget.user.id);
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () async {
-        // Открываем персональный чат
-        final result = await Navigator.of(context, rootNavigator: true).push(
-          TransparentPageRoute(
-            builder: (_) => PersonalChatScreen(
-              chatId: 0, // Новый чат, будет создан на сервере
-              userId: user.id,
-              userName: user.fullName,
-              userAvatar: user.avatar,
-            ),
-          ),
-        );
-
-        // Возвращаемся назад после создания чата
-        if (result == true && context.mounted) {
-          Navigator.of(context).pop(true);
-        }
-      },
+      onTap: () => _openChat(context),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Row(
           children: [
-            // Аватар пользователя
-            ClipOval(
-              child: Builder(
-                builder: (context) {
-                  final dpr = MediaQuery.of(context).devicePixelRatio;
-                  final w = (44 * dpr).round();
-                  return CachedNetworkImage(
-                    imageUrl: avatarUrl,
-                    width: 44,
-                    height: 44,
-                    fit: BoxFit.cover,
-                    fadeInDuration: const Duration(milliseconds: 120),
-                    memCacheWidth: w,
-                    maxWidthDiskCache: w,
-                    errorWidget: (context, imageUrl, error) {
-                      return Container(
-                        width: 44,
-                        height: 44,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.darkSurfaceMuted
-                            : AppColors.skeletonBase,
-                        alignment: Alignment.center,
-                        child: Icon(
-                          CupertinoIcons.person,
-                          size: 20,
-                          color: AppColors.getIconSecondaryColor(context),
-                        ),
-                      );
-                    },
-                  );
-                },
+            // ─── Аватар → переход в профиль ───
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _openProfile(context),
+              child: ClipOval(
+                child: Builder(
+                  builder: (context) {
+                    final dpr = MediaQuery.of(context).devicePixelRatio;
+                    final w = (44 * dpr).round();
+                    return CachedNetworkImage(
+                      imageUrl: avatarUrl,
+                      width: 44,
+                      height: 44,
+                      fit: BoxFit.cover,
+                      fadeInDuration: const Duration(milliseconds: 120),
+                      memCacheWidth: w,
+                      maxWidthDiskCache: w,
+                      errorWidget: (context, imageUrl, error) {
+                        return Container(
+                          width: 44,
+                          height: 44,
+                          color:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? AppColors.darkSurfaceMuted
+                                  : AppColors.skeletonBase,
+                          alignment: Alignment.center,
+                          child: Icon(
+                            CupertinoIcons.person,
+                            size: 20,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ),
             const SizedBox(width: 12),
+
+            // ─── Имя/возраст/город → переход в профиль ───
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    user.fullName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _openProfile(context),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.user.fullName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${user.age} лет, ${user.city}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      color: AppColors.getTextSecondaryColor(context),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${widget.user.age} лет, ${widget.user.city}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
+
+            // ─── Остальная зона карточки → чат ───
             IconButton(
               tooltip: 'Написать',
               splashRadius: 22,
@@ -401,22 +436,7 @@ class _RowTile extends StatelessWidget {
                 size: 20,
                 color: AppColors.brandPrimary,
               ),
-              onPressed: () async {
-                final result = await Navigator.of(context, rootNavigator: true)
-                    .push(
-                      TransparentPageRoute(
-                        builder: (_) => PersonalChatScreen(
-                          chatId: 0,
-                          userId: user.id,
-                          userName: user.fullName,
-                          userAvatar: user.avatar,
-                        ),
-                      ),
-                    );
-                if (result == true && context.mounted) {
-                  Navigator.of(context).pop(true);
-                }
-              },
+              onPressed: () => _openChat(context),
             ),
           ],
         ),

@@ -176,14 +176,16 @@ class CoffeeRunVldMembersContentState
   @override
   Widget build(BuildContext context) {
     if (_members.isEmpty && !_loading) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text(
-          'Участники отсутствуют',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            color: AppColors.textSecondary,
+      return Builder(
+        builder: (context) => Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            'Участники отсутствуют',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: AppColors.getTextSecondaryColor(context),
+            ),
           ),
         ),
       );
@@ -198,9 +200,12 @@ class CoffeeRunVldMembersContentState
       itemBuilder: (context, index) {
         if (index >= _members.length) {
           // Индикатор загрузки в конце списка
-          return const Padding(
-            padding: EdgeInsets.all(16),
-            child: Center(child: CircularProgressIndicator()),
+          return Builder(
+            builder: (context) => Container(
+              color: AppColors.getSurfaceColor(context),
+              padding: const EdgeInsets.all(16),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
           );
         }
 
@@ -211,123 +216,152 @@ class CoffeeRunVldMembersContentState
         final userId = m['user_id'] as int?;
         final isCurrentUser = m['is_current_user'] as bool? ?? false;
         final isSubscribed = m['is_subscribed'] as bool? ?? false;
-        final isToggling = userId != null && (_togglingSubscriptions[userId] == true);
+        final isToggling =
+            userId != null && (_togglingSubscriptions[userId] == true);
 
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Row(
-                children: [
-                  // ──────────────────────── Кликабельная левая часть (аватар + имя + роль) ────────────────────────
-                  Expanded(
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: userId != null
-                            ? () {
-                                Navigator.of(context).push(
-                                  TransparentPageRoute(
-                                    builder: (_) => ProfileScreen(
-                                      userId: userId,
-                                    ),
-                                  ),
-                                );
-                              }
-                            : null,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 4,
-                          ),
-                          child: Row(
-                            children: [
-                              ClipOval(
-                                child: avatarUrl.isNotEmpty
-                                    ? _Avatar40(url: avatarUrl)
-                                    : Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: const BoxDecoration(
-                                          color: AppColors.border,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(Icons.person, size: 24),
-                                      ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      name,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    if (role != null) ...[
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        role,
-                                        style: const TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 12,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+        return Builder(
+          builder: (context) => Container(
+            color: AppColors.getSurfaceColor(context),
+            child: _MemberRow(
+              name: name,
+              role: role,
+              avatarUrl: avatarUrl,
+              userId: userId,
+              isCurrentUser: isCurrentUser,
+              isSubscribed: isSubscribed,
+              isToggling: isToggling,
+              onTap: userId != null
+                  ? () {
+                      Navigator.of(context).push(
+                        TransparentPageRoute(
+                          builder: (_) => ProfileScreen(userId: userId),
                         ),
+                      );
+                    }
+                  : null,
+              onToggleSubscribe: userId != null && !isCurrentUser
+                  ? () => _toggleSubscribe(userId, isSubscribed)
+                  : null,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// ──────────────────────── Карточка участника в стиле событий ────────────────────────
+class _MemberRow extends StatelessWidget {
+  final String name;
+  final String? role;
+  final String avatarUrl;
+  final int? userId;
+  final bool isCurrentUser;
+  final bool isSubscribed;
+  final bool isToggling;
+  final VoidCallback? onTap;
+  final VoidCallback? onToggleSubscribe;
+
+  const _MemberRow({
+    required this.name,
+    this.role,
+    required this.avatarUrl,
+    this.userId,
+    this.isCurrentUser = false,
+    this.isSubscribed = false,
+    this.isToggling = false,
+    this.onTap,
+    this.onToggleSubscribe,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          children: [
+            ClipOval(
+              child: avatarUrl.isNotEmpty
+                  ? _Avatar40(url: avatarUrl)
+                  : Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.getBorderColor(context),
+                        shape: BoxShape.circle,
                       ),
+                      child: Icon(
+                        Icons.person,
+                        size: 24,
+                        color: AppColors.getIconSecondaryColor(context),
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 12),
+
+            // имя + роль
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
-                  // Иконка подписки: не показываем для текущего пользователя и владельца
-                  if (!isCurrentUser && userId != null)
-                    IconButton(
-                      onPressed: isToggling
-                          ? null
-                          : () => _toggleSubscribe(userId, isSubscribed),
-                      splashRadius: 22,
-                      icon: isToggling
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Icon(
-                              isSubscribed
-                                  ? CupertinoIcons
-                                      .person_crop_circle_badge_minus
-                                  : CupertinoIcons
-                                      .person_crop_circle_badge_plus,
-                              size: 24,
-                            ),
-                      style: IconButton.styleFrom(
-                        foregroundColor: isSubscribed
-                            ? Colors.red
-                            : AppColors.brandPrimary,
-                        disabledForegroundColor: AppColors.disabledText,
+                  if (role != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      role!,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                     ),
+                  ],
                 ],
               ),
             ),
-            if (index < _members.length - 1)
-              const Divider(height: 1, thickness: 0.5, color: AppColors.border),
+
+            // Иконка действий.
+            // ── Для текущего пользователя показываем пустое место того же размера,
+            //    чтобы высота карточки совпадала с другими пользователями.
+            if (isCurrentUser)
+              const SizedBox(width: 48, height: 48)
+            else if (userId != null)
+              IconButton(
+                onPressed: isToggling ? null : onToggleSubscribe,
+                splashRadius: 22,
+                icon: isToggling
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        isSubscribed
+                            ? CupertinoIcons.person_crop_circle_badge_minus
+                            : CupertinoIcons.person_crop_circle_badge_plus,
+                        size: 24,
+                      ),
+                style: IconButton.styleFrom(
+                  foregroundColor: isSubscribed
+                      ? Colors.red
+                      : AppColors.brandPrimary,
+                  disabledForegroundColor: AppColors.disabledText,
+                ),
+              ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -349,11 +383,17 @@ class _Avatar40 extends StatelessWidget {
       fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
-      errorWidget: (context, imageUrl, error) => Container(
-        width: 40,
-        height: 40,
-        color: AppColors.border,
-        child: const Icon(Icons.person, size: 24),
+      errorWidget: (context, imageUrl, error) => Builder(
+        builder: (context) => Container(
+          width: 40,
+          height: 40,
+          color: AppColors.getBorderColor(context),
+          child: Icon(
+            Icons.person,
+            size: 24,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
       ),
     );
   }
