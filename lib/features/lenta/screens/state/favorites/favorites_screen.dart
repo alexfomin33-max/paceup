@@ -69,14 +69,20 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
             ),
           ),
           Expanded(
-            child: TabBarView(
-              controller: _tab,
-              physics: const BouncingScrollPhysics(),
-              children: const [
-                MyEventsContent(),
-                BookmarksContent(),
-                RoutesContent(),
-              ],
+            child: Padding(
+              // Добавляем padding снизу, чтобы контент не перекрывал нижнее меню
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 60, // высота нижнего меню + системный отступ
+              ),
+              child: TabBarView(
+                controller: _tab,
+                physics: const BouncingScrollPhysics(),
+                children: const [
+                  MyEventsContent(),
+                  BookmarksContent(),
+                  RoutesContent(),
+                ],
+              ),
             ),
           ),
         ],

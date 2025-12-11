@@ -532,7 +532,7 @@ class _MonthGrid extends StatelessWidget {
                           ),
                           child: Text(
                             bubble,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 11,
                               // Цвет всегда светлый, чтобы в тёмной теме текст был

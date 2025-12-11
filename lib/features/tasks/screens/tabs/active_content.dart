@@ -32,8 +32,8 @@ class ActiveContent extends ConsumerWidget {
                 // Задачи из базы данных, сгруппированные по месяцам
                 ...tasksByMonth.map((monthGroup) {
                   return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       _MonthLabel(monthGroup.monthYearLabel),
                       const SizedBox(height: 8),
                       ...monthGroup.tasks.map((task) {
@@ -43,15 +43,16 @@ class ActiveContent extends ConsumerWidget {
                               title: task.name,
                               progressText: task.formattedProgress,
                               percent: task.progressPercent ?? 0.0,
-                              image: task.imageUrl != null && task.imageUrl!.isNotEmpty
-                                  ? _RectImage(
-                                      imageUrl: task.imageUrl!,
-                                    )
+                              image:
+                                  task.imageUrl != null &&
+                                      task.imageUrl!.isNotEmpty
+                                  ? _RectImage(imageUrl: task.imageUrl!)
                                   : null,
                               onTap: () {
                                 Navigator.of(context, rootNavigator: true).push(
                                   TransparentPageRoute(
-                                    builder: (_) => TaskDetailScreen(taskId: task.id),
+                                    builder: (_) =>
+                                        TaskDetailScreen(taskId: task.id),
                                   ),
                                 );
                               },
@@ -62,81 +63,91 @@ class ActiveContent extends ConsumerWidget {
                       }),
                     ],
                   );
-                }).toList(),
+                }),
 
                 // Захардкоженные задачи (пока оставляем)
                 if (tasksByMonth.isEmpty) ...[
-            const _MonthLabel('Июнь 2025'),
-            const SizedBox(height: 8),
+                  const _MonthLabel('Июнь 2025'),
+                  const SizedBox(height: 8),
                 ],
-            const TaskCard(
-              title: '10 дней активности',
-              progressText: '6 / 10 дней',
-              percent: 0.60,
-              image: _RectImage(provider: AssetImage('assets/activity10.png')),
-            ),
-            const SizedBox(height: 12),
+                const TaskCard(
+                  title: '10 дней активности',
+                  progressText: '6 / 10 дней',
+                  percent: 0.60,
+                  image: _RectImage(
+                    provider: AssetImage('assets/activity10.png'),
+                  ),
+                ),
+                const SizedBox(height: 12),
 
-            TaskCard(
-              title: '200 км бега',
-              progressText: '145,8 / 200 км',
-              percent: 0.729,
-              image: const _RectImage(
-                provider: AssetImage('assets/card200run.jpg'),
-              ),
-              onTap: () {
-                Navigator.of(context, rootNavigator: true).push(
-                  TransparentPageRoute(builder: (_) => const Run200kScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 12),
+                TaskCard(
+                  title: '200 км бега',
+                  progressText: '145,8 / 200 км',
+                  percent: 0.729,
+                  image: const _RectImage(
+                    provider: AssetImage('assets/card200run.jpg'),
+                  ),
+                  onTap: () {
+                    Navigator.of(context, rootNavigator: true).push(
+                      TransparentPageRoute(
+                        builder: (_) => const Run200kScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
 
-            const TaskCard(
-              title: '1000 метров набора высоты',
-              progressText: '537 / 1000 м',
-              percent: 0.537,
-              image: _RectImage(provider: AssetImage('assets/height1000.jpg')),
-            ),
-            const SizedBox(height: 12),
+                const TaskCard(
+                  title: '1000 метров набора высоты',
+                  progressText: '537 / 1000 м',
+                  percent: 0.537,
+                  image: _RectImage(
+                    provider: AssetImage('assets/height1000.jpg'),
+                  ),
+                ),
+                const SizedBox(height: 12),
 
-            const TaskCard(
-              title: '1000 минут активности',
-              progressText: '618 / 1000 мин',
-              percent: 0.618,
-              image: _RectImage(
-                provider: AssetImage('assets/activity1000.png'),
-              ),
-            ),
-            const SizedBox(height: 20),
+                const TaskCard(
+                  title: '1000 минут активности',
+                  progressText: '618 / 1000 мин',
+                  percent: 0.618,
+                  image: _RectImage(
+                    provider: AssetImage('assets/activity1000.png'),
+                  ),
+                ),
+                const SizedBox(height: 20),
 
-            const _SectionLabel('Экспедиции'),
-            const SizedBox(height: 8),
+                const _SectionLabel('Экспедиции'),
+                const SizedBox(height: 8),
 
-            ExpeditionCard(
-              title: 'Суздаль',
-              progressText: '21 784 / 110 033 шагов',
-              percent: 0.198,
-              image: const _RoundImage(
-                provider: AssetImage('assets/Suzdal.png'),
-              ),
-              onTap: () {
-                Navigator.of(context, rootNavigator: true).push(
-                  TransparentPageRoute(builder: (_) => const SuzdalScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 12),
+                ExpeditionCard(
+                  title: 'Суздаль',
+                  progressText: '21 784 / 110 033 шагов',
+                  percent: 0.198,
+                  image: const _RoundImage(
+                    provider: AssetImage('assets/Suzdal.png'),
+                  ),
+                  onTap: () {
+                    Navigator.of(context, rootNavigator: true).push(
+                      TransparentPageRoute(
+                        builder: (_) => const SuzdalScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
 
-            const ExpeditionCard(
-              title: 'Монблан',
-              progressText: '3 521 / 4 810 метров',
-              percent: 0.732,
-              image: _RoundImage(provider: AssetImage('assets/Monblan.png')),
-            ),
+                const ExpeditionCard(
+                  title: 'Монблан',
+                  progressText: '3 521 / 4 810 метров',
+                  percent: 0.732,
+                  image: _RoundImage(
+                    provider: AssetImage('assets/Monblan.png'),
+                  ),
+                ),
 
-            const SizedBox(height: 16),
-          ],
+                const SizedBox(height: 16),
+              ],
             );
           },
           loading: () => const Center(
@@ -155,7 +166,9 @@ class ActiveContent extends ConsumerWidget {
                 title: '10 дней активности',
                 progressText: '6 / 10 дней',
                 percent: 0.60,
-                image: _RectImage(provider: AssetImage('assets/activity10.png')),
+                image: _RectImage(
+                  provider: AssetImage('assets/activity10.png'),
+                ),
               ),
               const SizedBox(height: 12),
               TaskCard(
@@ -176,7 +189,9 @@ class ActiveContent extends ConsumerWidget {
                 title: '1000 метров набора высоты',
                 progressText: '537 / 1000 м',
                 percent: 0.537,
-                image: _RectImage(provider: AssetImage('assets/height1000.jpg')),
+                image: _RectImage(
+                  provider: AssetImage('assets/height1000.jpg'),
+                ),
               ),
               const SizedBox(height: 12),
               const TaskCard(
@@ -603,34 +618,6 @@ class _RectImage extends StatelessWidget {
               ),
             ),
             errorWidget: (context, url, error) => Container(
-        width: 64,
-        height: 64,
-        decoration: BoxDecoration(
-          color: AppColors.skeletonBase,
-          borderRadius: BorderRadius.circular(AppRadius.xxl),
-        ),
-        child: Icon(
-          CupertinoIcons.photo,
-          size: 22,
-          color: AppColors.getIconSecondaryColor(context),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    // Если передан provider, используем его
-    if (provider != null) {
-    return ClipOval(
-      child: SizedBox(
-        width: 64,
-        height: 64,
-        child: Image(
-          image: provider!,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
               width: 64,
               height: 64,
               decoration: BoxDecoration(
@@ -642,9 +629,37 @@ class _RectImage extends StatelessWidget {
                 size: 22,
                 color: AppColors.getIconSecondaryColor(context),
               ),
-            );
-          },
+            ),
+          ),
         ),
+      );
+    }
+
+    // Если передан provider, используем его
+    if (provider != null) {
+      return ClipOval(
+        child: SizedBox(
+          width: 64,
+          height: 64,
+          child: Image(
+            image: provider!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.skeletonBase,
+                  borderRadius: BorderRadius.circular(AppRadius.xxl),
+                ),
+                child: Icon(
+                  CupertinoIcons.photo,
+                  size: 22,
+                  color: AppColors.getIconSecondaryColor(context),
+                ),
+              );
+            },
+          ),
         ),
       );
     }

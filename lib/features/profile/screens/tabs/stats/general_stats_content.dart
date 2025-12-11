@@ -8,7 +8,7 @@ import '../../../../../core/theme/app_theme.dart';
 /// Возвращает список сливеров для вкладки «Общая»
 List<Widget> buildGeneralStatsSlivers() {
   return [
-    SliverToBoxAdapter(child: _GeneralContent()),
+    const SliverToBoxAdapter(child: _GeneralContent()),
     const SliverToBoxAdapter(child: SizedBox(height: 18)),
   ];
 }

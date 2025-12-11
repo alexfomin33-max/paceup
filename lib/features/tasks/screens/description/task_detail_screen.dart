@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -75,7 +74,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       final api = ApiService();
       final authService = AuthService();
       final userId = await authService.getUserId();
-      
+
       if (userId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -84,17 +83,13 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         }
         return;
       }
-      
+
       final action = isParticipating ? 'cancel' : 'start';
       final response = await api.post(
         '/task_action.php',
-        body: {
-          'task_id': widget.taskId,
-          'action': action,
-          'user_id': userId,
-        },
+        body: {'task_id': widget.taskId, 'action': action, 'user_id': userId},
       );
-      
+
       // Выводим логи в консоль для отладки
       if (response['debug_logs'] != null) {
         final logs = response['debug_logs'] as List? ?? [];
@@ -104,10 +99,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         for (final log in logs) {
           debugPrint('  $log');
         }
-        debugPrint('Updated tasks count: ${response['updated_tasks_count'] ?? 0}');
+        debugPrint(
+          'Updated tasks count: ${response['updated_tasks_count'] ?? 0}',
+        );
         debugPrint('═══════════════════════════════════════════════════════');
       }
-      
+
       // Обновляем провайдеры - инвалидируем для принудительного обновления
       ref.invalidate(taskParticipantsProvider(widget.taskId));
       ref.invalidate(taskParticipationProvider(widget.taskId));
@@ -116,7 +113,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       // Обновляем списки задач для динамического отображения
       ref.invalidate(tasksProvider);
       ref.invalidate(userTasksProvider);
-      
+
       // Принудительно перестраиваем виджет после обновления провайдеров
       if (mounted) {
         // Небольшая задержка, чтобы дать время провайдерам обновиться
@@ -128,9 +125,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: ${e.toString()}')));
       }
     }
   }
@@ -138,7 +135,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final taskAsync = ref.watch(taskDetailProvider(widget.taskId));
-    final participantsAsync = ref.watch(taskParticipantsProvider(widget.taskId));
+    final participantsAsync = ref.watch(
+      taskParticipantsProvider(widget.taskId),
+    );
 
     return InteractiveBackSwipe(
       child: Scaffold(
@@ -164,9 +163,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             final taskColor = _getColorForTaskType(task.type);
             final taskIcon = _getIconForTaskType(task.type);
             final progressPercent = task.progressPercent ?? 0.0;
-            
+
             // Получаем статус участия текущего пользователя
-            final isParticipating = participantsAsync.value?.isCurrentUserParticipating ?? false;
+            final isParticipating =
+                participantsAsync.value?.isCurrentUserParticipating ?? false;
 
             return CustomScrollView(
               slivers: [
@@ -180,7 +180,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   leadingWidth: 60,
                   leading: SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 10, top: 6, bottom: 6),
+                      padding: const EdgeInsets.only(
+                        left: 10,
+                        top: 6,
+                        bottom: 6,
+                      ),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(AppRadius.xl),
                         onTap: () => Navigator.of(context).pop(),
@@ -203,33 +207,28 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     ),
                   ),
                   flexibleSpace: FlexibleSpaceBar(
-                    background: task.imageUrl != null && task.imageUrl!.isNotEmpty
+                    background:
+                        task.imageUrl != null && task.imageUrl!.isNotEmpty
                         ? CachedNetworkImage(
                             imageUrl: task.imageUrl!,
                             fit: BoxFit.cover,
                             placeholder: (context, url) => Container(
                               color: AppColors.getBorderColor(context),
                               child: const Center(
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
                             ),
                             errorWidget: (context, url, error) => Container(
                               color: AppColors.getBorderColor(context),
-                              child: Icon(
-                                taskIcon,
-                                size: 48,
-                                color: taskColor,
-                              ),
+                              child: Icon(taskIcon, size: 48, color: taskColor),
                             ),
                           )
                         : Container(
                             color: AppColors.getBorderColor(context),
                             child: Center(
-                              child: Icon(
-                                taskIcon,
-                                size: 48,
-                                color: taskColor,
-                              ),
+                              child: Icon(taskIcon, size: 48, color: taskColor),
                             ),
                           ),
                   ),
@@ -247,7 +246,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                           boxShadow: [
                             // тонкая тень вниз ~1px
                             BoxShadow(
-                              color: Theme.of(context).brightness == Brightness.dark
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
                                   ? AppColors.darkShadowSoft
                                   : AppColors.shadowSoft,
                               offset: const Offset(0, 1),
@@ -282,24 +283,35 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                               Center(
                                 child: SizedBox(
                                   width: 240,
-                                  child: _MiniProgress(percent: progressPercent.clamp(0.0, 1.0)),
+                                  child: _MiniProgress(
+                                    percent: progressPercent.clamp(0.0, 1.0),
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                _formatProgress(task.currentValue, task.targetValue, task.unitLabel),
+                                _formatProgress(
+                                  task.currentValue,
+                                  task.targetValue,
+                                  task.unitLabel,
+                                ),
                                 style: TextStyle(
                                   fontFamily: 'Inter',
                                   fontSize: 13,
-                                  color: AppColors.getTextSecondaryColor(context),
+                                  color: AppColors.getTextSecondaryColor(
+                                    context,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 16),
                               // Кнопка "Начать" / "Отменить"
                               Center(
                                 child: InkWell(
-                                  onTap: () => _handleTaskAction(isParticipating),
-                                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                                  onTap: () =>
+                                      _handleTaskAction(isParticipating),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.lg,
+                                  ),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 24,
@@ -309,7 +321,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                                       color: isParticipating
                                           ? AppColors.getBorderColor(context)
                                           : taskColor,
-                                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.lg,
+                                      ),
                                     ),
                                     child: Text(
                                       isParticipating ? 'Отменить' : 'Начать',
@@ -318,8 +332,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                         color: isParticipating
-                                            ? AppColors.getTextPrimaryColor(context)
-                                            : AppColors.getSurfaceColor(context),
+                                            ? AppColors.getTextPrimaryColor(
+                                                context,
+                                              )
+                                            : AppColors.getSurfaceColor(
+                                                context,
+                                              ),
                                       ),
                                     ),
                                   ),
@@ -332,7 +350,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
                       // Сам круг: центр ровно на границе фото/белого блока
                       Positioned(
-                        top: -36, // 72/2 со знаком минус — половина на фото, половина на белом фоне
+                        top:
+                            -36, // 72/2 со знаком минус — половина на фото, половина на белом фоне
                         left: 0,
                         right: 0,
                         child: Center(
@@ -348,7 +367,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                               ), // белая рамка 2px
                               boxShadow: [
                                 BoxShadow(
-                                  color: Theme.of(context).brightness == Brightness.dark
+                                  color:
+                                      Theme.of(context).brightness ==
+                                          Brightness.dark
                                       ? AppColors.darkShadowSoft
                                       : AppColors.shadowSoft,
                                   blurRadius: 10,
@@ -393,7 +414,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _SectionTitle('Описание'),
+                          const _SectionTitle('Описание'),
                           const SizedBox(height: 8),
                           Text(
                             task.fullDescription,
@@ -414,7 +435,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   child: participantsAsync.when(
                     data: (participantsData) {
                       final participants = participantsData.participants;
-                      
+
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -453,42 +474,58 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                                 : Builder(
                                     builder: (context) {
                                       // Получаем текущего пользователя из провайдера
-                                      final currentUserIdAsync = ref.watch(currentUserIdProvider);
-                                      
+                                      final currentUserIdAsync = ref.watch(
+                                        currentUserIdProvider,
+                                      );
+
                                       return currentUserIdAsync.when(
                                         data: (currentUserId) {
                                           return Column(
-                                            children: List.generate(participants.length, (i) {
-                                              final participant = participants[i];
-                                              
-                                              // Определяем, является ли это текущим пользователем
-                                              final isCurrentUser = currentUserId != null && 
-                                                  participant.userId == currentUserId;
-                                              
+                                            children: List.generate(
+                                              participants.length,
+                                              (i) {
+                                                final participant =
+                                                    participants[i];
+
+                                                // Определяем, является ли это текущим пользователем
+                                                final isCurrentUser =
+                                                    currentUserId != null &&
+                                                    participant.userId ==
+                                                        currentUserId;
+
+                                                return _ParticipantRow(
+                                                  rank: i + 1,
+                                                  name: participant.fullName,
+                                                  value: participant.valueText,
+                                                  avatarUrl: participant.avatar,
+                                                  highlight: isCurrentUser,
+                                                  isLast:
+                                                      i ==
+                                                      participants.length - 1,
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        },
+                                        loading: () => const SizedBox.shrink(),
+                                        error: (_, __) => Column(
+                                          children: List.generate(
+                                            participants.length,
+                                            (i) {
+                                              final participant =
+                                                  participants[i];
                                               return _ParticipantRow(
                                                 rank: i + 1,
                                                 name: participant.fullName,
                                                 value: participant.valueText,
                                                 avatarUrl: participant.avatar,
-                                                highlight: isCurrentUser,
-                                                isLast: i == participants.length - 1,
+                                                highlight: false,
+                                                isLast:
+                                                    i ==
+                                                    participants.length - 1,
                                               );
-                                            }),
-                                          );
-                                        },
-                                        loading: () => const SizedBox.shrink(),
-                                        error: (_, __) => Column(
-                                          children: List.generate(participants.length, (i) {
-                                            final participant = participants[i];
-                                            return _ParticipantRow(
-                                              rank: i + 1,
-                                              name: participant.fullName,
-                                              value: participant.valueText,
-                                              avatarUrl: participant.avatar,
-                                              highlight: false,
-                                              isLast: i == participants.length - 1,
-                                            );
-                                          }),
+                                            },
+                                          ),
                                         ),
                                       );
                                     },
@@ -520,9 +557,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                           ),
                           child: const Padding(
                             padding: EdgeInsets.all(32),
-                            child: Center(
-                              child: CircularProgressIndicator(),
-                            ),
+                            child: Center(child: CircularProgressIndicator()),
                           ),
                         ),
                       ],
@@ -548,8 +583,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                               ),
                             ),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(32),
+                          child: const Padding(
+                            padding: EdgeInsets.all(32),
                             child: Center(
                               child: Text(
                                 'Ошибка загрузки участников',
@@ -829,4 +864,3 @@ class _ParticipantRow extends StatelessWidget {
     );
   }
 }
-

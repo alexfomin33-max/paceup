@@ -295,15 +295,15 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         const SizedBox(height: 8),
 
         // ── Карточка с графиком "Дней активности"
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(12, 0, 12, 0),
           child: _YearChartCard(
             initialYear: 2024,
             color: AppColors.male,
             maxY: 30,
             tick: 5,
             height: 170,
-            values: const [6, 10, 14, 19, 22, 28, 30, 25, 24, 22, 18, 12],
+            values: [6, 10, 14, 19, 22, 28, 30, 25, 24, 22, 18, 12],
           ),
         ),
         const SizedBox(height: 16),
@@ -313,15 +313,15 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         const SizedBox(height: 8),
 
         // ── Карточка с графиком "Время активности"
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(12, 0, 12, 0),
           child: _YearChartCard(
             initialYear: 2024,
             color: AppColors.female,
             maxY: 3000,
             tick: 500,
             height: 190,
-            values: const [
+            values: [
               1500,
               1450,
               1400,
@@ -564,7 +564,7 @@ class _MetricsList extends StatelessWidget {
                 Icon(
                   r.icon,
                   size: 16,
-                  color: r.color ?? AppColors.brandPrimary,
+                  color: AppColors.brandPrimary,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -592,7 +592,11 @@ class _MetricsList extends StatelessWidget {
                     ),
                     if (r.title == 'Средний пульс') ...[
                       const SizedBox(width: 4),
-                      Icon(Icons.favorite, size: 11, color: AppColors.error),
+                      const Icon(
+                        Icons.favorite,
+                        size: 11,
+                        color: AppColors.error,
+                      ),
                     ],
                   ],
                 ),
@@ -609,8 +613,7 @@ class _MetricRowData {
   final IconData icon;
   final String title;
   final String value;
-  final Color? color; // для пульса — красный
-  const _MetricRowData(this.icon, this.title, this.value, {this.color});
+  const _MetricRowData(this.icon, this.title, this.value);
 }
 
 // ———— График (12 месяцев) — низ ровный, верх скруглён, подписи под столбцами

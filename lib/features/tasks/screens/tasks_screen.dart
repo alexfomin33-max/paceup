@@ -1,4 +1,5 @@
 // lib/screens/tasks_screen.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
@@ -8,6 +9,7 @@ import '../../../core/widgets/app_bar.dart'; // ← глобальная шап�
 // контенты по вкладкам
 import 'tabs/active_content.dart';
 import 'tabs/available_content.dart';
+import 'rating_screen.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
   const TasksScreen({super.key});
@@ -41,9 +43,26 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       backgroundColor: AppColors.getBackgroundColor(context),
 
       // ── Глобальная шапка
-      appBar: const PaceAppBar(
+      appBar: PaceAppBar(
         title: 'Задачи',
         showBack: false, // на этом экране «назад» не нужен
+        actions: [
+          IconButton(
+            tooltip: 'Трофей',
+            onPressed: () {
+              Navigator.of(
+                context,
+              ).push(CupertinoPageRoute(builder: (_) => const RatingScreen()));
+            },
+            icon: const Icon(
+              Icons.emoji_events_outlined,
+              size: 22,
+              color: AppColors.gold,
+            ),
+            splashRadius: 22,
+          ),
+          const SizedBox(width: 6),
+        ],
       ),
 
       body: SafeArea(

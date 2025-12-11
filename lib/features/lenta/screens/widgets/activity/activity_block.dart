@@ -266,11 +266,22 @@ class ActivityBlock extends ConsumerWidget {
                     final height = width / 1.3;
 
                     if (isImportedWithoutRoute) {
+                      // ────────────────────────────────────────────────────────────────
+                      // 🖼️ ВЫБОР ДЕФОЛТНОЙ КАРТИНКИ ПО ТИПУ ТРЕНИРОВКИ:
+                      // Для бега (run) — assets/nogps.jpg
+                      // Для плавания (swim/swimming) — assets/nogps_swim.jpg
+                      // ────────────────────────────────────────────────────────────────
+                      final activityType = updatedActivity.type.toLowerCase();
+                      final defaultImagePath = (activityType == 'swim' ||
+                              activityType == 'swimming')
+                          ? 'assets/nogps_swim.jpg'
+                          : 'assets/nogps.jpg';
+
                       return SizedBox(
                         height: height,
                         width: double.infinity,
                         child: Image.asset(
-                          'assets/nogps.jpg',
+                          defaultImagePath,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
                               Container(

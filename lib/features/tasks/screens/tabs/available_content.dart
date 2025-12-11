@@ -40,7 +40,7 @@ class AvailableContent extends ConsumerWidget {
             }
 
             return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Отображаем задачи по месяцам
                 ...tasksByMonth.map((monthGroup) {
@@ -57,43 +57,44 @@ class AvailableContent extends ConsumerWidget {
                             onPressed: () {
                               Navigator.of(context, rootNavigator: true).push(
                                 TransparentPageRoute(
-                                  builder: (_) => TaskDetailScreen(taskId: task.id),
+                                  builder: (_) =>
+                                      TaskDetailScreen(taskId: task.id),
                                 ),
                               );
                             },
                           );
                         }).toList(),
-            ),
-            const SizedBox(height: 20),
+                      ),
+                      const SizedBox(height: 20),
                     ],
                   );
-                }).toList(),
+                }),
 
                 // Секция экспедиций (оставляем как есть)
-            const _SectionLabel('Экспедиции'),
-            const SizedBox(height: 8),
-            _ExpeditionGrid(
-              children: [
-                const AvailableExpeditionCard(
-                  imageProvider: AssetImage('assets/Travel_velo.png'),
-                  title: 'Путешествия на велосипеде',
+                const _SectionLabel('Экспедиции'),
+                const SizedBox(height: 8),
+                _ExpeditionGrid(
+                  children: [
+                    const AvailableExpeditionCard(
+                      imageProvider: AssetImage('assets/Travel_velo.png'),
+                      title: 'Путешествия на велосипеде',
+                    ),
+                    AvailableExpeditionCard(
+                      imageProvider: const AssetImage('assets/Travel_swim.png'),
+                      title: 'Плавательное приключение',
+                      onPressed: () {
+                        Navigator.of(context, rootNavigator: true).push(
+                          TransparentPageRoute(
+                            builder: (_) => const SwimTripScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                AvailableExpeditionCard(
-                  imageProvider: const AssetImage('assets/Travel_swim.png'),
-                  title: 'Плавательное приключение',
-                  onPressed: () {
-                    Navigator.of(context, rootNavigator: true).push(
-                      TransparentPageRoute(
-                        builder: (_) => const SwimTripScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
 
-            const SizedBox(height: 16),
-          ],
+                const SizedBox(height: 16),
+              ],
             );
           },
           loading: () => const Center(
@@ -240,8 +241,8 @@ class AvailableTaskCard extends StatelessWidget {
               child: imageUrl != null && imageUrl!.isNotEmpty
                   ? CachedNetworkImage(
                       imageUrl: imageUrl!,
-                fit: BoxFit.cover,
-                width: double.infinity,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
                       placeholder: (context, url) => Container(
                         color: AppColors.getBorderColor(context),
                         child: const Center(
@@ -256,7 +257,7 @@ class AvailableTaskCard extends StatelessWidget {
                   : Container(
                       color: AppColors.getBorderColor(context),
                       child: const Icon(Icons.fitness_center),
-              ),
+                    ),
             ),
             // Текст занимает 1/3 нижней части карточки
             Expanded(
