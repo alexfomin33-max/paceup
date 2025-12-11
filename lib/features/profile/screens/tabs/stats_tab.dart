@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_theme.dart';
 
 /// Вкладка «По видам» — интерактивная:
 /// • Выпадающий период (неделя/месяц/3м/6м/год)
@@ -10,6 +10,32 @@ List<Widget> buildByTypeStatsSlivers() {
     SliverToBoxAdapter(child: _ByTypeContent()),
     SliverToBoxAdapter(child: SizedBox(height: 18)),
   ];
+}
+
+class StatsTab extends StatefulWidget {
+  const StatsTab({super.key});
+
+  @override
+  State<StatsTab> createState() => _StatsTabState();
+}
+
+class _StatsTabState extends State<StatsTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        const SliverToBoxAdapter(child: SizedBox(height: 10)),
+        ...buildByTypeStatsSlivers(),
+        const SliverToBoxAdapter(child: SizedBox(height: 18)),
+      ],
+    );
+  }
 }
 
 class _ByTypeContent extends StatefulWidget {
@@ -561,11 +587,7 @@ class _MetricsList extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               children: [
-                Icon(
-                  r.icon,
-                  size: 16,
-                  color: AppColors.brandPrimary,
-                ),
+                Icon(r.icon, size: 16, color: AppColors.brandPrimary),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(

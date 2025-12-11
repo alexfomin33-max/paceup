@@ -16,7 +16,7 @@ import 'widgets/tabs_bar.dart';
 // вкладки
 import 'tabs/main/main_tab.dart';
 import 'tabs/photos_tab.dart';
-import 'tabs/stats/stats_tab.dart';
+import 'tabs/stats_tab.dart';
 import 'tabs/training_tab.dart';
 import 'tabs/races/races_tab.dart';
 import 'tabs/equipment/equipment_tab.dart';
@@ -58,7 +58,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final GlobalKey<MainTabState> _mainTabKey = GlobalKey<MainTabState>();
 
   int _tab = 0;
-  bool _wasRouteActive = false; // Отслеживание предыдущего состояния видимости маршрута
+  bool _wasRouteActive =
+      false; // Отслеживание предыдущего состояния видимости маршрута
 
   @override
   void dispose() {
@@ -90,11 +91,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     // Если маршрут стал активным (видимым), обновляем данные
     if (isRouteActive && !_wasRouteActive) {
       _wasRouteActive = true;
-      
+
       // Обновляем данные профиля при отображении экрана
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        
+
         final userId = widget.userId;
         if (userId != null) {
           _updateProfileHeader(userId);
@@ -129,7 +130,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (i == 0) {
       MainTab.checkCache(_mainTabKey);
     }
-    
+
     // ────────────────────────────────────────────────────────────────────────
     // Обновление данных профиля при переключении вкладок
     // Обновляем количество подписок и подписчиков при каждом переключении
