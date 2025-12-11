@@ -89,6 +89,7 @@ class StatsRow extends StatelessWidget {
   final bool isManuallyAdded;
   final bool
   showExtendedStats; // показывать ли третью строку (Калории | Шаги | Скорость)
+  final String? activityType; // тип активности для определения единиц измерения
 
   const StatsRow({
     super.key,
@@ -102,22 +103,35 @@ class StatsRow extends StatelessWidget {
     this.totalSteps,
     this.isManuallyAdded = false,
     this.showExtendedStats = false,
+    this.activityType,
   });
 
   @override
   Widget build(BuildContext context) {
-    final distanceKm = (distanceMeters ?? 0) / 1000.0;
+    // ──────────────────────────────────────────────────────────────
+    // 📏 ФОРМАТИРОВАНИЕ РАССТОЯНИЯ: для плавания (SWIM) показываем в метрах,
+    // для остальных типов — в километрах
+    // ──────────────────────────────────────────────────────────────
+    final isSwim = activityType?.toLowerCase() == 'swim' ||
+        activityType?.toLowerCase() == 'swimming';
     final distanceText = distanceMeters != null
-        ? distanceKm.toStringAsFixed(2)
+        ? isSwim
+            ? '${distanceMeters!.toStringAsFixed(0)} м'
+            : '${((distanceMeters! / 1000.0).toStringAsFixed(2))} км'
         : '—';
     final elevationText = elevationGainM != null
-        ? elevationGainM!.toStringAsFixed(0)
+        ? '${elevationGainM!.toStringAsFixed(0)} м'
         : '—';
     final durationText = durationSec != null
         ? formatDuration(durationSec)
         : '—';
+    // ──────────────────────────────────────────────────────────────
+    // ⏱️ ФОРМАТИРОВАНИЕ ТЕМПА: для плавания пересчитываем из мин/км в мин/100м
+    // ──────────────────────────────────────────────────────────────
     final paceText = avgPaceMinPerKm != null
-        ? formatPace(avgPaceMinPerKm!)
+        ? isSwim
+            ? formatPace(avgPaceMinPerKm! / 10.0) // мин/км → мин/100м (делим на 10)
+            : formatPace(avgPaceMinPerKm!)
         : '—';
     final hrText = avgHeartRate != null
         ? avgHeartRate!.toStringAsFixed(0)
@@ -164,7 +178,7 @@ class StatsRow extends StatelessWidget {
               SizedBox(
                 width: 120,
                 child: MetricVertical(
-                  mainTitle: 'Расстояние, км',
+                  mainTitle: 'Расстояние',
                   mainValue: distanceText,
                   subTitle: '',
                   subValue: '',
@@ -184,7 +198,10 @@ class StatsRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Темп, мин/км',
+                      // ──────────────────────────────────────────────────────────────
+                      // ⏱️ ЗАГОЛОВОК ТЕМПА: для плавания показываем мин/100м
+                      // ──────────────────────────────────────────────────────────────
+                      isSwim ? 'Темп, мин/100м' : 'Темп, мин/км',
                       style: AppTextStyles.h11w4Sec.copyWith(
                         color: AppColors.getTextSecondaryColor(context),
                       ),
@@ -213,7 +230,7 @@ class StatsRow extends StatelessWidget {
                 SizedBox(
                   width: 120,
                   child: MetricVertical(
-                    mainTitle: 'Набор высоты, м',
+                    mainTitle: 'Набор высоты',
                     mainValue: elevationText,
                     subTitle: '',
                     subValue: '',

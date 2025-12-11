@@ -17,7 +17,7 @@ import '../../../../core/services/health_sync_service.dart';
 import '../../../../core/widgets/error_display.dart';
 
 import 'widgets/activity/activity_block.dart'; // карточка тренировки
-import 'widgets/recommended/recommended_block.dart'; // блок «Рекомендации»
+import 'widgets/recommended_block.dart'; // блок «Рекомендации»
 import 'widgets/post/post_card.dart'; // карточка поста (с попапом «…» внутри)
 import '../../../../features/profile/providers/search/friends_search_provider.dart'; // провайдер рекомендаций
 
