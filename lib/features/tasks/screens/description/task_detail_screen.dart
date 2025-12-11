@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/services/api_service.dart';
@@ -20,6 +19,8 @@ class TaskDetailScreen extends ConsumerStatefulWidget {
 
 class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   int _segment = 0; // 0 — Все, 1 — Друзья
+  bool _isProcessingAction = false; // Флаг для блокировки повторных нажатий
+
 
   /// Получает иконку для типа задачи
   IconData _getIconForTaskType(String type) {
@@ -70,7 +71,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
   /// Обработка нажатия на кнопку "Начать"/"Отменить"
   Future<void> _handleTaskAction(bool isParticipating) async {
+    if (_isProcessingAction) return;
+
     try {
+      _isProcessingAction = true;
+      if (mounted) setState(() {});
+
       final api = ApiService();
       final authService = AuthService();
       final userId = await authService.getUserId();
@@ -85,50 +91,46 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       }
 
       final action = isParticipating ? 'cancel' : 'start';
-      final response = await api.post(
+      
+      await api.post(
         '/task_action.php',
         body: {'task_id': widget.taskId, 'action': action, 'user_id': userId},
       );
 
-      // Выводим логи в консоль для отладки
-      if (response['debug_logs'] != null) {
-        final logs = response['debug_logs'] as List? ?? [];
-        debugPrint('═══════════════════════════════════════════════════════');
-        debugPrint('TASK ACTION DEBUG LOGS:');
-        debugPrint('═══════════════════════════════════════════════════════');
-        for (final log in logs) {
-          debugPrint('  $log');
-        }
-        debugPrint(
-          'Updated tasks count: ${response['updated_tasks_count'] ?? 0}',
-        );
-        debugPrint('═══════════════════════════════════════════════════════');
-      }
+      if (!mounted) return;
 
-      // Обновляем провайдеры - инвалидируем для принудительного обновления
+      // Небольшая задержка для обновления БД (особенно важно для задач типа "бег")
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (!mounted) return;
+
+      // Инвалидируем провайдер участников - это заставит его перезагрузить данные из базы
       ref.invalidate(taskParticipantsProvider(widget.taskId));
-      ref.invalidate(taskParticipationProvider(widget.taskId));
-      // Обновляем детали задачи, чтобы получить актуальный прогресс
+      
+      // Ждем загрузки новых данных участников из базы
+      // Это критично для обновления кнопки и списка участников
+      final newParticipantsData = await ref.read(taskParticipantsProvider(widget.taskId).future);
+      
+      if (!mounted) return;
+      
+      // Инвалидируем остальные провайдеры
       ref.invalidate(taskDetailProvider(widget.taskId));
-      // Обновляем списки задач для динамического отображения
       ref.invalidate(tasksProvider);
       ref.invalidate(userTasksProvider);
-
-      // Принудительно перестраиваем виджет после обновления провайдеров
-      if (mounted) {
-        // Небольшая задержка, чтобы дать время провайдерам обновиться
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (mounted) {
-            setState(() {});
-          }
-        });
-      }
+      ref.invalidate(taskParticipationProvider(widget.taskId));
+      
+      // Принудительно обновляем состояние виджета для перерисовки кнопки и списка
+      if (mounted) setState(() {});
+      
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Ошибка: ${e.toString()}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка: ${e.toString()}')),
+        );
       }
+    } finally {
+      _isProcessingAction = false;
+      if (mounted) setState(() {});
     }
   }
 
@@ -164,12 +166,26 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             final taskIcon = _getIconForTaskType(task.type);
             final progressPercent = task.progressPercent ?? 0.0;
 
-            // Получаем статус участия текущего пользователя
-            final isParticipating =
-                participantsAsync.value?.isCurrentUserParticipating ?? false;
+            // Получаем статус участия текущего пользователя из провайдера
+            // Всегда используем данные из БД
+            final bool isParticipating = participantsAsync.when(
+              data: (data) => data.isCurrentUserParticipating,
+              loading: () => false,
+              error: (error, stack) => false,
+            );
 
-            return CustomScrollView(
-              slivers: [
+            return RefreshIndicator(
+              onRefresh: () async {
+                // Используем refresh для принудительного обновления из БД
+                ref.invalidate(taskDetailProvider(widget.taskId));
+                ref.invalidate(taskParticipantsProvider(widget.taskId));
+                await Future.wait([
+                  ref.read(taskDetailProvider(widget.taskId).future),
+                  ref.read(taskParticipantsProvider(widget.taskId).future),
+                ]);
+              },
+              child: CustomScrollView(
+                slivers: [
                 // ─────────── Верхнее фото + кнопка "назад"
                 SliverAppBar(
                   pinned: false,
@@ -209,18 +225,21 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   flexibleSpace: FlexibleSpaceBar(
                     background:
                         task.imageUrl != null && task.imageUrl!.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: task.imageUrl!,
+                        ? Image.network(
+                            task.imageUrl!,
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: AppColors.getBorderColor(context),
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: AppColors.getBorderColor(context),
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 ),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) => Container(
                               color: AppColors.getBorderColor(context),
                               child: Icon(taskIcon, size: 48, color: taskColor),
                             ),
@@ -306,27 +325,54 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                               const SizedBox(height: 16),
                               // Кнопка "Начать" / "Отменить"
                               Center(
-                                child: InkWell(
-                                  onTap: () =>
-                                      _handleTaskAction(isParticipating),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
-                                  ),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 24,
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isParticipating
-                                          ? AppColors.getBorderColor(context)
-                                          : taskColor,
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.lg,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      isParticipating ? 'Отменить' : 'Начать',
+                                child: _isProcessingAction
+                                    ? Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 12,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.lg,
+                                          ),
+                                        ),
+                                        child: const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                      )
+                                    : InkWell(
+                                        onTap: () {
+                                          _handleTaskAction(isParticipating);
+                                        },
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.lg,
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 24,
+                                            vertical: 12,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isParticipating
+                                                ? AppColors.getBorderColor(
+                                                    context,
+                                                  )
+                                                : taskColor,
+                                            borderRadius: BorderRadius.circular(
+                                              AppRadius.lg,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            isParticipating
+                                                ? 'Отменить'
+                                                : 'Начать',
                                       style: TextStyle(
                                         fontFamily: 'Inter',
                                         fontSize: 14,
@@ -602,6 +648,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   ),
                 ),
               ],
+              ),
             );
           },
           loading: () => const Center(
@@ -802,20 +849,23 @@ class _ParticipantRow extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           ClipOval(
-            child: CachedNetworkImage(
-              imageUrl: avatarUrl,
+            child: Image.network(
+              avatarUrl,
               width: 32,
               height: 32,
               fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
-                width: 32,
-                height: 32,
-                color: AppColors.getBorderColor(context),
-                child: const Center(
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-              errorWidget: (context, url, error) => Container(
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  width: 32,
+                  height: 32,
+                  color: AppColors.getBorderColor(context),
+                  child: const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) => Container(
                 width: 32,
                 height: 32,
                 color: AppColors.getBorderColor(context),
