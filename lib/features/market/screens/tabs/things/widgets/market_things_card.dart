@@ -157,7 +157,7 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                         ),
                         child: CachedNetworkImage(
                           imageUrl: img,
-                          fit: BoxFit.contain,
+                          fit: BoxFit.cover,
                           placeholder: (context, url) => Container(
                             color: AppColors.getBackgroundColor(context),
                             child: Center(
