@@ -9,7 +9,7 @@ import '../../../core/widgets/app_bar.dart'; // ← глобальная шап�
 // контенты по вкладкам
 import 'tabs/active_content.dart';
 import 'tabs/available_content.dart';
-import 'rating_screen.dart';
+import 'leaderboard_screen.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
   const TasksScreen({super.key});
@@ -50,9 +50,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           IconButton(
             tooltip: 'Трофей',
             onPressed: () {
-              Navigator.of(
-                context,
-              ).push(CupertinoPageRoute(builder: (_) => const RatingScreen()));
+              Navigator.of(context).push(
+                CupertinoPageRoute(builder: (_) => const LeaderboardScreen()),
+              );
             },
             icon: const Icon(
               Icons.emoji_events_outlined,
