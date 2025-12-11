@@ -19,9 +19,14 @@ class ActiveContent extends ConsumerWidget {
     final userTasksAsync = ref.watch(userTasksProvider);
 
     // Вертикальный скролл + горизонтальные поля внутри контента
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Padding(
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(userTasksProvider);
+        await ref.read(userTasksProvider.future);
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
         child: userTasksAsync.when(
           data: (tasksByMonth) {
@@ -229,6 +234,7 @@ class ActiveContent extends ConsumerWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

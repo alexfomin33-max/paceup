@@ -4,7 +4,6 @@
 //  Провайдер для загрузки и управления задачами
 // ────────────────────────────────────────────────────────────────────────────
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/auth_service.dart';
@@ -57,18 +56,6 @@ final userTasksProvider = FutureProvider<List<TasksByMonth>>((ref) async {
       timeout: const Duration(seconds: 15),
     );
 
-    // Выводим логи в консоль для отладки
-    if (data['debug_logs'] != null) {
-      final logs = data['debug_logs'] as List? ?? [];
-      debugPrint('═══════════════════════════════════════════════════════');
-      debugPrint('GET USER TASKS DEBUG LOGS:');
-      debugPrint('═══════════════════════════════════════════════════════');
-      for (final log in logs) {
-        debugPrint('  $log');
-      }
-      debugPrint('═══════════════════════════════════════════════════════');
-    }
-
     final List rawList = data['tasks'] as List? ?? const [];
     
     return rawList
@@ -77,7 +64,6 @@ final userTasksProvider = FutureProvider<List<TasksByMonth>>((ref) async {
         .toList();
   } catch (e) {
     // В случае ошибки возвращаем пустой список
-    debugPrint('❌ Ошибка загрузки активных задач: $e');
     return [];
   }
 });
@@ -104,24 +90,11 @@ final taskDetailProvider = FutureProvider.family<Task?, int>((ref, taskId) async
       timeout: const Duration(seconds: 15),
     );
 
-    // Выводим логи в консоль для отладки
-    if (data['debug_logs'] != null) {
-      final logs = data['debug_logs'] as List? ?? [];
-      debugPrint('═══════════════════════════════════════════════════════');
-      debugPrint('GET TASK DEBUG LOGS:');
-      debugPrint('═══════════════════════════════════════════════════════');
-      for (final log in logs) {
-        debugPrint('  $log');
-      }
-      debugPrint('═══════════════════════════════════════════════════════');
-    }
-
     if (data['success'] == true && data['task'] != null) {
       return Task.fromApi(data['task'] as Map<String, dynamic>);
     }
     return null;
   } catch (e) {
-    debugPrint('❌ Ошибка загрузки деталей задачи: $e');
     return null;
   }
 });
@@ -182,9 +155,11 @@ final taskParticipantsProvider = FutureProvider.family<TaskParticipantsData, int
           .map((json) => TaskParticipant.fromJson(json))
           .toList();
       
+      final isParticipating = (data['is_current_user_participating'] as bool?) ?? false;
+      
       return TaskParticipantsData(
         participants: participants,
-        isCurrentUserParticipating: (data['is_current_user_participating'] as bool?) ?? false,
+        isCurrentUserParticipating: isParticipating,
       );
     }
     return const TaskParticipantsData(participants: [], isCurrentUserParticipating: false);

@@ -17,9 +17,14 @@ class AvailableContent extends ConsumerWidget {
     final tasksAsync = ref.watch(tasksProvider);
 
     // Скролл + внутренние горизонтальные отступы
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Padding(
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(tasksProvider);
+        await ref.read(tasksProvider.future);
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
         child: tasksAsync.when(
           data: (tasksByMonth) {
@@ -118,6 +123,7 @@ class AvailableContent extends ConsumerWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }
