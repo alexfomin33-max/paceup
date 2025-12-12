@@ -6,7 +6,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../description/run_200k_screen.dart';
 import '../description/suzdal_screen.dart';
-import '../description/task_detail_screen.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../providers/tasks_provider.dart';
 
@@ -57,7 +56,10 @@ class ActiveContent extends ConsumerWidget {
                                 Navigator.of(context, rootNavigator: true).push(
                                   TransparentPageRoute(
                                     builder: (_) =>
-                                        TaskDetailScreen(taskId: task.id),
+                                        Run200kScreen(
+                                          key: ValueKey('task_${task.id}'),
+                                          taskId: task.id,
+                                        ),
                                   ),
                                 );
                               },
@@ -85,20 +87,13 @@ class ActiveContent extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
 
-                TaskCard(
+                const TaskCard(
                   title: '200 км бега',
                   progressText: '145,8 / 200 км',
                   percent: 0.729,
-                  image: const _RectImage(
+                  image: _RectImage(
                     provider: AssetImage('assets/card200run.jpg'),
                   ),
-                  onTap: () {
-                    Navigator.of(context, rootNavigator: true).push(
-                      TransparentPageRoute(
-                        builder: (_) => const Run200kScreen(),
-                      ),
-                    );
-                  },
                 ),
                 const SizedBox(height: 12),
 
@@ -176,18 +171,13 @@ class ActiveContent extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              TaskCard(
+              const TaskCard(
                 title: '200 км бега',
                 progressText: '145,8 / 200 км',
                 percent: 0.729,
-                image: const _RectImage(
+                image: _RectImage(
                   provider: AssetImage('assets/card200run.jpg'),
                 ),
-                onTap: () {
-                  Navigator.of(context, rootNavigator: true).push(
-                    TransparentPageRoute(builder: (_) => const Run200kScreen()),
-                  );
-                },
               ),
               const SizedBox(height: 12),
               const TaskCard(

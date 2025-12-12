@@ -39,6 +39,10 @@ class Task {
   /// Название единицы измерения для отображения
   final String unitLabel;
 
+  /// Тип метрики для подсчета ('distance', 'elevation', 'duration', 'steps', 'count', 'days', 'weeks')
+  /// Определяет, что именно нужно считать из тренировок для этой задачи
+  final String? metricType;
+
   /// Целевое значение (опционально)
   final double? targetValue;
 
@@ -60,6 +64,7 @@ class Task {
     this.dateEnd,
     required this.unit,
     required this.unitLabel,
+    this.metricType,
     this.targetValue,
     this.currentValue,
     this.progressPercent,
@@ -79,6 +84,7 @@ class Task {
       dateEnd: _parseSqlDateTime(json['date_end']?.toString()),
       unit: json['unit']?.toString() ?? '',
       unitLabel: json['unit_label']?.toString() ?? '',
+      metricType: json['metric_type']?.toString(),
       targetValue: json['target_value'] != null
           ? _asDouble(json['target_value'])
           : null,

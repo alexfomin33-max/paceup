@@ -1,10 +1,11 @@
 // lib/screens/tabs/available_content.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../description/swim_trip_screen.dart';
-import '../description/task_detail_screen.dart';
+import '../description/run_200k_screen.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../providers/tasks_provider.dart';
 
@@ -63,7 +64,10 @@ class AvailableContent extends ConsumerWidget {
                               Navigator.of(context, rootNavigator: true).push(
                                 TransparentPageRoute(
                                   builder: (_) =>
-                                      TaskDetailScreen(taskId: task.id),
+                                      Run200kScreen(
+                                        key: ValueKey('task_${task.id}'),
+                                        taskId: task.id,
+                                      ),
                                 ),
                               );
                             },
@@ -108,20 +112,48 @@ class AvailableContent extends ConsumerWidget {
               child: CircularProgressIndicator(),
             ),
           ),
-          error: (error, stack) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Text(
-                'Ошибка загрузки задач: ${error.toString()}',
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  color: Colors.red,
+          error: (error, stack) {
+            // Логируем ошибку для отладки
+            debugPrint('❌ AvailableContent: ошибка загрузки задач: $error');
+            debugPrint('❌ AvailableContent: stackTrace: $stack');
+            
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Ошибка загрузки задач',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.red,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      error.toString(),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        color: Colors.red,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-                textAlign: TextAlign.center,
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
       ),

@@ -141,17 +141,40 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
 
       if (response['success'] == true) {
         final List<dynamic> eventsData = response['events'] ?? [];
-        return eventsData.map((e) {
+        
+        // ─── Логирование для отладки ───
+        debugPrint(
+          '🔍 Поиск событий: запрос="$query", найдено в ответе: ${eventsData.length}',
+        );
+        
+        if (eventsData.isNotEmpty) {
+          debugPrint('📋 Первые 3 события:');
+          for (int i = 0; i < eventsData.length && i < 3; i++) {
+            debugPrint(
+              '  ${i + 1}. ID=${eventsData[i]['id']}, название="${eventsData[i]['name']}"',
+            );
+          }
+        }
+        
+        // ─── Явно преобразуем в List для корректной работы Autocomplete ───
+        final result = eventsData.map((e) {
           return _EventOption(
             id: e['id'] as int,
             name: e['name'] as String,
             place: e['place'] as String? ?? '',
             eventDate: e['event_date'] as String? ?? '',
           );
-        });
+        }).toList(); // ─── Преобразуем ленивый Iterable в материализованный List
+        
+        debugPrint(
+          '✅ Обработано событий в список: ${result.length}',
+        );
+        
+        return result;
       }
     } catch (e) {
       ErrorHandler.logError(e);
+      debugPrint('❌ Ошибка при поиске событий: $e');
     }
 
     return const [];
@@ -476,6 +499,12 @@ class _EventAutocompleteField extends StatelessWidget {
                 AutocompleteOnSelected<_EventOption> onSelected,
                 Iterable<_EventOption> options,
               ) {
+                // ─── Логирование для отладки отображения ───
+                final optionsList = options.toList();
+                debugPrint(
+                  '🎨 optionsViewBuilder: получено ${optionsList.length} опций',
+                );
+                
                 return Align(
                   alignment: Alignment.topLeft,
                   child: Material(
@@ -484,10 +513,11 @@ class _EventAutocompleteField extends StatelessWidget {
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxHeight: 200),
                       child: ListView.builder(
+                        padding: EdgeInsets.zero,
                         shrinkWrap: true,
-                        itemCount: options.length,
+                        itemCount: optionsList.length,
                         itemBuilder: (BuildContext context, int index) {
-                          final option = options.elementAt(index);
+                          final option = optionsList[index];
                           return InkWell(
                             onTap: () => onSelected(option),
                             child: Container(
