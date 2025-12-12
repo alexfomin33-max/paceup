@@ -157,7 +157,7 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                         ),
                         child: CachedNetworkImage(
                           imageUrl: img,
-                          fit: BoxFit.contain,
+                          fit: BoxFit.cover,
                           placeholder: (context, url) => Container(
                             color: AppColors.getBackgroundColor(context),
                             child: Center(
@@ -192,12 +192,21 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
               children: [
                 PricePill(text: _fmt(widget.item.price)),
                 const SizedBox(width: 6),
-                if (widget.item.gender == Gender.female)
+                // ── если gender == null (выбрано "Любой"), показываем обе пилюли
+                if (widget.item.gender == null) ...[
+                  const GenderPill.male(),
+                  const SizedBox(width: 6),
+                  const GenderPill.female(),
+                ] else if (widget.item.gender == Gender.female)
                   const GenderPill.female()
                 else
                   const GenderPill.male(),
-                const SizedBox(width: 6),
-                CityPill(text: widget.item.city),
+                // ── показываем пилюлю города только если город указан
+                if (widget.item.city.isNotEmpty &&
+                    widget.item.city != 'Не указано') ...[
+                  const SizedBox(width: 6),
+                  CityPill(text: widget.item.city),
+                ],
               ],
             ),
 

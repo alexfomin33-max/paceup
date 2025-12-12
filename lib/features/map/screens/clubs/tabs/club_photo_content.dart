@@ -59,6 +59,7 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
 
     final photosList = widget.clubData!['photos'] as List<dynamic>? ?? [];
     setState(() {
+      // Разворачиваем список, чтобы новые фото были в начале
       _photos = photosList
           .map(
             (p) => {
@@ -67,6 +68,8 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
             },
           )
           .where((p) => p['url'] != null && (p['url'] as String).isNotEmpty)
+          .toList()
+          .reversed
           .toList();
     });
   }
@@ -131,6 +134,7 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
 
       if (response['success'] == true) {
         // Обновляем список фотографий из ответа
+        // Разворачиваем список, чтобы новые фото были в начале
         final photosList = response['photos'] as List<dynamic>? ?? [];
         setState(() {
           _photos = photosList
@@ -141,6 +145,8 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
                 },
               )
               .where((p) => p['url'] != null && (p['url'] as String).isNotEmpty)
+              .toList()
+              .reversed
               .toList();
         });
 
@@ -252,6 +258,7 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
 
       if (response['success'] == true) {
         // Обновляем список фотографий из ответа
+        // Разворачиваем список, чтобы новые фото были в начале
         final photosList = response['photos'] as List<dynamic>? ?? [];
         setState(() {
           _photos = photosList
@@ -262,6 +269,8 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
                 },
               )
               .where((p) => p['url'] != null && (p['url'] as String).isNotEmpty)
+              .toList()
+              .reversed
               .toList();
         });
 

@@ -4,5 +4,6 @@ class AppRadius {
   static const double md = 12; // карточки, блоки
   static const double lg = 16; // панели, крупные контейнеры
   static const double xl = 20; // модалки, popover, всплывашки
+  static const double xll = 24; // модалки, popover, всплывашки
   static const double xxl = 999;
 }

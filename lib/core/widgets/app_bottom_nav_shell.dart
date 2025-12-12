@@ -6,6 +6,7 @@ import '../../features/lenta/screens/lenta_screen.dart';
 import '../../features/map/screens/map_screen.dart';
 import '../../features/market/screens/market_screen.dart';
 import '../../features/tasks/screens/tasks_screen.dart';
+import '../../features/leaderboard/leaderboard_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../theme/app_theme.dart';
 
@@ -35,7 +36,7 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
   }
 
   // отдельные стеки навигации для каждой вкладки
-  final _navKeys = List.generate(5, (_) => GlobalKey<NavigatorState>());
+  final _navKeys = List.generate(6, (_) => GlobalKey<NavigatorState>());
 
   void _onTabChanged(int index) {
     // Просто обновляем состояние при переключении вкладок.
@@ -100,7 +101,17 @@ class _AppBottomNavShellState extends State<AppBottomNavShell> {
           ),
         ),
         PersistentTabConfig(
-          screen: _tabRoot(_navKeys[4], const ProfileScreen()),
+          screen: _tabRoot(_navKeys[4], const LeaderboardScreen()),
+          item: ItemConfig(
+            icon: const Icon(Icons.emoji_events_outlined, size: navIconSize),
+            title: "Рейтинг",
+            textStyle: tabTextStyle,
+            activeForegroundColor: _active,
+            inactiveForegroundColor: _getInactiveColor(context),
+          ),
+        ),
+        PersistentTabConfig(
+          screen: _tabRoot(_navKeys[5], const ProfileScreen()),
           item: ItemConfig(
             icon: const Icon(CupertinoIcons.person, size: navIconSize),
             title: "Профиль",

@@ -604,7 +604,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                     ? CupertinoIcons.lock_open
                                     : CupertinoIcons.lock_fill,
                                 text: isOpen
-                                    ? 'Открытое беговое сообщество'
+                                    ? 'Открытое сообщество'
                                     : 'Закрытое беговое сообщество',
                               ),
                               const SizedBox(height: 6),

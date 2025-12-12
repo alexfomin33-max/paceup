@@ -53,7 +53,7 @@ class GoodsItem {
   final String title; // Название
   final List<String> images; // Список URL картинок
   final int price; // Цена
-  final Gender gender; // «Ж» или «М» (для фильтра/чипа)
+  final Gender? gender; // «Ж», «М» или null (для фильтра/чипа)
   final String city; // Города через запятую
   final String? description; // Описание (если пусто — раскрывать нечего)
   final int sellerId; // ID продавца
@@ -64,7 +64,7 @@ class GoodsItem {
     required this.title,
     required this.images,
     required this.price,
-    required this.gender,
+    this.gender,
     required this.city,
     this.description,
     required this.sellerId,
