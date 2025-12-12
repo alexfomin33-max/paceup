@@ -116,7 +116,7 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
           'user_id': userId.toString(),
           'title': titleCtrl.text.trim(),
           'category': _category!,
-          'price': priceCtrl.text.trim(),
+          'price': priceCtrl.text.replaceAll(' ', ''), // ── удаляем пробелы из цены
           'description': descCtrl.text.trim(),
         };
 

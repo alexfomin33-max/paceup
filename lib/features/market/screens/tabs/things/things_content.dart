@@ -1,6 +1,7 @@
 // lib/screens/market/tabs/things/things_content.dart
 // Всё, что относится к вкладке «Вещи»: выбор категории, список, раскрытие карточек.
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -45,7 +46,7 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
     // ── преобразуем выбранную категорию в фильтр
     String? categoryFilter;
     int? sellerId;
-    
+
     if (_selected == 'Мои') {
       // ── при выборе "Мои" получаем userId из AuthService
       final authService = ref.read(authServiceProvider);
@@ -193,54 +194,53 @@ class _CategoryDropdown extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 0, 0, 4),
+        padding: const EdgeInsets.only(bottom: 4),
         child: SizedBox(
           width: dropdownWidth,
-          child: DropdownButtonFormField<String>(
-            initialValue: value,
-            isExpanded: true,
-            onChanged: onChanged,
-            dropdownColor: AppColors.getSurfaceColor(context),
-            menuMaxHeight: 300,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            // Стрелка выпадающего меню
-            icon: Icon(
-              Icons.arrow_drop_down,
-              color: AppColors.getIconSecondaryColor(context),
-            ),
-            decoration: const InputDecoration(
-              isDense: true,
-              // Убираем фон
-              filled: false,
-              contentPadding: EdgeInsets.fromLTRB(0, 6, 16, 8),
-              // Только нижняя подчеркивающая линия
-              border: UnderlineInputBorder(
-                borderSide: BorderSide(color: AppColors.outline),
-              ),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: AppColors.outline),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: AppColors.outline, width: 2),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.getSurfaceColor(context),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(
+                color: AppColors.getBorderColor(context),
+                width: 0.7,
               ),
             ),
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w400,
-              color: AppColors.getTextPrimaryColor(context),
-            ),
-            items: options.map((o) {
-              return DropdownMenuItem<String>(
-                value: o,
-                child: Text(
-                  o,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w400,
-                  ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: value,
+                isDense: true,
+                icon: Icon(
+                  CupertinoIcons.chevron_down,
+                  size: 14,
+                  color: AppColors.getIconPrimaryColor(context),
                 ),
-              );
-            }).toList(),
+                dropdownColor: AppColors.getSurfaceColor(context),
+                menuMaxHeight: 300,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+                onChanged: onChanged,
+                items: options.map((String option) {
+                  return DropdownMenuItem<String>(
+                    value: option,
+                    child: Text(
+                      option,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        color: AppColors.getTextPrimaryColor(context),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
           ),
         ),
       ),

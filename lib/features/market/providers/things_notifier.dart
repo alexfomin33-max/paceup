@@ -185,8 +185,8 @@ class ThingsNotifier extends StateNotifier<ThingsState> {
     } else if (genderStr == 'female') {
       gender = Gender.female;
     } else {
-      // Если gender не указан, используем male по умолчанию для отображения
-      gender = Gender.male;
+      // Если gender не указан (выбрано "Любой"), оставляем null
+      gender = null;
     }
 
     // ── парсим изображения (массив URL)
