@@ -5,11 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/segmented_pill.dart';
 import '../../../core/widgets/app_bar.dart'; // ← глобальная шапка
+import '../../../providers/services/auth_provider.dart'; // ← для проверки userId
 
 // контенты по вкладкам
 import 'tabs/active_content.dart';
 import 'tabs/available_content.dart';
-import 'leaderboard_screen.dart';
+
+/// Единые размеры для AppBar в iOS-стиле
+const double _kAppBarIconSize = 22.0; // сама иконка ~20–22pt
+const double _kAppBarTapTarget = 42.0; // кликабельная область 42×42
 
 class TasksScreen extends ConsumerStatefulWidget {
   const TasksScreen({super.key});
@@ -39,6 +43,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Получаем ID текущего пользователя
+    final userIdAsync = ref.watch(currentUserIdProvider);
+
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
 
@@ -46,23 +53,27 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       appBar: PaceAppBar(
         title: 'Задачи',
         showBack: false, // на этом экране «назад» не нужен
-        actions: [
-          IconButton(
-            tooltip: 'Трофей',
-            onPressed: () {
-              Navigator.of(context).push(
-                CupertinoPageRoute(builder: (_) => const LeaderboardScreen()),
+        leadingWidth: 56, // одна иконка слева
+        // слева — иконка плюса (только для пользователя с id=1)
+        leading: userIdAsync.when(
+          data: (userId) {
+            // Показываем иконку только если userId == 1
+            if (userId == 1) {
+              return Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: _NavIcon(
+                  icon: CupertinoIcons.add_circled,
+                  onPressed: () {
+                    // TODO: обработчик клика на иконку плюса
+                  },
+                ),
               );
-            },
-            icon: const Icon(
-              Icons.emoji_events_outlined,
-              size: 22,
-              color: AppColors.gold,
-            ),
-            splashRadius: 22,
-          ),
-          const SizedBox(width: 6),
-        ],
+            }
+            return null;
+          },
+          loading: () => null, // Во время загрузки не показываем иконку
+          error: (_, __) => null, // При ошибке не показываем иконку
+        ),
       ),
 
       body: SafeArea(
@@ -116,6 +127,37 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ————————————————————————————————————————————————————————————————
+//                 Мелкие утилиты UI: иконка
+// ————————————————————————————————————————————————————————————————
+
+/// Единый вид для иконок в AppBar — размер 22, tap-target 42×42
+class _NavIcon extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _NavIcon({super.key, required this.icon, required this.onPressed});
+
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _kAppBarTapTarget,
+      height: _kAppBarTapTarget,
+      child: IconButton(
+        onPressed: onPressed,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(
+          minWidth: _kAppBarTapTarget,
+          minHeight: _kAppBarTapTarget,
+        ),
+        icon: Icon(icon, size: _kAppBarIconSize),
+        splashRadius: 22,
       ),
     );
   }
