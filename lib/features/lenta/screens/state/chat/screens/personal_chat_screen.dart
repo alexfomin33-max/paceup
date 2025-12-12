@@ -1646,13 +1646,14 @@ class _ComposerState extends State<_Composer> {
                         vertical: 6,
                       ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.xxl),
+                        borderRadius: BorderRadius.circular(AppRadius.xll),
                         borderSide: BorderSide.none,
                       ),
                       filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.darkSurfaceMuted
-                          : AppColors.softBg,
+                      fillColor:
+                          Theme.of(context).brightness == Brightness.light
+                          ? AppColors.background
+                          : AppColors.getSurfaceMutedColor(context),
                     ),
                     onSubmitted: (_) => widget.onSend(),
                   ),

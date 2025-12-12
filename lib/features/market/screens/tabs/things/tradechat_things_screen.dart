@@ -1751,7 +1751,7 @@ class _Composer extends StatelessWidget {
                         vertical: 6,
                       ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.xxl),
+                        borderRadius: BorderRadius.circular(AppRadius.xll),
                         borderSide: BorderSide.none,
                       ),
                       filled: true,
