@@ -55,7 +55,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
       // ── Глобальная шапка без нижнего бордера
       appBar: const PaceAppBar(
         title: 'Лидерборд',
-        showBack: true,
+        showBack: false,
         showBottomDivider: false,
       ),
 
