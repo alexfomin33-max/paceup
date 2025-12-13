@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -12,10 +11,7 @@ import '../../providers/tasks_provider.dart';
 class Run200kScreen extends ConsumerStatefulWidget {
   final int taskId;
 
-  const Run200kScreen({
-    super.key,
-    required this.taskId,
-  });
+  const Run200kScreen({super.key, required this.taskId});
 
   @override
   ConsumerState<Run200kScreen> createState() => _Run200kScreenState();
@@ -46,7 +42,9 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
     super.didUpdateWidget(oldWidget);
     // Если taskId изменился, обновляем провайдеры
     if (oldWidget.taskId != widget.taskId) {
-      debugPrint('🔄 Run200kScreen: taskId изменился с ${oldWidget.taskId} на ${widget.taskId}');
+      debugPrint(
+        '🔄 Run200kScreen: taskId изменился с ${oldWidget.taskId} на ${widget.taskId}',
+      );
       _lastTaskId = widget.taskId;
       _refreshProviders();
     }
@@ -71,66 +69,61 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
     }
   }
 
-  IconData _getTaskIcon(String? taskType) {
-    switch (taskType) {
-      case 'run':
-        return Icons.directions_run;
-      case 'bike':
-        return Icons.directions_bike;
-      case 'swim':
-        return Icons.pool;
-      case 'walk':
-        return Icons.directions_walk;
-      case 'general':
-      default:
-        return Icons.flag;
-    }
-  }
-
   /// Обработка действия принятия/отмены задачи
   /// Полностью полагается на данные из API через провайдеры
   Future<void> _handleTaskAction() async {
     if (_isLoading || _currentUserId == null) return;
 
     final taskId = widget.taskId;
-    debugPrint('🎯 Run200kScreen: обработка действия для taskId=$taskId, userId=$_currentUserId');
+    debugPrint(
+      '🎯 Run200kScreen: обработка действия для taskId=$taskId, userId=$_currentUserId',
+    );
 
     // Получаем актуальное состояние из провайдера
-    final participantsData = await ref.read(taskParticipantsProvider(taskId).future);
+    final participantsData = await ref.read(
+      taskParticipantsProvider(taskId).future,
+    );
     final wasParticipating = participantsData.isCurrentUserParticipating;
-    debugPrint('📊 Run200kScreen: текущее состояние участия=$wasParticipating для taskId=$taskId');
+    debugPrint(
+      '📊 Run200kScreen: текущее состояние участия=$wasParticipating для taskId=$taskId',
+    );
 
     setState(() => _isLoading = true);
 
     try {
       final api = ApiService();
       final action = wasParticipating ? 'cancel' : 'start';
-      debugPrint('📤 Run200kScreen: отправка запроса task_action.php с taskId=$taskId, action=$action');
+      debugPrint(
+        '📤 Run200kScreen: отправка запроса task_action.php с taskId=$taskId, action=$action',
+      );
 
       // Выполняем действие на сервере
       final response = await api.post(
         '/task_action.php',
-        body: {
-          'task_id': taskId,
-          'action': action,
-        },
+        body: {'task_id': taskId, 'action': action},
       );
 
       debugPrint('✅ Run200kScreen: ответ от task_action.php: $response');
 
       // Инвалидируем провайдер для получения свежих данных из API
       ref.invalidate(taskParticipantsProvider(taskId));
-      
+
       // Ждем обновления данных из API
       // Это гарантирует, что UI отобразит актуальное состояние из базы данных
-      final updatedData = await ref.read(taskParticipantsProvider(taskId).future);
-      debugPrint('🔄 Run200kScreen: обновленные данные участников для taskId=$taskId: isParticipating=${updatedData.isCurrentUserParticipating}, participantsCount=${updatedData.participants.length}');
+      final updatedData = await ref.read(
+        taskParticipantsProvider(taskId).future,
+      );
+      debugPrint(
+        '🔄 Run200kScreen: обновленные данные участников для taskId=$taskId: isParticipating=${updatedData.isCurrentUserParticipating}, participantsCount=${updatedData.participants.length}',
+      );
     } catch (e) {
-      debugPrint('❌ Run200kScreen: ошибка при обработке действия для taskId=$taskId: $e');
+      debugPrint(
+        '❌ Run200kScreen: ошибка при обработке действия для taskId=$taskId: $e',
+      );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: ${e.toString()}')));
       }
     } finally {
       if (mounted) {
@@ -142,10 +135,12 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
   @override
   Widget build(BuildContext context) {
     final taskId = widget.taskId;
-    
+
     // Логируем, если taskId изменился
     if (_lastTaskId != null && _lastTaskId != taskId) {
-      debugPrint('🔄 Run200kScreen.build: taskId изменился с $_lastTaskId на $taskId');
+      debugPrint(
+        '🔄 Run200kScreen.build: taskId изменился с $_lastTaskId на $taskId',
+      );
       _lastTaskId = taskId;
       // Обновляем провайдеры при изменении taskId
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -160,14 +155,17 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
 
     // Логируем состояние провайдеров для отладки
     participantsAsync.whenData((data) {
-      debugPrint('📊 Run200kScreen.build: taskId=$taskId, isParticipating=${data.isCurrentUserParticipating}, participantsCount=${data.participants.length}');
+      debugPrint(
+        '📊 Run200kScreen.build: taskId=$taskId, isParticipating=${data.isCurrentUserParticipating}, participantsCount=${data.participants.length}',
+      );
     });
 
     // Получаем актуальное состояние участия из провайдера
     // Провайдер - единственный источник правды, данные загружаются из API
     final currentIsParticipating = participantsAsync.maybeWhen(
       data: (data) => data.isCurrentUserParticipating,
-      orElse: () => false, // По умолчанию не участвует, если данные еще загружаются
+      orElse: () =>
+          false, // По умолчанию не участвует, если данные еще загружаются
     );
 
     return InteractiveBackSwipe(
@@ -175,63 +173,63 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
         backgroundColor: AppColors.getBackgroundColor(context),
         body: CustomScrollView(
           slivers: [
-            // ─────────── Верхнее фото + кнопка "назад"
-            SliverAppBar(
-              pinned: false,
-              floating: false,
-              expandedHeight: 140,
-              elevation: 0,
-              backgroundColor: AppColors.getSurfaceColor(context),
-              leadingWidth: 60,
-              leading: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 10, top: 6, bottom: 6),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: const BoxDecoration(
-                        color: AppColors.scrim40,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          CupertinoIcons.back,
-                          color: AppColors.surface,
-                          size: 20,
+            // ─────────── Фоновая картинка + кнопка "назад" + логотип
+            SliverToBoxAdapter(
+              child: Builder(
+                builder: (context) => Container(
+                  color: AppColors.getSurfaceColor(
+                    context,
+                  ), // Цвет полоски для нижней половины логотипа
+                  padding: const EdgeInsets.only(
+                    bottom: 46,
+                  ), // Место для нижней половины логотипа с обводкой
+                  child: Stack(
+                    clipBehavior: Clip
+                        .none, // Разрешаем отображение элементов за пределами Stack
+                    children: [
+                      // Фоновая картинка 200k_run.png
+                      const _BackgroundImage(),
+                      // Верхняя кнопка "назад"
+                      SafeArea(
+                        bottom: false,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          child: _CircleIconBtn(
+                            icon: CupertinoIcons.back,
+                            semantic: 'Назад',
+                            onTap: () => Navigator.of(context).pop(),
+                          ),
                         ),
                       ),
-                    ),
+                      // Логотип card200run.jpg наполовину на фоне (позиционирован внизу фона)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom:
+                            -46, // Половина логотипа с обводкой (92/2 = 46) выходит за границу фона
+                        child: Center(
+                          child: Builder(
+                            builder: (context) => Container(
+                              width:
+                                  92, // 90 + 1*2 (логотип + обводка с двух сторон)
+                              height: 92,
+                              decoration: BoxDecoration(
+                                color: AppColors.getSurfaceColor(context),
+                                shape: BoxShape.circle,
+                              ),
+                              padding: const EdgeInsets.all(
+                                1,
+                              ), // Толщина обводки
+                              child: ClipOval(child: _HeaderLogo()),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-              flexibleSpace: taskAsync.when(
-                data: (task) {
-                  if (task?.imageUrl != null && task!.imageUrl!.isNotEmpty) {
-                    return FlexibleSpaceBar(
-                      background: CachedNetworkImage(
-                        imageUrl: task.imageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: AppColors.skeletonBase,
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: AppColors.skeletonBase,
-                        ),
-                      ),
-                    );
-                  }
-                  return const FlexibleSpaceBar(
-                    background: ColoredBox(color: AppColors.skeletonBase),
-                  );
-                },
-                loading: () => const FlexibleSpaceBar(
-                  background: ColoredBox(color: AppColors.skeletonBase),
-                ),
-                error: (_, __) => const FlexibleSpaceBar(
-                  background: ColoredBox(color: AppColors.skeletonBase),
                 ),
               ),
             ),
@@ -276,7 +274,9 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                           boxShadow: [
                             // тонкая тень вниз ~1px
                             BoxShadow(
-                              color: Theme.of(context).brightness == Brightness.dark
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
                                   ? AppColors.darkShadowSoft
                                   : AppColors.shadowSoft,
                               offset: const Offset(0, 1),
@@ -284,8 +284,8 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                             ),
                           ],
                         ),
-                        // добавили +36 сверху, чтобы нижняя половина круга не перекрывала текст
-                        padding: const EdgeInsets.fromLTRB(16, 16 + 36, 16, 16),
+                        // добавили +46 сверху, чтобы нижняя половина логотипа не перекрывала текст
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                         child: Column(
                           children: [
                             Text(
@@ -294,7 +294,7 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                                 color: AppColors.getTextPrimaryColor(context),
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 12),
                             Text(
                               task.fullDescription.isNotEmpty
                                   ? task.fullDescription
@@ -302,13 +302,13 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 13,
-                                color: AppColors.getTextSecondaryColor(context),
-                                height: 1.25,
+                                fontSize: 14,
+                                color: AppColors.getTextPrimaryColor(context),
+                                height: 1.5,
                               ),
                             ),
                             if (task.targetValue != null) ...[
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 16),
                               // узкий прогресс-бар по центру
                               Center(
                                 child: SizedBox(
@@ -324,50 +324,16 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                                   task.formattedProgress,
                                   style: TextStyle(
                                     fontFamily: 'Inter',
-                                    fontSize: 13,
-                                    color: AppColors.getTextSecondaryColor(context),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
                                   ),
                                 ),
                               ),
                             ],
                           ],
-                        ),
-                      ),
-
-                      // Сам круг: центр ровно на границе фото/белого блока
-                      Positioned(
-                        top: -36, // 72/2 со знаком минус — половина на фото, половина на белом фоне
-                        left: 0,
-                        right: 0,
-                        child: Center(
-                          child: Container(
-                            width: 72,
-                            height: 72,
-                            decoration: BoxDecoration(
-                              color: AppColors.gold,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.getSurfaceColor(context),
-                                width: 2,
-                              ), // белая рамка 2px
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Theme.of(context).brightness == Brightness.dark
-                                      ? AppColors.darkShadowSoft
-                                      : AppColors.shadowSoft,
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Icon(
-                                _getTaskIcon(task.type),
-                                size: 34,
-                                color: AppColors.getSurfaceColor(context),
-                              ),
-                            ),
-                          ),
                         ),
                       ),
                     ],
@@ -414,15 +380,18 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
                 child: Center(
                   child: SizedBox(
-                    width: 280,
+                    width: 200,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleTaskAction,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: currentIsParticipating
                             ? AppColors.error
-                            : AppColors.accentMint,
+                            : AppColors.brandPrimary,
                         foregroundColor: AppColors.surface,
-                        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 0,
+                          vertical: 8,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.xl),
                         ),
@@ -441,7 +410,7 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                             )
                           : Text(
                               currentIsParticipating ? 'Отменить' : 'Начать',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -491,7 +460,7 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                                 'Пока нет участников',
                                 style: TextStyle(
                                   fontFamily: 'Inter',
-                                  fontSize: 13,
+                                  fontSize: 14,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
@@ -509,7 +478,8 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                               rank: i + 1,
                               name: participant.fullName.isNotEmpty
                                   ? participant.fullName
-                                  : '${participant.name} ${participant.surname}'.trim(),
+                                  : '${participant.name} ${participant.surname}'
+                                        .trim(),
                               value: participant.valueText,
                               avatar: participant.avatar,
                               highlight: isMe,
@@ -523,14 +493,17 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                         child: Center(child: CircularProgressIndicator()),
                       ),
                       error: (error, stackTrace) {
-                        debugPrint('❌ Run200kScreen: ошибка загрузки участников: $error');
+                        debugPrint(
+                          '❌ Run200kScreen: ошибка загрузки участников: $error',
+                        );
                         debugPrint('❌ Run200kScreen: stackTrace: $stackTrace');
-                        
+
                         // Проверяем, не является ли это ошибкой "HTML вместо JSON"
                         final errorMessage = error.toString();
-                        final isServerError = errorMessage.contains('HTML вместо JSON') ||
+                        final isServerError =
+                            errorMessage.contains('HTML вместо JSON') ||
                             errorMessage.contains('Сервер вернул HTML');
-                        
+
                         return Padding(
                           padding: const EdgeInsets.all(16),
                           child: Center(
@@ -584,6 +557,107 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
 
 // ───── Вспомогательные виджеты
 
+/// Фоновая картинка 200k_run.png (соотношение сторон 2.3:1)
+class _BackgroundImage extends StatelessWidget {
+  const _BackgroundImage();
+
+  @override
+  Widget build(BuildContext context) {
+    final screenW = MediaQuery.of(context).size.width;
+    final calculatedHeight =
+        screenW / 2.3; // Вычисляем высоту по соотношению 2.3:1
+    return Image.asset(
+      'assets/200k_run.png',
+      width: double.infinity,
+      height: calculatedHeight,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Builder(
+        builder: (context) => Container(
+          width: double.infinity,
+          height: calculatedHeight,
+          color: AppColors.getBorderColor(context),
+          child: Icon(
+            Icons.image,
+            size: 48,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Круглый логотип card200run.jpg 90×90 с обводкой
+class _HeaderLogo extends StatelessWidget {
+  const _HeaderLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/card200run.jpg',
+      width: 90,
+      height: 90,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Builder(
+        builder: (context) => Container(
+          width: 90,
+          height: 90,
+          color: AppColors.getBorderColor(context),
+          child: Icon(
+            Icons.image,
+            size: 32,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Полупрозрачная круглая кнопка-иконка
+class _CircleIconBtn extends StatelessWidget {
+  final IconData icon;
+  final String? semantic;
+  final VoidCallback onTap;
+  const _CircleIconBtn({
+    required this.icon,
+    required this.onTap,
+    this.semantic,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // В светлой теме иконки светлые (белые), в темной — как обычно
+    final brightness = Theme.of(context).brightness;
+    final iconColor = brightness == Brightness.light
+        ? Colors.white
+        : AppColors.getIconPrimaryColor(context);
+
+    // В темной теме увеличиваем непрозрачность кружочка
+    final backgroundColor = brightness == Brightness.dark
+        ? AppColors.scrim60
+        : AppColors.scrim40;
+
+    return Semantics(
+      label: semantic,
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 18, color: iconColor),
+        ),
+      ),
+    );
+  }
+}
+
 class _MiniProgress extends StatelessWidget {
   final double percent;
   const _MiniProgress({required this.percent});
@@ -592,18 +666,24 @@ class _MiniProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        final w = (percent.clamp(0.0, 1.0)) * c.maxWidth;
+        final clampedPercent = percent.clamp(0.0, 1.0);
+        final w = clampedPercent * c.maxWidth;
+        final isFull = clampedPercent >= 1.0;
         return Row(
           children: [
             Container(
               width: w,
               height: 4,
-              decoration: const BoxDecoration(
-                color: AppColors.accentMint,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(AppRadius.xs),
-                  bottomLeft: Radius.circular(AppRadius.xs),
-                ),
+              decoration: BoxDecoration(
+                color: AppColors.success,
+                borderRadius: isFull
+                    ? BorderRadius.circular(AppRadius.xs)
+                    : const BorderRadius.only(
+                        topLeft: Radius.circular(AppRadius.xs),
+                        bottomLeft: Radius.circular(AppRadius.xs),
+                        topRight: Radius.circular(AppRadius.xs),
+                        bottomRight: Radius.circular(AppRadius.xs),
+                      ),
               ),
             ),
             Expanded(
@@ -611,10 +691,12 @@ class _MiniProgress extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.getBorderColor(context),
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(AppRadius.xs),
-                    bottomRight: Radius.circular(AppRadius.xs),
-                  ),
+                  borderRadius: isFull
+                      ? BorderRadius.zero
+                      : const BorderRadius.only(
+                          topRight: Radius.circular(AppRadius.xs),
+                          bottomRight: Radius.circular(AppRadius.xs),
+                        ),
                 ),
               ),
             ),
@@ -676,10 +758,10 @@ class _FriendRow extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Inter',
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: highlight
-                    ? AppColors.accentMint
+                    ? AppColors.success
                     : AppColors.getTextPrimaryColor(context),
               ),
             ),
@@ -715,7 +797,7 @@ class _FriendRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: 'Inter',
-                fontSize: 13,
+                fontSize: 14,
                 color: AppColors.getTextPrimaryColor(context),
               ),
             ),
@@ -725,10 +807,10 @@ class _FriendRow extends StatelessWidget {
             value,
             style: TextStyle(
               fontFamily: 'Inter',
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
               color: highlight
-                  ? AppColors.accentMint
+                  ? AppColors.success
                   : AppColors.getTextPrimaryColor(context),
             ),
           ),

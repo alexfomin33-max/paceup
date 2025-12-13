@@ -478,19 +478,23 @@ class _ProgressBar extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final totalWidth = constraints.maxWidth;
-        final currentWidth = (percent.clamp(0, 1)) * totalWidth;
+        final clampedPercent = percent.clamp(0, 1);
+        final currentWidth = clampedPercent * totalWidth;
+        final isFull = clampedPercent >= 1.0;
 
         return Row(
           children: [
             Container(
               width: currentWidth,
               height: 5,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.success,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(AppRadius.xs),
-                  bottomLeft: Radius.circular(AppRadius.xs),
-                ),
+                borderRadius: isFull
+                    ? BorderRadius.circular(AppRadius.xs)
+                    : const BorderRadius.only(
+                        topLeft: Radius.circular(AppRadius.xs),
+                        bottomLeft: Radius.circular(AppRadius.xs),
+                      ),
               ),
             ),
             Expanded(

@@ -140,7 +140,7 @@ class LeaderboardAvatar extends StatelessWidget {
                   child: Center(
                     child: Text(
                       '$rank',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -190,4 +190,3 @@ class LeaderboardAvatar extends StatelessWidget {
     );
   }
 }
-

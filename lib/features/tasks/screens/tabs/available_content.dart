@@ -1,5 +1,4 @@
 // lib/screens/tabs/available_content.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -26,136 +25,137 @@ class AvailableContent extends ConsumerWidget {
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-        child: tasksAsync.when(
-          data: (tasksByMonth) {
-            if (tasksByMonth.isEmpty) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Text(
-                    'Нет доступных задач',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      color: AppColors.darkTextSecondary,
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+          child: tasksAsync.when(
+            data: (tasksByMonth) {
+              if (tasksByMonth.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Text(
+                      'Нет доступных задач',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        color: AppColors.darkTextSecondary,
+                      ),
                     ),
+                  ),
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Отображаем задачи по месяцам
+                  ...tasksByMonth.map((monthGroup) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _MonthLabel(monthGroup.monthYearLabel),
+                        const SizedBox(height: 8),
+                        _AvailableGrid(
+                          children: monthGroup.tasks.map((task) {
+                            return AvailableTaskCard(
+                              imageUrl: task.imageUrl,
+                              title: task.formattedTitle,
+                              onPressed: () {
+                                Navigator.of(context, rootNavigator: true).push(
+                                  TransparentPageRoute(
+                                    builder: (_) => Run200kScreen(
+                                      key: ValueKey('task_${task.id}'),
+                                      taskId: task.id,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                    );
+                  }),
+
+                  // Секция экспедиций (оставляем как есть)
+                  const _SectionLabel('Экспедиции'),
+                  const SizedBox(height: 8),
+                  _ExpeditionGrid(
+                    children: [
+                      const AvailableExpeditionCard(
+                        imageProvider: AssetImage('assets/Travel_velo.png'),
+                        title: 'Путешествия на велосипеде',
+                      ),
+                      AvailableExpeditionCard(
+                        imageProvider: const AssetImage(
+                          'assets/Travel_swim.png',
+                        ),
+                        title: 'Плавательное приключение',
+                        onPressed: () {
+                          Navigator.of(context, rootNavigator: true).push(
+                            TransparentPageRoute(
+                              builder: (_) => const SwimTripScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+                ],
+              );
+            },
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+            error: (error, stack) {
+              // Логируем ошибку для отладки
+              debugPrint('❌ AvailableContent: ошибка загрузки задач: $error');
+              debugPrint('❌ AvailableContent: stackTrace: $stack');
+
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Ошибка загрузки задач',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        error.toString(),
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          color: Colors.red,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
               );
-            }
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Отображаем задачи по месяцам
-                ...tasksByMonth.map((monthGroup) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _MonthLabel(monthGroup.monthYearLabel),
-                      const SizedBox(height: 8),
-                      _AvailableGrid(
-                        children: monthGroup.tasks.map((task) {
-                          return AvailableTaskCard(
-                            imageUrl: task.imageUrl,
-                            title: task.formattedTitle,
-                            onPressed: () {
-                              Navigator.of(context, rootNavigator: true).push(
-                                TransparentPageRoute(
-                                  builder: (_) =>
-                                      Run200kScreen(
-                                        key: ValueKey('task_${task.id}'),
-                                        taskId: task.id,
-                                      ),
-                                ),
-                              );
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                  );
-                }),
-
-                // Секция экспедиций (оставляем как есть)
-                const _SectionLabel('Экспедиции'),
-                const SizedBox(height: 8),
-                _ExpeditionGrid(
-                  children: [
-                    const AvailableExpeditionCard(
-                      imageProvider: AssetImage('assets/Travel_velo.png'),
-                      title: 'Путешествия на велосипеде',
-                    ),
-                    AvailableExpeditionCard(
-                      imageProvider: const AssetImage('assets/Travel_swim.png'),
-                      title: 'Плавательное приключение',
-                      onPressed: () {
-                        Navigator.of(context, rootNavigator: true).push(
-                          TransparentPageRoute(
-                            builder: (_) => const SwimTripScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-              ],
-            );
-          },
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: CircularProgressIndicator(),
-            ),
+            },
           ),
-          error: (error, stack) {
-            // Логируем ошибку для отладки
-            debugPrint('❌ AvailableContent: ошибка загрузки задач: $error');
-            debugPrint('❌ AvailableContent: stackTrace: $stack');
-            
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Ошибка загрузки задач',
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.red,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      error.toString(),
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        color: Colors.red,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
         ),
-      ),
       ),
     );
   }
