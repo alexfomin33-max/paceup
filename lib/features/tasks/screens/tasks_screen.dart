@@ -5,11 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/segmented_pill.dart';
 import '../../../core/widgets/app_bar.dart'; // ← глобальная шапка
+import '../../../core/widgets/transparent_route.dart'; // ← для прозрачного перехода
 import '../../../providers/services/auth_provider.dart'; // ← для проверки userId
 
 // контенты по вкладкам
 import 'tabs/active_content.dart';
 import 'tabs/available_content.dart';
+import 'add_tasks_screen.dart';
 
 /// Единые размеры для AppBar в iOS-стиле
 const double _kAppBarIconSize = 22.0; // сама иконка ~20–22pt
@@ -63,8 +65,22 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 padding: const EdgeInsets.only(left: 6),
                 child: _NavIcon(
                   icon: CupertinoIcons.add_circled,
-                  onPressed: () {
-                    // TODO: обработчик клика на иконку плюса
+                  onPressed: () async {
+                    // ── открываем экран создания задачи с прозрачным переходом
+                    final result = await Navigator.of(
+                      context,
+                      rootNavigator: true,
+                    ).push<bool>(
+                      TransparentPageRoute(
+                        builder: (_) => const AddTaskScreen(),
+                      ),
+                    );
+
+                    // ── если задача была успешно создана, можно обновить список
+                    // TODO: обновить список задач при необходимости
+                    if (result == true && mounted) {
+                      // Можно добавить обновление списка задач здесь
+                    }
                   },
                 ),
               );

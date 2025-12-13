@@ -1159,7 +1159,7 @@ class _AddOfficialEventScreenState
                               color: AppColors.getTextPrimaryColor(context),
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Введите дистанцию',
+                              hintText: '0 метров',
                               hintStyle: AppTextStyles.h14w4Place,
                               filled: true,
                               fillColor: AppColors.getSurfaceColor(context),
