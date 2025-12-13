@@ -24,7 +24,7 @@ class LeaderboardFiltersPanel extends StatefulWidget {
   final ValueChanged<String?> onPeriodChanged;
   final ValueChanged<bool> onGenderMaleChanged;
   final ValueChanged<bool> onGenderFemaleChanged;
-  final VoidCallback? onApplyDate;
+  final ValueChanged<DateTimeRange?>? onApplyDate;
 
   const LeaderboardFiltersPanel({
     super.key,
@@ -219,11 +219,42 @@ class _LeaderboardFiltersPanelState extends State<LeaderboardFiltersPanel> {
                 selected: _applyDatePressed,
                 enabled: _areDateFieldsComplete(),
                 onTap: () {
-                  setState(() {
-                    _applyDatePressed = !_applyDatePressed;
-                  });
-                  if (widget.onApplyDate != null) {
-                    widget.onApplyDate!();
+                  if (_areDateFieldsComplete() && widget.onApplyDate != null) {
+                    // Парсим даты из формата dd.MM.yyyy
+                    final startDateStr = _startDateController.text;
+                    final endDateStr = _endDateController.text;
+                    
+                    try {
+                      final startParts = startDateStr.split('.');
+                      final endParts = endDateStr.split('.');
+                      
+                      if (startParts.length == 3 && endParts.length == 3) {
+                        final startDate = DateTime(
+                          int.parse(startParts[2]), // год
+                          int.parse(startParts[1]), // месяц
+                          int.parse(startParts[0]), // день
+                        );
+                        final endDate = DateTime(
+                          int.parse(endParts[2]), // год
+                          int.parse(endParts[1]), // месяц
+                          int.parse(endParts[0]), // день
+                        );
+                        
+                        setState(() {
+                          _applyDatePressed = !_applyDatePressed;
+                        });
+                        
+                        widget.onApplyDate!(DateTimeRange(
+                          start: startDate,
+                          end: endDate,
+                        ));
+                      }
+                    } catch (e) {
+                      // Если ошибка парсинга, просто переключаем состояние кнопки
+                      setState(() {
+                        _applyDatePressed = !_applyDatePressed;
+                      });
+                    }
                   }
                 },
               ),

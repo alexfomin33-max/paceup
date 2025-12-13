@@ -119,7 +119,7 @@ class _CityTabState extends ConsumerState<CityTab> {
                       // TODO: здесь будет фильтрация лидерборда по полу
                     });
                   },
-                  onApplyDate: () {
+                  onApplyDate: (dateRange) {
                     // TODO: здесь будет применение выбранного периода
                   },
                 ),

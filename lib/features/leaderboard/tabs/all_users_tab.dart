@@ -92,7 +92,7 @@ class _AllUsersTabState extends ConsumerState<AllUsersTab> {
                   // TODO: здесь будет фильтрация лидерборда по полу
                 });
               },
-              onApplyDate: () {
+              onApplyDate: (dateRange) {
                 // TODO: здесь будет применение выбранного периода
               },
             ),

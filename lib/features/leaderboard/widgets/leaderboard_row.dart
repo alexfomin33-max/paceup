@@ -6,6 +6,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/transparent_route.dart';
+import '../../profile/screens/profile_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //                     СТРОКА ТАБЛИЦЫ ЛИДЕРБОРДА
@@ -14,19 +16,31 @@ class LeaderboardRow extends StatelessWidget {
   final int rank;
   final String name;
   final String value;
-  final AssetImage avatar;
+  final String avatarUrl;
   final bool highlight;
   final bool isLast;
+  final int? userId; // ID пользователя для навигации в профиль
 
   const LeaderboardRow({
     super.key,
     required this.rank,
     required this.name,
     required this.value,
-    required this.avatar,
+    required this.avatarUrl,
     required this.highlight,
     required this.isLast,
+    this.userId,
   });
+
+  void _navigateToProfile(BuildContext context) {
+    if (userId != null) {
+      Navigator.of(context).push(
+        TransparentPageRoute(
+          builder: (_) => ProfileScreen(userId: userId!),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,23 +64,56 @@ class LeaderboardRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          ClipOval(
-            child: Image(
-              image: avatar,
-              width: 32,
-              height: 32,
-              fit: BoxFit.cover,
+          // Кликабельный аватар
+          GestureDetector(
+            onTap: userId != null ? () => _navigateToProfile(context) : null,
+            child: ClipOval(
+              child: Image.network(
+                avatarUrl,
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 32,
+                    height: 32,
+                    color: AppColors.getBorderColor(context),
+                    child: const Icon(Icons.person, size: 20),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    width: 32,
+                    height: 32,
+                    color: AppColors.getBorderColor(context),
+                    child: const Center(
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
           const SizedBox(width: 10),
+          // Кликабельное имя
           Expanded(
-            child: Text(
-              name,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: AppColors.getTextPrimaryColor(context),
+            child: GestureDetector(
+              onTap: userId != null ? () => _navigateToProfile(context) : null,
+              child: Text(
+                name,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  color: highlight
+                      ? AppColors.success
+                      : AppColors.getTextPrimaryColor(context),
+                ),
               ),
             ),
           ),

@@ -51,25 +51,28 @@ class TopThreeLeaders extends StatelessWidget {
               rank: topThree[1].rank,
               name: topThree[1].name,
               value: topThree[1].value,
-              avatar: topThree[1].avatar,
+              avatarUrl: topThree[1].avatarUrl,
               borderColor: AppColors.textSecondary, // светло-серый
+              userId: topThree[1].userId,
             ),
             // ── 1 место (по центру, больше)
             LeaderboardAvatar(
               rank: topThree[0].rank,
               name: topThree[0].name,
               value: topThree[0].value,
-              avatar: topThree[0].avatar,
+              avatarUrl: topThree[0].avatarUrl,
               borderColor: AppColors.accentYellow, // желтый
               isFirst: true,
+              userId: topThree[0].userId,
             ),
             // ── 3 место (справа)
             LeaderboardAvatar(
               rank: topThree[2].rank,
               name: topThree[2].name,
               value: topThree[2].value,
-              avatar: topThree[2].avatar,
+              avatarUrl: topThree[2].avatarUrl,
               borderColor: AppColors.orange, // оранжевый
+              userId: topThree[2].userId,
             ),
           ],
         ),

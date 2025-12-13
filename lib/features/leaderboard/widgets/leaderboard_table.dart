@@ -16,11 +16,13 @@ import 'leaderboard_row.dart';
 class LeaderboardTable extends StatelessWidget {
   final List<LeaderboardRowData> rows;
   final int? currentUserRank;
+  final bool showAllIfLessThanThree;
 
   const LeaderboardTable({
     super.key,
     required this.rows,
     this.currentUserRank,
+    this.showAllIfLessThanThree = false,
   });
 
   @override
@@ -43,26 +45,53 @@ class LeaderboardTable extends StatelessWidget {
           ),
         ),
         child: Column(
-          // ── Пропускаем первые 3 места (они показываются в топ-3 лидерах)
+          // ── Если пользователей меньше 3 и showAllIfLessThanThree = true, показываем всех
+          // ── Иначе пропускаем первые 3 места (они показываются в топ-3 лидерах)
           // ── Таблица начинается с 4-го места
-          children: rows.length > 3
-              ? List.generate(rows.length - 3, (i) {
-                  final r = rows[i + 3]; // начинаем с индекса 3 (4-е место)
-                  final isMe = currentUserRank != null && r.rank == currentUserRank;
-                  final totalTableRows = rows.length - 3;
-                  return LeaderboardRow(
-                    rank: r.rank,
-                    name: r.name,
-                    value: r.value,
-                    avatar: r.avatar,
-                    highlight: isMe,
-                    isLast: i == totalTableRows - 1,
-                  );
-                })
-              : [],
+          children: _buildTableRows(),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildTableRows() {
+    // Если пользователей меньше 3 и нужно показать всех
+    if (showAllIfLessThanThree && rows.length < 3) {
+      return List.generate(rows.length, (i) {
+        final r = rows[i];
+        final isMe = currentUserRank != null && r.rank == currentUserRank;
+        return LeaderboardRow(
+          rank: r.rank,
+          name: r.name,
+          value: r.value,
+          avatarUrl: r.avatarUrl,
+          highlight: isMe,
+          isLast: i == rows.length - 1,
+          userId: r.userId,
+        );
+      });
+    }
+    
+    // Если пользователей 3 или больше, показываем только с 4-го места
+    if (rows.length > 3) {
+      return List.generate(rows.length - 3, (i) {
+        final r = rows[i + 3]; // начинаем с индекса 3 (4-е место)
+        final isMe = currentUserRank != null && r.rank == currentUserRank;
+        final totalTableRows = rows.length - 3;
+        return LeaderboardRow(
+          rank: r.rank,
+          name: r.name,
+          value: r.value,
+          avatarUrl: r.avatarUrl,
+          highlight: isMe,
+          isLast: i == totalTableRows - 1,
+          userId: r.userId,
+        );
+      });
+    }
+    
+    // Если пользователей ровно 3, таблица пустая (все в топ-3)
+    return [];
   }
 }
 

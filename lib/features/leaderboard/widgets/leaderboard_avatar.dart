@@ -6,6 +6,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/transparent_route.dart';
+import '../../profile/screens/profile_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //                     АВАТАР ЛИДЕРА С РАМКОЙ И ЗНАЧКОМ
@@ -16,19 +18,31 @@ class LeaderboardAvatar extends StatelessWidget {
   final int rank;
   final String name;
   final String value;
-  final AssetImage avatar;
+  final String avatarUrl;
   final Color borderColor;
   final bool isFirst;
+  final int? userId; // ID пользователя для навигации в профиль
 
   const LeaderboardAvatar({
     super.key,
     required this.rank,
     required this.name,
     required this.value,
-    required this.avatar,
+    required this.avatarUrl,
     required this.borderColor,
     this.isFirst = false,
+    this.userId,
   });
+
+  void _navigateToProfile(BuildContext context) {
+    if (userId != null) {
+      Navigator.of(context).push(
+        TransparentPageRoute(
+          builder: (_) => ProfileScreen(userId: userId!),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,40 +59,68 @@ class LeaderboardAvatar extends StatelessWidget {
     return Column(
       children: [
         // ── Аватар с цветной обводкой и значком (стиль как в _LeaderCard)
-        SizedBox(
-          width: containerSize,
-          height: containerSize,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // ── Цветной контейнер с padding (вместо border)
-              Container(
-                width: containerSize,
-                height: containerSize,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: borderColor,
-                ),
-                padding: const EdgeInsets.all(3),
-                child: Container(
-                  // ── Промежуточная обводка цвета фона
+        GestureDetector(
+          onTap: userId != null ? () => _navigateToProfile(context) : null,
+          child: SizedBox(
+            width: containerSize,
+            height: containerSize,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // ── Цветной контейнер с padding (вместо border)
+                Container(
+                  width: containerSize,
+                  height: containerSize,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.getSurfaceColor(context),
+                    color: borderColor,
                   ),
-                  padding: const EdgeInsets.all(2),
-                  child: ClipOval(
-                    child: Image(
-                      image: avatar,
-                      width:
-                          avatarSize -
-                          4, // учитываем промежуточную обводку (2px с каждой стороны)
-                      height: avatarSize - 4,
-                      fit: BoxFit.cover,
+                  padding: const EdgeInsets.all(3),
+                  child: Container(
+                    // ── Промежуточная обводка цвета фона
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.getSurfaceColor(context),
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: ClipOval(
+                      child: Image.network(
+                        avatarUrl,
+                        width:
+                            avatarSize -
+                            4, // учитываем промежуточную обводку (2px с каждой стороны)
+                        height: avatarSize - 4,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: avatarSize - 4,
+                            height: avatarSize - 4,
+                            color: AppColors.getBorderColor(context),
+                            child: Icon(
+                              Icons.person,
+                              size: (avatarSize - 4) * 0.6,
+                            ),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            width: avatarSize - 4,
+                            height: avatarSize - 4,
+                            color: AppColors.getBorderColor(context),
+                            child: Center(
+                              child: SizedBox(
+                                width: (avatarSize - 4) * 0.4,
+                                height: (avatarSize - 4) * 0.4,
+                                child: const CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
-              ),
               // ── Значок с номером места в правом нижнем углу
               // ── Позиционирование пропорционально размеру контейнера для визуального выравнивания
               Positioned(
@@ -111,20 +153,24 @@ class LeaderboardAvatar extends StatelessWidget {
             ],
           ),
         ),
+        ),
         const SizedBox(height: 8),
-        // ── Имя пользователя (стиль как в таблице, одна строка, чуть толще)
-        SizedBox(
-          width: containerSize + 20, // немного шире контейнера для текста
-          child: Text(
-            name,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: AppColors.getTextPrimaryColor(context),
+        // ── Имя пользователя (стиль как в таблице, одна строка, чуть толще) - кликабельное
+        GestureDetector(
+          onTap: userId != null ? () => _navigateToProfile(context) : null,
+          child: SizedBox(
+            width: containerSize + 20, // немного шире контейнера для текста
+            child: Text(
+              name,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
             ),
           ),
         ),
