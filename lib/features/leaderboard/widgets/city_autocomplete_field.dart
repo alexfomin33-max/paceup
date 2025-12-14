@@ -15,12 +15,14 @@ class CityAutocompleteField extends StatelessWidget {
   final TextEditingController controller;
   final List<String> suggestions;
   final Function(String) onSelected;
+  final VoidCallback? onSubmitted; // Callback для нажатия Enter
 
   const CityAutocompleteField({
     super.key,
     required this.controller,
     required this.suggestions,
     required this.onSelected,
+    this.onSubmitted,
   });
 
   @override
@@ -63,6 +65,10 @@ class CityAutocompleteField extends StatelessWidget {
               focusNode: focusNode,
               onSubmitted: (String value) {
                 onFieldSubmitted();
+                // Вызываем дополнительный callback, если он предоставлен
+                if (onSubmitted != null) {
+                  onSubmitted!();
+                }
               },
               style: AppTextStyles.h14w4.copyWith(
                 color: AppColors.getTextPrimaryColor(context),

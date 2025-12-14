@@ -3,14 +3,17 @@
 // Вкладка "Город" лидерборда с полем поиска города
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/leaderboard_data.dart';
+import '../../../core/services/api_service.dart';
 import '../widgets/city_autocomplete_field.dart';
 import '../widgets/leaderboard_filters_panel.dart';
 import '../widgets/leaderboard_table.dart';
 import '../widgets/top_three_leaders.dart';
+import '../providers/city_leaderboard_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //                     ВКЛАДКА "ГОРОД"
@@ -26,8 +29,11 @@ class _CityTabState extends ConsumerState<CityTab> {
   // ── контроллер для поля поиска города
   final _cityController = TextEditingController();
 
-  // ── список городов для автокомплита (пока пустой, будет загружаться из API)
-  final List<String> _cities = [];
+  // ── список городов для автокомплита
+  List<String> _cities = [];
+
+  // ── выбранный город
+  String? _selectedCity;
 
   // ── выбранный параметр лидерборда (по умолчанию "Расстояние")
   String? _selectedParameter = 'Расстояние';
@@ -41,6 +47,16 @@ class _CityTabState extends ConsumerState<CityTab> {
   // ── пол: по умолчанию оба выбраны, всегда хотя бы один должен быть активен
   bool _genderMale = true;
   bool _genderFemale = true;
+  
+  // ── выбранный диапазон дат для кастомного периода
+  DateTimeRange? _selectedDateRange;
+
+  @override
+  void initState() {
+    super.initState();
+    // Загружаем список городов при инициализации
+    _loadCities();
+  }
 
   @override
   void dispose() {
@@ -48,10 +64,103 @@ class _CityTabState extends ConsumerState<CityTab> {
     super.dispose();
   }
 
+  /// Загрузка списка городов из БД через API
+  Future<void> _loadCities() async {
+    try {
+      final api = ApiService();
+      final data = await api.get('/get_cities.php').timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          throw TimeoutException('Превышено время ожидания загрузки городов');
+        },
+      );
+
+      if (data['success'] == true && data['cities'] != null) {
+        final cities = data['cities'] as List<dynamic>? ?? [];
+        if (mounted) {
+          setState(() {
+            _cities = cities.map((city) => city.toString()).toList();
+          });
+        }
+      }
+    } catch (e) {
+      // В случае ошибки оставляем пустой список
+      // Пользователь все равно сможет ввести город вручную
+    }
+  }
+
+  /// Применение выбранного города
+  void _applyCity() {
+    final city = _cityController.text.trim();
+    if (city.isNotEmpty) {
+      setState(() {
+        _selectedCity = city;
+      });
+      // Обновляем данные при применении города
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updateLeaderboard();
+      });
+    }
+  }
+
+  /// Обновление лидерборда с текущими параметрами
+  void _updateLeaderboard() {
+    String period = 'current_week';
+    if (_selectedPeriod == 'Текущий месяц') {
+      period = 'current_month';
+    } else if (_selectedPeriod == 'Текущий год') {
+      period = 'current_year';
+    } else if (_selectedPeriod == 'Выбранный период') {
+      period = 'custom';
+    }
+
+    final newParams = CityLeaderboardParams(
+      city: _selectedCity,
+      sport: _sport,
+      period: period,
+      dateStart: _selectedDateRange != null
+          ? _selectedDateRange!.start.toIso8601String().split('T')[0]
+          : null,
+      dateEnd: _selectedDateRange != null
+          ? _selectedDateRange!.end.toIso8601String().split('T')[0]
+          : null,
+      genderMale: _genderMale,
+      genderFemale: _genderFemale,
+      parameter: _selectedParameter ?? 'Расстояние',
+    );
+    ref.invalidate(cityLeaderboardProvider(newParams));
+  }
+
   @override
   Widget build(BuildContext context) {
-    // TODO: заменить на реальные данные из API
-    final rows = kDemoLeaderboardRows;
+    // Преобразуем период в формат для API
+    String period = 'current_week';
+    if (_selectedPeriod == 'Текущий месяц') {
+      period = 'current_month';
+    } else if (_selectedPeriod == 'Текущий год') {
+      period = 'current_year';
+    } else if (_selectedPeriod == 'Выбранный период') {
+      period = 'custom';
+    }
+
+    final params = CityLeaderboardParams(
+      city: _selectedCity,
+      sport: _sport,
+      period: period,
+      dateStart: _selectedDateRange != null
+          ? _selectedDateRange!.start.toIso8601String().split('T')[0] // YYYY-MM-DD
+          : null,
+      dateEnd: _selectedDateRange != null
+          ? _selectedDateRange!.end.toIso8601String().split('T')[0] // YYYY-MM-DD
+          : null,
+      genderMale: _genderMale,
+      genderFemale: _genderFemale,
+      parameter: _selectedParameter ?? 'Расстояние',
+    );
+
+    final leaderboardAsync = ref.watch(
+      cityLeaderboardProvider(params),
+    );
 
     return SingleChildScrollView(
       child: Column(
@@ -73,9 +182,16 @@ class _CityTabState extends ConsumerState<CityTab> {
                   controller: _cityController,
                   suggestions: _cities,
                   onSelected: (city) {
-                    _cityController.text = city;
-                    // TODO: здесь будет фильтрация лидерборда по выбранному городу
+                    setState(() {
+                      _selectedCity = city;
+                      _cityController.text = city;
+                    });
+                    // Обновляем данные при выборе города из списка
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _updateLeaderboard();
+                    });
                   },
+                  onSubmitted: _applyCity, // Применяем город при нажатии Enter
                 ),
                 const SizedBox(height: 8),
                 // ── Панель фильтров
@@ -89,52 +205,151 @@ class _CityTabState extends ConsumerState<CityTab> {
                     if (newValue != null) {
                       setState(() {
                         _selectedParameter = newValue;
-                        // TODO: здесь будет фильтрация лидерборда по выбранному параметру
+                      });
+                      // Обновляем данные при изменении параметра
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        _updateLeaderboard();
                       });
                     }
                   },
                   onSportChanged: (int sport) {
                     setState(() {
                       _sport = sport;
-                      // TODO: здесь будет фильтрация лидерборда по виду спорта
+                    });
+                    // Обновляем данные при изменении вида спорта
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _updateLeaderboard();
                     });
                   },
                   onPeriodChanged: (String? newValue) {
                     if (newValue != null) {
                       setState(() {
                         _selectedPeriod = newValue;
-                        // TODO: здесь будет фильтрация лидерборда по выбранному периоду
+                        // Сбрасываем выбранные даты, если период изменился на не "Выбранный период"
+                        if (newValue != 'Выбранный период') {
+                          _selectedDateRange = null;
+                        }
+                      });
+                      // Обновляем данные при изменении периода
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        _updateLeaderboard();
                       });
                     }
                   },
                   onGenderMaleChanged: (bool value) {
                     setState(() {
                       _genderMale = value;
-                      // TODO: здесь будет фильтрация лидерборда по полу
+                    });
+                    // Обновляем данные при изменении фильтра по полу
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _updateLeaderboard();
                     });
                   },
                   onGenderFemaleChanged: (bool value) {
                     setState(() {
                       _genderFemale = value;
-                      // TODO: здесь будет фильтрация лидерборда по полу
+                    });
+                    // Обновляем данные при изменении фильтра по полу
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _updateLeaderboard();
                     });
                   },
                   onApplyDate: (dateRange) {
-                    // TODO: здесь будет применение выбранного периода
+                    setState(() {
+                      _selectedDateRange = dateRange;
+                    });
+                    // Обновляем данные при применении дат (после обновления состояния)
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _updateLeaderboard();
+                    });
                   },
                 ),
               ],
             ),
           ),
 
-          // ── Топ-3 лидера перед таблицей
-          TopThreeLeaders(rows: rows),
-          const SizedBox(height: 16),
-          // ── Таблица лидерборда на всю ширину с отступами по 4px
-          LeaderboardTable(
-            rows: rows,
-            currentUserRank: 4, // TODO: получить из API
+          // ── Контент лидерборда
+          leaderboardAsync.when(
+            data: (result) {
+              final rows = result.leaderboard;
+              final currentUserRank = result.currentUserRank;
+              
+              // Если город не выбран, показываем сообщение
+              if (_selectedCity == null || _selectedCity!.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: Center(
+                    child: Text(
+                      'Выберите город для отображения лидерборда',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                );
+              }
+              
+              if (rows.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: Center(
+                    child: Text(
+                      'Нет данных для отображения',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  // ── Топ-3 лидера перед таблицей (только если есть 3+ пользователя)
+                  if (rows.length >= 3) TopThreeLeaders(rows: rows),
+                  if (rows.length >= 3) const SizedBox(height: 16),
+                  // ── Таблица лидерборда на всю ширину с отступами по 4px
+                  // Если пользователей меньше 3, показываем всех в таблице
+                  // Если 3 или больше, показываем только с 4-го места
+                  LeaderboardTable(
+                    rows: rows,
+                    currentUserRank: currentUserRank,
+                    showAllIfLessThanThree: true,
+                  ),
+                ],
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, stack) => Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Center(
+                child: Column(
+                  children: [
+                    Text(
+                      'Ошибка загрузки данных',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.red,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () {
+                        ref.invalidate(cityLeaderboardProvider(params));
+                      },
+                      child: const Text('Повторить'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
+
           // ── Отступ снизу, чтобы контент не перекрывался нижним меню
           Builder(
             builder: (context) =>

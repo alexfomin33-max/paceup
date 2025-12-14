@@ -6,10 +6,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/leaderboard_data.dart';
 import '../widgets/leaderboard_filters_panel.dart';
 import '../widgets/leaderboard_table.dart';
 import '../widgets/top_three_leaders.dart';
+import '../providers/all_users_leaderboard_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //                     ВКЛАДКА "ВСЕ ПОЛЬЗОВАТЕЛИ"
@@ -34,11 +34,39 @@ class _AllUsersTabState extends ConsumerState<AllUsersTab> {
   // ── пол: по умолчанию оба выбраны, всегда хотя бы один должен быть активен
   bool _genderMale = true;
   bool _genderFemale = true;
+  
+  // ── выбранный диапазон дат для кастомного периода
+  DateTimeRange? _selectedDateRange;
 
   @override
   Widget build(BuildContext context) {
-    // TODO: заменить на реальные данные из API
-    final rows = kDemoLeaderboardRows;
+    // Преобразуем период в формат для API
+    String period = 'current_week';
+    if (_selectedPeriod == 'Текущий месяц') {
+      period = 'current_month';
+    } else if (_selectedPeriod == 'Текущий год') {
+      period = 'current_year';
+    } else if (_selectedPeriod == 'Выбранный период') {
+      period = 'custom';
+    }
+
+    final params = AllUsersLeaderboardParams(
+      sport: _sport,
+      period: period,
+      dateStart: _selectedDateRange != null
+          ? _selectedDateRange!.start.toIso8601String().split('T')[0] // YYYY-MM-DD
+          : null,
+      dateEnd: _selectedDateRange != null
+          ? _selectedDateRange!.end.toIso8601String().split('T')[0] // YYYY-MM-DD
+          : null,
+      genderMale: _genderMale,
+      genderFemale: _genderFemale,
+      parameter: _selectedParameter ?? 'Расстояние',
+    );
+
+    final leaderboardAsync = ref.watch(
+      allUsersLeaderboardProvider(params),
+    );
 
     return SingleChildScrollView(
       child: Column(
@@ -62,50 +90,182 @@ class _AllUsersTabState extends ConsumerState<AllUsersTab> {
                 if (newValue != null) {
                   setState(() {
                     _selectedParameter = newValue;
-                    // TODO: здесь будет фильтрация лидерборда по выбранному параметру
+                  });
+                  // Обновляем данные при изменении параметра
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    final newParams = AllUsersLeaderboardParams(
+                      sport: _sport,
+                      period: period,
+                      dateStart: _selectedDateRange != null
+                          ? _selectedDateRange!.start.toIso8601String().split('T')[0]
+                          : null,
+                      dateEnd: _selectedDateRange != null
+                          ? _selectedDateRange!.end.toIso8601String().split('T')[0]
+                          : null,
+                      genderMale: _genderMale,
+                      genderFemale: _genderFemale,
+                      parameter: newValue,
+                    );
+                    ref.invalidate(allUsersLeaderboardProvider(newParams));
                   });
                 }
               },
               onSportChanged: (int sport) {
                 setState(() {
                   _sport = sport;
-                  // TODO: здесь будет фильтрация лидерборда по виду спорта
                 });
               },
               onPeriodChanged: (String? newValue) {
                 if (newValue != null) {
                   setState(() {
                     _selectedPeriod = newValue;
-                    // TODO: здесь будет фильтрация лидерборда по выбранному периоду
+                    // Сбрасываем выбранные даты, если период изменился на не "Выбранный период"
+                    if (newValue != 'Выбранный период') {
+                      _selectedDateRange = null;
+                    }
                   });
                 }
               },
               onGenderMaleChanged: (bool value) {
                 setState(() {
                   _genderMale = value;
-                  // TODO: здесь будет фильтрация лидерборда по полу
+                });
+                // Обновляем данные при изменении фильтра по полу
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  final newParams = AllUsersLeaderboardParams(
+                    sport: _sport,
+                    period: period,
+                    dateStart: _selectedDateRange != null
+                        ? _selectedDateRange!.start.toIso8601String().split('T')[0]
+                        : null,
+                    dateEnd: _selectedDateRange != null
+                        ? _selectedDateRange!.end.toIso8601String().split('T')[0]
+                        : null,
+                    genderMale: value,
+                    genderFemale: _genderFemale,
+                  );
+                  ref.invalidate(allUsersLeaderboardProvider(newParams));
                 });
               },
               onGenderFemaleChanged: (bool value) {
                 setState(() {
                   _genderFemale = value;
-                  // TODO: здесь будет фильтрация лидерборда по полу
+                });
+                // Обновляем данные при изменении фильтра по полу
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  final newParams = AllUsersLeaderboardParams(
+                    sport: _sport,
+                    period: period,
+                    dateStart: _selectedDateRange != null
+                        ? _selectedDateRange!.start.toIso8601String().split('T')[0]
+                        : null,
+                    dateEnd: _selectedDateRange != null
+                        ? _selectedDateRange!.end.toIso8601String().split('T')[0]
+                        : null,
+                    genderMale: _genderMale,
+                    genderFemale: value,
+                  );
+                  ref.invalidate(allUsersLeaderboardProvider(newParams));
                 });
               },
               onApplyDate: (dateRange) {
-                // TODO: здесь будет применение выбранного периода
+                setState(() {
+                  _selectedDateRange = dateRange;
+                });
+                // Обновляем данные при применении дат (после обновления состояния)
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  // Преобразуем период в формат для API
+                  String periodValue = 'current_week';
+                  if (_selectedPeriod == 'Текущий месяц') {
+                    periodValue = 'current_month';
+                  } else if (_selectedPeriod == 'Текущий год') {
+                    periodValue = 'current_year';
+                  } else if (_selectedPeriod == 'Выбранный период') {
+                    periodValue = 'custom';
+                  }
+                  
+                  final newParams = AllUsersLeaderboardParams(
+                    sport: _sport,
+                    period: periodValue,
+                    dateStart: dateRange != null
+                        ? dateRange.start.toIso8601String().split('T')[0]
+                        : null,
+                    dateEnd: dateRange != null
+                        ? dateRange.end.toIso8601String().split('T')[0]
+                        : null,
+                  );
+                  ref.invalidate(allUsersLeaderboardProvider(newParams));
+                });
               },
             ),
           ),
 
-          // ── Топ-3 лидера перед таблицей
-          TopThreeLeaders(rows: rows),
-          const SizedBox(height: 16),
-          // ── Таблица лидерборда на всю ширину с отступами по 4px
-          LeaderboardTable(
-            rows: rows,
-            currentUserRank: 4, // TODO: получить из API
+          // ── Контент лидерборда
+          leaderboardAsync.when(
+            data: (result) {
+              final rows = result.leaderboard;
+              final currentUserRank = result.currentUserRank;
+              
+              if (rows.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: Center(
+                    child: Text(
+                      'Нет данных для отображения',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  // ── Топ-3 лидера перед таблицей (только если есть 3+ пользователя)
+                  if (rows.length >= 3) TopThreeLeaders(rows: rows),
+                  if (rows.length >= 3) const SizedBox(height: 16),
+                  // ── Таблица лидерборда на всю ширину с отступами по 4px
+                  // Если пользователей меньше 3, показываем всех в таблице
+                  // Если 3 или больше, показываем только с 4-го места
+                  LeaderboardTable(
+                    rows: rows,
+                    currentUserRank: currentUserRank,
+                    showAllIfLessThanThree: true,
+                  ),
+                ],
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, stack) => Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Center(
+                child: Column(
+                  children: [
+                    Text(
+                      'Ошибка загрузки данных',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.red,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () {
+                        ref.invalidate(allUsersLeaderboardProvider(params));
+                      },
+                      child: const Text('Повторить'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
+
           // ── Отступ снизу, чтобы контент не перекрывался нижним меню
           Builder(
             builder: (context) =>
