@@ -98,7 +98,7 @@ class _AdaptiveGearImage extends StatefulWidget {
 }
 
 class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
-  BoxFit _fit = BoxFit.cover;
+  BoxFit _fit = BoxFit.contain; // По умолчанию contain для вписывания по длинной стороне
   ImageStreamListener? _listener;
   ImageStream? _imageStream;
 
@@ -155,25 +155,41 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
     _listener = ImageStreamListener(
       (ImageInfo imageInfo, bool _) {
         final image = imageInfo.image;
-        final width = image.width.toDouble();
-        final height = image.height.toDouble();
-        final aspectRatio = width / height;
+        final imageWidth = image.width.toDouble();
+        final imageHeight = image.height.toDouble();
+        
+        // Размеры контейнера
+        const containerWidth = 66.0;
+        const containerHeight = 44.0;
+        
+        // Определяем, какая сторона у изображения длиннее
+        final imageIsWider = imageWidth > imageHeight;
+        // Определяем, какая сторона у контейнера длиннее
+        final containerIsWider = containerWidth > containerHeight;
+        
+        // Если длинная сторона изображения соответствует длинной стороне контейнера,
+        // используем fit по длинной стороне
+        if (imageIsWider && containerIsWider) {
+          // Горизонтальное изображение в горизонтальном контейнере - fit по ширине
+          _fit = BoxFit.fitWidth;
+        } else if (!imageIsWider && !containerIsWider) {
+          // Вертикальное изображение в вертикальном контейнере - fit по высоте
+          _fit = BoxFit.fitHeight;
+        } else {
+          // Разная ориентация - используем contain для полного вписывания
+          _fit = BoxFit.contain;
+        }
 
-        // Если соотношение меньше 1.5, используем fitHeight
-        // (фиксированная высота, ширина подстраивается)
-        // Иначе используем cover (как было)
         if (mounted) {
-          setState(() {
-            _fit = aspectRatio < 1.5 ? BoxFit.fitHeight : BoxFit.cover;
-          });
+          setState(() {});
         }
         _cleanupListener();
       },
       onError: (exception, stackTrace) {
-        // При ошибке используем cover по умолчанию
+        // При ошибке используем contain по умолчанию
         if (mounted) {
           setState(() {
-            _fit = BoxFit.cover;
+            _fit = BoxFit.contain;
           });
         }
         _cleanupListener();
@@ -193,44 +209,26 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
         widget.imageUrl!.isNotEmpty &&
         (widget.imageUrl!.startsWith('http://') ||
             widget.imageUrl!.startsWith('https://'))) {
-      // Для fitHeight ограничиваем ширину, чтобы изображение не выходило за границы
-      final imageWidget = _fit == BoxFit.fitHeight
-          ? SizedBox(
+      // Изображение вписывается по длинной стороне с сохранением пропорций
+      final imageWidget = SizedBox(
+        width: 66,
+        height: 44,
+        child: Image.network(
+          widget.imageUrl!,
+          fit: _fit,
+          errorBuilder: (context, error, stackTrace) {
+            final image = Image.asset(
+              defaultImage,
               width: 66,
               height: 44,
-              child: Image.network(
-                widget.imageUrl!,
-                fit: _fit,
-                errorBuilder: (context, error, stackTrace) {
-                  final image = Image.asset(
-                    defaultImage,
-                    width: 66,
-                    height: 44,
-                    fit: BoxFit.cover,
-                  );
-                  return widget.isBike
-                      ? image
-                      : Opacity(opacity: 0.9, child: image);
-                },
-              ),
-            )
-          : Image.network(
-              widget.imageUrl!,
-              width: 66,
-              height: 44,
-              fit: _fit,
-              errorBuilder: (context, error, stackTrace) {
-                final image = Image.asset(
-                  defaultImage,
-                  width: 66,
-                  height: 44,
-                  fit: BoxFit.cover,
-                );
-                return widget.isBike
-                    ? image
-                    : Opacity(opacity: 0.9, child: image);
-              },
+              fit: BoxFit.contain,
             );
+            return widget.isBike
+                ? image
+                : Opacity(opacity: 0.9, child: image);
+          },
+        ),
+      );
 
       return imageWidget;
     }
@@ -240,7 +238,7 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
       defaultImage,
       width: 66,
       height: 44,
-      fit: BoxFit.cover,
+      fit: BoxFit.contain,
     );
     return widget.isBike ? image : Opacity(opacity: 0.9, child: image);
   }
