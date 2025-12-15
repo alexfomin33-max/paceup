@@ -50,9 +50,10 @@ class ImageCompressionPreset {
   static const equipmentList = (maxSide: 190, quality: 80);
 
   /// Оборудование в просмотре (220px на экране)
-  /// Расчет: 220px × 3x DPR = 660px
+  /// Расчет: 220px × 3x DPR × 1.5 (запас для четкости) = 990px → округляем до 1000px
   /// Используется для: просмотр кроссовок и велосипедов
-  static const equipmentView = (maxSide: 660, quality: 80);
+  /// Увеличен размер и качество для предотвращения пикселизации
+  static const equipmentView = (maxSide: 1000, quality: 90);
 
   /// Изображение в чате (~90% ширины экрана ~385px)
   /// Расчет: 385px × 3x DPR × 0.9 ≈ 1040px → округляем до 1200px

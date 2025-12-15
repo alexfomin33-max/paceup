@@ -1,15 +1,18 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../../../../core/theme/app_theme.dart';
 import '../../../../../../../../core/utils/error_handler.dart';
 import '../../../../../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../../../../../core/widgets/transparent_route.dart';
+import '../../../../../../../../core/widgets/primary_button.dart';
 import '../../../../../../../../providers/services/api_provider.dart';
 import '../../../../../../../../providers/services/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../../core/utils/equipment_date_format.dart';
 import '../../../editing/editing_equipment_screen.dart';
+import '../../../adding/adding_equipment_screen.dart';
 
 /// Модель элемента снаряжения для просмотра
 class _SneakerItem {
@@ -205,10 +208,37 @@ class _ViewingSneakersContentState
     }
 
     if (_sneakers.isEmpty) {
-      return Center(
-        child: Text(
-          'Нет кроссовок',
-          style: TextStyle(color: AppColors.getTextSecondaryColor(context)),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Нет кроссовок',
+                style: TextStyle(
+                  color: AppColors.getTextSecondaryColor(context),
+                ),
+              ),
+              const SizedBox(height: 24),
+              PrimaryButton(
+                text: 'Добавить кроссовки',
+                leading: const Icon(CupertinoIcons.plus_circle, size: 18),
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (_) =>
+                          const AddingEquipmentScreen(initialSegment: 0),
+                    ),
+                  );
+                  // Обновляем список после возврата
+                  if (mounted) {
+                    _loadSneakers();
+                  }
+                },
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -237,6 +267,29 @@ class _ViewingSneakersContentState
             ],
           );
         }),
+        // ── Кнопка "Добавить кроссовки"
+        if (_sneakers.isNotEmpty) const SizedBox(height: 25),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Center(
+            child: PrimaryButton(
+              text: 'Добавить кроссовки',
+              leading: const Icon(CupertinoIcons.plus_circle, size: 18),
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  CupertinoPageRoute(
+                    builder: (_) =>
+                        const AddingEquipmentScreen(initialSegment: 0),
+                  ),
+                );
+                // Обновляем список после возврата
+                if (mounted) {
+                  _loadSneakers();
+                }
+              },
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -605,22 +658,36 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.xl),
                         child: hasValidImageUrl
-                            ? Image.network(
-                                widget.imageUrl!,
-                                width: 220,
-                                height: 150,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) {
+                            ? Builder(
+                                builder: (context) {
                                   // ────────────────────────────────────────────────────────────────
-                                  // 🖼️ ДЕФОЛТНОЕ ИЗОБРАЖЕНИЕ: при ошибке загрузки показываем asset
+                                  // 🖼️ ОПТИМИЗАЦИЯ КАЧЕСТВА: используем CachedNetworkImage с учетом DPR
                                   // ────────────────────────────────────────────────────────────────
-                                  final image = Image.asset(
-                                    defaultImageAsset,
+                                  final dpr = MediaQuery.of(
+                                    context,
+                                  ).devicePixelRatio;
+                                  final cacheWidth = (220 * dpr).round();
+                                  return CachedNetworkImage(
+                                    imageUrl: widget.imageUrl!,
                                     width: 220,
                                     height: 150,
                                     fit: BoxFit.contain,
+                                    memCacheWidth: cacheWidth,
+                                    maxWidthDiskCache: cacheWidth,
+                                    filterQuality: FilterQuality.high,
+                                    // НЕ передаем cacheManager - используется DefaultCacheManager
+                                    errorWidget: (context, url, error) {
+                                      // ────────────────────────────────────────────────────────────────
+                                      // 🖼️ ДЕФОЛТНОЕ ИЗОБРАЖЕНИЕ: при ошибке загрузки показываем asset
+                                      // ────────────────────────────────────────────────────────────────
+                                      return Image.asset(
+                                        defaultImageAsset,
+                                        width: 220,
+                                        height: 150,
+                                        fit: BoxFit.contain,
+                                      );
+                                    },
                                   );
-                                  return image;
                                 },
                               )
                             : widget.asset != null
@@ -635,13 +702,12 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
                                   // ────────────────────────────────────────────────────────────────
                                   // 🖼️ ДЕФОЛТНОЕ ИЗОБРАЖЕНИЕ: если нет URL, показываем asset
                                   // ────────────────────────────────────────────────────────────────
-                                  final image = Image.asset(
+                                  return Image.asset(
                                     defaultImageAsset,
                                     width: 220,
                                     height: 150,
                                     fit: BoxFit.contain,
                                   );
-                                  return image;
                                 },
                               ),
                       ),

@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/api_service.dart';
+import '../../../core/theme/colors.dart';
 import '../widgets/city_autocomplete_field.dart';
 import '../widgets/leaderboard_filters_panel.dart';
 import '../widgets/leaderboard_table.dart';
@@ -47,7 +48,7 @@ class _CityTabState extends ConsumerState<CityTab> {
   // ── пол: по умолчанию оба выбраны, всегда хотя бы один должен быть активен
   bool _genderMale = true;
   bool _genderFemale = true;
-  
+
   // ── выбранный диапазон дат для кастомного периода
   DateTimeRange? _selectedDateRange;
 
@@ -68,12 +69,16 @@ class _CityTabState extends ConsumerState<CityTab> {
   Future<void> _loadCities() async {
     try {
       final api = ApiService();
-      final data = await api.get('/get_cities.php').timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          throw TimeoutException('Превышено время ожидания загрузки городов');
-        },
-      );
+      final data = await api
+          .get('/get_cities.php')
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              throw TimeoutException(
+                'Превышено время ожидания загрузки городов',
+              );
+            },
+          );
 
       if (data['success'] == true && data['cities'] != null) {
         final cities = data['cities'] as List<dynamic>? ?? [];
@@ -148,19 +153,21 @@ class _CityTabState extends ConsumerState<CityTab> {
       sport: _sport,
       period: period,
       dateStart: _selectedDateRange != null
-          ? _selectedDateRange!.start.toIso8601String().split('T')[0] // YYYY-MM-DD
+          ? _selectedDateRange!.start.toIso8601String().split(
+              'T',
+            )[0] // YYYY-MM-DD
           : null,
       dateEnd: _selectedDateRange != null
-          ? _selectedDateRange!.end.toIso8601String().split('T')[0] // YYYY-MM-DD
+          ? _selectedDateRange!.end.toIso8601String().split(
+              'T',
+            )[0] // YYYY-MM-DD
           : null,
       genderMale: _genderMale,
       genderFemale: _genderFemale,
       parameter: _selectedParameter ?? 'Расстояние',
     );
 
-    final leaderboardAsync = ref.watch(
-      cityLeaderboardProvider(params),
-    );
+    final leaderboardAsync = ref.watch(cityLeaderboardProvider(params));
 
     return SingleChildScrollView(
       child: Column(
@@ -273,7 +280,7 @@ class _CityTabState extends ConsumerState<CityTab> {
             data: (result) {
               final rows = result.leaderboard;
               final currentUserRank = result.currentUserRank;
-              
+
               // Если город не выбран, показываем сообщение
               if (_selectedCity == null || _selectedCity!.isEmpty) {
                 return const Padding(
@@ -282,14 +289,15 @@ class _CityTabState extends ConsumerState<CityTab> {
                     child: Text(
                       'Выберите город для отображения лидерборда',
                       style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
+                        fontSize: 15,
+                        color: AppColors.textSecondary,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 );
               }
-              
+
               if (rows.isEmpty) {
                 return const Padding(
                   padding: EdgeInsets.all(32.0),
@@ -297,8 +305,8 @@ class _CityTabState extends ConsumerState<CityTab> {
                     child: Text(
                       'Нет данных для отображения',
                       style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
+                        fontSize: 15,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ),
@@ -330,12 +338,9 @@ class _CityTabState extends ConsumerState<CityTab> {
               child: Center(
                 child: Column(
                   children: [
-                    Text(
+                    const Text(
                       'Ошибка загрузки данных',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.red,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.red),
                     ),
                     const SizedBox(height: 8),
                     TextButton(
@@ -360,4 +365,3 @@ class _CityTabState extends ConsumerState<CityTab> {
     );
   }
 }
-
