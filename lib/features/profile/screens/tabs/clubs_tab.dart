@@ -45,7 +45,8 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
     return currentUserIdAsync.when(
       data: (currentUserId) {
         // Определяем, является ли открытый профиль профилем текущего пользователя
-        final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
+        final isOwnProfile =
+            currentUserId != null && currentUserId == widget.userId;
 
         return _buildClubsContent(clubsAsync, isOwnProfile: isOwnProfile);
       },
@@ -94,7 +95,7 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
                           'У вас пока нет клубов',
                           style: TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 16,
+                            fontSize: 15,
                             color: AppColors.getTextSecondaryColor(context),
                           ),
                         ),
@@ -187,8 +188,9 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
                   onPressed: () {
                     Navigator.of(context).push(
                       CupertinoPageRoute(
-                        builder: (_) =>
-                            const SearchPrefsPage(startIndex: 1), // сразу «Клубы»
+                        builder: (_) => const SearchPrefsPage(
+                          startIndex: 1,
+                        ), // сразу «Клубы»
                       ),
                     );
                   },

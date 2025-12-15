@@ -1,13 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../edit_profile_screen.dart';
 import '../state/subscribe/communication_screen.dart';
 import '../../../../domain/models/user_profile_header.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/avatar.dart';
+import '../../../../providers/services/auth_provider.dart';
 
-class HeaderCard extends StatelessWidget {
+class HeaderCard extends ConsumerWidget {
   final UserProfileHeader? profile;
   final int userId;
   final VoidCallback onReload;
@@ -20,7 +22,7 @@ class HeaderCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // ────────────────────────────────────────────────────────────────
     // 🎨 SKELETON LOADER: показываем заглушку пока profile == null
     // ────────────────────────────────────────────────────────────────
@@ -178,16 +180,38 @@ class HeaderCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    _SmallIconBtn(
-                      icon: CupertinoIcons.pencil,
-                      onPressed: () async {
-                        final changed = await Navigator.of(context).push<bool>(
-                          TransparentPageRoute(
-                            builder: (_) => EditProfileScreen(userId: userId),
-                          ),
-                        );
-                        if (changed == true) {
-                          onReload(); // ← одна строка на авто-рефреш
+                    // Определяем, является ли открытый профиль профилем текущего пользователя
+                    // для условного отображения иконки редактирования или меню
+                    Builder(
+                      builder: (context) {
+                        final currentUserIdAsync = ref.watch(currentUserIdProvider);
+                        final currentUserId = currentUserIdAsync.value;
+                        final isOwnProfile = currentUserId != null && currentUserId == userId;
+
+                        if (isOwnProfile) {
+                          // Свой профиль - показываем иконку карандаша для редактирования
+                          return _SmallIconBtn(
+                            icon: CupertinoIcons.pencil,
+                            onPressed: () async {
+                              final changed = await Navigator.of(context).push<bool>(
+                                TransparentPageRoute(
+                                  builder: (_) => EditProfileScreen(userId: userId),
+                                ),
+                              );
+                              if (changed == true) {
+                                onReload(); // ← одна строка на авто-рефреш
+                              }
+                            },
+                          );
+                        } else {
+                          // Чужой профиль - показываем иконку с тремя точками (меню)
+                          return _SmallIconBtn(
+                            icon: CupertinoIcons.ellipsis,
+                            onPressed: () {
+                              // TODO: Показать меню действий (заблокировать, пожаловаться и т.д.)
+                              // Пока оставляем пустым или можно показать CupertinoActionSheet
+                            },
+                          );
                         }
                       },
                     ),
