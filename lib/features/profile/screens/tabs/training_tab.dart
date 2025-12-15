@@ -12,7 +12,9 @@ import '../../../../../providers/services/auth_provider.dart';
 import '../../../../../core/widgets/transparent_route.dart';
 
 class TrainingTab extends ConsumerStatefulWidget {
-  const TrainingTab({super.key});
+  /// ID пользователя, чьи тренировки нужно отобразить
+  final int userId;
+  const TrainingTab({super.key, required this.userId});
 
   @override
   ConsumerState<TrainingTab> createState() => _TrainingTabState();
@@ -44,8 +46,8 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
   Widget build(BuildContext context) {
     super.build(context);
 
-    // Получаем данные из провайдера
-    final trainingDataAsync = ref.watch(trainingActivitiesProvider(_sports));
+    // Получаем данные из провайдера с userId профиля
+    final trainingDataAsync = ref.watch(trainingActivitiesProvider((userId: widget.userId, sports: _sports)));
 
     return trainingDataAsync.when(
       data: (data) {
@@ -170,6 +172,7 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
               SliverToBoxAdapter(
                 child: _WorkoutTable(
                   items: items.map((a) => _Workout.fromTraining(a)).toList(),
+                  profileUserId: widget.userId,
                 ),
               ),
 
@@ -562,7 +565,8 @@ class _MonthGrid extends StatelessWidget {
 
 class _WorkoutTable extends StatelessWidget {
   final List<_Workout> items;
-  const _WorkoutTable({required this.items});
+  final int profileUserId;
+  const _WorkoutTable({required this.items, required this.profileUserId});
 
   @override
   Widget build(BuildContext context) {
@@ -596,7 +600,7 @@ class _WorkoutTable extends StatelessWidget {
           final last = i == items.length - 1;
           return Column(
             children: [
-              _WorkoutRow(item: w),
+              _WorkoutRow(item: w, profileUserId: profileUserId),
               if (!last)
                 Divider(
                   height: 1,
@@ -613,21 +617,23 @@ class _WorkoutTable extends StatelessWidget {
 
 class _WorkoutRow extends ConsumerWidget {
   final _Workout item;
-  const _WorkoutRow({required this.item});
+  final int profileUserId;
+  const _WorkoutRow({required this.item, required this.profileUserId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return InkWell(
       onTap: () async {
         final auth = ref.read(authServiceProvider);
-        final userId = await auth.getUserId();
-        if (userId == null) return;
+        final currentUserId = await auth.getUserId();
+        if (currentUserId == null) return;
 
         // Получаем данные пользователя (пока используем дефолтные значения)
         final userName = 'Пользователь';
         final userAvatar = 'assets/avatar_2.png';
 
-        final activity = item.toActivity(userId, userName, userAvatar);
+        // Используем userId профиля (владельца активности), а не текущего пользователя
+        final activity = item.toActivity(profileUserId, userName, userAvatar);
 
         if (!context.mounted) return;
 
@@ -635,7 +641,7 @@ class _WorkoutRow extends ConsumerWidget {
           TransparentPageRoute(
             builder: (_) => ActivityDescriptionPage(
               activity: activity,
-              currentUserId: userId,
+              currentUserId: currentUserId,
             ),
           ),
         );

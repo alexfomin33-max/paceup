@@ -42,7 +42,9 @@ class _GearItem {
 }
 
 class GearTab extends ConsumerStatefulWidget {
-  const GearTab({super.key});
+  /// ID пользователя, чье снаряжение нужно отобразить
+  final int userId;
+  const GearTab({super.key, required this.userId});
   @override
   ConsumerState<GearTab> createState() => _GearTabState();
 }
@@ -56,7 +58,7 @@ class _GearTabState extends ConsumerState<GearTab>
   List<_GearItem> _bikes = [];
   bool _isLoading = true;
   String? _error;
-  int? _currentUserId;
+  bool _isOwnProfile = false;
 
   // Флаги "На главном экране" для кроссовок и велосипедов
   // Используем значение из первого элемента, если есть
@@ -76,22 +78,15 @@ class _GearTabState extends ConsumerState<GearTab>
     });
 
     try {
+      // Проверяем, является ли просматриваемый пользователь текущим авторизованным
       final authService = ref.read(authServiceProvider);
-      final userId = await authService.getUserId();
+      final currentUserId = await authService.getUserId();
+      _isOwnProfile = currentUserId != null && currentUserId == widget.userId;
 
-      if (userId == null) {
-        setState(() {
-          _error = 'Пользователь не авторизован';
-          _isLoading = false;
-        });
-        return;
-      }
-
-      _currentUserId = userId;
       final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/get_equipment.php',
-        body: {'user_id': userId.toString()},
+        body: {'user_id': widget.userId.toString()},
       );
 
       if (data['success'] == true) {
@@ -162,7 +157,7 @@ class _GearTabState extends ConsumerState<GearTab>
   }
 
   Future<void> _updateShowOnMain(bool isBoots, bool value) async {
-    if (_currentUserId == null) return;
+    if (!_isOwnProfile) return;
 
     final items = isBoots ? _boots : _bikes;
     if (items.isEmpty) return;
@@ -174,7 +169,7 @@ class _GearTabState extends ConsumerState<GearTab>
         await api.post(
           '/update_equipment_show_on_main.php',
           body: {
-            'user_id': _currentUserId.toString(),
+            'user_id': widget.userId.toString(),
             'equip_user_id': item.equipUserId.toString(),
             'show_on_main': value.toString(),
           },
@@ -183,7 +178,7 @@ class _GearTabState extends ConsumerState<GearTab>
 
       // Очищаем кэш MainTab, чтобы данные обновились на главной странице профиля
       final prefs = await SharedPreferences.getInstance();
-      final cacheKey = 'main_tab_$_currentUserId';
+      final cacheKey = 'main_tab_${widget.userId}';
       await prefs.remove(cacheKey);
 
       setState(() {
@@ -267,14 +262,33 @@ class _GearTabState extends ConsumerState<GearTab>
 
         // ─── Кроссовки (показываем только если есть)
         if (_boots.isNotEmpty) ...[
-          SliverToBoxAdapter(
-            child: _SectionHeaderWithToggle(
-              title: 'Кроссовки',
-              value: _showShoesOnMain,
-              onChanged: (v) => _updateShowOnMain(true, v),
+          if (_isOwnProfile)
+            SliverToBoxAdapter(
+              child: _SectionHeaderWithToggle(
+                title: 'Кроссовки',
+                value: _showShoesOnMain,
+                onChanged: (v) => _updateShowOnMain(true, v),
+              ),
             ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 2)),
+          if (_isOwnProfile) const SliverToBoxAdapter(child: SizedBox(height: 2)),
+          if (!_isOwnProfile)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Кроссовки',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkTextSecondary
+                        : null,
+                  ),
+                ),
+              ),
+            ),
+          if (!_isOwnProfile) const SliverToBoxAdapter(child: SizedBox(height: 2)),
           SliverToBoxAdapter(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -296,14 +310,33 @@ class _GearTabState extends ConsumerState<GearTab>
 
         // ─── Велосипеды (показываем только если есть)
         if (_bikes.isNotEmpty) ...[
-          SliverToBoxAdapter(
-            child: _SectionHeaderWithToggle(
-              title: 'Велосипеды',
-              value: _showBikesOnMain,
-              onChanged: (v) => _updateShowOnMain(false, v),
+          if (_isOwnProfile)
+            SliverToBoxAdapter(
+              child: _SectionHeaderWithToggle(
+                title: 'Велосипеды',
+                value: _showBikesOnMain,
+                onChanged: (v) => _updateShowOnMain(false, v),
+              ),
             ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 2)),
+          if (_isOwnProfile) const SliverToBoxAdapter(child: SizedBox(height: 2)),
+          if (!_isOwnProfile)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Велосипеды',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkTextSecondary
+                        : null,
+                  ),
+                ),
+              ),
+            ),
+          if (!_isOwnProfile) const SliverToBoxAdapter(child: SizedBox(height: 2)),
           SliverToBoxAdapter(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -323,27 +356,28 @@ class _GearTabState extends ConsumerState<GearTab>
         ],
         const SliverToBoxAdapter(child: SizedBox(height: 25)),
 
-        // ─── Кнопка "Добавить снаряжение"
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Center(
-              child: PrimaryButton(
-                text: 'Добавить снаряжение',
-                leading: const Icon(CupertinoIcons.plus_circle, size: 18),
-                onPressed: () async {
-                  await Navigator.of(context).push(
-                    CupertinoPageRoute(
-                      builder: (_) => const AddingEquipmentScreen(),
-                    ),
-                  );
-                  // Обновляем данные после возврата
-                  _loadEquipment();
-                },
+        // ─── Кнопка "Добавить снаряжение" (только для своего профиля)
+        if (_isOwnProfile)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: PrimaryButton(
+                  text: 'Добавить снаряжение',
+                  leading: const Icon(CupertinoIcons.plus_circle, size: 18),
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (_) => const AddingEquipmentScreen(),
+                      ),
+                    );
+                    // Обновляем данные после возврата
+                    _loadEquipment();
+                  },
+                ),
               ),
             ),
           ),
-        ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ],

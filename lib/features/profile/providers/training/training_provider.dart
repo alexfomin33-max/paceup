@@ -5,7 +5,6 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../providers/services/auth_provider.dart';
 import '../../../../providers/services/api_provider.dart';
 
 /// Модель тренировки
@@ -100,18 +99,12 @@ class TrainingData {
 }
 
 /// Провайдер для получения тренировок пользователя
+/// Принимает кортеж (userId, sports) для поддержки просмотра профилей других пользователей
 final trainingActivitiesProvider =
-    FutureProvider.family<TrainingData, Set<int>>((ref, sports) async {
+    FutureProvider.family<TrainingData, ({int userId, Set<int> sports})>((ref, params) async {
   final api = ref.watch(apiServiceProvider);
-  final auth = ref.watch(authServiceProvider);
-
-  final userId = await auth.getUserId();
-  if (userId == null) {
-    return TrainingData(
-      activities: [],
-      calendar: {},
-    );
-  }
+  final userId = params.userId;
+  final sports = params.sports;
 
   try {
     // Преобразуем Set<int> в List для JSON

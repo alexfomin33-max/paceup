@@ -1,13 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../edit_profile_screen.dart';
 import '../state/subscribe/communication_screen.dart';
 import '../../../../domain/models/user_profile_header.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/avatar.dart';
+import '../../../../providers/services/auth_provider.dart';
 
-class HeaderCard extends StatelessWidget {
+class HeaderCard extends ConsumerWidget {
   final UserProfileHeader? profile;
   final int userId;
   final VoidCallback onReload;
@@ -20,7 +22,7 @@ class HeaderCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // ────────────────────────────────────────────────────────────────
     // 🎨 SKELETON LOADER: показываем заглушку пока profile == null
     // ────────────────────────────────────────────────────────────────
@@ -177,18 +179,31 @@ class HeaderCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    _SmallIconBtn(
-                      icon: CupertinoIcons.pencil,
-                      onPressed: () async {
-                        final changed = await Navigator.of(context).push<bool>(
-                          TransparentPageRoute(
-                            builder: (_) => EditProfileScreen(userId: userId),
-                          ),
-                        );
-                        if (changed == true) {
-                          onReload(); // ← одна строка на авто-рефреш
+                    // Показываем иконку редактирования только для своего профиля
+                    Builder(
+                      builder: (context) {
+                        if (!_isOwnProfile(ref)) {
+                          return const SizedBox.shrink();
                         }
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(width: 6),
+                            _SmallIconBtn(
+                              icon: CupertinoIcons.pencil,
+                              onPressed: () async {
+                                final changed = await Navigator.of(context).push<bool>(
+                                  TransparentPageRoute(
+                                    builder: (_) => EditProfileScreen(userId: userId),
+                                  ),
+                                );
+                                if (changed == true) {
+                                  onReload(); // ← одна строка на авто-рефреш
+                                }
+                              },
+                            ),
+                          ],
+                        );
                       },
                     ),
                   ],
@@ -266,6 +281,16 @@ class HeaderCard extends StatelessWidget {
     if (p.age != null) parts.add('${p.age} ${_yearsRu(p.age)}');
     if ((p.city ?? '').isNotEmpty) parts.add(p.city!);
     return parts.isEmpty ? null : parts.join(', ');
+  }
+
+  /// Проверяет, является ли просматриваемый профиль профилем текущего авторизованного пользователя
+  bool _isOwnProfile(WidgetRef ref) {
+    final currentUserIdAsync = ref.read(currentUserIdProvider);
+    return currentUserIdAsync.when(
+      data: (currentUserId) => currentUserId != null && currentUserId == userId,
+      loading: () => false,
+      error: (_, __) => false,
+    );
   }
 }
 
