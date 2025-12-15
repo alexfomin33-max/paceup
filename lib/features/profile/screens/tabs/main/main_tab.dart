@@ -18,6 +18,7 @@ import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/error_handler.dart';
 import '../equipment/viewing/viewing_equipment_screen.dart';
 import '../../../../../providers/services/api_provider.dart';
+import '../../../../../providers/services/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // 🔹 Модели и парсинг данных
@@ -270,6 +271,12 @@ class _MainTabState extends MainTabState
 
   // Метод для построения контента (вынесен для читаемости)
   List<Widget> _buildContentSlivers(MainTabData data) {
+    // Определяем, является ли открытый профиль профилем текущего пользователя
+    // для условного отображения иконки редактирования в карточках снаряжения
+    final currentUserIdAsync = ref.read(currentUserIdProvider);
+    final currentUserId = currentUserIdAsync.value;
+    final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
+
     return [
       // ───────────────── Активность (горизонтальный скроллер) ─────────────────
       const SliverToBoxAdapter(child: SizedBox(height: 12)),
@@ -300,6 +307,7 @@ class _MainTabState extends MainTabState
           title: 'Кроссовки',
           items: data.shoes,
           isBike: false,
+          isOwnProfile: isOwnProfile,
           onItemTap: _openShoesView,
         ),
 
@@ -309,6 +317,7 @@ class _MainTabState extends MainTabState
           title: 'Велосипед',
           items: data.bikes,
           isBike: true,
+          isOwnProfile: isOwnProfile,
           onItemTap: _openBikesView,
         ),
 

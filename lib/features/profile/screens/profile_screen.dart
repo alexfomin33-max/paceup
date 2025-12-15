@@ -396,7 +396,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   TrainingTab(userId: userId),
                   const RacesTab(),
                   GearTab(userId: userId),
-                  const ClubsTab(),
+                  ClubsTab(userId: userId),
                   const AwardsTab(),
                   const SkillsTab(),
                 ],

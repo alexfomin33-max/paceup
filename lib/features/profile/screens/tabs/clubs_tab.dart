@@ -14,10 +14,13 @@ import '../../../../domain/models/club.dart';
 
 /// Вкладка "Клубы" в профиле пользователя
 ///
-/// Загружает клубы текущего авторизованного пользователя через API
+/// Загружает клубы указанного пользователя через API
 /// и отображает их в сетке 2xN
+/// Кнопка "Найти клуб" показывается только для текущего авторизованного пользователя
 class ClubsTab extends ConsumerStatefulWidget {
-  const ClubsTab({super.key});
+  /// ID пользователя, чьи клубы нужно отобразить
+  final int userId;
+  const ClubsTab({super.key, required this.userId});
 
   @override
   ConsumerState<ClubsTab> createState() => _ClubsTabState();
@@ -32,87 +35,39 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
   Widget build(BuildContext context) {
     super.build(context);
 
-    // Получаем текущего пользователя из AuthService
+    // Загружаем клубы указанного пользователя через provider
+    final clubsAsync = ref.watch(userClubsProvider(widget.userId));
+
+    // Получаем текущего авторизованного пользователя для проверки,
+    // нужно ли показывать кнопку "Найти клуб"
     final currentUserIdAsync = ref.watch(currentUserIdProvider);
 
-    // Обрабатываем состояние загрузки userId
     return currentUserIdAsync.when(
-      data: (userId) {
-        if (userId == null) {
-          // Пользователь не авторизован
-          return CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Center(
-                    child: Text(
-                      'Необходима авторизация',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 16,
-                        color: AppColors.getTextSecondaryColor(context),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }
+      data: (currentUserId) {
+        // Определяем, является ли открытый профиль профилем текущего пользователя
+        final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
 
-        // Загружаем клубы текущего пользователя через provider
-        final clubsAsync = ref.watch(userClubsProvider(userId));
-
-        return _buildClubsContent(clubsAsync);
+        return _buildClubsContent(clubsAsync, isOwnProfile: isOwnProfile);
       },
-      loading: () => const CustomScrollView(
-        physics: BouncingScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          ),
-        ],
-      ),
-      error: (err, stack) => const CustomScrollView(
-        physics: BouncingScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(
-                      CupertinoIcons.exclamationmark_triangle,
-                      size: 48,
-                      color: AppColors.error,
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Ошибка загрузки данных пользователя',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 16,
-                        color: AppColors.error,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      loading: () {
+        // Показываем клубы даже во время загрузки информации о текущем пользователе
+        return _buildClubsContent(clubsAsync, isOwnProfile: false);
+      },
+      error: (err, stack) {
+        // В случае ошибки загрузки текущего пользователя,
+        // показываем клубы без кнопки (isOwnProfile = false)
+        return _buildClubsContent(clubsAsync, isOwnProfile: false);
+      },
     );
   }
 
   /// Строит контент с клубами
-  Widget _buildClubsContent(AsyncValue<List<Club>> clubsAsync) {
+  ///
+  /// [isOwnProfile] - true, если открыт профиль текущего авторизованного пользователя
+  Widget _buildClubsContent(
+    AsyncValue<List<Club>> clubsAsync, {
+    required bool isOwnProfile,
+  }) {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
@@ -219,27 +174,28 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
 
         const SliverToBoxAdapter(child: SizedBox(height: 25)),
 
-        // Кнопка "Найти клуб" (теперь глобальный PrimaryButton)
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Center(
-              child: PrimaryButton(
-                text: 'Найти клуб',
-                leading: const Icon(CupertinoIcons.search, size: 18),
-                width: MediaQuery.of(context).size.width / 2,
-                onPressed: () {
-                  Navigator.of(context).push(
-                    CupertinoPageRoute(
-                      builder: (_) =>
-                          const SearchPrefsPage(startIndex: 1), // сразу «Клубы»
-                    ),
-                  );
-                },
+        // Кнопка "Найти клуб" показывается только в профиле текущего пользователя
+        if (isOwnProfile)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: PrimaryButton(
+                  text: 'Найти клуб',
+                  leading: const Icon(CupertinoIcons.search, size: 18),
+                  width: MediaQuery.of(context).size.width / 2,
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (_) =>
+                            const SearchPrefsPage(startIndex: 1), // сразу «Клубы»
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ),
-        ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
       ],
