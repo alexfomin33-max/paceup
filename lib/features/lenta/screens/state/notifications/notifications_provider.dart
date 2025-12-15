@@ -4,6 +4,7 @@
 // Управляет получением, отображением и отметкой уведомлений как прочитанных
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../providers/services/api_provider.dart';
 import '../../../../../providers/services/auth_provider.dart';
@@ -60,6 +61,7 @@ class NotificationItem {
 }
 
 /// Модель состояния списка уведомлений
+@immutable
 class NotificationsState {
   final List<NotificationItem> items;
   final bool isLoading;
@@ -98,6 +100,29 @@ class NotificationsState {
       unreadCount: unreadCount ?? this.unreadCount,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NotificationsState &&
+          runtimeType == other.runtimeType &&
+          listEquals(items, other.items) &&
+          isLoading == other.isLoading &&
+          isLoadingMore == other.isLoadingMore &&
+          hasMore == other.hasMore &&
+          error == other.error &&
+          total == other.total &&
+          unreadCount == other.unreadCount;
+
+  @override
+  int get hashCode =>
+      items.hashCode ^
+      isLoading.hashCode ^
+      isLoadingMore.hashCode ^
+      hasMore.hashCode ^
+      error.hashCode ^
+      total.hashCode ^
+      unreadCount.hashCode;
 }
 
 /// Notifier для управления уведомлениями
@@ -291,8 +316,11 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
 
       final unreadCount = data['unread_count'] as int? ?? 0;
 
-      // Обновляем только счетчик, не трогая список уведомлений
-      state = state.copyWith(unreadCount: unreadCount);
+      // ✅ Обновляем состояние только если значение изменилось
+      // Это предотвращает лишние перерисовки, но гарантирует обновление при изменении
+      if (state.unreadCount != unreadCount) {
+        state = state.copyWith(unreadCount: unreadCount);
+      }
     } catch (e) {
       // Игнорируем ошибки при обновлении счетчика
     }
