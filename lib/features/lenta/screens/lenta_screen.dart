@@ -155,6 +155,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
         // Запускаем polling для динамического обновления счетчика
         _startUnreadChatsPolling(userId);
+        // ✅ Инициализируем провайдер уведомлений, чтобы гарантировать его создание
+        // Это важно для правильной работы подписки через ref.watch
+        ref.read(notificationsProvider);
         // Загружаем только счетчик непрочитанных уведомлений (не все уведомления)
         ref.read(notificationsProvider.notifier).updateUnreadCount();
         // Запускаем polling для динамического обновления счетчика уведомлений
@@ -315,6 +318,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     await ref.read(lentaProvider(userId).notifier).refresh();
     // Обновляем количество непрочитанных чатов при обновлении ленты
     ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
+    // Обновляем счетчик непрочитанных уведомлений при обновлении ленты
+    ref.read(notificationsProvider.notifier).updateUnreadCount();
     // Инвалидируем провайдер рекомендаций для получения новых рандомных пользователей
     ref.invalidate(recommendedFriendsProvider);
   }

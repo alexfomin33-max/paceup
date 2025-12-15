@@ -184,20 +184,25 @@ class HeaderCard extends ConsumerWidget {
                     // для условного отображения иконки редактирования или меню
                     Builder(
                       builder: (context) {
-                        final currentUserIdAsync = ref.watch(currentUserIdProvider);
+                        final currentUserIdAsync = ref.watch(
+                          currentUserIdProvider,
+                        );
                         final currentUserId = currentUserIdAsync.value;
-                        final isOwnProfile = currentUserId != null && currentUserId == userId;
+                        final isOwnProfile =
+                            currentUserId != null && currentUserId == userId;
 
                         if (isOwnProfile) {
                           // Свой профиль - показываем иконку карандаша для редактирования
                           return _SmallIconBtn(
                             icon: CupertinoIcons.pencil,
                             onPressed: () async {
-                              final changed = await Navigator.of(context).push<bool>(
-                                TransparentPageRoute(
-                                  builder: (_) => EditProfileScreen(userId: userId),
-                                ),
-                              );
+                              final changed = await Navigator.of(context)
+                                  .push<bool>(
+                                    TransparentPageRoute(
+                                      builder: (_) =>
+                                          EditProfileScreen(userId: userId),
+                                    ),
+                                  );
                               if (changed == true) {
                                 onReload(); // ← одна строка на авто-рефреш
                               }
