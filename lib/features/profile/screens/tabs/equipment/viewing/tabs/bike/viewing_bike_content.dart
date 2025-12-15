@@ -1,12 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import '../../../../../../../../core/theme/app_theme.dart';
 import '../../../../../../../../core/utils/error_handler.dart';
+import '../../../../../../../../core/widgets/primary_button.dart';
 import '../sneakers/viewing_sneakers_content.dart'
     show GearViewCard; // теперь публичный класс
 import '../../../../../../../../providers/services/api_provider.dart';
 import '../../../../../../../../providers/services/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../../core/utils/equipment_date_format.dart';
+import '../../../adding/adding_equipment_screen.dart';
 
 /// Модель элемента велосипеда для просмотра
 class _BikeItem {
@@ -203,11 +205,37 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
     }
 
     if (_bikes.isEmpty) {
-      return Center(
-        child: Text(
-          'Нет велосипедов',
-          style: TextStyle(
-            color: AppColors.getTextSecondaryColor(context),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Нет велосипедов',
+                style: TextStyle(
+                  color: AppColors.getTextSecondaryColor(context),
+                ),
+              ),
+              const SizedBox(height: 24),
+              PrimaryButton(
+                text: 'Добавить велосипед',
+                leading: const Icon(CupertinoIcons.plus_circle, size: 18),
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (_) => const AddingEquipmentScreen(
+                        initialSegment: 1,
+                      ),
+                    ),
+                  );
+                  // Обновляем список после возврата
+                  if (mounted) {
+                    _loadBikes();
+                  }
+                },
+              ),
+            ],
           ),
         ),
       );
@@ -236,6 +264,30 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
             ],
           );
         }),
+        // ── Кнопка "Добавить велосипед"
+        const SizedBox(height: 25),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Center(
+            child: PrimaryButton(
+              text: 'Добавить велосипед',
+              leading: const Icon(CupertinoIcons.plus_circle, size: 18),
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  CupertinoPageRoute(
+                    builder: (_) => const AddingEquipmentScreen(
+                      initialSegment: 1,
+                    ),
+                  ),
+                );
+                // Обновляем список после возврата
+                if (mounted) {
+                  _loadBikes();
+                }
+              },
+            ),
+          ),
+        ),
       ],
     );
   }

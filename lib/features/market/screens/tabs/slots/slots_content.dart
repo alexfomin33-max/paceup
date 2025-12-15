@@ -544,7 +544,7 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
               borderRadius: BorderRadius.circular(AppRadius.sm),
               color: AppColors.getSurfaceColor(context),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 200),
+                constraints: const BoxConstraints(maxHeight: 260),
                 child: _isLoading
                     ? const Padding(
                         padding: EdgeInsets.all(16.0),
@@ -569,7 +569,7 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
-                                vertical: 12,
+                                vertical: 10,
                               ),
                               child: Row(
                                 children: [
@@ -633,6 +633,8 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
                                                   context,
                                                 ),
                                           ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                         if (!isMySlots &&
                                             option.place.isNotEmpty)

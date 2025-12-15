@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/colors.dart';
 import '../widgets/leaderboard_filters_panel.dart';
 import '../widgets/leaderboard_table.dart';
 import '../widgets/top_three_leaders.dart';
@@ -35,7 +36,7 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
   // ── пол: по умолчанию оба выбраны, всегда хотя бы один должен быть активен
   bool _genderMale = true;
   bool _genderFemale = true;
-  
+
   // ── выбранный диапазон дат для кастомного периода
   DateTimeRange? _selectedDateRange;
 
@@ -59,10 +60,14 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
       sport: _sport,
       period: period,
       dateStart: _selectedDateRange != null
-          ? _selectedDateRange!.start.toIso8601String().split('T')[0] // YYYY-MM-DD
+          ? _selectedDateRange!.start.toIso8601String().split(
+              'T',
+            )[0] // YYYY-MM-DD
           : null,
       dateEnd: _selectedDateRange != null
-          ? _selectedDateRange!.end.toIso8601String().split('T')[0] // YYYY-MM-DD
+          ? _selectedDateRange!.end.toIso8601String().split(
+              'T',
+            )[0] // YYYY-MM-DD
           : null,
       genderMale: _genderMale,
       genderFemale: _genderFemale,
@@ -102,10 +107,14 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
                       sport: _sport,
                       period: period,
                       dateStart: _selectedDateRange != null
-                          ? _selectedDateRange!.start.toIso8601String().split('T')[0]
+                          ? _selectedDateRange!.start.toIso8601String().split(
+                              'T',
+                            )[0]
                           : null,
                       dateEnd: _selectedDateRange != null
-                          ? _selectedDateRange!.end.toIso8601String().split('T')[0]
+                          ? _selectedDateRange!.end.toIso8601String().split(
+                              'T',
+                            )[0]
                           : null,
                       genderMale: _genderMale,
                       genderFemale: _genderFemale,
@@ -141,10 +150,14 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
                     sport: _sport,
                     period: period,
                     dateStart: _selectedDateRange != null
-                        ? _selectedDateRange!.start.toIso8601String().split('T')[0]
+                        ? _selectedDateRange!.start.toIso8601String().split(
+                            'T',
+                          )[0]
                         : null,
                     dateEnd: _selectedDateRange != null
-                        ? _selectedDateRange!.end.toIso8601String().split('T')[0]
+                        ? _selectedDateRange!.end.toIso8601String().split(
+                            'T',
+                          )[0]
                         : null,
                     genderMale: value,
                     genderFemale: _genderFemale,
@@ -162,10 +175,14 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
                     sport: _sport,
                     period: period,
                     dateStart: _selectedDateRange != null
-                        ? _selectedDateRange!.start.toIso8601String().split('T')[0]
+                        ? _selectedDateRange!.start.toIso8601String().split(
+                            'T',
+                          )[0]
                         : null,
                     dateEnd: _selectedDateRange != null
-                        ? _selectedDateRange!.end.toIso8601String().split('T')[0]
+                        ? _selectedDateRange!.end.toIso8601String().split(
+                            'T',
+                          )[0]
                         : null,
                     genderMale: _genderMale,
                     genderFemale: value,
@@ -188,7 +205,7 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
                   } else if (_selectedPeriod == 'Выбранный период') {
                     periodValue = 'custom';
                   }
-                  
+
                   final newParams = SubscriptionsLeaderboardParams(
                     sport: _sport,
                     period: periodValue,
@@ -210,7 +227,7 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
             data: (result) {
               final rows = result.leaderboard;
               final currentUserRank = result.currentUserRank;
-              
+
               if (rows.isEmpty) {
                 return const Padding(
                   padding: EdgeInsets.all(32.0),
@@ -218,8 +235,8 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
                     child: Text(
                       'Нет данных для отображения',
                       style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
+                        fontSize: 15,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ),
@@ -253,15 +270,14 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
                   children: [
                     Text(
                       'Ошибка загрузки данных',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.red,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.red),
                     ),
                     const SizedBox(height: 8),
                     TextButton(
                       onPressed: () {
-                        ref.invalidate(subscriptionsLeaderboardProvider(params));
+                        ref.invalidate(
+                          subscriptionsLeaderboardProvider(params),
+                        );
                       },
                       child: const Text('Повторить'),
                     ),
@@ -281,4 +297,3 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
     );
   }
 }
-

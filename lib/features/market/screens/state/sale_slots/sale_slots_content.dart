@@ -24,12 +24,14 @@ class _EventOption {
   final String name;
   final String place;
   final String eventDate;
+  final String? logoUrl;
 
   const _EventOption({
     required this.id,
     required this.name,
     required this.place,
     required this.eventDate,
+    this.logoUrl,
   });
 }
 
@@ -44,6 +46,7 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
 
   // ─── Состояние выбранного события ───
   int? _selectedEventId;
+  String? _selectedEventLogoUrl;
   bool _isEventSelectedFromDropdown =
       false; // Флаг: событие выбрано из выпадающего списка
   bool _isSettingEventFromDropdown =
@@ -70,6 +73,7 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
         setState(() {
           _isEventSelectedFromDropdown = false;
           _selectedEventId = null;
+          _selectedEventLogoUrl = null;
           _distances = [];
           _distanceIndex = 0;
         });
@@ -141,12 +145,12 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
 
       if (response['success'] == true) {
         final List<dynamic> eventsData = response['events'] ?? [];
-        
+
         // ─── Логирование для отладки ───
         debugPrint(
           '🔍 Поиск событий: запрос="$query", найдено в ответе: ${eventsData.length}',
         );
-        
+
         if (eventsData.isNotEmpty) {
           debugPrint('📋 Первые 3 события:');
           for (int i = 0; i < eventsData.length && i < 3; i++) {
@@ -155,21 +159,22 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
             );
           }
         }
-        
+
         // ─── Явно преобразуем в List для корректной работы Autocomplete ───
-        final result = eventsData.map((e) {
-          return _EventOption(
-            id: e['id'] as int,
-            name: e['name'] as String,
-            place: e['place'] as String? ?? '',
-            eventDate: e['event_date'] as String? ?? '',
-          );
-        }).toList(); // ─── Преобразуем ленивый Iterable в материализованный List
-        
-        debugPrint(
-          '✅ Обработано событий в список: ${result.length}',
-        );
-        
+        final result = eventsData.map(
+          (e) {
+            return _EventOption(
+              id: e['id'] as int,
+              name: e['name'] as String,
+              place: e['place'] as String? ?? '',
+              eventDate: e['event_date'] as String? ?? '',
+              logoUrl: (e['logo_url'] ?? e['logo'] ?? '') as String?,
+            );
+          },
+        ).toList(); // ─── Преобразуем ленивый Iterable в материализованный List
+
+        debugPrint('✅ Обработано событий в список: ${result.length}');
+
         return result;
       }
     } catch (e) {
@@ -302,6 +307,7 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
               label: 'Название события',
               hint: 'Начните вводить название события',
               controller: nameCtrl,
+              selectedLogoUrl: _selectedEventLogoUrl,
               onEventSelected: (event) {
                 // Устанавливаем флаг, чтобы слушатель не сработал
                 _isSettingEventFromDropdown = true;
@@ -309,6 +315,7 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
                   _selectedEventId = event.id;
                   _isEventSelectedFromDropdown =
                       true; // Устанавливаем флаг, что выбрано из списка
+                  _selectedEventLogoUrl = event.logoUrl;
                   // Устанавливаем текст события
                   if (nameCtrl.text != event.name) {
                     nameCtrl.text = event.name;
@@ -321,6 +328,16 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
                 _loadEventDistances(event.id);
               },
               searchFunction: _searchEvents,
+              onClear: () {
+                setState(() {
+                  _isEventSelectedFromDropdown = false;
+                  _selectedEventId = null;
+                  _distances = [];
+                  _distanceIndex = 0;
+                  _isLoadingDistances = false;
+                  _selectedEventLogoUrl = null;
+                });
+              },
             ),
             const SizedBox(height: 20),
 
@@ -415,15 +432,19 @@ class _EventAutocompleteField extends StatelessWidget {
   final String label;
   final String hint;
   final TextEditingController controller;
+  final String? selectedLogoUrl;
   final ValueChanged<_EventOption> onEventSelected;
   final Future<Iterable<_EventOption>> Function(String) searchFunction;
+  final VoidCallback onClear;
 
   const _EventAutocompleteField({
     required this.label,
     required this.hint,
     required this.controller,
+    required this.selectedLogoUrl,
     required this.onEventSelected,
     required this.searchFunction,
+    required this.onClear,
   });
 
   @override
@@ -449,48 +470,109 @@ class _EventAutocompleteField extends StatelessWidget {
                 FocusNode focusNode,
                 VoidCallback onFieldSubmitted,
               ) {
-                return TextFormField(
-                  controller: textEditingController,
-                  focusNode: focusNode,
-                  onFieldSubmitted: (String value) {
-                    onFieldSubmitted();
+                // Синхронизируем контроллер Autocomplete с внешним контроллером
+                if (textEditingController.text != controller.text) {
+                  textEditingController.value = controller.value;
+                }
+
+                return ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: textEditingController,
+                  builder: (context, value, _) {
+                    final hasText = value.text.isNotEmpty;
+                    final hasLogo =
+                        selectedLogoUrl != null && selectedLogoUrl!.isNotEmpty;
+                    return TextFormField(
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      onFieldSubmitted: (String _) {
+                        onFieldSubmitted();
+                      },
+                      style: AppTextStyles.h14w4.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                      decoration: InputDecoration(
+                        hintText: hint,
+                        hintStyle: AppTextStyles.h14w4Place.copyWith(
+                          color: AppColors.getTextPlaceholderColor(context),
+                        ),
+                        filled: true,
+                        fillColor: AppColors.getSurfaceColor(context),
+                        // Показываем мини-лого выбранного события в поле
+                        prefixIcon: hasLogo
+                            ? Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 6,
+                                  right: 6,
+                                  top: 6,
+                                  bottom: 6,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.xs,
+                                  ),
+                                  child: Image.network(
+                                    selectedLogoUrl!,
+                                    width: 30,
+                                    height: 30,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) => Icon(
+                                          CupertinoIcons.calendar,
+                                          size: 18,
+                                          color:
+                                              AppColors.getIconSecondaryColor(
+                                                context,
+                                              ),
+                                        ),
+                                  ),
+                                ),
+                              )
+                            : null,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 17,
+                        ),
+                        suffixIcon: hasText
+                            ? IconButton(
+                                icon: Icon(
+                                  CupertinoIcons.xmark_circle_fill,
+                                  size: 18,
+                                  color: AppColors.getIconSecondaryColor(
+                                    context,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  textEditingController.clear();
+                                  controller.clear();
+                                  onClear();
+                                  focusNode.requestFocus();
+                                },
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                    );
                   },
-                  style: AppTextStyles.h14w4.copyWith(
-                    color: AppColors.getTextPrimaryColor(context),
-                  ),
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    hintStyle: AppTextStyles.h14w4Place.copyWith(
-                      color: AppColors.getTextPlaceholderColor(context),
-                    ),
-                    filled: true,
-                    fillColor: AppColors.getSurfaceColor(context),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 17,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      borderSide: BorderSide(
-                        color: AppColors.getBorderColor(context),
-                        width: 1,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      borderSide: BorderSide(
-                        color: AppColors.getBorderColor(context),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      borderSide: BorderSide(
-                        color: AppColors.getBorderColor(context),
-                        width: 1,
-                      ),
-                    ),
-                  ),
                 );
               },
           optionsViewBuilder:
@@ -504,56 +586,103 @@ class _EventAutocompleteField extends StatelessWidget {
                 debugPrint(
                   '🎨 optionsViewBuilder: получено ${optionsList.length} опций',
                 );
-                
+
                 return Align(
                   alignment: Alignment.topLeft,
                   child: Material(
                     elevation: 4.0,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 200),
+                      constraints: const BoxConstraints(maxHeight: 240),
                       child: ListView.builder(
                         padding: EdgeInsets.zero,
                         shrinkWrap: true,
                         itemCount: optionsList.length,
                         itemBuilder: (BuildContext context, int index) {
                           final option = optionsList[index];
+                          final hasLogo =
+                              option.logoUrl != null &&
+                              option.logoUrl!.isNotEmpty;
                           return InkWell(
                             onTap: () => onSelected(option),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppColors.getSurfaceColor(context),
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: AppColors.getBorderColor(context),
-                                    width: 0.5,
-                                  ),
-                                ),
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 12,
+                                right: 16,
+                                top: 10,
+                                bottom: 10,
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
                                 children: [
-                                  Text(
-                                    option.name,
-                                    style: AppTextStyles.h14w5.copyWith(
-                                      color: AppColors.getTextPrimaryColor(
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.xs,
+                                      ),
+                                      color: AppColors.getBackgroundColor(
                                         context,
                                       ),
                                     ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: hasLogo
+                                        ? Image.network(
+                                            option.logoUrl!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                                  return Icon(
+                                                    CupertinoIcons.calendar,
+                                                    size: 18,
+                                                    color:
+                                                        AppColors.getIconSecondaryColor(
+                                                          context,
+                                                        ),
+                                                  );
+                                                },
+                                          )
+                                        : Icon(
+                                            CupertinoIcons.calendar,
+                                            size: 18,
+                                            color:
+                                                AppColors.getIconSecondaryColor(
+                                                  context,
+                                                ),
+                                          ),
                                   ),
-                                  if (option.place.isNotEmpty) ...[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      option.place,
-                                      style: AppTextStyles.h14w4.copyWith(
-                                        color: AppColors.getTextSecondaryColor(
-                                          context,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          option.name,
+                                          style: AppTextStyles.h14w5.copyWith(
+                                            color:
+                                                AppColors.getTextPrimaryColor(
+                                                  context,
+                                                ),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        fontSize: 12,
-                                      ),
+                                        if (option.place.isNotEmpty) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            option.place,
+                                            style: AppTextStyles.h12w4.copyWith(
+                                              color:
+                                                  AppColors.getTextSecondaryColor(
+                                                    context,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ],
                               ),
                             ),

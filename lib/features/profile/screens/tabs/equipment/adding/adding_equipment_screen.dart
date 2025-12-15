@@ -9,7 +9,13 @@ import 'tabs/adding_sneakers_content.dart';
 
 /// Экран «Добавить снаряжение»
 class AddingEquipmentScreen extends ConsumerStatefulWidget {
-  const AddingEquipmentScreen({super.key});
+  /// 0 — Кроссовки (по умолчанию), 1 — Велосипеды
+  final int initialSegment;
+  
+  const AddingEquipmentScreen({
+    super.key,
+    this.initialSegment = 0,
+  });
 
   @override
   ConsumerState<AddingEquipmentScreen> createState() =>
@@ -22,13 +28,15 @@ class _AddingEquipmentScreenState extends ConsumerState<AddingEquipmentScreen> {
   static const Curve _kTabCurve = Curves.easeOutCubic;
 
   /// 0 = Кроссовки, 1 = Велосипед
-  int _index = 0;
+  late int _index;
 
   late final PageController _page;
 
   @override
   void initState() {
     super.initState();
+    // страхуемся от некорректных значений
+    _index = (widget.initialSegment == 1) ? 1 : 0;
     _page = PageController(initialPage: _index);
   }
 

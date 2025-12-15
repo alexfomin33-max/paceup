@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../../core/theme/app_theme.dart';
 import '../../../../../../../../core/utils/local_image_compressor.dart'
@@ -476,13 +477,28 @@ class _EditingBikeContentState extends ConsumerState<EditingBikeContent>
                                   maxWidth: 240,
                                   maxHeight: 140,
                                 ),
-                                child: Image.network(
-                                  _currentImageUrl!,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    // При ошибке загрузки показываем пустое место,
-                                    // чтобы оставалось только фоновое изображение
-                                    return const SizedBox.shrink();
+                                child: Builder(
+                                  builder: (context) {
+                                    // ────────────────────────────────────────────────────────────────
+                                    // 🖼️ ОПТИМИЗАЦИЯ КАЧЕСТВА: используем CachedNetworkImage с учетом DPR
+                                    // ────────────────────────────────────────────────────────────────
+                                    final dpr = MediaQuery.of(
+                                      context,
+                                    ).devicePixelRatio;
+                                    final cacheWidth = (240 * dpr).round();
+                                    return CachedNetworkImage(
+                                      imageUrl: _currentImageUrl!,
+                                      fit: BoxFit.contain,
+                                      memCacheWidth: cacheWidth,
+                                      maxWidthDiskCache: cacheWidth,
+                                      filterQuality: FilterQuality.high,
+                                      // НЕ передаем cacheManager - используется DefaultCacheManager
+                                      errorWidget: (context, url, error) {
+                                        // При ошибке загрузки показываем пустое место,
+                                        // чтобы оставалось только фоновое изображение
+                                        return const SizedBox.shrink();
+                                      },
+                                    );
                                   },
                                 ),
                               ),
