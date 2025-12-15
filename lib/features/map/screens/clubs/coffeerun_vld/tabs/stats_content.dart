@@ -121,17 +121,20 @@ class _CoffeeRunVldStatsContentState
         final hasMore = data['has_more'] as bool? ?? false;
         
         setState(() {
-          final newRows = statistics.map((s) {
-            final stat = s as Map<String, dynamic>;
-            return _StatRow(
-              rank: stat['rank'] as int? ?? 0,
-              name: stat['name'] as String? ?? 'Пользователь',
-              avatarUrl: stat['avatar_url'] as String? ?? '',
-              distance: (stat['distance'] as num?)?.toDouble() ?? 0.0,
-              userId: stat['user_id'] as int?,
-              isCurrentUser: stat['is_current_user'] as bool? ?? false,
-            );
-          }).toList();
+          final newRows = statistics
+              .map((s) {
+                final stat = s as Map<String, dynamic>;
+                return _StatRow(
+                  rank: stat['rank'] as int? ?? 0,
+                  name: stat['name'] as String? ?? 'Пользователь',
+                  avatarUrl: stat['avatar_url'] as String? ?? '',
+                  distance: (stat['distance'] as num?)?.toDouble() ?? 0.0,
+                  userId: stat['user_id'] as int?,
+                  isCurrentUser: stat['is_current_user'] as bool? ?? false,
+                );
+              })
+              .where((row) => row.distance > 0.0) // Фильтруем пользователей с нулевыми показателями
+              .toList();
           
           if (reset || _currentPage == 1) {
             // Заменяем данные только после загрузки новых
