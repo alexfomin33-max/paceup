@@ -10,6 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/api_service.dart';
 import '../../../core/theme/colors.dart';
+import '../../../core/services/auth_service.dart';
+import '../../profile/providers/profile_header_provider.dart';
 import '../widgets/city_autocomplete_field.dart';
 import '../widgets/leaderboard_filters_panel.dart';
 import '../widgets/leaderboard_table.dart';
@@ -26,7 +28,8 @@ class CityTab extends ConsumerStatefulWidget {
   ConsumerState<CityTab> createState() => _CityTabState();
 }
 
-class _CityTabState extends ConsumerState<CityTab> {
+class _CityTabState extends ConsumerState<CityTab>
+    with AutomaticKeepAliveClientMixin {
   // ── контроллер для поля поиска города
   final _cityController = TextEditingController();
 
@@ -52,11 +55,37 @@ class _CityTabState extends ConsumerState<CityTab> {
   // ── выбранный диапазон дат для кастомного периода
   DateTimeRange? _selectedDateRange;
 
+  // ── флаг для отслеживания, был ли город уже установлен из профиля
+  bool _citySetFromProfile = false;
+
+  // ── ID авторизованного пользователя
+  int? _currentUserId;
+
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   void initState() {
     super.initState();
     // Загружаем список городов при инициализации
     _loadCities();
+    // Загружаем город пользователя
+    _loadUserCity();
+  }
+
+  /// Загрузка города авторизованного пользователя
+  Future<void> _loadUserCity() async {
+    try {
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+      if (userId != null && mounted) {
+        setState(() {
+          _currentUserId = userId;
+        });
+      }
+    } catch (e) {
+      // Игнорируем ошибки при получении userId
+    }
   }
 
   @override
@@ -138,6 +167,31 @@ class _CityTabState extends ConsumerState<CityTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Обязательно вызываем для AutomaticKeepAliveClientMixin
+    // ── Загружаем профиль пользователя для получения города
+    if (_currentUserId != null) {
+      final profileState = ref.watch(profileHeaderProvider(_currentUserId!));
+      
+      // ── Устанавливаем город из профиля, если он доступен и еще не был установлен
+      if (!_citySetFromProfile && 
+          profileState.profile != null && 
+          profileState.profile!.city != null && 
+          profileState.profile!.city!.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && !_citySetFromProfile) {
+            final userCity = profileState.profile!.city!;
+            setState(() {
+              _selectedCity = userCity;
+              _cityController.text = userCity;
+              _citySetFromProfile = true;
+            });
+            // Обновляем лидерборд после установки города
+            _updateLeaderboard();
+          }
+        });
+      }
+    }
+
     // Преобразуем период в формат для API
     String period = 'current_week';
     if (_selectedPeriod == 'Текущий месяц') {
