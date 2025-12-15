@@ -392,7 +392,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   MainTab(key: _mainTabKey, userId: userId),
                   PhotosTab(userId: userId),
-                  const StatsTab(),
+                  StatsTab(userId: userId),
                   TrainingTab(userId: userId),
                   const RacesTab(),
                   GearTab(userId: userId),
