@@ -197,11 +197,6 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           metrics.avgCadence ?? '—',
         ),
         _MetricRowData(
-          Icons.insights,
-          'Относительное усилие',
-          metrics.relativeEffort ?? '—',
-        ),
-        _MetricRowData(
           Icons.terrain,
           'Набор высоты',
           metrics.elevationGain ?? '—',
