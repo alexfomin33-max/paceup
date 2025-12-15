@@ -155,8 +155,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
         // Запускаем polling для динамического обновления счетчика
         _startUnreadChatsPolling(userId);
-        // Загружаем уведомления для получения счетчика непрочитанных
-        ref.read(notificationsProvider.notifier).loadInitial();
+        // Загружаем только счетчик непрочитанных уведомлений (не все уведомления)
+        ref.read(notificationsProvider.notifier).updateUnreadCount();
         // Запускаем polling для динамического обновления счетчика уведомлений
         _startUnreadNotificationsPolling(userId);
 
@@ -392,8 +392,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       context,
     ).push(TransparentPageRoute(builder: (_) => const NotificationsScreen()));
     if (!mounted) return;
-    // Обновляем уведомления после возврата из экрана
-    ref.read(notificationsProvider.notifier).refresh();
+    // Обновляем только счетчик непрочитанных уведомлений после возврата из экрана
+    ref.read(notificationsProvider.notifier).updateUnreadCount();
   }
 
   /// Показывает выпадающее меню для кнопки создания поста
