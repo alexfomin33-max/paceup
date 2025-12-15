@@ -24,7 +24,7 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
   late DateTime _month;
 
   // Мультиселект видов спорта: 0 бег, 1 вело, 2 плавание
-  final Set<int> _sports = {0, 1, 2};
+  Set<int> _sports = {0, 1, 2};
 
   // Флаг для инициализации месяца только один раз при первой загрузке
   bool _monthInitialized = false;
@@ -77,10 +77,12 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
           _monthInitialized = true;
         }
 
-        // Фильтруем тренировки по текущему месяцу
+        // Фильтруем тренировки по текущему месяцу и выбранным видам спорта
         final items = data.activities
             .where((w) {
-              return w.when.year == _month.year && w.when.month == _month.month;
+              return w.when.year == _month.year && 
+                     w.when.month == _month.month &&
+                     _sports.contains(w.sportType);
             })
             .toList(growable: false);
 
@@ -120,13 +122,14 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
                     () => _month = DateTime(_month.year, _month.month + 1, 1),
                   ),
                   onToggleSport: (i) => setState(() {
-                    if (_sports.contains(i)) {
-                      _sports.remove(i);
+                    // Создаем новый Set для корректного обновления провайдера
+                    final newSports = Set<int>.from(_sports);
+                    if (newSports.contains(i)) {
+                      newSports.remove(i);
                     } else {
-                      _sports.add(i);
+                      newSports.add(i);
                     }
-                    // Инвалидируем провайдер для перезагрузки данных
-                    ref.invalidate(trainingActivitiesProvider(_sports));
+                    _sports = newSports;
                   }),
                 ),
               ),
