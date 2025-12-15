@@ -255,10 +255,41 @@ class _GearTabState extends ConsumerState<GearTab>
       );
     }
 
+    // Проверяем, есть ли снаряжение
+    final hasEquipment = _boots.isNotEmpty || _bikes.isNotEmpty;
+
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+        // ─── Пустое состояние, если нет снаряжения
+        if (!hasEquipment)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.pedal_bike_outlined,
+                      size: 48,
+                      color: AppColors.getTextSecondaryColor(context),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'У вас пока нет снаряжения',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 15,
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
 
         // ─── Кроссовки (показываем только если есть)
         if (_boots.isNotEmpty) ...[

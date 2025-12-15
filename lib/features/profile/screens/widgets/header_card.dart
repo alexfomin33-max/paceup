@@ -179,31 +179,45 @@ class HeaderCard extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    // Показываем иконку редактирования только для своего профиля
+                    const SizedBox(width: 6),
+                    // Определяем, является ли открытый профиль профилем текущего пользователя
+                    // для условного отображения иконки редактирования или меню
                     Builder(
                       builder: (context) {
-                        if (!_isOwnProfile(ref)) {
-                          return const SizedBox.shrink();
-                        }
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(width: 6),
-                            _SmallIconBtn(
-                              icon: CupertinoIcons.pencil,
-                              onPressed: () async {
-                                final changed = await Navigator.of(context).push<bool>(
-                                  TransparentPageRoute(
-                                    builder: (_) => EditProfileScreen(userId: userId),
-                                  ),
-                                );
-                                if (changed == true) {
-                                  onReload(); // ← одна строка на авто-рефреш
-                                }
-                              },
-                            ),
-                          ],
+                        final currentUserIdAsync = ref.watch(
+                          currentUserIdProvider,
                         );
+                        final currentUserId = currentUserIdAsync.value;
+                        final isOwnProfile =
+                            currentUserId != null && currentUserId == userId;
+
+                        if (isOwnProfile) {
+                          // Свой профиль - показываем иконку карандаша для редактирования
+                          return _SmallIconBtn(
+                            icon: CupertinoIcons.pencil,
+                            onPressed: () async {
+                              final changed = await Navigator.of(context)
+                                  .push<bool>(
+                                    TransparentPageRoute(
+                                      builder: (_) =>
+                                          EditProfileScreen(userId: userId),
+                                    ),
+                                  );
+                              if (changed == true) {
+                                onReload(); // ← одна строка на авто-рефреш
+                              }
+                            },
+                          );
+                        } else {
+                          // Чужой профиль - показываем иконку с тремя точками (меню)
+                          return _SmallIconBtn(
+                            icon: CupertinoIcons.ellipsis,
+                            onPressed: () {
+                              // TODO: Показать меню действий (заблокировать, пожаловаться и т.д.)
+                              // Пока оставляем пустым или можно показать CupertinoActionSheet
+                            },
+                          );
+                        }
                       },
                     ),
                   ],
@@ -281,16 +295,6 @@ class HeaderCard extends ConsumerWidget {
     if (p.age != null) parts.add('${p.age} ${_yearsRu(p.age)}');
     if ((p.city ?? '').isNotEmpty) parts.add(p.city!);
     return parts.isEmpty ? null : parts.join(', ');
-  }
-
-  /// Проверяет, является ли просматриваемый профиль профилем текущего авторизованного пользователя
-  bool _isOwnProfile(WidgetRef ref) {
-    final currentUserIdAsync = ref.read(currentUserIdProvider);
-    return currentUserIdAsync.when(
-      data: (currentUserId) => currentUserId != null && currentUserId == userId,
-      loading: () => false,
-      error: (_, __) => false,
-    );
   }
 }
 
