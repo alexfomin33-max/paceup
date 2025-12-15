@@ -318,6 +318,7 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
 
       // ✅ Всегда обновляем состояние, чтобы гарантировать обновление UI
       // Это важно для первого вызова и для случаев, когда виджет еще не подписан
+      // ✅ copyWith всегда создает новый объект, что гарантирует обновление подписчиков в Riverpod
       state = state.copyWith(unreadCount: unreadCount);
     } catch (e) {
       // Логируем ошибки для отладки, но не прерываем работу

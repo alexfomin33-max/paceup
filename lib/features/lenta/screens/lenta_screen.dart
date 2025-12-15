@@ -743,9 +743,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // Читаем состояние уведомлений для счетчика
     // ✅ Используем селектор для отслеживания только unreadCount
     // Это гарантирует, что виджет перестроится при изменении счетчика
-    final unreadNotificationsCount = ref.watch(
-      notificationsProvider.select((state) => state.unreadCount),
-    );
+    // ✅ Исправлено: используем полное состояние для гарантии обновления
+    final notificationsState = ref.watch(notificationsProvider);
+    final unreadNotificationsCount = notificationsState.unreadCount;
 
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
