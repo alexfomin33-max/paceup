@@ -316,13 +316,12 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
 
       final unreadCount = data['unread_count'] as int? ?? 0;
 
-      // ✅ Обновляем состояние только если значение изменилось
-      // Это предотвращает лишние перерисовки, но гарантирует обновление при изменении
-      if (state.unreadCount != unreadCount) {
-        state = state.copyWith(unreadCount: unreadCount);
-      }
+      // ✅ Всегда обновляем состояние, чтобы гарантировать обновление UI
+      // Это важно для первого вызова и для случаев, когда виджет еще не подписан
+      state = state.copyWith(unreadCount: unreadCount);
     } catch (e) {
-      // Игнорируем ошибки при обновлении счетчика
+      // Логируем ошибки для отладки, но не прерываем работу
+      debugPrint('⚠️ Ошибка при обновлении счетчика уведомлений: $e');
     }
   }
 }
