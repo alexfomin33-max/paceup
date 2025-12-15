@@ -890,18 +890,8 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                                 );
                               }
 
-                              // 2 — категория
-                              if (index == 2) {
-                                return _KVLine(
-                                  k: 'Категория',
-                                  v: _ChipNeutral(
-                                    child: Text(chatData.thingCategory),
-                                  ),
-                                );
-                              }
-
-                              // 3 — пол (если указан)
-                              if (index == 3 && chatData.thingGender != null) {
+                              // 2 — пол (если указан)
+                              if (index == 2 && chatData.thingGender != null) {
                                 return _KVLine(
                                   k: 'Пол',
                                   v: chatData.thingGender == Gender.male
@@ -910,10 +900,10 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                                 );
                               }
 
-                              // 4 — города передачи (если пол указан, иначе индекс 3)
+                              // 3 — города передачи (если пол указан, иначе индекс 2)
                               final citiesIndex = chatData.thingGender != null
-                                  ? 4
-                                  : 3;
+                                  ? 3
+                                  : 2;
                               if (index == citiesIndex) {
                                 return _KVLine(
                                   k: 'Город передачи',
@@ -921,9 +911,9 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                                 );
                               }
 
-                              // 5..6 или 4..5 — участники (с учетом того, что пол может быть пропущен)
+                              // 4..5 или 3..4 — участники (с учетом того, что пол может быть пропущен)
                               final participantIndex =
-                                  chatData.thingGender != null ? 5 : 4;
+                                  chatData.thingGender != null ? 4 : 3;
                               if (index == participantIndex) {
                                 return _ParticipantRow(
                                   avatarUrl: chatData.sellerAvatar,
@@ -942,7 +932,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                               }
 
                               return const SizedBox.shrink();
-                            }, childCount: chatData.thingGender != null ? 7 : 6),
+                            }, childCount: chatData.thingGender != null ? 6 : 5),
                           ),
                         ),
 
@@ -1159,33 +1149,6 @@ class _KVLine extends StatelessWidget {
           const SizedBox(width: 10),
           v,
         ],
-      ),
-    );
-  }
-}
-
-class _ChipNeutral extends StatelessWidget {
-  final Widget child;
-  const _ChipNeutral({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.light
-            ? AppColors.background
-            : AppColors.getSurfaceMutedColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-      ),
-      child: DefaultTextStyle(
-        style: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 13,
-          fontWeight: FontWeight.w400,
-          color: AppColors.getTextPrimaryColor(context),
-        ),
-        child: child,
       ),
     );
   }
