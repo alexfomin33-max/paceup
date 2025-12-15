@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/transparent_route.dart';
 import '../../../profile/providers/search/friends_search_provider.dart';
+import '../../../profile/screens/profile_screen.dart';
 
 /// Блок «Рекомендации для вас» с реальными данными из API
 class RecommendedBlock extends ConsumerWidget {
@@ -147,6 +149,17 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
     return widget.friend.isSubscribed;
   }
 
+  /// Переход на страницу профиля пользователя
+  ///
+  /// ⚡ UX: открывает профиль пользователя при клике на аватарку
+  void _navigateToProfile() {
+    Navigator.of(context).push(
+      TransparentPageRoute(
+        builder: (_) => ProfileScreen(userId: widget.friend.id),
+      ),
+    );
+  }
+
   /// Обработчик подписки/отписки с защитой от race condition
   ///
   /// ⚡ PERFORMANCE & RELIABILITY:
@@ -239,28 +252,35 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ClipOval(
-            child: CachedNetworkImage(
-              imageUrl: friend.avatarUrl,
-              width: 120,
-              height: 120,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
+          // ────────────────────────────────────────────────────────────────
+          // 🔹 КЛИКАБЕЛЬНАЯ АВАТАРКА: переход на профиль пользователя
+          // ────────────────────────────────────────────────────────────────
+          GestureDetector(
+            onTap: _navigateToProfile,
+            behavior: HitTestBehavior.opaque,
+            child: ClipOval(
+              child: CachedNetworkImage(
+                imageUrl: friend.avatarUrl,
                 width: 120,
                 height: 120,
-                color: AppColors.getSkeletonBaseColor(context),
-                alignment: Alignment.center,
-                child: const CupertinoActivityIndicator(),
-              ),
-              errorWidget: (context, url, error) => Container(
-                width: 120,
-                height: 120,
-                color: AppColors.getSkeletonBaseColor(context),
-                alignment: Alignment.center,
-                child: Icon(
-                  CupertinoIcons.person,
-                  size: 40,
-                  color: AppColors.getTextSecondaryColor(context),
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  width: 120,
+                  height: 120,
+                  color: AppColors.getSkeletonBaseColor(context),
+                  alignment: Alignment.center,
+                  child: const CupertinoActivityIndicator(),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  width: 120,
+                  height: 120,
+                  color: AppColors.getSkeletonBaseColor(context),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    CupertinoIcons.person,
+                    size: 40,
+                    color: AppColors.getTextSecondaryColor(context),
+                  ),
                 ),
               ),
             ),
