@@ -7,6 +7,7 @@ class GearSectionSliver extends StatelessWidget {
   final String title; // Заголовок секции ("Кроссовки"/"Велосипед")
   final List<GearItem> items; // Список элементов снаряжения
   final bool isBike; // Управляет подписью второй метрики: "Скорость" или "Темп"
+  final bool isOwnProfile; // true, если открыт профиль текущего пользователя
   final VoidCallback? onItemTap; // 👈 колбэк на тап по карточке
 
   const GearSectionSliver({
@@ -14,6 +15,7 @@ class GearSectionSliver extends StatelessWidget {
     required this.title,
     required this.items,
     required this.isBike,
+    required this.isOwnProfile,
     this.onItemTap,
   });
 
@@ -50,6 +52,7 @@ class GearSectionSliver extends StatelessWidget {
               title: g.title,
               imageUrl: g.imageAsset,
               isBike: isBike,
+              isOwnProfile: isOwnProfile,
               stat1Label: 'Пробег:',
               stat1Value: g.mileage,
               stat2Label: isBike ? 'Скорость:' : 'Темп:',
@@ -250,6 +253,7 @@ class _GearCard extends StatelessWidget {
   final String imageUrl; // URL изображения из базы данных (может быть пустым)
   final bool
   isBike; // Флаг для определения типа снаряжения (кроссовки/велосипед)
+  final bool isOwnProfile; // true, если открыт профиль текущего пользователя
   final String stat1Label;
   final String stat1Value;
   final String stat2Label;
@@ -259,6 +263,7 @@ class _GearCard extends StatelessWidget {
     required this.title,
     required this.imageUrl,
     required this.isBike,
+    required this.isOwnProfile,
     required this.stat1Label,
     required this.stat1Value,
     required this.stat2Label,
@@ -310,7 +315,7 @@ class _GearCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Заголовок карточки + "карандаш" справа
+                  // Заголовок карточки + "карандаш" справа (только для своего профиля)
                   Row(
                     children: [
                       Expanded(
@@ -323,23 +328,25 @@ class _GearCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.darkSurfaceMuted
-                              : AppColors.skeletonBase,
-                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                      if (isOwnProfile) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.darkSurfaceMuted
+                                : AppColors.skeletonBase,
+                            borderRadius: BorderRadius.circular(AppRadius.xl),
+                          ),
+                          child: Icon(
+                            CupertinoIcons.pencil,
+                            size: 12,
+                            color: AppColors.getIconPrimaryColor(context),
+                          ),
                         ),
-                        child: Icon(
-                          CupertinoIcons.pencil,
-                          size: 12,
-                          color: AppColors.getIconPrimaryColor(context),
-                        ),
-                      ),
-                      const SizedBox(width: 2),
+                        const SizedBox(width: 2),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 8),
