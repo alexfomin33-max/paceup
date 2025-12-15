@@ -21,7 +21,8 @@ class SubscriptionsTab extends ConsumerStatefulWidget {
   ConsumerState<SubscriptionsTab> createState() => _SubscriptionsTabState();
 }
 
-class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab> {
+class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
+    with AutomaticKeepAliveClientMixin {
   // ── выбранный параметр лидерборда (по умолчанию "Расстояние")
   String? _selectedParameter = 'Расстояние';
 
@@ -39,7 +40,11 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab> {
   DateTimeRange? _selectedDateRange;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // Обязательно вызываем для AutomaticKeepAliveClientMixin
     // Преобразуем период в формат для API
     String period = 'current_week';
     if (_selectedPeriod == 'Текущий месяц') {
