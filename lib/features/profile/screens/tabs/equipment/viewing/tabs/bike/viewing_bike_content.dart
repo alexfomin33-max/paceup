@@ -40,7 +40,9 @@ class _BikeItem {
 }
 
 class ViewingBikeContent extends ConsumerStatefulWidget {
-  const ViewingBikeContent({super.key});
+  /// ID пользователя, чье снаряжение нужно отобразить
+  final int userId;
+  const ViewingBikeContent({super.key, required this.userId});
 
   @override
   ConsumerState<ViewingBikeContent> createState() =>
@@ -100,21 +102,10 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
     });
 
     try {
-      final authService = ref.read(authServiceProvider);
-      final userId = await authService.getUserId();
-
-      if (userId == null) {
-        setState(() {
-          _error = 'Пользователь не авторизован';
-          _isLoading = false;
-        });
-        return;
-      }
-
       final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/get_equipment.php',
-        body: {'user_id': userId.toString()},
+        body: {'user_id': widget.userId.toString()},
       );
 
       if (data['success'] == true) {
@@ -205,39 +196,53 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
     }
 
     if (_bikes.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Нет велосипедов',
-                style: TextStyle(
-                  color: AppColors.getTextSecondaryColor(context),
-                ),
-              ),
-              const SizedBox(height: 24),
-              PrimaryButton(
-                text: 'Добавить велосипед',
-                leading: const Icon(CupertinoIcons.plus_circle, size: 18),
-                onPressed: () async {
-                  await Navigator.of(context).push(
-                    CupertinoPageRoute(
-                      builder: (_) => const AddingEquipmentScreen(
-                        initialSegment: 1,
+      return Consumer(
+        builder: (context, ref, child) {
+          final currentUserIdAsync = ref.watch(currentUserIdProvider);
+          return currentUserIdAsync.when(
+            data: (currentUserId) {
+              final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Нет велосипедов',
+                        style: TextStyle(
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
                       ),
-                    ),
-                  );
-                  // Обновляем список после возврата
-                  if (mounted) {
-                    _loadBikes();
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
+                      if (isOwnProfile) ...[
+                        const SizedBox(height: 24),
+                        PrimaryButton(
+                          text: 'Добавить велосипед',
+                          leading: const Icon(CupertinoIcons.plus_circle, size: 18),
+                          onPressed: () async {
+                            await Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (_) => const AddingEquipmentScreen(
+                                  initialSegment: 1,
+                                ),
+                              ),
+                            );
+                            // Обновляем список после возврата
+                            if (mounted) {
+                              _loadBikes();
+                            }
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            },
+            loading: () => const Center(child: CupertinoActivityIndicator(radius: 16)),
+            error: (_, __) => const SizedBox.shrink(),
+          );
+        },
       );
     }
 
@@ -260,33 +265,53 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
                 since: bike.since,
                 mainBadgeText: bike.isMain ? 'Основной' : null,
                 onUpdate: _loadBikes, // Callback для обновления списка после действий
+                userId: widget.userId, // ID пользователя, чье снаряжение отображается
               ),
             ],
           );
         }),
-        // ── Кнопка "Добавить велосипед"
-        const SizedBox(height: 25),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Center(
-            child: PrimaryButton(
-              text: 'Добавить велосипед',
-              leading: const Icon(CupertinoIcons.plus_circle, size: 18),
-              onPressed: () async {
-                await Navigator.of(context).push(
-                  CupertinoPageRoute(
-                    builder: (_) => const AddingEquipmentScreen(
-                      initialSegment: 1,
-                    ),
-                  ),
-                );
-                // Обновляем список после возврата
-                if (mounted) {
-                  _loadBikes();
+        // ── Кнопка "Добавить велосипед" (только для собственного профиля)
+        Consumer(
+          builder: (context, ref, child) {
+            final currentUserIdAsync = ref.watch(currentUserIdProvider);
+            return currentUserIdAsync.when(
+              data: (currentUserId) {
+                final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
+                if (!isOwnProfile) {
+                  return const SizedBox.shrink();
                 }
+                return Column(
+                  children: [
+                    const SizedBox(height: 25),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Center(
+                        child: PrimaryButton(
+                          text: 'Добавить велосипед',
+                          leading: const Icon(CupertinoIcons.plus_circle, size: 18),
+                          onPressed: () async {
+                            await Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (_) => const AddingEquipmentScreen(
+                                  initialSegment: 1,
+                                ),
+                              ),
+                            );
+                            // Обновляем список после возврата
+                            if (mounted) {
+                              _loadBikes();
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                );
               },
-            ),
-          ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            );
+          },
         ),
       ],
     );

@@ -11,7 +11,13 @@ import 'tabs/bike/viewing_bike_content.dart';
 class ViewingEquipmentScreen extends ConsumerStatefulWidget {
   /// 0 — Кроссовки (по умолчанию), 1 — Велосипеды
   final int initialSegment;
-  const ViewingEquipmentScreen({super.key, this.initialSegment = 0});
+  /// ID пользователя, чье снаряжение нужно отобразить
+  final int userId;
+  const ViewingEquipmentScreen({
+    super.key,
+    this.initialSegment = 0,
+    required this.userId,
+  });
 
   @override
   ConsumerState<ViewingEquipmentScreen> createState() =>
@@ -115,17 +121,19 @@ class _ViewingEquipmentScreenState
                 onPageChanged: (i) {
                   if (_index != i) setState(() => _index = i);
                 },
-                children: const [
+                children: [
                   // Внутри каждого таба — свой вертикальный скролл и паддинги,
                   // как устроены соответствующие *content.dart
                   _TabScroller(
                     child: ViewingSneakersContent(
-                      key: PageStorageKey('view_sneakers'),
+                      key: const PageStorageKey('view_sneakers'),
+                      userId: widget.userId,
                     ),
                   ),
                   _TabScroller(
                     child: ViewingBikeContent(
-                      key: PageStorageKey('view_bikes'),
+                      key: const PageStorageKey('view_bikes'),
+                      userId: widget.userId,
                     ),
                   ),
                 ],

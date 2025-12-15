@@ -326,8 +326,10 @@ class _GearTabState extends ConsumerState<GearTab>
               onTap: () async {
                 await Navigator.of(context).push(
                   CupertinoPageRoute(
-                    builder: (_) =>
-                        const ViewingEquipmentScreen(initialSegment: 0),
+                    builder: (_) => ViewingEquipmentScreen(
+                      initialSegment: 0,
+                      userId: widget.userId,
+                    ),
                   ),
                 );
                 // Обновляем данные после возврата
@@ -374,8 +376,10 @@ class _GearTabState extends ConsumerState<GearTab>
               onTap: () async {
                 await Navigator.of(context).push(
                   CupertinoPageRoute(
-                    builder: (_) =>
-                        const ViewingEquipmentScreen(initialSegment: 1),
+                    builder: (_) => ViewingEquipmentScreen(
+                      initialSegment: 1,
+                      userId: widget.userId,
+                    ),
                   ),
                 );
                 // Обновляем данные после возврата

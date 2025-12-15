@@ -119,7 +119,10 @@ class _MainTabState extends MainTabState
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const ViewingEquipmentScreen(initialSegment: 0),
+        builder: (_) => ViewingEquipmentScreen(
+          initialSegment: 0,
+          userId: widget.userId,
+        ),
       ),
     );
     // Обновляем данные после возврата (если кэш был очищен)
@@ -132,7 +135,10 @@ class _MainTabState extends MainTabState
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const ViewingEquipmentScreen(initialSegment: 1),
+        builder: (_) => ViewingEquipmentScreen(
+          initialSegment: 1,
+          userId: widget.userId,
+        ),
       ),
     );
     // Обновляем данные после возврата (если кэш был очищен)

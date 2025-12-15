@@ -44,7 +44,9 @@ class _SneakerItem {
 }
 
 class ViewingSneakersContent extends ConsumerStatefulWidget {
-  const ViewingSneakersContent({super.key});
+  /// ID пользователя, чье снаряжение нужно отобразить
+  final int userId;
+  const ViewingSneakersContent({super.key, required this.userId});
 
   @override
   ConsumerState<ViewingSneakersContent> createState() =>
@@ -105,21 +107,10 @@ class _ViewingSneakersContentState
     });
 
     try {
-      final authService = ref.read(authServiceProvider);
-      final userId = await authService.getUserId();
-
-      if (userId == null) {
-        setState(() {
-          _error = 'Пользователь не авторизован';
-          _isLoading = false;
-        });
-        return;
-      }
-
       final api = ref.read(apiServiceProvider);
       final data = await api.post(
         '/get_equipment.php',
-        body: {'user_id': userId.toString()},
+        body: {'user_id': widget.userId.toString()},
       );
 
       if (data['success'] == true) {
@@ -208,38 +199,52 @@ class _ViewingSneakersContentState
     }
 
     if (_sneakers.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Нет кроссовок',
-                style: TextStyle(
-                  color: AppColors.getTextSecondaryColor(context),
+      return Consumer(
+        builder: (context, ref, child) {
+          final currentUserIdAsync = ref.watch(currentUserIdProvider);
+          return currentUserIdAsync.when(
+            data: (currentUserId) {
+              final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Нет кроссовок',
+                        style: TextStyle(
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                      ),
+                      if (isOwnProfile) ...[
+                        const SizedBox(height: 24),
+                        PrimaryButton(
+                          text: 'Добавить кроссовки',
+                          leading: const Icon(CupertinoIcons.plus_circle, size: 18),
+                          onPressed: () async {
+                            await Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (_) =>
+                                    const AddingEquipmentScreen(initialSegment: 0),
+                              ),
+                            );
+                            // Обновляем список после возврата
+                            if (mounted) {
+                              _loadSneakers();
+                            }
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              PrimaryButton(
-                text: 'Добавить кроссовки',
-                leading: const Icon(CupertinoIcons.plus_circle, size: 18),
-                onPressed: () async {
-                  await Navigator.of(context).push(
-                    CupertinoPageRoute(
-                      builder: (_) =>
-                          const AddingEquipmentScreen(initialSegment: 0),
-                    ),
-                  );
-                  // Обновляем список после возврата
-                  if (mounted) {
-                    _loadSneakers();
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
+              );
+            },
+            loading: () => const Center(child: CupertinoActivityIndicator(radius: 16)),
+            error: (_, __) => const SizedBox.shrink(),
+          );
+        },
       );
     }
 
@@ -263,32 +268,52 @@ class _ViewingSneakersContentState
                 mainBadgeText: sneaker.isMain ? 'Основные' : null,
                 onUpdate:
                     _loadSneakers, // Callback для обновления списка после действий
+                userId: widget.userId, // ID пользователя, чье снаряжение отображается
               ),
             ],
           );
         }),
-        // ── Кнопка "Добавить кроссовки"
-        if (_sneakers.isNotEmpty) const SizedBox(height: 25),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Center(
-            child: PrimaryButton(
-              text: 'Добавить кроссовки',
-              leading: const Icon(CupertinoIcons.plus_circle, size: 18),
-              onPressed: () async {
-                await Navigator.of(context).push(
-                  CupertinoPageRoute(
-                    builder: (_) =>
-                        const AddingEquipmentScreen(initialSegment: 0),
-                  ),
-                );
-                // Обновляем список после возврата
-                if (mounted) {
-                  _loadSneakers();
+        // ── Кнопка "Добавить кроссовки" (только для собственного профиля)
+        Consumer(
+          builder: (context, ref, child) {
+            final currentUserIdAsync = ref.watch(currentUserIdProvider);
+            return currentUserIdAsync.when(
+              data: (currentUserId) {
+                final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
+                if (!isOwnProfile) {
+                  return const SizedBox.shrink();
                 }
+                return Column(
+                  children: [
+                    if (_sneakers.isNotEmpty) const SizedBox(height: 25),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Center(
+                        child: PrimaryButton(
+                          text: 'Добавить кроссовки',
+                          leading: const Icon(CupertinoIcons.plus_circle, size: 18),
+                          onPressed: () async {
+                            await Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (_) =>
+                                    const AddingEquipmentScreen(initialSegment: 0),
+                              ),
+                            );
+                            // Обновляем список после возврата
+                            if (mounted) {
+                              _loadSneakers();
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                );
               },
-            ),
-          ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            );
+          },
         ),
       ],
     );
@@ -311,6 +336,7 @@ class GearViewCard extends ConsumerStatefulWidget {
   final String? mainBadgeText;
   final VoidCallback? onUpdate; // Callback для обновления списка после действий
   final String equipmentType; // Тип снаряжения: 'boots' или 'bike'
+  final int userId; // ID пользователя, чье снаряжение отображается
 
   const GearViewCard.shoes({
     super.key,
@@ -326,6 +352,7 @@ class GearViewCard extends ConsumerStatefulWidget {
     required this.since,
     this.mainBadgeText,
     this.onUpdate,
+    required this.userId,
   }) : thirdValue = pace,
        thirdLabel = 'Темп, мин/км',
        equipmentType = 'boots';
@@ -344,6 +371,7 @@ class GearViewCard extends ConsumerStatefulWidget {
     required this.since,
     this.mainBadgeText,
     this.onUpdate,
+    required this.userId,
   }) : thirdValue = speed,
        thirdLabel = 'Скорость, км/ч',
        equipmentType = 'bike';
@@ -360,6 +388,16 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
   void _showMenu(BuildContext context) async {
     // Если нет equipUserId, не показываем меню
     if (widget.equipUserId == null) {
+      return;
+    }
+
+    // Проверяем, является ли это собственным профилем
+    final authService = ref.read(authServiceProvider);
+    final currentUserId = await authService.getUserId();
+    final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
+
+    // Если это не собственный профиль, не показываем меню
+    if (!isOwnProfile) {
       return;
     }
 
@@ -569,20 +607,36 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
                     ),
                   ),
                 ),
-                IconButton(
-                  key: _menuKey,
-                  onPressed: () => _showMenu(context),
-                  tooltip: 'Меню',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
-                  icon: Icon(
-                    CupertinoIcons.ellipsis, // горизонтальная иконка
-                    size: 18,
-                    color: AppColors.getIconPrimaryColor(context),
-                  ),
+                // Показываем кнопку меню только для собственного профиля
+                Consumer(
+                  builder: (context, ref, child) {
+                    final currentUserIdAsync = ref.watch(currentUserIdProvider);
+                    return currentUserIdAsync.when(
+                      data: (currentUserId) {
+                        final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
+                        if (!isOwnProfile) {
+                          return const SizedBox.shrink();
+                        }
+                        return IconButton(
+                          key: _menuKey,
+                          onPressed: () => _showMenu(context),
+                          tooltip: 'Меню',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 32,
+                            minHeight: 32,
+                          ),
+                          icon: Icon(
+                            CupertinoIcons.ellipsis, // горизонтальная иконка
+                            size: 18,
+                            color: AppColors.getIconPrimaryColor(context),
+                          ),
+                        );
+                      },
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
+                    );
+                  },
                 ),
               ],
             ),
