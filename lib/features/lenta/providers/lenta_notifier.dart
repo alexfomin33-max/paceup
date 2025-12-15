@@ -73,13 +73,31 @@ class LentaNotifier extends StateNotifier<LentaState> {
     required int page,
     required int limit,
   }) async {
-    final data = await _api.post(
+    final response = await _api.post(
       '/activities_lenta.php',
       body: {'userId': '$userId', 'limit': '$limit', 'page': '$page'},
       timeout: const Duration(seconds: 15),
     );
 
-    final List rawList = data['data'] as List? ?? const [];
+    // PHP API возвращает массив напрямую, а не в поле 'data'
+    List<dynamic> rawList;
+    if (response is List<dynamic>) {
+      rawList = List<dynamic>.from(response as List);
+    } else if (response is Map<String, dynamic>) {
+      if (response.containsKey('data')) {
+        final dataValue = response['data'];
+        if (dataValue is List) {
+          rawList = List<dynamic>.from(dataValue);
+        } else {
+          rawList = const <dynamic>[];
+        }
+      } else {
+        rawList = const <dynamic>[];
+      }
+    } else {
+      rawList = const <dynamic>[];
+    }
+    
     final activities = rawList
         .whereType<Map<String, dynamic>>()
         .map(Activity.fromApi)
@@ -134,10 +152,16 @@ class LentaNotifier extends StateNotifier<LentaState> {
 
       final newSeenIds = deduplicatedItems.map(_getId).toSet();
 
+      // ✅ hasMore должен быть true, если вернулось больше 0 элементов
+      // Останавливаемся только если вернулось 0 элементов (значит больше нет данных)
+      // Это позволяет загружать дополнительные страницы, даже если на текущей странице меньше limit элементов
+      final itemsCount = deduplicatedItems.length;
+      final hasMore = itemsCount > 0;
+      
       state = state.copyWith(
         items: deduplicatedItems,
         currentPage: 1,
-        hasMore: deduplicatedItems.length == limit,
+        hasMore: hasMore,
         seenIds: newSeenIds,
         isRefreshing: false,
         error: null,
@@ -202,10 +226,19 @@ class LentaNotifier extends StateNotifier<LentaState> {
         }
       }
 
+      // ✅ hasMore должен быть true, если свежих элементов больше 0
+      // Останавливаемся только если вернулось 0 элементов (значит больше нет данных)
+      // Но также учитываем, что если до refresh были загружены дополнительные страницы,
+      // то возможно есть еще данные на следующих страницах (которые мы еще не проверили)
+      final freshItemsCount = deduplicatedFreshItems.length;
+      final hadMorePagesBeforeRefresh = state.currentPage > 1 && state.hasMore;
+      final hasMore = freshItemsCount > 0 || hadMorePagesBeforeRefresh;
+
       state = state.copyWith(
         items: updatedItems,
         seenIds: updatedSeenIds,
-        hasMore: deduplicatedFreshItems.length == limit,
+        currentPage: 1, // ✅ Сбрасываем currentPage на 1 после refresh
+        hasMore: hasMore,
         isRefreshing: false,
       );
     } catch (e) {
@@ -287,11 +320,18 @@ class LentaNotifier extends StateNotifier<LentaState> {
       final updatedItems = [...state.items, ...newItems];
       final updatedSeenIds = {...state.seenIds, ...newItems.map(_getId)};
 
+      // ✅ hasMore должен быть true, если вернулось больше 0 элементов
+      // Останавливаемся только если вернулось 0 элементов (значит больше нет данных)
+      // Это позволяет загружать дополнительные страницы, даже если на текущей странице меньше limit элементов
+      // Проверяем на основе исходного количества элементов с сервера (moreItems.length),
+      // а не после дедупликации (newItems.length), потому что сервер может вернуть дубликаты
+      final hasMore = moreItems.length > 0;
+      
       state = state.copyWith(
         items: updatedItems,
         currentPage: nextPage,
         seenIds: updatedSeenIds,
-        hasMore: moreItems.length == limit,
+        hasMore: hasMore,
         isLoadingMore: false,
       );
     } catch (e) {
