@@ -736,7 +736,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         ? ref.watch(unreadChatsProvider(_actualUserId!))
         : null;
     // Читаем состояние уведомлений для счетчика
-    final notificationsState = ref.watch(notificationsProvider);
+    // ✅ Используем селектор для отслеживания только unreadCount
+    // Это гарантирует, что виджет перестроится при изменении счетчика
+    final unreadNotificationsCount = ref.watch(
+      notificationsProvider.select((state) => state.unreadCount),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
@@ -808,11 +812,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                 icon: CupertinoIcons.bell,
                 onPressed: _openNotifications,
               ),
-              if (notificationsState.unreadCount > 0)
+              if (unreadNotificationsCount > 0)
                 Positioned(
                   right: 4,
                   top: 4,
-                  child: _Badge(count: notificationsState.unreadCount),
+                  child: _Badge(count: unreadNotificationsCount),
                 ),
             ],
           ),
