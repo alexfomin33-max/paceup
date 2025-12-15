@@ -74,12 +74,8 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                 SubscriptionsTab(
                   key: PageStorageKey('leaderboard_subscriptions'),
                 ),
-                AllUsersTab(
-                  key: PageStorageKey('leaderboard_users'),
-                ),
-                CityTab(
-                  key: PageStorageKey('leaderboard_city'),
-                ),
+                AllUsersTab(key: PageStorageKey('leaderboard_users')),
+                CityTab(key: PageStorageKey('leaderboard_city')),
               ],
             ),
           ),

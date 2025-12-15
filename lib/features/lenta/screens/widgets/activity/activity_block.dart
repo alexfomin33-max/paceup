@@ -141,79 +141,106 @@ class ActivityBlock extends ConsumerWidget {
               bottomGap: 12.0,
 
               // ────────────────────────────────────────────────────────────────
-              // 🔹 МЕНЮ С ТРЕМЯ ТОЧКАМИ: показываем только автору активности
+              // 🔹 МЕНЮ С ТРЕМЯ ТОЧКАМИ: показываем всегда, но разное содержимое
+              // для автора и других пользователей
               // ────────────────────────────────────────────────────────────────
-              trailing: updatedActivity.userId == currentUserId
-                  ? IconButton(
-                      key: menuKey,
-                      icon: Icon(
-                        CupertinoIcons.ellipsis,
-                        color: AppColors.getIconPrimaryColor(context),
+              trailing: IconButton(
+                key: menuKey,
+                icon: Icon(
+                  CupertinoIcons.ellipsis,
+                  color: AppColors.getIconPrimaryColor(context),
+                ),
+                onPressed: () {
+                  final items = <MoreMenuItem>[];
+
+                  // ────────────────────────────────────────────────────────────────
+                  // 🔹 МЕНЮ ДЛЯ АВТОРА: редактирование, добавление фото, удаление
+                  // ────────────────────────────────────────────────────────────────
+                  if (updatedActivity.userId == currentUserId) {
+                    items.addAll([
+                      MoreMenuItem(
+                        text: 'Редактировать',
+                        icon: CupertinoIcons.pencil,
+                        onTap: () {
+                          Navigator.of(context)
+                              .push(
+                                TransparentPageRoute(
+                                  builder: (_) => EditActivityScreen(
+                                    activity: updatedActivity,
+                                    currentUserId: currentUserId,
+                                  ),
+                                ),
+                              )
+                              .then((updated) {
+                                // Если изменения были сохранены, обновляем ленту
+                                if (updated == true) {
+                                  ref
+                                      .read(
+                                        lentaProvider(
+                                          currentUserId,
+                                        ).notifier,
+                                      )
+                                      .forceRefresh();
+                                }
+                              });
+                        },
                       ),
-                      onPressed: () {
-                        final items = <MoreMenuItem>[
-                          MoreMenuItem(
-                            text: 'Редактировать',
-                            icon: CupertinoIcons.pencil,
-                            onTap: () {
-                              Navigator.of(context)
-                                  .push(
-                                    TransparentPageRoute(
-                                      builder: (_) => EditActivityScreen(
-                                        activity: updatedActivity,
-                                        currentUserId: currentUserId,
-                                      ),
-                                    ),
-                                  )
-                                  .then((updated) {
-                                    // Если изменения были сохранены, обновляем ленту
-                                    if (updated == true) {
-                                      ref
-                                          .read(
-                                            lentaProvider(
-                                              currentUserId,
-                                            ).notifier,
-                                          )
-                                          .forceRefresh();
-                                    }
-                                  });
-                            },
-                          ),
-                          MoreMenuItem(
-                            text: 'Добавить фотографии',
-                            icon: CupertinoIcons.photo_on_rectangle,
-                            onTap: () {
-                              _handleAddPhotos(
-                                context: context,
-                                ref: ref,
-                                activityId: updatedActivity.id,
-                                lentaId: updatedActivity.lentaId,
-                                currentUserId: currentUserId,
-                              );
-                            },
-                          ),
-                          MoreMenuItem(
-                            text: 'Удалить тренировку',
-                            icon: CupertinoIcons.minus_circle,
-                            iconColor: AppColors.error,
-                            textStyle: const TextStyle(color: AppColors.error),
-                            onTap: () {
-                              _handleDeleteActivity(
-                                context: context,
-                                ref: ref,
-                                activity: updatedActivity,
-                                currentUserId: currentUserId,
-                              );
-                            },
-                          ),
-                        ];
-                        MoreMenuOverlay(
-                          anchorKey: menuKey,
-                          items: items,
-                        ).show(context);
-                      },
-                    )
-                  : null,
+                      MoreMenuItem(
+                        text: 'Добавить фотографии',
+                        icon: CupertinoIcons.photo_on_rectangle,
+                        onTap: () {
+                          _handleAddPhotos(
+                            context: context,
+                            ref: ref,
+                            activityId: updatedActivity.id,
+                            lentaId: updatedActivity.lentaId,
+                            currentUserId: currentUserId,
+                          );
+                        },
+                      ),
+                      MoreMenuItem(
+                        text: 'Удалить тренировку',
+                        icon: CupertinoIcons.minus_circle,
+                        iconColor: AppColors.error,
+                        textStyle: const TextStyle(color: AppColors.error),
+                        onTap: () {
+                          _handleDeleteActivity(
+                            context: context,
+                            ref: ref,
+                            activity: updatedActivity,
+                            currentUserId: currentUserId,
+                          );
+                        },
+                      ),
+                    ]);
+                  } else {
+                    // ────────────────────────────────────────────────────────────────
+                    // 🔹 МЕНЮ ДЛЯ ДРУГИХ ПОЛЬЗОВАТЕЛЕЙ: только "Скрыть тренировки"
+                    // ────────────────────────────────────────────────────────────────
+                    items.add(
+                      MoreMenuItem(
+                        text: 'Скрыть тренировки',
+                        icon: CupertinoIcons.eye_slash,
+                        iconColor: AppColors.error,
+                        textStyle: const TextStyle(color: AppColors.error),
+                        onTap: () {
+                          _handleHideActivities(
+                            context: context,
+                            ref: ref,
+                            activity: updatedActivity,
+                            currentUserId: currentUserId,
+                          );
+                        },
+                      ),
+                    );
+                  }
+
+                  MoreMenuOverlay(
+                    anchorKey: menuKey,
+                    items: items,
+                  ).show(context);
+                },
+              ),
             ),
           ),
 
@@ -733,4 +760,51 @@ Future<bool> _sendDeleteActivityRequest({
     debugPrint('⚠️ Неожиданная ошибка при удалении активности: $e');
     return false;
   }
+}
+
+/// Обработчик скрытия тренировок пользователя.
+///
+/// Показывает диалог подтверждения, после чего скрывает тренировки.
+/// Сама реализация скрытия будет добавлена позже.
+Future<void> _handleHideActivities({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Activity activity,
+  required int currentUserId,
+}) async {
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ДИАЛОГ ПОДТВЕРЖДЕНИЯ: спрашиваем у пользователя подтверждение
+  // ────────────────────────────────────────────────────────────────
+  final confirmed = await showCupertinoDialog<bool>(
+    context: context,
+    builder: (ctx) => CupertinoAlertDialog(
+      title: const Text('Скрыть тренировки?'),
+      content: Text(
+        'Тренировки ${activity.userName} будут скрыты из вашей ленты.',
+      ),
+      actions: [
+        CupertinoDialogAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('Отмена'),
+        ),
+        CupertinoDialogAction(
+          isDestructiveAction: true,
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: const Text('Да, скрыть'),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true || !context.mounted) return;
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 РЕАЛИЗАЦИЯ СКРЫТИЯ: будет добавлена позже
+  // ────────────────────────────────────────────────────────────────
+  // TODO: Реализовать скрытие тренировок пользователя
+  debugPrint(
+    '⚠️ Скрытие тренировок пользователя ${activity.userId} - '
+    'реализация будет добавлена позже',
+  );
 }

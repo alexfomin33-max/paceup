@@ -45,55 +45,11 @@ class LeaderboardRowData {
     return LeaderboardRowData(
       rank: json['rank'] as int,
       name: json['name'] as String,
-      value: json['distance_formatted'] as String? ?? 
-             (json['value'] as String? ?? '0,0'),
+      value:
+          json['distance_formatted'] as String? ??
+          (json['value'] as String? ?? '0,0'),
       avatarUrl: json['avatar_url'] as String,
       userId: json['user_id'] as int?,
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-//                     ДЕМО-ДАННЫЕ ДЛЯ ТАБЛИЦЫ
-// ─────────────────────────────────────────────────────────────────────────────
-/// Демо-данные для лидерборда (временно, будет заменено на данные из API)
-/// Примечание: эти данные больше не используются, так как данные загружаются из API
-const kDemoLeaderboardRows = <LeaderboardRowData>[
-  LeaderboardRowData(
-    rank: 1,
-    name: 'Алексей Лукашин',
-    value: '272,8',
-    avatarUrl: 'http://uploads.paceup.ru/images/users/avatars/def.png',
-  ),
-  LeaderboardRowData(
-    rank: 2,
-    name: 'Татьяна Свиридова',
-    value: '214,7',
-    avatarUrl: 'http://uploads.paceup.ru/images/users/avatars/def.png',
-  ),
-  LeaderboardRowData(
-    rank: 3,
-    name: 'Борис Жарких',
-    value: '197,2',
-    avatarUrl: 'http://uploads.paceup.ru/images/users/avatars/def.png',
-  ),
-  LeaderboardRowData(
-    rank: 4,
-    name: 'Евгений Бойко',
-    value: '145,8',
-    avatarUrl: 'http://uploads.paceup.ru/images/users/avatars/def.png',
-  ),
-  LeaderboardRowData(
-    rank: 5,
-    name: 'Екатерина Виноградова',
-    value: '108,5',
-    avatarUrl: 'http://uploads.paceup.ru/images/users/avatars/def.png',
-  ),
-  LeaderboardRowData(
-    rank: 6,
-    name: 'Юрий Селиванов',
-    value: '96,4',
-    avatarUrl: 'http://uploads.paceup.ru/images/users/avatars/def.png',
-  ),
-];
-
