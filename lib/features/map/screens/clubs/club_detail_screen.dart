@@ -780,9 +780,11 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                               ),
                             )
                           else if (_tab == 2)
-                            const Padding(
-                              padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
-                              child: CoffeeRunVldStatsContent(),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                              child: CoffeeRunVldStatsContent(
+                                clubId: widget.clubId,
+                              ),
                             )
                           else
                             const Padding(

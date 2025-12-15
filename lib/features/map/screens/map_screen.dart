@@ -1236,8 +1236,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       });
     }
 
+    // Используем стабильный ключ для предотвращения пересоздания FlutterMap
+    // Это предотвращает setState во время build при инициализации MapController
+    final mapKey = ValueKey('flutter_map_${_selectedIndex}');
+
     return SizedBox.expand(
       child: flutter_map.FlutterMap(
+        key: mapKey,
         mapController: _flutterMapController,
         options: flutter_map.MapOptions(
           initialCenter: center,
