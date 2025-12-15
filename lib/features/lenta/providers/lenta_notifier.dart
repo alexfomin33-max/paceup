@@ -356,6 +356,57 @@ class LentaNotifier extends StateNotifier<LentaState> {
     await _cache.removeCachedActivity(lentaId: lentaId);
   }
 
+  /// Удаление всех записей пользователя по типу контента
+  /// Используется при скрытии постов/тренировок пользователя
+  /// Не сбрасывает пагинацию, чтобы не ломать загрузку следующих страниц
+  Future<void> removeUserContent({
+    required int hiddenUserId,
+    required String contentType, // 'activity' или 'post'
+  }) async {
+    // Сначала собираем ID элементов, которые нужно удалить
+    final removedIds = <int>{};
+    
+    // Фильтруем элементы: оставляем только те, которые НЕ от скрытого пользователя
+    // или имеют другой тип контента
+    final updatedItems = state.items.where((item) {
+      // Если это запись от скрытого пользователя
+      if (item.userId == hiddenUserId) {
+        bool shouldHide = false;
+        
+        // Проверяем тип контента
+        if (contentType == 'activity') {
+          // Скрываем тренировки (все, кроме постов)
+          shouldHide = item.type != 'post';
+        } else if (contentType == 'post') {
+          // Скрываем посты
+          shouldHide = item.type == 'post';
+        }
+        
+        if (shouldHide) {
+          removedIds.add(_getId(item));
+          return false; // Удаляем этот элемент
+        }
+      }
+      // Оставляем все остальные записи
+      return true;
+    }).toList();
+
+    final updatedSeenIds = Set<int>.from(state.seenIds)..removeAll(removedIds);
+
+    // ✅ Важно: НЕ сбрасываем currentPage и hasMore
+    // Это позволяет продолжить загрузку следующих страниц
+    state = state.copyWith(
+      items: updatedItems,
+      seenIds: updatedSeenIds,
+      // Пагинация сохраняется
+    );
+
+    // Удаляем из кэша скрытые элементы
+    for (final lentaId in removedIds) {
+      await _cache.removeCachedActivity(lentaId: lentaId);
+    }
+  }
+
   /// Обновление счётчика лайков для активности
   /// Также обновляет кэш
   Future<void> updateLikes(int lentaId, int newLikesCount) async {

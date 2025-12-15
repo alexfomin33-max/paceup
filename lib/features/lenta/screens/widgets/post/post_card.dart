@@ -17,6 +17,7 @@ import '../../../../../core/utils/feed_date.dart';
 import '../../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../../core/widgets/transparent_route.dart';
 import '../../../../profile/screens/profile_screen.dart';
+import '../../../../../features/lenta/providers/lenta_provider.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 ///   КАРТОЧКА ПОСТА
@@ -151,8 +152,7 @@ class _PostCardState extends ConsumerState<PostCard> {
 
   /// Обработчик скрытия постов пользователя.
   ///
-  /// Показывает диалог подтверждения, после чего скрывает посты.
-  /// Сама реализация скрытия будет добавлена позже.
+  /// Показывает диалог подтверждения, после чего скрывает посты через API.
   Future<void> _handleHidePosts({
     required BuildContext context,
     required Activity post,
@@ -186,13 +186,85 @@ class _PostCardState extends ConsumerState<PostCard> {
     if (confirmed != true || !context.mounted) return;
 
     // ────────────────────────────────────────────────────────────────
-    // 🔹 РЕАЛИЗАЦИЯ СКРЫТИЯ: будет добавлена позже
+    // 🔹 ВЫЗОВ API: скрываем посты пользователя
     // ────────────────────────────────────────────────────────────────
-    // TODO: Реализовать скрытие постов пользователя
-    debugPrint(
-      '⚠️ Скрытие постов пользователя ${post.userId} - '
-      'реализация будет добавлена позже',
-    );
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/hide_user_content.php',
+        body: {
+          'userId': '$currentUserId',
+          'hidden_user_id': '${post.userId}',
+          'action': 'hide',
+          'content_type': 'post', // Скрываем только посты
+        },
+        timeout: const Duration(seconds: 10),
+      );
+
+      // Проверяем успешность операции
+      final success = data['success'] == true;
+      
+      if (success && context.mounted) {
+        // Удаляем посты пользователя из ленты локально без сброса пагинации
+        ref.read(lentaProvider(currentUserId).notifier).removeUserContent(
+          hiddenUserId: post.userId,
+          contentType: 'post',
+        );
+      } else if (context.mounted) {
+        // Показываем ошибку
+        await showCupertinoDialog<void>(
+          context: context,
+          builder: (ctx) => CupertinoAlertDialog(
+            title: const Text('Ошибка'),
+            content: Text(
+              data['message']?.toString() ?? 'Не удалось скрыть посты пользователя',
+            ),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Ок'),
+              ),
+            ],
+          ),
+        );
+      }
+    } on ApiException catch (e) {
+      if (context.mounted) {
+        await showCupertinoDialog<void>(
+          context: context,
+          builder: (ctx) => CupertinoAlertDialog(
+            title: const Text('Ошибка'),
+            content: Text('Не удалось скрыть посты: ${e.message}'),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Ок'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Ошибка при скрытии постов: $e');
+      if (context.mounted) {
+        await showCupertinoDialog<void>(
+          context: context,
+          builder: (ctx) => CupertinoAlertDialog(
+            title: const Text('Ошибка'),
+            content: const Text('Не удалось скрыть посты пользователя'),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Ок'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
   }
 
   @override

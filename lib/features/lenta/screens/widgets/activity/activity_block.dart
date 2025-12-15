@@ -764,8 +764,7 @@ Future<bool> _sendDeleteActivityRequest({
 
 /// Обработчик скрытия тренировок пользователя.
 ///
-/// Показывает диалог подтверждения, после чего скрывает тренировки.
-/// Сама реализация скрытия будет добавлена позже.
+/// Показывает диалог подтверждения, после чего скрывает тренировки через API.
 Future<void> _handleHideActivities({
   required BuildContext context,
   required WidgetRef ref,
@@ -800,11 +799,83 @@ Future<void> _handleHideActivities({
   if (confirmed != true || !context.mounted) return;
 
   // ────────────────────────────────────────────────────────────────
-  // 🔹 РЕАЛИЗАЦИЯ СКРЫТИЯ: будет добавлена позже
+  // 🔹 ВЫЗОВ API: скрываем тренировки пользователя
   // ────────────────────────────────────────────────────────────────
-  // TODO: Реализовать скрытие тренировок пользователя
-  debugPrint(
-    '⚠️ Скрытие тренировок пользователя ${activity.userId} - '
-    'реализация будет добавлена позже',
-  );
+  try {
+    final api = ref.read(apiServiceProvider);
+    final data = await api.post(
+      '/hide_user_content.php',
+      body: {
+        'userId': '$currentUserId',
+        'hidden_user_id': '${activity.userId}',
+        'action': 'hide',
+        'content_type': 'activity', // Скрываем только тренировки
+      },
+      timeout: const Duration(seconds: 10),
+    );
+
+    // Проверяем успешность операции
+    final success = data['success'] == true;
+    
+    if (success && context.mounted) {
+      // Удаляем тренировки пользователя из ленты локально без сброса пагинации
+      ref.read(lentaProvider(currentUserId).notifier).removeUserContent(
+        hiddenUserId: activity.userId,
+        contentType: 'activity',
+      );
+    } else if (context.mounted) {
+      // Показываем ошибку
+      await showCupertinoDialog<void>(
+        context: context,
+        builder: (ctx) => CupertinoAlertDialog(
+          title: const Text('Ошибка'),
+          content: Text(
+            data['message']?.toString() ?? 'Не удалось скрыть тренировки пользователя',
+          ),
+          actions: [
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Ок'),
+            ),
+          ],
+        ),
+      );
+    }
+  } on ApiException catch (e) {
+    if (context.mounted) {
+      await showCupertinoDialog<void>(
+        context: context,
+        builder: (ctx) => CupertinoAlertDialog(
+          title: const Text('Ошибка'),
+          content: Text('Не удалось скрыть тренировки: ${e.message}'),
+          actions: [
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Ок'),
+            ),
+          ],
+        ),
+      );
+    }
+  } catch (e) {
+    debugPrint('Ошибка при скрытии тренировок: $e');
+    if (context.mounted) {
+      await showCupertinoDialog<void>(
+        context: context,
+        builder: (ctx) => CupertinoAlertDialog(
+          title: const Text('Ошибка'),
+          content: const Text('Не удалось скрыть тренировки пользователя'),
+          actions: [
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Ок'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
 }
