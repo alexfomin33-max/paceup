@@ -1,19 +1,21 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../services/stats_service.dart';
 
 /// Вкладка «По видам» — интерактивная:
-/// • Выпадающий период (неделя/месяц/3м/6м/год)
+/// • Выпадающий период (неделя/месяц/год)
 /// • Переключение вида спорта (бег/вело/плавание)
-List<Widget> buildByTypeStatsSlivers() {
-  return const [
-    SliverToBoxAdapter(child: _ByTypeContent()),
-    SliverToBoxAdapter(child: SizedBox(height: 18)),
+List<Widget> buildByTypeStatsSlivers(int userId) {
+  return [
+    SliverToBoxAdapter(child: _ByTypeContent(userId: userId)),
+    const SliverToBoxAdapter(child: SizedBox(height: 18)),
   ];
 }
 
 class StatsTab extends StatefulWidget {
-  const StatsTab({super.key});
+  final int? userId;
+  const StatsTab({super.key, this.userId});
 
   @override
   State<StatsTab> createState() => _StatsTabState();
@@ -27,11 +29,18 @@ class _StatsTabState extends State<StatsTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final userId = widget.userId;
+    if (userId == null) {
+      return const Center(
+        child: Text('Ошибка: не указан userId'),
+      );
+    }
+    
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 10)),
-        ...buildByTypeStatsSlivers(),
+        ...buildByTypeStatsSlivers(userId),
         const SliverToBoxAdapter(child: SizedBox(height: 18)),
       ],
     );
@@ -39,174 +48,305 @@ class _StatsTabState extends State<StatsTab>
 }
 
 class _ByTypeContent extends StatefulWidget {
-  const _ByTypeContent();
+  final int userId;
+  const _ByTypeContent({required this.userId});
   @override
   State<_ByTypeContent> createState() => _ByTypeContentState();
 }
 
 class _ByTypeContentState extends State<_ByTypeContent> {
+  final StatsService _statsService = StatsService();
+  
   // Периоды
   static const _periods = ['За неделю', 'За месяц', 'За год'];
   String _period = 'За год';
 
   // Вид спорта: 0 бег, 1 вело, 2 плавание (single-select)
   int _sport = 0;
+  
+  // Состояние загрузки
+  bool _isLoading = true;
+  StatsData? _statsData;
+  String? _error;
+  
+  // Текущий год для графиков
+  int _currentYear = DateTime.now().year;
 
-  // Демо-данные (за год). Другие периоды считаем через scale.
-  static const _run = [
-    560,
-    580,
-    640,
-    690,
-    780,
-    920,
-    890,
-    860,
-    700,
-    540,
-    460,
-    380,
-  ];
-  static const _bike = [
-    820,
-    900,
-    980,
-    1100,
-    1200,
-    1300,
-    1400,
-    1350,
-    1200,
-    1000,
-    900,
-    820,
-  ];
-  static const _swim = [
-    120,
-    130,
-    160,
-    190,
-    210,
-    240,
-    220,
-    210,
-    180,
-    150,
-    130,
-    120,
-  ];
-
-  double _scaleForPeriod(String p) {
-    switch (p) {
-      case 'За неделю':
-        return 0.06; // ~1/16
-      case 'За месяц':
-        return 0.10; // ~1/10
-      default:
-        return 1.0; // За год
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+  
+  /// Загружает статистику с текущими фильтрами
+  Future<void> _loadStats({int? year}) async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    
+    try {
+      final periodMap = {
+        'За неделю': 'week',
+        'За месяц': 'month',
+        'За год': 'year',
+      };
+      
+      final sportTypeMap = {
+        0: 'run',
+        1: 'bike',
+        2: 'swim',
+      };
+      
+      final period = periodMap[_period] ?? 'year';
+      final sportType = sportTypeMap[_sport];
+      final yearForRequest = year ?? _currentYear;
+      
+      final data = await _statsService.getStats(
+        userId: widget.userId,
+        period: period,
+        sportType: sportType,
+        year: yearForRequest,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _statsData = data;
+          _isLoading = false;
+          if (year != null) {
+            _currentYear = year;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
-
-  List<double> _valuesForSport() {
-    final s = _scaleForPeriod(_period);
-    final base = _sport == 0 ? _run : (_sport == 1 ? _bike : _swim);
-    return base.map((v) => v * s).toList(growable: false);
+  
+  /// Преобразует период в API формат
+  String _getPeriodApi() {
+    switch (_period) {
+      case 'За неделю':
+        return 'week';
+      case 'За месяц':
+        return 'month';
+      case 'За год':
+      default:
+        return 'year';
+    }
   }
-
-  List<_MetricRowData> _metricsForSport() {
-    final s = _scaleForPeriod(_period);
-    if (_sport == 0) {
-      // Бег
+  
+  /// Преобразует вид спорта в API формат
+  String? _getSportTypeApi() {
+    switch (_sport) {
+      case 0:
+        return 'run';
+      case 1:
+        return 'bike';
+      case 2:
+        return 'swim';
+      default:
+        return null;
+    }
+  }
+  
+  /// Получает метрики из загруженных данных
+  List<_MetricRowData> _getMetrics() {
+    if (_statsData == null) {
+      return [];
+    }
+    
+    final metrics = _statsData!.metrics;
+    final sportType = _getSportTypeApi();
+    
+    if (sportType == 'run') {
       return [
         _MetricRowData(
           Icons.directions_run,
           'Забегов',
-          (270 * s).toStringAsFixed(0),
+          metrics.activitiesCount,
         ),
         _MetricRowData(
           Icons.access_time,
           'Общее время',
-          '${(301 * s).toStringAsFixed(0)} ч ${(16 * s).toStringAsFixed(0)} мин',
+          metrics.totalTime,
         ),
         _MetricRowData(
           Icons.place_outlined,
           'Расстояние',
-          '${(2976 * s).toStringAsFixed(0)} км',
+          metrics.distance,
         ),
-        const _MetricRowData(Icons.favorite_border, 'Средний пульс', '152'),
-        const _MetricRowData(Icons.speed, 'Средний темп', '5:15 /км'),
-        const _MetricRowData(
+        _MetricRowData(
+          Icons.favorite_border,
+          'Средний пульс',
+          metrics.avgHeartRate ?? '—',
+        ),
+        _MetricRowData(
+          Icons.speed,
+          'Средний темп',
+          metrics.avgPace ?? '—',
+        ),
+        _MetricRowData(
           Icons.directions_walk_outlined,
           'Средний каденс',
-          '173',
+          metrics.avgCadence ?? '—',
         ),
-        const _MetricRowData(Icons.insights, 'Относительное усилие', '50'),
+        _MetricRowData(
+          Icons.insights,
+          'Относительное усилие',
+          metrics.relativeEffort ?? '—',
+        ),
         _MetricRowData(
           Icons.terrain,
           'Набор высоты',
-          '${(27804 * s).toStringAsFixed(0)} м',
+          metrics.elevationGain ?? '—',
         ),
       ];
-    } else if (_sport == 1) {
-      // Вело
+    } else if (sportType == 'bike') {
       return [
         _MetricRowData(
           Icons.directions_bike,
           'Заездов',
-          (180 * s).toStringAsFixed(0),
+          metrics.activitiesCount,
         ),
         _MetricRowData(
           Icons.access_time,
           'Общее время',
-          '${(420 * s).toStringAsFixed(0)} ч',
+          metrics.totalTime,
         ),
         _MetricRowData(
           Icons.place,
           'Расстояние',
-          '${(6120 * s).toStringAsFixed(0)} км',
+          metrics.distance,
         ),
-        const _MetricRowData(Icons.speed, 'Средняя скорость', '28,4 км/ч'),
+        _MetricRowData(
+          Icons.speed,
+          'Средняя скорость',
+          metrics.avgSpeed ?? '—',
+        ),
         _MetricRowData(
           Icons.terrain_outlined,
           'Набор высоты',
-          '${(41000 * s).toStringAsFixed(0)} м',
+          metrics.elevationGain ?? '—',
         ),
       ];
-    } else {
-      // Плавание
+    } else if (sportType == 'swim') {
       return [
-        _MetricRowData(Icons.pool, 'Заплывов', (120 * s).toStringAsFixed(0)),
+        _MetricRowData(
+          Icons.pool,
+          'Заплывов',
+          metrics.activitiesCount,
+        ),
         _MetricRowData(
           Icons.access_time,
           'Общее время',
-          '${(95 * s).toStringAsFixed(0)} ч',
+          metrics.totalTime,
         ),
         _MetricRowData(
           Icons.place,
           'Расстояние',
-          '${(320 * s).toStringAsFixed(0)} км',
+          metrics.distance,
         ),
-        const _MetricRowData(Icons.speed, 'Средний темп', '1:45 /100м'),
+        _MetricRowData(
+          Icons.speed,
+          'Средний темп',
+          metrics.avgPace ?? '—',
+        ),
       ];
     }
+    
+    return [];
   }
-
+  
+  /// Получает данные для графика расстояния
+  List<double> _getDistanceChart() {
+    if (_statsData == null) {
+      return List.filled(12, 0.0);
+    }
+    return _statsData!.charts.distance.map((e) => e.toDouble()).toList();
+  }
+  
+  /// Получает данные для графика дней активности
+  List<double> _getActiveDaysChart() {
+    if (_statsData == null) {
+      return List.filled(12, 0.0);
+    }
+    return _statsData!.charts.activeDays.map((e) => e.toDouble()).toList();
+  }
+  
+  /// Получает данные для графика времени активности
+  List<double> _getActiveTimeChart() {
+    if (_statsData == null) {
+      return List.filled(12, 0.0);
+    }
+    return _statsData!.charts.activeTime.map((e) => e.toDouble()).toList();
+  }
+  
+  /// Вычисляет maxY для графика расстояния
+  double _getDistanceMaxY() {
+    final values = _getDistanceChart();
+    if (values.isEmpty) return 100;
+    final max = values.reduce((a, b) => a > b ? a : b);
+    if (max <= 0) return 100;
+    // Округляем до ближайшего большего кратного 100
+    return ((max / 100).ceil() * 100).toDouble();
+  }
+  
+  /// Вычисляет tick для графика расстояния
+  double _getDistanceTick() {
+    final maxY = _getDistanceMaxY();
+    if (maxY <= 200) return 50;
+    if (maxY <= 500) return 100;
+    if (maxY <= 1000) return 200;
+    return 500;
+  }
+  
   Color _barColor() => AppColors.accentMint;
-  double _maxY() => _sport == 0
-      ? 1000
-      : _sport == 1
-      ? 1400
-      : 300;
-  double _tick() => _sport == 0
-      ? 100
-      : _sport == 1
-      ? 200
-      : 50;
 
   @override
   Widget build(BuildContext context) {
-    final values = _valuesForSport();
-    final metrics = _metricsForSport();
+    if (_isLoading && _statsData == null) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    
+    if (_error != null && _statsData == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Text(
+            'Ошибка загрузки: $_error',
+            style: TextStyle(
+              color: AppColors.getTextSecondaryColor(context),
+            ),
+          ),
+        ),
+      );
+    }
+    
+    final metrics = _getMetrics();
+    final distanceValues = _getDistanceChart();
+    final activeDaysValues = _getActiveDaysChart();
+    final activeTimeValues = _getActiveTimeChart();
+    
+    // Вычисляем maxY для графиков
+    final distanceMaxY = _getDistanceMaxY();
+    final distanceTick = _getDistanceTick();
+    final activeDaysMaxY = activeDaysValues.isEmpty
+        ? 30.0
+        : (activeDaysValues.reduce((a, b) => a > b ? a : b).ceil() / 5).ceil() * 5.0;
+    final activeTimeMaxY = activeTimeValues.isEmpty
+        ? 3000.0
+        : (activeTimeValues.reduce((a, b) => a > b ? a : b).ceil() / 500).ceil() * 500.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,6 +389,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                     onChanged: (String? newValue) {
                       if (newValue != null && newValue != _period) {
                         setState(() => _period = newValue);
+                        _loadStats();
                       }
                     },
                     items: _periods.map((String period) {
@@ -272,19 +413,28 @@ class _ByTypeContentState extends State<_ByTypeContent> {
               _SportIcon(
                 selected: _sport == 0,
                 icon: Icons.directions_run,
-                onTap: () => setState(() => _sport = 0),
+                onTap: () {
+                  setState(() => _sport = 0);
+                  _loadStats();
+                },
               ),
               const SizedBox(width: 8),
               _SportIcon(
                 selected: _sport == 1,
                 icon: Icons.directions_bike,
-                onTap: () => setState(() => _sport = 1),
+                onTap: () {
+                  setState(() => _sport = 1);
+                  _loadStats();
+                },
               ),
               const SizedBox(width: 8),
               _SportIcon(
                 selected: _sport == 2,
                 icon: Icons.pool,
-                onTap: () => setState(() => _sport = 2),
+                onTap: () {
+                  setState(() => _sport = 2);
+                  _loadStats();
+                },
               ),
             ],
           ),
@@ -292,10 +442,16 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         const SizedBox(height: 12),
 
         // ── Метрики
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: _MetricsList(metrics: metrics),
-        ),
+        if (_isLoading)
+          const Padding(
+            padding: EdgeInsets.all(32.0),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: _MetricsList(metrics: metrics),
+          ),
         const SizedBox(height: 12),
 
         // ── Заголовок графика
@@ -306,12 +462,16 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: _YearChartCard(
-            initialYear: 2024,
+            initialYear: _currentYear,
             color: _barColor(),
-            maxY: _maxY(),
-            tick: _tick(),
+            maxY: distanceMaxY,
+            tick: distanceTick,
             height: 170,
-            values: values,
+            values: distanceValues,
+            userId: widget.userId,
+            period: _getPeriodApi(),
+            sportType: _getSportTypeApi(),
+            onYearChanged: (year) => _loadStats(year: year),
           ),
         ),
         const SizedBox(height: 16),
@@ -321,15 +481,19 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         const SizedBox(height: 8),
 
         // ── Карточка с графиком "Дней активности"
-        const Padding(
-          padding: EdgeInsets.fromLTRB(12, 0, 12, 0),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
           child: _YearChartCard(
-            initialYear: 2024,
+            initialYear: _currentYear,
             color: AppColors.male,
-            maxY: 30,
+            maxY: activeDaysMaxY,
             tick: 5,
             height: 170,
-            values: [6, 10, 14, 19, 22, 28, 30, 25, 24, 22, 18, 12],
+            values: activeDaysValues,
+            userId: widget.userId,
+            period: _getPeriodApi(),
+            sportType: _getSportTypeApi(),
+            onYearChanged: (year) => _loadStats(year: year),
           ),
         ),
         const SizedBox(height: 16),
@@ -339,28 +503,19 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         const SizedBox(height: 8),
 
         // ── Карточка с графиком "Время активности"
-        const Padding(
-          padding: EdgeInsets.fromLTRB(12, 0, 12, 0),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
           child: _YearChartCard(
-            initialYear: 2024,
+            initialYear: _currentYear,
             color: AppColors.female,
-            maxY: 3000,
+            maxY: activeTimeMaxY,
             tick: 500,
             height: 190,
-            values: [
-              1500,
-              1450,
-              1400,
-              2200,
-              2900,
-              2400,
-              1700,
-              2500,
-              3000,
-              2700,
-              2500,
-              1700,
-            ],
+            values: activeTimeValues,
+            userId: widget.userId,
+            period: _getPeriodApi(),
+            sportType: _getSportTypeApi(),
+            onYearChanged: (year) => _loadStats(year: year),
           ),
         ),
       ],
@@ -442,6 +597,10 @@ class _YearChartCard extends StatefulWidget {
   final double tick;
   final Color color;
   final double height;
+  final int userId;
+  final String period;
+  final String? sportType;
+  final Function(int) onYearChanged;
 
   const _YearChartCard({
     required this.initialYear,
@@ -450,6 +609,10 @@ class _YearChartCard extends StatefulWidget {
     required this.tick,
     required this.color,
     required this.height,
+    required this.userId,
+    required this.period,
+    required this.sportType,
+    required this.onYearChanged,
   });
 
   @override
@@ -458,6 +621,35 @@ class _YearChartCard extends StatefulWidget {
 
 class _YearChartCardState extends State<_YearChartCard> {
   late int _year = widget.initialYear;
+  bool _isLoading = false;
+
+  @override
+  void didUpdateWidget(_YearChartCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialYear != widget.initialYear) {
+      _year = widget.initialYear;
+    }
+  }
+
+  void _changeYear(int delta) {
+    final newYear = _year + delta;
+    // Ограничиваем год разумными пределами
+    if (newYear >= 2020 && newYear <= DateTime.now().year + 1) {
+      setState(() {
+        _year = newYear;
+        _isLoading = true;
+      });
+      widget.onYearChanged(newYear);
+      // Сброс индикатора загрузки произойдет при обновлении данных
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -487,23 +679,35 @@ class _YearChartCardState extends State<_YearChartCard> {
             children: [
               _NavIcon(
                 CupertinoIcons.left_chevron,
-                onTap: () => setState(() => _year--),
+                onTap: () => _changeYear(-1),
               ),
               Expanded(
-                child: Text(
-                  '$_year',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.getTextPrimaryColor(context),
-                  ),
-                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: Center(
+                          child: SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      )
+                    : Text(
+                        '$_year',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
               ),
               _NavIcon(
                 CupertinoIcons.right_chevron,
-                onTap: () => setState(() => _year++),
+                onTap: () => _changeYear(1),
               ),
             ],
           ),
