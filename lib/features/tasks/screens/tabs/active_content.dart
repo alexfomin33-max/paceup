@@ -141,8 +141,8 @@ class ActiveContent extends ConsumerWidget {
 
                   const ExpeditionCard(
                     title: 'Монблан',
-                    progressText: '3 521 / 4 810 метров',
-                    percent: 0.732,
+                    progressText: '4 021 / 4 810 метров',
+                    percent: 0.832,
                     image: _RoundImage(
                       provider: AssetImage('assets/Monblan.png'),
                     ),

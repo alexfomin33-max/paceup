@@ -30,8 +30,8 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
   // ── вид спорта: 0 бег, 1 вело, 2 плавание (single-select)
   int _sport = 0;
 
-  // ── выбранный период (по умолчанию "Текущая неделя")
-  String? _selectedPeriod = 'Текущая неделя';
+  // ── выбранный период (по умолчанию "Текущий месяц")
+  String? _selectedPeriod = 'Текущий месяц';
 
   // ── пол: по умолчанию оба выбраны, всегда хотя бы один должен быть активен
   bool _genderMale = true;

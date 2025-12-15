@@ -35,9 +35,7 @@ class LeaderboardRow extends StatelessWidget {
   void _navigateToProfile(BuildContext context) {
     if (userId != null) {
       Navigator.of(context).push(
-        TransparentPageRoute(
-          builder: (_) => ProfileScreen(userId: userId!),
-        ),
+        TransparentPageRoute(builder: (_) => ProfileScreen(userId: userId!)),
       );
     }
   }
@@ -45,11 +43,11 @@ class LeaderboardRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final row = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
         children: [
           SizedBox(
-            width: 14,
+            width: 24,
             child: Text(
               '$rank',
               textAlign: TextAlign.center,
@@ -63,7 +61,7 @@ class LeaderboardRow extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           // Кликабельный аватар
           GestureDetector(
             onTap: userId != null ? () => _navigateToProfile(context) : null,
@@ -140,10 +138,11 @@ class LeaderboardRow extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 0.5,
+            indent: 12,
+            endIndent: 8,
             color: AppColors.getDividerColor(context),
           ),
       ],
     );
   }
 }
-
