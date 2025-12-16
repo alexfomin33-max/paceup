@@ -383,16 +383,38 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         appBar: PaceAppBar(
           title: 'Уведомления',
           actions: [
-            IconButton(
-              padding: const EdgeInsets.only(right: 12),
-              splashRadius: 22,
-              icon: Icon(
-                CupertinoIcons.slider_horizontal_3,
-                size: 20,
-                color: AppColors.getIconPrimaryColor(context),
+            // Кнопка «отметить» (функционал добавим позже)
+            SizedBox(
+              width: 44,
+              height: 44,
+              child: IconButton(
+                onPressed: () {},
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                splashRadius: 22,
+                icon: Icon(
+                  CupertinoIcons.check_mark_circled,
+                  size: 20,
+                  color: AppColors.getIconPrimaryColor(context),
+                ),
               ),
-              onPressed: _openSettingsSheet,
             ),
+            SizedBox(
+              width: 44,
+              height: 44,
+              child: IconButton(
+                onPressed: _openSettingsSheet,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                splashRadius: 22,
+                icon: Icon(
+                  CupertinoIcons.slider_horizontal_3,
+                  size: 20,
+                  color: AppColors.getIconPrimaryColor(context),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
           ],
         ),
 
