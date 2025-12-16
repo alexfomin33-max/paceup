@@ -6,16 +6,23 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../models/market_models.dart' show Gender;
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_service.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../widgets/pills.dart';
+import '../../../../core/widgets/transparent_route.dart';
+import '../../../map/screens/events/event_detail_screen.dart';
 
 /// Модель оповещения о слоте
 class AlertItem {
+  final int? eventId;
   final String id;
   final String eventName;
   final Gender gender;
@@ -23,11 +30,29 @@ class AlertItem {
   final String imageUrl;
 
   const AlertItem({
+    required this.eventId,
     required this.id,
     required this.eventName,
     required this.gender,
     required this.distance,
     required this.imageUrl,
+  });
+}
+
+// ─── Модель события для автопоиска ───
+class _EventOption {
+  final int id;
+  final String name;
+  final String place;
+  final String eventDate;
+  final String? logoUrl;
+
+  const _EventOption({
+    required this.id,
+    required this.name,
+    required this.place,
+    required this.eventDate,
+    this.logoUrl,
   });
 }
 
@@ -45,27 +70,57 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
 
   Gender _gender = Gender.male;
   int _distanceIndex = 0;
-  final List<String> _distances = const ['5 км', '10 км', '21,1 км', '42,2 км'];
+  List<String> _distances = []; // Динамический список дистанций
 
-  // Демо-данные текущих оповещений
-  final List<AlertItem> _alerts = [
-    const AlertItem(
-      id: '1',
-      eventName: 'СберПрайм Казанский марафон 2025',
-      gender: Gender.male,
-      distance: '42,2 км',
-      imageUrl: 'assets/race_kazan.png',
-    ),
-    const AlertItem(
-      id: '2',
-      eventName: 'Московский полумарафон',
-      gender: Gender.female,
-      distance: '21,1 км',
-      imageUrl: 'assets/race_moscow.png',
-    ),
-  ];
+  // ─── Состояние выбранного события ───
+  int? _selectedEventId;
+  String? _selectedEventLogoUrl;
+  bool _isEventSelectedFromDropdown = false; // Флаг: событие выбрано из выпадающего списка
+  bool _isSettingEventFromDropdown = false; // Флаг: сейчас устанавливаем событие программно
+  bool _isLoadingDistances = false;
 
-  bool get _isValid => nameCtrl.text.trim().isNotEmpty;
+  // ─── Состояние загрузки и ошибок ───
+  bool _isSubmitting = false;
+  bool _isLoadingAlerts = false;
+  String? _errorMessage;
+
+  // Данные текущих оповещений из API
+  List<AlertItem> _alerts = [];
+
+  bool get _isValid {
+    if (nameCtrl.text.trim().isEmpty) return false;
+    if (!_isEventSelectedFromDropdown) return false;
+    // Если событие выбрано, но дистанции еще не загружены или не выбраны
+    if (_selectedEventId != null) {
+      if (_isLoadingDistances) return false;
+      if (_distances.isEmpty) return false;
+      if (_distanceIndex >= _distances.length) return false;
+    }
+    return true;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAlerts();
+    
+    // ─── Сбрасываем флаг выбора из списка, если пользователь редактирует текст вручную ───
+    nameCtrl.addListener(() {
+      // Если сейчас устанавливаем событие программно - игнорируем
+      if (_isSettingEventFromDropdown) return;
+
+      // Если флаг установлен, но текст изменился - значит пользователь редактирует вручную
+      if (_isEventSelectedFromDropdown && mounted) {
+        setState(() {
+          _isEventSelectedFromDropdown = false;
+          _selectedEventId = null;
+          _selectedEventLogoUrl = null;
+          _distances = [];
+          _distanceIndex = 0;
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -73,37 +128,303 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
     super.dispose();
   }
 
-  void _createAlert() {
-    if (!_isValid) return;
-
-    // Добавляем новое оповещение
-    final newAlert = AlertItem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      eventName: nameCtrl.text.trim(),
-      gender: _gender,
-      distance: _distances[_distanceIndex],
-      imageUrl: 'assets/race_moscow.png', // Демо-изображение
-    );
-
+  /// Загрузка оповещений из API
+  Future<void> _loadAlerts() async {
     setState(() {
-      _alerts.insert(0, newAlert);
-      nameCtrl.clear();
-      _distanceIndex = 0;
-      _gender = Gender.male;
+      _isLoadingAlerts = true;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Оповещение создано'),
-        duration: Duration(seconds: 2),
+    try {
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        throw Exception('Не удалось получить ID пользователя');
+      }
+
+      final api = ApiService();
+      final response = await api.post(
+        '/get_alerts.php',
+        body: {'user_id': userId},
+      );
+
+      if (response['success'] == true && mounted) {
+        final List<dynamic> alertsData = response['alerts'] ?? [];
+        final alerts = alertsData.map((a) {
+          final eventId = a['event_id'] == null ? null : int.tryParse(a['event_id'].toString());
+          return AlertItem(
+            eventId: eventId,
+            id: a['id'].toString(),
+            eventName: a['event_name'] as String,
+            gender: (a['gender'] as String) == 'male' ? Gender.male : Gender.female,
+            distance: a['distance'] as String,
+            imageUrl: (a['image_url'] as String?) ?? '',
+          );
+        }).toList();
+
+        setState(() {
+          _alerts = alerts;
+          _isLoadingAlerts = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingAlerts = false;
+        });
+      }
+    } catch (e) {
+      ErrorHandler.logError(e);
+      if (mounted) {
+        setState(() {
+          _isLoadingAlerts = false;
+        });
+      }
+    }
+  }
+
+  /// Загрузка дистанций события
+  Future<void> _loadEventDistances(int eventId) async {
+    setState(() {
+      _isLoadingDistances = true;
+      _distances = [];
+      _distanceIndex = 0;
+    });
+
+    try {
+      final api = ApiService();
+      final response = await api.post(
+        '/get_event_distances.php',
+        body: {'event_id': eventId},
+      );
+
+      if (response['success'] == true && mounted) {
+        final List<dynamic> distancesData = response['distances'] ?? [];
+        final distances = distancesData
+            .map((d) => d['formatted'] as String)
+            .toList();
+
+        setState(() {
+          _distances = distances;
+          _distanceIndex = 0;
+          _isLoadingDistances = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingDistances = false;
+        });
+      }
+    } catch (e) {
+      ErrorHandler.logError(e);
+      if (mounted) {
+        setState(() {
+          _isLoadingDistances = false;
+        });
+      }
+    }
+  }
+
+  /// Поиск событий для автозаполнения
+  Future<Iterable<_EventOption>> _searchEvents(String query) async {
+    if (query.length < 2) {
+      return const [];
+    }
+
+    try {
+      final api = ApiService();
+      final response = await api.post(
+        '/search_events.php',
+        body: {'query': query},
+      );
+
+      if (response['success'] == true) {
+        final List<dynamic> eventsData = response['events'] ?? [];
+
+        // ─── Явно преобразуем в List для корректной работы Autocomplete ───
+        final result = eventsData.map(
+          (e) {
+            return _EventOption(
+              id: e['id'] as int,
+              name: e['name'] as String,
+              place: e['place'] as String? ?? '',
+              eventDate: e['event_date'] as String? ?? '',
+              logoUrl: (e['logo_url'] ?? e['logo'] ?? '') as String?,
+            );
+          },
+        ).toList();
+
+        return result;
+      }
+    } catch (e) {
+      ErrorHandler.logError(e);
+    }
+
+    return const [];
+  }
+
+  /// Открытие экрана события
+  void _openEvent(int eventId) {
+    if (!mounted) return;
+    Navigator.of(context).push(
+      TransparentPageRoute(
+        builder: (_) => EventDetailScreen(eventId: eventId),
       ),
     );
   }
 
-  void _deleteAlert(String id) {
+  /// Создание оповещения через API
+  Future<void> _createAlert() async {
+    if (!_isValid || _isSubmitting) return;
+
+    // ─── Проверяем, что событие выбрано из выпадающего списка ───
+    final eventNameText = nameCtrl.text.trim();
+    if (eventNameText.isEmpty || !_isEventSelectedFromDropdown) {
+      setState(() {
+        _errorMessage = 'Пожалуйста, выберите событие из списка предложенных вариантов';
+      });
+      return;
+    }
+
+    // ─── Сброс предыдущей ошибки ───
     setState(() {
-      _alerts.removeWhere((alert) => alert.id == id);
+      _errorMessage = null;
+      _isSubmitting = true;
     });
+
+    try {
+      // ─── Получаем user_id из AuthService ───
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        throw Exception('Не удалось получить ID пользователя');
+      }
+
+      // ─── Проверяем, что дистанция выбрана (обязательна если событие выбрано) ───
+      String distance;
+      if (_selectedEventId != null) {
+        if (_distances.isEmpty || _distanceIndex >= _distances.length) {
+          throw Exception('Выберите дистанцию');
+        }
+        distance = _distances[_distanceIndex];
+      } else {
+        // Если событие не выбрано из списка, дистанция не требуется
+        // Но по логике приложения событие всегда должно быть выбрано
+        throw Exception('Выберите событие из списка');
+      }
+
+      // ─── Преобразуем Gender в строку для API ───
+      final genderString = _gender == Gender.male ? 'male' : 'female';
+
+      // ─── Отправляем данные на сервер ───
+      final api = ApiService();
+      final response = await api.post(
+        '/create_alert.php',
+        body: {
+          'user_id': userId,
+          if (_selectedEventId != null) 'event_id': _selectedEventId,
+          'event_name': eventNameText,
+          'distance': distance,
+          'gender': genderString,
+        },
+      );
+
+      // ─── Проверяем успешность ответа ───
+      if (response['success'] == true) {
+        // ─── Успешно создано оповещение ───
+        if (mounted) {
+          // Очищаем форму
+          nameCtrl.clear();
+          setState(() {
+            _selectedEventId = null;
+            _selectedEventLogoUrl = null;
+            _isEventSelectedFromDropdown = false;
+            _distances = [];
+            _distanceIndex = 0;
+            _gender = Gender.male;
+            _isSubmitting = false;
+          });
+
+          // Загружаем обновленный список оповещений
+          await _loadAlerts();
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Оповещение создано'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+        }
+      } else {
+        // ─── Ошибка от сервера ───
+        final errorMsg =
+            response['message']?.toString() ??
+            'Не удалось создать оповещение. Попробуйте ещё раз';
+        setState(() {
+          _errorMessage = errorMsg;
+          _isSubmitting = false;
+        });
+      }
+    } catch (e) {
+      // ─── Обработка ошибок ───
+      ErrorHandler.logError(e);
+      final errorMsg = ErrorHandler.format(e);
+      if (mounted) {
+        setState(() {
+          _errorMessage = errorMsg;
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  /// Удаление оповещения через API
+  Future<void> _deleteAlert(String id) async {
+    try {
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        throw Exception('Не удалось получить ID пользователя');
+      }
+
+      final api = ApiService();
+      final response = await api.post(
+        '/delete_alert.php',
+        body: {
+          'user_id': userId,
+          'alert_id': int.parse(id),
+        },
+      );
+
+      if (response['success'] == true) {
+        // Загружаем обновленный список оповещений
+        await _loadAlerts();
+      } else {
+        final errorMsg =
+            response['message']?.toString() ??
+            'Не удалось удалить оповещение';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMsg),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      ErrorHandler.logError(e);
+      final errorMsg = ErrorHandler.format(e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMsg),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -152,39 +473,105 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
                       const SizedBox(height: 20),
 
                       // ─── Форма создания оповещения ───
-                      _LabeledTextField(
+                      _EventAutocompleteField(
                         label: 'Название события',
-                        hint: 'Официальное название события',
+                        hint: 'Начните вводить название события',
                         controller: nameCtrl,
-                        onChanged: (_) => setState(() {}),
+                        selectedLogoUrl: _selectedEventLogoUrl,
+                        onEventSelected: (event) {
+                          // Устанавливаем флаг, чтобы слушатель не сработал
+                          _isSettingEventFromDropdown = true;
+                          setState(() {
+                            _selectedEventId = event.id;
+                            _isEventSelectedFromDropdown = true;
+                            _selectedEventLogoUrl = event.logoUrl;
+                            // Устанавливаем текст события
+                            if (nameCtrl.text != event.name) {
+                              nameCtrl.text = event.name;
+                            }
+                          });
+                          // Сбрасываем флаг после небольшой задержки
+                          Future.microtask(() {
+                            _isSettingEventFromDropdown = false;
+                          });
+                          _loadEventDistances(event.id);
+                        },
+                        searchFunction: _searchEvents,
+                        onClear: () {
+                          setState(() {
+                            _isEventSelectedFromDropdown = false;
+                            _selectedEventId = null;
+                            _distances = [];
+                            _distanceIndex = 0;
+                            _isLoadingDistances = false;
+                            _selectedEventLogoUrl = null;
+                          });
+                        },
                       ),
                       const SizedBox(height: 20),
 
-                      const _SmallLabel('Пол'),
-                      const SizedBox(height: 8),
-                      _GenderRow(
-                        maleSelected: _gender == Gender.male,
-                        femaleSelected: _gender == Gender.female,
-                        onMaleTap: () => setState(() => _gender = Gender.male),
-                        onFemaleTap: () =>
-                            setState(() => _gender = Gender.female),
-                      ),
-                      const SizedBox(height: 20),
+                      // ─── Пол и дистанции показываем только после выбора события ───
+                      if (_selectedEventId != null) ...[
+                        const _SmallLabel('Пол'),
+                        const SizedBox(height: 8),
+                        _GenderRow(
+                          maleSelected: _gender == Gender.male,
+                          femaleSelected: _gender == Gender.female,
+                          onMaleTap: () => setState(() => _gender = Gender.male),
+                          onFemaleTap: () =>
+                              setState(() => _gender = Gender.female),
+                        ),
+                        const SizedBox(height: 20),
 
-                      const _SmallLabel('Дистанция'),
-                      const SizedBox(height: 8),
-                      _ChipsRow(
-                        items: _distances,
-                        selectedIndex: _distanceIndex,
-                        onSelected: (i) => setState(() => _distanceIndex = i),
-                      ),
-                      const SizedBox(height: 24),
+                        // ─── Показываем список дистанций только если выбрано событие ───
+                        const _SmallLabel('Дистанция'),
+                        const SizedBox(height: 8),
+                        if (_isLoadingDistances)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: CupertinoActivityIndicator(),
+                            ),
+                          )
+                        else if (_distances.isEmpty)
+                          Text(
+                            'У этого события нет доступных дистанций',
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.getTextSecondaryColor(context),
+                            ),
+                          )
+                        else
+                          _ChipsRow(
+                            items: _distances,
+                            selectedIndex: _distanceIndex,
+                            onSelected: (i) => setState(() => _distanceIndex = i),
+                          ),
+                        const SizedBox(height: 20),
+                      ],
+
+                      // ─── Отображение ошибки ───
+                      if (_errorMessage != null) ...[
+                        SelectableText.rich(
+                          TextSpan(
+                            text: _errorMessage,
+                            style: const TextStyle(
+                              color: AppColors.error,
+                              fontSize: 14,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
 
                       Center(
                         child: PrimaryButton(
                           text: 'Создать оповещение',
-                          onPressed: _createAlert,
+                          onPressed: _isSubmitting ? () {} : () => _createAlert(),
                           width: 220,
+                          isLoading: _isSubmitting,
                         ),
                       ),
                     ],
@@ -193,30 +580,50 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
               ),
 
               // ─── Раздел «Текущие оповещения» ───
-              if (_alerts.isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 20, 12, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: _SmallLabel('Текущие оповещения'),
-                      ),
-                      const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 20, 12, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: _SmallLabel('Текущие оповещения'),
+                    ),
+                    const SizedBox(height: 12),
+                    if (_isLoadingAlerts)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: CupertinoActivityIndicator(),
+                        ),
+                      )
+                    else if (_alerts.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          'У вас пока нет созданных оповещений',
+                          style: AppTextStyles.h14w4.copyWith(
+                            color: AppColors.getTextSecondaryColor(context),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    else
                       ..._alerts.map(
                         (alert) => Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: _AlertCard(
                             alert: alert,
+                            onOpen: alert.eventId != null
+                                ? () => _openEvent(alert.eventId!)
+                                : null,
                             onDelete: () => _deleteAlert(alert.id),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ],
             ),
           ),
@@ -227,14 +634,6 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
 }
 
 /// ——— Локальные UI-компоненты ———
-
-const TextStyle _fieldText = TextStyle(fontFamily: 'Inter', fontSize: 14);
-// _hintText теперь создается динамически с учетом темы
-TextStyle _hintText(BuildContext context) => TextStyle(
-  fontFamily: 'Inter',
-  fontSize: 14,
-  color: AppColors.getTextPlaceholderColor(context),
-);
 
 class _SmallLabel extends StatelessWidget {
   final String text;
@@ -254,17 +653,24 @@ class _SmallLabel extends StatelessWidget {
   }
 }
 
-class _LabeledTextField extends StatelessWidget {
+/// Поле автозаполнения для поиска событий (как в sale_slots_content.dart)
+class _EventAutocompleteField extends StatelessWidget {
   final String label;
   final String hint;
   final TextEditingController controller;
-  final ValueChanged<String>? onChanged;
+  final String? selectedLogoUrl;
+  final ValueChanged<_EventOption> onEventSelected;
+  final Future<Iterable<_EventOption>> Function(String) searchFunction;
+  final VoidCallback onClear;
 
-  const _LabeledTextField({
+  const _EventAutocompleteField({
     required this.label,
     required this.hint,
     required this.controller,
-    this.onChanged,
+    required this.selectedLogoUrl,
+    required this.onEventSelected,
+    required this.searchFunction,
+    required this.onClear,
   });
 
   @override
@@ -274,38 +680,241 @@ class _LabeledTextField extends StatelessWidget {
       children: [
         _SmallLabel(label),
         const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          onChanged: onChanged,
-          style: _fieldText,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: _hintText(context),
-            filled: true,
-            fillColor: AppColors.getSurfaceColor(context),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 10,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: const BorderRadius.all(
-                Radius.circular(AppRadius.sm),
-              ),
-              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: const BorderRadius.all(
-                Radius.circular(AppRadius.sm),
-              ),
-              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
-            ),
-            focusedBorder: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(
-                Radius.circular(AppRadius.sm),
-              ),
-              borderSide: BorderSide(color: AppColors.outline),
-            ),
-          ),
+        Autocomplete<_EventOption>(
+          optionsBuilder: (TextEditingValue textEditingValue) async {
+            if (textEditingValue.text.length < 2) {
+              return const Iterable<_EventOption>.empty();
+            }
+            return await searchFunction(textEditingValue.text);
+          },
+          onSelected: onEventSelected,
+          displayStringForOption: (option) => option.name,
+          fieldViewBuilder:
+              (
+                BuildContext context,
+                TextEditingController textEditingController,
+                FocusNode focusNode,
+                VoidCallback onFieldSubmitted,
+              ) {
+                // Синхронизируем контроллер Autocomplete с внешним контроллером
+                if (textEditingController.text != controller.text) {
+                  textEditingController.value = controller.value;
+                }
+
+                return ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: textEditingController,
+                  builder: (context, value, _) {
+                    final hasText = value.text.isNotEmpty;
+                    final hasLogo =
+                        selectedLogoUrl != null && selectedLogoUrl!.isNotEmpty;
+                    return TextFormField(
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      onFieldSubmitted: (String _) {
+                        onFieldSubmitted();
+                      },
+                      style: AppTextStyles.h14w4.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                      decoration: InputDecoration(
+                        hintText: hint,
+                        hintStyle: AppTextStyles.h14w4Place.copyWith(
+                          color: AppColors.getTextPlaceholderColor(context),
+                        ),
+                        filled: true,
+                        fillColor: AppColors.getSurfaceColor(context),
+                        // Показываем мини-лого выбранного события в поле
+                        prefixIcon: hasLogo
+                            ? Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 6,
+                                  right: 6,
+                                  top: 6,
+                                  bottom: 6,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.xs,
+                                  ),
+                                  child: Image.network(
+                                    selectedLogoUrl!,
+                                    width: 30,
+                                    height: 30,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) => Icon(
+                                          CupertinoIcons.calendar,
+                                          size: 18,
+                                          color:
+                                              AppColors.getIconSecondaryColor(
+                                                context,
+                                              ),
+                                        ),
+                                  ),
+                                ),
+                              )
+                            : null,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 17,
+                        ),
+                        suffixIcon: hasText
+                            ? IconButton(
+                                icon: Icon(
+                                  CupertinoIcons.xmark_circle_fill,
+                                  size: 18,
+                                  color: AppColors.getIconSecondaryColor(
+                                    context,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  textEditingController.clear();
+                                  controller.clear();
+                                  onClear();
+                                  focusNode.requestFocus();
+                                },
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+          optionsViewBuilder:
+              (
+                BuildContext context,
+                AutocompleteOnSelected<_EventOption> onSelected,
+                Iterable<_EventOption> options,
+              ) {
+                final optionsList = options.toList();
+
+                return Align(
+                  alignment: Alignment.topLeft,
+                  child: Material(
+                    elevation: 4.0,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 240),
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: optionsList.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final option = optionsList[index];
+                          final hasLogo =
+                              option.logoUrl != null &&
+                              option.logoUrl!.isNotEmpty;
+                          return InkWell(
+                            onTap: () => onSelected(option),
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 12,
+                                right: 16,
+                                top: 10,
+                                bottom: 10,
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.xs,
+                                      ),
+                                      color: AppColors.getBackgroundColor(
+                                        context,
+                                      ),
+                                    ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: hasLogo
+                                        ? Image.network(
+                                            option.logoUrl!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                                  return Icon(
+                                                    CupertinoIcons.calendar,
+                                                    size: 18,
+                                                    color:
+                                                        AppColors.getIconSecondaryColor(
+                                                          context,
+                                                        ),
+                                                  );
+                                                },
+                                          )
+                                        : Icon(
+                                            CupertinoIcons.calendar,
+                                            size: 18,
+                                            color:
+                                                AppColors.getIconSecondaryColor(
+                                                  context,
+                                                ),
+                                          ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          option.name,
+                                          style: AppTextStyles.h14w5.copyWith(
+                                            color:
+                                                AppColors.getTextPrimaryColor(
+                                                  context,
+                                                ),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (option.place.isNotEmpty) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            option.place,
+                                            style: AppTextStyles.h12w4.copyWith(
+                                              color:
+                                                  AppColors.getTextSecondaryColor(
+                                                    context,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              },
         ),
       ],
     );
@@ -446,9 +1055,14 @@ class _OvalToggle extends StatelessWidget {
 /// Карточка оповещения в стиле market_slot_card.dart
 class _AlertCard extends StatelessWidget {
   final AlertItem alert;
+  final VoidCallback? onOpen;
   final VoidCallback onDelete;
 
-  const _AlertCard({required this.alert, required this.onDelete});
+  const _AlertCard({
+    required this.alert,
+    required this.onDelete,
+    this.onOpen,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -470,21 +1084,38 @@ class _AlertCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Миниатюра слева
-          Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.all(
-                Radius.circular(AppRadius.xs),
+          // Миниатюра слева (кликабельная при наличии экрана события)
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onOpen,
+            child: Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.all(
+                  Radius.circular(AppRadius.xs),
+                ),
+                color: AppColors.getBackgroundColor(context),
               ),
-              color: AppColors.getBackgroundColor(context),
-              image: DecorationImage(
-                image: AssetImage(alert.imageUrl),
-                fit: BoxFit.cover,
-              ),
+              clipBehavior: Clip.antiAlias,
+              child: alert.imageUrl.isNotEmpty
+                  ? Image.network(
+                      alert.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          CupertinoIcons.calendar,
+                          size: 24,
+                          color: AppColors.getIconSecondaryColor(context),
+                        );
+                      },
+                    )
+                  : Icon(
+                      CupertinoIcons.calendar,
+                      size: 24,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
             ),
-            clipBehavior: Clip.antiAlias,
           ),
           const SizedBox(width: 8),
 
@@ -494,12 +1125,16 @@ class _AlertCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 2),
-                Text(
-                  alert.eventName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h14w4.copyWith(
-                    color: AppColors.getTextPrimaryColor(context),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onOpen,
+                  child: Text(
+                    alert.eventName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.h14w4.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
