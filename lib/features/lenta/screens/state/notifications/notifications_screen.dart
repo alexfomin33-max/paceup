@@ -67,10 +67,24 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   // Получение иконки по строковому коду
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Подбираем иконку по строковому коду; для тренировок берём те же иконки,
+  // что используются во вкладке тренировок профиля
+  // ─────────────────────────────────────────────────────────────────────────────
   IconData _getIconData(String iconCode) {
-    switch (iconCode) {
+    final code = iconCode.toLowerCase();
+
+    switch (code) {
       case 'directions_run':
+      case 'run':
         return Icons.directions_run;
+      case 'pedal_bike':
+      case 'bike':
+      case 'directions_bike':
+        return Icons.pedal_bike;
+      case 'pool':
+      case 'swim':
+        return Icons.pool;
       case 'favorite':
         return CupertinoIcons.heart;
       case 'comment':
@@ -95,6 +109,35 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     } catch (e) {
       return AppColors.brandPrimary;
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Получаем цвет иконки уведомления; для тренировок всегда brandPrimary
+  // ─────────────────────────────────────────────────────────────────────────────
+  Color _resolveIconColor(NotificationItem notification) {
+    // Для тренировок принудительно используем фирменный цвет
+    const trainingIcons = {
+      'directions_run',
+      'run',
+      'pedal_bike',
+      'bike',
+      'directions_bike',
+      'pool',
+      'swim',
+    };
+
+    // Для лайков/сердец всегда красный цвет
+    const heartIcons = {'favorite', 'heart'};
+
+    if (trainingIcons.contains(notification.icon.toLowerCase())) {
+      return AppColors.brandPrimary;
+    }
+
+    if (heartIcons.contains(notification.icon.toLowerCase())) {
+      return AppColors.error;
+    }
+
+    return _getColorFromString(notification.color);
   }
 
   void _openSettingsSheet() {
@@ -473,9 +516,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                   Icon(
                                     _getIconData(notification.icon),
                                     size: 16,
-                                    color: _getColorFromString(
-                                      notification.color,
-                                    ),
+                                    color: _resolveIconColor(notification),
                                   ),
                                   const Spacer(),
                                   Text(

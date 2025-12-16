@@ -457,25 +457,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                     height: 100,
                                     child: Row(
                                       children: [
-                                        _CircleIconBtn(
-                                          icon: CupertinoIcons.back,
-                                          semantic: 'Назад',
-                                          onTap: () {
-                                            // ── Если количество участников было обновлено, возвращаем результат
-                                            if (_updatedParticipantsCount !=
-                                                null) {
-                                              Navigator.of(context).pop({
-                                                'participants_count_updated':
-                                                    true,
-                                                'participants_count':
-                                                    _updatedParticipantsCount,
-                                                'event_id': widget.eventId,
-                                              });
-                                            } else {
-                                              Navigator.of(context).maybePop();
-                                            }
-                                          },
-                                        ),
+                                        // ── Плейсхолдеры сохраняют центрирование логотипа
+                                        const SizedBox(width: 34, height: 34),
                                         Expanded(
                                           child: Center(
                                             child: logoUrl.isNotEmpty
@@ -501,25 +484,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                                   ),
                                           ),
                                         ),
-                                        // Показываем карандаш для создателя, закладку для остальных
-                                        _canEdit
-                                            ? _CircleIconBtn(
-                                                icon: CupertinoIcons.pencil,
-                                                semantic: 'Редактировать',
-                                                onTap: _openEditScreen,
-                                              )
-                                            : _CircleIconBtn(
-                                                icon: CupertinoIcons.star_fill,
-                                                semantic: _isBookmarked
-                                                    ? 'Удалить из закладок'
-                                                    : 'Добавить в закладки',
-                                                onTap: _isTogglingBookmark
-                                                    ? null
-                                                    : _toggleBookmark,
-                                                color: _isBookmarked
-                                                    ? AppColors.orange
-                                                    : null,
-                                              ),
+                                        const SizedBox(width: 34, height: 34),
                                       ],
                                     ),
                                   ),
@@ -779,6 +744,59 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                     ),
                   ),
                 ),
+                // ───────── Плавающие круглые иконки (назад + действие)
+                Positioned(
+                  top: 8,
+                  left: 0,
+                  right: 0,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // ── Назад: всегда доступен
+                          _CircleIconBtn(
+                            icon: CupertinoIcons.back,
+                            semantic: 'Назад',
+                            onTap: () {
+                              // ── Если количество участников обновлено, возвращаем
+                              if (_updatedParticipantsCount != null) {
+                                Navigator.of(context).pop({
+                                  'participants_count_updated': true,
+                                  'participants_count':
+                                      _updatedParticipantsCount,
+                                  'event_id': widget.eventId,
+                                });
+                              } else {
+                                Navigator.of(context).maybePop();
+                              }
+                            },
+                          ),
+                          // ── Правый кружок: редактирование или закладка
+                          _canEdit
+                              ? _CircleIconBtn(
+                                  icon: CupertinoIcons.pencil,
+                                  semantic: 'Редактировать',
+                                  onTap: _openEditScreen,
+                                )
+                              : _CircleIconBtn(
+                                  icon: _isBookmarked
+                                      ? CupertinoIcons.star_fill
+                                      : CupertinoIcons.star,
+                                  semantic: _isBookmarked
+                                      ? 'Удалить из закладок'
+                                      : 'Добавить в закладки',
+                                  onTap: _isTogglingBookmark
+                                      ? null
+                                      : _toggleBookmark,
+                                ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -795,43 +813,37 @@ class _CircleIconBtn extends StatelessWidget {
   final IconData icon;
   final String? semantic;
   final VoidCallback? onTap;
-  final Color? color; // Цвет иконки (по умолчанию AppColors.surface)
-  const _CircleIconBtn({
-    required this.icon,
-    this.onTap,
-    this.semantic,
-    this.color,
-  });
+  const _CircleIconBtn({required this.icon, this.onTap, this.semantic});
 
   @override
   Widget build(BuildContext context) {
-    if (onTap == null) {
-      return const SizedBox.shrink();
-    }
+    final isDisabled = onTap == null;
 
     // В темной теме увеличиваем непрозрачность кружочка
-    final brightness = Theme.of(context).brightness;
-    final backgroundColor = brightness == Brightness.dark
-        ? AppColors.scrim60
-        : AppColors.scrim20;
+    final backgroundColor = AppColors.getBackgroundColor(
+      context,
+    ).withValues(alpha: 0.7);
 
     return Semantics(
       label: semantic,
       button: true,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: Icon(
-            icon,
-            size: 18,
-            color: color ?? AppColors.getIconPrimaryColor(context),
+      child: AbsorbPointer(
+        absorbing: isDisabled,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              icon,
+              size: 20,
+              color: AppColors.getIconPrimaryColor(context),
+            ),
           ),
         ),
       ),
