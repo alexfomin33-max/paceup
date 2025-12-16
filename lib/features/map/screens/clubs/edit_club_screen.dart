@@ -89,12 +89,16 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
   Future<void> _loadCities() async {
     try {
       final api = ref.read(apiServiceProvider);
-      final data = await api.get('/get_cities.php').timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          throw TimeoutException('Превышено время ожидания загрузки городов');
-        },
-      );
+      final data = await api
+          .get('/get_cities.php')
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              throw TimeoutException(
+                'Превышено время ожидания загрузки городов',
+              );
+            },
+          );
 
       if (data['success'] == true && data['cities'] != null) {
         final cities = data['cities'] as List<dynamic>? ?? [];
@@ -191,13 +195,15 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
         // Заполняем медиа
         final parsedLogoUrl = club['logo_url'] as String?;
         // ── извлекаем имя файла из URL или используем поле logo из БД
-        final parsedLogoFilename = club['logo'] as String? ??
+        final parsedLogoFilename =
+            club['logo'] as String? ??
             (parsedLogoUrl != null && parsedLogoUrl.isNotEmpty
                 ? Uri.parse(parsedLogoUrl).pathSegments.last
                 : null);
         final parsedBackgroundUrl = club['background_url'] as String?;
         // ── извлекаем имя файла из URL или используем поле background из БД
-        final parsedBackgroundFilename = club['background'] as String? ??
+        final parsedBackgroundFilename =
+            club['background'] as String? ??
             (parsedBackgroundUrl != null && parsedBackgroundUrl.isNotEmpty
                 ? Uri.parse(parsedBackgroundUrl).pathSegments.last
                 : null);
@@ -450,9 +456,9 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
       final userId = await authService.getUserId();
       if (userId == null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ошибка авторизации')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Ошибка авторизации')));
         return;
       }
 
@@ -485,16 +491,14 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage ?? 'Ошибка при удалении клуба'),
-          ),
+          SnackBar(content: Text(errorMessage ?? 'Ошибка при удалении клуба')),
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorHandler.format(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(ErrorHandler.format(e))));
     } finally {
       if (mounted) {
         setState(() => _deleting = false);
@@ -504,7 +508,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
 
   Future<void> _submit() async {
     final formNotifier = ref.read(formStateProvider.notifier);
-    
+
     // ── проверяем все обязательные поля и подсвечиваем незаполненные
     final Map<String, String> newErrors = {};
 
@@ -533,45 +537,45 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
 
     await formNotifier.submit(
       () async {
-      // Формируем данные
-      final files = <String, File>{};
-      final fields = <String, String>{};
+        // Формируем данные
+        final files = <String, File>{};
+        final fields = <String, String>{};
 
-      // Добавляем логотип (если выбран новый)
-      if (logoFile != null) {
-        files['logo'] = logoFile!;
-      }
+        // Добавляем логотип (если выбран новый)
+        if (logoFile != null) {
+          files['logo'] = logoFile!;
+        }
 
-      // Добавляем фоновую картинку (если выбрана новая)
-      if (backgroundFile != null) {
-        files['background'] = backgroundFile!;
-      }
+        // Добавляем фоновую картинку (если выбрана новая)
+        if (backgroundFile != null) {
+          files['background'] = backgroundFile!;
+        }
 
         // Добавляем поля формы
         final userId = await authService.getUserId();
         if (userId == null) {
           throw Exception('Ошибка авторизации. Необходимо войти в систему');
         }
-      fields['club_id'] = widget.clubId.toString();
-      fields['user_id'] = userId.toString();
-      fields['name'] = nameCtrl.text.trim();
-      fields['link'] = linkCtrl.text.trim();
-      fields['city'] = cityCtrl.text.trim();
-      fields['description'] = descCtrl.text.trim();
-      fields['activity'] = activity!;
-      fields['is_open'] = isOpenCommunity ? '1' : '0';
-      fields['foundation_date'] = _fmtDate(foundationDate!);
-      // Координаты не обязательны - будут получены по городу на сервере
+        fields['club_id'] = widget.clubId.toString();
+        fields['user_id'] = userId.toString();
+        fields['name'] = nameCtrl.text.trim();
+        fields['link'] = linkCtrl.text.trim();
+        fields['city'] = cityCtrl.text.trim();
+        fields['description'] = descCtrl.text.trim();
+        fields['activity'] = activity!;
+        fields['is_open'] = isOpenCommunity ? '1' : '0';
+        fields['foundation_date'] = _fmtDate(foundationDate!);
+        // Координаты не обязательны - будут получены по городу на сервере
 
-      // Флаги для сохранения существующих изображений
-      if (logoUrl != null && logoFile == null && logoFilename != null) {
-        fields['keep_logo'] = 'true';
-      }
-      if (backgroundUrl != null &&
-          backgroundFile == null &&
-          backgroundFilename != null) {
-        fields['keep_background'] = 'true';
-      }
+        // Флаги для сохранения существующих изображений
+        if (logoUrl != null && logoFile == null && logoFilename != null) {
+          fields['keep_logo'] = 'true';
+        }
+        if (backgroundUrl != null &&
+            backgroundFile == null &&
+            backgroundFilename != null) {
+          fields['keep_background'] = 'true';
+        }
 
         // Отправляем запрос
         Map<String, dynamic> data;
@@ -711,7 +715,8 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                                 backgroundUrl = null;
                                 backgroundFilename = null;
                               }),
-                              width: 207, // Ширина для соотношения 2.3:1 (90 * 2.3)
+                              width:
+                                  207, // Ширина для соотношения 2.3:1 (90 * 2.3)
                               height: 90,
                             ),
                           ],
@@ -913,7 +918,9 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                                 builder: (context) => Text(
                                   option,
                                   style: AppTextStyles.h14w4.copyWith(
-                                    color: AppColors.getTextPrimaryColor(context),
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -933,9 +940,9 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                         height: 24,
                         child: Radio<bool>(
                           value: true,
-                              // ignore: deprecated_member_use
+                          // ignore: deprecated_member_use
                           groupValue: isOpenCommunity,
-                              // ignore: deprecated_member_use
+                          // ignore: deprecated_member_use
                           onChanged: (v) =>
                               setState(() => isOpenCommunity = v ?? false),
                           activeColor: AppColors.brandPrimary,
@@ -958,9 +965,9 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                         height: 24,
                         child: Radio<bool>(
                           value: false,
-                              // ignore: deprecated_member_use
+                          // ignore: deprecated_member_use
                           groupValue: isOpenCommunity,
-                              // ignore: deprecated_member_use
+                          // ignore: deprecated_member_use
                           onChanged: (v) =>
                               setState(() => isOpenCommunity = v ?? false),
                           activeColor: AppColors.brandPrimary,
@@ -1038,7 +1045,10 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
-                                color: formState.fieldErrors.containsKey('foundationDate')
+                                color:
+                                    formState.fieldErrors.containsKey(
+                                      'foundationDate',
+                                    )
                                     ? AppColors.error
                                     : AppColors.getBorderColor(context),
                                 width: 1,
@@ -1047,7 +1057,10 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
-                                color: formState.fieldErrors.containsKey('foundationDate')
+                                color:
+                                    formState.fieldErrors.containsKey(
+                                      'foundationDate',
+                                    )
                                     ? AppColors.error
                                     : AppColors.getBorderColor(context),
                                 width: 1,
@@ -1056,7 +1069,10 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
-                                color: formState.fieldErrors.containsKey('foundationDate')
+                                color:
+                                    formState.fieldErrors.containsKey(
+                                      'foundationDate',
+                                    )
                                     ? AppColors.error
                                     : AppColors.getBorderColor(context),
                                 width: 1,
@@ -1069,7 +1085,9 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                                 : 'Выберите дату',
                             style: foundationDate != null
                                 ? AppTextStyles.h14w4.copyWith(
-                                    color: AppColors.getTextPrimaryColor(context),
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
                                   )
                                 : AppTextStyles.h14w4Place,
                           ),
@@ -1092,7 +1110,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                   Builder(
                     builder: (context) => TextField(
                       controller: descCtrl,
-                      maxLines: 12,
+                      maxLines: 30,
                       minLines: 7,
                       textAlignVertical: TextAlignVertical.top,
                       style: AppTextStyles.h14w4.copyWith(
@@ -1447,9 +1465,7 @@ class _MediaTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             color: AppColors.getSurfaceColor(context),
-            border: Border.all(
-              color: AppColors.getBorderColor(context),
-            ),
+            border: Border.all(color: AppColors.getBorderColor(context)),
           ),
           child: Center(
             child: Icon(
@@ -1463,4 +1479,3 @@ class _MediaTile extends StatelessWidget {
     );
   }
 }
-

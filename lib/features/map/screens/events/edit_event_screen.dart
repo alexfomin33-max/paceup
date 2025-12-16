@@ -1272,7 +1272,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                   Builder(
                     builder: (context) => TextField(
                       controller: descCtrl,
-                      maxLines: 12,
+                      maxLines: 30,
                       minLines: 7,
                       textAlignVertical: TextAlignVertical.top,
                       style: AppTextStyles.h14w4.copyWith(

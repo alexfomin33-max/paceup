@@ -699,7 +699,8 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
                   hint:
                       'Размер, отправка, передача и другая полезная информация',
                   controller: descCtrl,
-                  maxLines: 5,
+                  minLines: 7, // ── минимальная высота поля 7 строк
+                  maxLines: 20, // ── максимальная высота поля 20 строк
                 ),
                 const SizedBox(height: 24),
 
@@ -938,6 +939,7 @@ class _LabeledTextField extends StatelessWidget {
   final String label;
   final String hint;
   final TextEditingController controller;
+  final int minLines;
   final int maxLines;
   final ValueChanged<String>? onChanged;
 
@@ -945,6 +947,7 @@ class _LabeledTextField extends StatelessWidget {
     required this.label,
     required this.hint,
     required this.controller,
+    this.minLines = 1,
     this.maxLines = 1,
     this.onChanged,
   });
@@ -960,6 +963,7 @@ class _LabeledTextField extends StatelessWidget {
         ],
         TextFormField(
           controller: controller,
+          minLines: minLines,
           maxLines: maxLines,
           onChanged: onChanged,
           style: AppTextStyles.h14w4.copyWith(

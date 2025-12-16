@@ -541,7 +541,8 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
                   hint:
                       'Опишите варианты передачи слота, кластер и другую информацию',
                   controller: descCtrl,
-                  maxLines: 5,
+                  minLines: 7, // ── минимальная высота поля 7 строк
+                  maxLines: 20, // ── максимальная высота поля 20 строк
                 ),
                 const SizedBox(height: 24),
 
@@ -778,12 +779,14 @@ class _LabeledTextField extends StatelessWidget {
   final String label;
   final String hint;
   final TextEditingController controller;
+  final int minLines;
   final int maxLines;
 
   const _LabeledTextField({
     required this.label,
     required this.hint,
     required this.controller,
+    this.minLines = 1,
     this.maxLines = 1,
   });
 
@@ -796,6 +799,7 @@ class _LabeledTextField extends StatelessWidget {
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
+          minLines: minLines,
           maxLines: maxLines,
           style: AppTextStyles.h14w4.copyWith(
             color: AppColors.getTextPrimaryColor(context),

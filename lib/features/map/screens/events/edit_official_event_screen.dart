@@ -42,7 +42,8 @@ class _EditOfficialEventScreenState
   // выборы
   String? activity;
   DateTime? date;
-  TimeOfDay? time; // ── время (необязательное для официальных событий, не показываем в UI)
+  TimeOfDay?
+  time; // ── время (необязательное для официальных событий, не показываем в UI)
 
   // ── контроллеры для полей ввода дистанций
   final List<TextEditingController> _distanceControllers = [];
@@ -605,7 +606,8 @@ class _EditOfficialEventScreenState
             'template_name': fields['template_name'] ?? '',
           };
           // ── Время необязательное для официальных событий, добавляем только если указано
-          if (fields.containsKey('event_time') && fields['event_time']!.isNotEmpty) {
+          if (fields.containsKey('event_time') &&
+              fields['event_time']!.isNotEmpty) {
             jsonBody['event_time'] = fields['event_time'];
           }
           if (distanceValues.isNotEmpty) {
@@ -1276,7 +1278,7 @@ class _EditOfficialEventScreenState
                   Builder(
                     builder: (context) => TextField(
                       controller: descCtrl,
-                      maxLines: 12,
+                      maxLines: 30,
                       minLines: 7,
                       textAlignVertical: TextAlignVertical.top,
                       style: AppTextStyles.h14w4.copyWith(
