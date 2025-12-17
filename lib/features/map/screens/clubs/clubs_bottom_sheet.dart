@@ -268,13 +268,7 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
             Container(
               height: 100,
               width: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.getBorderColor(context),
-                  width: 0.5,
-                ),
-              ),
+              decoration: const BoxDecoration(shape: BoxShape.circle),
               child: ClipOval(child: _ClubLogoImage(logoUrl: logoUrl)),
             ),
             const SizedBox(height: 8),

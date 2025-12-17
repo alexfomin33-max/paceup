@@ -25,6 +25,7 @@ class ImagePickerHelper {
   /// [maxSide] - максимальный размер стороны после сжатия
   /// [jpegQuality] - качество JPEG (0-100)
   /// [cropTitle] - заголовок экрана обрезки
+  /// [isCircular] - если true, обрезка будет круглой (UI и результат)
   ///
   /// Возвращает [File] с обработанным изображением или null, если пользователь отменил
   static Future<File?> pickAndProcessImage({
@@ -33,6 +34,7 @@ class ImagePickerHelper {
     required int maxSide,
     required int jpegQuality,
     required String cropTitle,
+    bool isCircular = false,
   }) async {
     // ── выбираем файл из галереи
     final picked = await _picker.pickImage(source: ImageSource.gallery);
@@ -45,6 +47,7 @@ class ImagePickerHelper {
       source: picked,
       aspectRatio: aspectRatio,
       title: cropTitle,
+      isCircular: isCircular,
     );
     if (cropped == null) return null;
 
@@ -72,6 +75,7 @@ class ImagePickerHelper {
   /// [source] - выбранный файл из галереи
   /// [aspectRatio] - пропорции обрезки
   /// [title] - заголовок экрана обрезки
+  /// [isCircular] - если true, обрезка будет круглой (UI и результат)
   ///
   /// Возвращает [File] с обрезанным изображением или null, если пользователь отменил
   static Future<File?> cropPickedImage({
@@ -79,6 +83,7 @@ class ImagePickerHelper {
     required XFile source,
     required double aspectRatio,
     required String title,
+    bool isCircular = false,
   }) async {
     // ── читаем байты выбранного изображения
     final imageBytes = await source.readAsBytes();
@@ -92,6 +97,7 @@ class ImagePickerHelper {
           imageBytes: imageBytes,
           aspectRatio: aspectRatio,
           title: title,
+          isCircular: isCircular,
         ),
       ),
     );

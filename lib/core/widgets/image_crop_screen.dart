@@ -25,11 +25,15 @@ class ImageCropScreen extends StatefulWidget {
   /// Заголовок экрана обрезки
   final String title;
 
+  /// Если true, обрезка будет круглой (UI и результат)
+  final bool isCircular;
+
   const ImageCropScreen({
     super.key,
     required this.imageBytes,
     required this.aspectRatio,
     required this.title,
+    this.isCircular = false,
   });
 
   @override
@@ -70,6 +74,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
                       controller: _controller,
                       image: widget.imageBytes,
                       aspectRatio: widget.aspectRatio,
+                      withCircleUi: widget.isCircular,
                       onCropped: _handleCroppedResult,
                       progressIndicator: const Center(
                         child: CupertinoActivityIndicator(radius: 12),
@@ -100,7 +105,12 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
   void _onCropPressed() {
     setState(() => _cropping = true);
     try {
-      _controller.crop();
+      // ── если нужна круглая обрезка, используем cropCircle вместо crop
+      if (widget.isCircular) {
+        _controller.cropCircle();
+      } else {
+        _controller.crop();
+      }
     } catch (error) {
       if (!mounted) return;
       setState(() => _cropping = false);

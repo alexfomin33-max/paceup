@@ -299,13 +299,14 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
   }
 
   Future<void> _pickLogo() async {
-    // ── выбираем логотип с обрезкой в фиксированную пропорцию 1:1
+    // ── выбираем логотип с круглой обрезкой
     final processed = await ImagePickerHelper.pickAndProcessImage(
       context: context,
       aspectRatio: _logoAspectRatio,
       maxSide: ImageCompressionPreset.logo.maxSide,
       jpegQuality: ImageCompressionPreset.logo.quality,
       cropTitle: 'Обрезка логотипа',
+      isCircular: true,
     );
     if (processed == null || !mounted) return;
 
@@ -770,6 +771,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                               logoUrl = null;
                               logoFilename = null;
                             }),
+                            isCircular: true,
                           ),
                         ],
                       ),
@@ -1352,12 +1354,14 @@ class _MediaTile extends StatelessWidget {
   final String? url;
   final VoidCallback onPick;
   final VoidCallback onRemove;
+  final bool isCircular;
 
   const _MediaTile({
     required this.file,
     this.url,
     required this.onPick,
     required this.onRemove,
+    this.isCircular = false,
   });
 
   @override
@@ -1371,25 +1375,44 @@ class _MediaTile extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: onPick,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: Image.file(
-                  file!,
-                  fit: BoxFit.cover,
-                  width: 90,
-                  height: 90,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    width: 90,
-                    height: 90,
-                    color: AppColors.getBackgroundColor(context),
-                    child: Icon(
-                      CupertinoIcons.photo,
-                      size: 24,
-                      color: AppColors.getIconSecondaryColor(context),
+              child: isCircular
+                  ? ClipOval(
+                      child: Image.file(
+                        file!,
+                        fit: BoxFit.cover,
+                        width: 90,
+                        height: 90,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 90,
+                          height: 90,
+                          color: AppColors.getBackgroundColor(context),
+                          child: Icon(
+                            CupertinoIcons.photo,
+                            size: 24,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
+                        ),
+                      ),
+                    )
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      child: Image.file(
+                        file!,
+                        fit: BoxFit.cover,
+                        width: 90,
+                        height: 90,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 90,
+                          height: 90,
+                          color: AppColors.getBackgroundColor(context),
+                          child: Icon(
+                            CupertinoIcons.photo,
+                            size: 24,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
             ),
             Positioned(
               right: -6,
@@ -1430,41 +1453,76 @@ class _MediaTile extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: onPick,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: Builder(
-                  builder: (context) {
-                    final dpr = MediaQuery.of(context).devicePixelRatio;
-                    final side = (90 * dpr).round();
-                    return CachedNetworkImage(
-                      imageUrl: url!,
-                      fit: BoxFit.cover,
-                      width: 90,
-                      height: 90,
-                      memCacheWidth: side,
-                      maxWidthDiskCache: side,
-                      placeholder: (context, url) => Container(
-                        width: 90,
-                        height: 90,
-                        color: AppColors.getBackgroundColor(context),
-                        child: const Center(
-                          child: CupertinoActivityIndicator(),
-                        ),
+              child: isCircular
+                  ? ClipOval(
+                      child: Builder(
+                        builder: (context) {
+                          final dpr = MediaQuery.of(context).devicePixelRatio;
+                          final side = (90 * dpr).round();
+                          return CachedNetworkImage(
+                            imageUrl: url!,
+                            fit: BoxFit.cover,
+                            width: 90,
+                            height: 90,
+                            memCacheWidth: side,
+                            maxWidthDiskCache: side,
+                            placeholder: (context, url) => Container(
+                              width: 90,
+                              height: 90,
+                              color: AppColors.getBackgroundColor(context),
+                              child: const Center(
+                                child: CupertinoActivityIndicator(),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              width: 90,
+                              height: 90,
+                              color: AppColors.getBackgroundColor(context),
+                              child: Icon(
+                                CupertinoIcons.photo,
+                                size: 24,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                      errorWidget: (context, url, error) => Container(
-                        width: 90,
-                        height: 90,
-                        color: AppColors.getBackgroundColor(context),
-                        child: Icon(
-                          CupertinoIcons.photo,
-                          size: 24,
-                          color: AppColors.getIconSecondaryColor(context),
-                        ),
+                    )
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      child: Builder(
+                        builder: (context) {
+                          final dpr = MediaQuery.of(context).devicePixelRatio;
+                          final side = (90 * dpr).round();
+                          return CachedNetworkImage(
+                            imageUrl: url!,
+                            fit: BoxFit.cover,
+                            width: 90,
+                            height: 90,
+                            memCacheWidth: side,
+                            maxWidthDiskCache: side,
+                            placeholder: (context, url) => Container(
+                              width: 90,
+                              height: 90,
+                              color: AppColors.getBackgroundColor(context),
+                              child: const Center(
+                                child: CupertinoActivityIndicator(),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              width: 90,
+                              height: 90,
+                              color: AppColors.getBackgroundColor(context),
+                              child: Icon(
+                                CupertinoIcons.photo,
+                                size: 24,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-              ),
+                    ),
             ),
             Positioned(
               right: -6,
@@ -1506,7 +1564,10 @@ class _MediaTile extends StatelessWidget {
             width: 90,
             height: 90,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              shape: isCircular ? BoxShape.circle : BoxShape.rectangle,
+              borderRadius: isCircular
+                  ? null
+                  : BorderRadius.circular(AppRadius.sm),
               color: AppColors.getSurfaceColor(context),
               border: Border.all(color: AppColors.getBorderColor(context)),
             ),

@@ -122,13 +122,14 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
   }
 
   Future<void> _pickLogo() async {
-    // ── выбираем логотип с обрезкой в фиксированную пропорцию 1:1
+    // ── выбираем логотип с круглой обрезкой
     final processed = await ImagePickerHelper.pickAndProcessImage(
       context: context,
       aspectRatio: _logoAspectRatio,
       maxSide: ImageCompressionPreset.logo.maxSide,
       jpegQuality: ImageCompressionPreset.logo.quality,
       cropTitle: 'Обрезка логотипа',
+      isCircular: true,
     );
     if (processed == null || !mounted) return;
 
@@ -389,6 +390,7 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
                             onRemove: () => setState(() => logoFile = null),
                             width: 90,
                             height: 90,
+                            isCircular: true,
                           ),
                         ],
                       ),
@@ -1006,6 +1008,7 @@ class _MediaTile extends StatelessWidget {
   final VoidCallback onRemove;
   final double width;
   final double height;
+  final bool isCircular;
 
   const _MediaTile({
     required this.file,
@@ -1013,6 +1016,7 @@ class _MediaTile extends StatelessWidget {
     required this.onRemove,
     required this.width,
     required this.height,
+    this.isCircular = false,
   });
 
   @override
@@ -1025,7 +1029,10 @@ class _MediaTile extends StatelessWidget {
           width: width,
           height: height,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            shape: isCircular ? BoxShape.circle : BoxShape.rectangle,
+            borderRadius: isCircular
+                ? null
+                : BorderRadius.circular(AppRadius.sm),
             color: AppColors.getSurfaceColor(context),
             border: Border.all(color: AppColors.getBorderColor(context)),
           ),
@@ -1046,25 +1053,44 @@ class _MediaTile extends StatelessWidget {
       children: [
         GestureDetector(
           onTap: onPick,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            child: Image.file(
-              file!,
-              fit: BoxFit.cover,
-              width: width,
-              height: height,
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: width,
-                height: height,
-                color: AppColors.getBackgroundColor(context),
-                child: Icon(
-                  CupertinoIcons.photo,
-                  size: 24,
-                  color: AppColors.getIconSecondaryColor(context),
+          child: isCircular
+              ? ClipOval(
+                  child: Image.file(
+                    file!,
+                    fit: BoxFit.cover,
+                    width: width,
+                    height: height,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: width,
+                      height: height,
+                      color: AppColors.getBackgroundColor(context),
+                      child: Icon(
+                        CupertinoIcons.photo,
+                        size: 24,
+                        color: AppColors.getIconSecondaryColor(context),
+                      ),
+                    ),
+                  ),
+                )
+              : ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: Image.file(
+                    file!,
+                    fit: BoxFit.cover,
+                    width: width,
+                    height: height,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: width,
+                      height: height,
+                      color: AppColors.getBackgroundColor(context),
+                      child: Icon(
+                        CupertinoIcons.photo,
+                        size: 24,
+                        color: AppColors.getIconSecondaryColor(context),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
         ),
         Positioned(
           right: -6,
