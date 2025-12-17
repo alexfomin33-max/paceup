@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/transparent_route.dart';
-import 'event_detail_screen.dart';
+import 'event_detail_screen2.dart';
 import 'official_event_detail_screen.dart';
 
 /// Каркас bottom sheet для вкладки «События».
@@ -446,7 +446,7 @@ class _EventsListFromApiState extends State<EventsListFromApi> {
                     TransparentPageRoute(
                       builder: (_) => isOfficialEvent
                           ? OfficialEventDetailScreen(eventId: eventId)
-                          : EventDetailScreen(eventId: eventId),
+                          : EventDetailScreen2(eventId: eventId),
                     ),
                   );
                   // ── если количество участников было обновлено, обновляем локально

@@ -18,8 +18,7 @@ class EventDetailScreen2 extends ConsumerStatefulWidget {
   const EventDetailScreen2({super.key, required this.eventId});
 
   @override
-  ConsumerState<EventDetailScreen2> createState() =>
-      _EventDetailScreen2State();
+  ConsumerState<EventDetailScreen2> createState() => _EventDetailScreen2State();
 }
 
 class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
@@ -28,6 +27,8 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
   String? _error;
   bool _canEdit = false; // Права на редактирование
   String? _currentUserAvatar; // Аватар текущего пользователя из профиля
+  bool _isParticipant = false; // Является ли текущий пользователь участником
+  bool _isTogglingParticipation = false; // Флаг процесса присоединения/выхода
 
   @override
   void initState() {
@@ -54,6 +55,20 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
         final eventUserId = event['user_id'] as int?;
         final canEdit = userId != null && eventUserId == userId;
 
+        // Проверяем, является ли текущий пользователь участником
+        final participants = event['participants'] as List<dynamic>? ?? [];
+        bool isParticipant = false;
+        if (userId != null) {
+          for (final p in participants) {
+            final pMap = p as Map<String, dynamic>;
+            final pUserId = pMap['user_id'] as int?;
+            if (pUserId == userId) {
+              isParticipant = true;
+              break;
+            }
+          }
+        }
+
         // ─── Загружаем аватар текущего пользователя из профиля (если это организатор)
         String? currentUserAvatar;
         if (userId != null && eventUserId == userId) {
@@ -75,6 +90,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
         setState(() {
           _eventData = event;
           _canEdit = canEdit;
+          _isParticipant = isParticipant;
           _currentUserAvatar = currentUserAvatar;
           _loading = false;
         });
@@ -149,7 +165,71 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     }
   }
 
-  int _tab = 0; // 0 — Описание, 1 — Участники
+  /// ──────────────────────── Присоединение/выход из события ────────────────────────
+  Future<void> _toggleParticipation() async {
+    if (_isTogglingParticipation || _eventData == null) return;
+
+    // Проверяем, что userId доступен
+    final authService = ref.read(authServiceProvider);
+    final userId = await authService.getUserId();
+    if (userId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ошибка: Пользователь не авторизован'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isTogglingParticipation = true;
+    });
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      final action = _isParticipant ? 'leave' : 'join';
+
+      final data = await api.post(
+        '/join_event.php',
+        body: {'event_id': widget.eventId, 'action': action},
+      );
+
+      if (data['success'] == true) {
+        final isParticipant = data['is_participant'] as bool? ?? false;
+
+        // Обновляем состояние
+        setState(() {
+          _isParticipant = isParticipant;
+          _isTogglingParticipation = false;
+        });
+
+        // Перезагружаем событие для обновления списка участников
+        await _loadEvent();
+      } else {
+        final errorMessage = data['message'] as String? ?? 'Неизвестная ошибка';
+        setState(() {
+          _isTogglingParticipation = false;
+        });
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isTogglingParticipation = false;
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   void _openGallery(int startIndex) {
     if (_eventData == null) return;
@@ -186,7 +266,10 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                 children: [
                   Text(
                     _error ?? 'Событие не найдено',
-                    style: const TextStyle(fontSize: 16),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -201,8 +284,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
       );
     }
 
-    final logoUrl = _eventData!['logo_url'] as String? ?? '';
-    final name = _eventData!['name'] as String? ?? '';
+    final name = 'Субботний коферан';
     final organizerName = _eventData!['organizer_name'] as String? ?? '';
     final organizerAvatarUrl =
         _eventData!['organizer_avatar_url'] as String? ?? '';
@@ -214,14 +296,32 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
         : '';
     final dateFormatted = _eventData!['date_formatted_short'] as String? ?? '';
     final time = _eventData!['event_time'] as String? ?? '';
+    // ─── Объединённая дата и время
+    final dateTimeValue = dateFormatted.isEmpty
+        ? '—'
+        : time.isNotEmpty
+        ? '$dateFormatted, $time'
+        : dateFormatted;
     final place = _eventData!['place'] as String? ?? '';
     final photos = _eventData!['photos'] as List<dynamic>? ?? [];
-    final participants = _eventData!['participants'] as List<dynamic>? ?? [];
-    final participantsCount = _eventData!['participants_count'] as int? ?? 0;
+    final participantsRaw = _eventData!['participants'] as List<dynamic>? ?? [];
+    // ─── Сортируем участников: организатор первым
+    final eventUserId = _eventData!['user_id'] as int?;
+    final participants = List<dynamic>.from(participantsRaw)
+      ..sort((a, b) {
+        final aIsOrganizer =
+            (a['user_id'] as int?) == eventUserId ||
+            (a['is_organizer'] as bool?) == true;
+        final bIsOrganizer =
+            (b['user_id'] as int?) == eventUserId ||
+            (b['is_organizer'] as bool?) == true;
+        if (aIsOrganizer && !bIsOrganizer) return -1;
+        if (!aIsOrganizer && bIsOrganizer) return 1;
+        return 0;
+      });
 
     // ─── Извлекаем данные для метрик (опциональные поля из API)
     final distanceMeters = _eventData!['distance_meters'] as num?;
-    final durationSeconds = _eventData!['duration_seconds'] as num?;
 
     // ─── Форматирование метрик
     String formatDistance(double? meters) {
@@ -230,47 +330,8 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
       return '${km.toStringAsFixed(2)} км';
     }
 
-    // ─── Форматирование сложности
-    String formatDifficulty(double? meters, int? seconds) {
-      if (meters == null || meters <= 0 || seconds == null || seconds <= 0) {
-        return 'Лёгкая';
-      }
-      // Если данные есть, можно добавить логику определения сложности
-      // Пока возвращаем "Лёгкая" по умолчанию
-      return 'Лёгкая';
-    }
-
     // ─── Подготовка метрик с цветными тинтами
-    final metrics = <_EventMetric>[
-      _EventMetric(
-        label: 'Адрес',
-        value: place.isNotEmpty ? place : '—',
-        tint: CupertinoColors.systemTeal,
-      ),
-      _EventMetric(
-        label: 'Дата',
-        value: dateFormatted.isNotEmpty ? dateFormatted : '—',
-        tint: CupertinoColors.systemIndigo,
-      ),
-      _EventMetric(
-        label: 'Время',
-        value: time.isNotEmpty ? time : '—',
-        tint: CupertinoColors.systemPurple,
-      ),
-      _EventMetric(
-        label: 'Дистанция',
-        value: formatDistance(distanceMeters?.toDouble()),
-        tint: CupertinoColors.activeBlue,
-      ),
-      _EventMetric(
-        label: 'Сложность',
-        value: formatDifficulty(
-          distanceMeters?.toDouble(),
-          durationSeconds?.toInt(),
-        ),
-        tint: CupertinoColors.systemGreen,
-      ),
-    ];
+    final metrics = <_EventMetric>[];
 
     return InteractiveBackSwipe(
       child: Scaffold(
@@ -278,337 +339,642 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
         body: SafeArea(
           top: false,
           bottom: false,
-          child: Stack(
-            children: [
-              // ───────── Скроллируемый контент
-              CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  // ───────── Шапка без AppBar: SafeArea + кнопки у краёв + логотип по центру
-                  SliverToBoxAdapter(
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: Color.fromARGB(255, 255, 255, 255),
-                        border: Border(
-                          bottom: BorderSide(color: AppColors.border, width: 1),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          SafeArea(
-                            bottom: false,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              child: SizedBox(
-                                height: 100,
-                                child: Row(
-                                  children: [
-                                    _CircleIconBtn(
-                                      icon: CupertinoIcons.back,
-                                      semantic: 'Назад',
-                                      onTap: () =>
-                                          Navigator.of(context).maybePop(),
-                                    ),
-                                    Expanded(
-                                      child: Center(
-                                        child: logoUrl.isNotEmpty
-                                            ? ClipOval(
-                                                child: _HeaderLogo(
-                                                  url: logoUrl,
-                                                ),
-                                              )
-                                            : Container(
-                                                width: 100,
-                                                height: 100,
-                                                decoration: const BoxDecoration(
-                                                  color: AppColors.border,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: const Icon(
-                                                  Icons.event,
-                                                  size: 48,
-                                                ),
-                                              ),
-                                      ),
-                                    ),
-                                    _CircleIconBtn(
-                                      icon: CupertinoIcons.pencil,
-                                      semantic: 'Редактировать',
-                                      onTap: _canEdit ? _openEditScreen : null,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // Остальная часть шапки
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  name,
-                                  textAlign: TextAlign.center,
-                                  style: AppTextStyles.h17w6,
-                                ),
-                                const SizedBox(height: 10),
-
-                                // ─── Организатор с аватаркой 40×40
-                                Row(
-                                  children: [
-                                    ClipOval(
-                                      child: Builder(
-                                        builder: (context) {
-                                          if (finalOrganizerAvatar.isEmpty) {
-                                            return Container(
-                                              width: 40,
-                                              height: 40,
-                                              decoration: const BoxDecoration(
-                                                color: AppColors.border,
-                                                shape: BoxShape.circle,
-                                              ),
-                                              child: const Icon(
-                                                Icons.person,
-                                                size: 24,
-                                              ),
-                                            );
-                                          }
-                                          final dpr = MediaQuery.of(
-                                            context,
-                                          ).devicePixelRatio;
-                                          final cacheWidth = (40 * dpr).round();
-                                          return CachedNetworkImage(
-                                            imageUrl: finalOrganizerAvatar,
-                                            width: 40,
-                                            height: 40,
-                                            fit: BoxFit.cover,
-                                            fadeInDuration: const Duration(
-                                              milliseconds: 120,
-                                            ),
-                                            memCacheWidth: cacheWidth,
-                                            errorWidget:
-                                                (context, imageUrl, error) =>
-                                                    Container(
-                                                      width: 40,
-                                                      height: 40,
-                                                      color: AppColors.border,
-                                                      child: const Icon(
-                                                        Icons.person,
-                                                        size: 20,
-                                                      ),
-                                                    ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Text(
-                                            'Организатор',
-                                            style: TextStyle(
-                                              fontFamily: 'Inter',
-                                              fontSize: 12,
-                                              color: AppColors.textSecondary,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            organizerName,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                              fontFamily: 'Inter',
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                // ─── Цветные метрики (как в training_day_screen)
-                                const SizedBox(height: 12),
-                                _EventMetricBlock(metrics: metrics),
-
-                                if (photos.isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-
-                                  // Фотографии: всегда 3 ячейки для одинакового размера
-                                  Row(
-                                    children: () {
-                                      final widgets = <Widget>[];
-                                      for (var index = 0; index < 3; index++) {
-                                        final hasPhoto = index < photos.length;
-                                        final photoUrl = hasPhoto
-                                            ? photos[index] as String
-                                            : '';
-
-                                        widgets.add(
-                                          Expanded(
-                                            child: hasPhoto
-                                                ? _SquarePhoto(
-                                                    photoUrl,
-                                                    onTap: () =>
-                                                        _openGallery(index),
-                                                  )
-                                                : const SizedBox.shrink(),
-                                          ),
-                                        );
-
-                                        if (index < 2) {
-                                          widgets.add(
-                                            const SizedBox(width: 10),
-                                          );
-                                        }
-                                      }
-                                      return widgets;
-                                    }(),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                  // ───────── ЕДИНЫЙ нижний блок: вкладки + контент (растягивается до низа)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: AppColors.surface,
-                        border: Border(
-                          top: BorderSide(color: AppColors.border, width: 1),
-                          bottom: BorderSide(color: AppColors.border, width: 1),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Вкладки: каждая — в своей половине, центрирование текста, больше высота
-                          SizedBox(
-                            height: 52,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _HalfTab(
-                                    text: 'Описание',
-                                    selected: _tab == 0,
-                                    onTap: () => setState(() => _tab = 0),
-                                  ),
-                                ),
-                                Container(
-                                  width: 1,
-                                  height: 24,
-                                  color: AppColors.border,
-                                ),
-                                Expanded(
-                                  child: _HalfTab(
-                                    text: 'Участники ($participantsCount)',
-                                    selected: _tab == 1,
-                                    onTap: () => setState(() => _tab = 1),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const Divider(height: 1, color: AppColors.border),
-
-                          // Контент активной вкладки — растягивается до низа
-                          Expanded(
-                            child: _tab == 0
-                                ? Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      12,
-                                      12,
-                                      12,
-                                      12,
-                                    ),
-                                    child: EventDescriptionContent(
-                                      description:
-                                          _eventData!['description']
-                                              as String? ??
-                                          '',
-                                    ),
-                                  )
-                                : Padding(
-                                    padding: const EdgeInsets.only(
-                                      top: 0,
-                                      bottom: 0,
-                                    ),
-                                    child: EventMembersContent(
-                                      participants: participants,
-                                    ),
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              // ───────── Плавающая кнопка поверх контента
-              Positioned(
-                bottom: 20,
-                left: 0,
-                right: 0,
-                child: SafeArea(
-                  top: false,
-                  child: Center(
-                    child: Material(
-                      color: AppColors.brandPrimary,
-                      borderRadius: BorderRadius.circular(AppRadius.xxl),
-                      elevation: 0,
-                      child: InkWell(
-                        onTap: () {},
-                        borderRadius: BorderRadius.circular(AppRadius.xxl),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Stack(
+              children: [
+                // ───────── Скроллируемый контент
+                CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    // ───────── Отступ сверху для статус-бара
+                    SliverSafeArea(
+                      bottom: false,
+                      sliver: SliverToBoxAdapter(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 40,
-                            vertical: 12,
-                          ),
+                          height: 170,
                           decoration: BoxDecoration(
-                            color: AppColors.brandPrimary,
-                            borderRadius: BorderRadius.circular(AppRadius.xxl),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: AppColors.shadowMedium,
-                                blurRadius: 1,
-                                offset: Offset(0, 1),
+                            color: AppColors.getSurfaceColor(context),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            border: Border.all(
+                              color: AppColors.getBorderColor(context),
+                              width: 1,
+                            ),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Stack(
+                            children: [
+                              // ─── Фоновое изображение
+                              Positioned.fill(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
+                                  child: Image.asset(
+                                    'assets/coffeereun_fon.jpg',
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+
+                              // ─── Метрики поверх фона в нижней части
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                child: SafeArea(
+                                  bottom: false,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    child: _EventMetricBlock(metrics: metrics),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
-                          child: const Text(
-                            'Присоединиться',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.surface,
+                        ),
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                    // ───────── Промежуточный блок: название события и организатор
+                    SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurfaceColor(context),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              name,
+                              textAlign: TextAlign.left,
+                              style: AppTextStyles.h17w6.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                ClipOval(
+                                  child: Builder(
+                                    builder: (context) {
+                                      if (finalOrganizerAvatar.isEmpty) {
+                                        return Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.getBorderColor(
+                                              context,
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.person,
+                                            size: 24,
+                                            color:
+                                                AppColors.getIconPrimaryColor(
+                                                  context,
+                                                ),
+                                          ),
+                                        );
+                                      }
+                                      final dpr = MediaQuery.of(
+                                        context,
+                                      ).devicePixelRatio;
+                                      final cacheWidth = (40 * dpr).round();
+                                      return CachedNetworkImage(
+                                        imageUrl: finalOrganizerAvatar,
+                                        width: 40,
+                                        height: 40,
+                                        fit: BoxFit.cover,
+                                        fadeInDuration: const Duration(
+                                          milliseconds: 120,
+                                        ),
+                                        memCacheWidth: cacheWidth,
+                                        errorWidget:
+                                            (
+                                              context,
+                                              imageUrl,
+                                              error,
+                                            ) => Container(
+                                              width: 40,
+                                              height: 40,
+                                              color: AppColors.getBorderColor(
+                                                context,
+                                              ),
+                                              child: Icon(
+                                                Icons.person,
+                                                size: 20,
+                                                color:
+                                                    AppColors.getIconPrimaryColor(
+                                                      context,
+                                                    ),
+                                              ),
+                                            ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Организатор',
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 12,
+                                          color:
+                                              AppColors.getTextSecondaryColor(
+                                                context,
+                                              ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        organizerName,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontFamily: 'Inter',
+                                          fontSize: 15,
+                                          color: AppColors.getTextPrimaryColor(
+                                            context,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                    // ───────── Промежуточный блок: адрес
+                    SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurfaceColor(context),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Адрес',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 12,
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              place.isNotEmpty ? place : '—',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Inter',
+                                fontSize: 15,
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                    // ───────── Промежуточный блок: дата и дистанция
+                    SliverToBoxAdapter(
+                      child: Row(
+                        children: [
+                          // Блок с датой
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.getSurfaceColor(context),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Дата',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 12,
+                                      color: AppColors.getTextSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    dateTimeValue,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'Inter',
+                                      fontSize: 15,
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Блок с дистанцией
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.getSurfaceColor(context),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Дистанция',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 12,
+                                      color: AppColors.getTextSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    formatDistance(distanceMeters?.toDouble()),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'Inter',
+                                      fontSize: 15,
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                    // ───────── Промежуточный блок: фотографии
+                    if (photos.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.getSurfaceColor(context),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            border: Border.all(
+                              color: AppColors.getBorderColor(context),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: () {
+                              final widgets = <Widget>[];
+                              for (var index = 0; index < 3; index++) {
+                                final hasPhoto = index < photos.length;
+                                final photoUrl = hasPhoto
+                                    ? photos[index] as String
+                                    : '';
+
+                                widgets.add(
+                                  Expanded(
+                                    child: hasPhoto
+                                        ? _SquarePhoto(
+                                            photoUrl,
+                                            onTap: () => _openGallery(index),
+                                          )
+                                        : const SizedBox.shrink(),
+                                  ),
+                                );
+
+                                if (index < 2) {
+                                  widgets.add(const SizedBox(width: 10));
+                                }
+                              }
+                              return widgets;
+                            }(),
+                          ),
+                        ),
+                      ),
+
+                    if (photos.isNotEmpty)
+                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                    // ───────── Промежуточный блок: участники
+                    SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurfaceColor(context),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Участники',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 12,
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            if (participants.isEmpty)
+                              Text(
+                                '—',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Inter',
+                                  fontSize: 15,
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
+                              )
+                            else
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: List.generate(participants.length, (
+                                    i,
+                                  ) {
+                                    final p =
+                                        participants[i] as Map<String, dynamic>;
+                                    final avatarUrl =
+                                        p['avatar_url'] as String? ?? '';
+                                    return Padding(
+                                      padding: EdgeInsets.only(
+                                        right: i < participants.length - 1
+                                            ? 8
+                                            : 0,
+                                      ),
+                                      child: ClipOval(
+                                        child: avatarUrl.isNotEmpty
+                                            ? Builder(
+                                                builder: (context) {
+                                                  final dpr = MediaQuery.of(
+                                                    context,
+                                                  ).devicePixelRatio;
+                                                  final w = (48 * dpr).round();
+                                                  return CachedNetworkImage(
+                                                    imageUrl: avatarUrl,
+                                                    width: 48,
+                                                    height: 48,
+                                                    fit: BoxFit.cover,
+                                                    fadeInDuration:
+                                                        const Duration(
+                                                          milliseconds: 120,
+                                                        ),
+                                                    memCacheWidth: w,
+                                                    maxWidthDiskCache: w,
+                                                    errorWidget:
+                                                        (
+                                                          context,
+                                                          imageUrl,
+                                                          error,
+                                                        ) => Container(
+                                                          width: 48,
+                                                          height: 48,
+                                                          color:
+                                                              AppColors.getBorderColor(
+                                                                context,
+                                                              ),
+                                                          child: Icon(
+                                                            Icons.person,
+                                                            size: 28,
+                                                            color:
+                                                                AppColors.getIconPrimaryColor(
+                                                                  context,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                  );
+                                                },
+                                              )
+                                            : Container(
+                                                width: 48,
+                                                height: 48,
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      AppColors.getBorderColor(
+                                                        context,
+                                                      ),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: Icon(
+                                                  Icons.person,
+                                                  size: 28,
+                                                  color:
+                                                      AppColors.getIconPrimaryColor(
+                                                        context,
+                                                      ),
+                                                ),
+                                              ),
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                    // ───────── Промежуточный блок: информация
+                    SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurfaceColor(context),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Информация',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 12,
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _eventData!['description'] as String? ?? '—',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Inter',
+                                fontSize: 15,
+                                height: 1.35,
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+                    // ───────── Кнопка "Присоединиться"/"Выйти"
+                    SliverToBoxAdapter(
+                      child: Center(
+                        child: Material(
+                          color: _isParticipant
+                              ? AppColors.red
+                              : AppColors.brandPrimary,
+                          borderRadius: BorderRadius.circular(AppRadius.xxl),
+                          elevation: 0,
+                          child: InkWell(
+                            onTap: _isTogglingParticipation
+                                ? null
+                                : _toggleParticipation,
+                            borderRadius: BorderRadius.circular(AppRadius.xxl),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: _isParticipant ? 60 : 40,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _isParticipant
+                                    ? AppColors.red
+                                    : AppColors.brandPrimary,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.xxl,
+                                ),
+                              ),
+                              child: _isTogglingParticipation
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              AppColors.surface,
+                                            ),
+                                      ),
+                                    )
+                                  : Text(
+                                      _isParticipant
+                                          ? 'Выйти'
+                                          : 'Присоединиться',
+                                      style: const TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.surface,
+                                      ),
+                                    ),
                             ),
                           ),
                         ),
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  ],
+                ),
+
+                // ───────── Плавающие круглые иконки (назад + редактирование)
+                Positioned(
+                  top: 12,
+                  left: 0,
+                  right: 0,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _CircleIconBtn(
+                            icon: CupertinoIcons.back,
+                            semantic: 'Назад',
+                            onTap: () => Navigator.of(context).maybePop(),
+                          ),
+                          if (_canEdit)
+                            _CircleIconBtn(
+                              icon: CupertinoIcons.pencil,
+                              semantic: 'Редактировать',
+                              onTap: _openEditScreen,
+                            )
+                          else
+                            const SizedBox(width: 38, height: 38),
+                        ],
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -622,14 +988,22 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
 class _CircleIconBtn extends StatelessWidget {
   final IconData icon;
   final String? semantic;
-  final VoidCallback? onTap;
-  const _CircleIconBtn({required this.icon, this.onTap, this.semantic});
+  final VoidCallback onTap;
+  const _CircleIconBtn({
+    required this.icon,
+    required this.onTap,
+    this.semantic,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (onTap == null) {
-      return const SizedBox.shrink();
-    }
+    // Цвет иконки теперь привязан к первичному тексту
+    final iconColor = AppColors.getTextPrimaryColor(context);
+
+    // Цвет фона совпадает с background и имеет лёгкую прозрачность
+    final backgroundColor = AppColors.getBackgroundColor(
+      context,
+    ).withValues(alpha: 0.7);
 
     return Semantics(
       label: semantic,
@@ -637,42 +1011,15 @@ class _CircleIconBtn extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          width: 34,
-          height: 34,
-          decoration: const BoxDecoration(
-            color: AppColors.scrim20,
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: backgroundColor,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 18, color: AppColors.surface),
+          child: Icon(icon, size: 20, color: iconColor),
         ),
-      ),
-    );
-  }
-}
-
-/// Круглый логотип 92×92 с кэшем
-class _HeaderLogo extends StatelessWidget {
-  final String url;
-  const _HeaderLogo({required this.url});
-
-  @override
-  Widget build(BuildContext context) {
-    final dpr = MediaQuery.of(context).devicePixelRatio;
-    final w = (100 * dpr).round();
-    return CachedNetworkImage(
-      imageUrl: url,
-      width: 100,
-      height: 100,
-      fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 120),
-      memCacheWidth: w,
-      maxWidthDiskCache: w,
-      errorWidget: (context, imageUrl, error) => Container(
-        width: 100,
-        height: 100,
-        color: AppColors.border,
-        child: const Icon(Icons.image, size: 48),
       ),
     );
   }
@@ -698,8 +1045,12 @@ class _Avatar40 extends StatelessWidget {
       errorWidget: (context, imageUrl, error) => Container(
         width: 40,
         height: 40,
-        color: AppColors.border,
-        child: const Icon(Icons.person, size: 24),
+        color: AppColors.getBorderColor(context),
+        child: Icon(
+          Icons.person,
+          size: 24,
+          color: AppColors.getIconPrimaryColor(context),
+        ),
       ),
     );
   }
@@ -716,7 +1067,7 @@ class _SquarePhoto extends StatelessWidget {
     return AspectRatio(
       aspectRatio: 1,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.xs),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         child: InkWell(
           onTap: onTap,
           child: LayoutBuilder(
@@ -730,43 +1081,15 @@ class _SquarePhoto extends StatelessWidget {
                 memCacheWidth: target,
                 maxWidthDiskCache: target,
                 errorWidget: (context, imageUrl, error) => Container(
-                  color: AppColors.border,
-                  child: const Icon(Icons.image, size: 48),
+                  color: AppColors.getBorderColor(context),
+                  child: Icon(
+                    Icons.image,
+                    size: 48,
+                    color: AppColors.getIconPrimaryColor(context),
+                  ),
                 ),
               );
             },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Текст вкладки, центрированный в своей половине.
-class _HalfTab extends StatelessWidget {
-  final String text;
-  final bool selected;
-  final VoidCallback onTap;
-  const _HalfTab({
-    required this.text,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = selected ? AppColors.brandPrimary : AppColors.textPrimary;
-    return InkWell(
-      onTap: onTap,
-      child: Center(
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: color,
           ),
         ),
       ),
@@ -796,7 +1119,7 @@ class _GalleryViewerState extends State<_GalleryViewer> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.textPrimary,
+      color: AppColors.getTextPrimaryColor(context),
       child: SafeArea(
         child: Stack(
           children: [
@@ -813,8 +1136,12 @@ class _GalleryViewerState extends State<_GalleryViewer> {
                       fit: BoxFit.contain,
                       fadeInDuration: const Duration(milliseconds: 120),
                       errorWidget: (context, imageUrl, error) => Container(
-                        color: AppColors.border,
-                        child: const Icon(Icons.image, size: 48),
+                        color: AppColors.getBorderColor(context),
+                        child: Icon(
+                          Icons.image,
+                          size: 48,
+                          color: AppColors.getIconPrimaryColor(context),
+                        ),
                       ),
                     ),
                   ),
@@ -830,13 +1157,15 @@ class _GalleryViewerState extends State<_GalleryViewer> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.surface.withValues(alpha: 0.5),
+                    color: AppColors.getSurfaceColor(
+                      context,
+                    ).withValues(alpha: 0.5),
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
-                  child: const Icon(
+                  child: Icon(
                     CupertinoIcons.xmark,
-                    color: AppColors.surface,
+                    color: AppColors.getSurfaceColor(context),
                     size: 18,
                   ),
                 ),
@@ -856,10 +1185,15 @@ class EventDescriptionContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const style = TextStyle(fontFamily: 'Inter', fontSize: 14, height: 1.35);
+    final style = TextStyle(
+      fontFamily: 'Inter',
+      fontSize: 14,
+      height: 1.35,
+      color: AppColors.getTextPrimaryColor(context),
+    );
 
     if (description.isEmpty) {
-      return const Align(
+      return Align(
         alignment: Alignment.topLeft,
         child: Text('Описание отсутствует', style: style),
       );
@@ -880,9 +1214,15 @@ class EventMembersContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (participants.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text('Участники отсутствуют', style: TextStyle(fontSize: 14)),
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          'Участники отсутствуют',
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.getTextPrimaryColor(context),
+          ),
+        ),
       );
     }
 
@@ -906,7 +1246,11 @@ class EventMembersContent extends StatelessWidget {
               ),
             ),
             if (i != participants.length - 1)
-              const Divider(height: 1, thickness: 0.5, color: AppColors.border),
+              Divider(
+                height: 1,
+                thickness: 0.5,
+                color: AppColors.getDividerColor(context),
+              ),
           ],
         );
       }),
@@ -927,14 +1271,20 @@ class _MemberRow extends StatelessWidget {
           ClipOval(
             child: member.avatar.isNotEmpty
                 ? _Avatar40(url: member.avatar)
-                : Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: AppColors.border,
-                      shape: BoxShape.circle,
+                : Builder(
+                    builder: (context) => Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.getBorderColor(context),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.person,
+                        size: 24,
+                        color: AppColors.getIconPrimaryColor(context),
+                      ),
                     ),
-                    child: const Icon(Icons.person, size: 24),
                   ),
           ),
           const SizedBox(width: 12),
@@ -944,23 +1294,28 @@ class _MemberRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  member.name,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
+                Builder(
+                  builder: (context) => Text(
+                    member.name,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
                   ),
                 ),
                 if (member.role != null) ...[
                   const SizedBox(height: 2),
-                  Text(
-                    member.role!,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+                  Builder(
+                    builder: (context) => Text(
+                      member.role!,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
                     ),
                   ),
                 ],
@@ -1050,11 +1405,11 @@ class _EventMetricBlock extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   m.value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: AppColors.getTextPrimaryColor(context),
                   ),
                   maxLines: isFirst ? 2 : 1,
                   overflow: TextOverflow.ellipsis,

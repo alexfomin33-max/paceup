@@ -6,7 +6,7 @@ import '../../../../../../domain/models/event.dart';
 import '../../../../../../features/map/providers/events/my_events_provider.dart';
 import '../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../core/widgets/transparent_route.dart';
-import '../../../../../../features/map/screens/events/event_detail_screen.dart';
+import '../../../../../../features/map/screens/events/event_detail_screen2.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 /// Вкладка «Мои события» — карточный список с зазором 2 px
@@ -270,7 +270,7 @@ class _MyEventsContentState extends ConsumerState<MyEventsContent> {
                               .push<dynamic>(
                                 TransparentPageRoute(
                                   builder: (_) =>
-                                      EventDetailScreen(eventId: event.id),
+                                      EventDetailScreen2(eventId: event.id),
                                 ),
                               );
                           // Если событие было удалено или обновлено, обновляем список

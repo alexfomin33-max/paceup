@@ -7,7 +7,7 @@ import '../../../../../../domain/models/event.dart';
 import '../../../../../../features/map/providers/events/bookmarked_events_provider.dart';
 import '../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../core/widgets/transparent_route.dart';
-import '../../../../../../features/map/screens/events/event_detail_screen.dart';
+import '../../../../../../features/map/screens/events/event_detail_screen2.dart';
 
 /// Вкладка «Закладки» — карточный список с промежутками (как в Маршрутах)
 /// Загружает события из закладок пользователя через API
@@ -137,7 +137,7 @@ class _BookmarksContentState extends ConsumerState<BookmarksContent> {
                               .push<dynamic>(
                                 TransparentPageRoute(
                                   builder: (_) =>
-                                      EventDetailScreen(eventId: event.id),
+                                      EventDetailScreen2(eventId: event.id),
                                 ),
                               );
                           // Если событие было удалено или удалено из закладок, обновляем список

@@ -301,7 +301,8 @@ class _GearTabState extends ConsumerState<GearTab>
                 onChanged: (v) => _updateShowOnMain(true, v),
               ),
             ),
-          if (_isOwnProfile) const SliverToBoxAdapter(child: SizedBox(height: 2)),
+          if (_isOwnProfile)
+            const SliverToBoxAdapter(child: SizedBox(height: 2)),
           if (!_isOwnProfile)
             SliverToBoxAdapter(
               child: Padding(
@@ -319,7 +320,8 @@ class _GearTabState extends ConsumerState<GearTab>
                 ),
               ),
             ),
-          if (!_isOwnProfile) const SliverToBoxAdapter(child: SizedBox(height: 2)),
+          if (!_isOwnProfile)
+            const SliverToBoxAdapter(child: SizedBox(height: 2)),
           SliverToBoxAdapter(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -351,7 +353,8 @@ class _GearTabState extends ConsumerState<GearTab>
                 onChanged: (v) => _updateShowOnMain(false, v),
               ),
             ),
-          if (_isOwnProfile) const SliverToBoxAdapter(child: SizedBox(height: 2)),
+          if (_isOwnProfile)
+            const SliverToBoxAdapter(child: SizedBox(height: 2)),
           if (!_isOwnProfile)
             SliverToBoxAdapter(
               child: Padding(
@@ -369,7 +372,8 @@ class _GearTabState extends ConsumerState<GearTab>
                 ),
               ),
             ),
-          if (!_isOwnProfile) const SliverToBoxAdapter(child: SizedBox(height: 2)),
+          if (!_isOwnProfile)
+            const SliverToBoxAdapter(child: SizedBox(height: 2)),
           SliverToBoxAdapter(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -691,6 +695,8 @@ class _GearListCard extends StatelessWidget {
                   Divider(
                     height: 1,
                     thickness: 0.5,
+                    indent: 12,
+                    endIndent: 12,
                     color: AppColors.getDividerColor(context),
                   ),
               ],

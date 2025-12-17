@@ -18,7 +18,7 @@ import '../../../../core/services/auth_service.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../widgets/pills.dart';
 import '../../../../core/widgets/transparent_route.dart';
-import '../../../map/screens/events/event_detail_screen.dart';
+import '../../../map/screens/events/event_detail_screen2.dart';
 
 /// Модель оповещения о слоте
 class AlertItem {
@@ -265,7 +265,7 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
     if (!mounted) return;
     Navigator.of(context).push(
       TransparentPageRoute(
-        builder: (_) => EventDetailScreen(eventId: eventId),
+        builder: (_) => EventDetailScreen2(eventId: eventId),
       ),
     );
   }

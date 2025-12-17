@@ -11,7 +11,7 @@ import '../../../../../core/widgets/transparent_route.dart';
 import '../../../../../providers/services/auth_provider.dart';
 import '../../../../../providers/services/api_provider.dart';
 import '../../../../profile/screens/profile_screen.dart';
-import '../../../../map/screens/events/event_detail_screen.dart';
+import '../../../../map/screens/events/event_detail_screen2.dart';
 import '../../activity/description_screen.dart';
 import '../../../../../domain/models/activity_lenta.dart' as al;
 import '../../../providers/lenta_provider.dart';
@@ -304,7 +304,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       if (!mounted) return;
       Navigator.of(context).push(
         TransparentPageRoute(
-          builder: (_) => EventDetailScreen(eventId: objectId),
+          builder: (_) => EventDetailScreen2(eventId: objectId),
         ),
       );
       return;
