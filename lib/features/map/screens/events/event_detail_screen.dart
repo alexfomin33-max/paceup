@@ -660,7 +660,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                 12,
                                 12,
                                 12,
-                                12,
+                                76,
                               ),
                               child: EventDescriptionContent(
                                 description:

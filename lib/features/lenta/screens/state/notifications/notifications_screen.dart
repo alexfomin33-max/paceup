@@ -66,6 +66,56 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     return DateFormat('dd.MM.yyyy').format(d);
   }
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // ФОРМАТИРОВАНИЕ ТЕКСТА УВЕДОМЛЕНИЯ: для забегов и заездов — 2 знака после запятой,
+  // для заплывов — конвертация в метры без десятичных значений
+  // ─────────────────────────────────────────────────────────────────────────────
+  String _formatNotificationText(String text) {
+    // Паттерн для забегов: "закончил забег X км." или "закончил забег X.XX км."
+    // Заменяем на формат с 2 знаками после запятой: "закончил забег X,XX км"
+    final runPattern = RegExp(
+      r'закончил забег\s+(\d+(?:\.\d+)?)\s*км\.?',
+      caseSensitive: false,
+    );
+    
+    text = text.replaceAllMapped(runPattern, (match) {
+      final distanceStr = match.group(1) ?? '0';
+      final distance = double.tryParse(distanceStr) ?? 0.0;
+      final formattedDistance = distance.toStringAsFixed(2).replaceAll('.', ',');
+      return 'закончил забег $formattedDistance км';
+    });
+
+    // Паттерн для заездов: "закончил заезд X км." или "закончил заезд X.XX км."
+    // Заменяем на формат с 2 знаками после запятой: "закончил заезд X,XX км"
+    final ridePattern = RegExp(
+      r'закончил заезд\s+(\d+(?:\.\d+)?)\s*км\.?',
+      caseSensitive: false,
+    );
+    
+    text = text.replaceAllMapped(ridePattern, (match) {
+      final distanceStr = match.group(1) ?? '0';
+      final distance = double.tryParse(distanceStr) ?? 0.0;
+      final formattedDistance = distance.toStringAsFixed(2).replaceAll('.', ',');
+      return 'закончил заезд $formattedDistance км';
+    });
+
+    // Паттерн для заплывов: "закончил заплыв X.XX км." или "закончил заплыв X км."
+    // Заменяем на формат в метрах без десятичных значений: "закончил заплыв XXX м"
+    final swimPattern = RegExp(
+      r'закончил заплыв\s+(\d+(?:\.\d+)?)\s*км\.?',
+      caseSensitive: false,
+    );
+    
+    text = text.replaceAllMapped(swimPattern, (match) {
+      final distanceStr = match.group(1) ?? '0';
+      final distanceKm = double.tryParse(distanceStr) ?? 0.0;
+      final distanceMeters = (distanceKm * 1000).round();
+      return 'закончил заплыв $distanceMeters м';
+    });
+
+    return text;
+  }
+
   // Получение иконки по строковому коду
   // ─────────────────────────────────────────────────────────────────────────────
   // Подбираем иконку по строковому коду; для тренировок берём те же иконки,
@@ -549,7 +599,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                notification.text,
+                                _formatNotificationText(notification.text),
                                 style: TextStyle(
                                   fontSize: 13,
                                   height: 1.25,
