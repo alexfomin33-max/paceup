@@ -91,7 +91,7 @@ class ClubsBottomSheet extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
                 ],
               ),
             );
@@ -209,8 +209,7 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
     // для ускорения первого кадра и плавного скролла.
     () {
       final dpr = MediaQuery.of(context).devicePixelRatio;
-      final targetW = (55 * dpr).round();
-      final targetH = (55 * dpr).round();
+      final targetW = (100 * dpr).round();
       final int limit = _clubs.length < 8 ? _clubs.length : 8;
       for (var i = 0; i < limit; i++) {
         final c = _clubs[i] as Map<String, dynamic>;
@@ -221,7 +220,7 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
             CachedNetworkImageProvider(
               logoUrl,
               maxWidth: targetW,
-              maxHeight: targetH,
+              maxHeight: targetW,
             ),
             context,
           );
@@ -233,86 +232,10 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
     Widget clubCard({
       required String? logoUrl,
       required String title,
-      required String subtitle,
+      required int membersCount,
+      required String? city,
       VoidCallback? onTap,
     }) {
-      final dpr = MediaQuery.of(context).devicePixelRatio;
-      final targetW = (55 * dpr).round();
-      final targetH = (55 * dpr).round();
-
-      final imageWidget = ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.xs),
-        child: logoUrl != null && logoUrl.isNotEmpty
-            ? CachedNetworkImage(
-                imageUrl: logoUrl,
-                width: 55,
-                height: 55,
-                fit: BoxFit.cover,
-                fadeInDuration: const Duration(milliseconds: 120),
-                memCacheWidth: targetW,
-                memCacheHeight: targetH,
-                maxWidthDiskCache: targetW,
-                maxHeightDiskCache: targetH,
-                errorWidget: (context, imageUrl, error) => Container(
-                  width: 55,
-                  height: 55,
-                  color: AppColors.getSurfaceMutedColor(context),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    CupertinoIcons.photo,
-                    size: 20,
-                    color: AppColors.getIconSecondaryColor(context),
-                  ),
-                ),
-              )
-            : Container(
-                width: 55,
-                height: 55,
-                color: AppColors.getSurfaceMutedColor(context),
-                alignment: Alignment.center,
-                child: Icon(
-                  CupertinoIcons.photo,
-                  size: 20,
-                  color: AppColors.getIconSecondaryColor(context),
-                ),
-              ),
-      );
-
-      final content = Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            imageWidget,
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.h14w6.copyWith(
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.h13w4.copyWith(
-                      color: AppColors.getTextSecondaryColor(context),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-
       // ── определяем цвет тени в зависимости от темы
       final brightness = Theme.of(context).brightness;
       final shadowColor = brightness == Brightness.dark
@@ -322,10 +245,10 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
       final card = Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: AppColors.getBorderColor(context),
-            width: 0.5,
+            width: 1,
           ),
           boxShadow: [
             BoxShadow(
@@ -336,41 +259,120 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
             ),
           ],
         ),
-        child: content,
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Логотип клуба (круглый)
+            Container(
+              height: 100,
+              width: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.getBorderColor(context),
+                  width: 0.5,
+                ),
+              ),
+              child: ClipOval(child: _ClubLogoImage(logoUrl: logoUrl)),
+            ),
+            const SizedBox(height: 8),
+
+            // Название клуба
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                height: 1.2,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // Количество участников и город
+            Align(
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    CupertinoIcons.person_2,
+                    size: 15,
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatMembers(membersCount),
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      height: 1.2,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                  if (city != null && city.isNotEmpty) ...[
+                    Flexible(
+                      child: Text(
+                        '  ·  $city',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 13,
+                          height: 1.2,
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       );
 
       if (onTap == null) return card;
 
-      return Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          child: card,
-        ),
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: card,
       );
     }
 
-    // ─────────────────────────── Ленивый список ───────────────────────────
+    // ─────────────────────────── Сетка карточек 2xN ───────────────────────────
     // Используем shrinkWrap для динамической высоты bottom sheet
-    return ListView.separated(
+    return GridView.builder(
       shrinkWrap: true,
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
       physics: const BouncingScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        mainAxisExtent: 174,
+      ),
       itemCount: _clubs.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 2),
       itemBuilder: (context, index) {
         final club = _clubs[index] as Map<String, dynamic>;
         final clubId = club['id'] as int?;
         final name = club['name'] as String? ?? '';
         final logoUrl = club['logo_url'] as String?;
         final membersCount = club['members_count'] as int? ?? 0;
-        final subtitle = 'Участников: $membersCount';
+        final city = club['city'] as String?;
 
         return clubCard(
           logoUrl: logoUrl,
           title: name,
-          subtitle: subtitle,
+          membersCount: membersCount,
+          city: city,
           onTap: clubId != null
               ? () async {
                   final result = await Navigator.of(context).push<dynamic>(
@@ -382,8 +384,7 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
                   if (result is Map<String, dynamic> &&
                       result['members_count_updated'] == true &&
                       context.mounted) {
-                    final updatedCount =
-                        result['members_count'] as int? ?? 0;
+                    final updatedCount = result['members_count'] as int? ?? 0;
                     final updatedClubId = result['club_id'] as int?;
                     if (updatedClubId != null) {
                       _updateMembersCount(updatedClubId, updatedCount);
@@ -399,4 +400,71 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
       },
     );
   }
+}
+
+/// Виджет для отображения логотипа клуба
+///
+/// Использует CachedNetworkImage для загрузки изображения из API
+/// Показывает placeholder при отсутствии логотипа или ошибке загрузки
+class _ClubLogoImage extends StatelessWidget {
+  final String? logoUrl;
+  const _ClubLogoImage({required this.logoUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    // Если логотип не указан, показываем placeholder
+    if (logoUrl == null || logoUrl!.isEmpty) {
+      return Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const Icon(
+          CupertinoIcons.group,
+          size: 40,
+          color: AppColors.textSecondary,
+        ),
+      );
+    }
+
+    // Загружаем логотип из сети с кэшированием
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final targetW = (100 * dpr).round();
+
+    return CachedNetworkImage(
+      imageUrl: logoUrl!,
+      width: 100,
+      height: 100,
+      fit: BoxFit.cover,
+      fadeInDuration: const Duration(milliseconds: 120),
+      memCacheWidth: targetW,
+      maxWidthDiskCache: targetW,
+      errorWidget: (context, imageUrl, error) => Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const Icon(
+          CupertinoIcons.photo,
+          size: 24,
+          color: AppColors.textSecondary,
+        ),
+      ),
+      placeholder: (context, imageUrl) => Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(strokeWidth: 2),
+      ),
+    );
+  }
+}
+
+// Формат "58 234"
+String _formatMembers(int n) {
+  final s = n.toString();
+  final buf = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    final rev = s.length - i;
+    buf.write(s[i]);
+    if (rev > 1 && rev % 3 == 1) {
+      buf.write('\u202F'); // узкий неразрывный пробел
+    }
+  }
+  return buf.toString();
 }
