@@ -1051,7 +1051,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         case 0:
           // Для событий создаём виджет со списком событий из API
           return ebs.EventsBottomSheet(
-            title: title,
+            title: 'Предстоящие события',
             child: events != null && events is List
                 ? ebs.EventsListFromApi(
                     events: events,

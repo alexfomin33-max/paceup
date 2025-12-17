@@ -92,7 +92,7 @@ class EventsBottomSheet extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
                 ],
               ),
             );
@@ -190,23 +190,18 @@ class _EventsListFromApiState extends State<EventsListFromApi> {
     });
   }
 
-  /// Форматирует дату, убирая год, если это текущий год
-  /// Работает с форматом "10 июня 2025" → "10 июня" (если 2025 = текущий год)
-  /// Адаптация подхода из _normalizeServerDateText (feed_date.dart)
-  String _formatDateWithoutCurrentYear(
-    String dateFormatted,
-    Map<String, dynamic> event,
-  ) {
+  /// Форматирует дату в формат "10.01.2027"
+  /// Работает с форматом "10 января 2027" → "10.01.2027"
+  String _formatDateToNumeric(String dateFormatted) {
     if (dateFormatted.isEmpty) {
       return dateFormatted;
     }
 
-    final currentYear = DateTime.now().year;
     final trimmedDate = dateFormatted.trim();
 
     // ──────────────────────────────────────────────────────────────
-    // Ищем паттерн: "dd месяца yyyy" (с годом)
-    // Пример: "10 июня 2025" → "10 июня" (если 2025 = текущий год)
+    // Парсим формат: "dd месяца yyyy"
+    // Пример: "10 января 2027" → "10.01.2027"
     // ──────────────────────────────────────────────────────────────
     final regexWithYear = RegExp(
       r'^(\d{1,2})\s+([а-яА-ЯёЁ]+)\s+(\d{4})$',
@@ -215,38 +210,35 @@ class _EventsListFromApiState extends State<EventsListFromApi> {
 
     final matchWithYear = regexWithYear.firstMatch(trimmedDate);
     if (matchWithYear != null) {
+      final dayStr = matchWithYear.group(1)!;
+      final monthName = matchWithYear.group(2)!.toLowerCase();
       final yearStr = matchWithYear.group(3)!;
-      final year = int.tryParse(yearStr);
-      if (year != null && year == currentYear) {
-        // Год текущий — убираем его
-        final day = matchWithYear.group(1)!;
-        final monthName = matchWithYear.group(2)!;
-        return '$day $monthName';
-      }
-      // Год не текущий — возвращаем как есть
-      return dateFormatted;
-    }
 
-    // ──────────────────────────────────────────────────────────────
-    // Более гибкий поиск: ищем любой 4-значный год в строке
-    // и удаляем его, если это текущий год
-    // ──────────────────────────────────────────────────────────────
-    final yearPattern = RegExp(r'\b(\d{4})\b');
-    final allMatches = yearPattern.allMatches(trimmedDate);
+      // Преобразуем название месяца в число
+      final monthMap = {
+        'января': '01',
+        'февраля': '02',
+        'марта': '03',
+        'апреля': '04',
+        'мая': '05',
+        'июня': '06',
+        'июля': '07',
+        'августа': '08',
+        'сентября': '09',
+        'октября': '10',
+        'ноября': '11',
+        'декабря': '12',
+      };
 
-    for (final match in allMatches) {
-      final yearStr = match.group(1)!;
-      final year = int.tryParse(yearStr);
-      if (year != null && year == currentYear) {
-        // Нашли текущий год — удаляем его вместе с окружающими пробелами
-        final before = trimmedDate.substring(0, match.start);
-        final after = trimmedDate.substring(match.end);
-        // Убираем лишние пробелы
-        return '${before.trim()} ${after.trim()}'.trim();
+      final monthNum = monthMap[monthName];
+      if (monthNum != null) {
+        // Форматируем день с ведущим нулём, если нужно
+        final day = dayStr.padLeft(2, '0');
+        return '$day.$monthNum.$yearStr';
       }
     }
 
-    // Не нашли текущий год — возвращаем как есть
+    // Если не удалось распарсить, возвращаем как есть
     return dateFormatted;
   }
 
@@ -270,8 +262,7 @@ class _EventsListFromApiState extends State<EventsListFromApi> {
     // для ускорения первого кадра и плавного скролла.
     () {
       final dpr = MediaQuery.of(context).devicePixelRatio;
-      final targetW = (55 * dpr).round();
-      final targetH = (55 * dpr).round();
+      final targetW = (100 * dpr).round();
       final int limit = _events.length < 8 ? _events.length : 8;
       for (var i = 0; i < limit; i++) {
         final e = _events[i] as Map<String, dynamic>;
@@ -282,7 +273,7 @@ class _EventsListFromApiState extends State<EventsListFromApi> {
             CachedNetworkImageProvider(
               logoUrl,
               maxWidth: targetW,
-              maxHeight: targetH,
+              maxHeight: targetW,
             ),
             context,
           );
@@ -294,87 +285,10 @@ class _EventsListFromApiState extends State<EventsListFromApi> {
     Widget eventCard({
       required String? logoUrl,
       required String title,
-      required String subtitle,
+      required String date,
+      required int participantsCount,
       VoidCallback? onTap,
     }) {
-      final dpr = MediaQuery.of(context).devicePixelRatio;
-      final targetW = (55 * dpr).round();
-      final targetH = (55 * dpr).round();
-
-      final imageWidget = ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.xs),
-        child: logoUrl != null && logoUrl.isNotEmpty
-            ? CachedNetworkImage(
-                imageUrl: logoUrl,
-                width: 55,
-                height: 55,
-                fit: BoxFit.cover,
-                fadeInDuration: const Duration(milliseconds: 120),
-                memCacheWidth: targetW,
-                memCacheHeight: targetH,
-                maxWidthDiskCache: targetW,
-                maxHeightDiskCache: targetH,
-                errorWidget: (context, imageUrl, error) => Container(
-                  width: 55,
-                  height: 55,
-                  color: AppColors.getSurfaceMutedColor(context),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    CupertinoIcons.photo,
-                    size: 20,
-                    color: AppColors.getIconSecondaryColor(context),
-                  ),
-                ),
-              )
-            : Container(
-                width: 55,
-                height: 55,
-                color: AppColors.getSurfaceMutedColor(context),
-                alignment: Alignment.center,
-                child: Icon(
-                  CupertinoIcons.photo,
-                  size: 20,
-                  color: AppColors.getIconSecondaryColor(context),
-                ),
-              ),
-      );
-
-      final content = Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            imageWidget,
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.h14w6.copyWith(
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.h13w4.copyWith(
-                      color: AppColors.getTextSecondaryColor(context),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-
       // ── определяем цвет тени в зависимости от темы
       final brightness = Theme.of(context).brightness;
       final shadowColor = brightness == Brightness.dark
@@ -384,10 +298,10 @@ class _EventsListFromApiState extends State<EventsListFromApi> {
       final card = Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: AppColors.getBorderColor(context),
-            width: 0.5,
+            width: 1,
           ),
           boxShadow: [
             BoxShadow(
@@ -398,39 +312,119 @@ class _EventsListFromApiState extends State<EventsListFromApi> {
             ),
           ],
         ),
-        child: content,
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Логотип события (круглый)
+            SizedBox(
+              height: 100,
+              width: 100,
+              child: ClipOval(child: _EventLogoImage(logoUrl: logoUrl)),
+            ),
+            const SizedBox(height: 8),
+
+            // Название события
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                height: 1.2,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // Дата и количество участников
+            Align(
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      date,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        height: 1.2,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '  ·  ',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      height: 1.2,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                  Icon(
+                    CupertinoIcons.person_2,
+                    size: 15,
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatParticipants(participantsCount),
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      height: 1.2,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       );
 
       if (onTap == null) return card;
 
-      return Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          child: card,
-        ),
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: card,
       );
     }
 
-    // ─────────────────────────── Ленивый список ───────────────────────────
+    // ─────────────────────────── Сетка карточек 2xN (или 1xN если событие одно) ───────────────────────────
+    // Если событий только одно, показываем карточку на всю ширину (как две карточки)
     // Используем shrinkWrap для динамической высоты bottom sheet
-    return ListView.separated(
+    final isSingleEvent = _events.length == 1;
+    return GridView.builder(
       shrinkWrap: true,
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
       physics: const BouncingScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isSingleEvent ? 1 : 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        mainAxisExtent: 174,
+      ),
       itemCount: _events.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 2),
       itemBuilder: (context, index) {
         final event = _events[index] as Map<String, dynamic>;
         final eventId = event['id'] as int?;
         final name = event['name'] as String? ?? '';
         final logoUrl = event['logo_url'] as String?;
         final dateRaw = event['date'] as String? ?? '';
-        // Форматируем дату, убирая год, если это текущий год
-        final date = _formatDateWithoutCurrentYear(dateRaw, event);
+        // ── Если событие одно, используем исходный формат даты (например, "13 августа 2026")
+        // ── Если событий несколько, форматируем в числовой формат "10.01.2027"
+        final date = isSingleEvent ? dateRaw : _formatDateToNumeric(dateRaw);
         final participantsCount = event['participants_count'] as int? ?? 0;
-        final subtitle = '$date  ·  Участников: $participantsCount';
         // ── Проверяем, является ли событие официальным (топ событием)
         // Используем event_type для точного определения, так как registration_link может отсутствовать в кратком списке
         final eventType = event['event_type'] as String? ?? 'amateur';
@@ -444,7 +438,8 @@ class _EventsListFromApiState extends State<EventsListFromApi> {
         return eventCard(
           logoUrl: logoUrl,
           title: name,
-          subtitle: subtitle,
+          date: date,
+          participantsCount: participantsCount,
           onTap: eventId != null
               ? () async {
                   final result = await Navigator.of(context).push<dynamic>(
@@ -479,4 +474,71 @@ class _EventsListFromApiState extends State<EventsListFromApi> {
       },
     );
   }
+}
+
+/// Виджет для отображения логотипа события
+///
+/// Использует CachedNetworkImage для загрузки изображения из API
+/// Показывает placeholder при отсутствии логотипа или ошибке загрузки
+class _EventLogoImage extends StatelessWidget {
+  final String? logoUrl;
+  const _EventLogoImage({required this.logoUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    // Если логотип не указан, показываем placeholder
+    if (logoUrl == null || logoUrl!.isEmpty) {
+      return Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const Icon(
+          CupertinoIcons.calendar,
+          size: 40,
+          color: AppColors.textSecondary,
+        ),
+      );
+    }
+
+    // Загружаем логотип из сети с кэшированием
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final targetW = (100 * dpr).round();
+
+    return CachedNetworkImage(
+      imageUrl: logoUrl!,
+      width: 100,
+      height: 100,
+      fit: BoxFit.cover,
+      fadeInDuration: const Duration(milliseconds: 120),
+      memCacheWidth: targetW,
+      maxWidthDiskCache: targetW,
+      errorWidget: (context, imageUrl, error) => Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const Icon(
+          CupertinoIcons.photo,
+          size: 24,
+          color: AppColors.textSecondary,
+        ),
+      ),
+      placeholder: (context, imageUrl) => Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(strokeWidth: 2),
+      ),
+    );
+  }
+}
+
+// Формат "58 234"
+String _formatParticipants(int n) {
+  final s = n.toString();
+  final buf = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    final rev = s.length - i;
+    buf.write(s[i]);
+    if (rev > 1 && rev % 3 == 1) {
+      buf.write('\u202F'); // узкий неразрывный пробел
+    }
+  }
+  return buf.toString();
 }
