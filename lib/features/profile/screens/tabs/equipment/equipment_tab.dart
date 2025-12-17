@@ -649,17 +649,6 @@ class _GearListCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              it.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.getTextPrimaryColor(context),
-                              ),
-                            ),
                             if (it.brand.isNotEmpty)
                               Text(
                                 it.brand,
@@ -667,10 +656,21 @@ class _GearListCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: 'Inter',
-                                  fontSize: 12,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
                                   color: AppColors.getTextPrimaryColor(context),
                                 ),
                               ),
+                            Text(
+                              it.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 12,
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
                           ],
                         ),
                       ),

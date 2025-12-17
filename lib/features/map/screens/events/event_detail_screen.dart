@@ -699,8 +699,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                               : _toggleParticipation,
                           borderRadius: BorderRadius.circular(AppRadius.xxl),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 40,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: _isParticipant ? 60 : 40,
                               vertical: 12,
                             ),
                             decoration: BoxDecoration(
@@ -710,13 +710,6 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                               borderRadius: BorderRadius.circular(
                                 AppRadius.xxl,
                               ),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: AppColors.shadowMedium,
-                                  blurRadius: 1,
-                                  offset: Offset(0, 1),
-                                ),
-                              ],
                             ),
                             child: _isTogglingParticipation
                                 ? const SizedBox(

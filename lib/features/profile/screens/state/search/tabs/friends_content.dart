@@ -8,6 +8,7 @@ import '../../../../../../features/profile/providers/search/friends_search_provi
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/error_handler.dart';
 import '../../../../../../core/widgets/primary_button.dart';
+import '../../../../../../core/widgets/transparent_route.dart';
 import '../../../../../../features/profile/screens/profile_screen.dart';
 
 /// Контент вкладки «Друзья»
@@ -57,6 +58,39 @@ class _SearchFriendsContentState extends ConsumerState<SearchFriendsContent> {
         : ref.watch(recommendedFriendsProvider);
 
     // ────────────────────────────────────────────────────────────────────────
+    // 🔹 СИНХРОНИЗАЦИЯ КЭША: отслеживаем изменения данных и обновляем
+    // кэш состояния подписок после завершения build
+    // ────────────────────────────────────────────────────────────────────────
+    // ⚠️ ВАЖНО: нельзя обновлять провайдеры во время build
+    // Используем ref.listen для отслеживания изменений и обновления
+    // кэша после завершения build через Future.microtask
+    ref.listen(
+      isSearching
+          ? searchFriendsProvider(trimmedQuery)
+          : recommendedFriendsProvider,
+      (previous, next) {
+        next.whenData((friends) {
+          // Откладываем обновление кэша до завершения build
+          Future.microtask(() {
+            final subscriptionNotifier = ref.read(
+              subscriptionStateProvider.notifier,
+            );
+            for (final friend in friends) {
+              // Обновляем кэш только если там нет значения для этого пользователя
+              // (чтобы не перезаписать состояние, измененное пользователем)
+              if (subscriptionNotifier.getSubscription(friend.id) == null) {
+                subscriptionNotifier.updateSubscription(
+                  friend.id,
+                  friend.isSubscribed,
+                );
+              }
+            }
+          });
+        });
+      },
+    );
+
+    // ────────────────────────────────────────────────────────────────────────
     // Функция обновления данных при pull-to-refresh
     // ────────────────────────────────────────────────────────────────────────
     Future<void> onRefresh() async {
@@ -78,12 +112,6 @@ class _SearchFriendsContentState extends ConsumerState<SearchFriendsContent> {
         physics: const BouncingScrollPhysics(),
         slivers: [
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-          // ───── Заголовок секции (показываем только если не идет поиск)
-          if (!isSearching)
-            const SliverToBoxAdapter(
-              child: _SectionTitle('Рекомендованные друзья'),
-            ),
 
           // ───── Контент: список друзей или результаты поиска
           friendsAsync.when(
@@ -108,7 +136,23 @@ class _SearchFriendsContentState extends ConsumerState<SearchFriendsContent> {
                 );
               }
 
-              return _FriendsListSliver(friends: friends);
+              // Сетка карточек 2xN
+              return SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                sliver: SliverGrid.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    mainAxisExtent: 201,
+                  ),
+                  itemCount: friends.length,
+                  itemBuilder: (context, i) => _FriendCard(
+                    key: ValueKey<int>(friends[i].id),
+                    friend: friends[i],
+                  ),
+                ),
+              );
             },
             loading: () => const SliverToBoxAdapter(
               child: Padding(
@@ -167,7 +211,7 @@ class _SearchFriendsContentState extends ConsumerState<SearchFriendsContent> {
 
           // ───── Подпись и кнопка «Пригласить» (показываем только если не идет поиск)
           if (!isSearching) ...[
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            const SliverToBoxAdapter(child: SizedBox(height: 25)),
 
             SliverToBoxAdapter(
               child: Padding(
@@ -186,7 +230,7 @@ class _SearchFriendsContentState extends ConsumerState<SearchFriendsContent> {
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
             SliverToBoxAdapter(
               child: Padding(
@@ -209,58 +253,112 @@ class _SearchFriendsContentState extends ConsumerState<SearchFriendsContent> {
   }
 }
 
-class _FriendRow extends ConsumerStatefulWidget {
+/// Карточка друга в сетке 2xN
+///
+/// Отображает аватар, имя, возраст/город и кнопку подписки
+/// При нажатии на аватар открывает детальную страницу профиля
+class _FriendCard extends ConsumerStatefulWidget {
   final FriendUser friend;
-  const _FriendRow({required this.friend});
+  const _FriendCard({super.key, required this.friend});
 
   @override
-  ConsumerState<_FriendRow> createState() => _FriendRowState();
+  ConsumerState<_FriendCard> createState() => _FriendCardState();
 }
 
-class _FriendRowState extends ConsumerState<_FriendRow> {
-  // Локальное состояние для оптимистичного обновления UI
-  bool? _localIsSubscribed;
-  bool _isToggling = false; // Флаг процесса подписки/отписки
+class _FriendCardState extends ConsumerState<_FriendCard> {
+  // ────────────────────────────────────────────────────────────────────────
+  // 🔹 СОСТОЯНИЕ ПЕРЕКЛЮЧЕНИЯ: флаг для блокировки кнопки во время запроса
+  // ────────────────────────────────────────────────────────────────────────
+  bool _isToggling = false;
 
+  /// Получает актуальное состояние подписки из провайдера или пропсов
+  ///
+  /// ⚡ PERFORMANCE & RELIABILITY:
+  /// - Сначала проверяет кэш состояния подписок (subscriptionStateProvider)
+  /// - Если в кэше нет - использует значение из пропсов
+  /// - Это гарантирует сохранение состояния при прокрутке списка
   bool get _currentIsSubscribed {
-    return _localIsSubscribed ?? widget.friend.isSubscribed;
+    final subscriptionState = ref.read(subscriptionStateProvider);
+    final cachedState = subscriptionState[widget.friend.id];
+
+    // Если есть кэшированное состояние - используем его
+    if (cachedState != null) {
+      return cachedState;
+    }
+
+    // Иначе используем значение из пропсов
+    return widget.friend.isSubscribed;
   }
 
-  Future<void> _handleToggleSubscribe() async {
-    if (_isToggling) return; // Предотвращаем повторные клики
+  /// Переход на страницу профиля пользователя
+  ///
+  /// ⚡ UX: открывает профиль пользователя при клике на аватарку
+  void _navigateToProfile() {
+    Navigator.of(context).push(
+      TransparentPageRoute(
+        builder: (_) => ProfileScreen(userId: widget.friend.id),
+      ),
+    );
+  }
+
+  /// Обработчик подписки/отписки с защитой от race condition
+  ///
+  /// ⚡ PERFORMANCE & RELIABILITY:
+  /// - Защита от повторных нажатий через флаг _isToggling
+  /// - Сохранение исходного состояния для отката при ошибке
+  /// - Обновление состояния только после успешного ответа сервера
+  /// - Правильная обработка ошибок с восстановлением состояния
+  Future<void> _handleSubscribe() async {
+    // ────────── ЗАЩИТА: предотвращаем повторные нажатия ──────────
+    if (_isToggling) return;
 
     final currentStatus = _currentIsSubscribed;
+    final targetUserId = widget.friend.id;
 
-    // Оптимистичное обновление UI
+    // ────────── БЛОКИРУЕМ кнопку перед запросом ──────────
     setState(() {
-      _localIsSubscribed = !currentStatus;
       _isToggling = true;
     });
 
     try {
-      // Выполняем подписку/отписку через провайдер
+      // ────────── СОЗДАЕМ параметры для запроса ──────────
       final params = ToggleSubscribeParams(
-        targetUserId: widget.friend.id,
+        targetUserId: targetUserId,
         isSubscribed: currentStatus,
       );
 
+      // ────────── ВЫПОЛНЯЕМ запрос к серверу ──────────
+      // ✅ Используем .future для получения результата напрямую
+      // autoDispose провайдер автоматически очищается после использования
       final newStatus = await ref.read(toggleSubscribeProvider(params).future);
 
-      // Обновляем локальное состояние на основе ответа сервера
+      // ────────── ОБНОВЛЯЕМ состояние только после успешного ответа ──────────
       if (mounted) {
+        // Сохраняем новое состояние в провайдер кэша
+        ref
+            .read(subscriptionStateProvider.notifier)
+            .updateSubscription(targetUserId, newStatus);
+
         setState(() {
-          _localIsSubscribed = newStatus;
           _isToggling = false;
         });
-      }
 
-      // НЕ инвалидируем провайдеры - пользователи должны оставаться в списке
-      // Только меняется иконка подписки (локальное состояние)
+        // ────────────────────────────────────────────────────────────────────────
+        // 🔹 НЕ инвалидируем провайдер - пользователи остаются в списке
+        // до обновления экрана (pull-to-refresh). Меняется только кнопка.
+        // Состояние сохраняется в subscriptionStateProvider и не теряется
+        // при прокрутке списка.
+        // ────────────────────────────────────────────────────────────────────────
+      }
     } catch (e) {
-      // В случае ошибки возвращаем предыдущее состояние
+      // ────────── ОТКАТ: восстанавливаем исходное состояние при ошибке ──────────
       if (mounted) {
+        // Восстанавливаем исходное состояние в кэше
+        ref
+            .read(subscriptionStateProvider.notifier)
+            .updateSubscription(targetUserId, currentStatus);
+
         setState(() {
-          _localIsSubscribed = currentStatus;
           _isToggling = false;
         });
 
@@ -271,186 +369,155 @@ class _FriendRowState extends ConsumerState<_FriendRow> {
           ),
         );
       }
-
+      // Логируем ошибку для отладки
       log('❌ Ошибка подписки/отписки: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final friend = widget.friend;
     final isSubscribed = _currentIsSubscribed;
+    final desc = friend.age > 0
+        ? '${friend.age} лет${friend.city.isNotEmpty ? '  ·  ${friend.city}' : ''}'
+        : friend.city.isNotEmpty
+        ? friend.city
+        : '';
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          Navigator.of(context).push(
-            CupertinoPageRoute(
-              builder: (context) => ProfileScreen(userId: widget.friend.id),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(
-            children: [
-              // Аватар
-              ClipOval(
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.getBorderColor(context), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // ────────────────────────────────────────────────────────────────────────
+          // 🔹 КЛИКАБЕЛЬНАЯ АВАТАРКА: переход на профиль пользователя
+          // ────────────────────────────────────────────────────────────────────────
+          GestureDetector(
+            onTap: _navigateToProfile,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              height: 80,
+              width: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.getBorderColor(context),
+                  width: 0.5,
+                ),
+              ),
+              child: ClipOval(
                 child: CachedNetworkImage(
-                  imageUrl: widget.friend.avatarUrl,
-                  width: 44,
-                  height: 44,
+                  imageUrl: friend.avatarUrl,
+                  width: 80,
+                  height: 80,
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
-                    width: 44,
-                    height: 44,
+                    width: 80,
+                    height: 80,
                     color: AppColors.getSkeletonBaseColor(context),
                     alignment: Alignment.center,
                     child: const CupertinoActivityIndicator(),
                   ),
                   errorWidget: (context, url, error) => Container(
-                    width: 44,
-                    height: 44,
+                    width: 80,
+                    height: 80,
                     color: AppColors.getSkeletonBaseColor(context),
                     alignment: Alignment.center,
                     child: Icon(
                       CupertinoIcons.person,
-                      size: 20,
+                      size: 32,
                       color: AppColors.getTextSecondaryColor(context),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-
-              // Имя + возраст/город
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.friend.fullName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.h15w5.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.friend.age > 0
-                          ? '${widget.friend.age} лет  ·  ${widget.friend.city}'
-                          : widget.friend.city,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.h13w4Sec.copyWith(
-                        color: AppColors.getTextSecondaryColor(context),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Кнопка подписки/отписки
-              // Если подписан → показываем красную иконку с крестиком
-              // Если не подписан → показываем синюю иконку с плюсом
-              IconButton(
-                onPressed: _isToggling ? null : _handleToggleSubscribe,
-                splashRadius: 24,
-                icon: _isToggling
-                    ? const SizedBox(
-                        width: 26,
-                        height: 26,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(
-                        isSubscribed
-                            ? CupertinoIcons.person_crop_circle_badge_xmark
-                            : CupertinoIcons.person_crop_circle_badge_plus,
-                        size: 26,
-                      ),
-                style: IconButton.styleFrom(
-                  foregroundColor: isSubscribed
-                      ? AppColors
-                            .error // Красный цвет для подписки
-                      : AppColors.brandPrimary, // Синий цвет для неподписки
-                  disabledForegroundColor: AppColors.disabledText,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  final String text;
-  const _SectionTitle(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: AppColors.getTextPrimaryColor(context),
-        ),
-      ),
-    );
-  }
-}
-
-// ──────────────────────────── Список друзей ────────────────────────────
-//
-//  Структура соответствует стилю из clubs_content.dart для единообразия UI.
-//  Используем Container с границами сверху и снизу, Divider между элементами.
-class _FriendsListSliver extends StatelessWidget {
-  final List<FriendUser> friends;
-  const _FriendsListSliver({required this.friends});
-
-  @override
-  Widget build(BuildContext context) {
-    if (friends.isEmpty) {
-      return const SliverToBoxAdapter(child: SizedBox.shrink());
-    }
-
-    return SliverToBoxAdapter(
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.getSurfaceColor(context),
-          border: Border(
-            top: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 0.5,
-            ),
-            bottom: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 0.5,
             ),
           ),
-        ),
-        child: Column(
-          children: List.generate(friends.length, (i) {
-            final friend = friends[i];
-            return Column(
-              children: [
-                _FriendRow(friend: friend),
-                if (i != friends.length - 1)
-                  Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    color: AppColors.getDividerColor(context),
-                  ),
-              ],
-            );
-          }),
-        ),
+          const SizedBox(height: 8),
+          // Имя с фамилией в стиле названия клуба
+          Text(
+            friend.fullName,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              height: 1.2,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ),
+          if (desc.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            // Возраст и город в стиле города клуба
+            Text(
+              desc,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                height: 1.2,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+            ),
+          ],
+          const SizedBox(height: 6),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isToggling ? null : _handleSubscribe,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isSubscribed
+                    ? Colors.red
+                    : AppColors.brandPrimary,
+                foregroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.surface
+                    : AppColors.getSurfaceColor(context),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                ),
+                disabledBackgroundColor: AppColors.disabledText,
+              ),
+              child: _isToggling
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      isSubscribed ? 'Отписаться' : 'Подписаться',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }
