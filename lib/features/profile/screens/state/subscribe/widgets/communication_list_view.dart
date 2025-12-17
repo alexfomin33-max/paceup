@@ -215,37 +215,15 @@ class _UsersSliver extends StatelessWidget {
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
         final user = users[index];
-        final isFirst = index == 0;
-        final isLast = index == users.length - 1;
 
         return DecoratedBox(
           decoration: BoxDecoration(
             color: AppColors.getSurfaceColor(context),
-            border: Border(
-              top: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: isFirst ? 0.5 : 0,
-              ),
-              bottom: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: isLast ? 0.5 : 0,
-              ),
-            ),
           ),
-          child: Column(
-            children: [
-              _CommunicationUserTile(
-                key: ValueKey('comm_user_${user.id}_${tab.name}'),
-                user: user,
-                onToggle: () => notifier.toggleSubscription(user.id),
-              ),
-              if (!isLast)
-                Divider(
-                  height: 1,
-                  thickness: 0.5,
-                  color: AppColors.getDividerColor(context),
-                ),
-            ],
+          child: _CommunicationUserTile(
+            key: ValueKey('comm_user_${user.id}_${tab.name}'),
+            user: user,
+            onToggle: () => notifier.toggleSubscription(user.id),
           ),
         );
       }, childCount: users.length),
@@ -326,7 +304,7 @@ class _CommunicationUserTile extends StatelessWidget {
 
   static String _subtitle(CommunicationUser user) {
     if (user.age > 0 && user.city.isNotEmpty) {
-      return '${user.age} лет, ${user.city}';
+      return '${user.age} лет  ·  ${user.city}';
     }
     if (user.age > 0) {
       return '${user.age} лет';
