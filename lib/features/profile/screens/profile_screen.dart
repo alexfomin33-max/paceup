@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bar.dart'; // ← наш глобальный AppBar
 import '../../../core/widgets/transparent_route.dart';
+import '../../../core/widgets/more_menu_overlay.dart';
 import '../providers/profile_header_provider.dart';
 import '../providers/profile_header_state.dart';
 import '../../../providers/services/auth_provider.dart';
@@ -287,54 +288,99 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   /// Строит контент профиля для указанного userId
   Widget _buildProfileContent(int userId, ProfileHeaderState profileState) {
+    // ────────────────────────────────────────────────────────────────
+    // 🔍 ОПРЕДЕЛЕНИЕ: является ли открытый профиль профилем текущего
+    // пользователя для условного отображения AppBar
+    // ────────────────────────────────────────────────────────────────
+    final currentUserIdAsync = ref.watch(currentUserIdProvider);
+    final currentUserId = currentUserIdAsync.value;
+    final isOwnProfile = currentUserId != null && currentUserId == userId;
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 КЛЮЧ ДЛЯ МЕНЮ: нужен для привязки всплывающего меню в AppBar
+    // ────────────────────────────────────────────────────────────────
+    final menuKey = GlobalKey();
+
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
 
       // ─────────── Верхняя шапка: обычный, плоский PaceAppBar ───────────
       appBar: PaceAppBar(
-        // Тот же заголовок с иконкой «AI тренер», но без стекла/прозрачности
-        titleWidget: Row(
-          children: [
-            Icon(
-              CupertinoIcons.sparkles,
-              size: 20,
-              color: AppColors.getIconPrimaryColor(context),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'AI тренер',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 16,
-                color: AppColors.getTextPrimaryColor(context),
-              ),
-            ),
-            const SizedBox(width: 6),
-          ],
-        ),
-        showBack: false, // это корневой экран профиля — кнопка назад не нужна
-        actions: [
-          const _AppIcon(CupertinoIcons.square_arrow_up),
-          _AppIcon(
-            CupertinoIcons.person_badge_plus,
-            onPressed: () {
-              Navigator.of(context).push(
-                CupertinoPageRoute(
-                  builder: (_) => const SearchPrefsPage(startIndex: 0),
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 ЗАГОЛОВОК: показываем "AI тренер" только для своего профиля
+        // ────────────────────────────────────────────────────────────────
+        titleWidget: isOwnProfile
+            ? Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.sparkles,
+                    size: 20,
+                    color: AppColors.getIconPrimaryColor(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'AI тренер',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+              )
+            : null,
+        title: isOwnProfile ? null : '',
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 КНОПКА НАЗАД: показываем только для чужих профилей
+        // ────────────────────────────────────────────────────────────────
+        showBack: !isOwnProfile,
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 ДЕЙСТВИЯ В APP BAR: разные для своего и чужого профиля
+        // ────────────────────────────────────────────────────────────────
+        actions: isOwnProfile
+            ? [
+                // Свой профиль — показываем стандартные иконки
+                const _AppIcon(CupertinoIcons.square_arrow_up),
+                _AppIcon(
+                  CupertinoIcons.person_badge_plus,
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (_) => const SearchPrefsPage(startIndex: 0),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-          _AppIcon(
-            CupertinoIcons.gear,
-            onPressed: () {
-              Navigator.of(context).push(
-                TransparentPageRoute(builder: (_) => const SettingsScreen()),
-              );
-            },
-          ),
-          const SizedBox(width: 6),
-        ],
+                _AppIcon(
+                  CupertinoIcons.gear,
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      TransparentPageRoute(
+                        builder: (_) => const SettingsScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 6),
+              ]
+            : [
+                // Чужой профиль — показываем только иконку трех точек
+                _AppIcon(
+                  CupertinoIcons.ellipsis,
+                  key: menuKey,
+                  onPressed: () {
+                    _showUserMenu(
+                      context: context,
+                      ref: ref,
+                      userId: userId,
+                      currentUserId: currentUserId ?? 0,
+                      menuKey: menuKey,
+                    );
+                  },
+                ),
+                const SizedBox(width: 6),
+              ],
         showBottomDivider: true,
       ),
 
@@ -412,7 +458,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 class _AppIcon extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onPressed;
-  const _AppIcon(this.icon, {this.onPressed});
+  const _AppIcon(this.icon, {super.key, this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -432,4 +478,157 @@ class _AppIcon extends StatelessWidget {
       ),
     );
   }
+}
+
+// ────────────────────────────────────────────────────────────────────
+//                           ЛОКАЛЬНЫЕ ХЕЛПЕРЫ
+// ────────────────────────────────────────────────────────────────────
+
+/// Показывает всплывающее меню для действий с чужим профилем
+/// (подписка, скрытие постов/тренировок, блокировка).
+void _showUserMenu({
+  required BuildContext context,
+  required WidgetRef ref,
+  required int userId,
+  required int currentUserId,
+  required GlobalKey menuKey,
+}) {
+  // ⚠️ Здесь позже нужно будет подставить реальные
+  // значения с сервера (PHP/MySQL). Пока заглушки.
+  // Привязываем флаги к userId, чтобы они не были
+  // compile‑time константами и не вызывали dead code.
+  final bool isSubscribed = userId == -1;
+  final bool arePostsHidden = userId == -1;
+  final bool areActivitiesHidden = userId == -1;
+  final bool isBlocked = userId == -1;
+
+  // ──────────────────────────────────────────────
+  // Формируем список пунктов меню
+  // ──────────────────────────────────────────────
+  final items = <MoreMenuItem>[
+    // 1) Подписаться / Отписаться
+    MoreMenuItem(
+      text: isSubscribed ? 'Отписаться' : 'Подписаться',
+      icon: isSubscribed
+          ? CupertinoIcons.person_badge_minus
+          : CupertinoIcons.person_badge_plus,
+      onTap: () {
+        // TODO: здесь должен быть вызов PHP‑API
+        // для подписки/отписки от пользователя.
+        _showStubDialog(
+          context,
+          title: isSubscribed
+              ? 'Отписка пока не реализована'
+              : 'Подписка пока не реализована',
+        );
+      },
+    ),
+
+    // 2) Скрыть посты / Показать посты
+    MoreMenuItem(
+      text: arePostsHidden ? 'Показать посты' : 'Скрыть посты',
+      icon: CupertinoIcons.text_bubble,
+      iconColor: arePostsHidden
+          ? AppColors.getIconPrimaryColor(context)
+          : AppColors.error,
+      textStyle: arePostsHidden
+          ? null
+          : const TextStyle(
+              color: AppColors.error,
+            ),
+      onTap: () {
+        // TODO: реальный вызов PHP‑скрипта,
+        // который скрывает / показывает посты
+        // пользователя в ленте.
+        _showStubDialog(
+          context,
+          title: arePostsHidden
+              ? 'Показать посты (заглушка)'
+              : 'Скрыть посты (заглушка)',
+        );
+      },
+    ),
+
+    // 3) Скрыть тренировки / Показать тренировки
+    MoreMenuItem(
+      text: areActivitiesHidden
+          ? 'Показать тренировки'
+          : 'Скрыть тренировки',
+      icon: CupertinoIcons.flame,
+      iconColor: areActivitiesHidden
+          ? AppColors.getIconPrimaryColor(context)
+          : AppColors.error,
+      textStyle: areActivitiesHidden
+          ? null
+          : const TextStyle(
+              color: AppColors.error,
+            ),
+      onTap: () {
+        // TODO: реальный вызов PHP‑скрипта,
+        // который скрывает / показывает
+        // тренировки пользователя.
+        _showStubDialog(
+          context,
+          title: areActivitiesHidden
+              ? 'Показать тренировки (заглушка)'
+              : 'Скрыть тренировки (заглушка)',
+        );
+      },
+    ),
+
+    // 4) Заблокировать / Разблокировать
+    MoreMenuItem(
+      text: isBlocked ? 'Разблокировать' : 'Заблокировать',
+      icon: CupertinoIcons.exclamationmark_octagon,
+      iconColor: AppColors.error,
+      textStyle: const TextStyle(
+        color: AppColors.error,
+      ),
+      onTap: () {
+        // TODO: реальный вызов PHP‑скрипта
+        // для блокировки / разблокировки
+        // пользователя.
+        _showStubDialog(
+          context,
+          title: isBlocked
+              ? 'Разблокировка (заглушка)'
+              : 'Блокировка (заглушка)',
+        );
+      },
+    ),
+  ];
+
+  MoreMenuOverlay(
+    anchorKey: menuKey,
+    items: items,
+  ).show(context);
+}
+
+/// Показ диалога‑заглушки для пунктов меню, где ещё нет интеграции
+/// с реальными PHP/MySQL‑скриптами.
+Future<void> _showStubDialog(
+  BuildContext context, {
+  required String title,
+}) async {
+  if (!context.mounted) return;
+
+  await showCupertinoDialog<void>(
+    context: context,
+    builder: (ctx) => CupertinoAlertDialog(
+      title: const Text('Функция в разработке'),
+      content: const Padding(
+        padding: EdgeInsets.only(top: 8),
+        child: Text(
+          'Этот пункт меню пока работает как заглушка. '
+          'Позже здесь появится реальное действие с сервером.',
+        ),
+      ),
+      actions: const [
+        CupertinoDialogAction(
+          isDefaultAction: true,
+          child: Text('Понятно'),
+        ),
+      ],
+    ),
+  );
 }

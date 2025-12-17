@@ -339,7 +339,7 @@ class _FriendRowState extends ConsumerState<_FriendRow> {
                     const SizedBox(height: 2),
                     Text(
                       widget.friend.age > 0
-                          ? '${widget.friend.age} лет, ${widget.friend.city}'
+                          ? '${widget.friend.age} лет  ·  ${widget.friend.city}'
                           : widget.friend.city,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

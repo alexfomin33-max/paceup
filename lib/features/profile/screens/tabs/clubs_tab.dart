@@ -237,9 +237,16 @@ class _ClubCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Логотип клуба (круглый)
-          SizedBox(
+          Container(
             height: 100,
             width: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.getBorderColor(context),
+                width: 0.5,
+              ),
+            ),
             child: ClipOval(child: _ClubLogoImage(logoUrl: club.logoUrl)),
           ),
           const SizedBox(height: 8),
@@ -266,8 +273,14 @@ class _ClubCard extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Icon(
+                  CupertinoIcons.person_2,
+                  size: 15,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+                const SizedBox(width: 4),
                 Text(
-                  'Участников: ${_formatMembers(club.membersCount)}',
+                  _formatMembers(club.membersCount),
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
@@ -275,6 +288,21 @@ class _ClubCard extends StatelessWidget {
                     color: AppColors.getTextPrimaryColor(context),
                   ),
                 ),
+                if (club.city != null && club.city!.isNotEmpty) ...[
+                  Flexible(
+                    child: Text(
+                      '  ·  ${club.city}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        height: 1.2,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

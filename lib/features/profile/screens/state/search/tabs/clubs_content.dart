@@ -8,7 +8,7 @@ import '../../../../../../features/map/providers/search/clubs_search_provider.da
 import '../../../../../../features/map/screens/clubs/club_detail_screen.dart';
 
 /// Контент вкладки «Клубы»
-/// Табличный список «в одну коробку» (как на карте/в маршрутных списках).
+/// Отображает клубы в сетке карточек 2xN (как во вкладке "Клубы" профиля).
 class SearchClubsContent extends ConsumerStatefulWidget {
   final String query;
   const SearchClubsContent({super.key, required this.query});
@@ -56,27 +56,33 @@ class _SearchClubsContentState extends ConsumerState<SearchClubsContent> {
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
-          if (!isSearching)
-            const SliverToBoxAdapter(
-              child: _SectionTitle('Рекомендованные клубы'),
-            ),
+          const SliverToBoxAdapter(child: SizedBox(height: 12)),
           clubsAsync.when(
             data: (clubs) {
               if (clubs.isEmpty) {
                 return SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(32),
+                    padding: const EdgeInsets.all(24),
                     child: Center(
-                      child: Text(
-                        isSearching
-                            ? 'Клубы не найдены'
-                            : 'Рекомендованные клубы отсутствуют',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                          color: AppColors.getTextSecondaryColor(context),
-                        ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            CupertinoIcons.group,
+                            size: 48,
+                            color: AppColors.getTextSecondaryColor(context),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            isSearching
+                                ? 'Клубы не найдены'
+                                : 'Рекомендованные клубы отсутствуют',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 15,
+                              color: AppColors.getTextSecondaryColor(context),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -92,44 +98,25 @@ class _SearchClubsContentState extends ConsumerState<SearchClubsContent> {
                   return a.name.compareTo(b.name);
                 });
 
-              return SliverToBoxAdapter(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.getSurfaceColor(context),
-                    border: Border(
-                      top: BorderSide(
-                        color: AppColors.getBorderColor(context),
-                        width: 0.5,
-                      ),
-                      bottom: BorderSide(
-                        color: AppColors.getBorderColor(context),
-                        width: 0.5,
-                      ),
-                    ),
+              // Сетка карточек 2xN
+              return SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                sliver: SliverGrid.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    mainAxisExtent: 174,
                   ),
-                  child: Column(
-                    children: List.generate(sortedClubs.length, (i) {
-                      final club = sortedClubs[i];
-                      return Column(
-                        children: [
-                          _ClubRow(club: club),
-                          if (i != sortedClubs.length - 1)
-                            Divider(
-                              height: 1,
-                              thickness: 0.5,
-                              color: AppColors.getDividerColor(context),
-                            ),
-                        ],
-                      );
-                    }),
-                  ),
+                  itemCount: sortedClubs.length,
+                  itemBuilder: (context, i) => _ClubCard(club: sortedClubs[i]),
                 ),
               );
             },
             loading: () => const SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: CupertinoActivityIndicator()),
+                padding: EdgeInsets.all(24),
+                child: Center(child: CircularProgressIndicator()),
               ),
             ),
             error: (error, stack) {
@@ -137,35 +124,33 @@ class _SearchClubsContentState extends ConsumerState<SearchClubsContent> {
               debugPrint('Stack trace: $stack');
               return SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(32),
+                  padding: const EdgeInsets.all(24),
                   child: Center(
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          CupertinoIcons.exclamationmark_circle,
+                        const Icon(
+                          CupertinoIcons.exclamationmark_triangle,
                           size: 48,
-                          color: AppColors.getTextSecondaryColor(context),
+                          color: AppColors.error,
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          'Ошибка загрузки',
+                        const Text(
+                          'Ошибка загрузки клубов',
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.getTextPrimaryColor(context),
+                            color: AppColors.error,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           error.toString(),
-                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 13,
+                            fontSize: 12,
                             color: AppColors.getTextSecondaryColor(context),
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
@@ -174,7 +159,7 @@ class _SearchClubsContentState extends ConsumerState<SearchClubsContent> {
               );
             },
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          const SliverToBoxAdapter(child: SizedBox(height: 20)),
         ],
       ),
     );
@@ -214,102 +199,174 @@ class _SearchClubsContentState extends ConsumerState<SearchClubsContent> {
   }
 }
 
-class _ClubRow extends StatelessWidget {
+/// Карточка клуба в сетке
+///
+/// Отображает логотип, название и количество участников
+/// При нажатии открывает детальную страницу клуба
+class _ClubCard extends StatelessWidget {
   final ClubSearch club;
-  const _ClubRow({required this.club});
-
-  void _onTap(BuildContext context) {
-    Navigator.of(context).push(
-      TransparentPageRoute(builder: (_) => ClubDetailScreen(clubId: club.id)),
-    );
-  }
+  const _ClubCard({required this.club});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => _onTap(context),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Row(
-          children: [
-            // Превью (логотип клуба)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.xs),
-              child: CachedNetworkImage(
-                imageUrl: club.logoUrl,
-                width: 55,
-                height: 55,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  width: 55,
-                  height: 55,
-                  color: AppColors.getSkeletonBaseColor(context),
-                  alignment: Alignment.center,
-                  child: const CupertinoActivityIndicator(),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  width: 55,
-                  height: 55,
-                  color: AppColors.getSkeletonBaseColor(context),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    CupertinoIcons.photo,
-                    size: 20,
-                    color: AppColors.getTextSecondaryColor(context),
-                  ),
-                ),
+    final card = Container(
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.getBorderColor(context), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Логотип клуба (круглый)
+          Container(
+            height: 100,
+            width: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.getBorderColor(context),
+                width: 0.5,
               ),
             ),
-            const SizedBox(width: 12),
+            child: ClipOval(child: _ClubLogoImage(logoUrl: club.logoUrl)),
+          ),
+          const SizedBox(height: 8),
 
-            // Название и детали
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    club.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.h14w6.copyWith(
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
+          // Название клуба
+          Text(
+            club.name,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              height: 1.2,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // Количество участников
+          Align(
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  CupertinoIcons.person_2,
+                  size: 15,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _fmt(club.membersCount),
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    height: 1.2,
+                    color: AppColors.getTextPrimaryColor(context),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${club.city}  ·  Участников: ${_fmt(club.membersCount)}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.h13w4.copyWith(
-                      color: AppColors.getTextSecondaryColor(context),
+                ),
+                if (club.city.isNotEmpty) ...[
+                  Flexible(
+                    child: Text(
+                      '  ·  ${club.city}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        height: 1.2,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+
+    // Делаем карточку кликабельной для перехода на детальную страницу
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        Navigator.of(context).push(
+          TransparentPageRoute(
+            builder: (_) => ClubDetailScreen(clubId: club.id),
+          ),
+        );
+      },
+      child: card,
     );
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  final String text;
-  const _SectionTitle(this.text);
+/// Виджет для отображения логотипа клуба
+///
+/// Использует CachedNetworkImage для загрузки изображения из API
+/// Показывает placeholder при отсутствии логотипа или ошибке загрузки
+class _ClubLogoImage extends StatelessWidget {
+  final String logoUrl;
+  const _ClubLogoImage({required this.logoUrl});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: AppColors.getTextPrimaryColor(context),
+    // Если логотип не указан, показываем placeholder
+    if (logoUrl.isEmpty) {
+      return Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const Icon(
+          CupertinoIcons.group,
+          size: 40,
+          color: AppColors.textSecondary,
         ),
+      );
+    }
+
+    // Загружаем логотип из сети с кэшированием
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final targetW = (100 * dpr).round();
+
+    return CachedNetworkImage(
+      imageUrl: logoUrl,
+      width: 100,
+      height: 100,
+      fit: BoxFit.cover,
+      fadeInDuration: const Duration(milliseconds: 120),
+      memCacheWidth: targetW,
+      maxWidthDiskCache: targetW,
+      errorWidget: (context, imageUrl, error) => Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const Icon(
+          CupertinoIcons.photo,
+          size: 24,
+          color: AppColors.textSecondary,
+        ),
+      ),
+      placeholder: (context, imageUrl) => Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(strokeWidth: 2),
       ),
     );
   }

@@ -26,7 +26,9 @@ class RecommendedBlock extends ConsumerWidget {
       next.whenData((friends) {
         // Откладываем обновление кэша до завершения build
         Future.microtask(() {
-          final subscriptionNotifier = ref.read(subscriptionStateProvider.notifier);
+          final subscriptionNotifier = ref.read(
+            subscriptionStateProvider.notifier,
+          );
           for (final friend in friends) {
             // Обновляем кэш только если там нет значения для этого пользователя
             // (чтобы не перезаписать состояние, измененное пользователем)
@@ -85,7 +87,7 @@ class _RecommendedList extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 254,
+      height: 256,
       child: ListView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(
@@ -103,10 +105,7 @@ class _RecommendedList extends StatelessWidget {
             // Без ключа виджет пересоздается при скролле и теряет локальное
             // состояние подписки. С ключом Flutter понимает, что это тот же
             // виджет и сохраняет его состояние.
-            _FriendCard(
-              key: ValueKey<int>(friends[i].id),
-              friend: friends[i],
-            ),
+            _FriendCard(key: ValueKey<int>(friends[i].id), friend: friends[i]),
           ],
         ],
       ),
@@ -139,12 +138,12 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
   bool get _currentIsSubscribed {
     final subscriptionState = ref.read(subscriptionStateProvider);
     final cachedState = subscriptionState[widget.friend.id];
-    
+
     // Если есть кэшированное состояние - используем его
     if (cachedState != null) {
       return cachedState;
     }
-    
+
     // Иначе используем значение из пропсов
     return widget.friend.isSubscribed;
   }
@@ -194,10 +193,9 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
       // ────────── ОБНОВЛЯЕМ состояние только после успешного ответа ──────────
       if (mounted) {
         // Сохраняем новое состояние в провайдер кэша
-        ref.read(subscriptionStateProvider.notifier).updateSubscription(
-          targetUserId,
-          newStatus,
-        );
+        ref
+            .read(subscriptionStateProvider.notifier)
+            .updateSubscription(targetUserId, newStatus);
 
         setState(() {
           _isToggling = false;
@@ -214,10 +212,9 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
       // ────────── ОТКАТ: восстанавливаем исходное состояние при ошибке ──────────
       if (mounted) {
         // Восстанавливаем исходное состояние в кэше
-        ref.read(subscriptionStateProvider.notifier).updateSubscription(
-          targetUserId,
-          currentStatus,
-        );
+        ref
+            .read(subscriptionStateProvider.notifier)
+            .updateSubscription(targetUserId, currentStatus);
 
         setState(() {
           _isToggling = false;
@@ -233,7 +230,7 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
     final friend = widget.friend;
     final isSubscribed = _currentIsSubscribed;
     final desc = friend.age > 0
-        ? '${friend.age} лет${friend.city.isNotEmpty ? ', ${friend.city}' : ''}'
+        ? '${friend.age} лет${friend.city.isNotEmpty ? '  ·  ${friend.city}' : ''}'
         : friend.city.isNotEmpty
         ? friend.city
         : '';
@@ -288,7 +285,7 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
           const SizedBox(height: 8),
           Text(
             friend.fullName,
-            style: AppTextStyles.h14w5.copyWith(
+            style: AppTextStyles.h15w5.copyWith(
               color: AppColors.getTextPrimaryColor(context),
             ),
             overflow: TextOverflow.ellipsis,
@@ -299,7 +296,7 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
             const SizedBox(height: 2),
             Text(
               desc,
-              style: AppTextStyles.h12w4Sec.copyWith(
+              style: AppTextStyles.h13w4Sec.copyWith(
                 color: AppColors.getTextSecondaryColor(context),
               ),
               overflow: TextOverflow.ellipsis,
@@ -307,7 +304,7 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
               textAlign: TextAlign.center,
             ),
           ],
-          const SizedBox(height: 6),
+          const SizedBox(height: 5),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(

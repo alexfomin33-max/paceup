@@ -8,7 +8,6 @@ import '../../../../domain/models/user_profile_header.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/avatar.dart';
 import '../../../../providers/services/auth_provider.dart';
-import '../../../../core/widgets/more_menu_overlay.dart';
 
 class HeaderCard extends ConsumerWidget {
   final UserProfileHeader? profile;
@@ -181,9 +180,10 @@ class HeaderCard extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    // Определяем, является ли открытый профиль профилем
-                    // текущего пользователя для условного отображения
-                    // иконки редактирования или меню
+                    // ────────────────────────────────────────────────────
+                    // 🔹 ИКОНКА РЕДАКТИРОВАНИЯ: показываем только для своего
+                    // профиля. Для чужого профиля меню теперь в AppBar.
+                    // ────────────────────────────────────────────────────
                     Builder(
                       builder: (context) {
                         final currentUserIdAsync = ref.watch(
@@ -211,134 +211,8 @@ class HeaderCard extends ConsumerWidget {
                             },
                           );
                         } else {
-                          // ────────────────────────────────────────────────────
-                          // Чужой профиль — показываем иконку с тремя точками.
-                          // По тапу открываем универсальное всплывающее меню
-                          // MoreMenuOverlay (как в карточке тренировки).
-                          // ────────────────────────────────────────────────────
-                          final menuKey = GlobalKey();
-
-                          // ⚠️ Здесь позже нужно будет подставить реальные
-                          // значения с сервера (PHP/MySQL). Пока заглушки.
-                          // Привязываем флаги к userId, чтобы они не были
-                          // compile‑time константами и не вызывали dead code.
-                          final bool isSubscribed = userId == -1;
-                          final bool arePostsHidden = userId == -1;
-                          final bool areActivitiesHidden = userId == -1;
-                          final bool isBlocked = userId == -1;
-
-                          return _SmallIconBtn(
-                            key: menuKey,
-                            icon: CupertinoIcons.ellipsis,
-                            onPressed: () {
-                              // ──────────────────────────────────────────────
-                              // Формируем список пунктов меню
-                              // ──────────────────────────────────────────────
-                              final items = <MoreMenuItem>[
-                                // 1) Подписаться / Отписаться
-                                MoreMenuItem(
-                                  text: isSubscribed
-                                      ? 'Отписаться'
-                                      : 'Подписаться',
-                                  icon: isSubscribed
-                                      ? CupertinoIcons.person_badge_minus
-                                      : CupertinoIcons.person_badge_plus,
-                                  onTap: () {
-                                    // TODO: здесь должен быть вызов PHP‑API
-                                    // для подписки/отписки от пользователя.
-                                    _showStubDialog(
-                                      context,
-                                      title: isSubscribed
-                                          ? 'Отписка пока не реализована'
-                                          : 'Подписка пока не реализована',
-                                    );
-                                  },
-                                ),
-
-                                // 2) Скрыть посты / Показать посты
-                                MoreMenuItem(
-                                  text: arePostsHidden
-                                      ? 'Показать посты'
-                                      : 'Скрыть посты',
-                                  icon: CupertinoIcons.text_bubble,
-                                  iconColor: arePostsHidden
-                                      ? AppColors.getIconPrimaryColor(context)
-                                      : AppColors.error,
-                                  textStyle: arePostsHidden
-                                      ? null
-                                      : const TextStyle(
-                                          color: AppColors.error,
-                                        ),
-                                  onTap: () {
-                                    // TODO: реальный вызов PHP‑скрипта,
-                                    // который скрывает / показывает посты
-                                    // пользователя в ленте.
-                                    _showStubDialog(
-                                      context,
-                                      title: arePostsHidden
-                                          ? 'Показать посты (заглушка)'
-                                          : 'Скрыть посты (заглушка)',
-                                    );
-                                  },
-                                ),
-
-                                // 3) Скрыть тренировки / Показать тренировки
-                                MoreMenuItem(
-                                  text: areActivitiesHidden
-                                      ? 'Показать тренировки'
-                                      : 'Скрыть тренировки',
-                                  icon: CupertinoIcons.flame,
-                                  iconColor: areActivitiesHidden
-                                      ? AppColors.getIconPrimaryColor(context)
-                                      : AppColors.error,
-                                  textStyle: areActivitiesHidden
-                                      ? null
-                                      : const TextStyle(
-                                          color: AppColors.error,
-                                        ),
-                                  onTap: () {
-                                    // TODO: реальный вызов PHP‑скрипта,
-                                    // который скрывает / показывает
-                                    // тренировки пользователя.
-                                    _showStubDialog(
-                                      context,
-                                      title: areActivitiesHidden
-                                          ? 'Показать тренировки (заглушка)'
-                                          : 'Скрыть тренировки (заглушка)',
-                                    );
-                                  },
-                                ),
-
-                                // 4) Заблокировать / Разблокировать
-                                MoreMenuItem(
-                                  text: isBlocked
-                                      ? 'Разблокировать'
-                                      : 'Заблокировать',
-                                  icon: CupertinoIcons.exclamationmark_octagon,
-                                  iconColor: AppColors.error,
-                                  textStyle: const TextStyle(
-                                    color: AppColors.error,
-                                  ),
-                                  onTap: () {
-                                    // TODO: реальный вызов PHP‑скрипта
-                                    // для блокировки / разблокировки
-                                    // пользователя.
-                                    _showStubDialog(
-                                      context,
-                                      title: isBlocked
-                                          ? 'Разблокировка (заглушка)'
-                                          : 'Блокировка (заглушка)',
-                                    );
-                                  },
-                                ),
-                              ];
-
-                              MoreMenuOverlay(
-                                anchorKey: menuKey,
-                                items: items,
-                              ).show(context);
-                            },
-                          );
+                          // Чужой профиль — ничего не показываем, меню в AppBar
+                          return const SizedBox.shrink();
                         }
                       },
                     ),
@@ -424,7 +298,7 @@ class _SmallIconBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onPressed;
 
-  const _SmallIconBtn({super.key, required this.icon, this.onPressed});
+  const _SmallIconBtn({required this.icon, this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -450,42 +324,6 @@ class _SmallIconBtn extends StatelessWidget {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────
-//                           ЛОКАЛЬНЫЕ ХЕЛПЕРЫ
-// ────────────────────────────────────────────────────────────────────
-
-/// Показ диалога‑заглушки для пунктов меню, где ещё нет интеграции
-/// с реальными PHP/MySQL‑скриптами.
-Future<void> _showStubDialog(
-  BuildContext context, {
-  required String title,
-}) async {
-  // В заглушке просто показываем понятный диалог без использования title,
-  // чтобы не плодить лишнюю строку текста. Если нужно — title легко
-  // добавить в разметку ниже.
-  if (!context.mounted) return;
-
-  await showCupertinoDialog<void>(
-    context: context,
-    builder: (ctx) => CupertinoAlertDialog(
-      // Короткий, но понятный текст, что функция пока не доступна
-      title: const Text('Функция в разработке'),
-      content: const Padding(
-        padding: EdgeInsets.only(top: 8),
-        child: Text(
-          'Этот пункт меню пока работает как заглушка. '
-          'Позже здесь появится реальное действие с сервером.',
-        ),
-      ),
-      actions: const [
-        CupertinoDialogAction(
-          isDefaultAction: true,
-          child: Text('Понятно'),
-        ),
-      ],
-    ),
-  );
-}
 
 class _FollowStat extends StatelessWidget {
   final String label;
