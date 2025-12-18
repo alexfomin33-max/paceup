@@ -106,8 +106,13 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
 
       debugPrint('✅ Run200kScreen: ответ от task_action.php: $response');
 
-      // Инвалидируем провайдер для получения свежих данных из API
+      // Инвалидируем провайдеры для получения свежих данных из API
       ref.invalidate(taskParticipantsProvider(taskId));
+      ref.invalidate(taskDetailProvider(taskId));
+      
+      // Инвалидируем провайдеры списков задач, чтобы экраны active_content и available_content обновились при возврате
+      ref.invalidate(userTasksProvider);
+      ref.invalidate(tasksProvider);
 
       // Ждем обновления данных из API
       // Это гарантирует, что UI отобразит актуальное состояние из базы данных
@@ -633,7 +638,7 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
 
 // ───── Вспомогательные виджеты
 
-/// Фоновая картинка из базы данных (соотношение сторон 2.3:1)
+/// Фоновая картинка из базы данных (соотношение сторон 2.1:1)
 class _BackgroundImage extends StatelessWidget {
   final String? imageUrl;
 
@@ -643,7 +648,7 @@ class _BackgroundImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenW = MediaQuery.of(context).size.width;
     final calculatedHeight =
-        screenW / 2.3; // Вычисляем высоту по соотношению 2.3:1
+        screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
 
     // Если есть URL из базы данных, используем его
     if (imageUrl != null && imageUrl!.isNotEmpty) {
@@ -801,11 +806,25 @@ class _MiniProgress extends StatelessWidget {
   final double percent;
   const _MiniProgress({required this.percent});
 
+  /// ── Определяет цвет индикатора прогресса в зависимости от процента выполнения
+  /// 0-25%: красный (error)
+  /// 25-99%: желтый (yellow)
+  /// 100%: зеленый (success)
+  Color _getProgressColor(double percent) {
+    if (percent >= 1.0) {
+      return AppColors.success; // 100% - зеленый
+    } else if (percent >= 0.25) {
+      return AppColors.yellow; // 25-99% - желтый
+    } else {
+      return AppColors.error; // 0-25% - красный
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        final clampedPercent = percent.clamp(0.0, 1.0);
+        final clampedPercent = percent.clamp(0.0, 1.0).toDouble();
         final w = clampedPercent * c.maxWidth;
         final isFull = clampedPercent >= 1.0;
         return Row(
@@ -814,7 +833,7 @@ class _MiniProgress extends StatelessWidget {
               width: w,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.success,
+                color: _getProgressColor(clampedPercent),
                 borderRadius: isFull
                     ? BorderRadius.circular(AppRadius.xs)
                     : const BorderRadius.only(

@@ -198,22 +198,40 @@ class _MiniProgress extends StatelessWidget {
   final double percent;
   const _MiniProgress({required this.percent});
 
+  /// ── Определяет цвет индикатора прогресса в зависимости от процента выполнения
+  /// 0-25%: красный (error)
+  /// 25-99%: желтый (yellow)
+  /// 100%: зеленый (success)
+  Color _getProgressColor(double percent) {
+    if (percent >= 1.0) {
+      return AppColors.success; // 100% - зеленый
+    } else if (percent >= 0.25) {
+      return AppColors.yellow; // 25-99% - желтый
+    } else {
+      return AppColors.error; // 0-25% - красный
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        final w = (percent.clamp(0.0, 1.0)) * c.maxWidth;
+        final clampedPercent = percent.clamp(0.0, 1.0).toDouble();
+        final w = clampedPercent * c.maxWidth;
+        final isFull = clampedPercent >= 1.0;
         return Row(
           children: [
             Container(
               width: w,
               height: 5,
-              decoration: const BoxDecoration(
-                color: AppColors.success,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(AppRadius.xs),
-                  bottomLeft: Radius.circular(AppRadius.xs),
-                ),
+              decoration: BoxDecoration(
+                color: _getProgressColor(clampedPercent),
+                borderRadius: isFull
+                    ? BorderRadius.circular(AppRadius.xs)
+                    : const BorderRadius.only(
+                        topLeft: Radius.circular(AppRadius.xs),
+                        bottomLeft: Radius.circular(AppRadius.xs),
+                      ),
               ),
             ),
             Expanded(

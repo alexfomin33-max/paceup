@@ -26,60 +26,147 @@ class ActiveContent extends ConsumerWidget {
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-        child: userTasksAsync.when(
-          data: (tasksByMonth) {
-            // Объединяем задачи из базы данных с захардкоженными задачами
-            return Column(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+          child: userTasksAsync.when(
+            data: (tasksByMonth) {
+              // Объединяем задачи из базы данных с захардкоженными задачами
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Задачи из базы данных, сгруппированные по месяцам
+                  ...tasksByMonth.map((monthGroup) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _MonthLabel(monthGroup.monthYearLabel),
+                        const SizedBox(height: 8),
+                        ...monthGroup.tasks.map((task) {
+                          return Column(
+                            children: [
+                              TaskCard(
+                                title: task.name,
+                                progressText: task.formattedProgress,
+                                percent: task.progressPercent ?? 0.0,
+                                image:
+                                    task.logoUrl != null &&
+                                        task.logoUrl!.isNotEmpty
+                                    ? _RectImage(imageUrl: task.logoUrl!)
+                                    : task.imageUrl != null &&
+                                          task.imageUrl!.isNotEmpty
+                                    ? _RectImage(imageUrl: task.imageUrl!)
+                                    : null,
+                                onTap: () {
+                                  Navigator.of(
+                                    context,
+                                    rootNavigator: true,
+                                  ).push(
+                                    TransparentPageRoute(
+                                      builder: (_) => Run200kScreen(
+                                        key: ValueKey('task_${task.id}'),
+                                        taskId: task.id,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                          );
+                        }),
+                      ],
+                    );
+                  }),
+
+                  // Захардкоженные задачи (пока оставляем)
+                  if (tasksByMonth.isEmpty) ...[
+                    const _MonthLabel('Июнь 2025'),
+                    const SizedBox(height: 8),
+                  ],
+                  const TaskCard(
+                    title: '10 дней активности',
+                    progressText: '6 / 10 дней',
+                    percent: 0.60,
+                    image: _RectImage(
+                      provider: AssetImage('assets/activity10.png'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  const TaskCard(
+                    title: '200 км бега',
+                    progressText: '145,8 / 200 км',
+                    percent: 0.729,
+                    image: _RectImage(
+                      provider: AssetImage('assets/card200run.jpg'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  const TaskCard(
+                    title: '1000 метров набора высоты',
+                    progressText: '537 / 1000 м',
+                    percent: 0.537,
+                    image: _RectImage(
+                      provider: AssetImage('assets/height1000.jpg'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  const TaskCard(
+                    title: '1000 минут активности',
+                    progressText: '618 / 1000 мин',
+                    percent: 0.618,
+                    image: _RectImage(
+                      provider: AssetImage('assets/activity1000.png'),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  const _SectionLabel('Экспедиции'),
+                  const SizedBox(height: 8),
+
+                  ExpeditionCard(
+                    title: 'Суздаль',
+                    progressText: '21 784 / 110 033 шагов',
+                    percent: 0.198,
+                    image: const _RoundImage(
+                      provider: AssetImage('assets/Suzdal.png'),
+                    ),
+                    onTap: () {
+                      Navigator.of(context, rootNavigator: true).push(
+                        TransparentPageRoute(
+                          builder: (_) => const SuzdalScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  const ExpeditionCard(
+                    title: 'Монблан',
+                    progressText: '3 521 / 4 810 метров',
+                    percent: 0.732,
+                    image: _RoundImage(
+                      provider: AssetImage('assets/Monblan.png'),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+                ],
+              );
+            },
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+            error: (error, stack) => Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Задачи из базы данных, сгруппированные по месяцам
-                ...tasksByMonth.map((monthGroup) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _MonthLabel(monthGroup.monthYearLabel),
-                      const SizedBox(height: 8),
-                      ...monthGroup.tasks.map((task) {
-                        return Column(
-                          children: [
-                            TaskCard(
-                              title: task.name,
-                              progressText: task.formattedProgress,
-                              percent: task.progressPercent ?? 0.0,
-                              image:
-                                  task.logoUrl != null &&
-                                      task.logoUrl!.isNotEmpty
-                                  ? _RectImage(imageUrl: task.logoUrl!)
-                                  : task.imageUrl != null &&
-                                      task.imageUrl!.isNotEmpty
-                                  ? _RectImage(imageUrl: task.imageUrl!)
-                                  : null,
-                              onTap: () {
-                                Navigator.of(context, rootNavigator: true).push(
-                                  TransparentPageRoute(
-                                    builder: (_) =>
-                                        Run200kScreen(
-                                          key: ValueKey('task_${task.id}'),
-                                          taskId: task.id,
-                                        ),
-                                  ),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                        );
-                      }),
-                    ],
-                  );
-                }),
-
-                // Захардкоженные задачи (пока оставляем)
-                if (tasksByMonth.isEmpty) ...[
-                  const _MonthLabel('Июнь 2025'),
-                  const SizedBox(height: 8),
-                ],
+                // Показываем захардкоженные задачи даже при ошибке
+                const _MonthLabel('Июнь 2025'),
+                const SizedBox(height: 8),
                 const TaskCard(
                   title: '10 дней активности',
                   progressText: '6 / 10 дней',
@@ -89,7 +176,6 @@ class ActiveContent extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-
                 const TaskCard(
                   title: '200 км бега',
                   progressText: '145,8 / 200 км',
@@ -99,7 +185,6 @@ class ActiveContent extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-
                 const TaskCard(
                   title: '1000 метров набора высоты',
                   progressText: '537 / 1000 м',
@@ -109,7 +194,6 @@ class ActiveContent extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-
                 const TaskCard(
                   title: '1000 минут активности',
                   progressText: '618 / 1000 мин',
@@ -119,10 +203,8 @@ class ActiveContent extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-
                 const _SectionLabel('Экспедиции'),
                 const SizedBox(height: 8),
-
                 ExpeditionCard(
                   title: 'Суздаль',
                   progressText: '21 784 / 110 033 шагов',
@@ -139,7 +221,6 @@ class ActiveContent extends ConsumerWidget {
                   },
                 ),
                 const SizedBox(height: 12),
-
                 const ExpeditionCard(
                   title: 'Монблан',
                   progressText: '3 521 / 4 810 метров',
@@ -148,86 +229,11 @@ class ActiveContent extends ConsumerWidget {
                     provider: AssetImage('assets/Monblan.png'),
                   ),
                 ),
-
                 const SizedBox(height: 16),
               ],
-            );
-          },
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: CircularProgressIndicator(),
             ),
           ),
-          error: (error, stack) => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Показываем захардкоженные задачи даже при ошибке
-              const _MonthLabel('Июнь 2025'),
-              const SizedBox(height: 8),
-              const TaskCard(
-                title: '10 дней активности',
-                progressText: '6 / 10 дней',
-                percent: 0.60,
-                image: _RectImage(
-                  provider: AssetImage('assets/activity10.png'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const TaskCard(
-                title: '200 км бега',
-                progressText: '145,8 / 200 км',
-                percent: 0.729,
-                image: _RectImage(
-                  provider: AssetImage('assets/card200run.jpg'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const TaskCard(
-                title: '1000 метров набора высоты',
-                progressText: '537 / 1000 м',
-                percent: 0.537,
-                image: _RectImage(
-                  provider: AssetImage('assets/height1000.jpg'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const TaskCard(
-                title: '1000 минут активности',
-                progressText: '618 / 1000 мин',
-                percent: 0.618,
-                image: _RectImage(
-                  provider: AssetImage('assets/activity1000.png'),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const _SectionLabel('Экспедиции'),
-              const SizedBox(height: 8),
-              ExpeditionCard(
-                title: 'Суздаль',
-                progressText: '21 784 / 110 033 шагов',
-                percent: 0.198,
-                image: const _RoundImage(
-                  provider: AssetImage('assets/Suzdal.png'),
-                ),
-                onTap: () {
-                  Navigator.of(context, rootNavigator: true).push(
-                    TransparentPageRoute(builder: (_) => const SuzdalScreen()),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              const ExpeditionCard(
-                title: 'Монблан',
-                progressText: '3 521 / 4 810 метров',
-                percent: 0.732,
-                image: _RoundImage(provider: AssetImage('assets/Monblan.png')),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
         ),
-      ),
       ),
     );
   }
@@ -345,14 +351,14 @@ class TaskCard extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: AppColors.getTextSecondaryColor(context),
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
                     Text(
                       '${(percent * 100).toStringAsFixed(1)}%',
                       style: TextStyle(
                         fontFamily: 'Inter',
-                        fontSize: 12,
+                        fontSize: 13,
                         color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
@@ -445,7 +451,7 @@ class ExpeditionCard extends StatelessWidget {
                       '${(percent * 100).toStringAsFixed(1)}%',
                       style: TextStyle(
                         fontFamily: 'Inter',
-                        fontSize: 12,
+                        fontSize: 13,
                         fontWeight: FontWeight.w400,
                         color: AppColors.getTextPrimaryColor(context),
                       ),
@@ -476,12 +482,26 @@ class _ProgressBar extends StatelessWidget {
   final double percent;
   const _ProgressBar({required this.percent});
 
+  /// ── Определяет цвет индикатора прогресса в зависимости от процента выполнения
+  /// 0-25%: красный (error)
+  /// 25-99%: желтый (yellow)
+  /// 100%: зеленый (success)
+  Color _getProgressColor(double percent) {
+    if (percent >= 1.0) {
+      return AppColors.success; // 100% - зеленый
+    } else if (percent >= 0.25) {
+      return AppColors.yellow; // 25-99% - желтый
+    } else {
+      return AppColors.error; // 0-25% - красный
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final totalWidth = constraints.maxWidth;
-        final clampedPercent = percent.clamp(0, 1);
+        final clampedPercent = percent.clamp(0.0, 1.0).toDouble();
         final currentWidth = clampedPercent * totalWidth;
         final isFull = clampedPercent >= 1.0;
 
@@ -491,7 +511,7 @@ class _ProgressBar extends StatelessWidget {
               width: currentWidth,
               height: 5,
               decoration: BoxDecoration(
-                color: AppColors.success,
+                color: _getProgressColor(clampedPercent),
                 borderRadius: isFull
                     ? BorderRadius.circular(AppRadius.xs)
                     : const BorderRadius.only(

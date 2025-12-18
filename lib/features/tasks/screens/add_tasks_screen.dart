@@ -16,6 +16,7 @@ import '../../../providers/services/auth_provider.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
 import '../../leaderboard/widgets/date_range_picker.dart';
+import '../providers/tasks_provider.dart';
 
 class AddTaskScreen extends ConsumerStatefulWidget {
   const AddTaskScreen({super.key});
@@ -48,7 +49,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
 
   // ──────────── фиксированные пропорции для обрезки медиа ────────────
   static const double _logoAspectRatio = 1;
-  static const double _backgroundAspectRatio = 2.3;
+  static const double _backgroundAspectRatio = 2.1;
 
   bool get isFormValid {
     if (nameCtrl.text.trim().isEmpty ||
@@ -141,7 +142,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
   }
 
   Future<void> _pickBackground() async {
-    // ── выбираем фон с обрезкой 2.3:1 и сжатием до оптимального размера
+    // ── выбираем фон с обрезкой 2.1:1 и сжатием до оптимального размера
     final processed = await ImagePickerHelper.pickAndProcessImage(
       context: context,
       aspectRatio: _backgroundAspectRatio,
@@ -292,6 +293,10 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
           final errorMessage = data['message']?.toString() ?? 'Ошибка при создании задачи';
           throw Exception(errorMessage);
         }
+
+        // Инвалидируем провайдеры списков задач, чтобы экраны active_content и available_content обновились при возврате
+        ref.invalidate(userTasksProvider);
+        ref.invalidate(tasksProvider);
       },
       onSuccess: () {
         if (!mounted) return;
@@ -364,7 +369,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                               onRemove: () =>
                                   setState(() => backgroundFile = null),
                               width:
-                                  207, // Ширина для соотношения 2.3:1 (90 * 2.3)
+                                  189, // Ширина для соотношения 2.1:1 (90 * 2.1)
                               height: 90,
                             ),
                           ],

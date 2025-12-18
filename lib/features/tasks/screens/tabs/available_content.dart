@@ -301,7 +301,7 @@ class AvailableTaskCard extends StatelessWidget {
             Expanded(
               flex: 1,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.fromLTRB(12, 9, 12, 12),
                 child: Text(
                   title,
                   textAlign: TextAlign.left,
@@ -368,7 +368,7 @@ class AvailableExpeditionCard extends StatelessWidget {
             Expanded(
               flex: 1,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.fromLTRB(12, 9, 12, 12),
                 child: Text(
                   title,
                   textAlign: TextAlign.left,

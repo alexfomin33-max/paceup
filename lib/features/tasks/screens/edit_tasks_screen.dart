@@ -60,7 +60,7 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
 
   // ──────────── фиксированные пропорции для обрезки медиа ────────────
   static const double _logoAspectRatio = 1;
-  static const double _backgroundAspectRatio = 2.3;
+  static const double _backgroundAspectRatio = 2.1;
 
   bool get isFormValid {
     if (nameCtrl.text.trim().isEmpty ||
@@ -230,7 +230,7 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
   }
 
   Future<void> _pickBackground() async {
-    // ── выбираем фон с обрезкой 2.3:1 и сжатием до оптимального размера
+    // ── выбираем фон с обрезкой 2.1:1 и сжатием до оптимального размера
     final processed = await ImagePickerHelper.pickAndProcessImage(
       context: context,
       aspectRatio: _backgroundAspectRatio,
@@ -324,6 +324,9 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
 
         // Инвалидируем провайдеры для обновления списка задач
         ref.invalidate(taskDetailProvider(widget.taskId));
+        // Инвалидируем провайдеры списков задач, чтобы экраны active_content и available_content обновились при возврате
+        ref.invalidate(userTasksProvider);
+        ref.invalidate(tasksProvider);
 
         // Возвращаемся на предыдущий экран с результатом удаления
         Navigator.of(context).pop('deleted');
@@ -498,8 +501,11 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
           throw Exception(errorMessage);
         }
 
-        // Инвалидируем провайдер для обновления данных
+        // Инвалидируем провайдеры для обновления данных
         ref.invalidate(taskDetailProvider(widget.taskId));
+        // Инвалидируем провайдеры списков задач, чтобы экраны active_content и available_content обновились при возврате
+        ref.invalidate(userTasksProvider);
+        ref.invalidate(tasksProvider);
       },
       onSuccess: () {
         if (!mounted) return;
@@ -616,7 +622,7 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                                     _backgroundDeleted = true;
                                   }),
                               width:
-                                  207, // Ширина для соотношения 2.3:1 (90 * 2.3)
+                                  189, // Ширина для соотношения 2.1:1 (90 * 2.1)
                               height: 90,
                             ),
                           ],
