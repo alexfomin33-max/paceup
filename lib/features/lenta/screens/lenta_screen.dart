@@ -14,6 +14,7 @@ import 'state/notifications/notifications_provider.dart';
 import '../../../../core/utils/image_cache_manager.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/health_sync_service.dart';
+import '../../../../core/services/strava_sync_service.dart';
 import '../../../../core/widgets/error_display.dart';
 
 import 'widgets/activity/activity_block.dart'; // карточка тренировки
@@ -66,8 +67,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   // Ключ для кнопки создания поста (для выпадающего меню)
   final GlobalKey _createMenuKey = GlobalKey();
 
-  // Флаг для предотвращения двойного запуска синхронизации
+  // Флаги для предотвращения двойного запуска синхронизации
   bool _isSyncingHealthData = false;
+  bool _isSyncingStrava = false;
 
   // Плагин Health (Health Connect/HealthKit) для запроса разрешений
   final Health _health = Health();
@@ -261,6 +263,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   /// Проверяет флаг синхронизации и запускает импорт новых тренировок
   ///
   /// При первом запуске автоматически запрашивает разрешения Health Connect
+  /// Также синхронизирует тренировки из Strava, если настроена синхронизация
   Future<void> _checkAndSyncHealthData() async {
     // Предотвращаем двойной запуск синхронизации
     if (_isSyncingHealthData) return;
@@ -273,35 +276,74 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         debugPrint(
           'Разрешения Health Connect не выданы, синхронизация пропущена',
         );
-        return;
+      } else {
+        final syncService = ref.read(healthSyncServiceProvider);
+
+        // Запускаем синхронизацию Health Connect, если пользователь авторизован
+        if (_actualUserId != null && mounted) {
+          // Устанавливаем флаг, чтобы предотвратить повторный запуск
+          _isSyncingHealthData = true;
+
+          // Запускаем синхронизацию в фоне
+          syncService
+              .syncNewWorkouts(ref)
+              .then((result) {
+                _isSyncingHealthData = false;
+                if (result.importedCount > 0) {
+                  debugPrint(
+                    'Автоматически импортировано тренировок из Health Connect: ${result.importedCount}',
+                  );
+                }
+              })
+              .catchError((error) {
+                _isSyncingHealthData = false;
+                debugPrint('Ошибка автоматической синхронизации Health Connect: $error');
+              });
+        }
       }
 
-      final syncService = ref.read(healthSyncServiceProvider);
-
-      // Запускаем синхронизацию, если пользователь авторизован
-      if (_actualUserId != null && mounted) {
-        // Устанавливаем флаг, чтобы предотвратить повторный запуск
-        _isSyncingHealthData = true;
-
-        // Запускаем синхронизацию в фоне
-        syncService
-            .syncNewWorkouts(ref)
-            .then((result) {
-              _isSyncingHealthData = false;
-              if (result.importedCount > 0) {
-                debugPrint(
-                  'Автоматически импортировано тренировок: ${result.importedCount}',
-                );
-              }
-            })
-            .catchError((error) {
-              _isSyncingHealthData = false;
-              debugPrint('Ошибка автоматической синхронизации: $error');
-            });
-      }
+      // Синхронизируем тренировки из Strava (если настроена синхронизация)
+      _syncStravaActivities();
     } catch (e) {
       _isSyncingHealthData = false;
       debugPrint('Ошибка синхронизации: $e');
+    }
+  }
+
+  /// Синхронизирует тренировки из Strava
+  ///
+  /// Вызывается автоматически при загрузке экрана, если у пользователя
+  /// настроена синхронизация со Strava
+  Future<void> _syncStravaActivities() async {
+    // Предотвращаем двойной запуск синхронизации
+    if (_isSyncingStrava) return;
+
+    try {
+      if (_actualUserId == null || !mounted) return;
+
+      // Устанавливаем флаг, чтобы предотвратить повторный запуск
+      _isSyncingStrava = true;
+
+      final stravaSyncService = ref.read(stravaSyncServiceProvider);
+
+      // Запускаем синхронизацию в фоне
+      stravaSyncService
+          .syncNewWorkouts(ref)
+          .then((result) {
+            _isSyncingStrava = false;
+            if (result.importedCount > 0) {
+              debugPrint(
+                'Автоматически импортировано тренировок из Strava: ${result.importedCount}',
+              );
+            }
+          })
+          .catchError((error) {
+            _isSyncingStrava = false;
+            debugPrint('Ошибка автоматической синхронизации Strava: $error');
+          });
+    } catch (e) {
+      _isSyncingStrava = false;
+      debugPrint('Ошибка синхронизации Strava: $e');
     }
   }
 

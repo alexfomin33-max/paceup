@@ -4,12 +4,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/error_handler.dart';
 import '../../../../../../core/widgets/app_bar.dart'; // PaceAppBar
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../core/widgets/primary_button.dart';
+import '../../../../../../providers/services/auth_provider.dart';
+import '../../../../../../providers/services/api_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  ЭКРАН «ПОДКЛЮЧЕННЫЕ ТРЕКЕРЫ»
@@ -85,10 +88,16 @@ class _ConnectedTrackersScreenState
   int _importedCount = 0;
   int _failedCount = 0;
 
+  // Для Strava
+  bool _stravaConnected = false;
+  String? _stravaLastSync;
+  bool _checkingStrava = false;
+
   @override
   void initState() {
     super.initState();
     _ensureConfigured();
+    _checkStravaConnection();
   }
 
   // ───────── Утилиты форматирования ─────────
@@ -107,6 +116,33 @@ class _ConnectedTrackersScreenState
 
   static String _dmy(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}';
+
+  String _formatStravaDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '—';
+    try {
+      final date = DateTime.parse(dateStr);
+      final now = DateTime.now();
+      final diff = now.difference(date);
+      
+      if (diff.inDays == 0) {
+        if (diff.inHours == 0) {
+          if (diff.inMinutes == 0) {
+            return 'только что';
+          }
+          return '${diff.inMinutes} мин. назад';
+        }
+        return '${diff.inHours} ч. назад';
+      } else if (diff.inDays == 1) {
+        return 'вчера';
+      } else if (diff.inDays < 7) {
+        return '${diff.inDays} дн. назад';
+      } else {
+        return _dmy(date);
+      }
+    } catch (e) {
+      return dateStr;
+    }
+  }
 
   // ───────── Конфигурация Health / Health Connect ─────────
 
@@ -423,6 +459,150 @@ class _ConnectedTrackersScreenState
     }
   }
 
+  // ───────── Strava ─────────
+
+  /// Проверяет статус подключения Strava
+  Future<void> _checkStravaConnection() async {
+    if (_checkingStrava) return;
+    
+    setState(() => _checkingStrava = true);
+    
+    try {
+      final authService = ref.read(authServiceProvider);
+      final userId = await authService.getUserId();
+      
+      if (userId == null) {
+        setState(() {
+          _stravaConnected = false;
+          _checkingStrava = false;
+        });
+        return;
+      }
+      
+      final api = ref.read(apiServiceProvider);
+      final response = await api.post(
+        '/strava_check_connection.php',
+        body: {'user_id': userId},
+      );
+      
+      if (mounted) {
+        setState(() {
+          _stravaConnected = response['connected'] == true;
+          _stravaLastSync = response['last_sync_at'];
+          _checkingStrava = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _stravaConnected = false;
+          _checkingStrava = false;
+        });
+      }
+      debugPrint('Ошибка проверки подключения Strava: $e');
+    }
+  }
+
+  /// Открывает OAuth авторизацию Strava
+  Future<void> _connectStrava() async {
+    try {
+      final authService = ref.read(authServiceProvider);
+      final userId = await authService.getUserId();
+      
+      if (userId == null) {
+        _showSnackBar('Пользователь не авторизован');
+        return;
+      }
+      
+      // Формируем URL для OAuth авторизации Strava
+      // Используем параметр 'state' для передачи user_id, так как Strava возвращает его обратно
+      const clientId = '190652';
+      const redirectUri = 'http://api.paceup.ru/strava_oauth_callback.php';
+      const scope = 'activity:read';
+      
+      final authUrl = Uri.parse(
+        'https://www.strava.com/oauth/authorize'
+        '?client_id=$clientId'
+        '&response_type=code'
+        '&redirect_uri=${Uri.encodeComponent(redirectUri)}'
+        '&approval_prompt=force'
+        '&scope=$scope'
+        '&state=$userId'
+      );
+      
+      // Открываем URL в браузере
+      final launched = await launchUrl(
+        authUrl,
+        mode: LaunchMode.externalApplication,
+      );
+      
+      if (!launched) {
+        _showSnackBar('Не удалось открыть страницу авторизации Strava');
+      } else {
+        // После возврата из браузера проверяем подключение
+        // (пользователь должен вернуться в приложение)
+        Future.delayed(const Duration(seconds: 2), () {
+          _checkStravaConnection();
+        });
+      }
+    } catch (e) {
+      _showSnackBar('Ошибка подключения Strava: ${ErrorHandler.format(e)}');
+    }
+  }
+
+  /// Синхронизирует тренировки из Strava
+  Future<void> _syncStrava() async {
+    if (_checkingStrava) return;
+    
+    setState(() {
+      _checkingStrava = true;
+      _status = 'Синхронизация Strava…';
+    });
+    
+    try {
+      final authService = ref.read(authServiceProvider);
+      final userId = await authService.getUserId();
+      
+      if (userId == null) {
+        setState(() {
+          _status = 'Пользователь не авторизован';
+          _checkingStrava = false;
+        });
+        return;
+      }
+      
+      final api = ref.read(apiServiceProvider);
+      final response = await api.post(
+        '/strava_sync_activities.php',
+        body: {'user_id': userId},
+      );
+      
+      if (mounted) {
+        final syncedCount = response['synced_count'] ?? 0;
+        final message = response['message'] ?? 'Синхронизация завершена';
+        
+        setState(() {
+          _status = message;
+          _checkingStrava = false;
+          if (response['last_sync_at'] != null) {
+            _stravaLastSync = response['last_sync_at'];
+          }
+        });
+        
+        if (syncedCount > 0) {
+          _showSnackBar('Синхронизировано тренировок из Strava: $syncedCount');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _status = 'Ошибка синхронизации Strava: ${ErrorHandler.format(e)}';
+          _checkingStrava = false;
+        });
+      }
+    }
+  }
+
   // ───────── Импорт всех найденных тренировок ─────────
 
   /// ─────────────────────────────────────────────────────────────────────────
@@ -625,18 +805,73 @@ class _ConnectedTrackersScreenState
 
             const SizedBox(height: 16),
 
-            // Кнопка синка
+            // Кнопки синка
             Center(
-              child: PrimaryButton(
-                text: _busy
-                    ? 'Синхронизация…'
-                    : (Platform.isIOS
-                          ? 'Синк из Apple Здоровья'
-                          : 'Синк из Health Connect'),
-                onPressed: _busy ? () {} : () => _fetchLast7Days(),
-                width: 260,
-                height: 44,
-                isLoading: _busy,
+              child: Column(
+                children: [
+                  PrimaryButton(
+                    text: _busy
+                        ? 'Синхронизация…'
+                        : (Platform.isIOS
+                              ? 'Синк из Apple Здоровья'
+                              : 'Синк из Health Connect'),
+                    onPressed: _busy ? () {} : () => _fetchLast7Days(),
+                    width: 260,
+                    height: 44,
+                    isLoading: _busy,
+                  ),
+                  const SizedBox(height: 12),
+                  // Кнопка Strava
+                  SizedBox(
+                    width: 260,
+                    height: 44,
+                    child: OutlinedButton(
+                      onPressed: _checkingStrava
+                          ? null
+                          : (_stravaConnected ? _syncStrava : _connectStrava),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: _stravaConnected
+                            ? AppColors.brandPrimary
+                            : Colors.transparent,
+                        foregroundColor: _stravaConnected
+                            ? Colors.white
+                            : AppColors.textPrimary,
+                        side: BorderSide(
+                          color: _stravaConnected
+                              ? AppColors.brandPrimary
+                              : AppColors.border,
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                      ),
+                      child: _checkingStrava
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CupertinoActivityIndicator(radius: 9),
+                            )
+                          : Text(
+                              _stravaConnected
+                                  ? 'Синк из Strava'
+                                  : 'Подключить Strava',
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                    ),
+                  ),
+                  if (_stravaConnected && _stravaLastSync != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Последняя синхронизация: ${_formatStravaDate(_stravaLastSync)}',
+                      style: AppTextStyles.h12w4Ter,
+                    ),
+                  ],
+                ],
               ),
             ),
 

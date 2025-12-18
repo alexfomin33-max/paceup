@@ -205,8 +205,11 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
         }
 
         // Проверяем ответ
-        if (data['success'] != true) {
-          final errorMessage = data['message'] ?? 'Ошибка при создании задачи';
+        // Обрабатываем разные форматы ответа: success может быть bool или String
+        final successValue = data['success'];
+        final isSuccess = successValue == true || successValue == 'true';
+        if (!isSuccess) {
+          final errorMessage = data['message']?.toString() ?? 'Ошибка при создании задачи';
           throw Exception(errorMessage);
         }
       },
