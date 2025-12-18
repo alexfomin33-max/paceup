@@ -280,13 +280,25 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
           }
         }
 
-        // Дистанции
-        final distancesList = event['distances'] as List<dynamic>? ?? [];
-        if (distancesList.isNotEmpty) {
-          distanceCtrl1.text = distancesList[0].toString();
+        // Дистанции "от" и "до"
+        // Сначала проверяем прямые поля distance_from и distance_to
+        final distanceFrom = event['distance_from'];
+        final distanceTo = event['distance_to'];
+        if (distanceFrom != null) {
+          distanceCtrl1.text = distanceFrom.toString();
         }
-        if (distancesList.length > 1) {
-          distanceCtrl2.text = distancesList[1].toString();
+        if (distanceTo != null) {
+          distanceCtrl2.text = distanceTo.toString();
+        }
+        // Если прямые поля не заполнены, проверяем массив distances (для обратной совместимости)
+        if (distanceFrom == null && distanceTo == null) {
+          final distancesList = event['distances'] as List<dynamic>? ?? [];
+          if (distancesList.isNotEmpty) {
+            distanceCtrl1.text = distancesList[0].toString();
+          }
+          if (distancesList.length > 1) {
+            distanceCtrl2.text = distancesList[1].toString();
+          }
         }
 
         setState(() {
@@ -682,16 +694,12 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
         fields['event_time'] = _fmtTime(time!);
         fields['description'] = descCtrl.text.trim();
 
-        // Добавляем дистанции (только если заполнены)
-        final distances = <String>[];
+        // Добавляем дистанции "от" и "до" (только если заполнены)
         if (distanceCtrl1.text.trim().isNotEmpty) {
-          distances.add(distanceCtrl1.text.trim());
+          fields['distances[0]'] = distanceCtrl1.text.trim(); // дистанция "от"
         }
         if (distanceCtrl2.text.trim().isNotEmpty) {
-          distances.add(distanceCtrl2.text.trim());
-        }
-        for (int i = 0; i < distances.length; i++) {
-          fields['distances[$i]'] = distances[i];
+          fields['distances[1]'] = distanceCtrl2.text.trim(); // дистанция "до"
         }
 
         // Флаги для сохранения существующих изображений

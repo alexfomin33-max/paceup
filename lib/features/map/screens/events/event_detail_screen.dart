@@ -136,6 +136,22 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     if (_eventData == null) return;
     final dpr = MediaQuery.of(context).devicePixelRatio;
 
+    // Фоновая картинка (если есть)
+    final backgroundUrl = _eventData!['background_url'] as String?;
+    if (backgroundUrl != null && backgroundUrl.isNotEmpty) {
+      final screenW = MediaQuery.of(context).size.width;
+      final targetH = 200 * dpr; // Высота фоновой картинки в пикселях
+      final targetW = (screenW * dpr).round();
+      precacheImage(
+        CachedNetworkImageProvider(
+          backgroundUrl,
+          maxWidth: targetW,
+          maxHeight: targetH.round(),
+        ),
+        context,
+      );
+    }
+
     // Логотип в шапке: 92×92
     final logoUrl = _eventData!['logo_url'] as String?;
     if (logoUrl != null && logoUrl.isNotEmpty) {
@@ -349,6 +365,33 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   int _tab = 0; // 0 — Описание, 1 — Участники
 
+  /// Форматирование дистанций для отображения
+  /// Принимает список дистанций и форматирует их как "от — до" или просто значение
+  /// Формат: "5 - 7 км" или "500 - 1000 м"
+  String _formatDistances(List<dynamic> distances) {
+    if (distances.isEmpty) return '';
+    
+    // Форматируем каждую дистанцию
+    final formatted = distances.map((d) {
+      final dist = (d is num) ? d.toDouble() : (double.tryParse(d.toString()) ?? 0.0);
+      if (dist >= 1000) {
+        // Если больше 1000 метров, показываем в километрах
+        final km = dist / 1000;
+        // Если число целое, показываем без десятичных знаков
+        if (km.truncateToDouble() == km) {
+          return '${km.toInt()} км';
+        } else {
+          // Округляем до одного знака после запятой
+          return '${km.toStringAsFixed(1)} км';
+        }
+      } else {
+        return '${dist.toInt()} м';
+      }
+    }).join(' - '); // Используем дефис с пробелами как в макете
+    
+    return formatted;
+  }
+
   void _openGallery(int startIndex) {
     if (_eventData == null) return;
     final photos = _eventData!['photos'] as List<dynamic>? ?? [];
@@ -400,12 +443,66 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     }
 
     final logoUrl = _eventData!['logo_url'] as String? ?? '';
+    final backgroundUrl = _eventData!['background_url'] as String? ?? '';
     final name = _eventData!['name'] as String? ?? '';
     final organizerName = _eventData!['organizer_name'] as String? ?? '';
     final dateFormatted = _eventData!['date_formatted_short'] as String? ?? '';
     final time = _eventData!['event_time'] as String? ?? '';
     final place = _eventData!['place'] as String? ?? '';
     final photos = _eventData!['photos'] as List<dynamic>? ?? [];
+    
+    // ── Дистанции "от" и "до" для обычных событий ──
+    // Сначала проверяем прямые поля distance_from и distance_to из базы данных
+    final distanceFromRaw = _eventData!['distance_from'];
+    final distanceToRaw = _eventData!['distance_to'];
+    num? distanceFrom;
+    num? distanceTo;
+    
+    if (distanceFromRaw != null) {
+      if (distanceFromRaw is num) {
+        distanceFrom = distanceFromRaw;
+      } else {
+        distanceFrom = num.tryParse(distanceFromRaw.toString());
+      }
+      if (distanceFrom != null && distanceFrom <= 0) {
+        distanceFrom = null;
+      }
+    }
+    
+    if (distanceToRaw != null) {
+      if (distanceToRaw is num) {
+        distanceTo = distanceToRaw;
+      } else {
+        distanceTo = num.tryParse(distanceToRaw.toString());
+      }
+      if (distanceTo != null && distanceTo <= 0) {
+        distanceTo = null;
+      }
+    }
+    
+    // Формируем массив дистанций для отображения
+    final distances = <num>[];
+    if (distanceFrom != null) {
+      distances.add(distanceFrom);
+    }
+    if (distanceTo != null) {
+      distances.add(distanceTo);
+    }
+    
+    // Если прямые поля не заполнены, используем массив distances (для обратной совместимости)
+    if (distances.isEmpty) {
+      final distancesList = _eventData!['distances'] as List<dynamic>? ?? [];
+      for (final d in distancesList) {
+        if (d is num && d > 0) {
+          distances.add(d);
+        } else if (d != null) {
+          final parsed = num.tryParse(d.toString());
+          if (parsed != null && parsed > 0) {
+            distances.add(parsed);
+          }
+        }
+      }
+    }
 
     return PopScope(
       canPop: _updatedParticipantsCount == null,
@@ -447,6 +544,33 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                           ),
                           child: Column(
                             children: [
+                              // ── Фоновая картинка (если есть)
+                              if (backgroundUrl.isNotEmpty) ...[
+                                Builder(
+                                  builder: (context) => Container(
+                                    width: double.infinity,
+                                    height: 200,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.getBorderColor(context),
+                                    ),
+                                    child: CachedNetworkImage(
+                                      imageUrl: backgroundUrl,
+                                      fit: BoxFit.cover,
+                                      errorWidget: (context, url, error) =>
+                                          Container(
+                                        color: AppColors.getBorderColor(context),
+                                        child: Icon(
+                                          CupertinoIcons.photo,
+                                          size: 48,
+                                          color: AppColors.getIconSecondaryColor(
+                                            context,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                               SafeArea(
                                 bottom: false,
                                 child: Padding(
@@ -531,6 +655,14 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                       icon: CupertinoIcons.location_solid,
                                       text: place,
                                     ),
+                                    // ── Дистанции (если есть)
+                                    if (distances.isNotEmpty) ...[
+                                      const SizedBox(height: 6),
+                                      _InfoRow(
+                                        icon: CupertinoIcons.flag_fill,
+                                        text: _formatDistances(distances),
+                                      ),
+                                    ],
 
                                     if (photos.isNotEmpty) ...[
                                       const SizedBox(height: 12),
@@ -582,6 +714,49 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                     ),
 
                     const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                    // ───────── Блок дистанции (если есть) ─────────
+                    if (distances.isNotEmpty) ...[
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        sliver: SliverToBoxAdapter(
+                          child: Builder(
+                            builder: (context) => Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.getSurfaceColor(context),
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Дистанция',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 12,
+                                      color: AppColors.getTextSecondaryColor(context),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _formatDistances(distances),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'Inter',
+                                      fontSize: 15,
+                                      color: AppColors.getTextPrimaryColor(context),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                    ],
 
                     // ───────── Вкладки: каждая — в своей половине, центрирование текста
                     SliverToBoxAdapter(
