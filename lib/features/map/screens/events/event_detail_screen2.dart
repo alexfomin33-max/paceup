@@ -120,6 +120,23 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     if (_eventData == null) return;
     final dpr = MediaQuery.of(context).devicePixelRatio;
 
+    // Фоновая картинка для верхнего блока (соотношение сторон 2.1:1)
+    final backgroundUrl = _eventData!['background_url'] as String?;
+    if (backgroundUrl != null && backgroundUrl.isNotEmpty) {
+      final screenW = MediaQuery.of(context).size.width;
+      final calculatedHeight = screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
+      final targetW = (screenW * dpr).round();
+      final targetH = (calculatedHeight * dpr).round();
+      precacheImage(
+        CachedNetworkImageProvider(
+          backgroundUrl,
+          maxWidth: targetW,
+          maxHeight: targetH,
+        ),
+        context,
+      );
+    }
+
     // Логотип в шапке: 92×92
     final logoUrl = _eventData!['logo_url'] as String?;
     if (logoUrl != null && logoUrl.isNotEmpty) {
@@ -481,11 +498,53 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                           clipBehavior: Clip.antiAlias,
                           child: Stack(
                             children: [
-                              // ─── Фоновое изображение
+                              // ─── Фоновое изображение из API
                               Positioned.fill(
-                                child: Image.asset(
-                                  'assets/coffeereun_fon.jpg',
-                                  fit: BoxFit.cover,
+                                child: Builder(
+                                  builder: (context) {
+                                    final backgroundUrl =
+                                        _eventData!['background_url'] as String?;
+                                    if (backgroundUrl != null &&
+                                        backgroundUrl.isNotEmpty) {
+                                      final dpr = MediaQuery.of(context)
+                                          .devicePixelRatio;
+                                      final screenW =
+                                          MediaQuery.of(context).size.width;
+                                      final calculatedHeight = screenW / 2.1;
+                                      final targetW = (screenW * dpr).round();
+                                      final targetH =
+                                          (calculatedHeight * dpr).round();
+                                      return CachedNetworkImage(
+                                        imageUrl: backgroundUrl,
+                                        fit: BoxFit.cover,
+                                        fadeInDuration: const Duration(
+                                          milliseconds: 200,
+                                        ),
+                                        memCacheWidth: targetW,
+                                        memCacheHeight: targetH,
+                                        errorWidget: (
+                                          context,
+                                          url,
+                                          error,
+                                        ) => Container(
+                                          color: AppColors.getSurfaceColor(
+                                            context,
+                                          ),
+                                          child: Icon(
+                                            CupertinoIcons.photo,
+                                            size: 48,
+                                            color: AppColors.getIconPrimaryColor(
+                                              context,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    // Fallback: цвет фона, если изображение отсутствует
+                                    return Container(
+                                      color: AppColors.getSurfaceColor(context),
+                                    );
+                                  },
                                 ),
                               ),
 
