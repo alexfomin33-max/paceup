@@ -149,6 +149,63 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     }
   }
 
+  /// ──────────────────────── Форматирование даты с годом ────────────────────────
+  /// Добавляет год к дате, если это не текущий год
+  String _formatDateWithYear(String dateFormattedShort) {
+    if (dateFormattedShort.isEmpty || _eventData == null) {
+      return dateFormattedShort;
+    }
+
+    // Пытаемся получить полную дату из данных события
+    dynamic eventDateRaw = _eventData!['event_date'];
+    eventDateRaw ??= _eventData!['date'];
+
+    if (eventDateRaw == null) {
+      return dateFormattedShort;
+    }
+
+    // Парсим дату
+    DateTime? eventDate;
+    try {
+      if (eventDateRaw is String) {
+        // Пробуем разные форматы
+        if (eventDateRaw.contains(' ')) {
+          // Формат "YYYY-MM-DD HH:mm:ss"
+          eventDate = DateTime.parse(eventDateRaw.split(' ')[0]);
+        } else if (eventDateRaw.contains('.')) {
+          // Формат "DD.MM.YYYY"
+          final parts = eventDateRaw.split('.');
+          if (parts.length == 3) {
+            eventDate = DateTime(
+              int.parse(parts[2]),
+              int.parse(parts[1]),
+              int.parse(parts[0]),
+            );
+          }
+        } else {
+          // Формат "YYYY-MM-DD"
+          eventDate = DateTime.parse(eventDateRaw);
+        }
+      }
+    } catch (e) {
+      // Если не удалось распарсить, возвращаем исходную строку
+      return dateFormattedShort;
+    }
+
+    if (eventDate == null) {
+      return dateFormattedShort;
+    }
+
+    // Сравниваем год с текущим
+    final currentYear = DateTime.now().year;
+    if (eventDate.year != currentYear) {
+      // Добавляем год к дате
+      return '$dateFormattedShort ${eventDate.year}';
+    }
+
+    return dateFormattedShort;
+  }
+
   /// Открытие экрана редактирования
   Future<void> _openEditScreen() async {
     if (!_canEdit) return;
@@ -284,17 +341,13 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
       );
     }
 
-    final name = 'Субботний коферан';
+    final name = _eventData!['name'] as String? ?? '';
     final organizerName = _eventData!['organizer_name'] as String? ?? '';
     final organizerAvatarUrl =
         _eventData!['organizer_avatar_url'] as String? ?? '';
-    // Используем аватар из профиля, если аватар организатора отсутствует
-    final finalOrganizerAvatar = organizerAvatarUrl.isNotEmpty
-        ? organizerAvatarUrl
-        : (_currentUserAvatar?.isNotEmpty ?? false)
-        ? _currentUserAvatar!
-        : '';
-    final dateFormatted = _eventData!['date_formatted_short'] as String? ?? '';
+    final dateFormattedShort = _eventData!['date_formatted_short'] as String? ?? '';
+    // ─── Форматируем дату с добавлением года, если это не текущий год
+    final dateFormatted = _formatDateWithYear(dateFormattedShort);
     final time = _eventData!['event_time'] as String? ?? '';
     // ─── Объединённая дата и время
     final dateTimeValue = dateFormatted.isEmpty
@@ -319,6 +372,29 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
         if (!aIsOrganizer && bIsOrganizer) return 1;
         return 0;
       });
+
+    // ─── Получаем аватар организатора: сначала из organizer_avatar_url,
+    //      затем из профиля текущего пользователя (если он организатор),
+    //      затем из списка участников (организатор всегда первый после сортировки)
+    String? organizerAvatarFromParticipants;
+    if (participants.isNotEmpty) {
+      final firstParticipant = participants[0] as Map<String, dynamic>;
+      final isFirstOrganizer = (firstParticipant['user_id'] as int?) ==
+              eventUserId ||
+          (firstParticipant['is_organizer'] as bool?) == true;
+      if (isFirstOrganizer) {
+        organizerAvatarFromParticipants =
+            firstParticipant['avatar_url'] as String? ?? '';
+      }
+    }
+
+    final finalOrganizerAvatar = organizerAvatarUrl.isNotEmpty
+        ? organizerAvatarUrl
+        : (_currentUserAvatar?.isNotEmpty ?? false)
+        ? _currentUserAvatar!
+        : (organizerAvatarFromParticipants?.isNotEmpty ?? false)
+        ? organizerAvatarFromParticipants!
+        : '';
 
     // ─── Извлекаем данные для метрик (опциональные поля из API)
     final distanceMeters = _eventData!['distance_meters'] as num?;
@@ -347,40 +423,47 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                 slivers: [
                   // ───────── Верхний блок с метриками (на всю ширину)
                   SliverToBoxAdapter(
-                    child: Container(
-                      height: 190,
-                      decoration: BoxDecoration(
-                        color: AppColors.getSurfaceColor(context),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Stack(
-                        children: [
-                          // ─── Фоновое изображение
-                          Positioned.fill(
-                            child: Image.asset(
-                              'assets/coffeereun_fon.jpg',
-                              fit: BoxFit.cover,
-                            ),
+                    child: Builder(
+                      builder: (context) {
+                        final screenW = MediaQuery.of(context).size.width;
+                        final calculatedHeight =
+                            screenW / 2.1; // Соотношение 2.1:1
+                        return Container(
+                          height: calculatedHeight,
+                          decoration: BoxDecoration(
+                            color: AppColors.getSurfaceColor(context),
                           ),
-
-                          // ─── Метрики поверх фона в нижней части
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            child: SafeArea(
-                              bottom: false,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
+                          clipBehavior: Clip.antiAlias,
+                          child: Stack(
+                            children: [
+                              // ─── Фоновое изображение
+                              Positioned.fill(
+                                child: Image.asset(
+                                  'assets/coffeereun_fon.jpg',
+                                  fit: BoxFit.cover,
                                 ),
-                                child: _EventMetricBlock(metrics: metrics),
                               ),
-                            ),
+
+                              // ─── Метрики поверх фона в нижней части
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                child: SafeArea(
+                                  bottom: false,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    child: _EventMetricBlock(metrics: metrics),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
 
@@ -750,88 +833,80 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                 ),
                               )
                             else
-                              SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  children: List.generate(participants.length, (
-                                    i,
-                                  ) {
-                                    final p =
-                                        participants[i] as Map<String, dynamic>;
-                                    final avatarUrl =
-                                        p['avatar_url'] as String? ?? '';
-                                    return Padding(
-                                      padding: EdgeInsets.only(
-                                        right: i < participants.length - 1
-                                            ? 8
-                                            : 0,
-                                      ),
-                                      child: ClipOval(
-                                        child: avatarUrl.isNotEmpty
-                                            ? Builder(
-                                                builder: (context) {
-                                                  final dpr = MediaQuery.of(
-                                                    context,
-                                                  ).devicePixelRatio;
-                                                  final w = (48 * dpr).round();
-                                                  return CachedNetworkImage(
-                                                    imageUrl: avatarUrl,
-                                                    width: 48,
-                                                    height: 48,
-                                                    fit: BoxFit.cover,
-                                                    fadeInDuration:
-                                                        const Duration(
-                                                          milliseconds: 120,
-                                                        ),
-                                                    memCacheWidth: w,
-                                                    maxWidthDiskCache: w,
-                                                    errorWidget:
-                                                        (
-                                                          context,
-                                                          imageUrl,
-                                                          error,
-                                                        ) => Container(
-                                                          width: 48,
-                                                          height: 48,
-                                                          color:
-                                                              AppColors.getBorderColor(
-                                                                context,
-                                                              ),
-                                                          child: Icon(
-                                                            Icons.person,
-                                                            size: 28,
-                                                            color:
-                                                                AppColors.getIconPrimaryColor(
-                                                                  context,
-                                                                ),
-                                                          ),
-                                                        ),
-                                                  );
-                                                },
-                                              )
-                                            : Container(
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: List.generate(participants.length, (
+                                  i,
+                                ) {
+                                  final p =
+                                      participants[i] as Map<String, dynamic>;
+                                  final avatarUrl =
+                                      p['avatar_url'] as String? ?? '';
+                                  return ClipOval(
+                                    child: avatarUrl.isNotEmpty
+                                        ? Builder(
+                                            builder: (context) {
+                                              final dpr = MediaQuery.of(
+                                                context,
+                                              ).devicePixelRatio;
+                                              final w = (48 * dpr).round();
+                                              return CachedNetworkImage(
+                                                imageUrl: avatarUrl,
                                                 width: 48,
                                                 height: 48,
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      AppColors.getBorderColor(
-                                                        context,
+                                                fit: BoxFit.cover,
+                                                fadeInDuration:
+                                                    const Duration(
+                                                      milliseconds: 120,
+                                                    ),
+                                                memCacheWidth: w,
+                                                maxWidthDiskCache: w,
+                                                errorWidget:
+                                                    (
+                                                      context,
+                                                      imageUrl,
+                                                      error,
+                                                    ) => Container(
+                                                      width: 48,
+                                                      height: 48,
+                                                      color:
+                                                          AppColors.getBorderColor(
+                                                            context,
+                                                          ),
+                                                      child: Icon(
+                                                        Icons.person,
+                                                        size: 28,
+                                                        color:
+                                                            AppColors.getIconPrimaryColor(
+                                                              context,
+                                                            ),
                                                       ),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: Icon(
-                                                  Icons.person,
-                                                  size: 28,
-                                                  color:
-                                                      AppColors.getIconPrimaryColor(
-                                                        context,
-                                                      ),
-                                                ),
-                                              ),
-                                      ),
-                                    );
-                                  }),
-                                ),
+                                                    ),
+                                              );
+                                            },
+                                          )
+                                        : Container(
+                                            width: 48,
+                                            height: 48,
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  AppColors.getBorderColor(
+                                                    context,
+                                                  ),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.person,
+                                              size: 28,
+                                              color:
+                                                  AppColors.getIconPrimaryColor(
+                                                    context,
+                                                  ),
+                                            ),
+                                          ),
+                                  );
+                                }),
                               ),
                           ],
                         ),

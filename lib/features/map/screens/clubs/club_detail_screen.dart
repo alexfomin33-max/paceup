@@ -116,12 +116,12 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
       );
     }
 
-    // Фоновая картинка (соотношение сторон 2.3:1)
+    // Фоновая картинка (соотношение сторон 2.1:1)
     final backgroundUrl = _clubData!['background_url'] as String?;
     if (backgroundUrl != null && backgroundUrl.isNotEmpty) {
       final screenW = MediaQuery.of(context).size.width;
       final calculatedHeight =
-          screenW / 2.3; // Вычисляем высоту по соотношению 2.3:1
+          screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
       final targetW = (screenW * dpr).round();
       final targetH = (calculatedHeight * dpr).round();
       precacheImage(
@@ -431,7 +431,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                     ).size.width;
                                     final calculatedHeight =
                                         screenW /
-                                        2.3; // Вычисляем высоту по соотношению 2.3:1
+                                        2.1; // Вычисляем высоту по соотношению 2.1:1
                                     return Container(
                                       width: double.infinity,
                                       height: calculatedHeight,
@@ -994,7 +994,7 @@ class _HeaderLogo extends StatelessWidget {
   }
 }
 
-/// Фоновая картинка клуба (соотношение сторон 2.3:1)
+/// Фоновая картинка клуба (соотношение сторон 2.1:1)
 class _BackgroundImage extends StatelessWidget {
   final String url;
   const _BackgroundImage({required this.url});
@@ -1003,7 +1003,7 @@ class _BackgroundImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenW = MediaQuery.of(context).size.width;
     final calculatedHeight =
-        screenW / 2.3; // Вычисляем высоту по соотношению 2.3:1
+        screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
     final dpr = MediaQuery.of(context).devicePixelRatio;
     final targetW = (screenW * dpr).round();
     final targetH = (calculatedHeight * dpr).round();
