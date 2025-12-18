@@ -339,70 +339,57 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
         body: SafeArea(
           top: false,
           bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Stack(
-              children: [
-                // ───────── Скроллируемый контент
-                CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    // ───────── Отступ сверху для статус-бара
-                    SliverSafeArea(
-                      bottom: false,
-                      sliver: SliverToBoxAdapter(
-                        child: Container(
-                          height: 170,
-                          decoration: BoxDecoration(
-                            color: AppColors.getSurfaceColor(context),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            border: Border.all(
-                              color: AppColors.getBorderColor(context),
-                              width: 1,
+          child: Stack(
+            children: [
+              // ───────── Скроллируемый контент
+              CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // ───────── Верхний блок с метриками (на всю ширину)
+                  SliverToBoxAdapter(
+                    child: Container(
+                      height: 190,
+                      decoration: BoxDecoration(
+                        color: AppColors.getSurfaceColor(context),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Stack(
+                        children: [
+                          // ─── Фоновое изображение
+                          Positioned.fill(
+                            child: Image.asset(
+                              'assets/coffeereun_fon.jpg',
+                              fit: BoxFit.cover,
                             ),
                           ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Stack(
-                            children: [
-                              // ─── Фоновое изображение
-                              Positioned.fill(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.md,
-                                  ),
-                                  child: Image.asset(
-                                    'assets/coffeereun_fon.jpg',
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
 
-                              // ─── Метрики поверх фона в нижней части
-                              Positioned(
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                child: SafeArea(
-                                  bottom: false,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    child: _EventMetricBlock(metrics: metrics),
-                                  ),
+                          // ─── Метрики поверх фона в нижней части
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: SafeArea(
+                              bottom: false,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
                                 ),
+                                child: _EventMetricBlock(metrics: metrics),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
+                  ),
 
-                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-                    // ───────── Промежуточный блок: название события и организатор
-                    SliverToBoxAdapter(
+                  // ───────── Промежуточный блок: название события и организатор
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    sliver: SliverToBoxAdapter(
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -526,11 +513,14 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                         ),
                       ),
                     ),
+                  ),
 
-                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-                    // ───────── Промежуточный блок: адрес
-                    SliverToBoxAdapter(
+                  // ───────── Промежуточный блок: адрес
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    sliver: SliverToBoxAdapter(
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -567,11 +557,14 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                         ),
                       ),
                     ),
+                  ),
 
-                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-                    // ───────── Промежуточный блок: дата и дистанция
-                    SliverToBoxAdapter(
+                  // ───────── Промежуточный блок: дата и дистанция
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    sliver: SliverToBoxAdapter(
                       child: Row(
                         children: [
                           // Блок с датой
@@ -666,12 +659,15 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                         ],
                       ),
                     ),
+                  ),
 
-                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-                    // ───────── Промежуточный блок: фотографии
-                    if (photos.isNotEmpty)
-                      SliverToBoxAdapter(
+                  // ───────── Промежуточный блок: фотографии
+                  if (photos.isNotEmpty)
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      sliver: SliverToBoxAdapter(
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -711,12 +707,15 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                           ),
                         ),
                       ),
+                    ),
 
-                    if (photos.isNotEmpty)
-                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  if (photos.isNotEmpty)
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-                    // ───────── Промежуточный блок: участники
-                    SliverToBoxAdapter(
+                  // ───────── Промежуточный блок: участники
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    sliver: SliverToBoxAdapter(
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -838,11 +837,14 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                         ),
                       ),
                     ),
+                  ),
 
-                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-                    // ───────── Промежуточный блок: информация
-                    SliverToBoxAdapter(
+                  // ───────── Промежуточный блок: информация
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    sliver: SliverToBoxAdapter(
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -880,11 +882,14 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                         ),
                       ),
                     ),
+                  ),
 
-                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-                    // ───────── Кнопка "Присоединиться"/"Выйти"
-                    SliverToBoxAdapter(
+                  // ───────── Кнопка "Присоединиться"/"Выйти"
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    sliver: SliverToBoxAdapter(
                       child: Center(
                         child: Material(
                           color: _isParticipant
@@ -938,43 +943,43 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                         ),
                       ),
                     ),
+                  ),
 
-                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                  ],
-                ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                ],
+              ),
 
-                // ───────── Плавающие круглые иконки (назад + редактирование)
-                Positioned(
-                  top: 12,
-                  left: 0,
-                  right: 0,
-                  child: SafeArea(
-                    bottom: false,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
+              // ───────── Плавающие круглые иконки (назад + редактирование)
+              Positioned(
+                top: 12,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _CircleIconBtn(
+                          icon: CupertinoIcons.back,
+                          semantic: 'Назад',
+                          onTap: () => Navigator.of(context).maybePop(),
+                        ),
+                        if (_canEdit)
                           _CircleIconBtn(
-                            icon: CupertinoIcons.back,
-                            semantic: 'Назад',
-                            onTap: () => Navigator.of(context).maybePop(),
-                          ),
-                          if (_canEdit)
-                            _CircleIconBtn(
-                              icon: CupertinoIcons.pencil,
-                              semantic: 'Редактировать',
-                              onTap: _openEditScreen,
-                            )
-                          else
-                            const SizedBox(width: 38, height: 38),
-                        ],
-                      ),
+                            icon: CupertinoIcons.pencil,
+                            semantic: 'Редактировать',
+                            onTap: _openEditScreen,
+                          )
+                        else
+                          const SizedBox(width: 38, height: 38),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
