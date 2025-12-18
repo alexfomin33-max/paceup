@@ -396,14 +396,59 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
         ? organizerAvatarFromParticipants!
         : '';
 
-    // ─── Извлекаем данные для метрик (опциональные поля из API)
-    final distanceMeters = _eventData!['distance_meters'] as num?;
+    // ─── Извлекаем данные для метрик из базы данных (distance_from и distance_to)
+    final distanceFromRaw = _eventData!['distance_from'];
+    final distanceToRaw = _eventData!['distance_to'];
+    num? distanceFrom;
+    num? distanceTo;
+    
+    if (distanceFromRaw != null) {
+      if (distanceFromRaw is num) {
+        distanceFrom = distanceFromRaw;
+      } else {
+        distanceFrom = num.tryParse(distanceFromRaw.toString());
+      }
+      if (distanceFrom != null && distanceFrom <= 0) {
+        distanceFrom = null;
+      }
+    }
+    
+    if (distanceToRaw != null) {
+      if (distanceToRaw is num) {
+        distanceTo = distanceToRaw;
+      } else {
+        distanceTo = num.tryParse(distanceToRaw.toString());
+      }
+      if (distanceTo != null && distanceTo <= 0) {
+        distanceTo = null;
+      }
+    }
 
-    // ─── Форматирование метрик
-    String formatDistance(double? meters) {
-      if (meters == null || meters <= 0) return '5 - 7 км';
-      final km = meters / 1000.0;
-      return '${km.toStringAsFixed(2)} км';
+    // ─── Форматирование метрик на основе distance_from и distance_to
+    String formatDistance(num? from, num? to) {
+      if (from == null && to == null) return '';
+      
+      String formatMeters(num meters) {
+        if (meters >= 1000) {
+          final km = meters / 1000.0;
+          if (km.truncateToDouble() == km) {
+            return '${km.toInt()} км';
+          } else {
+            return '${km.toStringAsFixed(1)} км';
+          }
+        } else {
+          return '${meters.toInt()} м';
+        }
+      }
+      
+      if (from != null && to != null) {
+        return '${formatMeters(from)} - ${formatMeters(to)}';
+      } else if (from != null) {
+        return formatMeters(from);
+      } else if (to != null) {
+        return formatMeters(to);
+      }
+      return '';
     }
 
     // ─── Подготовка метрик с цветными тинтами
@@ -725,7 +770,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    formatDistance(distanceMeters?.toDouble()),
+                                    formatDistance(distanceFrom, distanceTo),
                                     style: TextStyle(
                                       fontWeight: FontWeight.w500,
                                       fontFamily: 'Inter',

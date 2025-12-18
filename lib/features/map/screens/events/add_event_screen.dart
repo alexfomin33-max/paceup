@@ -549,16 +549,12 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
         fields['event_time'] = _fmtTime(time!);
         fields['description'] = descCtrl.text.trim();
         
-        // Добавляем дистанции (только если заполнены)
-        final distances = <String>[];
+        // Добавляем дистанции "от" и "до" (только если заполнены)
         if (distanceCtrl1.text.trim().isNotEmpty) {
-          distances.add(distanceCtrl1.text.trim());
+          fields['distances[0]'] = distanceCtrl1.text.trim(); // дистанция "от"
         }
         if (distanceCtrl2.text.trim().isNotEmpty) {
-          distances.add(distanceCtrl2.text.trim());
-        }
-        for (int i = 0; i < distances.length; i++) {
-          fields['distances[$i]'] = distances[i];
+          fields['distances[1]'] = distanceCtrl2.text.trim(); // дистанция "до"
         }
         
         if (createFromClub && selectedClub != null) {
