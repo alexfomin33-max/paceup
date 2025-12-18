@@ -284,7 +284,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
       );
     }
 
-    final name = 'Субботний коферан';
+    final name = _eventData!['name'] as String? ?? '';
     final organizerName = _eventData!['organizer_name'] as String? ?? '';
     final organizerAvatarUrl =
         _eventData!['organizer_avatar_url'] as String? ?? '';
@@ -347,40 +347,47 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                 slivers: [
                   // ───────── Верхний блок с метриками (на всю ширину)
                   SliverToBoxAdapter(
-                    child: Container(
-                      height: 190,
-                      decoration: BoxDecoration(
-                        color: AppColors.getSurfaceColor(context),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Stack(
-                        children: [
-                          // ─── Фоновое изображение
-                          Positioned.fill(
-                            child: Image.asset(
-                              'assets/coffeereun_fon.jpg',
-                              fit: BoxFit.cover,
-                            ),
+                    child: Builder(
+                      builder: (context) {
+                        final screenW = MediaQuery.of(context).size.width;
+                        final calculatedHeight =
+                            screenW / 2.1; // Соотношение 2.1:1
+                        return Container(
+                          height: calculatedHeight,
+                          decoration: BoxDecoration(
+                            color: AppColors.getSurfaceColor(context),
                           ),
-
-                          // ─── Метрики поверх фона в нижней части
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            child: SafeArea(
-                              bottom: false,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
+                          clipBehavior: Clip.antiAlias,
+                          child: Stack(
+                            children: [
+                              // ─── Фоновое изображение
+                              Positioned.fill(
+                                child: Image.asset(
+                                  'assets/coffeereun_fon.jpg',
+                                  fit: BoxFit.cover,
                                 ),
-                                child: _EventMetricBlock(metrics: metrics),
                               ),
-                            ),
+
+                              // ─── Метрики поверх фона в нижней части
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                child: SafeArea(
+                                  bottom: false,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    child: _EventMetricBlock(metrics: metrics),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
 

@@ -56,7 +56,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
 
   // ──────────── фиксированные пропорции для обрезки медиа ────────────
   static const double _logoAspectRatio = 1;
-  static const double _backgroundAspectRatio = 2.3;
+  static const double _backgroundAspectRatio = 2.1;
 
   // ── состояние загрузки данных
   bool _loadingData = true;
@@ -286,7 +286,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
   }
 
   Future<void> _pickBackground() async {
-    // ── выбираем фон с обрезкой 2.3:1 и сжатием до оптимального размера
+    // ── выбираем фон с обрезкой 2.1:1 и сжатием до оптимального размера
     final processed = await ImagePickerHelper.pickAndProcessImage(
       context: context,
       aspectRatio: _backgroundAspectRatio,
@@ -718,7 +718,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                                 backgroundFilename = null;
                               }),
                               width:
-                                  207, // Ширина для соотношения 2.3:1 (90 * 2.3)
+                                  189, // Ширина для соотношения 2.1:1 (90 * 2.1)
                               height: 90,
                             ),
                           ],

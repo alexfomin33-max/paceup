@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -31,6 +32,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
   final descCtrl = TextEditingController();
   final clubCtrl = TextEditingController(text: 'CoffeeRun_vld');
   final templateCtrl = TextEditingController();
+  final distanceCtrl1 = TextEditingController();
+  final distanceCtrl2 = TextEditingController();
   final _pickerFocusNode = FocusNode(debugLabel: 'pickerFocus');
 
   // выборы
@@ -48,10 +51,12 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
 
   // медиа
   File? logoFile;
+  File? backgroundFile;
   final List<File?> photos = [null, null, null];
 
-  // ──────────── фиксированные пропорции для обрезки логотипа ────────────
+  // ──────────── фиксированные пропорции для обрезки медиа ────────────
   static const double _logoAspectRatio = 1;
+  static const double _backgroundAspectRatio = 2.1;
 
   // координаты выбранного места
   LatLng? selectedLocation;
@@ -85,6 +90,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     descCtrl.dispose();
     clubCtrl.dispose();
     templateCtrl.dispose();
+    distanceCtrl1.dispose();
+    distanceCtrl2.dispose();
     _pickerFocusNode.dispose();
     super.dispose();
   }
@@ -110,6 +117,20 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     if (processed == null || !mounted) return;
 
     setState(() => logoFile = processed);
+  }
+
+  Future<void> _pickBackground() async {
+    // ── выбираем фон с обрезкой 2.1:1 и сжатием до оптимального размера
+    final processed = await ImagePickerHelper.pickAndProcessImage(
+      context: context,
+      aspectRatio: _backgroundAspectRatio,
+      maxSide: ImageCompressionPreset.background.maxSide,
+      jpegQuality: ImageCompressionPreset.background.quality,
+      cropTitle: 'Обрезка фонового фото',
+    );
+    if (processed == null || !mounted) return;
+
+    setState(() => backgroundFile = processed);
   }
 
   Future<void> _pickPhoto(int i) async {
@@ -501,6 +522,11 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
           files['logo'] = logoFile!;
         }
 
+        // Добавляем фоновую картинку
+        if (backgroundFile != null) {
+          files['background'] = backgroundFile!;
+        }
+
         // Добавляем фотографии
         for (int i = 0; i < photos.length; i++) {
           if (photos[i] != null) {
@@ -522,6 +548,19 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
         fields['event_date'] = _fmtDate(date!);
         fields['event_time'] = _fmtTime(time!);
         fields['description'] = descCtrl.text.trim();
+        
+        // Добавляем дистанции (только если заполнены)
+        final distances = <String>[];
+        if (distanceCtrl1.text.trim().isNotEmpty) {
+          distances.add(distanceCtrl1.text.trim());
+        }
+        if (distanceCtrl2.text.trim().isNotEmpty) {
+          distances.add(distanceCtrl2.text.trim());
+        }
+        for (int i = 0; i < distances.length; i++) {
+          fields['distances[$i]'] = distances[i];
+        }
+        
         if (createFromClub && selectedClub != null) {
           fields['club_name'] = selectedClub!;
         }
@@ -751,7 +790,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
                     const SizedBox(height: 24),
                   ],
 
-                  // ---------- Медиа: логотип + 3 фото ----------
+                  // ---------- Медиа: логотип + фоновая картинка ----------
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -766,7 +805,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
                               color: AppColors.getTextPrimaryColor(context),
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 8),
                           _MediaTile(
                             file: logoFile,
                             onPick: _pickLogo,
@@ -781,29 +820,21 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Фото события',
+                              'Фоновая картинка',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.getTextPrimaryColor(context),
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            SizedBox(
+                            const SizedBox(height: 8),
+                            _MediaTile(
+                              file: backgroundFile,
+                              onPick: _pickBackground,
+                              onRemove: () =>
+                                  setState(() => backgroundFile = null),
+                              width: 189, // Ширина для соотношения 2.1:1 (90 * 2.1)
                               height: 90,
-                              child: ListView.separated(
-                                scrollDirection: Axis.horizontal,
-                                physics: const BouncingScrollPhysics(),
-                                itemCount: 3,
-                                separatorBuilder: (_, _) =>
-                                    const SizedBox(width: 12),
-                                itemBuilder: (_, i) => _MediaTile(
-                                  file: photos[i],
-                                  onPick: () => _pickPhoto(i),
-                                  onRemove: () =>
-                                      setState(() => photos[i] = null),
-                                ),
-                              ),
                             ),
                           ],
                         ),
@@ -1267,6 +1298,163 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
                   ),
                   const SizedBox(height: 24),
 
+                  // ---------- Дистанция ----------
+                  Text(
+                    'Дистанция (в метрах)',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // ── два поля для ввода дистанций (в два столбца)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Builder(
+                          builder: (context) => TextField(
+                            controller: distanceCtrl1,
+                            keyboardType: TextInputType.number,
+                            textInputAction: TextInputAction.next,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                            decoration: InputDecoration(
+                              hintText: '0 метров',
+                              hintStyle: AppTextStyles.h14w4Place,
+                              filled: true,
+                              fillColor: AppColors.getSurfaceColor(context),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 17,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
+                                borderSide: BorderSide(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
+                                borderSide: BorderSide(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
+                                borderSide: BorderSide(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          '—',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.getTextSecondaryColor(context),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Builder(
+                          builder: (context) => TextField(
+                            controller: distanceCtrl2,
+                            keyboardType: TextInputType.number,
+                            textInputAction: TextInputAction.next,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                            decoration: InputDecoration(
+                              hintText: '0 метров',
+                              hintStyle: AppTextStyles.h14w4Place,
+                              filled: true,
+                              fillColor: AppColors.getSurfaceColor(context),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 17,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
+                                borderSide: BorderSide(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
+                                borderSide: BorderSide(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
+                                borderSide: BorderSide(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ---------- Фото события ----------
+                  Text(
+                    'Фото события',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 90,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: 3,
+                      separatorBuilder: (_, _) => const SizedBox(width: 12),
+                      itemBuilder: (_, i) => _MediaTile(
+                        file: photos[i],
+                        onPick: () => _pickPhoto(i),
+                        onRemove: () => setState(() => photos[i] = null),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
                   // ---------- Описание ----------
                   Text(
                     'Описание события',
@@ -1580,25 +1768,30 @@ class _MediaTile extends StatelessWidget {
   final VoidCallback onPick;
   final VoidCallback onRemove;
   final bool isCircular;
+  final double? width;
+  final double? height;
 
   const _MediaTile({
     required this.file,
     required this.onPick,
     required this.onRemove,
     this.isCircular = false,
+    this.width,
+    this.height,
   });
 
   @override
   Widget build(BuildContext context) {
+    final tileWidth = width ?? 90;
+    final tileHeight = height ?? 90;
+    
     // 📌 Если фото ещё нет — плитка с иконкой и рамкой
     if (file == null) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 6),
-        child: GestureDetector(
-          onTap: onPick,
-          child: Container(
-            width: 90,
-            height: 90,
+      return GestureDetector(
+        onTap: onPick,
+        child: Container(
+            width: tileWidth,
+            height: tileHeight,
             decoration: BoxDecoration(
               shape: isCircular ? BoxShape.circle : BoxShape.rectangle,
               borderRadius: isCircular
@@ -1615,14 +1808,11 @@ class _MediaTile extends StatelessWidget {
               ),
             ),
           ),
-        ),
-      );
+        );
     }
 
     // 📌 Если фото выбрано — превью без рамки
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Stack(
+    return Stack(
         clipBehavior: Clip.none,
         children: [
           GestureDetector(
@@ -1632,11 +1822,11 @@ class _MediaTile extends StatelessWidget {
                     child: Image.file(
                       file!,
                       fit: BoxFit.cover,
-                      width: 90,
-                      height: 90,
+                      width: tileWidth,
+                      height: tileHeight,
                       errorBuilder: (context, error, stackTrace) => Container(
-                        width: 90,
-                        height: 90,
+                        width: tileWidth,
+                        height: tileHeight,
                         color: AppColors.getBackgroundColor(context),
                         child: Icon(
                           CupertinoIcons.photo,
@@ -1651,11 +1841,11 @@ class _MediaTile extends StatelessWidget {
                     child: Image.file(
                       file!,
                       fit: BoxFit.cover,
-                      width: 90,
-                      height: 90,
+                      width: tileWidth,
+                      height: tileHeight,
                       errorBuilder: (context, error, stackTrace) => Container(
-                        width: 90,
-                        height: 90,
+                        width: tileWidth,
+                        height: tileHeight,
                         color: AppColors.getBackgroundColor(context),
                         child: Icon(
                           CupertinoIcons.photo,
@@ -1690,7 +1880,6 @@ class _MediaTile extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 }
