@@ -7,6 +7,7 @@ import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../providers/tasks_provider.dart';
+import '../edit_tasks_screen.dart';
 
 class Run200kScreen extends ConsumerStatefulWidget {
   final int taskId;
@@ -189,7 +190,7 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                     children: [
                       // Фоновая картинка 200k_run.png
                       const _BackgroundImage(),
-                      // Верхняя кнопка "назад"
+                      // Верхние кнопки "назад" и "редактировать"
                       SafeArea(
                         bottom: false,
                         child: Padding(
@@ -197,10 +198,59 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                             horizontal: 12,
                             vertical: 8,
                           ),
-                          child: _CircleIconBtn(
-                            icon: CupertinoIcons.back,
-                            semantic: 'Назад',
-                            onTap: () => Navigator.of(context).pop(),
+                          child: Builder(
+                            builder: (context) {
+                              final taskAsyncValue =
+                                  ref.watch(taskDetailProvider(widget.taskId));
+                              return Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  _CircleIconBtn(
+                                    icon: CupertinoIcons.back,
+                                    semantic: 'Назад',
+                                    onTap: () => Navigator.of(context).pop(),
+                                  ),
+                                  taskAsyncValue.when(
+                                    data: (task) {
+                                      // Показываем кнопку редактирования только если задача существует
+                                      if (task == null) {
+                                        return const SizedBox(
+                                          width: 34,
+                                          height: 34,
+                                        );
+                                      }
+                                      return _CircleIconBtn(
+                                        icon: CupertinoIcons.pencil,
+                                        semantic: 'Редактировать',
+                                        onTap: () async {
+                                          final result = await Navigator.of(
+                                            context,
+                                          ).push<String>(
+                                            MaterialPageRoute(
+                                              builder: (_) => EditTaskScreen(
+                                                taskId: widget.taskId,
+                                              ),
+                                            ),
+                                          );
+                                          // Если задача была обновлена, обновляем провайдеры
+                                          if (result == 'updated' && mounted) {
+                                            _refreshProviders();
+                                          }
+                                        },
+                                      );
+                                    },
+                                    loading: () => const SizedBox(
+                                      width: 34,
+                                      height: 34,
+                                    ),
+                                    error: (_, __) => const SizedBox(
+                                      width: 34,
+                                      height: 34,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ),
                       ),
