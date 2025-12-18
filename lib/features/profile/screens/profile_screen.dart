@@ -6,9 +6,13 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bar.dart'; // ← наш глобальный AppBar
 import '../../../core/widgets/transparent_route.dart';
 import '../../../core/widgets/more_menu_overlay.dart';
+import '../../../core/widgets/more_menu_hub.dart';
 import '../providers/profile_header_provider.dart';
 import '../providers/profile_header_state.dart';
 import '../../../providers/services/auth_provider.dart';
+import '../../../providers/services/api_provider.dart';
+import '../../../core/services/api_service.dart'; // для ApiException
+import '../../lenta/providers/lenta_provider.dart';
 
 // общие виджеты
 import 'widgets/header_card.dart';
@@ -370,6 +374,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   CupertinoIcons.ellipsis,
                   key: menuKey,
                   onPressed: () {
+                    // Вызываем асинхронную функцию без await (обработчик onPressed не возвращает Future)
                     _showUserMenu(
                       context: context,
                       ref: ref,
@@ -486,21 +491,39 @@ class _AppIcon extends StatelessWidget {
 
 /// Показывает всплывающее меню для действий с чужим профилем
 /// (подписка, скрытие постов/тренировок, блокировка).
-void _showUserMenu({
+Future<void> _showUserMenu({
   required BuildContext context,
   required WidgetRef ref,
   required int userId,
   required int currentUserId,
   required GlobalKey menuKey,
-}) {
-  // ⚠️ Здесь позже нужно будет подставить реальные
-  // значения с сервера (PHP/MySQL). Пока заглушки.
-  // Привязываем флаги к userId, чтобы они не были
-  // compile‑time константами и не вызывали dead code.
-  final bool isSubscribed = userId == -1;
-  final bool arePostsHidden = userId == -1;
-  final bool areActivitiesHidden = userId == -1;
-  final bool isBlocked = userId == -1;
+}) async {
+  // Получаем статусы пользователя с сервера
+  final api = ref.read(apiServiceProvider);
+  bool isSubscribed = false;
+  bool arePostsHidden = false;
+  bool areActivitiesHidden = false;
+  bool isBlocked = false;
+
+  try {
+    final statusData = await api.post(
+      '/get_user_status.php',
+      body: {
+        'target_user_id': userId.toString(),
+      },
+      timeout: const Duration(seconds: 10),
+    );
+
+    if (statusData['success'] == true) {
+      isSubscribed = statusData['is_subscribed'] == true;
+      arePostsHidden = statusData['are_posts_hidden'] == true;
+      areActivitiesHidden = statusData['are_activities_hidden'] == true;
+      isBlocked = statusData['is_blocked'] == true;
+    }
+  } catch (e) {
+    // В случае ошибки показываем меню с дефолтными значениями
+    debugPrint('Ошибка загрузки статусов пользователя: $e');
+  }
 
   // ──────────────────────────────────────────────
   // Формируем список пунктов меню
@@ -512,14 +535,20 @@ void _showUserMenu({
       icon: isSubscribed
           ? CupertinoIcons.person_badge_minus
           : CupertinoIcons.person_badge_plus,
-      onTap: () {
-        // TODO: здесь должен быть вызов PHP‑API
-        // для подписки/отписки от пользователя.
-        _showStubDialog(
-          context,
-          title: isSubscribed
-              ? 'Отписка пока не реализована'
-              : 'Подписка пока не реализована',
+      textStyle: isSubscribed
+          ? const TextStyle(
+              color: AppColors.error,
+            )
+          : null,
+      iconColor: isSubscribed ? AppColors.error : null,
+      onTap: () async {
+        MoreMenuHub.hide();
+        await _handleSubscribe(
+          context: context,
+          ref: ref,
+          userId: userId,
+          currentUserId: currentUserId,
+          isSubscribed: isSubscribed,
         );
       },
     ),
@@ -536,15 +565,14 @@ void _showUserMenu({
           : const TextStyle(
               color: AppColors.error,
             ),
-      onTap: () {
-        // TODO: реальный вызов PHP‑скрипта,
-        // который скрывает / показывает посты
-        // пользователя в ленте.
-        _showStubDialog(
-          context,
-          title: arePostsHidden
-              ? 'Показать посты (заглушка)'
-              : 'Скрыть посты (заглушка)',
+      onTap: () async {
+        MoreMenuHub.hide();
+        await _handleHidePosts(
+          context: context,
+          ref: ref,
+          userId: userId,
+          currentUserId: currentUserId,
+          arePostsHidden: arePostsHidden,
         );
       },
     ),
@@ -563,15 +591,14 @@ void _showUserMenu({
           : const TextStyle(
               color: AppColors.error,
             ),
-      onTap: () {
-        // TODO: реальный вызов PHP‑скрипта,
-        // который скрывает / показывает
-        // тренировки пользователя.
-        _showStubDialog(
-          context,
-          title: areActivitiesHidden
-              ? 'Показать тренировки (заглушка)'
-              : 'Скрыть тренировки (заглушка)',
+      onTap: () async {
+        MoreMenuHub.hide();
+        await _handleHideActivities(
+          context: context,
+          ref: ref,
+          userId: userId,
+          currentUserId: currentUserId,
+          areActivitiesHidden: areActivitiesHidden,
         );
       },
     ),
@@ -584,15 +611,14 @@ void _showUserMenu({
       textStyle: const TextStyle(
         color: AppColors.error,
       ),
-      onTap: () {
-        // TODO: реальный вызов PHP‑скрипта
-        // для блокировки / разблокировки
-        // пользователя.
-        _showStubDialog(
-          context,
-          title: isBlocked
-              ? 'Разблокировка (заглушка)'
-              : 'Блокировка (заглушка)',
+      onTap: () async {
+        MoreMenuHub.hide();
+        await _handleBlock(
+          context: context,
+          ref: ref,
+          userId: userId,
+          currentUserId: currentUserId,
+          isBlocked: isBlocked,
         );
       },
     ),
@@ -604,29 +630,212 @@ void _showUserMenu({
   ).show(context);
 }
 
-/// Показ диалога‑заглушки для пунктов меню, где ещё нет интеграции
-/// с реальными PHP/MySQL‑скриптами.
-Future<void> _showStubDialog(
-  BuildContext context, {
-  required String title,
+/// Обработчик подписки/отписки
+Future<void> _handleSubscribe({
+  required BuildContext context,
+  required WidgetRef ref,
+  required int userId,
+  required int currentUserId,
+  required bool isSubscribed,
 }) async {
+  if (!context.mounted) return;
+
+  final api = ref.read(apiServiceProvider);
+
+  try {
+    final data = await api.post(
+      '/toggle_subscribe.php',
+      body: {
+        'target_user_id': userId.toString(),
+        'action': isSubscribed ? 'unsubscribe' : 'subscribe',
+      },
+      timeout: const Duration(seconds: 10),
+    );
+
+    if (data['success'] == true && context.mounted) {
+      // Обновляем профиль для отображения новых счетчиков подписок
+      ref.read(profileHeaderProvider(userId).notifier).refresh();
+    } else if (context.mounted) {
+      await _showErrorDialog(
+        context,
+        data['message']?.toString() ?? 'Не удалось выполнить действие',
+      );
+    }
+  } on ApiException catch (e) {
+    if (context.mounted) {
+      await _showErrorDialog(context, 'Ошибка: ${e.message}');
+    }
+  } catch (e) {
+    if (context.mounted) {
+      await _showErrorDialog(context, 'Неизвестная ошибка: $e');
+    }
+  }
+}
+
+/// Обработчик скрытия/показа постов
+Future<void> _handleHidePosts({
+  required BuildContext context,
+  required WidgetRef ref,
+  required int userId,
+  required int currentUserId,
+  required bool arePostsHidden,
+}) async {
+  if (!context.mounted) return;
+
+  final api = ref.read(apiServiceProvider);
+
+  try {
+    final data = await api.post(
+      '/hide_user_content.php',
+      body: {
+        'hidden_user_id': userId.toString(),
+        'action': arePostsHidden ? 'show' : 'hide',
+        'content_type': 'post',
+      },
+      timeout: const Duration(seconds: 10),
+    );
+
+    if (data['success'] == true && context.mounted) {
+      if (arePostsHidden) {
+        // Показываем посты - обновляем ленту для загрузки постов пользователя
+        await ref.read(lentaProvider(currentUserId).notifier).refresh();
+      } else {
+        // Скрываем посты - удаляем их из ленты
+        ref.read(lentaProvider(currentUserId).notifier).removeUserContent(
+          hiddenUserId: userId,
+          contentType: 'post',
+        );
+      }
+    } else if (context.mounted) {
+      await _showErrorDialog(
+        context,
+        data['message']?.toString() ?? 'Не удалось выполнить действие',
+      );
+    }
+  } on ApiException catch (e) {
+    if (context.mounted) {
+      await _showErrorDialog(context, 'Ошибка: ${e.message}');
+    }
+  } catch (e) {
+    if (context.mounted) {
+      await _showErrorDialog(context, 'Неизвестная ошибка: $e');
+    }
+  }
+}
+
+/// Обработчик скрытия/показа тренировок
+Future<void> _handleHideActivities({
+  required BuildContext context,
+  required WidgetRef ref,
+  required int userId,
+  required int currentUserId,
+  required bool areActivitiesHidden,
+}) async {
+  if (!context.mounted) return;
+
+  final api = ref.read(apiServiceProvider);
+
+  try {
+    final data = await api.post(
+      '/hide_user_content.php',
+      body: {
+        'hidden_user_id': userId.toString(),
+        'action': areActivitiesHidden ? 'show' : 'hide',
+        'content_type': 'activity',
+      },
+      timeout: const Duration(seconds: 10),
+    );
+
+    if (data['success'] == true && context.mounted) {
+      if (areActivitiesHidden) {
+        // Показываем тренировки - обновляем ленту для загрузки тренировок пользователя
+        await ref.read(lentaProvider(currentUserId).notifier).refresh();
+      } else {
+        // Скрываем тренировки - удаляем их из ленты
+        ref.read(lentaProvider(currentUserId).notifier).removeUserContent(
+          hiddenUserId: userId,
+          contentType: 'activity',
+        );
+      }
+    } else if (context.mounted) {
+      await _showErrorDialog(
+        context,
+        data['message']?.toString() ?? 'Не удалось выполнить действие',
+      );
+    }
+  } on ApiException catch (e) {
+    if (context.mounted) {
+      await _showErrorDialog(context, 'Ошибка: ${e.message}');
+    }
+  } catch (e) {
+    if (context.mounted) {
+      await _showErrorDialog(context, 'Неизвестная ошибка: $e');
+    }
+  }
+}
+
+/// Обработчик блокировки/разблокировки
+Future<void> _handleBlock({
+  required BuildContext context,
+  required WidgetRef ref,
+  required int userId,
+  required int currentUserId,
+  required bool isBlocked,
+}) async {
+  if (!context.mounted) return;
+
+  final api = ref.read(apiServiceProvider);
+
+  try {
+    final data = await api.post(
+      '/toggle_block.php',
+      body: {
+        'blocked_user_id': userId.toString(),
+        'action': isBlocked ? 'unblock' : 'block',
+      },
+      timeout: const Duration(seconds: 10),
+    );
+
+    if (data['success'] == true && context.mounted) {
+      // Блокировка/разблокировка выполнена успешно
+      // Остаемся на экране профиля
+    } else if (context.mounted) {
+      await _showErrorDialog(
+        context,
+        data['message']?.toString() ?? 'Не удалось выполнить действие',
+      );
+    }
+  } on ApiException catch (e) {
+    if (context.mounted) {
+      await _showErrorDialog(context, 'Ошибка: ${e.message}');
+    }
+  } catch (e) {
+    if (context.mounted) {
+      await _showErrorDialog(context, 'Неизвестная ошибка: $e');
+    }
+  }
+}
+
+/// Показ диалога с ошибкой
+Future<void> _showErrorDialog(
+  BuildContext context,
+  String message,
+) async {
   if (!context.mounted) return;
 
   await showCupertinoDialog<void>(
     context: context,
     builder: (ctx) => CupertinoAlertDialog(
-      title: const Text('Функция в разработке'),
-      content: const Padding(
-        padding: EdgeInsets.only(top: 8),
-        child: Text(
-          'Этот пункт меню пока работает как заглушка. '
-          'Позже здесь появится реальное действие с сервером.',
-        ),
+      title: const Text('Ошибка'),
+      content: Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Text(message),
       ),
-      actions: const [
+      actions: [
         CupertinoDialogAction(
           isDefaultAction: true,
-          child: Text('Понятно'),
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text('Ок'),
         ),
       ],
     ),
