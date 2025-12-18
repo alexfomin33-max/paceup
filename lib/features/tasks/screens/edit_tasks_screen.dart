@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/image_picker_helper.dart';
@@ -16,6 +17,7 @@ import '../../../core/providers/form_state_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
 import '../../../core/utils/error_handler.dart';
 import '../providers/tasks_provider.dart';
+import '../../leaderboard/widgets/date_range_picker.dart';
 
 class EditTaskScreen extends ConsumerStatefulWidget {
   final int taskId;
@@ -31,10 +33,18 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
   final nameCtrl = TextEditingController();
   final descCtrl = TextEditingController();
   final parameterValueCtrl = TextEditingController();
+  final startDateCtrl = TextEditingController();
+  final endDateCtrl = TextEditingController();
+
+  // ── FocusNode для полей дат
+  final startDateFocusNode = FocusNode();
+  final endDateFocusNode = FocusNode();
 
   // ── выборы
   String? activity;
   String? activityParameter; // Параметр активности: distance, elevation, duration, steps, count, days, weeks
+  String? periodType; // Тип периода: "Месяц" или "Выбранный период"
+  String? selectedMonth; // Выбранный месяц (1-12) для типа "Месяц"
 
   // ── медиа
   File? logoFile;
@@ -50,12 +60,29 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
   static const double _logoAspectRatio = 1;
   static const double _backgroundAspectRatio = 2.3;
 
-  bool get isFormValid =>
-      nameCtrl.text.trim().isNotEmpty &&
-      descCtrl.text.trim().isNotEmpty &&
-      activity != null &&
-      activityParameter != null &&
-      parameterValueCtrl.text.trim().isNotEmpty;
+  bool get isFormValid {
+    if (nameCtrl.text.trim().isEmpty ||
+        descCtrl.text.trim().isEmpty ||
+        activity == null ||
+        activityParameter == null ||
+        parameterValueCtrl.text.trim().isEmpty ||
+        periodType == null) {
+      return false;
+    }
+    // ── если выбран "Месяц", должен быть выбран месяц
+    if (periodType == 'Месяц' && selectedMonth == null) {
+      return false;
+    }
+    // ── если выбран "Выбранный период", должны быть заполнены обе даты
+    if (periodType == 'Выбранный период') {
+      final startDigits = startDateCtrl.text.replaceAll(RegExp(r'[^\d]'), '');
+      final endDigits = endDateCtrl.text.replaceAll(RegExp(r'[^\d]'), '');
+      if (startDigits.length != 8 || endDigits.length != 8) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   @override
   void initState() {
@@ -73,6 +100,14 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
       _refresh();
       _clearFieldError('parameterValue');
     });
+    startDateCtrl.addListener(() {
+      _refresh();
+      _clearFieldError('startDate');
+    });
+    endDateCtrl.addListener(() {
+      _refresh();
+      _clearFieldError('endDate');
+    });
   }
 
   @override
@@ -80,6 +115,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
     nameCtrl.dispose();
     descCtrl.dispose();
     parameterValueCtrl.dispose();
+    startDateCtrl.dispose();
+    endDateCtrl.dispose();
+    startDateFocusNode.dispose();
+    endDateFocusNode.dispose();
     super.dispose();
   }
 
@@ -88,6 +127,14 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
   // ── очистка ошибки для конкретного поля при взаимодействии
   void _clearFieldError(String fieldName) {
     ref.read(formStateProvider.notifier).clearFieldError(fieldName);
+  }
+
+  // ── форматирует дату в формат "dd.MM.yyyy"
+  String _formatDate(DateTime date) {
+    final dd = date.day.toString().padLeft(2, '0');
+    final mm = date.month.toString().padLeft(2, '0');
+    final yy = date.year.toString();
+    return '$dd.$mm.$yy';
   }
 
   /// Загрузка данных задачи для редактирования
@@ -105,6 +152,35 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
           parameterValueCtrl.text = task.targetValue?.toString() ?? '';
           _existingLogoUrl = task.logoUrl;
           _existingBackgroundUrl = task.imageUrl;
+          
+          // ── Определяем тип периода на основе дат задачи
+          if (task.dateStart != null && task.dateEnd != null) {
+            final start = task.dateStart!;
+            final end = task.dateEnd!;
+            
+            // ── Проверяем, является ли период одним месяцем
+            final isSameMonth = start.year == end.year && 
+                               start.month == end.month &&
+                               start.day == 1 &&
+                               end.day == DateTime(start.year, start.month + 1, 0).day;
+            
+            if (isSameMonth) {
+              // ── Это один месяц
+              periodType = 'Месяц';
+              selectedMonth = start.month.toString();
+            } else {
+              // ── Это выбранный период
+              periodType = 'Выбранный период';
+              startDateCtrl.text = _formatDate(start);
+              endDateCtrl.text = _formatDate(end);
+            }
+          } else {
+            // ── Если дат нет, используем текущий месяц по умолчанию
+            periodType = 'Месяц';
+            final now = DateTime.now();
+            selectedMonth = now.month.toString();
+          }
+          
           _isLoadingTask = false;
         });
       } else {
@@ -284,6 +360,20 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
     if (parameterValueCtrl.text.trim().isEmpty) {
       newErrors['parameterValue'] = 'Введите значение';
     }
+    if (periodType == null) {
+      newErrors['periodType'] = 'Выберите период';
+    } else if (periodType == 'Месяц' && selectedMonth == null) {
+      newErrors['selectedMonth'] = 'Выберите месяц';
+    } else if (periodType == 'Выбранный период') {
+      final startDigits = startDateCtrl.text.replaceAll(RegExp(r'[^\d]'), '');
+      final endDigits = endDateCtrl.text.replaceAll(RegExp(r'[^\d]'), '');
+      if (startDigits.length != 8) {
+        newErrors['startDate'] = 'Введите дату начала';
+      }
+      if (endDigits.length != 8) {
+        newErrors['endDate'] = 'Введите дату окончания';
+      }
+    }
 
     // ── если есть ошибки — не отправляем форму
     if (newErrors.isNotEmpty) {
@@ -327,6 +417,43 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
           throw Exception('Введите корректное значение параметра');
         }
         fields['target_value'] = targetValue.toString();
+
+        // ── Устанавливаем даты в зависимости от выбранного периода
+        if (periodType == 'Месяц' && selectedMonth != null) {
+          // ── Выбран месяц: используем начало и конец выбранного месяца текущего года
+          final month = int.parse(selectedMonth!);
+          final now = DateTime.now();
+          final startOfMonth = DateTime(now.year, month, 1);
+          final endOfMonth = DateTime(now.year, month + 1, 0, 23, 59, 59);
+          fields['date_start'] = startOfMonth.toIso8601String().substring(0, 19).replaceAll('T', ' ');
+          fields['date_end'] = endOfMonth.toIso8601String().substring(0, 19).replaceAll('T', ' ');
+        } else if (periodType == 'Выбранный период') {
+          // ── Выбранный период: парсим даты из полей ввода
+          final startDateStr = startDateCtrl.text;
+          final endDateStr = endDateCtrl.text;
+          final startParts = startDateStr.split('.');
+          final endParts = endDateStr.split('.');
+          
+          if (startParts.length == 3 && endParts.length == 3) {
+            final startDate = DateTime(
+              int.parse(startParts[2]), // год
+              int.parse(startParts[1]), // месяц
+              int.parse(startParts[0]), // день
+            );
+            final endDate = DateTime(
+              int.parse(endParts[2]), // год
+              int.parse(endParts[1]), // месяц
+              int.parse(endParts[0]), // день
+              23, 59, 59, // конец дня
+            );
+            fields['date_start'] = startDate.toIso8601String().substring(0, 19).replaceAll('T', ' ');
+            fields['date_end'] = endDate.toIso8601String().substring(0, 19).replaceAll('T', ' ');
+          } else {
+            throw Exception('Ошибка парсинга дат');
+          }
+        } else {
+          throw Exception('Не выбран период');
+        }
 
         // Отправляем запрос
         Map<String, dynamic> data;
@@ -629,6 +756,259 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 24),
+
+                  // ---------- Период ----------
+                  Text(
+                    'Период',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Builder(
+                    builder: (context) => InputDecorator(
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: AppColors.getSurfaceColor(context),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: formState.fieldErrors.containsKey('periodType')
+                                ? AppColors.error
+                                : AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: formState.fieldErrors.containsKey('periodType')
+                                ? AppColors.error
+                                : AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: formState.fieldErrors.containsKey('periodType')
+                                ? AppColors.error
+                                : AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: periodType,
+                          isExpanded: true,
+                          hint: const Text(
+                            'Выберите период',
+                            style: AppTextStyles.h14w4Place,
+                          ),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                periodType = newValue;
+                                if (newValue != 'Месяц') {
+                                  selectedMonth = null;
+                                }
+                                if (newValue != 'Выбранный период') {
+                                  startDateCtrl.clear();
+                                  endDateCtrl.clear();
+                                }
+                                _clearFieldError('periodType');
+                              });
+                            }
+                          },
+                          dropdownColor: AppColors.getSurfaceColor(context),
+                          menuMaxHeight: 300,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          icon: Icon(
+                            Icons.arrow_drop_down,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
+                          style: AppTextStyles.h14w4.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                          items: const [
+                            DropdownMenuItem<String>(
+                              value: 'Месяц',
+                              child: Text('Месяц'),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'Выбранный период',
+                              child: Text('Выбранный период'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // ── Выпадающий список месяцев (появляется при выборе "Месяц")
+                  if (periodType == 'Месяц') ...[
+                    const SizedBox(height: 8),
+                    Builder(
+                      builder: (context) => InputDecorator(
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: AppColors.getSurfaceColor(context),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide(
+                              color: formState.fieldErrors.containsKey('selectedMonth')
+                                  ? AppColors.error
+                                  : AppColors.getBorderColor(context),
+                              width: 1,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide(
+                              color: formState.fieldErrors.containsKey('selectedMonth')
+                                  ? AppColors.error
+                                  : AppColors.getBorderColor(context),
+                              width: 1,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide(
+                              color: formState.fieldErrors.containsKey('selectedMonth')
+                                  ? AppColors.error
+                                  : AppColors.getBorderColor(context),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: selectedMonth,
+                            isExpanded: true,
+                            hint: const Text(
+                              'Выберите месяц',
+                              style: AppTextStyles.h14w4Place,
+                            ),
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                setState(() {
+                                  selectedMonth = newValue;
+                                  _clearFieldError('selectedMonth');
+                                });
+                              }
+                            },
+                            dropdownColor: AppColors.getSurfaceColor(context),
+                            menuMaxHeight: 300,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            icon: Icon(
+                              Icons.arrow_drop_down,
+                              color: AppColors.getIconSecondaryColor(context),
+                            ),
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                            items: const [
+                              DropdownMenuItem<String>(
+                                value: '1',
+                                child: Text('Январь'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: '2',
+                                child: Text('Февраль'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: '3',
+                                child: Text('Март'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: '4',
+                                child: Text('Апрель'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: '5',
+                                child: Text('Май'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: '6',
+                                child: Text('Июнь'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: '7',
+                                child: Text('Июль'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: '8',
+                                child: Text('Август'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: '9',
+                                child: Text('Сентябрь'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: '10',
+                                child: Text('Октябрь'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: '11',
+                                child: Text('Ноябрь'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: '12',
+                                child: Text('Декабрь'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  // ── Поля для выбора дат (появляются при выборе "Выбранный период")
+                  if (periodType == 'Выбранный период') ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Flexible(
+                          flex: 2,
+                          child: DateField(
+                            controller: startDateCtrl,
+                            focusNode: startDateFocusNode,
+                            hintText: _formatDate(DateTime.now()),
+                            onComplete: () {
+                              endDateFocusNode.requestFocus();
+                            },
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            '—',
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                        ),
+                        Flexible(
+                          flex: 2,
+                          child: DateField(
+                            controller: endDateCtrl,
+                            focusNode: endDateFocusNode,
+                            hintText: _formatDate(DateTime.now()),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 24),
 
                   // ---------- Параметр ----------
