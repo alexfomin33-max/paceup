@@ -188,8 +188,20 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                     clipBehavior: Clip
                         .none, // Разрешаем отображение элементов за пределами Stack
                     children: [
-                      // Фоновая картинка 200k_run.png
-                      const _BackgroundImage(),
+                      // Фоновая картинка из базы данных
+                      Builder(
+                        builder: (context) {
+                          final taskAsyncValue =
+                              ref.watch(taskDetailProvider(widget.taskId));
+                          return taskAsyncValue.when(
+                            data: (task) => _BackgroundImage(
+                              imageUrl: task?.imageUrl,
+                            ),
+                            loading: () => const _BackgroundImage(),
+                            error: (_, __) => const _BackgroundImage(),
+                          );
+                        },
+                      ),
                       // Верхние кнопки "назад" и "редактировать"
                       SafeArea(
                         bottom: false,
@@ -254,7 +266,7 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                           ),
                         ),
                       ),
-                      // Логотип card200run.jpg наполовину на фоне (позиционирован внизу фона)
+                      // Логотип из базы данных наполовину на фоне (позиционирован внизу фона)
                       Positioned(
                         left: 0,
                         right: 0,
@@ -262,19 +274,31 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                             -46, // Половина логотипа с обводкой (92/2 = 46) выходит за границу фона
                         child: Center(
                           child: Builder(
-                            builder: (context) => Container(
-                              width:
-                                  92, // 90 + 1*2 (логотип + обводка с двух сторон)
-                              height: 92,
-                              decoration: BoxDecoration(
-                                color: AppColors.getSurfaceColor(context),
-                                shape: BoxShape.circle,
-                              ),
-                              padding: const EdgeInsets.all(
-                                1,
-                              ), // Толщина обводки
-                              child: ClipOval(child: _HeaderLogo()),
-                            ),
+                            builder: (context) {
+                              final taskAsyncValue =
+                                  ref.watch(taskDetailProvider(widget.taskId));
+                              return Container(
+                                width:
+                                    92, // 90 + 1*2 (логотип + обводка с двух сторон)
+                                height: 92,
+                                decoration: BoxDecoration(
+                                  color: AppColors.getSurfaceColor(context),
+                                  shape: BoxShape.circle,
+                                ),
+                                padding: const EdgeInsets.all(
+                                  1,
+                                ), // Толщина обводки
+                                child: ClipOval(
+                                  child: taskAsyncValue.when(
+                                    data: (task) => _HeaderLogo(
+                                      logoUrl: task?.logoUrl,
+                                    ),
+                                    loading: () => const _HeaderLogo(),
+                                    error: (_, __) => const _HeaderLogo(),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -607,15 +631,47 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
 
 // ───── Вспомогательные виджеты
 
-/// Фоновая картинка 200k_run.png (соотношение сторон 2.3:1)
+/// Фоновая картинка из базы данных (соотношение сторон 2.3:1)
 class _BackgroundImage extends StatelessWidget {
-  const _BackgroundImage();
+  final String? imageUrl;
+
+  const _BackgroundImage({this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
     final screenW = MediaQuery.of(context).size.width;
     final calculatedHeight =
         screenW / 2.3; // Вычисляем высоту по соотношению 2.3:1
+
+    // Если есть URL из базы данных, используем его
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: imageUrl!,
+        width: double.infinity,
+        height: calculatedHeight,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          width: double.infinity,
+          height: calculatedHeight,
+          color: AppColors.getBorderColor(context),
+          child: const Center(
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          width: double.infinity,
+          height: calculatedHeight,
+          color: AppColors.getBorderColor(context),
+          child: Icon(
+            Icons.image,
+            size: 48,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
+      );
+    }
+
+    // Fallback на asset изображение
     return Image.asset(
       'assets/200k_run.png',
       width: double.infinity,
@@ -637,12 +693,43 @@ class _BackgroundImage extends StatelessWidget {
   }
 }
 
-/// Круглый логотип card200run.jpg 90×90 с обводкой
+/// Круглый логотип из базы данных 90×90 с обводкой
 class _HeaderLogo extends StatelessWidget {
-  const _HeaderLogo();
+  final String? logoUrl;
+
+  const _HeaderLogo({this.logoUrl});
 
   @override
   Widget build(BuildContext context) {
+    // Если есть URL из базы данных, используем его
+    if (logoUrl != null && logoUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: logoUrl!,
+        width: 90,
+        height: 90,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          width: 90,
+          height: 90,
+          color: AppColors.getBorderColor(context),
+          child: const Center(
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          width: 90,
+          height: 90,
+          color: AppColors.getBorderColor(context),
+          child: Icon(
+            Icons.image,
+            size: 32,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
+      );
+    }
+
+    // Fallback на asset изображение
     return Image.asset(
       'assets/card200run.jpg',
       width: 90,
