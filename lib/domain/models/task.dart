@@ -27,6 +27,9 @@ class Task {
   /// URL картинки задачи
   final String? imageUrl;
 
+  /// URL логотипа задачи
+  final String? logoUrl;
+
   /// Дата начала задачи
   final DateTime? dateStart;
 
@@ -60,6 +63,7 @@ class Task {
     required this.shortDescription,
     required this.fullDescription,
     this.imageUrl,
+    this.logoUrl,
     this.dateStart,
     this.dateEnd,
     required this.unit,
@@ -80,6 +84,7 @@ class Task {
       shortDescription: json['short_description']?.toString() ?? '',
       fullDescription: json['full_description']?.toString() ?? '',
       imageUrl: json['image_url']?.toString(),
+      logoUrl: json['logo_url']?.toString(),
       dateStart: _parseSqlDateTime(json['date_start']?.toString()),
       dateEnd: _parseSqlDateTime(json['date_end']?.toString()),
       unit: json['unit']?.toString() ?? '',

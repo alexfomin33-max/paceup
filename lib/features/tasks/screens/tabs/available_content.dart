@@ -57,7 +57,7 @@ class AvailableContent extends ConsumerWidget {
                         _AvailableGrid(
                           children: monthGroup.tasks.map((task) {
                             return AvailableTaskCard(
-                              imageUrl: task.imageUrl,
+                              imageUrl: task.logoUrl ?? task.imageUrl,
                               title: task.formattedTitle,
                               onPressed: () {
                                 Navigator.of(context, rootNavigator: true).push(

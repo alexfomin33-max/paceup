@@ -48,7 +48,10 @@ class ActiveContent extends ConsumerWidget {
                               progressText: task.formattedProgress,
                               percent: task.progressPercent ?? 0.0,
                               image:
-                                  task.imageUrl != null &&
+                                  task.logoUrl != null &&
+                                      task.logoUrl!.isNotEmpty
+                                  ? _RectImage(imageUrl: task.logoUrl!)
+                                  : task.imageUrl != null &&
                                       task.imageUrl!.isNotEmpty
                                   ? _RectImage(imageUrl: task.imageUrl!)
                                   : null,

@@ -12,6 +12,7 @@ import '../../../providers/services/auth_provider.dart'; // ← для пров�
 import 'tabs/active_content.dart';
 import 'tabs/available_content.dart';
 import 'add_tasks_screen.dart';
+import '../providers/tasks_provider.dart';
 
 /// Единые размеры для AppBar в iOS-стиле
 const double _kAppBarIconSize = 22.0; // сама иконка ~20–22pt
@@ -70,16 +71,17 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                     final result = await Navigator.of(
                       context,
                       rootNavigator: true,
-                    ).push<bool>(
+                    ).push<String>(
                       TransparentPageRoute(
                         builder: (_) => const AddTaskScreen(),
                       ),
                     );
 
                     // ── если задача была успешно создана, можно обновить список
-                    // TODO: обновить список задач при необходимости
-                    if (result == true && mounted) {
-                      // Можно добавить обновление списка задач здесь
+                    if (result == 'created' && mounted) {
+                      // Обновляем список задач
+                      ref.invalidate(userTasksProvider);
+                      ref.invalidate(tasksProvider);
                     }
                   },
                 ),
