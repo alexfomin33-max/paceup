@@ -25,13 +25,13 @@ class AddTaskScreen extends ConsumerStatefulWidget {
 class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
   // ── контроллеры
   final nameCtrl = TextEditingController();
+  final shortDescCtrl = TextEditingController();
   final descCtrl = TextEditingController();
   final parameterValueCtrl = TextEditingController();
 
   // ── выборы
   String? activity;
-  String? activityParameter =
-      'Дистанция'; // Параметр активности: "Дистанция", "Время" или "Дни"
+  String? activityParameter; // Параметр активности: distance, elevation, duration, steps, count, days, weeks
 
   // ── медиа
   File? logoFile;
@@ -43,6 +43,8 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
 
   bool get isFormValid =>
       nameCtrl.text.trim().isNotEmpty &&
+      shortDescCtrl.text.trim().isNotEmpty &&
+      descCtrl.text.trim().isNotEmpty &&
       activity != null &&
       activityParameter != null &&
       parameterValueCtrl.text.trim().isNotEmpty;
@@ -54,6 +56,14 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
       _refresh();
       _clearFieldError('name');
     });
+    shortDescCtrl.addListener(() {
+      _refresh();
+      _clearFieldError('short_description');
+    });
+    descCtrl.addListener(() {
+      _refresh();
+      _clearFieldError('full_description');
+    });
     parameterValueCtrl.addListener(() {
       _refresh();
       _clearFieldError('parameterValue');
@@ -63,6 +73,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
   @override
   void dispose() {
     nameCtrl.dispose();
+    shortDescCtrl.dispose();
     descCtrl.dispose();
     parameterValueCtrl.dispose();
     super.dispose();
@@ -112,6 +123,12 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
     if (nameCtrl.text.trim().isEmpty) {
       newErrors['name'] = 'Введите название задачи';
     }
+    if (shortDescCtrl.text.trim().isEmpty) {
+      newErrors['short_description'] = 'Введите короткое описание';
+    }
+    if (descCtrl.text.trim().isEmpty) {
+      newErrors['full_description'] = 'Введите полное описание';
+    }
     if (activity == null) {
       newErrors['activity'] = 'Выберите вид активности';
     }
@@ -143,9 +160,9 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
           files['logo'] = logoFile!;
         }
 
-        // Добавляем фоновую картинку
+        // Добавляем фоновую картинку (image)
         if (backgroundFile != null) {
-          files['background'] = backgroundFile!;
+          files['image'] = backgroundFile!;
         }
 
         // Добавляем поля формы
@@ -155,10 +172,22 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
         }
         fields['user_id'] = userId.toString();
         fields['name'] = nameCtrl.text.trim();
-        fields['description'] = descCtrl.text.trim();
-        fields['activity'] = activity!;
-        fields['activity_parameter'] = activityParameter!;
-        fields['parameter_value'] = parameterValueCtrl.text.trim();
+        fields['short_description'] = shortDescCtrl.text.trim();
+        fields['full_description'] = descCtrl.text.trim();
+        fields['type'] = activity!;
+        fields['metric_type'] = activityParameter!;
+        final targetValue = double.tryParse(parameterValueCtrl.text.trim());
+        if (targetValue == null || targetValue <= 0) {
+          throw Exception('Введите корректное значение параметра');
+        }
+        fields['target_value'] = targetValue.toString();
+        
+        // Устанавливаем даты (можно будет добавить выбор дат в форме позже)
+        final now = DateTime.now();
+        final startOfMonth = DateTime(now.year, now.month, 1);
+        final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+        fields['date_start'] = startOfMonth.toIso8601String().substring(0, 19).replaceAll('T', ' ');
+        fields['date_end'] = endOfMonth.toIso8601String().substring(0, 19).replaceAll('T', ' ');
 
         // Отправляем запрос
         Map<String, dynamic> data;
@@ -390,23 +419,28 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                           style: AppTextStyles.h14w4.copyWith(
                             color: AppColors.getTextPrimaryColor(context),
                           ),
-                          items: const ['Общий', 'Бег', 'Велосипед', 'Плавание']
-                              .map((option) {
-                                return DropdownMenuItem<String>(
-                                  value: option,
-                                  child: Builder(
-                                    builder: (context) => Text(
-                                      option,
-                                      style: AppTextStyles.h14w4.copyWith(
-                                        color: AppColors.getTextPrimaryColor(
-                                          context,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              })
-                              .toList(),
+                          items: const [
+                            DropdownMenuItem<String>(
+                              value: 'general',
+                              child: Text('Общий'),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'run',
+                              child: Text('Бег'),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'bike',
+                              child: Text('Велосипед'),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'swim',
+                              child: Text('Плавание'),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'walk',
+                              child: Text('Ходьба'),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -517,24 +551,36 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                                         context,
                                       ),
                                     ),
-                                    items: const ['Дистанция', 'Время', 'Дни'].map((
-                                      option,
-                                    ) {
-                                      return DropdownMenuItem<String>(
-                                        value: option,
-                                        child: Builder(
-                                          builder: (context) => Text(
-                                            option,
-                                            style: AppTextStyles.h14w4.copyWith(
-                                              color:
-                                                  AppColors.getTextPrimaryColor(
-                                                    context,
-                                                  ),
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
+                                    items: const [
+                                      DropdownMenuItem<String>(
+                                        value: 'distance',
+                                        child: Text('Дистанция'),
+                                      ),
+                                      DropdownMenuItem<String>(
+                                        value: 'elevation',
+                                        child: Text('Набор высоты'),
+                                      ),
+                                      DropdownMenuItem<String>(
+                                        value: 'duration',
+                                        child: Text('Длительность'),
+                                      ),
+                                      DropdownMenuItem<String>(
+                                        value: 'steps',
+                                        child: Text('Количество шагов'),
+                                      ),
+                                      DropdownMenuItem<String>(
+                                        value: 'count',
+                                        child: Text('Количество'),
+                                      ),
+                                      DropdownMenuItem<String>(
+                                        value: 'days',
+                                        child: Text('Количество дней'),
+                                      ),
+                                      DropdownMenuItem<String>(
+                                        value: 'weeks',
+                                        child: Text('Количество недель'),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -556,12 +602,20 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                                 color: AppColors.getTextPrimaryColor(context),
                               ),
                               decoration: InputDecoration(
-                                hintText: activityParameter == 'Дистанция'
+                                hintText: activityParameter == 'distance'
+                                    ? '0 км'
+                                    : activityParameter == 'elevation'
                                     ? '0 метров'
-                                    : activityParameter == 'Время'
+                                    : activityParameter == 'duration'
                                     ? '0 минут'
-                                    : activityParameter == 'Дни'
+                                    : activityParameter == 'steps'
+                                    ? '0 шагов'
+                                    : activityParameter == 'count'
+                                    ? '0'
+                                    : activityParameter == 'days'
                                     ? '0 дней'
+                                    : activityParameter == 'weeks'
+                                    ? '0 недель'
                                     : '0',
                                 hintStyle: AppTextStyles.h14w4Place,
                                 filled: true,
@@ -621,9 +675,66 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // ---------- Описание ----------
+                  // ---------- Короткое описание ----------
                   Text(
-                    'Описание',
+                    'Короткое описание задачи',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Builder(
+                    builder: (context) => TextField(
+                      controller: shortDescCtrl,
+                      maxLines: 3,
+                      minLines: 2,
+                      textAlignVertical: TextAlignVertical.top,
+                      style: AppTextStyles.h14w4.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Введите короткое описание задачи',
+                        hintStyle: AppTextStyles.h14w4Place,
+                        filled: true,
+                        fillColor: AppColors.getSurfaceColor(context),
+                        contentPadding: const EdgeInsets.all(12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: formState.fieldErrors.containsKey('short_description')
+                                ? AppColors.error
+                                : AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: formState.fieldErrors.containsKey('short_description')
+                                ? AppColors.error
+                                : AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(
+                            color: formState.fieldErrors.containsKey('short_description')
+                                ? AppColors.error
+                                : AppColors.getBorderColor(context),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ---------- Полное описание ----------
+                  Text(
+                    'Полное описание',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -641,7 +752,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                         color: AppColors.getTextPrimaryColor(context),
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Введите описание задачи',
+                        hintText: 'Введите полное описание задачи',
                         hintStyle: AppTextStyles.h14w4Place,
                         filled: true,
                         fillColor: AppColors.getSurfaceColor(context),
@@ -649,21 +760,27 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
+                            color: formState.fieldErrors.containsKey('full_description')
+                                ? AppColors.error
+                                : AppColors.getBorderColor(context),
                             width: 1,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
+                            color: formState.fieldErrors.containsKey('full_description')
+                                ? AppColors.error
+                                : AppColors.getBorderColor(context),
                             width: 1,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
+                            color: formState.fieldErrors.containsKey('full_description')
+                                ? AppColors.error
+                                : AppColors.getBorderColor(context),
                             width: 1,
                           ),
                         ),
