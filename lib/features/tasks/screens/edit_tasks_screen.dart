@@ -51,6 +51,8 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
   File? backgroundFile;
   String? _existingLogoUrl;
   String? _existingBackgroundUrl;
+  bool _logoDeleted = false; // Флаг удаления логотипа
+  bool _backgroundDeleted = false; // Флаг удаления фонового изображения
 
   // ── состояние загрузки
   bool _isLoadingTask = true;
@@ -152,6 +154,8 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
           parameterValueCtrl.text = task.targetValue?.toString() ?? '';
           _existingLogoUrl = task.logoUrl;
           _existingBackgroundUrl = task.imageUrl;
+          _logoDeleted = false;
+          _backgroundDeleted = false;
           
           // ── Определяем тип периода на основе дат задачи
           if (task.dateStart != null && task.dateEnd != null) {
@@ -219,7 +223,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() => logoFile = processed);
+    setState(() {
+      logoFile = processed;
+      _logoDeleted = false; // Сбрасываем флаг удаления при выборе нового файла
+    });
   }
 
   Future<void> _pickBackground() async {
@@ -233,7 +240,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() => backgroundFile = processed);
+    setState(() {
+      backgroundFile = processed;
+      _backgroundDeleted = false; // Сбрасываем флаг удаления при выборе нового файла
+    });
   }
 
   /// ──────────────────────── Удаление задачи ────────────────────────
@@ -391,14 +401,22 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
         final files = <String, File>{};
         final fields = <String, String>{};
 
-        // Добавляем логотип
+        // Добавляем логотип (если выбран новый)
         if (logoFile != null) {
           files['logo'] = logoFile!;
         }
 
-        // Добавляем фоновую картинку (image)
+        // Добавляем фоновую картинку (image) (если выбрана новая)
         if (backgroundFile != null) {
           files['image'] = backgroundFile!;
+        }
+
+        // Добавляем флаги удаления изображений
+        if (_logoDeleted && logoFile == null) {
+          fields['delete_logo'] = 'true';
+        }
+        if (_backgroundDeleted && backgroundFile == null) {
+          fields['delete_image'] = 'true';
         }
 
         // Добавляем поля формы
@@ -565,7 +583,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                             file: logoFile,
                             existingUrl: _existingLogoUrl,
                             onPick: _pickLogo,
-                            onRemove: () => setState(() => logoFile = null),
+                            onRemove: () => setState(() {
+                              logoFile = null;
+                              _logoDeleted = true;
+                            }),
                             width: 90,
                             height: 90,
                           ),
@@ -590,7 +611,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                               existingUrl: _existingBackgroundUrl,
                               onPick: _pickBackground,
                               onRemove: () =>
-                                  setState(() => backgroundFile = null),
+                                  setState(() {
+                                    backgroundFile = null;
+                                    _backgroundDeleted = true;
+                                  }),
                               width:
                                   207, // Ширина для соотношения 2.3:1 (90 * 2.3)
                               height: 90,

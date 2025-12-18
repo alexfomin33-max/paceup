@@ -18,9 +18,6 @@ class Task {
   /// Название типа задачи для отображения
   final String typeLabel;
 
-  /// Короткое описание
-  final String shortDescription;
-
   /// Полное описание
   final String fullDescription;
 
@@ -60,7 +57,6 @@ class Task {
     required this.name,
     required this.type,
     required this.typeLabel,
-    required this.shortDescription,
     required this.fullDescription,
     this.imageUrl,
     this.logoUrl,
@@ -81,7 +77,6 @@ class Task {
       name: json['name']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
       typeLabel: json['type_label']?.toString() ?? '',
-      shortDescription: json['short_description']?.toString() ?? '',
       fullDescription: json['full_description']?.toString() ?? '',
       imageUrl: json['image_url']?.toString(),
       logoUrl: json['logo_url']?.toString(),
