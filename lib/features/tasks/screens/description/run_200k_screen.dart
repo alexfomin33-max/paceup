@@ -248,6 +248,10 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                                           if (result == 'updated' && mounted) {
                                             _refreshProviders();
                                           }
+                                          // Если задача была удалена, закрываем экран
+                                          if (result == 'deleted' && mounted) {
+                                            Navigator.of(context).pop();
+                                          }
                                         },
                                       );
                                     },
