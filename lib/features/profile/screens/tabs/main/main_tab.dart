@@ -25,6 +25,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'models/main_tab_data.dart';
 // 🔹 Виджет-секция "Снаряжение" как один sliver
 import 'widgets/gear_section_sliver.dart';
+// 🔹 График недельной активности
+import 'widgets/weekly_activity_chart.dart';
 
 class MainTab extends ConsumerStatefulWidget {
   final int userId; // ID пользователя, для которого показываем вкладку
@@ -336,6 +338,16 @@ class _MainTabState extends MainTabState
       const SliverToBoxAdapter(child: SizedBox(height: 16)),
       const SliverToBoxAdapter(child: _SectionTitle('Показатели')),
       const SliverToBoxAdapter(child: SizedBox(height: 8)),
+      
+      // График недельной активности
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: WeeklyActivityChart(userId: widget.userId),
+        ),
+      ),
+      
+      const SliverToBoxAdapter(child: SizedBox(height: 16)),
       SliverToBoxAdapter(child: _MetricsCard(data: data.metrics)),
 
       const SliverToBoxAdapter(child: SizedBox(height: 24)),
