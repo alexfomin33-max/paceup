@@ -82,6 +82,7 @@ class StatsRow extends StatelessWidget {
   final num? durationSec;
   final double? elevationGainM;
   final double? avgPaceMinPerKm;
+  final double? avgSpeed; // средняя скорость в км/ч (для велотренировок)
   final double? avgHeartRate;
   final double? avgCadence; // шагов в минуту (spm)
   final double? calories; // калории (ккал)
@@ -97,6 +98,7 @@ class StatsRow extends StatelessWidget {
     required this.durationSec,
     required this.elevationGainM,
     required this.avgPaceMinPerKm,
+    this.avgSpeed,
     required this.avgHeartRate,
     this.avgCadence,
     this.calories,
@@ -114,6 +116,9 @@ class StatsRow extends StatelessWidget {
     // ──────────────────────────────────────────────────────────────
     final isSwim = activityType?.toLowerCase() == 'swim' ||
         activityType?.toLowerCase() == 'swimming';
+    final isBike = activityType?.toLowerCase() == 'bike' ||
+        activityType?.toLowerCase() == 'bicycle' ||
+        activityType?.toLowerCase() == 'cycling';
     final distanceText = distanceMeters != null
         ? isSwim
             ? '${distanceMeters!.toStringAsFixed(0)} м'
@@ -127,6 +132,7 @@ class StatsRow extends StatelessWidget {
         : '—';
     // ──────────────────────────────────────────────────────────────
     // ⏱️ ФОРМАТИРОВАНИЕ ТЕМПА: для плавания пересчитываем из мин/км в мин/100м
+    // 🚴 ДЛЯ ВЕЛОТРЕНИРОВОК: показываем скорость вместо темпа
     // ──────────────────────────────────────────────────────────────
     final paceText = avgPaceMinPerKm != null
         ? isSwim
@@ -143,15 +149,31 @@ class StatsRow extends StatelessWidget {
     final stepsText = totalSteps != null ? totalSteps.toString() : '—';
 
     // ──────────────────────────────────────────────────────────────
-    // Вычисляем скорость из расстояния и времени (км/ч)
+    // 🚴 ВЫЧИСЛЕНИЕ СКОРОСТИ ДЛЯ ВЕЛОТРЕНИРОВОК: используем avgSpeed из stats,
+    // если его нет — рассчитываем из расстояния и времени (км/ч)
     // ──────────────────────────────────────────────────────────────
     double? speedKmh;
-    if (distanceMeters != null &&
-        durationSec != null &&
-        distanceMeters! > 0 &&
-        (durationSec as num).toDouble() > 0) {
-      final duration = (durationSec as num).toDouble();
-      speedKmh = (distanceMeters! / duration) * 3.6;
+    if (isBike) {
+      // Для велотренировок используем avgSpeed из stats, если он есть
+      if (avgSpeed != null && avgSpeed! > 0) {
+        speedKmh = avgSpeed;
+      } else if (distanceMeters != null &&
+          durationSec != null &&
+          distanceMeters! > 0 &&
+          (durationSec as num).toDouble() > 0) {
+        // Если avgSpeed нет, рассчитываем из расстояния и времени
+        final duration = (durationSec as num).toDouble();
+        speedKmh = (distanceMeters! / duration) * 3.6;
+      }
+    } else {
+      // Для других типов активности (для третьей строки) рассчитываем скорость
+      if (distanceMeters != null &&
+          durationSec != null &&
+          distanceMeters! > 0 &&
+          (durationSec as num).toDouble() > 0) {
+        final duration = (durationSec as num).toDouble();
+        speedKmh = (distanceMeters! / duration) * 3.6;
+      }
     }
     final speedText = speedKmh != null
         ? '${speedKmh.toStringAsFixed(1)} км/ч'
@@ -199,16 +221,26 @@ class StatsRow extends StatelessWidget {
                   children: [
                     Text(
                       // ──────────────────────────────────────────────────────────────
-                      // ⏱️ ЗАГОЛОВОК ТЕМПА: для плавания показываем мин/100м
+                      // ⏱️ ЗАГОЛОВОК ТЕМПА/СКОРОСТИ:
+                      // - для плавания показываем "Темп, мин/100м"
+                      // - для велотренировок показываем "Скорость, км/ч"
+                      // - для остальных показываем "Темп, мин/км"
                       // ──────────────────────────────────────────────────────────────
-                      isSwim ? 'Темп, мин/100м' : 'Темп, мин/км',
+                      isSwim
+                          ? 'Темп, мин/100м'
+                          : isBike
+                              ? 'Скорость, км/ч'
+                              : 'Темп, мин/км',
                       style: AppTextStyles.h11w4Sec.copyWith(
                         color: AppColors.getTextSecondaryColor(context),
                       ),
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      paceText,
+                      // ──────────────────────────────────────────────────────────────
+                      // 🚴 ДЛЯ ВЕЛОТРЕНИРОВОК: показываем скорость вместо темпа
+                      // ──────────────────────────────────────────────────────────────
+                      isBike ? speedText : paceText,
                       style: AppTextStyles.h14w6.copyWith(
                         color: AppColors.getTextPrimaryColor(context),
                       ),
