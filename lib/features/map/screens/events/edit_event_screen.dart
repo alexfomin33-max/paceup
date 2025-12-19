@@ -61,6 +61,10 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
   String? backgroundUrl; // URL для отображения существующей фоновой картинки
   String? backgroundFilename; // Имя файла существующей фоновой картинки
   final List<File?> photos = [null, null, null];
+  
+  // ── исходные значения дистанций для сохранения при отправке формы
+  String? _originalDistanceFrom;
+  String? _originalDistanceTo;
   // ── отдельный фокус для пикеров, чтобы не поднимать клавиатуру после закрытия
   final _pickerFocusNode = FocusNode(debugLabel: 'editEventPickerFocus');
 
@@ -285,19 +289,27 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
         final distanceFrom = event['distance_from'];
         final distanceTo = event['distance_to'];
         if (distanceFrom != null) {
-          distanceCtrl1.text = distanceFrom.toString();
+          final distanceFromStr = distanceFrom.toString();
+          distanceCtrl1.text = distanceFromStr;
+          _originalDistanceFrom = distanceFromStr; // Сохраняем исходное значение
         }
         if (distanceTo != null) {
-          distanceCtrl2.text = distanceTo.toString();
+          final distanceToStr = distanceTo.toString();
+          distanceCtrl2.text = distanceToStr;
+          _originalDistanceTo = distanceToStr; // Сохраняем исходное значение
         }
         // Если прямые поля не заполнены, проверяем массив distances (для обратной совместимости)
         if (distanceFrom == null && distanceTo == null) {
           final distancesList = event['distances'] as List<dynamic>? ?? [];
           if (distancesList.isNotEmpty) {
-            distanceCtrl1.text = distancesList[0].toString();
+            final distFromStr = distancesList[0].toString();
+            distanceCtrl1.text = distFromStr;
+            _originalDistanceFrom = distFromStr; // Сохраняем исходное значение
           }
           if (distancesList.length > 1) {
-            distanceCtrl2.text = distancesList[1].toString();
+            final distToStr = distancesList[1].toString();
+            distanceCtrl2.text = distToStr;
+            _originalDistanceTo = distToStr; // Сохраняем исходное значение
           }
         }
 
@@ -694,12 +706,23 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
         fields['event_time'] = _fmtTime(time!);
         fields['description'] = descCtrl.text.trim();
 
-        // Добавляем дистанции "от" и "до" (только если заполнены)
-        if (distanceCtrl1.text.trim().isNotEmpty) {
-          fields['distances[0]'] = distanceCtrl1.text.trim(); // дистанция "от"
+        // Добавляем дистанции "от" и "до"
+        // Отправляем текущее значение, если оно заполнено
+        // Если поле пустое, но было исходное значение, используем исходное, чтобы не обнулить значение
+        final distanceFromValue = distanceCtrl1.text.trim();
+        if (distanceFromValue.isNotEmpty) {
+          fields['distances[0]'] = distanceFromValue; // дистанция "от"
+        } else if (_originalDistanceFrom != null && _originalDistanceFrom!.isNotEmpty) {
+          // Поле пустое, но было исходное значение - сохраняем его, чтобы не обнулить в БД
+          fields['distances[0]'] = _originalDistanceFrom!;
         }
-        if (distanceCtrl2.text.trim().isNotEmpty) {
-          fields['distances[1]'] = distanceCtrl2.text.trim(); // дистанция "до"
+        
+        final distanceToValue = distanceCtrl2.text.trim();
+        if (distanceToValue.isNotEmpty) {
+          fields['distances[1]'] = distanceToValue; // дистанция "до"
+        } else if (_originalDistanceTo != null && _originalDistanceTo!.isNotEmpty) {
+          // Поле пустое, но было исходное значение - сохраняем его, чтобы не обнулить в БД
+          fields['distances[1]'] = _originalDistanceTo!;
         }
 
         // Флаги для сохранения существующих изображений
