@@ -10,6 +10,8 @@ import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/transparent_route.dart';
+import '../../../../core/widgets/more_menu_overlay.dart';
+import '../../../../core/widgets/more_menu_hub.dart';
 import 'edit_official_event_screen.dart';
 
 /// Детальная страница официального события (топ события)
@@ -32,6 +34,8 @@ class _OfficialEventDetailScreenState
   bool _isBookmarked = false; // Находится ли событие в закладках
   bool _isTogglingBookmark =
       false; // Флаг процесса добавления/удаления закладки
+  final GlobalKey _menuKey =
+      GlobalKey(); // Ключ для позиционирования попапа меню
 
   @override
   void initState() {
@@ -100,7 +104,8 @@ class _OfficialEventDetailScreenState
     final backgroundUrl = _eventData!['background_url'] as String?;
     if (backgroundUrl != null && backgroundUrl.isNotEmpty) {
       final screenW = MediaQuery.of(context).size.width;
-      final calculatedHeight = screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
+      final calculatedHeight =
+          screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
       final targetW = (screenW * dpr).round();
       final targetH = (calculatedHeight * dpr).round();
       precacheImage(
@@ -114,30 +119,62 @@ class _OfficialEventDetailScreenState
     }
   }
 
-  /// Открытие экрана редактирования
-  Future<void> _openEditScreen() async {
-    if (!_canEdit) return;
+  /// ──────────────────────── Показ меню с действиями ────────────────────────
+  void _showMenu(BuildContext context) {
+    final items = <MoreMenuItem>[];
 
-    final result = await Navigator.of(context).push<dynamic>(
-      TransparentPageRoute(
-        builder: (_) => EditOfficialEventScreen(eventId: widget.eventId),
+    // ── Пункт "Редактировать" (только для создателя события)
+    if (_canEdit) {
+      items.add(
+        MoreMenuItem(
+          text: 'Редактировать',
+          icon: CupertinoIcons.pencil,
+          onTap: () async {
+            MoreMenuHub.hide();
+            // Переходим на экран редактирования события
+            final result = await Navigator.of(context).push<dynamic>(
+              TransparentPageRoute(
+                builder: (_) =>
+                    EditOfficialEventScreen(eventId: widget.eventId),
+              ),
+            );
+            // Если редактирование прошло успешно, обновляем данные
+            if (!context.mounted) return;
+            // Если событие было удалено, возвращаемся назад
+            if (result == 'deleted') {
+              Navigator.of(context).pop(true);
+              return;
+            }
+            // Если событие было обновлено, перезагружаем данные и возвращаем сигнал на карту
+            if (result == true) {
+              await _loadEvent();
+              if (!context.mounted) return;
+              // ── возвращаем сигнал об обновлении, чтобы карта обновила маркеры
+              Navigator.of(context).pop('updated');
+            }
+          },
+        ),
+      );
+    }
+
+    // ── Пункт "Добавить в избранное / Убрать из избранного"
+    items.add(
+      MoreMenuItem(
+        text: _isBookmarked ? 'Убрать из избранного' : 'Добавить в избранное',
+        icon: _isBookmarked
+            ? CupertinoIcons.bookmark_fill
+            : CupertinoIcons.bookmark,
+        iconColor: _isBookmarked ? AppColors.red : null,
+        textStyle: _isBookmarked ? TextStyle(color: AppColors.red) : null,
+        onTap: () {
+          MoreMenuHub.hide();
+          _toggleBookmark();
+        },
       ),
     );
 
-    // Если событие было удалено, возвращаемся назад
-    if (result == 'deleted') {
-      if (!mounted) return;
-      Navigator.of(context).pop(true);
-      return;
-    }
-
-    // Если событие было обновлено, перезагружаем данные и возвращаем сигнал на карту
-    if (result == true) {
-      await _loadEvent();
-      if (!mounted) return;
-      // ── возвращаем сигнал об обновлении, чтобы карта обновила маркеры
-      Navigator.of(context).pop('updated');
-    }
+    // Показываем попап меню
+    MoreMenuOverlay(anchorKey: _menuKey, items: items).show(context);
   }
 
   /// ──────────────────────── Добавление/удаление из закладок ────────────────────────
@@ -311,7 +348,6 @@ class _OfficialEventDetailScreenState
     return dateFormattedShort;
   }
 
-
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -415,19 +451,21 @@ class _OfficialEventDetailScreenState
         }
       } else {
         // Если несколько дистанций, показываем их через точку
-        return dists.map((d) {
-          final meters = d.toDouble();
-          if (meters >= 1000) {
-            final km = meters / 1000;
-            if (km == km.roundToDouble()) {
-              return '${km.toInt()} км';
-            } else {
-              return '${km.toStringAsFixed(1).replaceAll('.', ',')} км';
-            }
-          } else {
-            return '${meters.toInt()} м';
-          }
-        }).join('  ·  ');
+        return dists
+            .map((d) {
+              final meters = d.toDouble();
+              if (meters >= 1000) {
+                final km = meters / 1000;
+                if (km == km.roundToDouble()) {
+                  return '${km.toInt()} км';
+                } else {
+                  return '${km.toStringAsFixed(1).replaceAll('.', ',')} км';
+                }
+              } else {
+                return '${meters.toInt()} м';
+              }
+            })
+            .join('  ·  ');
       }
     }
 
@@ -469,12 +507,12 @@ class _OfficialEventDetailScreenState
                                         ),
                                         errorWidget: (context, url, error) =>
                                             Builder(
-                                          builder: (context) => Container(
-                                            color: AppColors.getBorderColor(
-                                              context,
+                                              builder: (context) => Container(
+                                                color: AppColors.getBorderColor(
+                                                  context,
+                                                ),
+                                              ),
                                             ),
-                                          ),
-                                        ),
                                       )
                                     : Builder(
                                         builder: (context) => Container(
@@ -521,8 +559,7 @@ class _OfficialEventDetailScreenState
                             if (registrationLink.isNotEmpty) ...[
                               const SizedBox(height: 12),
                               GestureDetector(
-                                onTap: () =>
-                                    _openEventLink(registrationLink),
+                                onTap: () => _openEventLink(registrationLink),
                                 child: Row(
                                   children: [
                                     const Icon(
@@ -743,8 +780,8 @@ class _OfficialEventDetailScreenState
                               style: TextStyle(
                                 fontWeight: FontWeight.w400,
                                 fontFamily: 'Inter',
-                                fontSize: 15,
-                                height: 1.35,
+                                fontSize: 14,
+                                height: 1.4,
                                 color: AppColors.getTextPrimaryColor(context),
                               ),
                             ),
@@ -768,7 +805,9 @@ class _OfficialEventDetailScreenState
                             elevation: 0,
                             child: InkWell(
                               onTap: () => _openEventLink(registrationLink),
-                              borderRadius: BorderRadius.circular(AppRadius.xxl),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.xxl,
+                              ),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 40,
@@ -818,23 +857,14 @@ class _OfficialEventDetailScreenState
                           semantic: 'Назад',
                           onTap: () => Navigator.of(context).maybePop(),
                         ),
-                        _canEdit
-                            ? _CircleIconBtn(
-                                icon: CupertinoIcons.pencil,
-                                semantic: 'Редактировать',
-                                onTap: _openEditScreen,
-                              )
-                            : _CircleIconBtn(
-                                icon: _isBookmarked
-                                    ? CupertinoIcons.star_fill
-                                    : CupertinoIcons.star,
-                                semantic: _isBookmarked
-                                    ? 'Удалить из закладок'
-                                    : 'Добавить в закладки',
-                                onTap: _isTogglingBookmark
-                                    ? null
-                                    : _toggleBookmark,
-                              ),
+                        Container(
+                          key: _menuKey,
+                          child: _CircleIconBtn(
+                            icon: CupertinoIcons.ellipsis_vertical,
+                            semantic: 'Меню',
+                            onTap: () => _showMenu(context),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -863,13 +893,13 @@ class _CircleIconBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Цвет иконки теперь привязан к первичному тексту
-    final iconColor = AppColors.getTextPrimaryColor(context);
+    // Цвет иконки светлый
+    final iconColor = AppColors.getSurfaceColor(context);
 
-    // Цвет фона совпадает с background и имеет лёгкую прозрачность
-    final backgroundColor = AppColors.getBackgroundColor(
+    // Цвет фона темный с прозрачностью
+    final backgroundColor = AppColors.getTextPrimaryColor(
       context,
-    ).withValues(alpha: 0.7);
+    ).withValues(alpha: 0.5);
 
     return Semantics(
       label: semantic,
@@ -890,4 +920,3 @@ class _CircleIconBtn extends StatelessWidget {
     );
   }
 }
-

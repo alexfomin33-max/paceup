@@ -360,7 +360,7 @@ class _CoffeeRunVldStatsContentState
                           SizedBox(
                             width: _kmColW,
                             child: Align(
-                              alignment: Alignment.centerLeft,
+                              alignment: Alignment.centerRight,
                               child: Text(
                                 '${m.distance.toStringAsFixed(2).replaceAll('.', ',')} км',
                                 softWrap: false,

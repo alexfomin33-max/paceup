@@ -9,6 +9,8 @@ import '../../../../providers/services/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../core/widgets/more_menu_overlay.dart';
+import '../../../../core/widgets/more_menu_hub.dart';
 import 'edit_event_screen.dart';
 import '../../../../features/profile/screens/profile_screen.dart';
 
@@ -30,6 +32,11 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
   String? _currentUserAvatar; // Аватар текущего пользователя из профиля
   bool _isParticipant = false; // Является ли текущий пользователь участником
   bool _isTogglingParticipation = false; // Флаг процесса присоединения/выхода
+  bool _isBookmarked = false; // Находится ли событие в избранном
+  bool _isTogglingBookmark =
+      false; // Флаг процесса добавления/удаления из избранного
+  final GlobalKey _menuKey =
+      GlobalKey(); // Ключ для позиционирования попапа меню
 
   @override
   void initState() {
@@ -70,6 +77,9 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
           }
         }
 
+        // Проверяем статус закладки
+        final isBookmarked = event['is_bookmarked'] as bool? ?? false;
+
         // ─── Загружаем аватар текущего пользователя из профиля (если это организатор)
         String? currentUserAvatar;
         if (userId != null && eventUserId == userId) {
@@ -92,6 +102,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
           _eventData = event;
           _canEdit = canEdit;
           _isParticipant = isParticipant;
+          _isBookmarked = isBookmarked;
           _currentUserAvatar = currentUserAvatar;
           _loading = false;
         });
@@ -125,7 +136,8 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     final backgroundUrl = _eventData!['background_url'] as String?;
     if (backgroundUrl != null && backgroundUrl.isNotEmpty) {
       final screenW = MediaQuery.of(context).size.width;
-      final calculatedHeight = screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
+      final calculatedHeight =
+          screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
       final targetW = (screenW * dpr).round();
       final targetH = (calculatedHeight * dpr).round();
       precacheImage(
@@ -224,20 +236,138 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     return dateFormattedShort;
   }
 
-  /// Открытие экрана редактирования
-  Future<void> _openEditScreen() async {
-    if (!_canEdit) return;
+  /// ──────────────────────── Добавление/удаление из избранного ────────────────────────
+  Future<void> _toggleBookmark() async {
+    if (_isTogglingBookmark || _eventData == null) return;
 
-    final result = await Navigator.of(context).push<bool>(
-      TransparentPageRoute(
-        builder: (_) => EditEventScreen(eventId: widget.eventId),
+    // Проверяем, что userId доступен
+    final authService = ref.read(authServiceProvider);
+    final userId = await authService.getUserId();
+    if (userId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ошибка: Пользователь не авторизован'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isTogglingBookmark = true;
+    });
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/toggle_event_bookmark.php',
+        body: {'event_id': widget.eventId},
+      );
+
+      if (data['success'] == true) {
+        final isBookmarked = data['is_bookmarked'] as bool? ?? false;
+
+        // Обновляем состояние
+        setState(() {
+          _isBookmarked = isBookmarked;
+          _isTogglingBookmark = false;
+        });
+
+        // Обновляем данные события
+        if (_eventData != null) {
+          setState(() {
+            _eventData = {..._eventData!, 'is_bookmarked': isBookmarked};
+          });
+        }
+      } else {
+        final errorMessage = data['message'] as String? ?? 'Неизвестная ошибка';
+        setState(() {
+          _isTogglingBookmark = false;
+        });
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isTogglingBookmark = false;
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// ──────────────────────── Показ меню с действиями ────────────────────────
+  void _showMenu(BuildContext context) {
+    final items = <MoreMenuItem>[];
+
+    // ── Пункт "Редактировать" (только для создателя события)
+    if (_canEdit) {
+      items.add(
+        MoreMenuItem(
+          text: 'Редактировать',
+          icon: CupertinoIcons.pencil,
+          onTap: () async {
+            MoreMenuHub.hide();
+            // Переходим на экран редактирования события
+            final result = await Navigator.of(context).push<bool>(
+              TransparentPageRoute(
+                builder: (_) => EditEventScreen(eventId: widget.eventId),
+              ),
+            );
+            // Если редактирование прошло успешно, обновляем данные
+            if (!context.mounted) return;
+            if (result == true) {
+              _loadEvent();
+            }
+          },
+        ),
+      );
+    }
+
+    // ── Пункт "Добавить в избранное / Убрать из избранного"
+    items.add(
+      MoreMenuItem(
+        text: _isBookmarked ? 'Убрать из избранного' : 'Добавить в избранное',
+        icon: _isBookmarked
+            ? CupertinoIcons.bookmark_fill
+            : CupertinoIcons.bookmark,
+        iconColor: _isBookmarked ? AppColors.red : null,
+        textStyle: _isBookmarked ? TextStyle(color: AppColors.red) : null,
+        onTap: () {
+          MoreMenuHub.hide();
+          _toggleBookmark();
+        },
       ),
     );
 
-    // Если событие было обновлено, перезагружаем данные
-    if (result == true) {
-      await _loadEvent();
-    }
+    // ── Пункт "Присоединиться / Покинуть"
+    items.add(
+      MoreMenuItem(
+        text: _isParticipant ? 'Покинуть' : 'Присоединиться',
+        icon: _isParticipant
+            ? CupertinoIcons.minus_circle
+            : CupertinoIcons.person_add,
+        iconColor: _isParticipant ? AppColors.red : AppColors.brandPrimary,
+        textStyle: _isParticipant
+            ? TextStyle(color: AppColors.red)
+            : TextStyle(color: AppColors.brandPrimary),
+        onTap: () {
+          MoreMenuHub.hide();
+          _toggleParticipation();
+        },
+      ),
+    );
+
+    // Показываем попап меню
+    MoreMenuOverlay(anchorKey: _menuKey, items: items).show(context);
   }
 
   /// ──────────────────────── Переход в профиль организатора ────────────────────────
@@ -247,19 +377,15 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     if (eventUserId == null) return;
 
     Navigator.of(context).push(
-      TransparentPageRoute(
-        builder: (_) => ProfileScreen(userId: eventUserId),
-      ),
+      TransparentPageRoute(builder: (_) => ProfileScreen(userId: eventUserId)),
     );
   }
 
   /// ──────────────────────── Переход в профиль участника ────────────────────────
   void _openParticipantProfile(int userId) {
-    Navigator.of(context).push(
-      TransparentPageRoute(
-        builder: (_) => ProfileScreen(userId: userId),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(TransparentPageRoute(builder: (_) => ProfileScreen(userId: userId)));
   }
 
   /// ──────────────────────── Присоединение/выход из события ────────────────────────
@@ -385,7 +511,8 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     final organizerName = _eventData!['organizer_name'] as String? ?? '';
     final organizerAvatarUrl =
         _eventData!['organizer_avatar_url'] as String? ?? '';
-    final dateFormattedShort = _eventData!['date_formatted_short'] as String? ?? '';
+    final dateFormattedShort =
+        _eventData!['date_formatted_short'] as String? ?? '';
     // ─── Форматируем дату с добавлением года, если это не текущий год
     final dateFormatted = _formatDateWithYear(dateFormattedShort);
     final time = _eventData!['event_time'] as String? ?? '';
@@ -419,8 +546,8 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     String? organizerAvatarFromParticipants;
     if (participants.isNotEmpty) {
       final firstParticipant = participants[0] as Map<String, dynamic>;
-      final isFirstOrganizer = (firstParticipant['user_id'] as int?) ==
-              eventUserId ||
+      final isFirstOrganizer =
+          (firstParticipant['user_id'] as int?) == eventUserId ||
           (firstParticipant['is_organizer'] as bool?) == true;
       if (isFirstOrganizer) {
         organizerAvatarFromParticipants =
@@ -441,7 +568,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     final distanceToRaw = _eventData!['distance_to'];
     num? distanceFrom;
     num? distanceTo;
-    
+
     if (distanceFromRaw != null) {
       if (distanceFromRaw is num) {
         distanceFrom = distanceFromRaw;
@@ -452,7 +579,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
         distanceFrom = null;
       }
     }
-    
+
     if (distanceToRaw != null) {
       if (distanceToRaw is num) {
         distanceTo = distanceToRaw;
@@ -467,7 +594,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     // ─── Форматирование метрик на основе distance_from и distance_to
     String formatDistance(num? from, num? to) {
       if (from == null && to == null) return '';
-      
+
       String formatMeters(num meters) {
         if (meters >= 1000) {
           final km = meters / 1000.0;
@@ -480,7 +607,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
           return '${meters.toInt()} м';
         }
       }
-      
+
       if (from != null && to != null) {
         return '${formatMeters(from)} - ${formatMeters(to)}';
       } else if (from != null) {
@@ -526,17 +653,20 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                 child: Builder(
                                   builder: (context) {
                                     final backgroundUrl =
-                                        _eventData!['background_url'] as String?;
+                                        _eventData!['background_url']
+                                            as String?;
                                     if (backgroundUrl != null &&
                                         backgroundUrl.isNotEmpty) {
-                                      final dpr = MediaQuery.of(context)
-                                          .devicePixelRatio;
-                                      final screenW =
-                                          MediaQuery.of(context).size.width;
+                                      final dpr = MediaQuery.of(
+                                        context,
+                                      ).devicePixelRatio;
+                                      final screenW = MediaQuery.of(
+                                        context,
+                                      ).size.width;
                                       final calculatedHeight = screenW / 2.1;
                                       final targetW = (screenW * dpr).round();
-                                      final targetH =
-                                          (calculatedHeight * dpr).round();
+                                      final targetH = (calculatedHeight * dpr)
+                                          .round();
                                       return CachedNetworkImage(
                                         imageUrl: backgroundUrl,
                                         fit: BoxFit.cover,
@@ -545,22 +675,20 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                         ),
                                         memCacheWidth: targetW,
                                         memCacheHeight: targetH,
-                                        errorWidget: (
-                                          context,
-                                          url,
-                                          error,
-                                        ) => Container(
-                                          color: AppColors.getSurfaceColor(
-                                            context,
-                                          ),
-                                          child: Icon(
-                                            CupertinoIcons.photo,
-                                            size: 48,
-                                            color: AppColors.getIconPrimaryColor(
-                                              context,
+                                        errorWidget: (context, url, error) =>
+                                            Container(
+                                              color: AppColors.getSurfaceColor(
+                                                context,
+                                              ),
+                                              child: Icon(
+                                                CupertinoIcons.photo,
+                                                size: 48,
+                                                color:
+                                                    AppColors.getIconPrimaryColor(
+                                                      context,
+                                                    ),
+                                              ),
                                             ),
-                                          ),
-                                        ),
                                       );
                                     }
                                     // Fallback: цвет фона, если изображение отсутствует
@@ -713,9 +841,10 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                             fontWeight: FontWeight.w500,
                                             fontFamily: 'Inter',
                                             fontSize: 15,
-                                            color: AppColors.getTextPrimaryColor(
-                                              context,
-                                            ),
+                                            color:
+                                                AppColors.getTextPrimaryColor(
+                                                  context,
+                                                ),
                                           ),
                                         ),
                                       ],
@@ -981,8 +1110,8 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                   return GestureDetector(
                                     onTap: participantUserId != null
                                         ? () => _openParticipantProfile(
-                                              participantUserId,
-                                            )
+                                            participantUserId,
+                                          )
                                         : null,
                                     behavior: HitTestBehavior.opaque,
                                     child: ClipOval(
@@ -1032,10 +1161,9 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                               width: 48,
                                               height: 48,
                                               decoration: BoxDecoration(
-                                                color:
-                                                    AppColors.getBorderColor(
-                                                      context,
-                                                    ),
+                                                color: AppColors.getBorderColor(
+                                                  context,
+                                                ),
                                                 shape: BoxShape.circle,
                                               ),
                                               child: Icon(
@@ -1091,8 +1219,8 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                               style: TextStyle(
                                 fontWeight: FontWeight.w400,
                                 fontFamily: 'Inter',
-                                fontSize: 15,
-                                height: 1.35,
+                                fontSize: 14,
+                                height: 1.4,
                                 color: AppColors.getTextPrimaryColor(context),
                               ),
                             ),
@@ -1184,14 +1312,14 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                           semantic: 'Назад',
                           onTap: () => Navigator.of(context).maybePop(),
                         ),
-                        if (_canEdit)
-                          _CircleIconBtn(
-                            icon: CupertinoIcons.pencil,
-                            semantic: 'Редактировать',
-                            onTap: _openEditScreen,
-                          )
-                        else
-                          const SizedBox(width: 38, height: 38),
+                        Container(
+                          key: _menuKey,
+                          child: _CircleIconBtn(
+                            icon: CupertinoIcons.ellipsis_vertical,
+                            semantic: 'Меню',
+                            onTap: () => _showMenu(context),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -1220,13 +1348,13 @@ class _CircleIconBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Цвет иконки теперь привязан к первичному тексту
-    final iconColor = AppColors.getTextPrimaryColor(context);
+    // Цвет иконки светлый
+    final iconColor = AppColors.getSurfaceColor(context);
 
-    // Цвет фона совпадает с background и имеет лёгкую прозрачность
-    final backgroundColor = AppColors.getBackgroundColor(
+    // Цвет фона темный с прозрачностью
+    final backgroundColor = AppColors.getTextPrimaryColor(
       context,
-    ).withValues(alpha: 0.7);
+    ).withValues(alpha: 0.5);
 
     return Semantics(
       label: semantic,

@@ -9,7 +9,9 @@ import '../../../../core/utils/error_handler.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
-import '../../../../core/widgets/expandable_text.dart';
+import '../../../../core/widgets/more_menu_overlay.dart';
+import '../../../../core/widgets/more_menu_hub.dart';
+import '../../../../core/widgets/primary_button.dart';
 import 'tabs/club_photo_content.dart';
 import 'coffeerun_vld/tabs/members_content.dart';
 import 'coffeerun_vld/tabs/stats_content.dart';
@@ -38,6 +40,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
   bool _isJoining = false; // Идёт ли процесс вступления
   int?
   _updatedMembersCount; // Обновленное количество участников (если было изменено)
+  final GlobalKey _menuKey =
+      GlobalKey(); // Ключ для позиционирования попапа меню
 
   @override
   void initState() {
@@ -322,6 +326,73 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     }
   }
 
+  /// ──────────────────────── Показ меню с действиями ────────────────────────
+  void _showMenu(BuildContext context) {
+    final items = <MoreMenuItem>[];
+
+    // ── Пункт "Редактировать" (только для владельца клуба)
+    if (_canEdit) {
+      items.add(
+        MoreMenuItem(
+          text: 'Редактировать',
+          icon: CupertinoIcons.pencil,
+          onTap: () async {
+            MoreMenuHub.hide();
+            // Переходим на экран редактирования клуба
+            final result = await Navigator.of(context).push(
+              TransparentPageRoute(
+                builder: (_) => EditClubScreen(clubId: widget.clubId),
+              ),
+            );
+            // Если редактирование прошло успешно, обновляем данные
+            if (!context.mounted) return;
+            if (result == true) {
+              _loadClub();
+            }
+            // Если клуб был удалён, возвращаемся назад с результатом
+            // (приоритет удаления выше, чем обновление участников)
+            if (result == 'deleted') {
+              Navigator.of(context).pop('deleted');
+            }
+          },
+        ),
+      );
+    }
+
+    // ── Пункт "Вступить / Выйти"
+    final isOpen = _clubData?['is_open'] as bool? ?? true;
+    final isJoinAction = !_isMember && !_isRequest;
+    items.add(
+      MoreMenuItem(
+        text: _isMember
+            ? 'Выйти из клуба'
+            : (_isRequest
+                  ? 'Заявка подана'
+                  : (isOpen ? 'Вступить в клуб' : 'Подать заявку')),
+        icon: _isMember
+            ? CupertinoIcons.minus_circle
+            : CupertinoIcons.person_add,
+        iconColor: _isMember
+            ? AppColors.red
+            : (isJoinAction ? AppColors.brandPrimary : null),
+        textStyle: _isMember
+            ? TextStyle(color: AppColors.red)
+            : (isJoinAction ? TextStyle(color: AppColors.brandPrimary) : null),
+        onTap: () {
+          MoreMenuHub.hide();
+          if (_isMember) {
+            _leaveClub();
+          } else {
+            _joinClub();
+          }
+        },
+      ),
+    );
+
+    // Показываем попап меню
+    MoreMenuOverlay(anchorKey: _menuKey, items: items).show(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -366,7 +437,6 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
     final logoUrl = _clubData!['logo_url'] as String? ?? '';
     final name = _clubData!['name'] as String? ?? '';
-    final dateFormatted = _clubData!['date_formatted'] as String? ?? '';
     final backgroundUrl = _clubData!['background_url'] as String? ?? '';
     final membersCount = _clubData!['members_count'] as int? ?? 0;
     final isOpen = _clubData!['is_open'] as bool? ?? true;
@@ -511,60 +581,49 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                             CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          // Название клуба
-                                          Text(
-                                            name,
-                                            style: AppTextStyles.h17w6.copyWith(
-                                              fontWeight: FontWeight.w700,
-                                              color:
-                                                  AppColors.getTextPrimaryColor(
-                                                    context,
-                                                  ),
+                                          // Название клуба (с горизонтальной прокруткой)
+                                          SizedBox(
+                                            height: 24, // Высота текста
+                                            child: SingleChildScrollView(
+                                              scrollDirection: Axis.horizontal,
+                                              physics:
+                                                  const BouncingScrollPhysics(),
+                                              child: Text(
+                                                name,
+                                                style: AppTextStyles.h17w6.copyWith(
+                                                  fontWeight: FontWeight.w700,
+                                                  color:
+                                                      AppColors.getTextPrimaryColor(
+                                                        context,
+                                                      ),
+                                                ),
+                                              ),
                                             ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
                                           ),
                                           const SizedBox(height: 2),
                                           // Участники и тип сообщества
                                           Row(
                                             children: [
                                               Text(
-                                                'Участников: $membersCount',
+                                                '${membersCount.toString()} ${_getMembersWord(membersCount)}',
                                                 style: TextStyle(
                                                   fontFamily: 'Inter',
-                                                  fontSize: 13,
+                                                  fontSize: 14,
                                                   color:
                                                       AppColors.getTextPrimaryColor(
                                                         context,
                                                       ),
                                                 ),
                                               ),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                '·',
-                                                style: TextStyle(
-                                                  fontFamily: 'Inter',
-                                                  fontSize: 13,
-                                                  color:
-                                                      AppColors.getTextPrimaryColor(
-                                                        context,
-                                                      ),
+                                              // ── Маленькие аватарки участников (не более 3)
+                                              if (_clubData != null) ...[
+                                                const SizedBox(width: 8),
+                                                _MemberAvatars(
+                                                  members:
+                                                      _clubData!['members']
+                                                          as List<dynamic>?,
                                                 ),
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                isOpen
-                                                    ? 'Открытое'
-                                                    : 'Закрытое',
-                                                style: TextStyle(
-                                                  fontFamily: 'Inter',
-                                                  fontSize: 13,
-                                                  color:
-                                                      AppColors.getTextPrimaryColor(
-                                                        context,
-                                                      ),
-                                                ),
-                                              ),
+                                              ],
                                             ],
                                           ),
                                         ],
@@ -581,31 +640,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
                     const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-                    // ───────── Промежуточный блок: ссылка на сайт клуба (если есть)
-                    if (link.isNotEmpty)
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        sliver: SliverToBoxAdapter(
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.getSurfaceColor(context),
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                              border: Border.all(
-                                color: AppColors.getBorderColor(context),
-                                width: 1,
-                              ),
-                            ),
-                            child: _LinkRow(link: link),
-                          ),
-                        ),
-                      ),
-
-                    if (link.isNotEmpty)
-                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
                     // ───────── Промежуточный блок: информация
-                    if (description.isNotEmpty)
+                    if (description.isNotEmpty || link.isNotEmpty)
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         sliver: SliverToBoxAdapter(
@@ -633,21 +669,26 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Builder(
-                                  builder: (context) => ExpandableText(
-                                    text: description,
-                                    textStyle: TextStyle(
+                                if (description.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    description,
+                                    style: TextStyle(
                                       fontFamily: 'Inter',
-                                      fontSize: 15,
-                                      height: 1.35,
+                                      fontSize: 14,
+                                      height: 1.4,
                                       color: AppColors.getTextPrimaryColor(
                                         context,
                                       ),
                                       fontWeight: FontWeight.w400,
                                     ),
                                   ),
-                                ),
+                                ],
+                                if (link.isNotEmpty) ...[
+                                  if (description.isNotEmpty)
+                                    const SizedBox(height: 12),
+                                  _LinkRow(link: link),
+                                ],
                               ],
                             ),
                           ),
@@ -657,230 +698,21 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                     if (description.isNotEmpty)
                       const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-                    // ───────── Промежуточный блок: дата основания и кнопка
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      sliver: SliverToBoxAdapter(
-                        child: Row(
-                          children: [
-                            // Блок с датой основания
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppColors.getSurfaceColor(context),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.md,
-                                  ),
-                                  border: Border.all(
-                                    color: AppColors.getBorderColor(context),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Дата основания',
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 12,
-                                        color: AppColors.getTextSecondaryColor(
-                                          context,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      dateFormatted.isNotEmpty
-                                          ? dateFormatted
-                                          : '—',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        fontFamily: 'Inter',
-                                        fontSize: 15,
-                                        color: AppColors.getTextPrimaryColor(
-                                          context,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Кнопка действия
-                            Builder(
-                              builder: (context) => Material(
-                                color: _isMember
-                                    ? AppColors.red
-                                    : AppColors.brandPrimary,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.xxl,
-                                ),
-                                elevation: 0,
-                                child: InkWell(
-                                  onTap: _isJoining
-                                      ? null
-                                      : _isMember
-                                      ? _leaveClub
-                                      : _joinClub,
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.xxl,
-                                  ),
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: _isMember ? 30 : 24,
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _isMember
-                                          ? AppColors.red
-                                          : AppColors.brandPrimary,
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.xxl,
-                                      ),
-                                    ),
-                                    child: _isJoining
-                                        ? const SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(
-                                                    AppColors.surface,
-                                                  ),
-                                            ),
-                                          )
-                                        : Text(
-                                            _isMember
-                                                ? 'Выйти'
-                                                : _isRequest
-                                                ? 'Заявка подана'
-                                                : isOpen
-                                                ? 'Вступить'
-                                                : 'Подать заявку',
-                                            style: const TextStyle(
-                                              fontFamily: 'Inter',
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w500,
-                                              color: AppColors.surface,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                    // ───────── Промежуточный блок: кнопка действия (только для вступления)
+                    if (!_isMember && !_isRequest) ...[
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        sliver: SliverToBoxAdapter(
+                          child: PrimaryButton(
+                            text: isOpen ? 'Вступить' : 'Подать заявку',
+                            onPressed: _joinClub,
+                            expanded: true,
+                            isLoading: _isJoining,
+                          ),
                         ),
                       ),
-                    ),
-
-                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-                    // ───────── Промежуточный блок: количество участников и тип сообщества
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      sliver: SliverToBoxAdapter(
-                        child: Row(
-                          children: [
-                            // Блок с количеством участников
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppColors.getSurfaceColor(context),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.md,
-                                  ),
-                                  border: Border.all(
-                                    color: AppColors.getBorderColor(context),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Участников',
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 12,
-                                        color: AppColors.getTextSecondaryColor(
-                                          context,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      membersCount.toString(),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        fontFamily: 'Inter',
-                                        fontSize: 15,
-                                        color: AppColors.getTextPrimaryColor(
-                                          context,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Блок с типом сообщества
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppColors.getSurfaceColor(context),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.md,
-                                  ),
-                                  border: Border.all(
-                                    color: AppColors.getBorderColor(context),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Тип сообщества',
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 12,
-                                        color: AppColors.getTextSecondaryColor(
-                                          context,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      isOpen ? 'Открытое' : 'Закрытое',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        fontFamily: 'Inter',
-                                        fontSize: 15,
-                                        color: AppColors.getTextPrimaryColor(
-                                          context,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                    ],
 
                     // ───────── Пилюля с табами
                     SliverPadding(
@@ -940,7 +772,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                         sliver: SliverToBoxAdapter(
                           child: Builder(
                             builder: (context) => Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
                                 color: AppColors.getSurfaceColor(context),
                                 borderRadius: BorderRadius.circular(
@@ -967,7 +799,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                         sliver: SliverToBoxAdapter(
                           child: Builder(
                             builder: (context) => Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: AppColors.getSurfaceColor(context),
                                 borderRadius: BorderRadius.circular(
@@ -1043,32 +875,14 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                               }
                             },
                           ),
-                          if (_canEdit)
-                            _CircleIconBtn(
-                              icon: CupertinoIcons.pencil,
-                              semantic: 'Редактировать',
-                              onTap: () async {
-                                // Переходим на экран редактирования клуба
-                                final result = await Navigator.of(context).push(
-                                  TransparentPageRoute(
-                                    builder: (_) =>
-                                        EditClubScreen(clubId: widget.clubId),
-                                  ),
-                                );
-                                // Если редактирование прошло успешно, обновляем данные
-                                if (!context.mounted) return;
-                                if (result == true) {
-                                  _loadClub();
-                                }
-                                // Если клуб был удалён, возвращаемся назад с результатом
-                                // (приоритет удаления выше, чем обновление участников)
-                                if (result == 'deleted') {
-                                  Navigator.of(context).pop('deleted');
-                                }
-                              },
-                            )
-                          else
-                            const SizedBox(width: 38, height: 38),
+                          Container(
+                            key: _menuKey,
+                            child: _CircleIconBtn(
+                              icon: CupertinoIcons.ellipsis_vertical,
+                              semantic: 'Меню',
+                              onTap: () => _showMenu(context),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1085,6 +899,24 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
 /// ─── helpers
 
+/// Получение правильной формы слова "участник" в зависимости от числа
+String _getMembersWord(int count) {
+  final mod10 = count % 10;
+  final mod100 = count % 100;
+
+  if (mod100 >= 11 && mod100 <= 19) {
+    return 'участников';
+  }
+
+  if (mod10 == 1) {
+    return 'участник';
+  } else if (mod10 >= 2 && mod10 <= 4) {
+    return 'участника';
+  } else {
+    return 'участников';
+  }
+}
+
 /// Полупрозрачная круглая кнопка-иконка
 class _CircleIconBtn extends StatelessWidget {
   final IconData icon;
@@ -1098,13 +930,13 @@ class _CircleIconBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Цвет иконки теперь привязан к первичному тексту
-    final iconColor = AppColors.getTextPrimaryColor(context);
+    // Цвет иконки светлый
+    final iconColor = AppColors.getSurfaceColor(context);
 
-    // Цвет фона совпадает с background и имеет лёгкую прозрачность
-    final backgroundColor = AppColors.getBackgroundColor(
+    // Цвет фона темный с прозрачностью
+    final backgroundColor = AppColors.getTextPrimaryColor(
       context,
-    ).withValues(alpha: 0.7);
+    ).withValues(alpha: 0.5);
 
     return Semantics(
       label: semantic,
@@ -1281,7 +1113,9 @@ class _PillTabBtn extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.brandPrimary : Colors.transparent,
+          color: selected
+              ? AppColors.getTextPrimaryColor(context)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Center(
@@ -1297,6 +1131,79 @@ class _PillTabBtn extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Маленькие аватарки участников (не более 3)
+class _MemberAvatars extends StatelessWidget {
+  final List<dynamic>? members;
+  const _MemberAvatars({this.members});
+
+  @override
+  Widget build(BuildContext context) {
+    if (members == null || members!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Берем первые 3 участника
+    final displayMembers = members!.take(3).toList();
+    final avatarSize = 20.0; // Очень маленький размер
+    final overlap = 4.0; // Наложение между аватарками
+
+    return SizedBox(
+      height: avatarSize,
+      width: avatarSize + (displayMembers.length - 1) * (avatarSize - overlap),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: List.generate(displayMembers.length, (index) {
+          final member = displayMembers[index] as Map<String, dynamic>?;
+          final avatarUrl = member?['avatar_url'] as String? ?? '';
+          return Positioned(
+            left: index * (avatarSize - overlap),
+            child: Container(
+              width: avatarSize,
+              height: avatarSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.getSurfaceColor(context),
+                  width: 1.5,
+                ),
+              ),
+              child: ClipOval(
+                child: avatarUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: avatarUrl,
+                        width: avatarSize,
+                        height: avatarSize,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) => Container(
+                          width: avatarSize,
+                          height: avatarSize,
+                          color: AppColors.getBorderColor(context),
+                          child: Icon(
+                            Icons.person,
+                            size: avatarSize * 0.6,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
+                        ),
+                      )
+                    : Container(
+                        width: avatarSize,
+                        height: avatarSize,
+                        color: AppColors.getBorderColor(context),
+                        child: Icon(
+                          Icons.person,
+                          size: avatarSize * 0.6,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      ),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }

@@ -26,7 +26,8 @@ class CoffeeRunVldMembersContentState
   bool _hasMore = true;
   int _currentPage = 1;
   static const int _limit = 25;
-  final Map<int, bool> _togglingSubscriptions = {}; // Для отслеживания процесса подписки/отписки
+  final Map<int, bool> _togglingSubscriptions =
+      {}; // Для отслеживания процесса подписки/отписки
 
   @override
   void initState() {
@@ -109,7 +110,10 @@ class CoffeeRunVldMembersContentState
   }
 
   /// ──────────────────────── Подписка/отписка на пользователя ────────────────────────
-  Future<void> _toggleSubscribe(int targetUserId, bool currentlySubscribed) async {
+  Future<void> _toggleSubscribe(
+    int targetUserId,
+    bool currentlySubscribed,
+  ) async {
     // Проверяем, не идет ли уже процесс подписки/отписки для этого пользователя
     if (_togglingSubscriptions[targetUserId] == true) return;
 
@@ -124,10 +128,7 @@ class CoffeeRunVldMembersContentState
 
       final data = await api.post(
         '/toggle_subscribe.php',
-        body: {
-          'target_user_id': targetUserId.toString(),
-          'action': action,
-        },
+        body: {'target_user_id': targetUserId.toString(), 'action': action},
       );
 
       if (!mounted) return;
@@ -137,7 +138,9 @@ class CoffeeRunVldMembersContentState
 
         // Обновляем статус подписки в списке участников
         setState(() {
-          final index = _members.indexWhere((m) => (m['user_id'] as int?) == targetUserId);
+          final index = _members.indexWhere(
+            (m) => (m['user_id'] as int?) == targetUserId,
+          );
           if (index != -1) {
             _members[index]['is_subscribed'] = isSubscribed;
           }
@@ -279,7 +282,7 @@ class _MemberRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.only(left: 8, right: 0, top: 4, bottom: 4),
         child: Row(
           children: [
             ClipOval(
