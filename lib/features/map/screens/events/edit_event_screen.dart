@@ -288,28 +288,47 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
         // Сначала проверяем прямые поля distance_from и distance_to
         final distanceFrom = event['distance_from'];
         final distanceTo = event['distance_to'];
+        
+        // Загружаем distance_from
         if (distanceFrom != null) {
-          final distanceFromStr = distanceFrom.toString();
-          distanceCtrl1.text = distanceFromStr;
-          _originalDistanceFrom = distanceFromStr; // Сохраняем исходное значение
+          final distanceFromStr = distanceFrom.toString().trim();
+          if (distanceFromStr.isNotEmpty) {
+            distanceCtrl1.text = distanceFromStr;
+            _originalDistanceFrom = distanceFromStr; // Сохраняем исходное значение
+          }
         }
+        
+        // Загружаем distance_to
         if (distanceTo != null) {
-          final distanceToStr = distanceTo.toString();
-          distanceCtrl2.text = distanceToStr;
-          _originalDistanceTo = distanceToStr; // Сохраняем исходное значение
+          final distanceToStr = distanceTo.toString().trim();
+          if (distanceToStr.isNotEmpty) {
+            distanceCtrl2.text = distanceToStr;
+            _originalDistanceTo = distanceToStr; // Сохраняем исходное значение
+          }
         }
+        
         // Если прямые поля не заполнены, проверяем массив distances (для обратной совместимости)
-        if (distanceFrom == null && distanceTo == null) {
+        // Проверяем distance_from из массива, если оно еще не загружено
+        if (_originalDistanceFrom == null) {
           final distancesList = event['distances'] as List<dynamic>? ?? [];
           if (distancesList.isNotEmpty) {
-            final distFromStr = distancesList[0].toString();
-            distanceCtrl1.text = distFromStr;
-            _originalDistanceFrom = distFromStr; // Сохраняем исходное значение
+            final distFromStr = distancesList[0].toString().trim();
+            if (distFromStr.isNotEmpty) {
+              distanceCtrl1.text = distFromStr;
+              _originalDistanceFrom = distFromStr; // Сохраняем исходное значение
+            }
           }
+        }
+        
+        // Проверяем distance_to из массива, если оно еще не загружено
+        if (_originalDistanceTo == null) {
+          final distancesList = event['distances'] as List<dynamic>? ?? [];
           if (distancesList.length > 1) {
-            final distToStr = distancesList[1].toString();
-            distanceCtrl2.text = distToStr;
-            _originalDistanceTo = distToStr; // Сохраняем исходное значение
+            final distToStr = distancesList[1].toString().trim();
+            if (distToStr.isNotEmpty) {
+              distanceCtrl2.text = distToStr;
+              _originalDistanceTo = distToStr; // Сохраняем исходное значение
+            }
           }
         }
 
@@ -707,23 +726,29 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
         fields['description'] = descCtrl.text.trim();
 
         // Добавляем дистанции "от" и "до"
-        // Отправляем текущее значение, если оно заполнено
-        // Если поле пустое, но было исходное значение, используем исходное, чтобы не обнулить значение
+        // ВАЖНО: Всегда отправляем значения, если они были загружены из БД,
+        // чтобы не потерять данные при обновлении других полей (например, фоновой картинки)
         final distanceFromValue = distanceCtrl1.text.trim();
         if (distanceFromValue.isNotEmpty) {
-          fields['distances[0]'] = distanceFromValue; // дистанция "от"
+          // Пользователь ввел новое значение - используем его
+          fields['distances[0]'] = distanceFromValue;
         } else if (_originalDistanceFrom != null && _originalDistanceFrom!.isNotEmpty) {
           // Поле пустое, но было исходное значение - сохраняем его, чтобы не обнулить в БД
           fields['distances[0]'] = _originalDistanceFrom!;
         }
+        // Если и текущее значение пустое, и исходное значение не было установлено,
+        // поле не отправляется, и PHP установит null (это нормально для новых событий)
         
         final distanceToValue = distanceCtrl2.text.trim();
         if (distanceToValue.isNotEmpty) {
-          fields['distances[1]'] = distanceToValue; // дистанция "до"
+          // Пользователь ввел новое значение - используем его
+          fields['distances[1]'] = distanceToValue;
         } else if (_originalDistanceTo != null && _originalDistanceTo!.isNotEmpty) {
           // Поле пустое, но было исходное значение - сохраняем его, чтобы не обнулить в БД
           fields['distances[1]'] = _originalDistanceTo!;
         }
+        // Если и текущее значение пустое, и исходное значение не было установлено,
+        // поле не отправляется, и PHP установит null (это нормально для новых событий)
 
         // Флаги для сохранения существующих изображений
         if (logoUrl != null && logoFile == null && logoFilename != null) {
