@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import 'edit_event_screen.dart';
+import '../../../../features/profile/screens/profile_screen.dart';
 
 /// Детальная страница события (на основе coffeerun_screen.dart)
 class EventDetailScreen2 extends ConsumerStatefulWidget {
@@ -237,6 +238,28 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     if (result == true) {
       await _loadEvent();
     }
+  }
+
+  /// ──────────────────────── Переход в профиль организатора ────────────────────────
+  void _openOrganizerProfile() {
+    if (_eventData == null) return;
+    final eventUserId = _eventData!['user_id'] as int?;
+    if (eventUserId == null) return;
+
+    Navigator.of(context).push(
+      TransparentPageRoute(
+        builder: (_) => ProfileScreen(userId: eventUserId),
+      ),
+    );
+  }
+
+  /// ──────────────────────── Переход в профиль участника ────────────────────────
+  void _openParticipantProfile(int userId) {
+    Navigator.of(context).push(
+      TransparentPageRoute(
+        builder: (_) => ProfileScreen(userId: userId),
+      ),
+    );
   }
 
   /// ──────────────────────── Присоединение/выход из события ────────────────────────
@@ -599,102 +622,107 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                ClipOval(
-                                  child: Builder(
-                                    builder: (context) {
-                                      if (finalOrganizerAvatar.isEmpty) {
-                                        return Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            color: AppColors.getBorderColor(
-                                              context,
-                                            ),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            Icons.person,
-                                            size: 24,
-                                            color:
-                                                AppColors.getIconPrimaryColor(
-                                                  context,
-                                                ),
-                                          ),
-                                        );
-                                      }
-                                      final dpr = MediaQuery.of(
-                                        context,
-                                      ).devicePixelRatio;
-                                      final cacheWidth = (40 * dpr).round();
-                                      return CachedNetworkImage(
-                                        imageUrl: finalOrganizerAvatar,
-                                        width: 40,
-                                        height: 40,
-                                        fit: BoxFit.cover,
-                                        fadeInDuration: const Duration(
-                                          milliseconds: 120,
-                                        ),
-                                        memCacheWidth: cacheWidth,
-                                        errorWidget:
-                                            (
-                                              context,
-                                              imageUrl,
-                                              error,
-                                            ) => Container(
-                                              width: 40,
-                                              height: 40,
+                            // ─── Кликабельный блок организатора: переход в профиль
+                            GestureDetector(
+                              onTap: _openOrganizerProfile,
+                              behavior: HitTestBehavior.opaque,
+                              child: Row(
+                                children: [
+                                  ClipOval(
+                                    child: Builder(
+                                      builder: (context) {
+                                        if (finalOrganizerAvatar.isEmpty) {
+                                          return Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
                                               color: AppColors.getBorderColor(
                                                 context,
                                               ),
-                                              child: Icon(
-                                                Icons.person,
-                                                size: 20,
-                                                color:
-                                                    AppColors.getIconPrimaryColor(
-                                                      context,
-                                                    ),
-                                              ),
+                                              shape: BoxShape.circle,
                                             ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Организатор',
-                                        style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 12,
-                                          color:
-                                              AppColors.getTextSecondaryColor(
+                                            child: Icon(
+                                              Icons.person,
+                                              size: 24,
+                                              color:
+                                                  AppColors.getIconPrimaryColor(
+                                                    context,
+                                                  ),
+                                            ),
+                                          );
+                                        }
+                                        final dpr = MediaQuery.of(
+                                          context,
+                                        ).devicePixelRatio;
+                                        final cacheWidth = (40 * dpr).round();
+                                        return CachedNetworkImage(
+                                          imageUrl: finalOrganizerAvatar,
+                                          width: 40,
+                                          height: 40,
+                                          fit: BoxFit.cover,
+                                          fadeInDuration: const Duration(
+                                            milliseconds: 120,
+                                          ),
+                                          memCacheWidth: cacheWidth,
+                                          errorWidget:
+                                              (
                                                 context,
+                                                imageUrl,
+                                                error,
+                                              ) => Container(
+                                                width: 40,
+                                                height: 40,
+                                                color: AppColors.getBorderColor(
+                                                  context,
+                                                ),
+                                                child: Icon(
+                                                  Icons.person,
+                                                  size: 20,
+                                                  color:
+                                                      AppColors.getIconPrimaryColor(
+                                                        context,
+                                                      ),
+                                                ),
                                               ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        organizerName,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontFamily: 'Inter',
-                                          fontSize: 15,
-                                          color: AppColors.getTextPrimaryColor(
-                                            context,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Организатор',
+                                          style: TextStyle(
+                                            fontFamily: 'Inter',
+                                            fontSize: 12,
+                                            color:
+                                                AppColors.getTextSecondaryColor(
+                                                  context,
+                                                ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          organizerName,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            fontFamily: 'Inter',
+                                            fontSize: 15,
+                                            color: AppColors.getTextPrimaryColor(
+                                              context,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -947,68 +975,79 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                       participants[i] as Map<String, dynamic>;
                                   final avatarUrl =
                                       p['avatar_url'] as String? ?? '';
-                                  return ClipOval(
-                                    child: avatarUrl.isNotEmpty
-                                        ? Builder(
-                                            builder: (context) {
-                                              final dpr = MediaQuery.of(
-                                                context,
-                                              ).devicePixelRatio;
-                                              final w = (48 * dpr).round();
-                                              return CachedNetworkImage(
-                                                imageUrl: avatarUrl,
-                                                width: 48,
-                                                height: 48,
-                                                fit: BoxFit.cover,
-                                                fadeInDuration:
-                                                    const Duration(
-                                                      milliseconds: 120,
-                                                    ),
-                                                memCacheWidth: w,
-                                                maxWidthDiskCache: w,
-                                                errorWidget:
-                                                    (
-                                                      context,
-                                                      imageUrl,
-                                                      error,
-                                                    ) => Container(
-                                                      width: 48,
-                                                      height: 48,
-                                                      color:
-                                                          AppColors.getBorderColor(
-                                                            context,
-                                                          ),
-                                                      child: Icon(
-                                                        Icons.person,
-                                                        size: 28,
+                                  final participantUserId =
+                                      p['user_id'] as int?;
+                                  // ─── Кликабельный аватар участника: переход в профиль
+                                  return GestureDetector(
+                                    onTap: participantUserId != null
+                                        ? () => _openParticipantProfile(
+                                              participantUserId,
+                                            )
+                                        : null,
+                                    behavior: HitTestBehavior.opaque,
+                                    child: ClipOval(
+                                      child: avatarUrl.isNotEmpty
+                                          ? Builder(
+                                              builder: (context) {
+                                                final dpr = MediaQuery.of(
+                                                  context,
+                                                ).devicePixelRatio;
+                                                final w = (48 * dpr).round();
+                                                return CachedNetworkImage(
+                                                  imageUrl: avatarUrl,
+                                                  width: 48,
+                                                  height: 48,
+                                                  fit: BoxFit.cover,
+                                                  fadeInDuration:
+                                                      const Duration(
+                                                        milliseconds: 120,
+                                                      ),
+                                                  memCacheWidth: w,
+                                                  maxWidthDiskCache: w,
+                                                  errorWidget:
+                                                      (
+                                                        context,
+                                                        imageUrl,
+                                                        error,
+                                                      ) => Container(
+                                                        width: 48,
+                                                        height: 48,
                                                         color:
-                                                            AppColors.getIconPrimaryColor(
+                                                            AppColors.getBorderColor(
                                                               context,
                                                             ),
+                                                        child: Icon(
+                                                          Icons.person,
+                                                          size: 28,
+                                                          color:
+                                                              AppColors.getIconPrimaryColor(
+                                                                context,
+                                                              ),
+                                                        ),
                                                       ),
+                                                );
+                                              },
+                                            )
+                                          : Container(
+                                              width: 48,
+                                              height: 48,
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    AppColors.getBorderColor(
+                                                      context,
                                                     ),
-                                              );
-                                            },
-                                          )
-                                        : Container(
-                                            width: 48,
-                                            height: 48,
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  AppColors.getBorderColor(
-                                                    context,
-                                                  ),
-                                              shape: BoxShape.circle,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Icon(
+                                                Icons.person,
+                                                size: 28,
+                                                color:
+                                                    AppColors.getIconPrimaryColor(
+                                                      context,
+                                                    ),
+                                              ),
                                             ),
-                                            child: Icon(
-                                              Icons.person,
-                                              size: 28,
-                                              color:
-                                                  AppColors.getIconPrimaryColor(
-                                                    context,
-                                                  ),
-                                            ),
-                                          ),
+                                    ),
                                   );
                                 }),
                               ),
