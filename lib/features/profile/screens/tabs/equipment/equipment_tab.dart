@@ -26,6 +26,9 @@ class _GearItem {
   final bool isMain;
   final bool showOnMain;
   final String? imageUrl;
+  final double? avgPace; // Средний темп в минутах на километр (для кроссовок)
+  final double? avgSpeed; // Средняя скорость в км/ч (для велосипедов)
+  final bool isBoots; // Тип снаряжения
 
   const _GearItem({
     required this.id,
@@ -36,9 +39,36 @@ class _GearItem {
     required this.isMain,
     required this.showOnMain,
     this.imageUrl,
+    this.avgPace,
+    this.avgSpeed,
+    required this.isBoots,
   });
 
-  String get value => '$dist км';
+  String get value {
+    // Для кроссовок показываем темп, для велосипедов - скорость
+    if (isBoots) {
+      if (avgPace != null && avgPace! > 0) {
+        final minutes = avgPace!.floor();
+        var seconds = ((avgPace! - minutes) * 60).round();
+        // Обрабатываем случай, когда секунды >= 60
+        if (seconds >= 60) {
+          final adjustedMinutes = minutes + 1;
+          seconds = 0;
+          final formattedSeconds = seconds.toString().padLeft(2, '0');
+          return '$adjustedMinutes:$formattedSeconds /км';
+        }
+        final formattedSeconds = seconds.toString().padLeft(2, '0');
+        return '$minutes:$formattedSeconds /км';
+      }
+      return '$dist км';
+    } else {
+      if (avgSpeed != null && avgSpeed! > 0) {
+        final formattedSpeed = avgSpeed!.toStringAsFixed(1).replaceAll('.', ',');
+        return '$formattedSpeed км/ч';
+      }
+      return '$dist км';
+    }
+  }
 }
 
 class GearTab extends ConsumerStatefulWidget {
@@ -95,6 +125,8 @@ class _GearTabState extends ConsumerState<GearTab>
 
         setState(() {
           _boots = bootsList.map((item) {
+            final avgPaceRaw = item['avg_pace'];
+            final avgPace = avgPaceRaw != null ? (avgPaceRaw is double ? avgPaceRaw : (avgPaceRaw as num).toDouble()) : null;
             return _GearItem(
               id: item['id'] as int,
               equipUserId: item['equip_user_id'] as int,
@@ -104,6 +136,8 @@ class _GearTabState extends ConsumerState<GearTab>
               isMain: (item['main'] as int) == 1,
               showOnMain: (item['show_on_main'] as int) == 1,
               imageUrl: item['image'] as String?,
+              avgPace: avgPace,
+              isBoots: true,
             );
           }).toList();
           // Сортируем: основные элементы первыми
@@ -114,6 +148,8 @@ class _GearTabState extends ConsumerState<GearTab>
           });
 
           _bikes = bikesList.map((item) {
+            final avgSpeedRaw = item['avg_speed'];
+            final avgSpeed = avgSpeedRaw != null ? (avgSpeedRaw is double ? avgSpeedRaw : (avgSpeedRaw as num).toDouble()) : null;
             return _GearItem(
               id: item['id'] as int,
               equipUserId: item['equip_user_id'] as int,
@@ -123,6 +159,8 @@ class _GearTabState extends ConsumerState<GearTab>
               isMain: (item['main'] as int) == 1,
               showOnMain: (item['show_on_main'] as int) == 1,
               imageUrl: item['image'] as String?,
+              avgSpeed: avgSpeed,
+              isBoots: false,
             );
           }).toList();
           // Сортируем: основные элементы первыми
@@ -194,6 +232,9 @@ class _GearTabState extends ConsumerState<GearTab>
               isMain: item.isMain,
               showOnMain: value,
               imageUrl: item.imageUrl,
+              avgPace: item.avgPace,
+              avgSpeed: item.avgSpeed,
+              isBoots: item.isBoots,
             );
           }).toList();
         } else {
@@ -208,6 +249,9 @@ class _GearTabState extends ConsumerState<GearTab>
               isMain: item.isMain,
               showOnMain: value,
               imageUrl: item.imageUrl,
+              avgPace: item.avgPace,
+              avgSpeed: item.avgSpeed,
+              isBoots: item.isBoots,
             );
           }).toList();
         }
