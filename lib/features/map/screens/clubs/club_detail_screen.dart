@@ -13,7 +13,6 @@ import '../../../../core/widgets/expandable_text.dart';
 import 'tabs/club_photo_content.dart';
 import 'coffeerun_vld/tabs/members_content.dart';
 import 'coffeerun_vld/tabs/stats_content.dart';
-import 'coffeerun_vld/tabs/glory_content.dart';
 import 'edit_club_screen.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../profile/providers/user_clubs_provider.dart';
@@ -135,7 +134,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     }
   }
 
-  int _tab = 0; // 0 — Фото, 1 — Участники, 2 — Статистика, 3 — Зал славы
+  int _tab = 0; // 0 — Фото, 1 — Участники, 2 — Статистика
   final GlobalKey<CoffeeRunVldMembersContentState> _membersContentKey =
       GlobalKey<CoffeeRunVldMembersContentState>();
 
@@ -323,14 +322,6 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     }
   }
 
-  Widget _vDivider() => Builder(
-    builder: (context) => Container(
-      width: 1,
-      height: 24,
-      color: AppColors.getBorderColor(context),
-    ),
-  );
-
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -409,360 +400,564 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                     // ───────── Cover + overlay-кнопки + логотип
                     SliverToBoxAdapter(
                       child: Builder(
-                        builder: (context) => Container(
-                          color: AppColors.getSurfaceColor(
-                            context,
-                          ), // Цвет полоски для нижней половины логотипа
-                          padding: const EdgeInsets.only(
-                            bottom: 46,
-                          ), // Место для нижней половины логотипа с обводкой
-                          child: Stack(
-                            clipBehavior: Clip
-                                .none, // Разрешаем отображение элементов за пределами Stack
-                            children: [
-                              // Cover изображение (если есть)
-                              if (backgroundUrl.isNotEmpty)
-                                _BackgroundImage(url: backgroundUrl)
-                              else
-                                Builder(
-                                  builder: (context) {
-                                    final screenW = MediaQuery.of(
-                                      context,
-                                    ).size.width;
-                                    final calculatedHeight =
-                                        screenW /
-                                        2.1; // Вычисляем высоту по соотношению 2.1:1
-                                    return Container(
-                                      width: double.infinity,
+                        builder: (context) {
+                          final screenW = MediaQuery.of(context).size.width;
+                          final calculatedHeight =
+                              screenW /
+                              2.1; // Вычисляем высоту по соотношению 2.1:1
+                          final containerHeight =
+                              calculatedHeight + 60; // Высота фона + 60px
+                          return Container(
+                            height: containerHeight,
+                            decoration: BoxDecoration(
+                              color: AppColors.getSurfaceColor(
+                                context,
+                              ), // Цвет фона для нижней части с логотипом
+                              borderRadius: const BorderRadius.only(
+                                bottomLeft: Radius.circular(AppRadius.xl),
+                                bottomRight: Radius.circular(AppRadius.xl),
+                              ),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.only(
+                                bottomLeft: Radius.circular(AppRadius.xl),
+                                bottomRight: Radius.circular(AppRadius.xl),
+                              ),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  // Cover изображение (если есть)
+                                  if (backgroundUrl.isNotEmpty)
+                                    Positioned(
+                                      top: 0,
+                                      left: 0,
+                                      right: 0,
                                       height: calculatedHeight,
-                                      color: AppColors.getBorderColor(context),
-                                    );
-                                  },
-                                ),
-                              // ── Верхние кнопки вынесены в плавающий слой выше
-                              // Логотип наполовину на фоне (позиционирован внизу фона)
-                              Positioned(
-                                left: 12,
-                                bottom:
-                                    -46, // Половина логотипа с обводкой (92/2 = 46) выходит за границу фона
-                                child: Builder(
-                                  builder: (context) => Container(
-                                    width:
-                                        92, // 90 + 1*2 (логотип + обводка с двух сторон)
-                                    height: 92,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.getSurfaceColor(context),
-                                      shape: BoxShape.circle,
+                                      child: _BackgroundImage(
+                                        url: backgroundUrl,
+                                      ),
+                                    )
+                                  else
+                                    Positioned(
+                                      top: 0,
+                                      left: 0,
+                                      right: 0,
+                                      height: calculatedHeight,
+                                      child: Container(
+                                        width: double.infinity,
+                                        height: calculatedHeight,
+                                        color: AppColors.getBorderColor(
+                                          context,
+                                        ),
+                                      ),
                                     ),
-                                    padding: const EdgeInsets.all(
-                                      1,
-                                    ), // Толщина обводки
-                                    child: ClipOval(
-                                      child: logoUrl.isNotEmpty
-                                          ? _HeaderLogo(url: logoUrl)
-                                          : Builder(
-                                              builder: (context) => Container(
-                                                width: 90,
-                                                height: 90,
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      AppColors.getBorderColor(
-                                                        context,
-                                                      ),
-                                                  shape: BoxShape.circle,
+                                  // ── Логотип внизу контейнера
+                                  Positioned(
+                                    left: 12,
+                                    bottom: 0, // В самом низу контейнера
+                                    child: Builder(
+                                      builder: (context) => Container(
+                                        width:
+                                            92, // 90 + 1*2 (логотип + обводка с двух сторон)
+                                        height: 92,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.getSurfaceColor(
+                                            context,
+                                          ),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        padding: const EdgeInsets.all(
+                                          1,
+                                        ), // Толщина обводки
+                                        child: ClipOval(
+                                          child: logoUrl.isNotEmpty
+                                              ? _HeaderLogo(url: logoUrl)
+                                              : Builder(
+                                                  builder: (context) => Container(
+                                                    width: 90,
+                                                    height: 90,
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          AppColors.getBorderColor(
+                                                            context,
+                                                          ),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: Icon(
+                                                      Icons.group,
+                                                      size: 12,
+                                                      color:
+                                                          AppColors.getIconSecondaryColor(
+                                                            context,
+                                                          ),
+                                                    ),
+                                                  ),
                                                 ),
-                                                child: Icon(
-                                                  Icons.group,
-                                                  size: 12,
-                                                  color:
-                                                      AppColors.getIconSecondaryColor(
-                                                        context,
-                                                      ),
-                                                ),
-                                              ),
-                                            ),
+                                        ),
+                                      ),
                                     ),
                                   ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                    // ───────── Промежуточный блок: название клуба и ссылка
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      sliver: SliverToBoxAdapter(
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.getSurfaceColor(context),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            border: Border.all(
+                              color: AppColors.getBorderColor(context),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                name,
+                                textAlign: TextAlign.left,
+                                style: AppTextStyles.h17w6.copyWith(
+                                  color: AppColors.getTextPrimaryColor(context),
                                 ),
                               ),
+                              if (link.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                _LinkRow(link: link),
+                              ],
                             ],
                           ),
                         ),
                       ),
                     ),
 
-                    // ───────── «Шапка» карточки клуба
-                    SliverToBoxAdapter(
-                      child: Builder(
-                        builder: (context) => Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.getSurfaceColor(context),
-                            border: Border(
-                              bottom: BorderSide(
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                    // ───────── Промежуточный блок: информация
+                    if (description.isNotEmpty)
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        sliver: SliverToBoxAdapter(
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.getSurfaceColor(context),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(
                                 color: AppColors.getBorderColor(context),
                                 width: 1,
                               ),
                             ),
-                          ),
-                          padding: const EdgeInsets.fromLTRB(
-                            12,
-                            10, // Небольшой отступ от нижней половины логотипа (которая уже в полоске выше)
-                            12,
-                            12,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Имя клуба (логотип теперь в Stack выше)
-                              Text(
-                                name,
-                                style: AppTextStyles.h17w6.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.getTextPrimaryColor(context),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Информация',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 12,
+                                    color: AppColors.getTextSecondaryColor(
+                                      context,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-
-                              // Описание с возможностью раскрытия
-                              if (description.isNotEmpty)
+                                const SizedBox(height: 4),
                                 Builder(
                                   builder: (context) => ExpandableText(
                                     text: description,
                                     textStyle: TextStyle(
                                       fontFamily: 'Inter',
-                                      fontSize: 14,
-                                      height: 1.5,
-                                      color: AppColors.getTextSecondaryColor(
+                                      fontSize: 15,
+                                      height: 1.35,
+                                      color: AppColors.getTextPrimaryColor(
                                         context,
                                       ),
-                                      fontWeight: FontWeight.w500,
+                                      fontWeight: FontWeight.w400,
                                     ),
                                   ),
                                 ),
-                              if (description.isNotEmpty)
-                                const SizedBox(height: 12),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
 
-                              // Инфо-блок
-                              Column(
-                                children: [
-                                  // Статус открытости клуба
-                                  _InfoRow(
-                                    icon: isOpen
-                                        ? CupertinoIcons.lock_open
-                                        : CupertinoIcons.lock_fill,
-                                    text: isOpen
-                                        ? 'Открытое сообщество'
-                                        : 'Закрытое беговое сообщество',
-                                  ),
-                                  const SizedBox(height: 6),
-                                  if (dateFormatted.isNotEmpty) ...[
-                                    _InfoRow(
-                                      icon: CupertinoIcons.calendar_today,
-                                      text: 'Основан: $dateFormatted',
-                                    ),
-                                    const SizedBox(height: 6),
-                                  ],
-                                  // Количество участников
-                                  _InfoRow(
-                                    icon: CupertinoIcons.person_2_fill,
-                                    text: 'Участников: $membersCount',
-                                  ),
-                                  // Ссылка на сайт клуба (если указана)
-                                  if (link.isNotEmpty) ...[
-                                    const SizedBox(height: 6),
-                                    _LinkRow(link: link),
-                                  ],
-                                ],
-                              ),
-                              const SizedBox(height: 12),
+                    if (description.isNotEmpty)
+                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-                              // Кнопка действия
-                              Align(
-                                alignment: Alignment.center,
-                                child: Builder(
-                                  builder: (context) => ElevatedButton(
-                                    onPressed: _isJoining
-                                        ? null
-                                        : _isMember
-                                        ? _leaveClub
-                                        : _joinClub,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: _isMember
-                                          ? AppColors.getBackgroundColor(
-                                              context,
-                                            )
-                                          : AppColors.brandPrimary,
-                                      foregroundColor: _isMember
-                                          ? AppColors.getTextSecondaryColor(
-                                              context,
-                                            )
-                                          : AppColors.getSurfaceColor(context),
-                                      elevation: 0,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 30,
-                                        vertical: 12,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.xxl,
+                    // ───────── Промежуточный блок: дата основания и кнопка
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      sliver: SliverToBoxAdapter(
+                        child: Row(
+                          children: [
+                            // Блок с датой основания
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.getSurfaceColor(context),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
+                                  border: Border.all(
+                                    color: AppColors.getBorderColor(context),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Дата основания',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 12,
+                                        color: AppColors.getTextSecondaryColor(
+                                          context,
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      dateFormatted.isNotEmpty
+                                          ? dateFormatted
+                                          : '—',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Inter',
+                                        fontSize: 15,
+                                        color: AppColors.getTextPrimaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Кнопка действия
+                            Builder(
+                              builder: (context) => Material(
+                                color: _isMember
+                                    ? AppColors.red
+                                    : AppColors.brandPrimary,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.xxl,
+                                ),
+                                elevation: 0,
+                                child: InkWell(
+                                  onTap: _isJoining
+                                      ? null
+                                      : _isMember
+                                      ? _leaveClub
+                                      : _joinClub,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.xxl,
+                                  ),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: _isMember ? 30 : 24,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _isMember
+                                          ? AppColors.red
+                                          : AppColors.brandPrimary,
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.xxl,
+                                      ),
+                                    ),
                                     child: _isJoining
-                                        ? SizedBox(
+                                        ? const SizedBox(
                                             width: 20,
                                             height: 20,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
                                               valueColor:
                                                   AlwaysStoppedAnimation<Color>(
-                                                    AppColors.getSurfaceColor(
-                                                      context,
-                                                    ),
+                                                    AppColors.surface,
                                                   ),
                                             ),
                                           )
-                                        : Builder(
-                                            builder: (context) => Text(
-                                              _isMember
-                                                  ? 'Выйти из клуба'
-                                                  : _isRequest
-                                                  ? 'Заявка подана'
-                                                  : isOpen
-                                                  ? 'Вступить в клуб'
-                                                  : 'Подать заявку',
-                                              style: TextStyle(
-                                                fontFamily: 'Inter',
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w500,
-                                                color: _isMember
-                                                    ? AppColors.getTextSecondaryColor(
-                                                        context,
-                                                      )
-                                                    : AppColors.getSurfaceColor(
-                                                        context,
-                                                      ),
-                                              ),
+                                        : Text(
+                                            _isMember
+                                                ? 'Выйти'
+                                                : _isRequest
+                                                ? 'Заявка подана'
+                                                : isOpen
+                                                ? 'Вступить'
+                                                : 'Подать заявку',
+                                            style: const TextStyle(
+                                              fontFamily: 'Inter',
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppColors.surface,
                                             ),
                                           ),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
 
-                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-                    // ───────── Табы + контент
-                    SliverToBoxAdapter(
-                      child: Builder(
-                        builder: (context) => Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.getSurfaceColor(context),
-                            border: Border(
-                              top: BorderSide(
-                                color: AppColors.getBorderColor(context),
-                                width: 1,
-                              ),
-                              bottom: BorderSide(
-                                color: AppColors.getBorderColor(context),
-                                width: 1,
-                              ),
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                height: 48,
-                                child: Row(
+                    // ───────── Промежуточный блок: количество участников и тип сообщества
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      sliver: SliverToBoxAdapter(
+                        child: Row(
+                          children: [
+                            // Блок с количеством участников
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.getSurfaceColor(context),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
+                                  border: Border.all(
+                                    color: AppColors.getBorderColor(context),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    _TabBtn(
-                                      text: 'Фото',
-                                      selected: _tab == 0,
-                                      onTap: () => setState(() => _tab = 0),
+                                    Text(
+                                      'Участников',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 12,
+                                        color: AppColors.getTextSecondaryColor(
+                                          context,
+                                        ),
+                                      ),
                                     ),
-                                    _vDivider(),
-                                    _TabBtn(
-                                      text: 'Участники',
-                                      selected: _tab == 1,
-                                      onTap: () => setState(() => _tab = 1),
-                                    ),
-                                    _vDivider(),
-                                    _TabBtn(
-                                      text: 'Статистика',
-                                      selected: _tab == 2,
-                                      onTap: () => setState(() => _tab = 2),
-                                    ),
-                                    _vDivider(),
-                                    _TabBtn(
-                                      text: 'Зал славы',
-                                      selected: _tab == 3,
-                                      onTap: () => setState(() => _tab = 3),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      membersCount.toString(),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Inter',
+                                        fontSize: 15,
+                                        color: AppColors.getTextPrimaryColor(
+                                          context,
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
-                              Builder(
-                                builder: (context) => Divider(
-                                  height: 1,
-                                  color: AppColors.getBorderColor(context),
+                            ),
+                            const SizedBox(width: 12),
+                            // Блок с типом сообщества
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.getSurfaceColor(context),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
+                                  border: Border.all(
+                                    color: AppColors.getBorderColor(context),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Тип сообщества',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 12,
+                                        color: AppColors.getTextSecondaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      isOpen ? 'Открытое' : 'Закрытое',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Inter',
+                                        fontSize: 15,
+                                        color: AppColors.getTextPrimaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
 
-                              if (_tab == 0)
-                                Padding(
-                                  padding: const EdgeInsets.all(2),
-                                  child: ClubPhotoContent(
-                                    clubId: widget.clubId,
-                                    canEdit: _canEdit,
-                                    clubData: _clubData,
-                                    onPhotosUpdated: _loadClub,
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                    // ───────── Пилюля с табами
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      sliver: SliverToBoxAdapter(
+                        child: Builder(
+                          builder: (context) => Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.getSurfaceColor(context),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.xxl,
+                              ),
+                              border: Border.all(
+                                color: AppColors.getBorderColor(context),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: _PillTabBtn(
+                                    text: 'Фото',
+                                    selected: _tab == 0,
+                                    onTap: () => setState(() => _tab = 0),
                                   ),
-                                )
-                              else if (_tab == 1)
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    top: 0,
-                                    bottom: 0,
-                                  ),
-                                  child: CoffeeRunVldMembersContent(
-                                    key: _membersContentKey,
-                                    clubId: widget.clubId,
-                                  ),
-                                )
-                              else if (_tab == 2)
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    12,
-                                    12,
-                                    12,
-                                    12,
-                                  ),
-                                  child: CoffeeRunVldStatsContent(
-                                    clubId: widget.clubId,
-                                  ),
-                                )
-                              else
-                                const Padding(
-                                  padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
-                                  child: CoffeeRunVldGloryContent(),
                                 ),
-                            ],
+                                Expanded(
+                                  child: _PillTabBtn(
+                                    text: 'Участники',
+                                    selected: _tab == 1,
+                                    onTap: () => setState(() => _tab = 1),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _PillTabBtn(
+                                    text: 'Статистика',
+                                    selected: _tab == 2,
+                                    onTap: () => setState(() => _tab = 2),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
 
-                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                    // ───────── Контент табов
+                    if (_tab == 0)
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        sliver: SliverToBoxAdapter(
+                          child: Builder(
+                            builder: (context) => Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.getSurfaceColor(context),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
+                              ),
+                              child: ClubPhotoContent(
+                                clubId: widget.clubId,
+                                canEdit: _canEdit,
+                                clubData: _clubData,
+                                onPhotosUpdated: _loadClub,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (_tab == 1)
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        sliver: SliverToBoxAdapter(
+                          child: Builder(
+                            builder: (context) => Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.getSurfaceColor(context),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
+                              ),
+                              child: CoffeeRunVldMembersContent(
+                                key: _membersContentKey,
+                                clubId: widget.clubId,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        sliver: SliverToBoxAdapter(
+                          child: Builder(
+                            builder: (context) => Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.getSurfaceColor(context),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.getBorderColor(context),
+                                  width: 1,
+                                ),
+                              ),
+                              child: CoffeeRunVldStatsContent(
+                                clubId: widget.clubId,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
                   ],
                 ),
 
                 // ───────── Плавающие круглые иконки (назад + редактирование)
                 Positioned(
-                  top: 8,
+                  top: 12,
                   left: 0,
                   right: 0,
                   child: SafeArea(
@@ -813,7 +1008,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                               },
                             )
                           else
-                            const SizedBox(width: 34, height: 34),
+                            const SizedBox(width: 38, height: 38),
                         ],
                       ),
                     ),
@@ -871,32 +1066,6 @@ class _CircleIconBtn extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _InfoRow({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: AppColors.brandPrimary),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              color: AppColors.getTextPrimaryColor(context),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 /// Строка со ссылкой на сайт клуба (кликабельная)
 class _LinkRow extends StatelessWidget {
   final String link;
@@ -933,13 +1102,13 @@ class _LinkRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: () => _openLink(context),
       child: Row(
         children: [
           const Icon(
-            CupertinoIcons.link,
-            size: 14,
+            CupertinoIcons.globe,
+            size: 18,
             color: AppColors.brandPrimary,
           ),
           const SizedBox(width: 8),
@@ -1033,12 +1202,12 @@ class _BackgroundImage extends StatelessWidget {
   }
 }
 
-/// Кнопка вкладки
-class _TabBtn extends StatelessWidget {
+/// Кнопка вкладки в пилюле
+class _PillTabBtn extends StatelessWidget {
   final String text;
   final bool selected;
   final VoidCallback onTap;
-  const _TabBtn({
+  const _PillTabBtn({
     required this.text,
     required this.selected,
     required this.onTap,
@@ -1046,21 +1215,26 @@ class _TabBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected
-        ? AppColors.brandPrimary
-        : AppColors.getTextPrimaryColor(context);
     return InkWell(
       onTap: onTap,
-      child: Padding(
-        // одинаковый отступ от текста до вертикального разделителя
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: color,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.brandPrimary : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
+        child: Center(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: selected
+                  ? AppColors.getSurfaceColor(context)
+                  : AppColors.getTextPrimaryColor(context),
+            ),
           ),
         ),
       ),
