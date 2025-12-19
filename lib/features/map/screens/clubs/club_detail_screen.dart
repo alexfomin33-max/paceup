@@ -406,7 +406,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                               screenW /
                               2.1; // Вычисляем высоту по соотношению 2.1:1
                           final containerHeight =
-                              calculatedHeight + 60; // Высота фона + 60px
+                              calculatedHeight + 68; // Высота фона + 60px
                           return Container(
                             height: containerHeight,
                             decoration: BoxDecoration(
@@ -454,7 +454,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                   // ── Логотип внизу контейнера
                                   Positioned(
                                     left: 12,
-                                    bottom: 0, // В самом низу контейнера
+                                    bottom: 8, // В самом низу контейнера
                                     child: Builder(
                                       builder: (context) => Container(
                                         width:
@@ -497,6 +497,80 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                       ),
                                     ),
                                   ),
+                                  // ── Название клуба и информация справа от логотипа
+                                  Positioned(
+                                    left:
+                                        116, // 12 (отступ слева) + 92 (ширина логотипа) + 12 (отступ)
+                                    right: 12,
+                                    top:
+                                        calculatedHeight +
+                                        12, // Чуть ниже фоновой картинки
+                                    child: Builder(
+                                      builder: (context) => Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          // Название клуба
+                                          Text(
+                                            name,
+                                            style: AppTextStyles.h17w6.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                              color:
+                                                  AppColors.getTextPrimaryColor(
+                                                    context,
+                                                  ),
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          // Участники и тип сообщества
+                                          Row(
+                                            children: [
+                                              Text(
+                                                'Участников: $membersCount',
+                                                style: TextStyle(
+                                                  fontFamily: 'Inter',
+                                                  fontSize: 13,
+                                                  color:
+                                                      AppColors.getTextPrimaryColor(
+                                                        context,
+                                                      ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                '·',
+                                                style: TextStyle(
+                                                  fontFamily: 'Inter',
+                                                  fontSize: 13,
+                                                  color:
+                                                      AppColors.getTextPrimaryColor(
+                                                        context,
+                                                      ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                isOpen
+                                                    ? 'Открытое'
+                                                    : 'Закрытое',
+                                                style: TextStyle(
+                                                  fontFamily: 'Inter',
+                                                  fontSize: 13,
+                                                  color:
+                                                      AppColors.getTextPrimaryColor(
+                                                        context,
+                                                      ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -507,42 +581,28 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
                     const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-                    // ───────── Промежуточный блок: название клуба и ссылка
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      sliver: SliverToBoxAdapter(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.getSurfaceColor(context),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            border: Border.all(
-                              color: AppColors.getBorderColor(context),
-                              width: 1,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                name,
-                                textAlign: TextAlign.left,
-                                style: AppTextStyles.h17w6.copyWith(
-                                  color: AppColors.getTextPrimaryColor(context),
-                                ),
+                    // ───────── Промежуточный блок: ссылка на сайт клуба (если есть)
+                    if (link.isNotEmpty)
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        sliver: SliverToBoxAdapter(
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.getSurfaceColor(context),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(
+                                color: AppColors.getBorderColor(context),
+                                width: 1,
                               ),
-                              if (link.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                _LinkRow(link: link),
-                              ],
-                            ],
+                            ),
+                            child: _LinkRow(link: link),
                           ),
                         ),
                       ),
-                    ),
 
-                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                    if (link.isNotEmpty)
+                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
                     // ───────── Промежуточный блок: информация
                     if (description.isNotEmpty)
