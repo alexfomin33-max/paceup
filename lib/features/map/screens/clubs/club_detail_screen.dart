@@ -11,7 +11,6 @@ import '../../../../providers/services/auth_provider.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../core/widgets/more_menu_hub.dart';
-import '../../../../core/widgets/primary_button.dart';
 import 'tabs/club_photo_content.dart';
 import 'coffeerun_vld/tabs/members_content.dart';
 import 'coffeerun_vld/tabs/stats_content.dart';
@@ -703,11 +702,77 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         sliver: SliverToBoxAdapter(
-                          child: PrimaryButton(
-                            text: isOpen ? 'Вступить' : 'Подать заявку',
-                            onPressed: _joinClub,
-                            expanded: true,
-                            isLoading: _isJoining,
+                          child: Builder(
+                            builder: (context) {
+                              // ── Цвет текста: в светлой теме используем getSurfaceColor, в тёмной — surface
+                              final textColor = Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? AppColors.surface
+                                  : AppColors.getSurfaceColor(context);
+
+                              // ── Контент кнопки с индикатором загрузки
+                              final Widget content = Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (_isJoining)
+                                    const Padding(
+                                      padding: EdgeInsets.only(right: 10),
+                                      child: CupertinoActivityIndicator(
+                                        radius: 9,
+                                      ),
+                                    ),
+                                  Flexible(
+                                    child: Text(
+                                      isOpen ? 'Вступить' : 'Подать заявку',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                        color: textColor,
+                                        height: 1.0,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+
+                              // ── Кнопка с borderRadius = AppRadius.md
+                              final Widget button = ElevatedButton(
+                                onPressed: _isJoining ? null : _joinClub,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.brandPrimary,
+                                  foregroundColor: textColor,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 30,
+                                    vertical: 0,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
+                                    ),
+                                  ),
+                                  minimumSize: const Size(0, 44),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  alignment: Alignment.center,
+                                ),
+                                child: content,
+                              );
+
+                              // ── Растягиваем на всю ширину
+                              return SizedBox(
+                                width: double.infinity,
+                                height: 44,
+                                child: _isJoining
+                                    ? IgnorePointer(child: button)
+                                    : button,
+                              );
+                            },
                           ),
                         ),
                       ),

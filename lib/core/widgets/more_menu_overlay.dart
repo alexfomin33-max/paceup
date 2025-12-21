@@ -120,19 +120,15 @@ class MoreMenuOverlay {
     // используем адаптивный цвет (darkSurfaceMuted в темной теме)
     final bgColor = backgroundColor == AppColors.surface
         ? (brightness == Brightness.dark
-            ? AppColors.darkSurfaceMuted
-            : AppColors.getSurfaceColor(context))
+              ? AppColors.darkSurfaceMuted
+              : AppColors.getSurfaceColor(context))
         : backgroundColor;
     // Для темной темы используем более заметную тень
     final shadowColor = brightness == Brightness.dark
         ? AppColors.darkShadowSoft
         : AppColors.scrim20;
     final shadowList = [
-      BoxShadow(
-        color: shadowColor,
-        blurRadius: 4,
-        offset: const Offset(0, 1),
-      ),
+      BoxShadow(color: shadowColor, blurRadius: 4, offset: const Offset(0, 1)),
     ];
 
     _entry = OverlayEntry(
@@ -194,16 +190,13 @@ class MoreMenuOverlay {
                 Expanded(
                   child: Text(
                     it.text,
-                    style: it.textStyle ??
+                    style:
+                        it.textStyle ??
                         AppTextStyles.h14w4.copyWith(color: textColor),
                   ),
                 ),
                 const SizedBox(width: 12),
-                Icon(
-                  it.icon,
-                  size: 18,
-                  color: it.iconColor ?? iconColor,
-                ),
+                Icon(it.icon, size: 18, color: it.iconColor ?? iconColor),
               ],
             ),
           ),

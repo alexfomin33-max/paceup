@@ -64,7 +64,7 @@ class RecommendedBlock extends ConsumerWidget {
             return _RecommendedList(friends: friends);
           },
           loading: () => const SizedBox(
-            height: 286,
+            height: 287,
             child: Center(child: CupertinoActivityIndicator()),
           ),
           error: (error, stack) => const SizedBox.shrink(),
@@ -87,7 +87,7 @@ class _RecommendedList extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 256,
+      height: 257,
       child: ListView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(

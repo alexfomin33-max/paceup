@@ -1236,33 +1236,31 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     sliver: SliverToBoxAdapter(
-                      child: Center(
-                        child: Material(
-                          color: _isParticipant
-                              ? AppColors.red
-                              : AppColors.brandPrimary,
-                          borderRadius: BorderRadius.circular(AppRadius.xxl),
-                          elevation: 0,
-                          child: InkWell(
-                            onTap: _isTogglingParticipation
-                                ? null
-                                : _toggleParticipation,
-                            borderRadius: BorderRadius.circular(AppRadius.xxl),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: _isParticipant ? 60 : 40,
-                                vertical: 12,
+                      child: Material(
+                        color: _isParticipant
+                            ? AppColors.textPrimary
+                            : AppColors.brandPrimary,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        elevation: 0,
+                        child: InkWell(
+                          onTap: _isTogglingParticipation
+                              ? null
+                              : _toggleParticipation,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: _isParticipant
+                                  ? AppColors.textPrimary
+                                  : AppColors.brandPrimary,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.md,
                               ),
-                              decoration: BoxDecoration(
-                                color: _isParticipant
-                                    ? AppColors.red
-                                    : AppColors.brandPrimary,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.xxl,
-                                ),
-                              ),
-                              child: _isTogglingParticipation
-                                  ? const SizedBox(
+                            ),
+                            child: _isTogglingParticipation
+                                ? const Center(
+                                    child: SizedBox(
                                       width: 20,
                                       height: 20,
                                       child: CircularProgressIndicator(
@@ -1272,8 +1270,10 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                               AppColors.surface,
                                             ),
                                       ),
-                                    )
-                                  : Text(
+                                    ),
+                                  )
+                                : Center(
+                                    child: Text(
                                       _isParticipant
                                           ? 'Выйти'
                                           : 'Присоединиться',
@@ -1284,7 +1284,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                         color: AppColors.surface,
                                       ),
                                     ),
-                            ),
+                                  ),
                           ),
                         ),
                       ),

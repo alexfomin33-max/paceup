@@ -798,35 +798,33 @@ class _OfficialEventDetailScreenState
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       sliver: SliverToBoxAdapter(
-                        child: Center(
-                          child: Material(
-                            color: AppColors.brandPrimary,
-                            borderRadius: BorderRadius.circular(AppRadius.xxl),
-                            elevation: 0,
-                            child: InkWell(
-                              onTap: () => _openEventLink(registrationLink),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.xxl,
+                        child: Material(
+                          color: AppColors.brandPrimary,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          elevation: 0,
+                          child: InkWell(
+                            onTap: () => _openEventLink(registrationLink),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
                               ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 40,
-                                  vertical: 12,
+                              decoration: BoxDecoration(
+                                color: AppColors.brandPrimary,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.brandPrimary,
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.xxl,
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Зарегистрироваться',
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.surface,
-                                  ),
+                              ),
+                              child: const Text(
+                                'Зарегистрироваться',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.surface,
                                 ),
                               ),
                             ),
