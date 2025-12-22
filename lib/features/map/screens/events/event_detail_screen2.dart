@@ -98,6 +98,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
           }
         }
 
+        if (!mounted) return;
         setState(() {
           _eventData = event;
           _canEdit = canEdit;
@@ -114,12 +115,14 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
           });
         }
       } else {
+        if (!mounted) return;
         setState(() {
           _error = data['message'] as String? ?? 'Событие не найдено';
           _loading = false;
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = ErrorHandler.formatWithContext(e, context: 'загрузке события');
         _loading = false;

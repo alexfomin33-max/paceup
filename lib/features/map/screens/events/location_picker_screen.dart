@@ -423,6 +423,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                 if (!mounted || _mapboxMap == null) return;
                 try {
                   final cameraState = await _mapboxMap!.getCameraState();
+                  if (!mounted) return;
                   final center = cameraState.center;
                   final newLocation = LatLng(
                     center.coordinates.lat.toDouble(),
@@ -474,6 +475,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                       '⚠️ Не удалось установить начальную позицию карты: $flyToError',
                     );
                   }
+                  if (!mounted) return;
                   setState(() {
                     _selectedLocation = widget.initialPosition!;
                   });

@@ -186,12 +186,14 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     final auth = ref.read(authServiceProvider);
     final userId = await auth.getUserId();
     if (userId == null) {
+      if (!mounted) return;
       setState(() {
         _error = 'Пользователь не авторизован';
       });
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       _currentUserId = userId;
     });
@@ -226,6 +228,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       if (response['success'] == true) {
         final chatId = response['chat_id'] as int;
 
+        if (!mounted) return;
         setState(() {
           _actualChatId = chatId;
           _isLoading = false;
@@ -236,12 +239,14 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         _markMessagesAsRead();
         _startPolling();
       } else {
+        if (!mounted) return;
         setState(() {
           _error = response['message'] as String? ?? 'Ошибка создания чата';
           _isLoading = false;
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = ErrorHandler.format(e);
         _isLoading = false;
@@ -295,6 +300,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
           _lastMessageId = 0;
         }
 
+        if (!mounted) return;
         setState(() {
           _messages = messages;
           _hasMore = response['has_more'] as bool? ?? false;
@@ -309,6 +315,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
           }
         });
       } else {
+        if (!mounted) return;
         setState(() {
           _error =
               response['message'] as String? ?? 'Ошибка загрузки сообщений';
@@ -316,6 +323,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = ErrorHandler.format(e);
         _isLoading = false;
@@ -355,6 +363,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             .reversed
             .toList(); // Старые сообщения добавляем в конец
 
+        if (!mounted) return;
         setState(() {
           // При reverse: true старые сообщения добавляются в конец
           _messages.addAll(newMessages);
@@ -363,11 +372,13 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
           _isLoadingMore = false;
         });
       } else {
+        if (!mounted) return;
         setState(() {
           _isLoadingMore = false;
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoadingMore = false;
       });
@@ -418,6 +429,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
         if (createResponse['success'] == true) {
           chatId = createResponse['chat_id'] as int;
+          if (!mounted) return;
           setState(() {
             _actualChatId = chatId;
           });
@@ -513,6 +525,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
           final createdAt = DateTime.parse(response['created_at'] as String);
 
           // Обновляем временное сообщение с реальными данными
+          if (!mounted) return;
           setState(() {
             // Ищем последнее временное сообщение (id == -1) в конце списка
             final index = _messages.indexWhere((m) => m.id == -1);
@@ -531,6 +544,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
           });
         } else {
           // Удаляем временное сообщение при ошибке
+          if (!mounted) return;
           setState(() {
             _messages.removeWhere((m) => m.id == -1);
           });
@@ -560,6 +574,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       }
     } catch (e) {
       // Удаляем временное сообщение при ошибке (если было добавлено)
+      if (!mounted) return;
       setState(() {
         _messages.removeWhere((m) => m.id == -1);
       });
@@ -625,11 +640,13 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
         if (createResponse['success'] == true) {
           chatId = createResponse['chat_id'] as int;
+          if (!mounted) return;
           setState(() {
             _actualChatId = chatId;
           });
         } else {
           // Удаляем временное сообщение при ошибке
+          if (!mounted) return;
           setState(() {
             _messages.removeWhere((m) => m.id == -1);
           });
@@ -637,6 +654,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         }
       } catch (e) {
         // Удаляем временное сообщение при ошибке
+        if (!mounted) return;
         setState(() {
           _messages.removeWhere((m) => m.id == -1);
         });
@@ -660,6 +678,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         final createdAt = DateTime.parse(response['created_at'] as String);
 
         // Обновляем временное сообщение с реальными данными
+        if (!mounted) return;
         setState(() {
           // Ищем временное сообщение (id == -1) в начале списка
           final index = _messages.indexWhere((m) => m.id == -1);
@@ -677,12 +696,14 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         });
       } else {
         // Удаляем временное сообщение при ошибке
+        if (!mounted) return;
         setState(() {
           _messages.removeWhere((m) => m.id == -1);
         });
       }
     } catch (e) {
       // Удаляем временное сообщение при ошибке
+      if (!mounted) return;
       setState(() {
         _messages.removeWhere((m) => m.id == -1);
       });

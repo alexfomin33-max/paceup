@@ -521,6 +521,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
       onSuccess: () async {
         // Очищаем форму
         _descriptionController.clear();
+        if (!mounted) return;
         setState(() {
           _images.clear();
           _canPublish = false;

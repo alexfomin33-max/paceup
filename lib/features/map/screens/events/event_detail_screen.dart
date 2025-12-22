@@ -311,6 +311,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
         final participantsCount = data['participants_count'] as int? ?? 0;
 
         // Обновляем состояние
+        if (!mounted) return;
         setState(() {
           _isParticipant = isParticipant;
           _isTogglingParticipation = false;
@@ -318,6 +319,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
         // Обновляем счетчик участников в данных события
         if (_eventData != null) {
+          if (!mounted) return;
           setState(() {
             _eventData = {
               ..._eventData!,
@@ -341,6 +343,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
         _updatedParticipantsCount = participantsCount;
       } else {
         final errorMessage = data['message'] as String? ?? 'Неизвестная ошибка';
+        if (!mounted) return;
         setState(() {
           _isTogglingParticipation = false;
         });
@@ -350,6 +353,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isTogglingParticipation = false;
       });
