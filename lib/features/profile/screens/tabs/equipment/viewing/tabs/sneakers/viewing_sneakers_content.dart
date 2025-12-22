@@ -65,39 +65,6 @@ class _ViewingSneakersContentState
     _loadSneakers();
   }
 
-  /// Получение жестких данных для полей, которых нет в API
-  /// На основе бренда и модели возвращает дефолтные значения
-  Map<String, dynamic> _getHardcodedData(String brand, String model) {
-    final brandLower = brand.toLowerCase();
-
-    // Для Asics (включая "Asics Fat Burner")
-    if (brandLower.contains('asics')) {
-      return {
-        'workouts': 46,
-        'hours': 48,
-        'pace': '4:18 /км',
-        'since': 'В использовании с 21 июля 2023 г.',
-      };
-    }
-
-    // Для Anta
-    if (brandLower.contains('anta')) {
-      return {
-        'workouts': 68,
-        'hours': 102,
-        'pace': '3:42 /км',
-        'since': 'В использовании с 18 августа 2022 г.',
-      };
-    }
-
-    // Дефолтные значения для других брендов
-    return {
-      'workouts': 0,
-      'hours': 0,
-      'pace': '0:00 /км',
-      'since': 'Дата не указана',
-    };
-  }
 
   /// Загрузка кроссовок из API
   Future<void> _loadSneakers() async {
@@ -121,20 +88,16 @@ class _ViewingSneakersContentState
             final brand = item['brand'] as String;
             final model = item['name'] as String;
 
-            // Получаем жесткие данные для полей, которых нет в API
-            final hardcoded = _getHardcodedData(brand, model);
-
-            // Используем данные из API, если есть, иначе - жесткие данные
-            final paceStr =
-                item['pace'] as String? ?? hardcoded['pace'] as String;
-            final workouts =
-                item['workouts'] as int? ?? hardcoded['workouts'] as int;
-            final hours = item['hours'] as int? ?? hardcoded['hours'] as int;
+            // Получаем данные из API
+            final workouts = item['workouts'] as int? ?? 0;
+            final hours = item['hours'] as int? ?? 0;
+            final paceStr = item['pace'] as String? ?? '0:00 /км';
+            
             // Получаем дату из базы данных
             final inUseSinceStr = item['in_use_since'] as String?;
             final sinceText = inUseSinceStr != null && inUseSinceStr.isNotEmpty
                 ? formatEquipmentDateWithPrefix(inUseSinceStr)
-                : hardcoded['since'] as String;
+                : 'Дата не указана';
 
             return _SneakerItem(
               id: item['id'] as int,

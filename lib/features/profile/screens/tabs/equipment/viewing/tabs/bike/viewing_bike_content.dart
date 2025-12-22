@@ -60,39 +60,6 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
     _loadBikes();
   }
 
-  /// Получение жестких данных для полей, которых нет в API
-  /// На основе бренда и модели возвращает дефолтные значения
-  Map<String, dynamic> _getHardcodedData(String brand, String model) {
-    final brandLower = brand.toLowerCase();
-
-    // Для Pinarello
-    if (brandLower.contains('pinarello')) {
-      return {
-        'workouts': 57,
-        'hours': 94,
-        'speed': '37 км/ч',
-        'since': 'В использовании с 16 августа 2022 г.',
-      };
-    }
-
-    // Для SCOTT
-    if (brandLower.contains('scott')) {
-      return {
-        'workouts': 41,
-        'hours': 67,
-        'speed': '32 км/ч',
-        'since': 'В использовании с 25 июня 2020 г.',
-      };
-    }
-
-    // Дефолтные значения для других брендов
-    return {
-      'workouts': 0,
-      'hours': 0,
-      'speed': '0 км/ч',
-      'since': 'Дата не указана',
-    };
-  }
 
   /// Загрузка велосипедов из API
   Future<void> _loadBikes() async {
@@ -116,20 +83,16 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
             final brand = item['brand'] as String;
             final model = item['name'] as String;
 
-            // Получаем жесткие данные для полей, которых нет в API
-            final hardcoded = _getHardcodedData(brand, model);
-
-            // Используем данные из API, если есть, иначе - жесткие данные
-            final speedStr =
-                item['speed'] as String? ?? hardcoded['speed'] as String;
-            final workouts =
-                item['workouts'] as int? ?? hardcoded['workouts'] as int;
-            final hours = item['hours'] as int? ?? hardcoded['hours'] as int;
+            // Получаем данные из API
+            final workouts = item['workouts'] as int? ?? 0;
+            final hours = item['hours'] as int? ?? 0;
+            final speedStr = item['speed'] as String? ?? '0 км/ч';
+            
             // Получаем дату из базы данных
             final inUseSinceStr = item['in_use_since'] as String?;
             final sinceText = inUseSinceStr != null && inUseSinceStr.isNotEmpty
                 ? formatEquipmentDateWithPrefix(inUseSinceStr)
-                : hardcoded['since'] as String;
+                : 'Дата не указана';
 
             return _BikeItem(
               id: item['id'] as int,
