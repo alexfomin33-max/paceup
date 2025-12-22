@@ -74,8 +74,8 @@ class ActivityBlock extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xll),
-          bottom: Radius.circular(AppRadius.xll),
+          top: Radius.circular(AppRadius.xl),
+          bottom: Radius.circular(AppRadius.xl),
         ),
         border: Border(
           top: BorderSide(width: 0.5, color: AppColors.getBorderColor(context)),
@@ -292,90 +292,81 @@ class ActivityBlock extends ConsumerWidget {
               // Показываем только если есть точки маршрута или есть изображения
               // Соотношение сторон 1.3:1 (как в постах)
               // Для импортированных тренировок без маршрута показываем дефолтную картинку
-              // Закругления снизу только если нет экипировки
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: ClipRRect(
-                  borderRadius: updatedActivity.equipments.isEmpty
-                      ? BorderRadius.only(
-                          bottomLeft: Radius.circular(AppRadius.md),
-                          bottomRight: Radius.circular(AppRadius.md),
-                        )
-                      : BorderRadius.zero,
-                  child: Builder(
-                    builder: (context) {
-                      // ────────────────────────────────────────────────────────────────
-                      // 🔍 ПРОВЕРКА НА ИМПОРТИРОВАННУЮ ТРЕНИРОВКУ БЕЗ МАРШРУТА:
-                      // Если тренировка импортирована (есть пульс/каденс), но нет маршрута
-                      // и нет изображений — показываем дефолтную картинку
-                      // ────────────────────────────────────────────────────────────────
-                      final hasHeartRateOrCadence =
-                          stats?.avgHeartRate != null ||
-                          stats?.avgCadence != null;
-                      final isImportedWithoutRoute =
-                          hasHeartRateOrCadence &&
-                          updatedActivity.points.isEmpty &&
-                          updatedActivity.mediaImages.isEmpty;
+              ClipRRect(
+                borderRadius: BorderRadius.zero,
+                child: Builder(
+                  builder: (context) {
+                    // ────────────────────────────────────────────────────────────────
+                    // 🔍 ПРОВЕРКА НА ИМПОРТИРОВАННУЮ ТРЕНИРОВКУ БЕЗ МАРШРУТА:
+                    // Если тренировка импортирована (есть пульс/каденс), но нет маршрута
+                    // и нет изображений — показываем дефолтную картинку
+                    // ────────────────────────────────────────────────────────────────
+                    final hasHeartRateOrCadence =
+                        stats?.avgHeartRate != null ||
+                        stats?.avgCadence != null;
+                    final isImportedWithoutRoute =
+                        hasHeartRateOrCadence &&
+                        updatedActivity.points.isEmpty &&
+                        updatedActivity.mediaImages.isEmpty;
 
-                      // Показываем блок, если есть маршрут, изображения или импортированная тренировка без маршрута
-                      if (updatedActivity.points.isNotEmpty ||
-                          updatedActivity.mediaImages.isNotEmpty ||
-                          isImportedWithoutRoute) {
-                        return LayoutBuilder(
-                          builder: (context, constraints) {
-                            // Вычисляем высоту для соотношения сторон 1.3:1
-                            final width = constraints.maxWidth;
-                            final height = width / 1.3;
+                    // Показываем блок, если есть маршрут, изображения или импортированная тренировка без маршрута
+                    if (updatedActivity.points.isNotEmpty ||
+                        updatedActivity.mediaImages.isNotEmpty ||
+                        isImportedWithoutRoute) {
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          // Вычисляем высоту для соотношения сторон 1.3:1
+                          final width = constraints.maxWidth;
+                          final height = width / 1.3;
 
-                            if (isImportedWithoutRoute) {
-                              // ────────────────────────────────────────────────────────────────
-                              // 🖼️ ВЫБОР ДЕФОЛТНОЙ КАРТИНКИ ПО ТИПУ ТРЕНИРОВКИ:
-                              // Для бега (run) — assets/nogps.jpg
-                              // Для плавания (swim/swimming) — assets/nogps_swim.jpg
-                              // ────────────────────────────────────────────────────────────────
-                              final activityType = updatedActivity.type
-                                  .toLowerCase();
-                              final defaultImagePath =
-                                  (activityType == 'swim' ||
-                                      activityType == 'swimming')
-                                  ? 'assets/nogps_swim.jpg'
-                                  : 'assets/nogps.jpg';
+                          if (isImportedWithoutRoute) {
+                            // ────────────────────────────────────────────────────────────────
+                            // 🖼️ ВЫБОР ДЕФОЛТНОЙ КАРТИНКИ ПО ТИПУ ТРЕНИРОВКИ:
+                            // Для бега (run) — assets/nogps.jpg
+                            // Для плавания (swim/swimming) — assets/nogps_swim.jpg
+                            // ────────────────────────────────────────────────────────────────
+                            final activityType = updatedActivity.type
+                                .toLowerCase();
+                            final defaultImagePath =
+                                (activityType == 'swim' ||
+                                    activityType == 'swimming')
+                                ? 'assets/nogps_swim.jpg'
+                                : 'assets/nogps.jpg';
 
-                              return SizedBox(
-                                height: height,
-                                width: double.infinity,
-                                child: Image.asset(
-                                  defaultImagePath,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Container(
-                                        color: AppColors.disabled,
-                                        child: const Center(
-                                          child: Icon(
-                                            CupertinoIcons.photo,
-                                            size: 48,
-                                            color: AppColors.textTertiary,
-                                          ),
+                            return SizedBox(
+                              height: height,
+                              width: double.infinity,
+                              child: Image.asset(
+                                defaultImagePath,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      color: AppColors.disabled,
+                                      child: const Center(
+                                        child: Icon(
+                                          CupertinoIcons.photo,
+                                          size: 48,
+                                          color: AppColors.textTertiary,
                                         ),
                                       ),
-                                ),
-                              );
-                            }
-
-                            return ActivityRouteCarousel(
-                              points: updatedActivity.points
-                                  .map((c) => LatLng(c.lat, c.lng))
-                                  .toList(),
-                              imageUrls: updatedActivity.mediaImages,
-                              height: height,
+                                    ),
+                              ),
                             );
-                          },
-                        );
-                      }
+                          }
 
-                      return const SizedBox.shrink();
-                    },
-                  ),
+                          return ActivityRouteCarousel(
+                            points: updatedActivity.points
+                                .map((c) => LatLng(c.lat, c.lng))
+                                .toList(),
+                            imageUrls: updatedActivity.mediaImages,
+                            height: height,
+                          );
+                        },
+                      );
+                    }
+
+                    return const SizedBox.shrink();
+                  },
                 ),
               ),
 
@@ -389,7 +380,7 @@ class ActivityBlock extends ConsumerWidget {
               // ────────────────────────────────────────────────────────────────
               if (updatedActivity.postContent.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
                   child: ExpandableText(text: updatedActivity.postContent),
                 ),
 
@@ -407,7 +398,7 @@ class ActivityBlock extends ConsumerWidget {
                   // вверх к родительскому GestureDetector в lenta_screen.dart
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.only(left: 13, right: 16),
                   child: ActivityActionsRow(
                     activityId: updatedActivity.id,
                     currentUserId: currentUserId,
