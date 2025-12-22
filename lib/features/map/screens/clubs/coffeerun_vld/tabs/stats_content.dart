@@ -79,7 +79,7 @@ class _CoffeeRunVldStatsContentState
     if (_loading || _loadingMore) return;
 
     final period = _getPeriod();
-    
+
     // Если период изменился, сбрасываем данные
     if (reset || _currentPeriod != period) {
       _currentPeriod = period;
@@ -119,7 +119,7 @@ class _CoffeeRunVldStatsContentState
       if (data['success'] == true) {
         final statistics = data['statistics'] as List<dynamic>? ?? [];
         final hasMore = data['has_more'] as bool? ?? false;
-        
+
         setState(() {
           final newRows = statistics
               .map((s) {
@@ -133,16 +133,18 @@ class _CoffeeRunVldStatsContentState
                   isCurrentUser: stat['is_current_user'] as bool? ?? false,
                 );
               })
-              .where((row) => row.distance > 0.0) // Фильтруем пользователей с нулевыми показателями
+              .where(
+                (row) => row.distance > 0.0,
+              ) // Фильтруем пользователей с нулевыми показателями
               .toList();
-          
+
           if (reset || _currentPage == 1) {
             // Заменяем данные только после загрузки новых
             _statistics = newRows;
           } else {
             _statistics.addAll(newRows);
           }
-          
+
           _hasMore = hasMore;
           _currentPage++;
           _loading = false;
@@ -174,11 +176,9 @@ class _CoffeeRunVldStatsContentState
   }
 
   void _navigateToProfile(int userId) {
-    Navigator.of(context).push(
-      TransparentPageRoute(
-        builder: (_) => ProfileScreen(userId: userId),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(TransparentPageRoute(builder: (_) => ProfileScreen(userId: userId)));
   }
 
   @override
@@ -237,7 +237,7 @@ class _CoffeeRunVldStatsContentState
             child: Center(
               child: Text(
                 _error!,
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
                   color: AppColors.textSecondary,
@@ -246,8 +246,8 @@ class _CoffeeRunVldStatsContentState
             ),
           )
         else if (_statistics.isEmpty && !_loading)
-          Padding(
-            padding: const EdgeInsets.all(20.0),
+          const Padding(
+            padding: EdgeInsets.all(20.0),
             child: Center(
               child: Text(
                 'Нет данных за выбранный период',
@@ -263,135 +263,136 @@ class _CoffeeRunVldStatsContentState
           Stack(
             children: [
               ListView.builder(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            itemCount: _statistics.length + (_loadingMore ? 1 : 0),
-            itemBuilder: (context, i) {
-              if (i == _statistics.length) {
-                // Индикатор загрузки в конце списка
-                return const Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              }
-              
-              final m = _statistics[i];
-              final isCurrentUser = m.isCurrentUser;
-              return Column(
-                children: [
-                  InkWell(
-                    onTap: m.userId != null
-                        ? () => _navigateToProfile(m.userId!)
-                        : null,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 0,
-                        vertical: 8,
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                itemCount: _statistics.length + (_loadingMore ? 1 : 0),
+                itemBuilder: (context, i) {
+                  if (i == _statistics.length) {
+                    // Индикатор загрузки в конце списка
+                    return const Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  final m = _statistics[i];
+                  final isCurrentUser = m.isCurrentUser;
+                  return Column(
+                    children: [
+                      InkWell(
+                        onTap: m.userId != null
+                            ? () => _navigateToProfile(m.userId!)
+                            : null,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 0,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                child: Text(
+                                  m.rank.toString(),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 14,
+                                    color: isCurrentUser
+                                        ? Colors.green
+                                        : AppColors.textPrimary,
+                                    fontWeight: isCurrentUser
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              ClipOval(
+                                child: CachedNetworkImage(
+                                  imageUrl: m.avatarUrl,
+                                  width: 36,
+                                  height: 36,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    width: 36,
+                                    height: 36,
+                                    color: AppColors.border,
+                                    child: const Icon(
+                                      Icons.person,
+                                      size: 20,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        color: AppColors.border,
+                                        child: const Icon(
+                                          Icons.person,
+                                          size: 20,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  m.name,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 13,
+                                    color: isCurrentUser
+                                        ? Colors.green
+                                        : AppColors.textPrimary,
+                                    fontWeight: isCurrentUser
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                width: _kmColW,
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Text(
+                                    '${m.distance.toStringAsFixed(2).replaceAll('.', ',')} км',
+                                    softWrap: false,
+                                    overflow: TextOverflow.fade,
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w400,
+                                      color: isCurrentUser
+                                          ? Colors.green
+                                          : AppColors.textPrimary,
+                                      // табличные цифры, чтобы разряды не «прыгали»
+                                      fontFeatures: [
+                                        const FontFeature.tabularFigures(),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 20,
-                            child: Text(
-                              m.rank.toString(),
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 14,
-                                color: isCurrentUser
-                                    ? Colors.green
-                                    : AppColors.textPrimary,
-                                fontWeight: isCurrentUser
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          ClipOval(
-                            child: CachedNetworkImage(
-                              imageUrl: m.avatarUrl,
-                              width: 36,
-                              height: 36,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                width: 36,
-                                height: 36,
-                                color: AppColors.border,
-                                child: const Icon(
-                                  Icons.person,
-                                  size: 20,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                width: 36,
-                                height: 36,
-                                color: AppColors.border,
-                                child: const Icon(
-                                  Icons.person,
-                                  size: 20,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              m.name,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 13,
-                                color: isCurrentUser
-                                    ? Colors.green
-                                    : AppColors.textPrimary,
-                                fontWeight: isCurrentUser
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: _kmColW,
-                            child: Align(
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                '${m.distance.toStringAsFixed(2).replaceAll('.', ',')} км',
-                                softWrap: false,
-                                overflow: TextOverflow.fade,
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w400,
-                                  color: isCurrentUser
-                                      ? Colors.green
-                                      : AppColors.textPrimary,
-                                  // табличные цифры, чтобы разряды не «прыгали»
-                                  fontFeatures: [FontFeature.tabularFigures()],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (i != _statistics.length - 1)
-                    const Divider(
-                      height: 1,
-                      thickness: 0.5,
-                      color: AppColors.border,
-                    ),
-                ],
-              );
-            },
-          ),
+                      if (i != _statistics.length - 1)
+                        const Divider(
+                          height: 1,
+                          thickness: 0.5,
+                          color: AppColors.border,
+                        ),
+                    ],
+                  );
+                },
+              ),
               // Индикатор загрузки поверх списка при смене периода
               if (_loading && _statistics.isNotEmpty)
                 Container(

@@ -340,7 +340,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
             ? CupertinoIcons.bookmark_fill
             : CupertinoIcons.bookmark,
         iconColor: _isBookmarked ? AppColors.red : null,
-        textStyle: _isBookmarked ? TextStyle(color: AppColors.red) : null,
+        textStyle: _isBookmarked ? const TextStyle(color: AppColors.red) : null,
         onTap: () {
           MoreMenuHub.hide();
           _toggleBookmark();
@@ -357,8 +357,8 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
             : CupertinoIcons.person_add,
         iconColor: _isParticipant ? AppColors.red : AppColors.brandPrimary,
         textStyle: _isParticipant
-            ? TextStyle(color: AppColors.red)
-            : TextStyle(color: AppColors.brandPrimary),
+            ? const TextStyle(color: AppColors.red)
+            : const TextStyle(color: AppColors.brandPrimary),
         onTap: () {
           MoreMenuHub.hide();
           _toggleParticipation();
@@ -1254,9 +1254,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                               color: _isParticipant
                                   ? AppColors.textPrimary
                                   : AppColors.brandPrimary,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.md,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                             child: _isTogglingParticipation
                                 ? const Center(

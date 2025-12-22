@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/image_picker_helper.dart';
@@ -39,7 +38,8 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
 
   // ── выборы
   String? activity;
-  String? activityParameter; // Параметр активности: distance, elevation, duration, steps, count, days, weeks
+  String?
+  activityParameter; // Параметр активности: distance, elevation, duration, steps, count, days, weeks
   String? periodType; // Тип периода: "Месяц" или "Выбранный период"
   String? selectedMonth; // Выбранный месяц (1-12) для типа "Месяц"
 
@@ -232,7 +232,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
           throw Exception('Введите корректное значение параметра');
         }
         fields['target_value'] = targetValue.toString();
-        
+
         // ── Устанавливаем даты в зависимости от выбранного периода
         if (periodType == 'Месяц' && selectedMonth != null) {
           // ── Выбран месяц: используем начало и конец выбранного месяца текущего года
@@ -240,15 +240,21 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
           final now = DateTime.now();
           final startOfMonth = DateTime(now.year, month, 1);
           final endOfMonth = DateTime(now.year, month + 1, 0, 23, 59, 59);
-          fields['date_start'] = startOfMonth.toIso8601String().substring(0, 19).replaceAll('T', ' ');
-          fields['date_end'] = endOfMonth.toIso8601String().substring(0, 19).replaceAll('T', ' ');
+          fields['date_start'] = startOfMonth
+              .toIso8601String()
+              .substring(0, 19)
+              .replaceAll('T', ' ');
+          fields['date_end'] = endOfMonth
+              .toIso8601String()
+              .substring(0, 19)
+              .replaceAll('T', ' ');
         } else if (periodType == 'Выбранный период') {
           // ── Выбранный период: парсим даты из полей ввода
           final startDateStr = startDateCtrl.text;
           final endDateStr = endDateCtrl.text;
           final startParts = startDateStr.split('.');
           final endParts = endDateStr.split('.');
-          
+
           if (startParts.length == 3 && endParts.length == 3) {
             final startDate = DateTime(
               int.parse(startParts[2]), // год
@@ -259,10 +265,18 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
               int.parse(endParts[2]), // год
               int.parse(endParts[1]), // месяц
               int.parse(endParts[0]), // день
-              23, 59, 59, // конец дня
+              23,
+              59,
+              59, // конец дня
             );
-            fields['date_start'] = startDate.toIso8601String().substring(0, 19).replaceAll('T', ' ');
-            fields['date_end'] = endDate.toIso8601String().substring(0, 19).replaceAll('T', ' ');
+            fields['date_start'] = startDate
+                .toIso8601String()
+                .substring(0, 19)
+                .replaceAll('T', ' ');
+            fields['date_end'] = endDate
+                .toIso8601String()
+                .substring(0, 19)
+                .replaceAll('T', ' ');
           } else {
             throw Exception('Ошибка парсинга дат');
           }
@@ -290,7 +304,8 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
         final successValue = data['success'];
         final isSuccess = successValue == true || successValue == 'true';
         if (!isSuccess) {
-          final errorMessage = data['message']?.toString() ?? 'Ошибка при создании задачи';
+          final errorMessage =
+              data['message']?.toString() ?? 'Ошибка при создании задачи';
           throw Exception(errorMessage);
         }
 
@@ -557,7 +572,8 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('periodType')
+                            color:
+                                formState.fieldErrors.containsKey('periodType')
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -566,7 +582,8 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('periodType')
+                            color:
+                                formState.fieldErrors.containsKey('periodType')
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -575,7 +592,8 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('periodType')
+                            color:
+                                formState.fieldErrors.containsKey('periodType')
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -644,7 +662,10 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                             borderSide: BorderSide(
-                              color: formState.fieldErrors.containsKey('selectedMonth')
+                              color:
+                                  formState.fieldErrors.containsKey(
+                                    'selectedMonth',
+                                  )
                                   ? AppColors.error
                                   : AppColors.getBorderColor(context),
                               width: 1,
@@ -653,7 +674,10 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                             borderSide: BorderSide(
-                              color: formState.fieldErrors.containsKey('selectedMonth')
+                              color:
+                                  formState.fieldErrors.containsKey(
+                                    'selectedMonth',
+                                  )
                                   ? AppColors.error
                                   : AppColors.getBorderColor(context),
                               width: 1,
@@ -662,7 +686,10 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                             borderSide: BorderSide(
-                              color: formState.fieldErrors.containsKey('selectedMonth')
+                              color:
+                                  formState.fieldErrors.containsKey(
+                                    'selectedMonth',
+                                  )
                                   ? AppColors.error
                                   : AppColors.getBorderColor(context),
                               width: 1,
@@ -1044,7 +1071,10 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('full_description')
+                            color:
+                                formState.fieldErrors.containsKey(
+                                  'full_description',
+                                )
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -1053,7 +1083,10 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('full_description')
+                            color:
+                                formState.fieldErrors.containsKey(
+                                  'full_description',
+                                )
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -1062,7 +1095,10 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('full_description')
+                            color:
+                                formState.fieldErrors.containsKey(
+                                  'full_description',
+                                )
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,

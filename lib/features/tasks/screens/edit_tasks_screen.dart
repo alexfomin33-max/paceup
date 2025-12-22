@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/image_picker_helper.dart';
@@ -42,7 +41,8 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
 
   // ── выборы
   String? activity;
-  String? activityParameter; // Параметр активности: distance, elevation, duration, steps, count, days, weeks
+  String?
+  activityParameter; // Параметр активности: distance, elevation, duration, steps, count, days, weeks
   String? periodType; // Тип периода: "Месяц" или "Выбранный период"
   String? selectedMonth; // Выбранный месяц (1-12) для типа "Месяц"
 
@@ -156,18 +156,19 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
           _existingBackgroundUrl = task.imageUrl;
           _logoDeleted = false;
           _backgroundDeleted = false;
-          
+
           // ── Определяем тип периода на основе дат задачи
           if (task.dateStart != null && task.dateEnd != null) {
             final start = task.dateStart!;
             final end = task.dateEnd!;
-            
+
             // ── Проверяем, является ли период одним месяцем
-            final isSameMonth = start.year == end.year && 
-                               start.month == end.month &&
-                               start.day == 1 &&
-                               end.day == DateTime(start.year, start.month + 1, 0).day;
-            
+            final isSameMonth =
+                start.year == end.year &&
+                start.month == end.month &&
+                start.day == 1 &&
+                end.day == DateTime(start.year, start.month + 1, 0).day;
+
             if (isSameMonth) {
               // ── Это один месяц
               periodType = 'Месяц';
@@ -184,7 +185,7 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
             final now = DateTime.now();
             selectedMonth = now.month.toString();
           }
-          
+
           _isLoadingTask = false;
         });
       } else {
@@ -242,7 +243,8 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
 
     setState(() {
       backgroundFile = processed;
-      _backgroundDeleted = false; // Сбрасываем флаг удаления при выборе нового файла
+      _backgroundDeleted =
+          false; // Сбрасываем флаг удаления при выборе нового файла
     });
   }
 
@@ -304,7 +306,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
       // Отправляем запрос на удаление
       final data = await api.post(
         '/delete_task.php',
-        body: {'task_id': widget.taskId.toString(), 'user_id': userId.toString()},
+        body: {
+          'task_id': widget.taskId.toString(),
+          'user_id': userId.toString(),
+        },
       );
 
       // Проверяем ответ
@@ -446,15 +451,21 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
           final now = DateTime.now();
           final startOfMonth = DateTime(now.year, month, 1);
           final endOfMonth = DateTime(now.year, month + 1, 0, 23, 59, 59);
-          fields['date_start'] = startOfMonth.toIso8601String().substring(0, 19).replaceAll('T', ' ');
-          fields['date_end'] = endOfMonth.toIso8601String().substring(0, 19).replaceAll('T', ' ');
+          fields['date_start'] = startOfMonth
+              .toIso8601String()
+              .substring(0, 19)
+              .replaceAll('T', ' ');
+          fields['date_end'] = endOfMonth
+              .toIso8601String()
+              .substring(0, 19)
+              .replaceAll('T', ' ');
         } else if (periodType == 'Выбранный период') {
           // ── Выбранный период: парсим даты из полей ввода
           final startDateStr = startDateCtrl.text;
           final endDateStr = endDateCtrl.text;
           final startParts = startDateStr.split('.');
           final endParts = endDateStr.split('.');
-          
+
           if (startParts.length == 3 && endParts.length == 3) {
             final startDate = DateTime(
               int.parse(startParts[2]), // год
@@ -465,10 +476,18 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
               int.parse(endParts[2]), // год
               int.parse(endParts[1]), // месяц
               int.parse(endParts[0]), // день
-              23, 59, 59, // конец дня
+              23,
+              59,
+              59, // конец дня
             );
-            fields['date_start'] = startDate.toIso8601String().substring(0, 19).replaceAll('T', ' ');
-            fields['date_end'] = endDate.toIso8601String().substring(0, 19).replaceAll('T', ' ');
+            fields['date_start'] = startDate
+                .toIso8601String()
+                .substring(0, 19)
+                .replaceAll('T', ' ');
+            fields['date_end'] = endDate
+                .toIso8601String()
+                .substring(0, 19)
+                .replaceAll('T', ' ');
           } else {
             throw Exception('Ошибка парсинга дат');
           }
@@ -616,11 +635,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                               file: backgroundFile,
                               existingUrl: _existingBackgroundUrl,
                               onPick: _pickBackground,
-                              onRemove: () =>
-                                  setState(() {
-                                    backgroundFile = null;
-                                    _backgroundDeleted = true;
-                                  }),
+                              onRemove: () => setState(() {
+                                backgroundFile = null;
+                                _backgroundDeleted = true;
+                              }),
                               width:
                                   189, // Ширина для соотношения 2.1:1 (90 * 2.1)
                               height: 90,
@@ -810,7 +828,8 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('periodType')
+                            color:
+                                formState.fieldErrors.containsKey('periodType')
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -819,7 +838,8 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('periodType')
+                            color:
+                                formState.fieldErrors.containsKey('periodType')
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -828,7 +848,8 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('periodType')
+                            color:
+                                formState.fieldErrors.containsKey('periodType')
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -897,7 +918,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                             borderSide: BorderSide(
-                              color: formState.fieldErrors.containsKey('selectedMonth')
+                              color:
+                                  formState.fieldErrors.containsKey(
+                                    'selectedMonth',
+                                  )
                                   ? AppColors.error
                                   : AppColors.getBorderColor(context),
                               width: 1,
@@ -906,7 +930,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                             borderSide: BorderSide(
-                              color: formState.fieldErrors.containsKey('selectedMonth')
+                              color:
+                                  formState.fieldErrors.containsKey(
+                                    'selectedMonth',
+                                  )
                                   ? AppColors.error
                                   : AppColors.getBorderColor(context),
                               width: 1,
@@ -915,7 +942,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                             borderSide: BorderSide(
-                              color: formState.fieldErrors.containsKey('selectedMonth')
+                              color:
+                                  formState.fieldErrors.containsKey(
+                                    'selectedMonth',
+                                  )
                                   ? AppColors.error
                                   : AppColors.getBorderColor(context),
                               width: 1,
@@ -1075,8 +1105,8 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                                           formState.fieldErrors.containsKey(
                                             'activityParameter',
                                           )
-                                              ? AppColors.error
-                                              : AppColors.getBorderColor(context),
+                                          ? AppColors.error
+                                          : AppColors.getBorderColor(context),
                                       width: 1,
                                     ),
                                   ),
@@ -1089,8 +1119,8 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                                           formState.fieldErrors.containsKey(
                                             'activityParameter',
                                           )
-                                              ? AppColors.error
-                                              : AppColors.getBorderColor(context),
+                                          ? AppColors.error
+                                          : AppColors.getBorderColor(context),
                                       width: 1,
                                     ),
                                   ),
@@ -1103,8 +1133,8 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                                           formState.fieldErrors.containsKey(
                                             'activityParameter',
                                           )
-                                              ? AppColors.error
-                                              : AppColors.getBorderColor(context),
+                                          ? AppColors.error
+                                          : AppColors.getBorderColor(context),
                                       width: 1,
                                     ),
                                   ),
@@ -1227,8 +1257,8 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                                         formState.fieldErrors.containsKey(
                                           'parameterValue',
                                         )
-                                            ? AppColors.error
-                                            : AppColors.getBorderColor(context),
+                                        ? AppColors.error
+                                        : AppColors.getBorderColor(context),
                                     width: 1,
                                   ),
                                 ),
@@ -1241,8 +1271,8 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                                         formState.fieldErrors.containsKey(
                                           'parameterValue',
                                         )
-                                            ? AppColors.error
-                                            : AppColors.getBorderColor(context),
+                                        ? AppColors.error
+                                        : AppColors.getBorderColor(context),
                                     width: 1,
                                   ),
                                 ),
@@ -1255,8 +1285,8 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                                         formState.fieldErrors.containsKey(
                                           'parameterValue',
                                         )
-                                            ? AppColors.error
-                                            : AppColors.getBorderColor(context),
+                                        ? AppColors.error
+                                        : AppColors.getBorderColor(context),
                                     width: 1,
                                   ),
                                 ),
@@ -1297,7 +1327,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('full_description')
+                            color:
+                                formState.fieldErrors.containsKey(
+                                  'full_description',
+                                )
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -1306,7 +1339,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('full_description')
+                            color:
+                                formState.fieldErrors.containsKey(
+                                  'full_description',
+                                )
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -1315,7 +1351,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('full_description')
+                            color:
+                                formState.fieldErrors.containsKey(
+                                  'full_description',
+                                )
                                 ? AppColors.error
                                 : AppColors.getBorderColor(context),
                             width: 1,
@@ -1426,32 +1465,32 @@ class _MediaTile extends StatelessWidget {
                     ),
                   )
                 : existingUrl != null
-                    ? Image.network(
-                        existingUrl!,
-                        fit: BoxFit.cover,
-                        width: width,
-                        height: height,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          width: width,
-                          height: height,
-                          color: AppColors.getBackgroundColor(context),
-                          child: Icon(
-                            CupertinoIcons.photo,
-                            size: 24,
-                            color: AppColors.getIconSecondaryColor(context),
-                          ),
-                        ),
-                      )
-                    : Container(
-                        width: width,
-                        height: height,
-                        color: AppColors.getBackgroundColor(context),
-                        child: Icon(
-                          CupertinoIcons.photo,
-                          size: 24,
-                          color: AppColors.getIconSecondaryColor(context),
-                        ),
+                ? Image.network(
+                    existingUrl!,
+                    fit: BoxFit.cover,
+                    width: width,
+                    height: height,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: width,
+                      height: height,
+                      color: AppColors.getBackgroundColor(context),
+                      child: Icon(
+                        CupertinoIcons.photo,
+                        size: 24,
+                        color: AppColors.getIconSecondaryColor(context),
                       ),
+                    ),
+                  )
+                : Container(
+                    width: width,
+                    height: height,
+                    color: AppColors.getBackgroundColor(context),
+                    child: Icon(
+                      CupertinoIcons.photo,
+                      size: 24,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
+                  ),
           ),
         ),
         Positioned(
@@ -1479,4 +1518,3 @@ class _MediaTile extends StatelessWidget {
     );
   }
 }
-

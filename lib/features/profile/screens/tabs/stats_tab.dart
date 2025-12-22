@@ -543,6 +543,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
             period: _getPeriodApi(),
             sportType: _getSportTypeApi(),
             onYearChanged: (year) => _loadStats(year: year),
+            valueFormatter: (value) => '${value.toStringAsFixed(1)} км',
           ),
         ),
         const SizedBox(height: 20),
@@ -566,6 +567,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
             period: _getPeriodApi(),
             sportType: _getSportTypeApi(),
             onYearChanged: (year) => _loadStats(year: year),
+            valueFormatter: (value) => value.toInt().toString(),
           ),
         ),
         const SizedBox(height: 20),
@@ -589,6 +591,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
             period: _getPeriodApi(),
             sportType: _getSportTypeApi(),
             onYearChanged: (year) => _loadStats(year: year),
+            valueFormatter: (value) => '${value.toInt()} мин',
           ),
         ),
       ],
@@ -605,7 +608,7 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.only(left: 20, right: 12),
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(
@@ -675,6 +678,7 @@ class _YearChartCard extends StatefulWidget {
   final String period;
   final String? sportType;
   final Function(int) onYearChanged;
+  final String Function(double) valueFormatter; // Форматирование значения
 
   const _YearChartCard({
     required this.initialYear,
@@ -688,6 +692,7 @@ class _YearChartCard extends StatefulWidget {
     required this.period,
     required this.sportType,
     required this.onYearChanged,
+    required this.valueFormatter,
   });
 
   @override
@@ -796,6 +801,7 @@ class _YearChartCardState extends State<_YearChartCard> {
             height: widget.height,
             borderColor: AppColors.getBorderColor(context),
             textSecondaryColor: AppColors.getTextSecondaryColor(context),
+            valueFormatter: widget.valueFormatter,
           ),
         ],
       ),
@@ -918,9 +924,9 @@ class _MetricRowData {
   const _MetricRowData(this.icon, this.title, this.value);
 }
 
-// ———— График (12 месяцев) — низ ровный, верх скруглён, подписи под столбцами
+// ———— График (12 месяцев) — линия с точками, подписи под точками
 
-class _BarsChart extends StatelessWidget {
+class _BarsChart extends StatefulWidget {
   final List<double> values; // 12
   final double minY;
   final double maxY;
@@ -929,6 +935,8 @@ class _BarsChart extends StatelessWidget {
   final double height;
   final Color borderColor;
   final Color textSecondaryColor;
+  final String Function(double)
+  valueFormatter; // Форматирование значения для отображения
 
   const _BarsChart({
     required this.values,
@@ -939,24 +947,61 @@ class _BarsChart extends StatelessWidget {
     this.height = 170,
     required this.borderColor,
     required this.textSecondaryColor,
+    required this.valueFormatter,
   });
+
+  @override
+  State<_BarsChart> createState() => _BarsChartState();
+}
+
+class _BarsChartState extends State<_BarsChart> {
+  int? _selectedIndex;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         SizedBox(
-          height: height,
+          height: widget.height,
           width: double.infinity,
-          child: CustomPaint(
-            painter: _BarsPainter(
-              values: values,
-              minY: minY,
-              maxY: maxY,
-              tick: tick,
-              barColor: barColor,
-              borderColor: borderColor,
-              textSecondaryColor: textSecondaryColor,
+          child: GestureDetector(
+            onTapDown: (details) {
+              final RenderBox box = context.findRenderObject() as RenderBox;
+              final localPosition = box.globalToLocal(details.globalPosition);
+              final painter = _BarsPainter(
+                values: widget.values,
+                minY: widget.minY,
+                maxY: widget.maxY,
+                tick: widget.tick,
+                barColor: widget.barColor,
+                borderColor: widget.borderColor,
+                textSecondaryColor: widget.textSecondaryColor,
+                selectedIndex: _selectedIndex,
+                valueFormatter: widget.valueFormatter,
+              );
+              final tappedIndex = painter.getTappedIndex(
+                localPosition,
+                box.size,
+              );
+              setState(() {
+                // Если кликнули по той же точке, снимаем выделение
+                _selectedIndex = tappedIndex == _selectedIndex
+                    ? null
+                    : tappedIndex;
+              });
+            },
+            child: CustomPaint(
+              painter: _BarsPainter(
+                values: widget.values,
+                minY: widget.minY,
+                maxY: widget.maxY,
+                tick: widget.tick,
+                barColor: widget.barColor,
+                borderColor: widget.borderColor,
+                textSecondaryColor: widget.textSecondaryColor,
+                selectedIndex: _selectedIndex,
+                valueFormatter: widget.valueFormatter,
+              ),
             ),
           ),
         ),
@@ -1018,6 +1063,8 @@ class _BarsPainter extends CustomPainter {
   final Color barColor;
   final Color borderColor;
   final Color textSecondaryColor;
+  final int? selectedIndex;
+  final String Function(double) valueFormatter;
 
   _BarsPainter({
     required this.values,
@@ -1027,12 +1074,42 @@ class _BarsPainter extends CustomPainter {
     required this.barColor,
     required this.borderColor,
     required this.textSecondaryColor,
+    this.selectedIndex,
+    required this.valueFormatter,
   });
 
   static const double leftPad = 28;
   static const double rightPad = 8;
   static const double topPad = 8;
   static const double bottomPad = 12;
+
+  /// Определяет, какая точка была нажата по координатам
+  int? getTappedIndex(Offset localPosition, Size size) {
+    if (values.isEmpty) return null;
+
+    final chartW = size.width - leftPad - rightPad;
+    final chartH = size.height - topPad - bottomPad;
+    final rangeY = maxY - minY;
+    final n = values.length;
+    final groupW = chartW / n;
+
+    for (int i = 0; i < n; i++) {
+      final v = values[i].clamp(minY, maxY);
+      final cx = leftPad + i * groupW + groupW / 2;
+      final frac = rangeY > 0 ? ((v - minY) / rangeY).clamp(0.0, 1.0) : 0.0;
+      final cy = size.height - bottomPad - frac * chartH;
+
+      final pointRadius = selectedIndex == i ? 8.0 : 5.0;
+      final distanceToPoint = (localPosition - Offset(cx, cy)).distance;
+
+      // Увеличиваем область клика для удобства
+      if (distanceToPoint <= pointRadius + 10) {
+        return i;
+      }
+    }
+
+    return null;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1070,29 +1147,97 @@ class _BarsPainter extends CustomPainter {
       tp.paint(canvas, Offset(leftPad - 6 - tp.width, yy - tp.height / 2));
     }
 
-    // столбики
+    // ── Линия с точками вместо столбцов ──
     final n = values.length;
     final groupW = chartW / n;
-    final barW = groupW * 0.52;
-    final barPaint = Paint()..color = barColor;
 
+    // Подготовка кистей для линии, заливки и точек
+    final linePaint = Paint()
+      ..color = barColor
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    final fillPaint = Paint()
+      ..color = barColor.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+
+    final pointPaint = Paint()
+      ..color = barColor
+      ..style = PaintingStyle.fill;
+
+    // Создаем путь для линии и заливки
+    final path = Path();
+    final fillPath = Path();
+
+    // Вычисляем координаты точек
+    final points = <Offset>[];
     for (int i = 0; i < n; i++) {
       final v = values[i].clamp(minY, maxY);
-      // Вычисляем высоту относительно диапазона
-      final h = rangeY > 0 ? ((v - minY) / rangeY) * chartH : 0.0;
+      final cx = leftPad + i * groupW + groupW / 2;
+      final frac = rangeY > 0 ? ((v - minY) / rangeY).clamp(0.0, 1.0) : 0.0;
+      final cy = size.height - bottomPad - frac * chartH;
+      points.add(Offset(cx, cy));
 
-      final cx = leftPad + i * groupW + (groupW - barW) / 2;
-      final top = size.height - bottomPad - h;
-      final rect = Rect.fromLTWH(cx, top, barW, h);
+      if (i == 0) {
+        path.moveTo(cx, cy);
+        fillPath.moveTo(cx, size.height - bottomPad);
+        fillPath.lineTo(cx, cy);
+      } else {
+        path.lineTo(cx, cy);
+        fillPath.lineTo(cx, cy);
+      }
+    }
 
-      // низ ровный, верх — сильно скруглён; для маленьких колонок уменьшаем радиус
-      final double topR = h <= 0 ? 0 : (h < 16 ? h / 2 : 8);
-      final rrect = RRect.fromRectAndCorners(
-        rect,
-        topLeft: Radius.circular(topR),
-        topRight: Radius.circular(topR),
-      );
-      canvas.drawRRect(rrect, barPaint);
+    // Замыкаем путь заливки
+    if (n > 0) {
+      final lastCx = leftPad + (n - 1) * groupW + groupW / 2;
+      fillPath.lineTo(lastCx, size.height - bottomPad);
+      fillPath.close();
+    }
+
+    // Рисуем заливку под линией
+    canvas.drawPath(fillPath, fillPaint);
+
+    // Рисуем линию
+    canvas.drawPath(path, linePaint);
+
+    // Рисуем точки и выделяем выбранную
+    for (int i = 0; i < points.length; i++) {
+      final point = points[i];
+      final isSelected = selectedIndex == i;
+      final pointRadius = isSelected ? 8.0 : 5.0;
+
+      // Если точка выбрана, рисуем вертикальную линию до оси X
+      if (isSelected) {
+        final verticalLinePaint = Paint()
+          ..color = barColor
+          ..strokeWidth = 1.0;
+        canvas.drawLine(
+          point,
+          Offset(point.dx, size.height - bottomPad),
+          verticalLinePaint,
+        );
+
+        // Рисуем метку со значением над точкой
+        final value = values[i];
+        tp.text = TextSpan(
+          text: valueFormatter(value),
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: barColor,
+          ),
+        );
+        tp.layout();
+        tp.paint(
+          canvas,
+          Offset(point.dx - tp.width / 2, point.dy - tp.height - 8),
+        );
+      }
+
+      // Рисуем точку
+      canvas.drawCircle(point, pointRadius, pointPaint);
     }
   }
 
@@ -1104,5 +1249,6 @@ class _BarsPainter extends CustomPainter {
       old.tick != tick ||
       old.barColor != barColor ||
       old.borderColor != borderColor ||
-      old.textSecondaryColor != textSecondaryColor;
+      old.textSecondaryColor != textSecondaryColor ||
+      old.selectedIndex != selectedIndex;
 }

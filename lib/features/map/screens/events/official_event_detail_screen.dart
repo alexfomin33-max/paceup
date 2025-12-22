@@ -165,7 +165,7 @@ class _OfficialEventDetailScreenState
             ? CupertinoIcons.bookmark_fill
             : CupertinoIcons.bookmark,
         iconColor: _isBookmarked ? AppColors.red : null,
-        textStyle: _isBookmarked ? TextStyle(color: AppColors.red) : null,
+        textStyle: _isBookmarked ? const TextStyle(color: AppColors.red) : null,
         onTap: () {
           MoreMenuHub.hide();
           _toggleBookmark();

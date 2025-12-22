@@ -339,7 +339,7 @@ class _MainTabState extends MainTabState
       const SliverToBoxAdapter(child: _SectionTitle('Общая статистика')),
       const SliverToBoxAdapter(child: SizedBox(height: 8)),
       
-      // График недельной активности
+      // График недельной активности (блок внутри WeeklyActivityChart)
       SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -347,7 +347,10 @@ class _MainTabState extends MainTabState
         ),
       ),
       
+      // ───────────────── Показатели ─────────────────
       const SliverToBoxAdapter(child: SizedBox(height: 16)),
+      const SliverToBoxAdapter(child: _SectionTitle('Показатели')),
+      const SliverToBoxAdapter(child: SizedBox(height: 8)),
       SliverToBoxAdapter(child: _MetricsCard(data: data.metrics)),
 
       const SliverToBoxAdapter(child: SizedBox(height: 24)),

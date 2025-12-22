@@ -259,8 +259,8 @@ class _CoffeeRunVldScreenState extends ConsumerState<CoffeeRunVldScreen> {
                         child: CoffeeRunVldMembersContent(clubId: 0),
                       )
                     else if (_tab == 2)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
                         child: CoffeeRunVldStatsContent(clubId: 0),
                       )
                     else

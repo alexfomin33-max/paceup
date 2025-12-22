@@ -375,8 +375,10 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
             ? AppColors.red
             : (isJoinAction ? AppColors.brandPrimary : null),
         textStyle: _isMember
-            ? TextStyle(color: AppColors.red)
-            : (isJoinAction ? TextStyle(color: AppColors.brandPrimary) : null),
+            ? const TextStyle(color: AppColors.red)
+            : (isJoinAction
+                  ? const TextStyle(color: AppColors.brandPrimary)
+                  : null),
         onTap: () {
           MoreMenuHub.hide();
           if (_isMember) {
@@ -705,7 +707,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                           child: Builder(
                             builder: (context) {
                               // ── Цвет текста: в светлой теме используем getSurfaceColor, в тёмной — surface
-                              final textColor = Theme.of(context).brightness ==
+                              final textColor =
+                                  Theme.of(context).brightness ==
                                       Brightness.dark
                                   ? AppColors.surface
                                   : AppColors.getSurfaceColor(context);

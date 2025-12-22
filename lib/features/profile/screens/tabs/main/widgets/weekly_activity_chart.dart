@@ -246,19 +246,46 @@ class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
     }
   }
 
+  // Вспомогательный метод для создания блока с единым оформлением
+  Widget _buildBlock(Widget child) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Padding(
-        padding: EdgeInsets.all(32.0),
-        child: Center(child: CupertinoActivityIndicator()),
+      return _buildBlock(
+        const Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Center(child: CupertinoActivityIndicator()),
+        ),
       );
     }
 
     if (_error != null) {
-      return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Text(
+      return _buildBlock(
+        Text(
           _error!,
           style: TextStyle(
             color: AppColors.getTextSecondaryColor(context),
@@ -270,9 +297,8 @@ class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
     }
 
     if (_weeks.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Text(
+      return _buildBlock(
+        Text(
           'Нет данных для отображения',
           style: TextStyle(
             color: AppColors.getTextSecondaryColor(context),
@@ -295,22 +321,19 @@ class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
       ),
     );
 
-    // Если неделя выбрана, помещаем график внутрь блока с деталями
-    if (_selectedWeekIndex != null && _selectedWeekSports != null) {
-      final selectedWeek = _weeks[_selectedWeekIndex!];
-      final formattedWeekLabel = _formatWeekRange(
-        selectedWeek.weekStart,
-        selectedWeek.weekEnd,
-      );
-      return WeekActivityDetails(
-        weekLabel: formattedWeekLabel,
-        sports: _selectedWeekSports!,
-        chart: chartWidget,
-      );
-    }
-
-    // Если неделя не выбрана, показываем только график
-    return chartWidget;
+    // Всегда оборачиваем в блок (Container)
+    return _buildBlock(
+      _selectedWeekIndex != null && _selectedWeekSports != null
+          ? WeekActivityDetails(
+              weekLabel: _formatWeekRange(
+                _weeks[_selectedWeekIndex!].weekStart,
+                _weeks[_selectedWeekIndex!].weekEnd,
+              ),
+              sports: _selectedWeekSports!,
+              chart: chartWidget,
+            )
+          : chartWidget,
+    );
   }
 }
 
@@ -628,58 +651,38 @@ class WeekActivityDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: AppColors.getBorderColor(context),
-          width: 0.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // График (если передан)
-          if (chart != null) ...[chart!, const SizedBox(height: 20)],
+    // Контент без Container (блок будет оборачиваться снаружи)
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // График (если передан)
+        if (chart != null) ...[chart!, const SizedBox(height: 20)],
 
-          // Заголовок недели
+        // Заголовок недели
+        Text(
+          weekLabel,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.getTextPrimaryColor(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Таблица видов спорта
+        if (sports.isEmpty)
           Text(
-            weekLabel,
+            'Нет активностей за эту неделю',
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.getTextPrimaryColor(context),
+              color: AppColors.getTextSecondaryColor(context),
             ),
-          ),
-          const SizedBox(height: 8),
-
-          // Таблица видов спорта
-          if (sports.isEmpty)
-            Text(
-              'Нет активностей за эту неделю',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                color: AppColors.getTextSecondaryColor(context),
-              ),
-            )
-          else
-            _SportsTable(sports: sports),
-        ],
-      ),
+          )
+        else
+          _SportsTable(sports: sports),
+      ],
     );
   }
 }

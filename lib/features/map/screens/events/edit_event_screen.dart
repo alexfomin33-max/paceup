@@ -1633,10 +1633,10 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                       ),
                                     ),
                                   )
-                                : Center(
+                                : const Center(
                                     child: Text(
                                       'Сохранить',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Inter',
                                         fontSize: 15,
                                         fontWeight: FontWeight.w500,

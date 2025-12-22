@@ -45,7 +45,9 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Обязательно вызываем для AutomaticKeepAliveClientMixin
+    super.build(
+      context,
+    ); // Обязательно вызываем для AutomaticKeepAliveClientMixin
     // Преобразуем период в формат для API
     String period = 'current_week';
     if (_selectedPeriod == 'Текущий месяц') {
@@ -268,7 +270,7 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
               child: Center(
                 child: Column(
                   children: [
-                    Text(
+                    const Text(
                       'Ошибка загрузки данных',
                       style: TextStyle(fontSize: 16, color: Colors.red),
                     ),
