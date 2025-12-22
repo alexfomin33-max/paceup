@@ -45,6 +45,11 @@ class _GearItem {
   });
 
   String get value {
+    // Для главного снаряжения всегда показываем суммарную дистанцию
+    if (isMain) {
+      return '$dist км';
+    }
+    
     // Для кроссовок показываем темп, для велосипедов - скорость
     if (isBoots) {
       if (avgPace != null && avgPace! > 0) {
