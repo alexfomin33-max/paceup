@@ -31,11 +31,9 @@ class _StatsTabState extends State<StatsTab>
     super.build(context);
     final userId = widget.userId;
     if (userId == null) {
-      return const Center(
-        child: Text('Ошибка: не указан userId'),
-      );
+      return const Center(child: Text('Ошибка: не указан userId'));
     }
-    
+
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
@@ -56,19 +54,19 @@ class _ByTypeContent extends StatefulWidget {
 
 class _ByTypeContentState extends State<_ByTypeContent> {
   final StatsService _statsService = StatsService();
-  
+
   // Периоды
   static const _periods = ['За неделю', 'За месяц', 'За год'];
   String _period = 'За год';
 
   // Вид спорта: 0 бег, 1 вело, 2 плавание (single-select)
   int _sport = 0;
-  
+
   // Состояние загрузки
   bool _isLoading = true;
   StatsData? _statsData;
   String? _error;
-  
+
   // Текущий год для графиков
   int _currentYear = DateTime.now().year;
 
@@ -77,38 +75,34 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     super.initState();
     _loadStats();
   }
-  
+
   /// Загружает статистику с текущими фильтрами
   Future<void> _loadStats({int? year}) async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
-    
+
     try {
       final periodMap = {
         'За неделю': 'week',
         'За месяц': 'month',
         'За год': 'year',
       };
-      
-      final sportTypeMap = {
-        0: 'run',
-        1: 'bike',
-        2: 'swim',
-      };
-      
+
+      final sportTypeMap = {0: 'run', 1: 'bike', 2: 'swim'};
+
       final period = periodMap[_period] ?? 'year';
       final sportType = sportTypeMap[_sport];
       final yearForRequest = year ?? _currentYear;
-      
+
       final data = await _statsService.getStats(
         userId: widget.userId,
         period: period,
         sportType: sportType,
         year: yearForRequest,
       );
-      
+
       if (mounted) {
         setState(() {
           _statsData = data;
@@ -127,7 +121,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
       }
     }
   }
-  
+
   /// Преобразует период в API формат
   String _getPeriodApi() {
     switch (_period) {
@@ -140,7 +134,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         return 'year';
     }
   }
-  
+
   /// Преобразует вид спорта в API формат
   String? _getSportTypeApi() {
     switch (_sport) {
@@ -154,40 +148,32 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         return null;
     }
   }
-  
+
   /// Получает метрики из загруженных данных
   List<_MetricRowData> _getMetrics() {
     if (_statsData == null) {
       return [];
     }
-    
+
     final metrics = _statsData!.metrics;
     final sportType = _getSportTypeApi();
-    
+
     if (sportType == 'run') {
       return [
         _MetricRowData(
-          Icons.directions_run,
+          Icons.directions_run_outlined,
           'Забегов',
           metrics.activitiesCount,
         ),
-        _MetricRowData(
-          Icons.access_time,
-          'Общее время',
-          metrics.totalTime,
-        ),
-        _MetricRowData(
-          Icons.place_outlined,
-          'Расстояние',
-          metrics.distance,
-        ),
+        _MetricRowData(Icons.timer_outlined, 'Общее время', metrics.totalTime),
+        _MetricRowData(Icons.place_outlined, 'Расстояние', metrics.distance),
         _MetricRowData(
           Icons.favorite_border,
           'Средний пульс',
           metrics.avgHeartRate ?? '—',
         ),
         _MetricRowData(
-          Icons.speed,
+          Icons.speed_outlined,
           'Средний темп',
           metrics.avgPace ?? '—',
         ),
@@ -197,7 +183,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           metrics.avgCadence ?? '—',
         ),
         _MetricRowData(
-          Icons.terrain,
+          Icons.terrain_outlined,
           'Набор высоты',
           metrics.elevationGain ?? '—',
         ),
@@ -205,22 +191,14 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     } else if (sportType == 'bike') {
       return [
         _MetricRowData(
-          Icons.directions_bike,
+          Icons.directions_bike_outlined,
           'Заездов',
           metrics.activitiesCount,
         ),
+        _MetricRowData(Icons.timer_outlined, 'Общее время', metrics.totalTime),
+        _MetricRowData(Icons.place_outlined, 'Расстояние', metrics.distance),
         _MetricRowData(
-          Icons.access_time,
-          'Общее время',
-          metrics.totalTime,
-        ),
-        _MetricRowData(
-          Icons.place,
-          'Расстояние',
-          metrics.distance,
-        ),
-        _MetricRowData(
-          Icons.speed,
+          Icons.speed_outlined,
           'Средняя скорость',
           metrics.avgSpeed ?? '—',
         ),
@@ -233,31 +211,23 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     } else if (sportType == 'swim') {
       return [
         _MetricRowData(
-          Icons.pool,
+          Icons.pool_outlined,
           'Заплывов',
           metrics.activitiesCount,
         ),
+        _MetricRowData(Icons.timer_outlined, 'Общее время', metrics.totalTime),
+        _MetricRowData(Icons.place_outlined, 'Расстояние', metrics.distance),
         _MetricRowData(
-          Icons.access_time,
-          'Общее время',
-          metrics.totalTime,
-        ),
-        _MetricRowData(
-          Icons.place,
-          'Расстояние',
-          metrics.distance,
-        ),
-        _MetricRowData(
-          Icons.speed,
+          Icons.speed_outlined,
           'Средний темп',
           metrics.avgPace ?? '—',
         ),
       ];
     }
-    
+
     return [];
   }
-  
+
   /// Получает данные для графика расстояния
   List<double> _getDistanceChart() {
     if (_statsData == null) {
@@ -265,7 +235,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     }
     return _statsData!.charts.distance.map((e) => e.toDouble()).toList();
   }
-  
+
   /// Получает данные для графика дней активности
   List<double> _getActiveDaysChart() {
     if (_statsData == null) {
@@ -273,7 +243,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     }
     return _statsData!.charts.activeDays.map((e) => e.toDouble()).toList();
   }
-  
+
   /// Получает данные для графика времени активности
   List<double> _getActiveTimeChart() {
     if (_statsData == null) {
@@ -281,26 +251,132 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     }
     return _statsData!.charts.activeTime.map((e) => e.toDouble()).toList();
   }
-  
-  /// Вычисляет maxY для графика расстояния
-  double _getDistanceMaxY() {
+
+  /// Вычисляет minY, maxY и tick для графика расстояния
+  /// Возвращает (minY, maxY, tick)
+  (double, double, double) _getDistanceRange() {
     final values = _getDistanceChart();
-    if (values.isEmpty) return 100;
+    if (values.isEmpty || values.every((v) => v <= 0)) {
+      return (0.0, 100.0, 20.0);
+    }
+
+    final min = values.where((v) => v > 0).reduce((a, b) => a < b ? a : b);
     final max = values.reduce((a, b) => a > b ? a : b);
-    if (max <= 0) return 100;
-    // Округляем до ближайшего большего кратного 100
-    return ((max / 100).ceil() * 100).toDouble();
+
+    // Добавляем отступ ~5% сверху и снизу
+    final range = max - min;
+    final padding = range * 0.05;
+    final rawMinY = (min - padding).clamp(0.0, double.infinity);
+    final rawMaxY = max + padding;
+
+    // Округляем minY вниз, maxY вверх до разумных значений
+    final minY = rawMinY <= 0 ? 0.0 : ((rawMinY / 10).floor() * 10).toDouble();
+    final maxY = ((rawMaxY / 10).ceil() * 10).toDouble();
+
+    // Вычисляем tick для 5-7 линий
+    final rangeY = maxY - minY;
+    final targetLines = 6;
+    final rawTick = rangeY / targetLines;
+
+    // Округляем tick до разумного значения
+    double tick;
+    if (rawTick <= 5) {
+      tick = 5;
+    } else if (rawTick <= 10) {
+      tick = 10;
+    } else if (rawTick <= 20) {
+      tick = 20;
+    } else if (rawTick <= 50) {
+      tick = 50;
+    } else if (rawTick <= 100) {
+      tick = 100;
+    } else {
+      tick = ((rawTick / 50).ceil() * 50).toDouble();
+    }
+
+    return (minY, maxY, tick);
   }
-  
-  /// Вычисляет tick для графика расстояния
-  double _getDistanceTick() {
-    final maxY = _getDistanceMaxY();
-    if (maxY <= 200) return 50;
-    if (maxY <= 500) return 100;
-    if (maxY <= 1000) return 200;
-    return 500;
+
+  /// Вычисляет minY, maxY и tick для графика дней активности
+  (double, double, double) _getActiveDaysRange(List<double> values) {
+    if (values.isEmpty || values.every((v) => v <= 0)) {
+      return (0.0, 30.0, 5.0);
+    }
+
+    final min = values.where((v) => v > 0).reduce((a, b) => a < b ? a : b);
+    final max = values.reduce((a, b) => a > b ? a : b);
+
+    // Добавляем отступ ~5% сверху и снизу
+    final range = max - min;
+    final padding = range * 0.05;
+    final rawMinY = (min - padding).clamp(0.0, double.infinity);
+    final rawMaxY = max + padding;
+
+    // Округляем minY вниз, maxY вверх
+    final minY = rawMinY <= 0 ? 0.0 : ((rawMinY / 1).floor() * 1).toDouble();
+    final maxY = ((rawMaxY / 1).ceil() * 1).toDouble();
+
+    // Вычисляем tick для 5-7 линий
+    final rangeY = maxY - minY;
+    final targetLines = 6;
+    final rawTick = rangeY / targetLines;
+
+    // Округляем tick до разумного значения
+    double tick;
+    if (rawTick <= 1) {
+      tick = 1;
+    } else if (rawTick <= 2) {
+      tick = 2;
+    } else if (rawTick <= 5) {
+      tick = 5;
+    } else {
+      tick = ((rawTick / 5).ceil() * 5).toDouble();
+    }
+
+    return (minY, maxY, tick);
   }
-  
+
+  /// Вычисляет minY, maxY и tick для графика времени активности
+  (double, double, double) _getActiveTimeRange(List<double> values) {
+    if (values.isEmpty || values.every((v) => v <= 0)) {
+      return (0.0, 3000.0, 500.0);
+    }
+
+    final min = values.where((v) => v > 0).reduce((a, b) => a < b ? a : b);
+    final max = values.reduce((a, b) => a > b ? a : b);
+
+    // Добавляем отступ ~5% сверху и снизу
+    final range = max - min;
+    final padding = range * 0.05;
+    final rawMinY = (min - padding).clamp(0.0, double.infinity);
+    final rawMaxY = max + padding;
+
+    // Округляем minY вниз, maxY вверх
+    final minY = rawMinY <= 0 ? 0.0 : ((rawMinY / 50).floor() * 50).toDouble();
+    final maxY = ((rawMaxY / 50).ceil() * 50).toDouble();
+
+    // Вычисляем tick для 5-7 линий
+    final rangeY = maxY - minY;
+    final targetLines = 6;
+    final rawTick = rangeY / targetLines;
+
+    // Округляем tick до разумного значения
+    double tick;
+    if (rawTick <= 50) {
+      tick = 50;
+    } else if (rawTick <= 100) {
+      tick = 100;
+    } else if (rawTick <= 250) {
+      tick = 250;
+    } else if (rawTick <= 500) {
+      tick = 500;
+    } else {
+      tick = ((rawTick / 500).ceil() * 500).toDouble();
+    }
+
+    return (minY, maxY, tick);
+  }
+
   Color _barColor() => AppColors.accentMint;
 
   @override
@@ -313,35 +389,34 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         ),
       );
     }
-    
+
     if (_error != null && _statsData == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32.0),
           child: Text(
             'Ошибка загрузки: $_error',
-            style: TextStyle(
-              color: AppColors.getTextSecondaryColor(context),
-            ),
+            style: TextStyle(color: AppColors.getTextSecondaryColor(context)),
           ),
         ),
       );
     }
-    
+
     final metrics = _getMetrics();
     final distanceValues = _getDistanceChart();
     final activeDaysValues = _getActiveDaysChart();
     final activeTimeValues = _getActiveTimeChart();
-    
-    // Вычисляем maxY для графиков
-    final distanceMaxY = _getDistanceMaxY();
-    final distanceTick = _getDistanceTick();
-    final activeDaysMaxY = activeDaysValues.isEmpty
-        ? 30.0
-        : (activeDaysValues.reduce((a, b) => a > b ? a : b).ceil() / 5).ceil() * 5.0;
-    final activeTimeMaxY = activeTimeValues.isEmpty
-        ? 3000.0
-        : (activeTimeValues.reduce((a, b) => a > b ? a : b).ceil() / 500).ceil() * 500.0;
+
+    // Вычисляем диапазоны для графиков
+    final (distanceMinY, distanceMaxY, distanceTick) = _getDistanceRange();
+
+    // График дней активности
+    final (activeDaysMinY, activeDaysMaxY, activeDaysTick) =
+        _getActiveDaysRange(activeDaysValues);
+
+    // График времени активности
+    final (activeTimeMinY, activeTimeMaxY, activeTimeTick) =
+        _getActiveTimeRange(activeTimeValues);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,7 +482,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
               const Spacer(),
               _SportIcon(
                 selected: _sport == 0,
-                icon: Icons.directions_run,
+                icon: Icons.directions_run_outlined,
                 onTap: () {
                   setState(() => _sport = 0);
                   _loadStats();
@@ -416,7 +491,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
               const SizedBox(width: 8),
               _SportIcon(
                 selected: _sport == 1,
-                icon: Icons.directions_bike,
+                icon: Icons.directions_bike_outlined,
                 onTap: () {
                   setState(() => _sport = 1);
                   _loadStats();
@@ -425,7 +500,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
               const SizedBox(width: 8),
               _SportIcon(
                 selected: _sport == 2,
-                icon: Icons.pool,
+                icon: Icons.pool_outlined,
                 onTap: () {
                   setState(() => _sport = 2);
                   _loadStats();
@@ -447,11 +522,11 @@ class _ByTypeContentState extends State<_ByTypeContent> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: _MetricsList(metrics: metrics),
           ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
 
         // ── Заголовок графика
         const _SectionTitle('Расстояние, км'),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
 
         // ── Карточка с графиком
         Padding(
@@ -459,9 +534,10 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           child: _YearChartCard(
             initialYear: _currentYear,
             color: _barColor(),
+            minY: distanceMinY,
             maxY: distanceMaxY,
             tick: distanceTick,
-            height: 170,
+            height: 200,
             values: distanceValues,
             userId: widget.userId,
             period: _getPeriodApi(),
@@ -469,11 +545,11 @@ class _ByTypeContentState extends State<_ByTypeContent> {
             onYearChanged: (year) => _loadStats(year: year),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
         // ── Заголовок графика "Дней активности"
         const _SectionTitle('Дней активности'),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
 
         // ── Карточка с графиком "Дней активности"
         Padding(
@@ -481,9 +557,10 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           child: _YearChartCard(
             initialYear: _currentYear,
             color: AppColors.male,
+            minY: activeDaysMinY,
             maxY: activeDaysMaxY,
-            tick: 5,
-            height: 170,
+            tick: activeDaysTick,
+            height: 200,
             values: activeDaysValues,
             userId: widget.userId,
             period: _getPeriodApi(),
@@ -491,11 +568,11 @@ class _ByTypeContentState extends State<_ByTypeContent> {
             onYearChanged: (year) => _loadStats(year: year),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
         // ── Заголовок графика "Время активности"
         const _SectionTitle('Время активности, мин'),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
 
         // ── Карточка с графиком "Время активности"
         Padding(
@@ -503,9 +580,10 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           child: _YearChartCard(
             initialYear: _currentYear,
             color: AppColors.female,
+            minY: activeTimeMinY,
             maxY: activeTimeMaxY,
-            tick: 500,
-            height: 190,
+            tick: activeTimeTick,
+            height: 220,
             values: activeTimeValues,
             userId: widget.userId,
             period: _getPeriodApi(),
@@ -588,6 +666,7 @@ class _SportIcon extends StatelessWidget {
 class _YearChartCard extends StatefulWidget {
   final int initialYear;
   final List<double> values; // 12
+  final double minY;
   final double maxY;
   final double tick;
   final Color color;
@@ -600,6 +679,7 @@ class _YearChartCard extends StatefulWidget {
   const _YearChartCard({
     required this.initialYear,
     required this.values,
+    required this.minY,
     required this.maxY,
     required this.tick,
     required this.color,
@@ -709,6 +789,7 @@ class _YearChartCardState extends State<_YearChartCard> {
           const SizedBox(height: 6),
           _BarsChart(
             values: widget.values,
+            minY: widget.minY,
             maxY: widget.maxY,
             tick: widget.tick,
             barColor: widget.color,
@@ -814,7 +895,7 @@ class _MetricsList extends StatelessWidget {
                     if (r.title == 'Средний пульс') ...[
                       const SizedBox(width: 4),
                       const Icon(
-                        Icons.favorite,
+                        Icons.favorite_outlined,
                         size: 11,
                         color: AppColors.error,
                       ),
@@ -841,6 +922,7 @@ class _MetricRowData {
 
 class _BarsChart extends StatelessWidget {
   final List<double> values; // 12
+  final double minY;
   final double maxY;
   final double tick;
   final Color barColor;
@@ -850,6 +932,7 @@ class _BarsChart extends StatelessWidget {
 
   const _BarsChart({
     required this.values,
+    required this.minY,
     required this.maxY,
     required this.tick,
     required this.barColor,
@@ -868,6 +951,7 @@ class _BarsChart extends StatelessWidget {
           child: CustomPaint(
             painter: _BarsPainter(
               values: values,
+              minY: minY,
               maxY: maxY,
               tick: tick,
               barColor: barColor,
@@ -928,6 +1012,7 @@ class _MonthLabels extends StatelessWidget {
 
 class _BarsPainter extends CustomPainter {
   final List<double> values;
+  final double minY;
   final double maxY;
   final double tick;
   final Color barColor;
@@ -936,6 +1021,7 @@ class _BarsPainter extends CustomPainter {
 
   _BarsPainter({
     required this.values,
+    required this.minY,
     required this.maxY,
     required this.tick,
     required this.barColor,
@@ -958,9 +1044,13 @@ class _BarsPainter extends CustomPainter {
       ..strokeWidth = 0.7;
 
     // сетка и подписи по Y
+    final rangeY = maxY - minY;
     final tp = TextPainter(textDirection: TextDirection.ltr);
-    for (double y = 0; y <= maxY + 0.0001; y += tick) {
-      final frac = (y / maxY).clamp(0.0, 1.0);
+    // Начинаем с minY, округленного вниз до ближайшего кратного tick
+    final startY = (minY / tick).floor() * tick;
+    for (double y = startY; y <= maxY + 0.0001; y += tick) {
+      // Вычисляем позицию относительно диапазона
+      final frac = rangeY > 0 ? ((y - minY) / rangeY).clamp(0.0, 1.0) : 0.0;
       final yy = size.height - bottomPad - frac * chartH;
       canvas.drawLine(
         Offset(leftPad, yy),
@@ -987,8 +1077,9 @@ class _BarsPainter extends CustomPainter {
     final barPaint = Paint()..color = barColor;
 
     for (int i = 0; i < n; i++) {
-      final v = values[i].clamp(0, maxY);
-      final h = (v / maxY) * chartH;
+      final v = values[i].clamp(minY, maxY);
+      // Вычисляем высоту относительно диапазона
+      final h = rangeY > 0 ? ((v - minY) / rangeY) * chartH : 0.0;
 
       final cx = leftPad + i * groupW + (groupW - barW) / 2;
       final top = size.height - bottomPad - h;
@@ -1008,6 +1099,7 @@ class _BarsPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _BarsPainter old) =>
       old.values != values ||
+      old.minY != minY ||
       old.maxY != maxY ||
       old.tick != tick ||
       old.barColor != barColor ||

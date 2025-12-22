@@ -334,9 +334,9 @@ class _MainTabState extends MainTabState
       const SliverToBoxAdapter(child: SizedBox(height: 8)),
       SliverToBoxAdapter(child: _PRRow(items: data.prs)),
 
-      // ───────────────── Показатели ─────────────────
+      // ───────────────── Общая статистика ─────────────────
       const SliverToBoxAdapter(child: SizedBox(height: 16)),
-      const SliverToBoxAdapter(child: _SectionTitle('Показатели')),
+      const SliverToBoxAdapter(child: _SectionTitle('Общая статистика')),
       const SliverToBoxAdapter(child: SizedBox(height: 8)),
       
       // График недельной активности

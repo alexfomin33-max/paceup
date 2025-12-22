@@ -47,7 +47,9 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
     super.build(context);
 
     // Получаем данные из провайдера с userId профиля
-    final trainingDataAsync = ref.watch(trainingActivitiesProvider((userId: widget.userId, sports: _sports)));
+    final trainingDataAsync = ref.watch(
+      trainingActivitiesProvider((userId: widget.userId, sports: _sports)),
+    );
 
     return trainingDataAsync.when(
       data: (data) {
@@ -82,9 +84,9 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
         // Фильтруем тренировки по текущему месяцу и выбранным видам спорта
         final items = data.activities
             .where((w) {
-              return w.when.year == _month.year && 
-                     w.when.month == _month.month &&
-                     _sports.contains(w.sportType);
+              return w.when.year == _month.year &&
+                  w.when.month == _month.month &&
+                  _sports.contains(w.sportType);
             })
             .toList(growable: false);
 
@@ -92,6 +94,8 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
         final monthKey =
             '${_month.year}-${_month.month.toString().padLeft(2, '0')}';
         final calendarData = <int, String>{};
+        // Map для хранения типов тренировок по дням (день => Set типов спорта)
+        final daySportTypes = <int, Set<int>>{};
 
         // Получаем дни для текущего месяца из календаря
         if (data.calendar.containsKey(monthKey)) {
@@ -102,6 +106,17 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
             if (day != null) {
               calendarData[day] = dist;
             }
+          }
+        }
+
+        // Определяем типы тренировок для каждого дня месяца
+        for (final activity in data.activities) {
+          if (activity.when.year == _month.year &&
+              activity.when.month == _month.month) {
+            final day = activity.when.day;
+            daySportTypes
+                .putIfAbsent(day, () => <int>{})
+                .add(activity.sportType);
           }
         }
 
@@ -142,7 +157,11 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: _CalendarCard(month: _month, bubbles: calendarData),
+                child: _CalendarCard(
+                  month: _month,
+                  bubbles: calendarData,
+                  daySportTypes: daySportTypes,
+                ),
               ),
             ),
 
@@ -260,18 +279,21 @@ class _MonthToolbar extends StatelessWidget {
         _SportIcon(
           selected: sports.contains(0),
           icon: Icons.directions_run,
+          sportType: 0,
           onTap: () => onToggleSport(0),
         ),
         const SizedBox(width: 8),
         _SportIcon(
           selected: sports.contains(1),
           icon: Icons.directions_bike,
+          sportType: 1,
           onTap: () => onToggleSport(1),
         ),
         const SizedBox(width: 8),
         _SportIcon(
           selected: sports.contains(2),
           icon: Icons.pool,
+          sportType: 2,
           onTap: () => onToggleSport(2),
         ),
       ],
@@ -322,12 +344,26 @@ class _NavIcon extends StatelessWidget {
 class _SportIcon extends StatelessWidget {
   final bool selected;
   final IconData icon;
+  final int sportType; // 0 бег, 1 вело, 2 плавание
   final VoidCallback onTap;
   const _SportIcon({
     required this.selected,
     required this.icon,
+    required this.sportType,
     required this.onTap,
   });
+
+  /// Получить цвет активной иконки в зависимости от типа спорта
+  Color _getActiveColor() {
+    switch (sportType) {
+      case 1: // велосипед
+        return AppColors.female; // Розовый цвет, как в main_tab.dart
+      case 2: // плавание
+        return AppColors.accentTeal;
+      default: // бег (0)
+        return AppColors.brandPrimary;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -339,7 +375,7 @@ class _SportIcon extends StatelessWidget {
         height: 28,
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.brandPrimary
+              ? _getActiveColor()
               : AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
@@ -366,8 +402,13 @@ class _SportIcon extends StatelessWidget {
 class _CalendarCard extends StatelessWidget {
   final DateTime month;
   final Map<int, String> bubbles;
+  final Map<int, Set<int>> daySportTypes; // день => Set типов спорта
 
-  const _CalendarCard({required this.month, required this.bubbles});
+  const _CalendarCard({
+    required this.month,
+    required this.bubbles,
+    required this.daySportTypes,
+  });
 
   // 🔽 две высоты вместо одной
   static const double _cellHeightTall = 52; // есть облачка
@@ -414,6 +455,7 @@ class _CalendarCard extends StatelessWidget {
           _MonthGrid(
             month: month,
             bubbles: bubbles,
+            daySportTypes: daySportTypes,
             tallHeight: _cellHeightTall,
             compactHeight: _cellHeightCompact,
             dayTop: _dayTop,
@@ -452,6 +494,7 @@ class _Dow extends StatelessWidget {
 class _MonthGrid extends StatelessWidget {
   final DateTime month;
   final Map<int, String> bubbles;
+  final Map<int, Set<int>> daySportTypes; // день => Set типов спорта
   final double tallHeight;
   final double compactHeight;
   final double dayTop;
@@ -460,11 +503,104 @@ class _MonthGrid extends StatelessWidget {
   const _MonthGrid({
     required this.month,
     required this.bubbles,
+    required this.daySportTypes,
     required this.tallHeight,
     required this.compactHeight,
     required this.dayTop,
     required this.bubbleTop,
   });
+
+  /// Определяет декорацию облачка (цвет или градиент) на основе типов тренировок в день
+  BoxDecoration _getBubbleDecoration(int day) {
+    final sportTypes = daySportTypes[day];
+    if (sportTypes == null || sportTypes.isEmpty) {
+      return BoxDecoration(
+        color: AppColors.brandPrimary,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      );
+    }
+
+    // Если только один тип тренировки
+    if (sportTypes.length == 1) {
+      Color color;
+      if (sportTypes.contains(1)) {
+        // Только велосипед
+        color = AppColors.female;
+      } else if (sportTypes.contains(2)) {
+        // Только плавание
+        color = AppColors.accentTeal;
+      } else {
+        // Только бег
+        color = AppColors.brandPrimary;
+      }
+      return BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      );
+    }
+
+    // Если несколько типов тренировок - используем градиент
+    if (sportTypes.length == 2) {
+      // Бег (0) + Велосипед (1)
+      if (sportTypes.contains(0) && sportTypes.contains(1)) {
+        return BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.brandPrimary, AppColors.female],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        );
+      }
+      // Бег (0) + Плавание (2)
+      if (sportTypes.contains(0) && sportTypes.contains(2)) {
+        return BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.brandPrimary, AppColors.accentTeal],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        );
+      }
+      // Велосипед (1) + Плавание (2)
+      if (sportTypes.contains(1) && sportTypes.contains(2)) {
+        return BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.female, AppColors.accentTeal],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        );
+      }
+    }
+
+    // Если все три типа тренировок (Бег + Велосипед + Плавание)
+    if (sportTypes.length == 3 &&
+        sportTypes.contains(0) &&
+        sportTypes.contains(1) &&
+        sportTypes.contains(2)) {
+      return BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            AppColors.brandPrimary,
+            AppColors.female,
+            AppColors.accentTeal,
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      );
+    }
+
+    // Если другая комбинация - дефолтный цвет
+    return BoxDecoration(
+      color: AppColors.brandPrimary,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -532,10 +668,7 @@ class _MonthGrid extends StatelessWidget {
                             horizontal: 8,
                             vertical: 2,
                           ),
-                          decoration: BoxDecoration(
-                            color: AppColors.brandPrimary,
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
+                          decoration: _getBubbleDecoration(dayNum),
                           child: Text(
                             bubble,
                             style: const TextStyle(
@@ -647,22 +780,22 @@ class _WorkoutRow extends ConsumerWidget {
         );
       },
       child: Padding(
-        // слева/сверху/снизу уменьшены, справа прежний 12
-        padding: const EdgeInsets.fromLTRB(8, 6, 10, 6),
+        // Увеличен паддинг справа на 4 пикселя
+        padding: const EdgeInsets.fromLTRB(10, 8, 20, 8),
         child: Row(
           children: [
-            // Мини-карта 80x55 (статичная карта маршрута)
+            // Мини-карта 80x80 (статичная карта маршрута)
             ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.xs),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               child: SizedBox(
                 width: 80,
-                height: 55,
+                height: 70,
                 child: item.points.isEmpty
                     ? const Image(
                         image: AssetImage('assets/training_map.png'),
                         fit: BoxFit.cover,
                       )
-                    : RouteCard(points: item.points, height: 55),
+                    : RouteCard(points: item.points, height: 80),
               ),
             ),
             const SizedBox(width: 12),
@@ -672,26 +805,16 @@ class _WorkoutRow extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Дата/время (иконку слева убрали)
-                  Row(
-                    children: [
-                      Text(
-                        _fmtDate(item.when),
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 12,
-                          color: AppColors.getTextSecondaryColor(context),
-                        ),
-                      ),
-                      const Spacer(),
-                      Icon(
-                        Icons.more_horiz,
-                        size: 18,
-                        color: AppColors.getTextSecondaryColor(context),
-                      ),
-                    ],
+                  // Дата/время
+                  Text(
+                    _fmtDate(item.when),
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      color: AppColors.getTextSecondaryColor(context),
+                    ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
 
                   // Три метрики — строго таблично, с вертикальными разделителями
                   IntrinsicHeight(
@@ -707,10 +830,17 @@ class _WorkoutRow extends ConsumerWidget {
                               item.kind == 0
                                   ? Icons.directions_run
                                   : (item.kind == 1
-                                        ? Icons.pedal_bike
+                                        ? Icons.directions_bike
                                         : Icons.pool),
                               size: 15,
-                              color: AppColors.brandPrimary,
+                              color: item.kind == 1
+                                  ? AppColors
+                                        .female // Розовый для велосипеда
+                                  : (item.kind == 2
+                                        ? AppColors
+                                              .accentTeal // Бирюзовый для плавания
+                                        : AppColors
+                                              .brandPrimary), // Синий для бега
                             ),
                           ),
                         ),
@@ -723,34 +853,20 @@ class _WorkoutRow extends ConsumerWidget {
                             MainAxisAlignment.start,
                           ),
                         ),
-                        VerticalDivider(
-                          width: 1,
-                          thickness: 0.5,
-                          color: AppColors.getDividerColor(context),
-                          indent: 0,
-                          endIndent: 0,
-                        ),
                         Expanded(
                           child: _metric(
                             context,
-                            null,
+                            CupertinoIcons.stopwatch,
                             item.durText,
-                            MainAxisAlignment.center,
+                            MainAxisAlignment.start,
                           ),
                         ),
-                        VerticalDivider(
-                          width: 1,
-                          thickness: 0.5,
-                          color: AppColors.getDividerColor(context),
-                          indent: 0,
-                          endIndent: 0,
-                        ),
-                        Expanded(
+                        IntrinsicWidth(
                           child: _metric(
                             context,
-                            null,
-                            item.paceText,
-                            MainAxisAlignment.center,
+                            Icons.speed,
+                            _removePaceUnits(item.paceText),
+                            MainAxisAlignment.start,
                           ),
                         ),
                       ],
@@ -779,16 +895,16 @@ class _WorkoutRow extends ConsumerWidget {
           if (icon != null) ...[
             Icon(
               icon,
-              size: 15,
+              size: 16,
               color: AppColors.getTextSecondaryColor(context),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
           ],
           Text(
             text,
             style: TextStyle(
               fontFamily: 'Inter',
-              fontSize: 13,
+              fontSize: 15,
               fontWeight: FontWeight.w400,
               color: AppColors.getTextPrimaryColor(context),
             ),
@@ -817,6 +933,15 @@ class _WorkoutRow extends ConsumerWidget {
     final hh = d.hour.toString().padLeft(2, '0');
     final mm = d.minute.toString().padLeft(2, '0');
     return '$dd ${months[d.month - 1]}, $hh:$mm';
+  }
+
+  /// Убирает единицы измерения из текста темпа
+  static String _removePaceUnits(String paceText) {
+    return paceText
+        .replaceAll('/км', '')
+        .replaceAll('км/ч', '')
+        .replaceAll('м/с', '')
+        .trim();
   }
 }
 

@@ -4,6 +4,67 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../providers/services/api_provider.dart';
 
+/// Форматирует даты недели в формат "3 ноября - 9 ноября"
+String _formatWeekRange(String weekStart, String weekEnd) {
+  try {
+    final startDate = DateTime.parse(weekStart);
+    final endDate = DateTime.parse(weekEnd);
+
+    final monthNames = [
+      'января',
+      'февраля',
+      'марта',
+      'апреля',
+      'мая',
+      'июня',
+      'июля',
+      'августа',
+      'сентября',
+      'октября',
+      'ноября',
+      'декабря',
+    ];
+
+    final startDay = startDate.day;
+    final startMonth = monthNames[startDate.month - 1];
+    final endDay = endDate.day;
+    final endMonth = monthNames[endDate.month - 1];
+
+    return '$startDay $startMonth - $endDay $endMonth';
+  } catch (e) {
+    // Если ошибка парсинга, возвращаем исходные строки
+    return '$weekStart - $weekEnd';
+  }
+}
+
+/// Возвращает иконку для вида спорта
+IconData _getSportIcon(String sportType) {
+  final type = sportType.toLowerCase();
+  if (type == 'run' || type == 'running') {
+    return Icons.directions_run;
+  } else if (type == 'bike' || type == 'cycling' || type == 'bicycle') {
+    return Icons.directions_bike;
+  } else if (type == 'swim' || type == 'swimming') {
+    return Icons.pool;
+  }
+  // Дефолтная иконка
+  return Icons.directions_run;
+}
+
+/// Возвращает цвет иконки для вида спорта
+Color _getSportIconColor(String sportType) {
+  final type = sportType.toLowerCase();
+  if (type == 'bike' || type == 'cycling' || type == 'bicycle') {
+    // Розовый для велосипеда
+    return AppColors.female;
+  } else if (type == 'swim' || type == 'swimming') {
+    // Бирюзовый для плавания
+    return AppColors.accentMint;
+  }
+  // Дефолтный цвет для бега и других видов спорта
+  return AppColors.brandPrimary;
+}
+
 /// Модель данных недели
 class WeekData {
   final String weekStart;
@@ -71,13 +132,11 @@ class WeekSportData {
 class WeeklyActivityChart extends ConsumerStatefulWidget {
   final int userId;
 
-  const WeeklyActivityChart({
-    super.key,
-    required this.userId,
-  });
+  const WeeklyActivityChart({super.key, required this.userId});
 
   @override
-  ConsumerState<WeeklyActivityChart> createState() => _WeeklyActivityChartState();
+  ConsumerState<WeeklyActivityChart> createState() =>
+      _WeeklyActivityChartState();
 }
 
 class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
@@ -86,7 +145,6 @@ class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
   String? _error;
   int? _selectedWeekIndex;
   List<WeekSportData>? _selectedWeekSports;
-  String? _selectedWeekLabel;
 
   @override
   void initState() {
@@ -102,7 +160,6 @@ class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
       setState(() {
         _selectedWeekIndex = null;
         _selectedWeekSports = null;
-        _selectedWeekLabel = null;
       });
       _loadData();
     }
@@ -124,7 +181,9 @@ class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
       if (response['success'] == true) {
         final weeksJson = response['weeks'] as List<dynamic>;
         setState(() {
-          _weeks = weeksJson.map((w) => WeekData.fromJson(w as Map<String, dynamic>)).toList();
+          _weeks = weeksJson
+              .map((w) => WeekData.fromJson(w as Map<String, dynamic>))
+              .toList();
           _isLoading = false;
         });
       } else {
@@ -145,20 +204,18 @@ class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
     if (weekIndex < 0 || weekIndex >= _weeks.length) return;
 
     final week = _weeks[weekIndex];
-    
+
     // Если уже выбрана эта неделя, снимаем выделение
     if (_selectedWeekIndex == weekIndex) {
       setState(() {
         _selectedWeekIndex = null;
         _selectedWeekSports = null;
-        _selectedWeekLabel = null;
       });
       return;
     }
 
     setState(() {
       _selectedWeekIndex = weekIndex;
-      _selectedWeekLabel = week.weekLabel;
     });
 
     // Загружаем детали недели
@@ -166,10 +223,7 @@ class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
       final api = ref.read(apiServiceProvider);
       final response = await api.post(
         '/get_week_activity_details.php',
-        body: {
-          'userId': widget.userId.toString(),
-          'weekStart': week.weekStart,
-        },
+        body: {'userId': widget.userId.toString(), 'weekStart': week.weekStart},
       );
 
       if (response['success'] == true && mounted) {
@@ -187,7 +241,6 @@ class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
         setState(() {
           _selectedWeekIndex = null;
           _selectedWeekSports = null;
-          _selectedWeekLabel = null;
         });
       }
     }
@@ -230,32 +283,34 @@ class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // График
-        SizedBox(
-          height: 200,
-          child: _ActivityLineChart(
-            weeks: _weeks,
-            selectedWeekIndex: _selectedWeekIndex,
-            onPointTap: _loadWeekDetails,
-            textSecondaryColor: AppColors.getTextSecondaryColor(context),
-            borderColor: AppColors.getBorderColor(context),
-          ),
-        ),
-        
-        // Детали выбранной недели
-        if (_selectedWeekIndex != null && _selectedWeekSports != null && _selectedWeekLabel != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: WeekActivityDetails(
-              weekLabel: _selectedWeekLabel!,
-              sports: _selectedWeekSports!,
-            ),
-          ),
-      ],
+    // График
+    final chartWidget = SizedBox(
+      height: 200,
+      child: _ActivityLineChart(
+        weeks: _weeks,
+        selectedWeekIndex: _selectedWeekIndex,
+        onPointTap: _loadWeekDetails,
+        textSecondaryColor: AppColors.getTextSecondaryColor(context),
+        borderColor: AppColors.getBorderColor(context),
+      ),
     );
+
+    // Если неделя выбрана, помещаем график внутрь блока с деталями
+    if (_selectedWeekIndex != null && _selectedWeekSports != null) {
+      final selectedWeek = _weeks[_selectedWeekIndex!];
+      final formattedWeekLabel = _formatWeekRange(
+        selectedWeek.weekStart,
+        selectedWeek.weekEnd,
+      );
+      return WeekActivityDetails(
+        weekLabel: formattedWeekLabel,
+        sports: _selectedWeekSports!,
+        chart: chartWidget,
+      );
+    }
+
+    // Если неделя не выбрана, показываем только график
+    return chartWidget;
   }
 }
 
@@ -330,13 +385,15 @@ class _LineChartPainter extends CustomPainter {
     if (weeks.isEmpty) return null;
 
     final leftPad = 40.0;
-    final rightPad = 20.0;
+    final rightPad = 8.0;
     final topPad = 30.0;
     final bottomPad = 40.0;
     final chartW = size.width - leftPad - rightPad;
     final chartH = size.height - topPad - bottomPad;
 
-    final maxDistance = weeks.map((w) => w.totalDistance).reduce((a, b) => a > b ? a : b);
+    final maxDistance = weeks
+        .map((w) => w.totalDistance)
+        .reduce((a, b) => a > b ? a : b);
     final maxY = maxDistance > 0 ? ((maxDistance / 40).ceil() * 40.0) : 80.0;
 
     final n = weeks.length;
@@ -364,14 +421,16 @@ class _LineChartPainter extends CustomPainter {
     if (weeks.isEmpty) return;
 
     final leftPad = 40.0;
-    final rightPad = 20.0;
-    final topPad = 30.0;
-    final bottomPad = 40.0;
+    final rightPad = 8.0;
+    final topPad = 10.0;
+    final bottomPad = 30.0;
     final chartW = size.width - leftPad - rightPad;
     final chartH = size.height - topPad - bottomPad;
 
     // Вычисляем максимальное значение для оси Y
-    final maxDistance = weeks.map((w) => w.totalDistance).reduce((a, b) => a > b ? a : b);
+    final maxDistance = weeks
+        .map((w) => w.totalDistance)
+        .reduce((a, b) => a > b ? a : b);
     final maxY = maxDistance > 0 ? ((maxDistance / 40).ceil() * 40.0) : 80.0;
     final tick = maxY / 2; // Делим на 2 интервала (0, 40, 80)
 
@@ -386,7 +445,7 @@ class _LineChartPainter extends CustomPainter {
     for (double y = 0; y <= maxY + 0.0001; y += tick) {
       final frac = (y / maxY).clamp(0.0, 1.0);
       final yy = size.height - bottomPad - frac * chartH;
-      
+
       // Горизонтальная линия сетки
       canvas.drawLine(
         Offset(leftPad, yy),
@@ -410,7 +469,7 @@ class _LineChartPainter extends CustomPainter {
     // Рисуем линию графика и точки
     final n = weeks.length;
     final groupW = chartW / n;
-    
+
     final linePaint = Paint()
       ..color = lineColor
       ..strokeWidth = 2.0
@@ -525,7 +584,7 @@ class _LineChartPainter extends CustomPainter {
       'СЕН.',
       'ОКТ.',
       'НОЯБ.',
-      'ДЕК.'
+      'ДЕК.',
     ];
 
     for (final entry in monthLabels.entries) {
@@ -558,11 +617,13 @@ class _LineChartPainter extends CustomPainter {
 class WeekActivityDetails extends StatelessWidget {
   final String weekLabel;
   final List<WeekSportData> sports;
+  final Widget? chart; // График, который будет отображаться внутри блока
 
   const WeekActivityDetails({
     super.key,
     required this.weekLabel,
     required this.sports,
+    this.chart,
   });
 
   @override
@@ -571,28 +632,41 @@ class WeekActivityDetails extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: AppColors.getBorderColor(context),
           width: 0.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // График (если передан)
+          if (chart != null) ...[chart!, const SizedBox(height: 20)],
+
           // Заголовок недели
           Text(
-            'Неделя $weekLabel',
+            weekLabel,
             style: TextStyle(
               fontFamily: 'Inter',
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
               color: AppColors.getTextPrimaryColor(context),
             ),
           ),
-          const SizedBox(height: 16),
-          
-          // Список видов спорта
+          const SizedBox(height: 8),
+
+          // Таблица видов спорта
           if (sports.isEmpty)
             Text(
               'Нет активностей за эту неделю',
@@ -603,104 +677,164 @@ class WeekActivityDetails extends StatelessWidget {
               ),
             )
           else
-            ...sports.map((sport) => _SportRow(sport: sport)),
+            _SportsTable(sports: sports),
         ],
       ),
     );
   }
 }
 
-/// Строка вида спорта
-class _SportRow extends StatelessWidget {
-  final WeekSportData sport;
+/// Таблица видов спорта с метриками
+class _SportsTable extends StatelessWidget {
+  final List<WeekSportData> sports;
 
-  const _SportRow({required this.sport});
+  const _SportsTable({required this.sports});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Название вида спорта
-          Text(
-            sport.typeLabel,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.getTextPrimaryColor(context),
-            ),
-          ),
-          const SizedBox(height: 8),
-          
-          // Метрики
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    // Ограничиваем количество строк до 3
+    final displaySports = sports.take(3).toList();
+
+    return Column(
+      children: [
+        // Заголовки таблицы
+        _TableRow(
+          isHeader: true,
+          icon: null,
+          distance: 'Дистанция',
+          time: 'Время',
+          elevation: 'Высота',
+        ),
+
+        // Разделитель после заголовков
+        Divider(
+          height: 1,
+          thickness: 0.5,
+          color: AppColors.getDividerColor(context),
+        ),
+
+        // Строки данных
+        ...displaySports.asMap().entries.map((entry) {
+          final index = entry.key;
+          final sport = entry.value;
+          return Column(
             children: [
-              Expanded(
-                child: _MetricItem(
-                  label: 'Дистанция',
-                  value: sport.distanceText,
+              _TableRow(
+                isHeader: false,
+                icon: _getSportIcon(sport.type),
+                sportType: sport.type,
+                distance: sport.distanceText,
+                time: sport.timeText.replaceAll('.', ''),
+                elevation: sport.elevationText ?? '—',
+              ),
+              // Разделитель после строки (кроме последней)
+              if (index < displaySports.length - 1)
+                Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  color: AppColors.getDividerColor(context),
                 ),
-              ),
-              Expanded(
-                child: _MetricItem(
-                  label: 'Время',
-                  value: sport.timeText,
-                ),
-              ),
-              Expanded(
-                child: sport.elevationText != null
-                    ? _MetricItem(
-                        label: 'Высота',
-                        value: sport.elevationText!,
-                      )
-                    : const SizedBox.shrink(),
-              ),
             ],
-          ),
-        ],
-      ),
+          );
+        }),
+      ],
     );
   }
 }
 
-/// Элемент метрики
-class _MetricItem extends StatelessWidget {
-  final String label;
-  final String value;
+/// Строка таблицы (заголовок или данные)
+class _TableRow extends StatelessWidget {
+  final bool isHeader;
+  final IconData? icon;
+  final String? sportType; // Тип спорта для определения цвета иконки
+  final String distance;
+  final String time;
+  final String elevation;
 
-  const _MetricItem({
-    required this.label,
-    required this.value,
+  const _TableRow({
+    required this.isHeader,
+    this.icon,
+    this.sportType,
+    required this.distance,
+    required this.time,
+    required this.elevation,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 12,
-            color: AppColors.getTextSecondaryColor(context),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+      child: Row(
+        children: [
+          // Колонка 1: Вид спорта (иконка) - фиксированная ширина
+          SizedBox(
+            width: 30,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: icon != null
+                  ? Icon(
+                      icon,
+                      size: 20,
+                      color: sportType != null
+                          ? _getSportIconColor(sportType!)
+                          : AppColors.brandPrimary,
+                    )
+                  : const SizedBox.shrink(),
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.getTextPrimaryColor(context),
+
+          // Колонка 2: Дистанция
+          Expanded(
+            flex: 3,
+            child: Text(
+              distance,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: isHeader ? 12 : 14,
+                fontWeight: isHeader ? FontWeight.w600 : FontWeight.w500,
+                color: isHeader
+                    ? AppColors.getTextSecondaryColor(context)
+                    : AppColors.getTextPrimaryColor(context),
+              ),
+            ),
           ),
-        ),
-      ],
+
+          // Колонка 3: Время
+          Expanded(
+            flex: 4,
+            child: Text(
+              time,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: isHeader ? 12 : 14,
+                fontWeight: isHeader ? FontWeight.w600 : FontWeight.w500,
+                color: isHeader
+                    ? AppColors.getTextSecondaryColor(context)
+                    : AppColors.getTextPrimaryColor(context),
+              ),
+            ),
+          ),
+
+          // Колонка 4: Высота
+          Expanded(
+            flex: 3,
+            child: Text(
+              elevation,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: isHeader ? 12 : 14,
+                fontWeight: isHeader ? FontWeight.w600 : FontWeight.w500,
+                color: isHeader
+                    ? AppColors.getTextSecondaryColor(context)
+                    : AppColors.getTextPrimaryColor(context),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
