@@ -457,16 +457,18 @@ class _EditingBikeContentState extends ConsumerState<EditingBikeContent>
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Center(
-                          child: Opacity(
-                            opacity: 0.5,
-                            child: Image.asset(
-                              'assets/add_bike.png',
-                              width: 150,
-                              fit: BoxFit.contain,
+                        // ── Показываем картинку по умолчанию только если нет загруженного изображения
+                        if (_currentImageUrl == null && _imageFile == null)
+                          Center(
+                            child: Opacity(
+                              opacity: 0.5,
+                              child: Image.asset(
+                                'assets/add_bike.png',
+                                width: 150,
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
-                        ),
                         // Отображение текущего изображения из базы или выбранного нового
                         if (_currentImageUrl != null && _imageFile == null)
                           Center(

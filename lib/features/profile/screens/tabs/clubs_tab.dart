@@ -251,18 +251,24 @@ class _ClubCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // Название клуба
-          Text(
-            club.name,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              height: 1.2,
-              color: AppColors.getTextPrimaryColor(context),
+          // Название клуба с горизонтальным скроллом
+          // Центрируем короткие названия, длинные можно прокрутить
+          Align(
+            alignment: Alignment.center,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Text(
+                club.name,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 6),

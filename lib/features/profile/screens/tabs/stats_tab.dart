@@ -149,6 +149,65 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     }
   }
 
+  /// Форматирует число с пробелами в качестве разделителя тысяч
+  /// Например: 1500 → "1 500", 12345 → "12 345"
+  String _formatNumberWithSpaces(int number) {
+    final str = number.toString();
+    final buffer = StringBuffer();
+    for (int i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) {
+        buffer.write(' ');
+      }
+      buffer.write(str[i]);
+    }
+    return buffer.toString();
+  }
+
+  /// Форматирует набор высоты в метрах
+  /// Принимает строку из API (может быть "1.5 км", "1500 м" или число)
+  /// Возвращает отформатированную строку в метрах с пробелами после трех знаков
+  String _formatElevationGain(String? elevationGain) {
+    if (elevationGain == null || elevationGain.isEmpty || elevationGain == '—') {
+      return '—';
+    }
+
+    try {
+      // Убираем пробелы и приводим к нижнему регистру
+      final cleaned = elevationGain.trim().toLowerCase();
+
+      // Если содержит "км", парсим и конвертируем в метры
+      if (cleaned.contains('км')) {
+        final numberStr = cleaned.replaceAll('км', '').trim();
+        final number = double.tryParse(numberStr);
+        if (number != null) {
+          final meters = (number * 1000).round();
+          return '${_formatNumberWithSpaces(meters)} м';
+        }
+      }
+
+      // Если содержит "м", парсим число и оставляем в метрах
+      if (cleaned.contains('м')) {
+        final numberStr = cleaned.replaceAll('м', '').trim();
+        final number = double.tryParse(numberStr);
+        if (number != null) {
+          return '${_formatNumberWithSpaces(number.round())} м';
+        }
+      }
+
+      // Если просто число, считаем что это метры
+      final number = double.tryParse(cleaned);
+      if (number != null) {
+        return '${_formatNumberWithSpaces(number.round())} м';
+      }
+
+      // Если не удалось распарсить, возвращаем как есть
+      return elevationGain;
+    } catch (e) {
+      // В случае ошибки возвращаем исходное значение
+      return elevationGain;
+    }
+  }
+
   /// Получает метрики из загруженных данных
   List<_MetricRowData> _getMetrics() {
     if (_statsData == null) {
@@ -185,7 +244,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         _MetricRowData(
           Icons.terrain_outlined,
           'Набор высоты',
-          metrics.elevationGain ?? '—',
+          _formatElevationGain(metrics.elevationGain),
         ),
       ];
     } else if (sportType == 'bike') {
@@ -205,7 +264,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         _MetricRowData(
           Icons.terrain_outlined,
           'Набор высоты',
-          metrics.elevationGain ?? '—',
+          _formatElevationGain(metrics.elevationGain),
         ),
       ];
     } else if (sportType == 'swim') {

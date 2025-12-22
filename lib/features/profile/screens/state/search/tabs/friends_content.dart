@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../features/profile/providers/search/friends_search_provider.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/error_handler.dart';
-import '../../../../../../core/widgets/primary_button.dart';
+// import '../../../../../../core/widgets/primary_button.dart';
 import '../../../../../../core/widgets/transparent_route.dart';
 import '../../../../../../features/profile/screens/profile_screen.dart';
 
@@ -210,41 +210,41 @@ class _SearchFriendsContentState extends ConsumerState<SearchFriendsContent> {
           ),
 
           // ───── Подпись и кнопка «Пригласить» (показываем только если не идет поиск)
-          if (!isSearching) ...[
-            const SliverToBoxAdapter(child: SizedBox(height: 25)),
+          // if (!isSearching) ...[
+          //   const SliverToBoxAdapter(child: SizedBox(height: 25)),
 
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Center(
-                  child: Text(
-                    'Пригласите друзей, которые еще не пользуются',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      color: AppColors.getTextSecondaryColor(context),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          //   SliverToBoxAdapter(
+          //     child: Padding(
+          //       padding: const EdgeInsets.symmetric(horizontal: 16),
+          //       child: Center(
+          //         child: Text(
+          //           'Пригласите друзей, которые еще не пользуются',
+          //           textAlign: TextAlign.center,
+          //           style: TextStyle(
+          //             fontFamily: 'Inter',
+          //             fontSize: 13,
+          //             color: AppColors.getTextSecondaryColor(context),
+          //           ),
+          //         ),
+          //       ),
+          //     ),
+          //   ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          //   const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Center(
-                  child: PrimaryButton(
-                    text: 'Пригласить',
-                    onPressed: () {},
-                    width: 220,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          //   SliverToBoxAdapter(
+          //     child: Padding(
+          //       padding: const EdgeInsets.symmetric(horizontal: 16),
+          //       child: Center(
+          //         child: PrimaryButton(
+          //           text: 'Пригласить',
+          //           onPressed: () {},
+          //           width: 220,
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          // ],
 
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
