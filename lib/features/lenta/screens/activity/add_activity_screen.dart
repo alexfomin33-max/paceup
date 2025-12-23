@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/local_image_compressor.dart'
@@ -87,6 +88,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   // Индекс перетаскиваемой фотографии
   int? _draggedIndex;
 
+  // GPX файл тренировки
+  File? _gpxFile;
+
   @override
   void initState() {
     super.initState();
@@ -135,6 +139,18 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   ),
                   const SizedBox(height: 8),
                   _buildPhotoCarousel(),
+
+                  const SizedBox(height: 24),
+
+                  // ────────────────────────────────────────────────────────────────
+                  // 📁 ФАЙЛ GPX ТРЕНИРОВКИ
+                  // ────────────────────────────────────────────────────────────────
+                  const Text(
+                    'Файл тренировки (GPX)',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildGpxFileSelector(),
 
                   const SizedBox(height: 24),
 
@@ -520,72 +536,159 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     );
   }
 
-  /// Выпадающий список для выбора типа тренировки
-  Widget _buildActivityTypeSelector() {
-    return InputDecorator(
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: AppColors.getSurfaceColor(context),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        border: OutlineInputBorder(
+  /// Виджет для выбора GPX файла
+  Widget _buildGpxFileSelector() {
+    if (_gpxFile != null) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
+          border: Border.all(color: AppColors.getBorderColor(context)),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
+        child: Row(
+          children: [
+            Icon(
+              CupertinoIcons.doc,
+              size: 20,
+              color: AppColors.getIconPrimaryColor(context),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _gpxFile!.path.split('/').last,
+                style: AppTextStyles.h14w4,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _gpxFile = null;
+                });
+              },
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: AppColors.getBorderColor(context),
+                  ),
+                ),
+                child: const Icon(
+                  CupertinoIcons.clear_circled_solid,
+                  size: 20,
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+          ],
         ),
-        focusedBorder: OutlineInputBorder(
+      );
+    }
+
+    return GestureDetector(
+      onTap: _handlePickGpxFile,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
+          border: Border.all(color: AppColors.getBorderColor(context)),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              CupertinoIcons.add_circled,
+              size: 20,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Прикрепить файл GPX',
+              style: AppTextStyles.h14w4Place,
+            ),
+          ],
         ),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedActivityType,
-          isExpanded: true,
-          hint: const Text(
-            'Выберите вид тренировки',
-            style: AppTextStyles.h14w4Place,
+    );
+  }
+
+  /// Выпадающий список для выбора типа тренировки
+  Widget _buildActivityTypeSelector() {
+    final isEnabled = _gpxFile == null;
+    return Opacity(
+      opacity: isEnabled ? 1.0 : 0.5,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.getSurfaceColor(context),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
           ),
-          onChanged: (String? newValue) {
-            if (newValue != null) {
-              setState(() {
-                _selectedActivityType = newValue;
-                // При смене типа тренировки сбрасываем выбранную экипировку
-                _selectedEquipment = null;
-                // Если выбран "Плавание" — скрываем экипировку
-                if (!_shouldShowEquipment()) {
-                  _showEquipment = false;
-                } else if (_showEquipment) {
-                  _loadEquipment();
-                }
-              });
-            }
-          },
-          dropdownColor: AppColors.getSurfaceColor(context),
-          menuMaxHeight: 300,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          icon: Icon(
-            Icons.arrow_drop_down,
-            color: AppColors.getIconSecondaryColor(context),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
           ),
-          style: AppTextStyles.h14w4,
-          items: _activityTypes.map((option) {
-            return DropdownMenuItem<String>(
-              value: option,
-              child: Text(option, style: AppTextStyles.h14w4),
-            );
-          }).toList(),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: _selectedActivityType,
+            isExpanded: true,
+            hint: const Text(
+              'Выберите вид тренировки',
+              style: AppTextStyles.h14w4Place,
+            ),
+            onChanged: isEnabled
+                ? (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedActivityType = newValue;
+                        // При смене типа тренировки сбрасываем выбранную экипировку
+                        _selectedEquipment = null;
+                        // Если выбран "Плавание" — скрываем экипировку
+                        if (!_shouldShowEquipment()) {
+                          _showEquipment = false;
+                        } else if (_showEquipment) {
+                          _loadEquipment();
+                        }
+                      });
+                    }
+                  }
+                : null,
+            dropdownColor: AppColors.getSurfaceColor(context),
+            menuMaxHeight: 300,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            icon: Icon(
+              Icons.arrow_drop_down,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+            style: AppTextStyles.h14w4,
+            items: _activityTypes.map((option) {
+              return DropdownMenuItem<String>(
+                value: option,
+                child: Text(option, style: AppTextStyles.h14w4),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -593,10 +696,13 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
   /// Поле выбора даты тренировки
   Widget _buildDateField() {
-    return GestureDetector(
-      onTap: _pickDate,
-      child: AbsorbPointer(
-        child: InputDecorator(
+    final isEnabled = _gpxFile == null;
+    return Opacity(
+      opacity: isEnabled ? 1.0 : 0.5,
+      child: GestureDetector(
+        onTap: isEnabled ? _pickDate : null,
+        child: AbsorbPointer(
+          child: InputDecorator(
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.getSurfaceColor(context),
@@ -648,15 +754,19 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
   /// Поле выбора времени начала
   Widget _buildTimeField() {
-    return GestureDetector(
-      onTap: _pickTime,
-      child: AbsorbPointer(
-        child: InputDecorator(
+    final isEnabled = _gpxFile == null;
+    return Opacity(
+      opacity: isEnabled ? 1.0 : 0.5,
+      child: GestureDetector(
+        onTap: isEnabled ? _pickTime : null,
+        child: AbsorbPointer(
+          child: InputDecorator(
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.getSurfaceColor(context),
@@ -706,13 +816,18 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
   /// Поле ввода дистанции
   Widget _buildDistanceField() {
-    return TextField(
-      controller: _distanceController,
+    final isEnabled = _gpxFile == null;
+    return Opacity(
+      opacity: isEnabled ? 1.0 : 0.5,
+      child: TextField(
+        controller: _distanceController,
+        enabled: isEnabled,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       textInputAction: TextInputAction.next,
       style: AppTextStyles.h14w4,
@@ -759,15 +874,19 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
   /// Поле выбора длительности тренировки
   Widget _buildDurationField() {
-    return GestureDetector(
-      onTap: _pickDuration,
-      child: AbsorbPointer(
-        child: InputDecorator(
+    final isEnabled = _gpxFile == null;
+    return Opacity(
+      opacity: isEnabled ? 1.0 : 0.5,
+      child: GestureDetector(
+        onTap: isEnabled ? _pickDuration : null,
+        child: AbsorbPointer(
+          child: InputDecorator(
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.getSurfaceColor(context),
@@ -817,6 +936,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -1344,8 +1464,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     if (formState.isSubmitting) return;
 
     // Валидация
-    if (_selectedActivityType == null) {
-      ref.read(formStateProvider.notifier).setError('Выберите вид тренировки');
+    // Если GPX файл не загружен, требуется выбор вида тренировки
+    if (_gpxFile == null && _selectedActivityType == null) {
+      ref.read(formStateProvider.notifier).setError('Выберите вид тренировки или загрузите GPX файл');
       return;
     }
 
@@ -1369,68 +1490,96 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               '${dt.second.toString().padLeft(2, '0')}';
         }
 
-        // Используем выбранные дату и время, или текущее время по умолчанию
+        // Если загружен GPX файл, используем временные значения (будут обновлены после парсинга)
+        // Иначе используем выбранные значения или значения по умолчанию
         DateTime dateStart;
         DateTime dateEnd;
+        String params;
+        String points;
+        double distanceKm;
 
-        // Если длительность не выбрана, используем 1 час по умолчанию
-        final duration = _duration ?? const Duration(hours: 1);
-
-        if (_activityDate != null && _startTime != null) {
-          dateStart = DateTime(
-            _activityDate!.year,
-            _activityDate!.month,
-            _activityDate!.day,
-            _startTime!.hour,
-            _startTime!.minute,
-          );
-          dateEnd = dateStart.add(duration);
-        } else {
-          // Если дата/время не выбраны, используем текущее время
+        if (_gpxFile != null) {
+          // При загрузке GPX файла используем временные значения
+          // Они будут обновлены после парсинга GPX файла
           final now = DateTime.now();
           dateStart = now;
-          dateEnd = now.add(duration);
+          dateEnd = now.add(const Duration(hours: 1));
+          
+          // Временные параметры (будут заменены после парсинга GPX)
+          params = jsonEncode([
+            {
+              'stats': {
+                'distance': 0.0,
+                'realDistance': 0.0,
+                'avgSpeed': 0.0,
+                'avgPace': 0.0,
+                'duration': 0,
+              },
+            },
+          ]);
+          points = jsonEncode([]);
+          distanceKm = 0.0;
+        } else {
+          // Используем выбранные дату и время, или текущее время по умолчанию
+          // Если длительность не выбрана, используем 1 час по умолчанию
+          final duration = _duration ?? const Duration(hours: 1);
+
+          if (_activityDate != null && _startTime != null) {
+            dateStart = DateTime(
+              _activityDate!.year,
+              _activityDate!.month,
+              _activityDate!.day,
+              _startTime!.hour,
+              _startTime!.minute,
+            );
+            dateEnd = dateStart.add(duration);
+          } else {
+            // Если дата/время не выбраны, используем текущее время
+            final now = DateTime.now();
+            dateStart = now;
+            dateEnd = now.add(duration);
+          }
+
+          // Получаем дистанцию из поля ввода (в километрах)
+          distanceKm =
+              double.tryParse(
+                _distanceController.text.trim().replaceAll(',', '.'),
+              ) ??
+              0.0;
+          final distanceMeters = (distanceKm * 1000).round();
+
+          // Рассчитываем темп (минуты на километр)
+          double avgPace = 0.0;
+          if (distanceKm > 0 && duration.inSeconds > 0) {
+            // Темп = (время в секундах / дистанция в км) / 60 (чтобы получить минуты)
+            avgPace = (duration.inSeconds / distanceKm) / 60.0;
+          }
+
+          // Рассчитываем среднюю скорость (км/ч)
+          double avgSpeed = 0.0;
+          if (distanceKm > 0 && duration.inSeconds > 0) {
+            avgSpeed = (distanceKm / duration.inSeconds) * 3600.0;
+          }
+
+          // Формируем params с рассчитанными значениями
+          params = jsonEncode([
+            {
+              'stats': {
+                'distance': distanceMeters.toDouble(),
+                'realDistance': distanceMeters.toDouble(),
+                'avgSpeed': avgSpeed,
+                'avgPace': avgPace,
+                'duration': duration.inSeconds,
+              },
+            },
+          ]);
+
+          // Формируем points (пустой массив)
+          points = jsonEncode([]);
         }
 
         final dateStartStr = formatDateTime(dateStart);
         final dateEndStr = formatDateTime(dateEnd);
-
-        // Получаем дистанцию из поля ввода (в километрах)
-        final distanceKm =
-            double.tryParse(
-              _distanceController.text.trim().replaceAll(',', '.'),
-            ) ??
-            0.0;
-        final distanceMeters = (distanceKm * 1000).round();
-
-        // Рассчитываем темп (минуты на километр)
-        double avgPace = 0.0;
-        if (distanceKm > 0 && duration.inSeconds > 0) {
-          // Темп = (время в секундах / дистанция в км) / 60 (чтобы получить минуты)
-          avgPace = (duration.inSeconds / distanceKm) / 60.0;
-        }
-
-        // Рассчитываем среднюю скорость (км/ч)
-        double avgSpeed = 0.0;
-        if (distanceKm > 0 && duration.inSeconds > 0) {
-          avgSpeed = (distanceKm / duration.inSeconds) * 3600.0;
-        }
-
-        // Формируем params с рассчитанными значениями
-        final params = jsonEncode([
-          {
-            'stats': {
-              'distance': distanceMeters.toDouble(),
-              'realDistance': distanceMeters.toDouble(),
-              'avgSpeed': avgSpeed,
-              'avgPace': avgPace,
-              'duration': duration.inSeconds,
-            },
-          },
-        ]);
-
-        // Формируем points (пустой массив)
-        final points = jsonEncode([]);
 
         // Получаем equip_user_id из выбранной экипировки
         int equipUserId = 0;
@@ -1438,13 +1587,20 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           equipUserId = _selectedEquipment!.equipUserId ?? 0;
         }
 
+        // Определяем тип активности
+        // Если GPX файл загружен, используем 'run' по умолчанию (будет определен из файла)
+        // Иначе используем выбранный тип
+        final activityType = _gpxFile != null 
+            ? 'run' // По умолчанию для GPX, может быть определен из файла
+            : (_activityTypeMap[_selectedActivityType] ?? 'run');
+
         // Создаем активность через новый API endpoint
         final api = ref.read(apiServiceProvider);
         final response = await api.post(
           '/create_activity_from_form.php',
           body: {
             'user_id': userId.toString(),
-            'type': _activityTypeMap[_selectedActivityType] ?? 'run',
+            'type': activityType,
             'date_start': dateStartStr,
             'date_end': dateEndStr,
             'params': params,
@@ -1468,6 +1624,11 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
         if (activityId == null) {
           throw Exception('Не удалось получить ID созданной тренировки');
+        }
+
+        // Загружаем GPX файл, если он есть
+        if (_gpxFile != null) {
+          await _uploadGpxFile(activityId, userId);
         }
 
         // Загружаем фотографии, если они есть
@@ -1531,6 +1692,36 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         _showError(formState.error ?? 'Ошибка при создании тренировки');
       },
     );
+  }
+
+  /// Загружает GPX файл для активности
+  Future<void> _uploadGpxFile(int activityId, int userId) async {
+    if (_gpxFile == null) return;
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      final response = await api.postMultipart(
+        '/upload_activity_gpx.php',
+        files: {
+          'file': _gpxFile!,
+        },
+        fields: {
+          'user_id': userId.toString(),
+          'activity_id': activityId.toString(),
+        },
+        timeout: const Duration(minutes: 2),
+      );
+
+      if (response['success'] != true) {
+        debugPrint('⚠️ Failed to upload GPX file: ${response['message']}');
+        // Не бросаем исключение, так как это не критично для создания активности
+      } else {
+        debugPrint('✅ GPX file uploaded and parsed successfully');
+      }
+    } catch (e) {
+      // Ошибка загрузки GPX файла не критична
+      debugPrint('⚠️ Failed to upload activity GPX file: $e');
+    }
   }
 
   /// Загружает фотографии для активности
@@ -1666,6 +1857,27 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     setState(() {
       _images.remove(image);
     });
+  }
+
+  /// Обработчик выбора GPX файла
+  Future<void> _handlePickGpxFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['gpx'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final file = File(result.files.single.path!);
+        setState(() {
+          _gpxFile = file;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError(e);
+      }
+    }
   }
 }
 
