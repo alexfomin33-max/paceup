@@ -290,7 +290,7 @@ class ActivityBlock extends ConsumerWidget {
 
               // ───────────────── МАРШРУТ С ФОТОГРАФИЯМИ ─────────────────
               // Показываем только если есть точки маршрута или есть изображения
-              // Соотношение сторон 1.3:1 (как в постах)
+              // Высота 400
               // Для импортированных тренировок без маршрута показываем дефолтную картинку
               ClipRRect(
                 borderRadius: BorderRadius.zero,
@@ -313,55 +313,46 @@ class ActivityBlock extends ConsumerWidget {
                     if (updatedActivity.points.isNotEmpty ||
                         updatedActivity.mediaImages.isNotEmpty ||
                         isImportedWithoutRoute) {
-                      return LayoutBuilder(
-                        builder: (context, constraints) {
-                          // Вычисляем высоту для соотношения сторон 1.3:1
-                          final width = constraints.maxWidth;
-                          final height = width / 1.3;
+                      if (isImportedWithoutRoute) {
+                        // ────────────────────────────────────────────────────────────────
+                        // 🖼️ ВЫБОР ДЕФОЛТНОЙ КАРТИНКИ ПО ТИПУ ТРЕНИРОВКИ:
+                        // Для бега (run) — assets/nogps.jpg
+                        // Для плавания (swim/swimming) — assets/nogps_swim.jpg
+                        // ────────────────────────────────────────────────────────────────
+                        final activityType = updatedActivity.type.toLowerCase();
+                        final defaultImagePath =
+                            (activityType == 'swim' ||
+                                activityType == 'swimming')
+                            ? 'assets/nogps_swim.jpg'
+                            : 'assets/nogps.jpg';
 
-                          if (isImportedWithoutRoute) {
-                            // ────────────────────────────────────────────────────────────────
-                            // 🖼️ ВЫБОР ДЕФОЛТНОЙ КАРТИНКИ ПО ТИПУ ТРЕНИРОВКИ:
-                            // Для бега (run) — assets/nogps.jpg
-                            // Для плавания (swim/swimming) — assets/nogps_swim.jpg
-                            // ────────────────────────────────────────────────────────────────
-                            final activityType = updatedActivity.type
-                                .toLowerCase();
-                            final defaultImagePath =
-                                (activityType == 'swim' ||
-                                    activityType == 'swimming')
-                                ? 'assets/nogps_swim.jpg'
-                                : 'assets/nogps.jpg';
-
-                            return SizedBox(
-                              height: height,
-                              width: double.infinity,
-                              child: Image.asset(
-                                defaultImagePath,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Container(
-                                      color: AppColors.disabled,
-                                      child: const Center(
-                                        child: Icon(
-                                          CupertinoIcons.photo,
-                                          size: 48,
-                                          color: AppColors.textTertiary,
-                                        ),
-                                      ),
+                        return SizedBox(
+                          height: 350,
+                          width: double.infinity,
+                          child: Image.asset(
+                            defaultImagePath,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  color: AppColors.disabled,
+                                  child: const Center(
+                                    child: Icon(
+                                      CupertinoIcons.photo,
+                                      size: 48,
+                                      color: AppColors.textTertiary,
                                     ),
-                              ),
-                            );
-                          }
+                                  ),
+                                ),
+                          ),
+                        );
+                      }
 
-                          return ActivityRouteCarousel(
-                            points: updatedActivity.points
-                                .map((c) => LatLng(c.lat, c.lng))
-                                .toList(),
-                            imageUrls: updatedActivity.mediaImages,
-                            height: height,
-                          );
-                        },
+                      return ActivityRouteCarousel(
+                        points: updatedActivity.points
+                            .map((c) => LatLng(c.lat, c.lng))
+                            .toList(),
+                        imageUrls: updatedActivity.mediaImages,
+                        height: 350,
                       );
                     }
 
@@ -533,11 +524,11 @@ Future<void> _handleAddPhotos({
       if (!context.mounted) return;
 
       final picked = pickedFiles[i];
-      // Обрезаем изображение в соотношении 1.3:1
+      // Обрезаем изображение для высоты 350px (соотношение ~1.223:1 для экрана 428px)
       final cropped = await ImagePickerHelper.cropPickedImage(
         context: context,
         source: picked,
-        aspectRatio: 1.3,
+        aspectRatio: 1.223,
         title: 'Обрезка фотографии ${i + 1}',
       );
 

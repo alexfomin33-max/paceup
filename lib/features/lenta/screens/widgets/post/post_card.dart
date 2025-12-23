@@ -165,9 +165,7 @@ class _PostCardState extends ConsumerState<PostCard> {
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
         title: const Text('Скрыть посты?'),
-        content: Text(
-          'Посты ${post.userName} будут скрыты из вашей ленты.',
-        ),
+        content: Text('Посты ${post.userName} будут скрыты из вашей ленты.'),
         actions: [
           CupertinoDialogAction(
             isDefaultAction: true,
@@ -203,13 +201,12 @@ class _PostCardState extends ConsumerState<PostCard> {
 
       // Проверяем успешность операции
       final success = data['success'] == true;
-      
+
       if (success && context.mounted) {
         // Удаляем посты пользователя из ленты локально без сброса пагинации
-        ref.read(lentaProvider(currentUserId).notifier).removeUserContent(
-          hiddenUserId: post.userId,
-          contentType: 'post',
-        );
+        ref
+            .read(lentaProvider(currentUserId).notifier)
+            .removeUserContent(hiddenUserId: post.userId, contentType: 'post');
       } else if (context.mounted) {
         // Показываем ошибку
         await showCupertinoDialog<void>(
@@ -217,7 +214,8 @@ class _PostCardState extends ConsumerState<PostCard> {
           builder: (ctx) => CupertinoAlertDialog(
             title: const Text('Ошибка'),
             content: Text(
-              data['message']?.toString() ?? 'Не удалось скрыть посты пользователя',
+              data['message']?.toString() ??
+                  'Не удалось скрыть посты пользователя',
             ),
             actions: [
               CupertinoDialogAction(
@@ -400,22 +398,15 @@ class _PostCardState extends ConsumerState<PostCard> {
           ),
 
           // ──────────────────────────────────────────────────────────────
-          // МЕДИА-КАРУСЕЛЬ: картинки/видео, соотношение сторон 1.3:1
+          // МЕДИА-КАРУСЕЛЬ: картинки/видео, высота 400
           // ──────────────────────────────────────────────────────────────
-          LayoutBuilder(
-            builder: (context, constraints) {
-              // Вычисляем высоту для соотношения сторон 1.3:1
-              final width = constraints.maxWidth;
-              final height = width / 1.3;
-              return SizedBox(
-                height: height,
-                width: double.infinity,
-                child: PostMediaCarousel(
-                  imageUrls: post.mediaImages,
-                  videoUrls: post.mediaVideos,
-                ),
-              );
-            },
+          SizedBox(
+            height: 350,
+            width: double.infinity,
+            child: PostMediaCarousel(
+              imageUrls: post.mediaImages,
+              videoUrls: post.mediaVideos,
+            ),
           ),
 
           // ──────────────────────────────────────────────────────────────

@@ -178,20 +178,15 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
 
             // ───────── Карта маршрута с фотографиями (как в ActivityBlock)
             // Показываем только если есть точки маршрута или есть изображения
-            // Соотношение сторон 1.3:1 (как в постах и тренировках)
+            // Высота 350
             if (a.points.isNotEmpty || a.mediaImages.isNotEmpty) ...[
               SliverToBoxAdapter(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    // Вычисляем высоту для соотношения сторон 1.3:1
-                    final width = constraints.maxWidth;
-                    final height = width / 1.3;
-                    return ActivityRouteCarousel(
-                      points: a.points
-                          .map((c) => ll.LatLng(c.lat, c.lng))
-                          .toList(),
-                      imageUrls: a.mediaImages,
-                      height: height,
+                child: ActivityRouteCarousel(
+                  points: a.points
+                      .map((c) => ll.LatLng(c.lat, c.lng))
+                      .toList(),
+                  imageUrls: a.mediaImages,
+                  height: 350,
                       // ────────────────────────────────────────────────────────────────
                       // 🔹 ОТКРЫТИЕ ПОЛНОЭКРАННОЙ КАРТЫ: при клике на слайд с картой
                       // ────────────────────────────────────────────────────────────────
@@ -209,8 +204,6 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                               );
                             }
                           : null,
-                    );
-                  },
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),

@@ -1604,7 +1604,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   /// Обработчик добавления фотографий к тренировке
   Future<void> _handleAddPhotos() async {
     try {
-      // ── выбираем и обрезаем изображения в соотношении 1.3:1
+      // ── выбираем и обрезаем изображения для высоты 350px (соотношение ~1.223:1 для экрана 428px)
       // Используем стандартный pickMultiImage, затем обрезаем каждое
       final picker = ImagePicker();
       final pickedFiles = await picker.pickMultiImage();
@@ -1616,11 +1616,11 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         if (!mounted) return;
         
         final picked = pickedFiles[i];
-        // Обрезаем изображение в соотношении 1.3:1
+        // Обрезаем изображение для высоты 350px (соотношение ~1.223:1 для экрана 428px)
         final cropped = await ImagePickerHelper.cropPickedImage(
           context: context,
           source: picked,
-          aspectRatio: 1.3,
+          aspectRatio: 1.223,
           title: 'Обрезка фотографии ${i + 1}',
         );
         

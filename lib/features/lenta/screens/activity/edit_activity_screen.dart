@@ -742,11 +742,11 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         if (!mounted) return;
 
         final picked = pickedFiles[i];
-        // Обрезаем изображение в соотношении 1.3:1
+        // Обрезаем изображение для высоты 350px (соотношение ~1.223:1 для экрана 428px)
         final cropped = await ImagePickerHelper.cropPickedImage(
           context: context,
           source: picked,
-          aspectRatio: 1.3,
+          aspectRatio: 1.223,
           title: 'Обрезка фотографии ${i + 1}',
         );
 
