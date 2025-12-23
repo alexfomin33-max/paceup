@@ -519,16 +519,20 @@ Future<void> _handleAddPhotos({
       return;
     }
 
+    // Рассчитываем соотношение сторон на основе ширины экрана
+    final screenWidth = MediaQuery.of(context).size.width;
+    final aspectRatio = screenWidth / 350.0;
+
     final filesForUpload = <String, File>{};
     for (var i = 0; i < pickedFiles.length; i++) {
       if (!context.mounted) return;
 
       final picked = pickedFiles[i];
-      // Обрезаем изображение для высоты 350px (соотношение ~1.223:1 для экрана 428px)
+      // Обрезаем изображение для высоты 350px (динамическое соотношение)
       final cropped = await ImagePickerHelper.cropPickedImage(
         context: context,
         source: picked,
-        aspectRatio: 1.223,
+        aspectRatio: aspectRatio,
         title: 'Обрезка фотографии ${i + 1}',
       );
 

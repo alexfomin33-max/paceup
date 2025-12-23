@@ -549,11 +549,15 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
   /// Обработчик добавления фотографий к посту
   Future<void> _handleAddPhotos() async {
     try {
-      // ── выбираем и обрезаем изображения для высоты 350px (соотношение ~1.223:1 для экрана 428px)
+      // ── выбираем и обрезаем изображения для высоты 350px (динамическое соотношение)
       // Используем стандартный pickMultiImage, затем обрезаем каждое
       final picker = ImagePicker();
       final pickedFiles = await picker.pickMultiImage();
       if (pickedFiles.isEmpty || !mounted) return;
+
+      // Рассчитываем соотношение сторон на основе ширины экрана
+      final screenWidth = MediaQuery.of(context).size.width;
+      final aspectRatio = screenWidth / 350.0;
 
       // ── обрезаем и сжимаем все выбранные изображения
       final compressedFiles = <File>[];
@@ -561,11 +565,11 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
         if (!mounted) return;
         
         final picked = pickedFiles[i];
-        // Обрезаем изображение для высоты 350px (соотношение ~1.223:1 для экрана 428px)
+        // Обрезаем изображение для высоты 350px (динамическое соотношение)
         final cropped = await ImagePickerHelper.cropPickedImage(
           context: context,
           source: picked,
-          aspectRatio: 1.223,
+          aspectRatio: aspectRatio,
           title: 'Обрезка фотографии ${i + 1}',
         );
         
