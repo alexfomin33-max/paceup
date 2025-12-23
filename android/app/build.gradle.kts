@@ -25,6 +25,16 @@ android {
         targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // ────────────────────────── Ограничение ABI ──────────────────────────
+        // Исключаем armeabi-v7a (armv7) для уменьшения размера APK
+        // Оставляем только arm64-v8a (современные устройства) и x86_64 (эмуляторы)
+        ndk {
+            abiFilters += listOf(
+                "arm64-v8a",  // Современные Android устройства (99% рынка при minSdk 26+)
+                "x86_64"      // Для тестирования на эмуляторах
+            )
+        }
     }
 
     buildTypes {
