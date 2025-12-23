@@ -574,9 +574,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.getSurfaceColor(context),
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(
-                    color: AppColors.getBorderColor(context),
-                  ),
+                  border: Border.all(color: AppColors.getBorderColor(context)),
                 ),
                 child: const Icon(
                   CupertinoIcons.clear_circled_solid,
@@ -607,10 +605,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               color: AppColors.getIconSecondaryColor(context),
             ),
             const SizedBox(width: 8),
-            Text(
-              'Прикрепить файл GPX',
-              style: AppTextStyles.h14w4Place,
-            ),
+            Text('Прикрепить файл GPX', style: AppTextStyles.h14w4Place),
           ],
         ),
       ),
@@ -626,7 +621,10 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         decoration: InputDecoration(
           filled: true,
           fillColor: AppColors.getSurfaceColor(context),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 4,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             borderSide: BorderSide(
@@ -703,58 +701,58 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         onTap: isEnabled ? _pickDate : null,
         child: AbsorbPointer(
           child: InputDecorator(
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.getSurfaceColor(context),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 18,
-            ),
-            prefixIcon: Padding(
-              padding: const EdgeInsets.only(left: 12, right: 6),
-              child: Icon(
-                CupertinoIcons.calendar,
-                size: 18,
-                color: AppColors.getIconPrimaryColor(context),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.getSurfaceColor(context),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 18,
+              ),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.only(left: 12, right: 6),
+                child: Icon(
+                  CupertinoIcons.calendar,
+                  size: 18,
+                  color: AppColors.getIconPrimaryColor(context),
+                ),
+              ),
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 18 + 14,
+                minHeight: 18,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
               ),
             ),
-            prefixIconConstraints: const BoxConstraints(
-              minWidth: 18 + 14,
-              minHeight: 18,
+            child: Text(
+              _activityDate != null
+                  ? _formatDate(_activityDate!)
+                  : 'Выберите дату',
+              style: _activityDate != null
+                  ? AppTextStyles.h14w4
+                  : AppTextStyles.h14w4Place,
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-          ),
-          child: Text(
-            _activityDate != null
-                ? _formatDate(_activityDate!)
-                : 'Выберите дату',
-            style: _activityDate != null
-                ? AppTextStyles.h14w4
-                : AppTextStyles.h14w4Place,
           ),
         ),
       ),
-    ),
     );
   }
 
@@ -767,56 +765,56 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         onTap: isEnabled ? _pickTime : null,
         child: AbsorbPointer(
           child: InputDecorator(
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.getSurfaceColor(context),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 18,
-            ),
-            prefixIcon: Padding(
-              padding: const EdgeInsets.only(left: 12, right: 6),
-              child: Icon(
-                CupertinoIcons.time,
-                size: 18,
-                color: AppColors.getIconPrimaryColor(context),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.getSurfaceColor(context),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 18,
+              ),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.only(left: 12, right: 6),
+                child: Icon(
+                  CupertinoIcons.time,
+                  size: 18,
+                  color: AppColors.getIconPrimaryColor(context),
+                ),
+              ),
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 18 + 14,
+                minHeight: 18,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
               ),
             ),
-            prefixIconConstraints: const BoxConstraints(
-              minWidth: 18 + 14,
-              minHeight: 18,
+            child: Text(
+              _startTime != null ? _formatTime(_startTime!) : 'Выберите время',
+              style: _startTime != null
+                  ? AppTextStyles.h14w4
+                  : AppTextStyles.h14w4Place,
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-          ),
-          child: Text(
-            _startTime != null ? _formatTime(_startTime!) : 'Выберите время',
-            style: _startTime != null
-                ? AppTextStyles.h14w4
-                : AppTextStyles.h14w4Place,
           ),
         ),
       ),
-    ),
     );
   }
 
@@ -828,53 +826,53 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       child: TextField(
         controller: _distanceController,
         enabled: isEnabled,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      textInputAction: TextInputAction.next,
-      style: AppTextStyles.h14w4,
-      decoration: InputDecoration(
-        hintText: '0.0',
-        hintStyle: AppTextStyles.h14w4Place,
-        filled: true,
-        fillColor: AppColors.getSurfaceColor(context),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 17,
-        ),
-        prefixIcon: Padding(
-          padding: const EdgeInsets.only(left: 12, right: 6),
-          child: Icon(
-            CupertinoIcons.location,
-            size: 18,
-            color: AppColors.getIconPrimaryColor(context),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        textInputAction: TextInputAction.next,
+        style: AppTextStyles.h14w4,
+        decoration: InputDecoration(
+          hintText: '0.0',
+          hintStyle: AppTextStyles.h14w4Place,
+          filled: true,
+          fillColor: AppColors.getSurfaceColor(context),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 17,
           ),
-        ),
-        prefixIconConstraints: const BoxConstraints(
-          minWidth: 18 + 14,
-          minHeight: 18,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(left: 12, right: 6),
+            child: Icon(
+              CupertinoIcons.location,
+              size: 18,
+              color: AppColors.getIconPrimaryColor(context),
+            ),
           ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 18 + 14,
+            minHeight: 18,
           ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 
@@ -887,56 +885,56 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         onTap: isEnabled ? _pickDuration : null,
         child: AbsorbPointer(
           child: InputDecorator(
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.getSurfaceColor(context),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 18,
-            ),
-            prefixIcon: Padding(
-              padding: const EdgeInsets.only(left: 12, right: 6),
-              child: Icon(
-                CupertinoIcons.timer,
-                size: 18,
-                color: AppColors.getIconPrimaryColor(context),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.getSurfaceColor(context),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 18,
+              ),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.only(left: 12, right: 6),
+                child: Icon(
+                  CupertinoIcons.timer,
+                  size: 18,
+                  color: AppColors.getIconPrimaryColor(context),
+                ),
+              ),
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 18 + 14,
+                minHeight: 18,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
               ),
             ),
-            prefixIconConstraints: const BoxConstraints(
-              minWidth: 18 + 14,
-              minHeight: 18,
+            child: Text(
+              _duration != null ? _formatDuration(_duration) : '00:00:00',
+              style: _duration != null
+                  ? AppTextStyles.h14w4
+                  : AppTextStyles.h14w4Place,
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-          ),
-          child: Text(
-            _duration != null ? _formatDuration(_duration) : '00:00:00',
-            style: _duration != null
-                ? AppTextStyles.h14w4
-                : AppTextStyles.h14w4Place,
           ),
         ),
       ),
-    ),
     );
   }
 
@@ -1030,7 +1028,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         menuButtonColor: Theme.of(context).brightness == Brightness.light
             ? AppColors.getBackgroundColor(context)
             : null, // В темной теме используем дефолтное поведение
-        onEquipmentChanged: (al.Equipment _) {
+        onEquipmentChanged: () {
           // После изменения экипировки обновляем список (параметр не используем)
           _loadEquipment();
         },
@@ -1466,7 +1464,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     // Валидация
     // Если GPX файл не загружен, требуется выбор вида тренировки
     if (_gpxFile == null && _selectedActivityType == null) {
-      ref.read(formStateProvider.notifier).setError('Выберите вид тренировки или загрузите GPX файл');
+      ref
+          .read(formStateProvider.notifier)
+          .setError('Выберите вид тренировки или загрузите GPX файл');
       return;
     }
 
@@ -1504,7 +1504,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           final now = DateTime.now();
           dateStart = now;
           dateEnd = now.add(const Duration(hours: 1));
-          
+
           // Временные параметры (будут заменены после парсинга GPX)
           params = jsonEncode([
             {
@@ -1590,7 +1590,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         // Определяем тип активности
         // Если GPX файл загружен, используем 'run' по умолчанию (будет определен из файла)
         // Иначе используем выбранный тип
-        final activityType = _gpxFile != null 
+        final activityType = _gpxFile != null
             ? 'run' // По умолчанию для GPX, может быть определен из файла
             : (_activityTypeMap[_selectedActivityType] ?? 'run');
 
@@ -1702,9 +1702,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       final api = ref.read(apiServiceProvider);
       final response = await api.postMultipart(
         '/upload_activity_gpx.php',
-        files: {
-          'file': _gpxFile!,
-        },
+        files: {'file': _gpxFile!},
         fields: {
           'user_id': userId.toString(),
           'activity_id': activityId.toString(),
@@ -1809,7 +1807,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       final compressedFiles = <File>[];
       for (int i = 0; i < pickedFiles.length; i++) {
         if (!mounted) return;
-        
+
         final picked = pickedFiles[i];
         // Обрезаем изображение для высоты 350px (динамическое соотношение)
         final cropped = await ImagePickerHelper.cropPickedImage(
@@ -1818,16 +1816,17 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           aspectRatio: aspectRatio,
           title: 'Обрезка фотографии ${i + 1}',
         );
-        
-        if (cropped == null) continue; // Пропускаем, если пользователь отменил обрезку
-        
+
+        if (cropped == null)
+          continue; // Пропускаем, если пользователь отменил обрезку
+
         // Сжимаем обрезанное изображение
         final compressed = await compressLocalImage(
           sourceFile: cropped,
           maxSide: ImageCompressionPreset.activity.maxSide,
           jpegQuality: ImageCompressionPreset.activity.quality,
         );
-        
+
         // Удаляем временный файл обрезки
         if (cropped.path != compressed.path) {
           try {
@@ -1836,12 +1835,12 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             // Игнорируем ошибки удаления
           }
         }
-        
+
         compressedFiles.add(compressed);
       }
 
       if (compressedFiles.isEmpty || !mounted) return;
-      
+
       setState(() {
         _images.addAll(compressedFiles);
       });

@@ -26,7 +26,7 @@ class EquipmentPopup {
     required String activityType,
     required int activityId,
     required double activityDistance,
-    void Function(al.Equipment)? onEquipmentChanged,
+    VoidCallback? onEquipmentChanged,
     Function(al.Equipment)?
     onEquipmentSelected, // callback для выбора экипировки (для экрана добавления)
   }) {
@@ -99,7 +99,7 @@ class _AnimatedPopup extends StatefulWidget {
   final String activityType;
   final int activityId;
   final double activityDistance;
-  final void Function(al.Equipment)? onEquipmentChanged;
+  final VoidCallback? onEquipmentChanged;
   final Function(al.Equipment)? onEquipmentSelected;
 
   const _AnimatedPopup({
@@ -219,10 +219,10 @@ class _AnimatedPopupState extends State<_AnimatedPopup>
                         activityType: widget.activityType,
                         activityId: widget.activityId,
                         activityDistance: widget.activityDistance,
-                        onEquipmentChanged: (al.Equipment eq) {
+                        onEquipmentChanged: () {
                           widget.onDismiss(); // закрываем попап
                           widget.onEquipmentChanged
-                              ?.call(eq); // вызываем callback
+                              ?.call(); // вызываем callback
                         },
                         onEquipmentSelected: widget.onEquipmentSelected,
                         onDismiss: widget.onDismiss,
@@ -250,7 +250,7 @@ class _PopupContent extends ConsumerStatefulWidget {
   final String activityType;
   final int activityId;
   final double activityDistance;
-  final void Function(al.Equipment)? onEquipmentChanged;
+  final VoidCallback? onEquipmentChanged;
   final Function(al.Equipment)? onEquipmentSelected;
   final VoidCallback? onDismiss;
 
@@ -424,7 +424,7 @@ class _PopupContentState extends ConsumerState<_PopupContent> {
       );
 
       // Вызываем callback для обновления UI
-      widget.onEquipmentChanged?.call(newEquipment);
+      widget.onEquipmentChanged?.call();
     } catch (e) {
       // Ошибка замены эквипа — можно показать сообщение
     }

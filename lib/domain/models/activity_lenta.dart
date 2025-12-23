@@ -188,33 +188,6 @@ class Activity {
       mediaVideos: videos ?? mediaVideos,
     );
   }
-
-  /// Создаёт копию с обновлённой экипировкой
-  Activity copyWithEquipments(List<Equipment> newEquipments) {
-    return Activity(
-      id: id,
-      type: type,
-      dateStart: dateStart,
-      dateEnd: dateEnd,
-      lentaId: lentaId,
-      lentaDate: lentaDate,
-      userId: userId,
-      userName: userName,
-      userAvatar: userAvatar,
-      likes: likes,
-      comments: comments,
-      userGroup: userGroup,
-      equipments: newEquipments,
-      stats: stats,
-      points: points,
-      postDateText: postDateText,
-      postMediaUrl: postMediaUrl,
-      postContent: postContent,
-      islike: islike,
-      mediaImages: mediaImages,
-      mediaVideos: mediaVideos,
-    );
-  }
 }
 
 class Equipment {

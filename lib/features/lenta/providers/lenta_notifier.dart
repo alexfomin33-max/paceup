@@ -79,10 +79,24 @@ class LentaNotifier extends StateNotifier<LentaState> {
       timeout: const Duration(seconds: 15),
     );
 
-    // PHP API может вернуть массив; ApiService в этом случае оборачивает его в поле data.
-    final dynamic dataValue = response['data'];
-    final List<dynamic> rawList =
-        dataValue is List ? List<dynamic>.from(dataValue) : const <dynamic>[];
+    // PHP API возвращает массив напрямую, а не в поле 'data'
+    List<dynamic> rawList;
+    if (response is List<dynamic>) {
+      rawList = List<dynamic>.from(response as List);
+    } else if (response is Map<String, dynamic>) {
+      if (response.containsKey('data')) {
+        final dataValue = response['data'];
+        if (dataValue is List) {
+          rawList = List<dynamic>.from(dataValue);
+        } else {
+          rawList = const <dynamic>[];
+        }
+      } else {
+        rawList = const <dynamic>[];
+      }
+    } else {
+      rawList = const <dynamic>[];
+    }
     
     final activities = rawList
         .whereType<Map<String, dynamic>>()
@@ -457,20 +471,5 @@ class LentaNotifier extends StateNotifier<LentaState> {
       lentaId: lentaId,
       mediaImages: mediaImages,
     );
-  }
-
-  /// Обновляет экипировку конкретной активности и кэш
-  Future<void> updateActivityEquipments({
-    required int lentaId,
-    required List<Equipment> equipments,
-  }) async {
-    final updatedItems = state.items.map((item) {
-      if (_getId(item) == lentaId) {
-        return item.copyWithEquipments(equipments);
-      }
-      return item;
-    }).toList();
-
-    state = state.copyWith(items: updatedItems);
   }
 }

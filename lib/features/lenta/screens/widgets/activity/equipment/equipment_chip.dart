@@ -20,7 +20,7 @@ class EquipmentChip extends StatefulWidget {
   activityType; // тип активности (run, bike) для определения типа эквипа
   final int activityId; // ID активности для обновления эквипа
   final double activityDistance; // дистанция активности в километрах
-  final void Function(al.Equipment)? onEquipmentChanged; // callback после замены эквипа
+  final VoidCallback? onEquipmentChanged; // callback после замены эквипа
   final bool showMenuButton; // показывать ли кнопку меню с тремя точками
   final Function(al.Equipment)?
   onEquipmentSelected; // callback для выбора экипировки (для экрана добавления)

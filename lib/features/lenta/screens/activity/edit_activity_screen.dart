@@ -532,7 +532,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       menuButtonColor: Theme.of(context).brightness == Brightness.light
           ? AppColors.getBackgroundColor(context)
           : null, // В темной теме используем дефолтное поведение
-      onEquipmentChanged: (equipment) {
+      onEquipmentChanged: () {
         // Обновляем ленту фоном без блокировки UI
         unawaited(
           ref.read(lentaProvider(widget.currentUserId).notifier).forceRefresh(),

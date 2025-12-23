@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui; // для ui.Path
 import 'package:latlong2/latlong.dart' as ll;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
 // Берём готовые виджеты (чтобы совпадал верх с ActivityBlock)
@@ -21,12 +22,13 @@ import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/services/api_service.dart';
+import '../../providers/lenta_provider.dart';
 
 /// Страница с подробным описанием тренировки.
 /// Верхний блок (аватар, дата, метрики) полностью повторяет ActivityBlock.
 /// Добавлены: плашка часов, «Отрезки» на всю ширину, сегменты «Темп/Пульс/Высота»,
 /// единый блок «График + сводка темпа».
-class ActivityDescriptionPage extends StatefulWidget {
+class ActivityDescriptionPage extends ConsumerStatefulWidget {
   final al.Activity activity;
   final int currentUserId;
 
@@ -37,11 +39,12 @@ class ActivityDescriptionPage extends StatefulWidget {
   });
 
   @override
-  State<ActivityDescriptionPage> createState() =>
+  ConsumerState<ActivityDescriptionPage> createState() =>
       _ActivityDescriptionPageState();
 }
 
-class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
+class _ActivityDescriptionPageState
+    extends ConsumerState<ActivityDescriptionPage> {
   int _chartTab = 0; // 0=Темп, 1=Пульс, 2=Высота
   
   // Данные пользователя (владельца тренировки)
@@ -49,6 +52,11 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
   String? _userLastName;
   String? _userAvatar;
   bool _isLoadingUserData = true;
+  
+  // ────────────────────────────────────────────────────────────────
+  // 📦 ЛОКАЛЬНОЕ СОСТОЯНИЕ: храним обновленную активность после замены экипировки
+  // ────────────────────────────────────────────────────────────────
+  al.Activity? _updatedActivity;
   
   final ApiService _api = ApiService();
 
@@ -96,9 +104,68 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
     }
   }
 
+  /// Получает актуальную активность: либо из провайдера (если обновлена),
+  /// либо из widget.activity
+  al.Activity get _currentActivity {
+    // Если есть обновленная активность в локальном состоянии — используем её
+    if (_updatedActivity != null) {
+      return _updatedActivity!;
+    }
+
+    // Пытаемся получить обновленную активность из провайдера
+    final userId = widget.currentUserId > 0
+        ? widget.currentUserId
+        : widget.activity.userId;
+    if (userId > 0) {
+      try {
+        final lentaState = ref.read(lentaProvider(userId));
+        final updated = lentaState.items.firstWhere(
+          (a) => a.lentaId == widget.activity.lentaId,
+          orElse: () => widget.activity,
+        );
+        return updated;
+      } catch (e) {
+        // Если ошибка — используем исходную активность
+        return widget.activity;
+      }
+    }
+
+    return widget.activity;
+  }
+
+  /// Обновляет активность после замены экипировки
+  Future<void> _refreshActivityAfterEquipmentChange() async {
+    final userId = widget.currentUserId > 0
+        ? widget.currentUserId
+        : widget.activity.userId;
+    if (userId <= 0) return;
+
+    try {
+      // Обновляем провайдер
+      await ref.read(lentaProvider(userId).notifier).refresh();
+
+      // Получаем обновленную активность из провайдера
+      final lentaState = ref.read(lentaProvider(userId));
+      final updated = lentaState.items.firstWhere(
+        (a) => a.lentaId == widget.activity.lentaId,
+        orElse: () => widget.activity,
+      );
+
+      // Обновляем локальное состояние
+      if (mounted) {
+        setState(() {
+          _updatedActivity = updated;
+        });
+      }
+    } catch (e) {
+      // В случае ошибки просто обновляем локальное состояние из провайдера
+      // без дополнительных действий
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final a = widget.activity;
+    final a = _currentActivity;
     final stats = a.stats;
 
     return InteractiveBackSwipe(
@@ -206,7 +273,9 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                       ),
                     ),
 
-                    // Плашка «обувь» (из ActivityBlock) — без кнопки меню
+                    // ────────────────────────────────────────────────────────────────
+                    // 🔹 ПЛАШКА ЭКИПИРОВКИ: с кнопкой меню для замены экипировки
+                    // ────────────────────────────────────────────────────────────────
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       child: ab.EquipmentChip(
@@ -215,8 +284,8 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                         activityType: a.type,
                         activityId: a.id,
                         activityDistance: (stats?.distance ?? 0.0) / 1000.0,
-                        showMenuButton:
-                            false, // скрываем кнопку меню на странице описания
+                        showMenuButton: true, // показываем кнопку меню для замены экипировки
+                        onEquipmentChanged: _refreshActivityAfterEquipmentChange,
                       ),
                     ),
                     const SizedBox(height: 4),

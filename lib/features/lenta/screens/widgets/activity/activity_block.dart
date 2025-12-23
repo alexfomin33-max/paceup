@@ -11,7 +11,6 @@ import 'package:latlong2/latlong.dart';
 // Токены/модели
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../domain/models/activity_lenta.dart';
-import '../../../../../domain/models/activity_lenta.dart' as al;
 import '../../../../../core/utils/error_handler.dart';
 
 // Подвиджеты
@@ -137,6 +136,10 @@ class ActivityBlock extends ConsumerWidget {
           // ────────────────────────────────────────────────────────────────
           // 📦 СОЗДАНИЕ ВИДЖЕТА ЭКИПИРОВКИ: используется в разных местах
           // ────────────────────────────────────────────────────────────────
+          // ────────────────────────────────────────────────────────────────
+          // 🔹 УБРАНА ЗАМЕНА ЭКИПИРОВКИ ИЗ ЛЕНТЫ: функциональность доступна
+          // только на экране описания тренировки (description_screen.dart)
+          // ────────────────────────────────────────────────────────────────
           final equipmentWidget = EquipmentChip(
             items: updatedActivity.equipments,
             userId: updatedActivity.userId,
@@ -145,21 +148,7 @@ class ActivityBlock extends ConsumerWidget {
             activityDistance:
                 (stats?.distance ?? 0.0) /
                 1000.0, // конвертируем метры в километры
-            showMenuButton: updatedActivity.userId == currentUserId,
-            onEquipmentChanged: (al.Equipment newEq) {
-              // Обновляем только эту карточку, без полной перезагрузки ленты
-              final current = updatedActivity.equipments;
-              final updatedList = [
-                newEq,
-                ...current.where((e) => e.equipUserId != newEq.equipUserId),
-              ];
-              ref
-                  .read(lentaProvider(currentUserId).notifier)
-                  .updateActivityEquipments(
-                    lentaId: updatedActivity.lentaId,
-                    equipments: updatedList,
-                  );
-            },
+            showMenuButton: false, // скрываем кнопку меню в ленте
           );
 
           return Column(
