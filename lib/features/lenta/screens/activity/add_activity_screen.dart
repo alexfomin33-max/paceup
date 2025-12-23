@@ -556,7 +556,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                _gpxFile!.path.split('/').last,
+                _gpxFile?.path.split('/').last ?? '',
                 style: AppTextStyles.h14w4,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1524,13 +1524,15 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           // Если длительность не выбрана, используем 1 час по умолчанию
           final duration = _duration ?? const Duration(hours: 1);
 
-          if (_activityDate != null && _startTime != null) {
+          final activityDate = _activityDate;
+          final startTime = _startTime;
+          if (activityDate != null && startTime != null) {
             dateStart = DateTime(
-              _activityDate!.year,
-              _activityDate!.month,
-              _activityDate!.day,
-              _startTime!.hour,
-              _startTime!.minute,
+              activityDate.year,
+              activityDate.month,
+              activityDate.day,
+              startTime.hour,
+              startTime.minute,
             );
             dateEnd = dateStart.add(duration);
           } else {
@@ -1696,13 +1698,14 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
   /// Загружает GPX файл для активности
   Future<void> _uploadGpxFile(int activityId, int userId) async {
-    if (_gpxFile == null) return;
+    final gpxFile = _gpxFile;
+    if (gpxFile == null) return;
 
     try {
       final api = ref.read(apiServiceProvider);
       final response = await api.postMultipart(
         '/upload_activity_gpx.php',
-        files: {'file': _gpxFile!},
+        files: {'file': gpxFile},
         fields: {
           'user_id': userId.toString(),
           'activity_id': activityId.toString(),

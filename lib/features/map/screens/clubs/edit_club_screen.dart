@@ -1414,7 +1414,7 @@ class _MediaTile extends StatelessWidget {
     }
 
     // ── если есть URL существующего изображения — показываем его
-    if (url != null && url!.isNotEmpty) {
+    if ((url?.isNotEmpty ?? false)) {
       return Stack(
         clipBehavior: Clip.none,
         children: [

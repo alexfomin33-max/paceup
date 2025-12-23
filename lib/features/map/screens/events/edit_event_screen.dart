@@ -430,8 +430,9 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     if (result != null) {
       setState(() {
         selectedLocation = result.coordinates;
-        if (result.address != null && result.address!.isNotEmpty) {
-          placeCtrl.text = result.address!;
+        final address = result.address;
+        if ((address?.isNotEmpty ?? false)) {
+          placeCtrl.text = address!;
         }
       });
     }
@@ -734,8 +735,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
         if (distanceFromValue.isNotEmpty) {
           // Пользователь ввел новое значение - используем его
           fields['distances[0]'] = distanceFromValue;
-        } else if (_originalDistanceFrom != null &&
-            _originalDistanceFrom!.isNotEmpty) {
+        } else if ((_originalDistanceFrom?.isNotEmpty ?? false)) {
           // Поле пустое, но было исходное значение - сохраняем его, чтобы не обнулить в БД
           fields['distances[0]'] = _originalDistanceFrom!;
         }
@@ -746,8 +746,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
         if (distanceToValue.isNotEmpty) {
           // Пользователь ввел новое значение - используем его
           fields['distances[1]'] = distanceToValue;
-        } else if (_originalDistanceTo != null &&
-            _originalDistanceTo!.isNotEmpty) {
+        } else if ((_originalDistanceTo?.isNotEmpty ?? false)) {
           // Поле пустое, но было исходное значение - сохраняем его, чтобы не обнулить в БД
           fields['distances[1]'] = _originalDistanceTo!;
         }
@@ -1765,7 +1764,7 @@ class _MediaTile extends StatelessWidget {
     }
 
     // Если есть URL существующего изображения - показываем его
-    if (url != null && url!.isNotEmpty) {
+    if ((url?.isNotEmpty ?? false)) {
       return Stack(
         clipBehavior: Clip.none,
         children: [

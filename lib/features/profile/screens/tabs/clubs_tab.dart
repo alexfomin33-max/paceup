@@ -294,7 +294,7 @@ class _ClubCard extends StatelessWidget {
                     color: AppColors.getTextPrimaryColor(context),
                   ),
                 ),
-                if (club.city != null && club.city!.isNotEmpty) ...[
+                if ((club.city?.isNotEmpty ?? false)) ...[
                   Flexible(
                     child: Text(
                       '  ·  ${club.city}',

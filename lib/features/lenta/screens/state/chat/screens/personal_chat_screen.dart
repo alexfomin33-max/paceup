@@ -1214,8 +1214,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                                     topSpacing: topSpacing,
                                     bottomSpacing: bottomSpacing,
                                     onImageTap:
-                                        message.image != null &&
-                                            message.image!.isNotEmpty
+                                        (message.image?.isNotEmpty ?? false)
                                         ? () => _showFullscreenImage(
                                             message.image!,
                                           )
@@ -1229,8 +1228,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                                     topSpacing: topSpacing,
                                     bottomSpacing: bottomSpacing,
                                     onImageTap:
-                                        message.image != null &&
-                                            message.image!.isNotEmpty
+                                        (message.image?.isNotEmpty ?? false)
                                         ? () => _showFullscreenImage(
                                             message.image!,
                                           )
@@ -1375,7 +1373,7 @@ class _BubbleLeft extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ─── Изображение (если есть) ───
-                  if (image != null && image!.isNotEmpty) ...[
+                  if ((image?.isNotEmpty ?? false)) ...[
                     GestureDetector(
                       onTap: onImageTap,
                       child: ClipRRect(
@@ -1499,7 +1497,7 @@ class _BubbleRight extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ─── Изображение (если есть) ───
-                  if (image != null && image!.isNotEmpty) ...[
+                  if ((image?.isNotEmpty ?? false)) ...[
                     GestureDetector(
                       onTap: onImageTap,
                       child: ClipRRect(

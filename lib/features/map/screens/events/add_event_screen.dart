@@ -157,7 +157,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
       setState(() {
         selectedLocation = result.coordinates;
         // ⚡️ Автозаполнение поля "Место проведения" адресом из геокодинга
-        if (result.address != null && result.address!.isNotEmpty) {
+        final address = result.address;
+        if ((address?.isNotEmpty ?? false)) {
           placeCtrl.text = result.address!;
         }
       });

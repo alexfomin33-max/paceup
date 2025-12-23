@@ -205,8 +205,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         ref.invalidate(recommendedClubsProvider);
 
         // ── Обновляем список участников на вкладке "Участники", если она открыта
-        if (_tab == 1 && _membersContentKey.currentState != null) {
-          _membersContentKey.currentState!.refreshMembers();
+        if (_tab == 1) {
+          _membersContentKey.currentState?.refreshMembers();
         }
       } else {
         final errorMessage =
@@ -296,8 +296,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         ref.invalidate(recommendedClubsProvider);
 
         // ── Обновляем список участников на вкладке "Участники", если она открыта
-        if (_tab == 1 && _membersContentKey.currentState != null) {
-          _membersContentKey.currentState!.refreshMembers();
+        if (_tab == 1) {
+          _membersContentKey.currentState?.refreshMembers();
         }
       } else {
         final errorMessage =
@@ -1211,12 +1211,13 @@ class _MemberAvatars extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (members == null || members!.isEmpty) {
+    final membersList = members;
+    if (membersList == null || membersList.isEmpty) {
       return const SizedBox.shrink();
     }
 
     // Берем первые 3 участника
-    final displayMembers = members!.take(3).toList();
+    final displayMembers = membersList.take(3).toList();
     final avatarSize = 20.0; // Очень маленький размер
     final overlap = 4.0; // Наложение между аватарками
 

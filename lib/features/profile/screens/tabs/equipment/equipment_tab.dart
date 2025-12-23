@@ -519,7 +519,7 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
   @override
   void initState() {
     super.initState();
-    if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty) {
+    if ((widget.imageUrl?.isNotEmpty ?? false)) {
       _determineFit();
     }
   }
@@ -529,7 +529,7 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
     super.didUpdateWidget(oldWidget);
     if (widget.imageUrl != oldWidget.imageUrl) {
       _cleanupListener();
-      if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty) {
+      if ((widget.imageUrl?.isNotEmpty ?? false)) {
         _determineFit();
       }
     }
@@ -593,7 +593,7 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty) {
+    if ((widget.imageUrl?.isNotEmpty ?? false)) {
       // Изображение помещается по длинной стороне (fitWidth или fitHeight)
       return SizedBox(
         width: 63,

@@ -621,7 +621,7 @@ class _RectImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Если передан URL, используем CachedNetworkImage
-    if (imageUrl != null && imageUrl!.isNotEmpty) {
+    if ((imageUrl?.isNotEmpty ?? false)) {
       return ClipOval(
         child: SizedBox(
           width: 64,

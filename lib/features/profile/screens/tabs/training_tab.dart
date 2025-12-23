@@ -793,8 +793,15 @@ class _WorkoutRow extends ConsumerWidget {
                 width: 80,
                 height: 70,
                 child: item.points.isEmpty
-                    ? const Image(
-                        image: AssetImage('assets/training_map.png'),
+                    ? Image(
+                        image: AssetImage(
+                          // Выбираем картинку в зависимости от типа спорта
+                          item.kind == 2
+                              ? 'assets/nogps_swim.jpg' // Плавание
+                              : (item.kind == 0
+                                  ? 'assets/nogps.jpg' // Бег
+                                  : 'assets/training_map.png'), // Велосипед
+                        ),
                         fit: BoxFit.cover,
                       )
                     : _buildStaticMiniMap(context, item.points),

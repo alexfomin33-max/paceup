@@ -651,7 +651,7 @@ class _BackgroundImage extends StatelessWidget {
         screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
 
     // Если есть URL из базы данных, используем его с fade-анимацией
-    if (imageUrl != null && imageUrl!.isNotEmpty) {
+    if ((imageUrl?.isNotEmpty ?? false)) {
       return CachedNetworkImage(
         imageUrl: imageUrl!,
         width: double.infinity,
@@ -701,7 +701,7 @@ class _HeaderLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Если есть URL из базы данных, используем его с fade-анимацией
-    if (logoUrl != null && logoUrl!.isNotEmpty) {
+    if ((logoUrl?.isNotEmpty ?? false)) {
       return CachedNetworkImage(
         imageUrl: logoUrl!,
         width: 90,

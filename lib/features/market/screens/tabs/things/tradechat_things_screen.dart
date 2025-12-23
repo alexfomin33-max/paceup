@@ -1456,7 +1456,7 @@ class _BubbleLeft extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (image != null && image!.isNotEmpty) ...[
+                  if ((image?.isNotEmpty ?? false)) ...[
                     GestureDetector(
                       onTap: onImageTap,
                       child: ClipRRect(
@@ -1573,7 +1573,7 @@ class _BubbleRight extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (image != null && image!.isNotEmpty) ...[
+                  if ((image?.isNotEmpty ?? false)) ...[
                     GestureDetector(
                       onTap: onImageTap,
                       child: ClipRRect(
