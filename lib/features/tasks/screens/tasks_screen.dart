@@ -90,7 +90,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             return null;
           },
           loading: () => null, // Во время загрузки не показываем иконку
-          error: (_, __) => null, // При ошибке не показываем иконку
+          error: (_, _) => null, // При ошибке не показываем иконку
         ),
       ),
 

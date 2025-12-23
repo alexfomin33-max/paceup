@@ -83,7 +83,8 @@ class LentaNotifier extends StateNotifier<LentaState> {
     List<dynamic> rawList;
     if (response is List<dynamic>) {
       rawList = List<dynamic>.from(response as List);
-    } else if (response is Map<String, dynamic>) {
+    } else {
+      // В этом ветке response гарантированно Map<String, dynamic>
       if (response.containsKey('data')) {
         final dataValue = response['data'];
         if (dataValue is List) {
@@ -94,8 +95,6 @@ class LentaNotifier extends StateNotifier<LentaState> {
       } else {
         rawList = const <dynamic>[];
       }
-    } else {
-      rawList = const <dynamic>[];
     }
     
     final activities = rawList

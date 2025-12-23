@@ -210,7 +210,7 @@ class _ViewingSneakersContentState
             },
             loading: () =>
                 const Center(child: CupertinoActivityIndicator(radius: 16)),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           );
         },
       );
@@ -285,7 +285,7 @@ class _ViewingSneakersContentState
                 );
               },
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             );
           },
         ),
@@ -368,6 +368,10 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
     // Проверяем, является ли это собственным профилем
     final authService = ref.read(authServiceProvider);
     final currentUserId = await authService.getUserId();
+
+    // Проверяем, что виджет все еще смонтирован после async-операции
+    if (!mounted) return;
+
     final isOwnProfile =
         currentUserId != null && currentUserId == widget.userId;
 
@@ -611,7 +615,7 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
                         );
                       },
                       loading: () => const SizedBox.shrink(),
-                      error: (_, __) => const SizedBox.shrink(),
+                      error: (_, _) => const SizedBox.shrink(),
                     );
                   },
                 ),

@@ -478,7 +478,7 @@ class _LineChartPainter extends CustomPainter {
 
       // Подпись значения
       tp.text = TextSpan(
-        text: y.toInt().toString() + ' км',
+        text: '${y.toInt()} км',
         style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 10,
@@ -499,7 +499,7 @@ class _LineChartPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-      ..color = lineColor.withOpacity(0.1)
+      ..color = lineColor.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
 
     final pointPaint = Paint()
@@ -571,7 +571,7 @@ class _LineChartPainter extends CustomPainter {
 
         // Метка над точкой
         tp.text = TextSpan(
-          text: distance.toStringAsFixed(0) + ' км',
+          text: '${distance.toStringAsFixed(0)} км',
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 11,
@@ -701,7 +701,7 @@ class _SportsTable extends StatelessWidget {
     return Column(
       children: [
         // Заголовки таблицы
-        _TableRow(
+        const _TableRow(
           isHeader: true,
           icon: null,
           distance: 'Дистанция',

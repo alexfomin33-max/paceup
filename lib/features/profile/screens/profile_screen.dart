@@ -498,6 +498,12 @@ Future<void> _showUserMenu({
   required int currentUserId,
   required GlobalKey menuKey,
 }) async {
+  // ──────────────────────────────────────────────
+  // Сохраняем значения цветов до async-операции
+  // для избежания использования BuildContext после async gap
+  // ──────────────────────────────────────────────
+  final iconPrimaryColor = AppColors.getIconPrimaryColor(context);
+
   // Получаем статусы пользователя с сервера
   final api = ref.read(apiServiceProvider);
   bool isSubscribed = false;
@@ -524,6 +530,9 @@ Future<void> _showUserMenu({
     // В случае ошибки показываем меню с дефолтными значениями
     debugPrint('Ошибка загрузки статусов пользователя: $e');
   }
+
+  // Проверяем, что контекст все еще валиден перед использованием
+  if (!context.mounted) return;
 
   // ──────────────────────────────────────────────
   // Формируем список пунктов меню
@@ -557,9 +566,7 @@ Future<void> _showUserMenu({
     MoreMenuItem(
       text: arePostsHidden ? 'Показать посты' : 'Скрыть посты',
       icon: CupertinoIcons.text_bubble,
-      iconColor: arePostsHidden
-          ? AppColors.getIconPrimaryColor(context)
-          : AppColors.error,
+      iconColor: arePostsHidden ? iconPrimaryColor : AppColors.error,
       textStyle: arePostsHidden
           ? null
           : const TextStyle(
@@ -583,9 +590,7 @@ Future<void> _showUserMenu({
           ? 'Показать тренировки'
           : 'Скрыть тренировки',
       icon: CupertinoIcons.flame,
-      iconColor: areActivitiesHidden
-          ? AppColors.getIconPrimaryColor(context)
-          : AppColors.error,
+      iconColor: areActivitiesHidden ? iconPrimaryColor : AppColors.error,
       textStyle: areActivitiesHidden
           ? null
           : const TextStyle(

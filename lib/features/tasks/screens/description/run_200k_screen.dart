@@ -203,7 +203,7 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                               imageUrl: task?.imageUrl,
                             ),
                             loading: () => const _BackgroundImage(),
-                            error: (_, __) => const _BackgroundImage(),
+                            error: (_, _) => const _BackgroundImage(),
                           );
                         },
                       ),
@@ -264,7 +264,7 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                                       width: 34,
                                       height: 34,
                                     ),
-                                    error: (_, __) => const SizedBox(
+                                    error: (_, _) => const SizedBox(
                                       width: 34,
                                       height: 34,
                                     ),
@@ -303,7 +303,7 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                                       logoUrl: task?.logoUrl,
                                     ),
                                     loading: () => const _HeaderLogo(),
-                                    error: (_, __) => const _HeaderLogo(),
+                                    error: (_, _) => const _HeaderLogo(),
                                   ),
                                 ),
                               );

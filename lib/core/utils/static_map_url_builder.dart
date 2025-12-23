@@ -3,7 +3,6 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../theme/app_theme.dart';
-import 'polyline_simplifier.dart';
 
 /// Утилита для генерации URL статичных карт Mapbox Static Images API.
 ///
@@ -13,12 +12,11 @@ import 'polyline_simplifier.dart';
 /// ⚡ PERFORMANCE OPTIMIZATION:
 /// - Статичные PNG картинки загружаются быстрее, чем GL-поверхности
 /// - Кеширование через CachedNetworkImage снижает повторные запросы
-/// - Упрощение полилинии уменьшает размер URL и ускоряет генерацию
 class StaticMapUrlBuilder {
   /// Генерирует URL для статичной карты Mapbox с маршрутом.
   ///
   /// Параметры:
-  /// - [points] - список точек маршрута (будет упрощён автоматически)
+  /// - [points] - список точек маршрута
   /// - [widthPx] - ширина изображения в пикселях
   /// - [heightPx] - высота изображения в пикселях
   /// - [strokeColor] - цвет линии маршрута (по умолчанию AppColors.brandPrimary)
@@ -50,21 +48,9 @@ class StaticMapUrlBuilder {
     }
 
     // ────────────────────────────────────────────────────────────────
-    // 🔹 УПРОЩЕНИЕ ПОЛИЛИНИИ: для оптимизации размера URL
-    // ────────────────────────────────────────────────────────────────
-    // Используем те же параметры, что и в RouteCard:
-    // - tolerance: 5 метров (баланс между качеством и производительностью)
-    // - maxPoints: 300 (достаточно для визуального качества на маленькой карте)
-    final simplifiedPoints = PolylineSimplifier.simplify(
-      points: points,
-      tolerance: 5.0,
-      maxPoints: 300,
-    );
-
-    // ────────────────────────────────────────────────────────────────
     // 🔹 КОДИРОВАНИЕ ПОЛИЛИНИИ: в формат Google polyline
     // ────────────────────────────────────────────────────────────────
-    final encodedPolyline = _encodePolyline(simplifiedPoints);
+    final encodedPolyline = _encodePolyline(points);
 
     // ────────────────────────────────────────────────────────────────
     // 🔹 ЦВЕТ ЛИНИИ: используем brandPrimary по умолчанию
@@ -107,7 +93,8 @@ class StaticMapUrlBuilder {
     final width = finalWidth.round();
     final height = finalHeight.round();
 
-    final url = 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/$encodedPath/auto/${width}x$height?access_token=${AppConfig.mapboxAccessToken}';
+    final url =
+        'https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/$encodedPath/auto/${width}x$height?access_token=${AppConfig.mapboxAccessToken}';
 
     return url;
   }
@@ -174,9 +161,15 @@ class StaticMapUrlBuilder {
 
   /// Преобразует Color в hex-строку без альфы (например, 379AE6).
   static String _colorToHex(Color color) {
-    final r = color.red.toRadixString(16).padLeft(2, '0');
-    final g = color.green.toRadixString(16).padLeft(2, '0');
-    final b = color.blue.toRadixString(16).padLeft(2, '0');
+    final r = ((color.r * 255.0).round() & 0xff)
+        .toRadixString(16)
+        .padLeft(2, '0');
+    final g = ((color.g * 255.0).round() & 0xff)
+        .toRadixString(16)
+        .padLeft(2, '0');
+    final b = ((color.b * 255.0).round() & 0xff)
+        .toRadixString(16)
+        .padLeft(2, '0');
     return '$r$g$b';
   }
 }

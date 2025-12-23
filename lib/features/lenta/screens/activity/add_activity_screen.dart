@@ -605,7 +605,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               color: AppColors.getIconSecondaryColor(context),
             ),
             const SizedBox(width: 8),
-            Text('Прикрепить файл GPX', style: AppTextStyles.h14w4Place),
+            const Text('Прикрепить файл GPX', style: AppTextStyles.h14w4Place),
           ],
         ),
       ),
@@ -1817,8 +1817,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           title: 'Обрезка фотографии ${i + 1}',
         );
 
-        if (cropped == null)
+        if (cropped == null) {
           continue; // Пропускаем, если пользователь отменил обрезку
+        }
 
         // Сжимаем обрезанное изображение
         final compressed = await compressLocalImage(
@@ -1861,14 +1862,12 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   /// Обработчик выбора GPX файла
   Future<void> _handlePickGpxFile() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.any,
-      );
+      final result = await FilePicker.platform.pickFiles(type: FileType.any);
 
       if (result != null && result.files.single.path != null) {
         final filePath = result.files.single.path!;
         final fileName = result.files.single.name.toLowerCase();
-        
+
         // Проверяем, что выбранный файл имеет расширение .gpx
         if (!fileName.endsWith('.gpx')) {
           if (mounted) {
@@ -1876,7 +1875,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           }
           return;
         }
-        
+
         final file = File(filePath);
         setState(() {
           _gpxFile = file;

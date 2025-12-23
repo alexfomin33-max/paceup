@@ -446,15 +446,23 @@ class ApiService {
           final jsonMatch = RegExp(r'\{.*\}', dotAll: true).firstMatch(cleaned);
           if (jsonMatch != null) {
             jsonContent = jsonMatch.group(0)!;
-            debugPrint('⚠️ API: Обнаружен HTML перед JSON, извлечен JSON из ответа');
+            debugPrint(
+              '⚠️ API: Обнаружен HTML перед JSON, извлечен JSON из ответа',
+            );
           } else {
             // Логируем первые 500 символов HTML для отладки
-            final htmlPreview = cleaned.length > 500 
-                ? cleaned.substring(0, 500) + '...'
+            final htmlPreview = cleaned.length > 500
+                ? '${cleaned.substring(0, 500)}...'
                 : cleaned;
-            debugPrint('❌ API: Сервер вернул HTML вместо JSON. Status: ${response.statusCode}');
-            debugPrint('❌ API: HTML превью (первые 500 символов):\n$htmlPreview');
-            throw ApiException("Сервер вернул HTML вместо JSON. Возможно, произошла ошибка на сервере. Проверьте логи для деталей.");
+            debugPrint(
+              '❌ API: Сервер вернул HTML вместо JSON. Status: ${response.statusCode}',
+            );
+            debugPrint(
+              '❌ API: HTML превью (первые 500 символов):\n$htmlPreview',
+            );
+            throw ApiException(
+              "Сервер вернул HTML вместо JSON. Возможно, произошла ошибка на сервере. Проверьте логи для деталей.",
+            );
           }
         }
 
@@ -486,14 +494,18 @@ class ApiService {
             try {
               final jsonContent = jsonMatch.group(0)!;
               final decoded = json.decode(jsonContent);
-              debugPrint('⚠️ API: Обнаружен HTML перед JSON, успешно извлечен JSON после ошибки парсинга');
+              debugPrint(
+                '⚠️ API: Обнаружен HTML перед JSON, успешно извлечен JSON после ошибки парсинга',
+              );
               if (decoded is! Map<String, dynamic>) {
                 return {'data': decoded};
               }
               final data = decoded;
               // Проверяем поля "ok" или "success" если есть
               if (data.containsKey('ok') && data['ok'] == false) {
-                throw ApiException(data['error']?.toString() ?? 'API вернул ошибку');
+                throw ApiException(
+                  data['error']?.toString() ?? 'API вернул ошибку',
+                );
               }
               if (data.containsKey('success') && data['success'] == false) {
                 throw ApiException(
@@ -505,17 +517,23 @@ class ApiService {
               // Если не удалось распарсить извлеченный JSON, продолжаем с ошибкой
             }
           }
-          
+
           // Логируем первые 500 символов HTML для отладки
-          final htmlPreview = cleaned.length > 500 
-              ? cleaned.substring(0, 500) + '...'
+          final htmlPreview = cleaned.length > 500
+              ? '${cleaned.substring(0, 500)}...'
               : cleaned;
-          debugPrint('❌ API: Ошибка парсинга JSON, получен HTML. Status: ${response.statusCode}');
+          debugPrint(
+            '❌ API: Ошибка парсинга JSON, получен HTML. Status: ${response.statusCode}',
+          );
           debugPrint('❌ API: HTML превью (первые 500 символов):\n$htmlPreview');
-          throw ApiException("Сервер вернул HTML вместо JSON. Возможно, произошла ошибка на сервере. Проверьте логи для деталей.");
+          throw ApiException(
+            "Сервер вернул HTML вместо JSON. Возможно, произошла ошибка на сервере. Проверьте логи для деталей.",
+          );
         }
         debugPrint('❌ API: Ошибка парсинга JSON: $e');
-        debugPrint('❌ API: Ответ сервера (первые 500 символов): ${cleaned.length > 500 ? cleaned.substring(0, 500) + "..." : cleaned}');
+        debugPrint(
+          '❌ API: Ответ сервера (первые 500 символов): ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}',
+        );
         throw ApiException("Некорректный JSON: $e");
       }
     }

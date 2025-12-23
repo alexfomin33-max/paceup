@@ -774,6 +774,13 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     final navigator = Navigator.of(context, rootNavigator: true);
     var loaderShown = false;
 
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 СОХРАНЯЕМ screenWidth ДО async операций, чтобы избежать
+    // использования BuildContext через async gap
+    // ────────────────────────────────────────────────────────────────
+    final screenWidth = MediaQuery.of(context).size.width;
+    final aspectRatio = screenWidth / 350.0;
+
     void hideLoader() {
       if (loaderShown && navigator.mounted) {
         navigator.pop();
@@ -794,10 +801,6 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         }
         return;
       }
-
-      // Рассчитываем соотношение сторон на основе ширины экрана
-      final screenWidth = MediaQuery.of(context).size.width;
-      final aspectRatio = screenWidth / 350.0;
 
       final filesForUpload = <String, File>{};
       for (var i = 0; i < pickedFiles.length; i++) {

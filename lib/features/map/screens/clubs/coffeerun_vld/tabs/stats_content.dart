@@ -396,7 +396,7 @@ class _CoffeeRunVldStatsContentState
               // Индикатор загрузки поверх списка при смене периода
               if (_loading && _statistics.isNotEmpty)
                 Container(
-                  color: AppColors.surface.withOpacity(0.8),
+                  color: AppColors.surface.withValues(alpha: 0.8),
                   child: const Center(
                     child: Padding(
                       padding: EdgeInsets.all(20.0),

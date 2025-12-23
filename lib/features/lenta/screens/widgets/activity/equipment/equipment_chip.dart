@@ -93,7 +93,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
 
     return Column(
       children: [
-        Container(
+        SizedBox(
           height: 64, // 56 + 4 (верх) + 4 (низ) = 64
           child: Padding(
             padding: const EdgeInsets.only(
@@ -265,7 +265,8 @@ class _EquipmentChipState extends State<EquipmentChip> {
                             // 🌓 ФОН КРУЖКА: используем background цвет
                             // ────────────────────────────────────────────────────────────────
                             // Если передан menuButtonColor, используем его (для переопределения на конкретных экранах)
-                            color: widget.menuButtonColor ??
+                            color:
+                                widget.menuButtonColor ??
                                 AppColors.getBackgroundColor(context),
                             shape: BoxShape.circle,
                           ),

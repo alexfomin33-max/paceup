@@ -203,7 +203,7 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
               );
             },
             loading: () => const Center(child: CupertinoActivityIndicator(radius: 16)),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           );
         },
       );
@@ -272,7 +272,7 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
                 );
               },
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             );
           },
         ),

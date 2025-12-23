@@ -325,6 +325,7 @@ class _RowTileState extends State<_RowTile> {
       ),
     );
 
+    if (!mounted) return;
     if (result == true && mounted) {
       Navigator.of(context).pop(true);
     }
@@ -373,10 +374,9 @@ class _RowTileState extends State<_RowTile> {
                         return Container(
                           width: 44,
                           height: 44,
-                          color:
-                              Theme.of(context).brightness == Brightness.dark
-                                  ? AppColors.darkSurfaceMuted
-                                  : AppColors.skeletonBase,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkSurfaceMuted
+                              : AppColors.skeletonBase,
                           alignment: Alignment.center,
                           child: Icon(
                             CupertinoIcons.person,

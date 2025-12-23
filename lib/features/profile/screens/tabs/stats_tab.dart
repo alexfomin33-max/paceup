@@ -1217,7 +1217,7 @@ class _BarsPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-      ..color = barColor.withOpacity(0.1)
+      ..color = barColor.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
 
     final pointPaint = Paint()
