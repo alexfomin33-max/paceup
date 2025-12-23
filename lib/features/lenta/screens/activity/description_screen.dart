@@ -46,18 +46,18 @@ class ActivityDescriptionPage extends ConsumerStatefulWidget {
 class _ActivityDescriptionPageState
     extends ConsumerState<ActivityDescriptionPage> {
   int _chartTab = 0; // 0=Темп, 1=Пульс, 2=Высота
-  
+
   // Данные пользователя (владельца тренировки)
   String? _userFirstName;
   String? _userLastName;
   String? _userAvatar;
   bool _isLoadingUserData = true;
-  
+
   // ────────────────────────────────────────────────────────────────
   // 📦 ЛОКАЛЬНОЕ СОСТОЯНИЕ: храним обновленную активность после замены экипировки
   // ────────────────────────────────────────────────────────────────
   al.Activity? _updatedActivity;
-  
+
   final ApiService _api = ApiService();
 
   @override
@@ -228,19 +228,24 @@ class _ActivityDescriptionPageState
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: ActivityHeader(
-                        userId: widget.activity.userId, // ID владельца тренировки
+                        userId:
+                            widget.activity.userId, // ID владельца тренировки
                         userName: _isLoadingUserData
                             ? (a.userName.isNotEmpty ? a.userName : 'Аноним')
                             : (_userFirstName != null && _userLastName != null
-                                ? '$_userFirstName $_userLastName'.trim()
-                                : (_userFirstName?.isNotEmpty == true
-                                    ? _userFirstName!
-                                    : (_userLastName?.isNotEmpty == true
-                                        ? _userLastName!
-                                        : (a.userName.isNotEmpty ? a.userName : 'Аноним')))),
+                                  ? '$_userFirstName $_userLastName'.trim()
+                                  : (_userFirstName?.isNotEmpty == true
+                                        ? _userFirstName!
+                                        : (_userLastName?.isNotEmpty == true
+                                              ? _userLastName!
+                                              : (a.userName.isNotEmpty
+                                                    ? a.userName
+                                                    : 'Аноним')))),
                         userAvatar: _isLoadingUserData
                             ? a.userAvatar
-                            : (_userAvatar?.isNotEmpty == true ? _userAvatar! : a.userAvatar),
+                            : (_userAvatar?.isNotEmpty == true
+                                  ? _userAvatar!
+                                  : a.userAvatar),
                         dateStart: a.dateStart,
                         dateTextOverride: a.postDateText,
                         bottom: StatsRow(
@@ -268,8 +273,12 @@ class _ActivityDescriptionPageState
                           // 📏 ПЕРЕДАЧА ТИПА АКТИВНОСТИ: для плавания расстояние показываем в метрах
                           // ────────────────────────────────────────────────────────────────
                           activityType: a.type,
+                          // ────────────────────────────────────────────────────────────────
+                          // 📏 УМЕНЬШАЕМ НИЖНИЙ PADDING: для уменьшения промежутка между метриками и картой
+                          // ────────────────────────────────────────────────────────────────
+                          bottomPadding: 0,
                         ),
-                        bottomGap: 12.0,
+                        bottomGap: 16.0,
                       ),
                     ),
 
@@ -284,12 +293,12 @@ class _ActivityDescriptionPageState
                         activityType: a.type,
                         activityId: a.id,
                         activityDistance: (stats?.distance ?? 0.0) / 1000.0,
-                        showMenuButton: true, // показываем кнопку меню для замены экипировки
-                        onEquipmentChanged: _refreshActivityAfterEquipmentChange,
+                        showMenuButton:
+                            true, // показываем кнопку меню для замены экипировки
+                        onEquipmentChanged:
+                            _refreshActivityAfterEquipmentChange,
                       ),
                     ),
-                    // const SizedBox(height: 4),
-
                     // ────────────────────────────────────────────────────────────────
                     // 🔹 ПЛАШКА ЧАСОВ: временно закомментирована
                     // ────────────────────────────────────────────────────────────────
@@ -304,8 +313,6 @@ class _ActivityDescriptionPageState
                     //     ),
                     //   ),
                     // ),
-
-                    const SizedBox(height: 10),
                   ],
                 ),
               ),
@@ -317,28 +324,25 @@ class _ActivityDescriptionPageState
             if (a.points.isNotEmpty || a.mediaImages.isNotEmpty) ...[
               SliverToBoxAdapter(
                 child: ActivityRouteCarousel(
-                  points: a.points
-                      .map((c) => ll.LatLng(c.lat, c.lng))
-                      .toList(),
+                  points: a.points.map((c) => ll.LatLng(c.lat, c.lng)).toList(),
                   imageUrls: a.mediaImages,
                   height: 350,
-                      // ────────────────────────────────────────────────────────────────
-                      // 🔹 ОТКРЫТИЕ ПОЛНОЭКРАННОЙ КАРТЫ: при клике на слайд с картой
-                      // ────────────────────────────────────────────────────────────────
-                      onMapTap: a.points.isNotEmpty
-                          ? () {
-                              Navigator.of(context).push(
-                                TransparentPageRoute(
-                                  builder: (context) =>
-                                      FullscreenRouteMapScreen(
-                                        points: a.points
-                                            .map((c) => ll.LatLng(c.lat, c.lng))
-                                            .toList(),
-                                      ),
-                                ),
-                              );
-                            }
-                          : null,
+                  // ────────────────────────────────────────────────────────────────
+                  // 🔹 ОТКРЫТИЕ ПОЛНОЭКРАННОЙ КАРТЫ: при клике на слайд с картой
+                  // ────────────────────────────────────────────────────────────────
+                  onMapTap: a.points.isNotEmpty
+                      ? () {
+                          Navigator.of(context).push(
+                            TransparentPageRoute(
+                              builder: (context) => FullscreenRouteMapScreen(
+                                points: a.points
+                                    .map((c) => ll.LatLng(c.lat, c.lng))
+                                    .toList(),
+                              ),
+                            ),
+                          );
+                        }
+                      : null,
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
@@ -524,30 +528,26 @@ class _SplitsTableFull extends StatelessWidget {
     // ────────────────────────────────────────────────────────────────
     var pacePerKm = stats?.pacePerKm ?? <String, double>{};
     var heartRatePerKm = stats?.heartRatePerKm ?? <String, double>{};
-    
+
     // ────────────────────────────────────────────────────────────────
     // Для типа "run" преобразуем ключи из "km_1" в "1"
     // ────────────────────────────────────────────────────────────────
     if (activityType == 'run') {
       final normalizedPacePerKm = <String, double>{};
       final normalizedHeartRatePerKm = <String, double>{};
-      
+
       pacePerKm.forEach((key, value) {
         // Убираем префикс "km_" если он есть
-        final normalizedKey = key.startsWith('km_') 
-            ? key.substring(3) 
-            : key;
+        final normalizedKey = key.startsWith('km_') ? key.substring(3) : key;
         normalizedPacePerKm[normalizedKey] = value;
       });
-      
+
       heartRatePerKm.forEach((key, value) {
         // Убираем префикс "km_" если он есть
-        final normalizedKey = key.startsWith('km_') 
-            ? key.substring(3) 
-            : key;
+        final normalizedKey = key.startsWith('km_') ? key.substring(3) : key;
         normalizedHeartRatePerKm[normalizedKey] = value;
       });
-      
+
       pacePerKm = normalizedPacePerKm;
       heartRatePerKm = normalizedHeartRatePerKm;
     }
@@ -683,12 +683,17 @@ class _SplitsTableFull extends StatelessWidget {
         .map((k) => pacePerKm[k] ?? 0.0)
         .where((v) => v > 0)
         .toList();
-    
+
     // Для типа "run" конвертируем минуты в секунды для сравнения
     final paceValuesForComparison = activityType == 'run'
-        ? paceValues.map((v) => (v.floor() * 60 + ((v - v.floor()) * 60).round()).toDouble()).toList()
+        ? paceValues
+              .map(
+                (v) => (v.floor() * 60 + ((v - v.floor()) * 60).round())
+                    .toDouble(),
+              )
+              .toList()
         : paceValues;
-    
+
     final slowestPace = paceValuesForComparison.isEmpty
         ? 1.0
         : paceValuesForComparison.reduce((a, b) => a > b ? a : b);
@@ -700,7 +705,7 @@ class _SplitsTableFull extends StatelessWidget {
     // ────────────────────────────────────────────────────────────────
     String fmtPace(double paceValue) {
       if (paceValue <= 0) return '-';
-      
+
       if (activityType == 'run') {
         // Формат: 5.7 означает 5 минут и 7 десятых от минуты = 5:42 мин/км
         final minutes = paceValue.floor();
@@ -785,12 +790,14 @@ class _SplitsTableFull extends StatelessWidget {
             // Для типа "run" конвертируем минуты в секунды для сравнения
             // ────────────────────────────────────────────────────────────────
             final paceSecForVisual = activityType == 'run'
-                ? (paceValue.floor() * 60 + ((paceValue - paceValue.floor()) * 60).round()).toDouble()
+                ? (paceValue.floor() * 60 +
+                          ((paceValue - paceValue.floor()) * 60).round())
+                      .toDouble()
                 : paceValue;
             final visualFrac = paceSecForVisual > 0 && slowestPace > 0
                 ? (slowestPace / paceSecForVisual).clamp(0.05, 1.0)
                 : 0.05;
-            
+
             // Форматируем ключ для отображения (убираем "_partial" если есть)
             final displayKey = kmKey.replaceAll('_partial', '');
 

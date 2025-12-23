@@ -120,6 +120,7 @@ class StatsRow extends StatelessWidget {
   final bool
   showExtendedStats; // показывать ли третью строку (Калории | Шаги | Скорость)
   final String? activityType; // тип активности для определения единиц измерения
+  final double? bottomPadding; // нижний padding (по умолчанию 16)
 
   const StatsRow({
     super.key,
@@ -135,6 +136,7 @@ class StatsRow extends StatelessWidget {
     this.isManuallyAdded = false,
     this.showExtendedStats = false,
     this.activityType,
+    this.bottomPadding,
   });
 
   @override
@@ -246,8 +248,6 @@ class StatsRow extends StatelessWidget {
         ? '${speedKmh.toStringAsFixed(1)} км/ч'
         : '—';
 
-    final hasCaloriesOrSteps = calories != null || totalSteps != null;
-
     return Column(
       children: [
         // ────────────────────────────────────────────────────────────────
@@ -255,7 +255,12 @@ class StatsRow extends StatelessWidget {
         // ────────────────────────────────────────────────────────────────
         Container(height: 0.5, color: AppColors.getDividerColor(context)),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: bottomPadding ?? 16,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -433,19 +438,20 @@ class StatsRow extends StatelessWidget {
                 ),
               ],
               // ──────────────────────────────────────────────────────────────
-              // ТРЕТЬЯ СТРОКА: Калории | Шаги | Скорость (если доступны)
-              // 🏊 ДЛЯ ПЛАВАНИЯ: показываем третью строку метрик (если есть данные)
-              // 🏃 ДЛЯ БЕГА: показываем третью строку метрик (если есть данные)
-              // 🚴 ДЛЯ ВЕЛОСИПЕДА: показываем третью строку метрик (если есть данные)
+              // ТРЕТЬЯ СТРОКА: Калории | Шаги | Скорость
+              // 🏊 ДЛЯ ПЛАВАНИЯ: показываем третью строку метрик (как на скриншоте)
+              // 🏃 ДЛЯ БЕГА: показываем третью строку метрик (как на скриншоте)
+              // 🚴 ДЛЯ ВЕЛОСИПЕДА: показываем третью строку метрик (как на скриншоте)
+              // Скорость всегда доступна (рассчитывается из расстояния и времени)
               // ──────────────────────────────────────────────────────────────
-              if (showExtendedStats && hasCaloriesOrSteps && !isManuallyAdded) ...[
+              if (showExtendedStats && !isManuallyAdded) ...[
                 const SizedBox(height: 12),
                 Row(
                   mainAxisSize: MainAxisSize.max,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
-                      width: 120,
+                      width: 140,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -466,7 +472,7 @@ class StatsRow extends StatelessWidget {
                       ),
                     ),
                     SizedBox(
-                      width: 90,
+                      width: 110,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
