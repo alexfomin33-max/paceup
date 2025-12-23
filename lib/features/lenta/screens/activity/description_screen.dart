@@ -58,24 +58,12 @@ class _ActivityDescriptionPageState
   // ────────────────────────────────────────────────────────────────
   al.Activity? _updatedActivity;
 
-  // ────────────────────────────────────────────────────────────────
-  // 📊 ДАННЫЕ ДЛЯ ГРАФИКОВ: темп, пульс, высота по километрам
-  // ────────────────────────────────────────────────────────────────
-  List<double> _paceData = [];
-  List<double> _heartRateData = [];
-  List<double> _elevationData = [];
-  bool _isLoadingCharts = true;
-
-  // Сводка данных для отображения под графиками
-  Map<String, dynamic>? _chartsSummary;
-
   final ApiService _api = ApiService();
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
-    _loadChartsData();
   }
 
   /// Загружает данные пользователя (владельца тренировки) из базы данных
@@ -112,58 +100,6 @@ class _ActivityDescriptionPageState
       // В случае ошибки используем данные из Activity как fallback
       setState(() {
         _isLoadingUserData = false;
-      });
-    }
-  }
-
-  /// Загружает данные для графиков (темп, пульс, высота по километрам)
-  Future<void> _loadChartsData() async {
-    final activityId = widget.activity.id;
-    if (activityId <= 0) {
-      setState(() {
-        _isLoadingCharts = false;
-      });
-      return;
-    }
-
-    try {
-      final data = await _api.post(
-        '/get_activity_charts.php',
-        body: {'activity_id': activityId.toString()},
-        timeout: const Duration(seconds: 10),
-      );
-
-      if (data['ok'] == true) {
-        setState(() {
-          // Преобразуем массивы в List<double>
-          _paceData =
-              (data['pace'] as List<dynamic>?)
-                  ?.map((e) => (e as num).toDouble())
-                  .toList() ??
-              [];
-          _heartRateData =
-              (data['heartRate'] as List<dynamic>?)
-                  ?.map((e) => (e as num).toDouble())
-                  .toList() ??
-              [];
-          _elevationData =
-              (data['elevation'] as List<dynamic>?)
-                  ?.map((e) => (e as num).toDouble())
-                  .toList() ??
-              [];
-          _chartsSummary = data['summary'] as Map<String, dynamic>?;
-          _isLoadingCharts = false;
-        });
-      } else {
-        // Если ошибка, оставляем пустые данные
-        setState(() {
-          _isLoadingCharts = false;
-        });
-      }
-    } catch (e) {
-      // В случае ошибки оставляем пустые данные
-      setState(() {
-        _isLoadingCharts = false;
       });
     }
   }
@@ -394,29 +330,6 @@ class _ActivityDescriptionPageState
                           bottomGap: 16.0,
                         ),
                       ),
-                      SizedBox(
-                        height: 210,
-                        width: double.infinity,
-                        child: _isLoadingCharts
-                            ? const Center(child: CircularProgressIndicator())
-                            : _SimpleLineChart(
-                                mode: _chartTab,
-                                paceData: _paceData,
-                                heartRateData: _heartRateData,
-                                elevationData: _elevationData,
-                              ),
-                      ),
-                      const SizedBox(height: 6),
-                      Divider(
-                        height: 1,
-                        thickness: 0.5,
-                        color: AppColors.getBorderColor(context),
-                      ),
-                      const SizedBox(height: 4),
-                      _ChartSummary(
-                        mode: _chartTab,
-                        summary: _chartsSummary,
-                      ), // подписи с данными в зависимости от вкладки
                     ],
                   ),
                 ),
@@ -484,7 +397,7 @@ class _ActivityDescriptionPageState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                      padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
                       child: Text(
                         'Отрезки',
                         style: AppTextStyles.h15w5.copyWith(
@@ -497,7 +410,7 @@ class _ActivityDescriptionPageState
                 ),
               ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
               // ───────── Сегменты — как в communication_prefs.dart (вынесены отдельно)
               SliverToBoxAdapter(
@@ -536,12 +449,7 @@ class _ActivityDescriptionPageState
                         SizedBox(
                           height: 210,
                           width: double.infinity,
-                          child: _SimpleLineChart(
-                            mode: _chartTab,
-                            paceData: _paceData,
-                            heartRateData: _heartRateData,
-                            elevationData: _elevationData,
-                          ),
+                          child: _SimpleLineChart(mode: _chartTab),
                         ),
                         const SizedBox(height: 6),
                         Divider(
@@ -550,10 +458,7 @@ class _ActivityDescriptionPageState
                           color: AppColors.getBorderColor(context),
                         ),
                         const SizedBox(height: 4),
-                        _ChartSummary(
-                          mode: _chartTab,
-                          summary: _chartsSummary,
-                        ), // подписи в зависимости от выбранной вкладки
+                        const _PaceSummary(), // подписи «Самый быстрый/Средний/Самый медленный»
                       ],
                     ),
                   ),
@@ -815,7 +720,7 @@ class _SplitsTableFull extends StatelessWidget {
     }
 
     // ────────────────────────────────────────────────────────────────
-    // Находим самый медленный темп для нормализации визуальных полос
+    // Находим самый быстрый темп для нормализации визуальных полос
     // Для типа "run" значения в формате минут (5.7 = 5:42), для других — секунды
     // ────────────────────────────────────────────────────────────────
     final paceValues = sortedKeys
@@ -833,9 +738,13 @@ class _SplitsTableFull extends StatelessWidget {
               .toList()
         : paceValues;
 
-    final slowestPace = paceValuesForComparison.isEmpty
+    // ────────────────────────────────────────────────────────────────
+    // Находим самый быстрый темп (минимальное значение в секундах)
+    // У самого быстрого темпа полоска будет на всю ширину (1.0)
+    // ────────────────────────────────────────────────────────────────
+    final fastestPace = paceValuesForComparison.isEmpty
         ? 1.0
-        : paceValuesForComparison.reduce((a, b) => a > b ? a : b);
+        : paceValuesForComparison.reduce((a, b) => a < b ? a : b);
 
     // ────────────────────────────────────────────────────────────────
     // Форматирование темпа
@@ -925,7 +834,8 @@ class _SplitsTableFull extends StatelessWidget {
             // ────────────────────────────────────────────────────────────────
             // Вычисляем долю для визуальной полосы темпа
             // Чем быстрее темп (меньше секунд), тем длиннее полоса
-            // Используем обратную пропорцию: slowestPace / paceSec
+            // Используем пропорцию: fastestPace / paceSecForVisual
+            // Самый быстрый темп (fastestPace) будет иметь полоску на всю ширину (1.0)
             // Для типа "run" конвертируем минуты в секунды для сравнения
             // ────────────────────────────────────────────────────────────────
             final paceSecForVisual = activityType == 'run'
@@ -933,8 +843,8 @@ class _SplitsTableFull extends StatelessWidget {
                           ((paceValue - paceValue.floor()) * 60).round())
                       .toDouble()
                 : paceValue;
-            final visualFrac = paceSecForVisual > 0 && slowestPace > 0
-                ? (slowestPace / paceSecForVisual).clamp(0.05, 1.0)
+            final visualFrac = paceSecForVisual > 0 && fastestPace > 0
+                ? (fastestPace / paceSecForVisual).clamp(0.05, 1.0)
                 : 0.05;
 
             // Форматируем ключ для отображения (убираем "_partial" если есть)
@@ -1095,51 +1005,84 @@ class _SegmentedPill extends StatelessWidget {
 
 /// Простой линейный график:
 /// - Для «Темп» ось Y — ММ:СС (мин/км), данные храним в сек/км;
-/// - Ось X — километры 0..N (где N — количество точек);
+/// - Ось X — километры 0..16 (для 16 точек);
 /// - Для «Пульс»/«Высота» — обычные числа.
 /// - Единицы измерения на оси Y НЕ отображаем.
 class _SimpleLineChart extends StatelessWidget {
   final int mode; // 0 pace, 1 hr, 2 elev
-  final List<double> paceData;
-  final List<double> heartRateData;
-  final List<double> elevationData;
-
-  const _SimpleLineChart({
-    required this.mode,
-    required this.paceData,
-    required this.heartRateData,
-    required this.elevationData,
-  });
+  const _SimpleLineChart({required this.mode});
 
   @override
   Widget build(BuildContext context) {
+    // демо-данные (16 точек)
+    final paceSec = const [
+      355,
+      333,
+      350,
+      330,
+      334,
+      334,
+      313,
+      319,
+      334,
+      323,
+      332,
+      313,
+      316,
+      298,
+      302,
+      314,
+    ];
+    final hr = const [
+      128,
+      135,
+      134,
+      134,
+      133,
+      143,
+      158,
+      149,
+      145,
+      152,
+      153,
+      157,
+      158,
+      162,
+      160,
+      158,
+    ];
+    final elev = const [
+      203,
+      210,
+      198,
+      205,
+      202,
+      207,
+      204,
+      199,
+      201,
+      206,
+      208,
+      201,
+      203,
+      205,
+      204,
+      202,
+    ];
+
     List<double> y;
     bool isPace;
 
     if (mode == 0) {
-      // Темп: секунд/км -> будем форматировать как мин/км
-      y = paceData.isNotEmpty ? paceData : [];
+      // секунд/км -> будем форматировать как мин/км
+      y = paceSec.map((s) => s.toDouble()).toList();
       isPace = true;
     } else if (mode == 1) {
-      // Пульс
-      y = heartRateData.isNotEmpty ? heartRateData : [];
+      y = hr.map((v) => v.toDouble()).toList();
       isPace = false;
     } else {
-      // Высота
-      y = elevationData.isNotEmpty ? elevationData : [];
+      y = elev.map((v) => v.toDouble()).toList();
       isPace = false;
-    }
-
-    // Если данных нет, показываем пустой график
-    if (y.isEmpty) {
-      return Center(
-        child: Text(
-          'Нет данных для отображения',
-          style: AppTextStyles.h13w4.copyWith(
-            color: AppColors.getTextSecondaryColor(context),
-          ),
-        ),
-      );
     }
 
     // xMax = число километров (точек). Подписываем 0..xMax (включительно).
@@ -1270,20 +1213,11 @@ class _LinePainter extends CustomPainter {
       old.textSecondaryColor != textSecondaryColor;
 }
 
-/// Подписи к графику — в одном блоке с графиком
-/// Отображает данные в зависимости от выбранной вкладки (темп, пульс, высота)
-class _ChartSummary extends StatelessWidget {
-  final int mode; // 0 pace, 1 hr, 2 elev
-  final Map<String, dynamic>? summary;
-
-  const _ChartSummary({required this.mode, this.summary});
-
-  String _fmtSecToMinSec(double sec) {
-    final s = sec.round();
-    final m = s ~/ 60;
-    final r = s % 60;
-    return '$m:${r.toString().padLeft(2, '0')}';
-  }
+/// Подписи к темпу — в одном блоке с графиком (значения как на макете)
+class _PaceSummary extends StatelessWidget {
+  final double horizontalPadding;
+  const _PaceSummary({this.horizontalPadding = 12})
+    : assert(horizontalPadding >= 0); // заодно тихо «используем» значение
 
   @override
   Widget build(BuildContext context) {
@@ -1315,119 +1249,15 @@ class _ChartSummary extends StatelessWidget {
       );
     }
 
-    if (summary == null) {
-      // Если данных нет, показываем пустые значения
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Column(
-          children: [
-            row('—', '—'),
-            row('—', '—'),
-            if (mode == 0) row('—', '—'),
-          ],
-        ),
-      );
-    }
-
-    if (mode == 0) {
-      // Темп
-      final paceSummary = summary!['pace'] as Map<String, dynamic>?;
-      if (paceSummary == null) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Column(
-            children: [
-              row('Самый быстрый', '—'),
-              row('Средний темп', '—'),
-              row('Самый медленный', '—'),
-            ],
-          ),
-        );
-      }
-
-      final fastest = paceSummary['fastest'] as num?;
-      final average = paceSummary['average'] as num?;
-      final slowest = paceSummary['slowest'] as num?;
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Column(
-          children: [
-            row(
-              'Самый быстрый',
-              fastest != null
-                  ? '${_fmtSecToMinSec(fastest.toDouble())} /км'
-                  : '—',
-            ),
-            row(
-              'Средний темп',
-              average != null
-                  ? '${_fmtSecToMinSec(average.toDouble())} /км'
-                  : '—',
-            ),
-            row(
-              'Самый медленный',
-              slowest != null
-                  ? '${_fmtSecToMinSec(slowest.toDouble())} /км'
-                  : '—',
-            ),
-          ],
-        ),
-      );
-    } else if (mode == 1) {
-      // Пульс
-      final hrSummary = summary!['heartRate'] as Map<String, dynamic>?;
-      if (hrSummary == null) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Column(
-            children: [
-              row('Минимальный', '—'),
-              row('Средний', '—'),
-              row('Максимальный', '—'),
-            ],
-          ),
-        );
-      }
-
-      final min = hrSummary['min'] as num?;
-      final average = hrSummary['average'] as num?;
-      final max = hrSummary['max'] as num?;
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Column(
-          children: [
-            row('Минимальный', min != null ? '${min.round()} уд/мин' : '—'),
-            row('Средний', average != null ? '${average.round()} уд/мин' : '—'),
-            row('Максимальный', max != null ? '${max.round()} уд/мин' : '—'),
-          ],
-        ),
-      );
-    } else {
-      // Высота
-      final elevSummary = summary!['elevation'] as Map<String, dynamic>?;
-      if (elevSummary == null) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Column(
-            children: [row('Минимальная', '—'), row('Максимальная', '—')],
-          ),
-        );
-      }
-
-      final min = elevSummary['min'] as num?;
-      final max = elevSummary['max'] as num?;
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Column(
-          children: [
-            row('Минимальная', min != null ? '${min.round()} м' : '—'),
-            row('Максимальная', max != null ? '${max.round()} м' : '—'),
-          ],
-        ),
-      );
-    }
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+      child: Column(
+        children: [
+          row('Самый быстрый', '4:58 /км'),
+          row('Средний темп', '5:24 /км'),
+          row('Самый медленный', '5:55 /км'),
+        ],
+      ),
+    );
   }
 }
