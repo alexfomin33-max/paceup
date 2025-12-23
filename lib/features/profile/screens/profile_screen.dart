@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -528,7 +529,9 @@ Future<void> _showUserMenu({
     }
   } catch (e) {
     // В случае ошибки показываем меню с дефолтными значениями
-    debugPrint('Ошибка загрузки статусов пользователя: $e');
+    if (kDebugMode) {
+      debugPrint('Ошибка загрузки статусов пользователя: $e');
+    }
   }
 
   // Проверяем, что контекст все еще валиден перед использованием

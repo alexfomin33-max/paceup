@@ -16,6 +16,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -118,15 +119,19 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
           .timeout(const Duration(seconds: 5));
 
       if (response.statusCode != 200) {
-        debugPrint(
-          '[LocationPicker] HTTP ошибка прямого геокодинга: ${response.statusCode}',
-        );
+        if (kDebugMode) {
+          debugPrint(
+            '[LocationPicker] HTTP ошибка прямого геокодинга: ${response.statusCode}',
+          );
+        }
         return null;
       }
 
       final data = json.decode(response.body) as List<dynamic>;
       if (data.isEmpty) {
-        debugPrint('[LocationPicker] Адрес не найден: $address');
+        if (kDebugMode) {
+          debugPrint('[LocationPicker] Адрес не найден: $address');
+        }
         return null;
       }
 
@@ -135,18 +140,24 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
       final lon = double.tryParse(firstResult['lon']?.toString() ?? '');
 
       if (lat == null || lon == null) {
-        debugPrint('[LocationPicker] Некорректные координаты в ответе');
+        if (kDebugMode) {
+          debugPrint('[LocationPicker] Некорректные координаты в ответе');
+        }
         return null;
       }
 
       final result = LatLng(lat, lon);
-      debugPrint(
-        '[LocationPicker] Прямой геокодинг успешен: $address -> $lat, $lon',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          '[LocationPicker] Прямой геокодинг успешен: $address -> $lat, $lon',
+        );
+      }
       return result;
     } catch (e, stackTrace) {
-      debugPrint('[LocationPicker] Ошибка прямого геокодинга: $e');
-      debugPrint('[LocationPicker] Stack trace: $stackTrace');
+      if (kDebugMode) {
+        debugPrint('[LocationPicker] Ошибка прямого геокодинга: $e');
+        debugPrint('[LocationPicker] Stack trace: $stackTrace');
+      }
       return null;
     }
   }
@@ -177,7 +188,9 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
           .timeout(const Duration(seconds: 5));
 
       if (response.statusCode != 200) {
-        debugPrint('[LocationPicker] HTTP ошибка: ${response.statusCode}');
+        if (kDebugMode) {
+          debugPrint('[LocationPicker] HTTP ошибка: ${response.statusCode}');
+        }
         return null;
       }
 
@@ -185,7 +198,9 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
       final address = data['address'] as Map<String, dynamic>?;
 
       if (address == null) {
-        debugPrint('[LocationPicker] Геокодинг: адрес не найден');
+        if (kDebugMode) {
+          debugPrint('[LocationPicker] Геокодинг: адрес не найден');
+        }
         return null;
       }
 
@@ -226,12 +241,16 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
       }
 
       final result = parts.isEmpty ? null : parts.join(', ');
-      debugPrint('[LocationPicker] Геокодинг успешен: $result');
+      if (kDebugMode) {
+        debugPrint('[LocationPicker] Геокодинг успешен: $result');
+      }
       return result;
     } catch (e, stackTrace) {
       // ⚠️ В случае ошибки геокодинга логируем для отладки
-      debugPrint('[LocationPicker] Ошибка геокодинга: $e');
-      debugPrint('[LocationPicker] Stack trace: $stackTrace');
+      if (kDebugMode) {
+        debugPrint('[LocationPicker] Ошибка геокодинга: $e');
+        debugPrint('[LocationPicker] Stack trace: $stackTrace');
+      }
       return null;
     }
   }
@@ -259,9 +278,11 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
     _geocodeTimer = Timer(const Duration(milliseconds: 800), () async {
       if (!mounted || _isManualInput) return;
 
-      debugPrint(
-        '[LocationPicker] Запуск геокодинга для: ${location.latitude}, ${location.longitude}',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          '[LocationPicker] Запуск геокодинга для: ${location.latitude}, ${location.longitude}',
+        );
+      }
 
       final address = await _reverseGeocode(location);
 
@@ -310,7 +331,9 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
     _forwardGeocodeTimer = Timer(const Duration(milliseconds: 1000), () async {
       if (!mounted) return;
 
-      debugPrint('[LocationPicker] Поиск координат для адреса: $value');
+      if (kDebugMode) {
+        debugPrint('[LocationPicker] Поиск координат для адреса: $value');
+      }
 
       final coordinates = await _forwardGeocode(value);
 
@@ -335,9 +358,11 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
             );
           } catch (flyToError) {
             // Если канал еще не готов, логируем и продолжаем работу
-            debugPrint(
-              '⚠️ Не удалось переместить камеру карты: $flyToError',
-            );
+            if (kDebugMode) {
+              debugPrint(
+                '⚠️ Не удалось переместить камеру карты: $flyToError',
+              );
+            }
           }
         }
         setState(() {
@@ -436,9 +461,11 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                   _updateAddressDebounced(newLocation);
                 } catch (cameraError) {
                   // Если канал еще не готов, логируем и продолжаем работу
-                  debugPrint(
-                    '⚠️ Не удалось получить состояние камеры: $cameraError',
-                  );
+                  if (kDebugMode) {
+                    debugPrint(
+                      '⚠️ Не удалось получить состояние камеры: $cameraError',
+                    );
+                  }
                 }
               },
               onMapCreated: (MapboxMap mapboxMap) async {
@@ -471,9 +498,11 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                     );
                   } catch (flyToError) {
                     // Если канал еще не готов, логируем и продолжаем работу
-                    debugPrint(
-                      '⚠️ Не удалось установить начальную позицию карты: $flyToError',
-                    );
+                    if (kDebugMode) {
+                      debugPrint(
+                        '⚠️ Не удалось установить начальную позицию карты: $flyToError',
+                      );
+                    }
                   }
                   if (!mounted) return;
                   setState(() {

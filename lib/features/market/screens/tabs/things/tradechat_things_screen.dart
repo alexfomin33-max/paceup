@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -379,7 +380,9 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
         body: {'chat_id': chatId, 'user_id': userId},
       );
     } catch (e) {
-      debugPrint('Ошибка отметки сообщений как прочитанных: $e');
+      if (kDebugMode) {
+        debugPrint('Ошибка отметки сообщений как прочитанных: $e');
+      }
     }
   }
 
@@ -429,7 +432,9 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
           }
         }
       } catch (e) {
-        debugPrint('Ошибка опроса новых сообщений: $e');
+        if (kDebugMode) {
+          debugPrint('Ошибка опроса новых сообщений: $e');
+        }
       }
     });
   }
@@ -482,7 +487,9 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
         }
       }
     } catch (e) {
-      debugPrint('Ошибка отправки сообщения: $e');
+      if (kDebugMode) {
+        debugPrint('Ошибка отправки сообщения: $e');
+      }
     }
   }
 
@@ -531,7 +538,9 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
         });
       }
     } catch (e) {
-      debugPrint('Ошибка отправки изображения: $e');
+      if (kDebugMode) {
+        debugPrint('Ошибка отправки изображения: $e');
+      }
     }
   }
 
@@ -541,7 +550,9 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
     try {
       await _loadChatData(_chatData!.chatId);
     } catch (e) {
-      debugPrint('Ошибка обновления данных чата: $e');
+      if (kDebugMode) {
+        debugPrint('Ошибка обновления данных чата: $e');
+      }
     }
   }
 
@@ -562,7 +573,9 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
         await _loadChatData(_chatData!.chatId);
       }
     } catch (e) {
-      debugPrint('Ошибка обновления статуса товара: $e');
+      if (kDebugMode) {
+        debugPrint('Ошибка обновления статуса товара: $e');
+      }
     }
   }
 

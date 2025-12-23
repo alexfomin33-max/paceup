@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -245,7 +246,9 @@ class _PostCardState extends ConsumerState<PostCard> {
         );
       }
     } catch (e) {
-      debugPrint('Ошибка при скрытии постов: $e');
+      if (kDebugMode) {
+        debugPrint('Ошибка при скрытии постов: $e');
+      }
       if (context.mounted) {
         await showCupertinoDialog<void>(
           context: context,

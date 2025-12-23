@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,10 +25,14 @@ void main() async {
     try {
       MapboxOptions.setAccessToken(AppConfig.mapboxAccessToken);
     } catch (e) {
-      debugPrint('⚠️ Ошибка инициализации Mapbox: $e');
+      if (kDebugMode) {
+        debugPrint('⚠️ Ошибка инициализации Mapbox: $e');
+      }
     }
   } else {
-    debugPrint('⚠️ Mapbox не поддерживается на macOS');
+    if (kDebugMode) {
+      debugPrint('⚠️ Mapbox не поддерживается на macOS');
+    }
   }
 
   // Логи ошибок: в дебаге — консоль; в релизе — не падаем.
@@ -35,8 +40,10 @@ void main() async {
     FlutterError.dumpErrorToConsole(details);
   };
   ui.PlatformDispatcher.instance.onError = (error, stack) {
-    debugPrint('Uncaught error: $error');
-    debugPrint('Stack: $stack');
+    if (kDebugMode) {
+      debugPrint('Uncaught error: $error');
+      debugPrint('Stack: $stack');
+    }
     return true; // помечаем как обработанное
   };
 

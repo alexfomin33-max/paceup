@@ -1,5 +1,6 @@
 // lib/widgets/route_card.dart
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:latlong2/latlong.dart';
@@ -156,9 +157,11 @@ class _RouteCardState extends State<RouteCard> {
                       } catch (annotationError) {
                         // Если не удалось создать полилинию, логируем ошибку
                         // Карта всё равно отобразится, просто без трека
-                        debugPrint(
-                          '⚠️ Не удалось создать полилинию на карте: $annotationError',
-                        );
+                        if (kDebugMode) {
+                          debugPrint(
+                            '⚠️ Не удалось создать полилинию на карте: $annotationError',
+                          );
+                        }
                       }
 
                       // Подстраиваем камеру под границы с обработкой ошибок канала
@@ -189,9 +192,11 @@ class _RouteCardState extends State<RouteCard> {
                       } catch (cameraError) {
                         // Если канал еще не готов, логируем и продолжаем работу
                         // Карта отобразится с начальной позицией из cameraOptions
-                        debugPrint(
-                          '⚠️ Не удалось настроить камеру карты: $cameraError',
-                        );
+                        if (kDebugMode) {
+                          debugPrint(
+                            '⚠️ Не удалось настроить камеру карты: $cameraError',
+                          );
+                        }
                       }
 
                       // ────────────────────────────────────────────────────────────────

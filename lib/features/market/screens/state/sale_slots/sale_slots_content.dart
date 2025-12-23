@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -147,16 +148,18 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
         final List<dynamic> eventsData = response['events'] ?? [];
 
         // ─── Логирование для отладки ───
-        debugPrint(
-          '🔍 Поиск событий: запрос="$query", найдено в ответе: ${eventsData.length}',
-        );
+        if (kDebugMode) {
+          debugPrint(
+            '🔍 Поиск событий: запрос="$query", найдено в ответе: ${eventsData.length}',
+          );
 
-        if (eventsData.isNotEmpty) {
-          debugPrint('📋 Первые 3 события:');
-          for (int i = 0; i < eventsData.length && i < 3; i++) {
-            debugPrint(
-              '  ${i + 1}. ID=${eventsData[i]['id']}, название="${eventsData[i]['name']}"',
-            );
+          if (eventsData.isNotEmpty) {
+            debugPrint('📋 Первые 3 события:');
+            for (int i = 0; i < eventsData.length && i < 3; i++) {
+              debugPrint(
+                '  ${i + 1}. ID=${eventsData[i]['id']}, название="${eventsData[i]['name']}"',
+              );
+            }
           }
         }
 
@@ -173,13 +176,17 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
           },
         ).toList(); // ─── Преобразуем ленивый Iterable в материализованный List
 
-        debugPrint('✅ Обработано событий в список: ${result.length}');
+        if (kDebugMode) {
+          debugPrint('✅ Обработано событий в список: ${result.length}');
+        }
 
         return result;
       }
     } catch (e) {
       ErrorHandler.logError(e);
-      debugPrint('❌ Ошибка при поиске событий: $e');
+      if (kDebugMode) {
+        debugPrint('❌ Ошибка при поиске событий: $e');
+      }
     }
 
     return const [];
@@ -582,11 +589,15 @@ class _EventAutocompleteField extends StatelessWidget {
                 AutocompleteOnSelected<_EventOption> onSelected,
                 Iterable<_EventOption> options,
               ) {
-                // ─── Логирование для отладки отображения ───
+                // ─── Преобразуем Iterable в List для использования в ListView ───
                 final optionsList = options.toList();
-                debugPrint(
-                  '🎨 optionsViewBuilder: получено ${optionsList.length} опций',
-                );
+
+                // ─── Логирование для отладки отображения ───
+                if (kDebugMode) {
+                  debugPrint(
+                    '🎨 optionsViewBuilder: получено ${optionsList.length} опций',
+                  );
+                }
 
                 return Align(
                   alignment: Alignment.topLeft,

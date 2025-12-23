@@ -93,7 +93,9 @@ class ApiService {
   /// Закрывает все активные соединения в пуле
   void dispose() {
     _client.close();
-    debugPrint('🔌 HTTP Client закрыт, все соединения освобождены');
+    if (kDebugMode) {
+      debugPrint('🔌 HTTP Client закрыт, все соединения освобождены');
+    }
   }
 
   // ──────────────────────────── Headers ────────────────────────────
@@ -150,10 +152,12 @@ class ApiService {
           milliseconds: AppConfig.retryBaseDelayMs * (1 << (attempt - 1)),
         );
 
-        debugPrint(
-          '⚠️ Retry #$attempt после SocketException: ${e.message}\n'
-          '   Ожидание: ${delay.inMilliseconds}ms',
-        );
+        if (kDebugMode) {
+          debugPrint(
+            '⚠️ Retry #$attempt после SocketException: ${e.message}\n'
+            '   Ожидание: ${delay.inMilliseconds}ms',
+          );
+        }
 
         await Future.delayed(delay);
       } on TimeoutException {
@@ -169,10 +173,12 @@ class ApiService {
           milliseconds: AppConfig.retryBaseDelayMs * (1 << (attempt - 1)),
         );
 
-        debugPrint(
-          '⚠️ Retry #$attempt после TimeoutException\n'
-          '   Ожидание: ${delay.inMilliseconds}ms',
-        );
+        if (kDebugMode) {
+          debugPrint(
+            '⚠️ Retry #$attempt после TimeoutException\n'
+            '   Ожидание: ${delay.inMilliseconds}ms',
+          );
+        }
 
         await Future.delayed(delay);
       }
@@ -446,20 +452,24 @@ class ApiService {
           final jsonMatch = RegExp(r'\{.*\}', dotAll: true).firstMatch(cleaned);
           if (jsonMatch != null) {
             jsonContent = jsonMatch.group(0)!;
-            debugPrint(
-              '⚠️ API: Обнаружен HTML перед JSON, извлечен JSON из ответа',
-            );
+            if (kDebugMode) {
+              debugPrint(
+                '⚠️ API: Обнаружен HTML перед JSON, извлечен JSON из ответа',
+              );
+            }
           } else {
             // Логируем первые 500 символов HTML для отладки
-            final htmlPreview = cleaned.length > 500
-                ? '${cleaned.substring(0, 500)}...'
-                : cleaned;
-            debugPrint(
-              '❌ API: Сервер вернул HTML вместо JSON. Status: ${response.statusCode}',
-            );
-            debugPrint(
-              '❌ API: HTML превью (первые 500 символов):\n$htmlPreview',
-            );
+            if (kDebugMode) {
+              final htmlPreview = cleaned.length > 500
+                  ? '${cleaned.substring(0, 500)}...'
+                  : cleaned;
+              debugPrint(
+                '❌ API: Сервер вернул HTML вместо JSON. Status: ${response.statusCode}',
+              );
+              debugPrint(
+                '❌ API: HTML превью (первые 500 символов):\n$htmlPreview',
+              );
+            }
             throw ApiException(
               "Сервер вернул HTML вместо JSON. Возможно, произошла ошибка на сервере. Проверьте логи для деталей.",
             );
@@ -494,9 +504,11 @@ class ApiService {
             try {
               final jsonContent = jsonMatch.group(0)!;
               final decoded = json.decode(jsonContent);
-              debugPrint(
-                '⚠️ API: Обнаружен HTML перед JSON, успешно извлечен JSON после ошибки парсинга',
-              );
+              if (kDebugMode) {
+                debugPrint(
+                  '⚠️ API: Обнаружен HTML перед JSON, успешно извлечен JSON после ошибки парсинга',
+                );
+              }
               if (decoded is! Map<String, dynamic>) {
                 return {'data': decoded};
               }
@@ -519,21 +531,25 @@ class ApiService {
           }
 
           // Логируем первые 500 символов HTML для отладки
-          final htmlPreview = cleaned.length > 500
-              ? '${cleaned.substring(0, 500)}...'
-              : cleaned;
-          debugPrint(
-            '❌ API: Ошибка парсинга JSON, получен HTML. Status: ${response.statusCode}',
-          );
-          debugPrint('❌ API: HTML превью (первые 500 символов):\n$htmlPreview');
+          if (kDebugMode) {
+            final htmlPreview = cleaned.length > 500
+                ? '${cleaned.substring(0, 500)}...'
+                : cleaned;
+            debugPrint(
+              '❌ API: Ошибка парсинга JSON, получен HTML. Status: ${response.statusCode}',
+            );
+            debugPrint('❌ API: HTML превью (первые 500 символов):\n$htmlPreview');
+          }
           throw ApiException(
             "Сервер вернул HTML вместо JSON. Возможно, произошла ошибка на сервере. Проверьте логи для деталей.",
           );
         }
-        debugPrint('❌ API: Ошибка парсинга JSON: $e');
-        debugPrint(
-          '❌ API: Ответ сервера (первые 500 символов): ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}',
-        );
+        if (kDebugMode) {
+          debugPrint('❌ API: Ошибка парсинга JSON: $e');
+          debugPrint(
+            '❌ API: Ответ сервера (первые 500 символов): ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}',
+          );
+        }
         throw ApiException("Некорректный JSON: $e");
       }
     }

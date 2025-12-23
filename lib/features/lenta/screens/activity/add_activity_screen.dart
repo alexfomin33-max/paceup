@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1714,14 +1715,20 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       );
 
       if (response['success'] != true) {
-        debugPrint('⚠️ Failed to upload GPX file: ${response['message']}');
+        if (kDebugMode) {
+          debugPrint('⚠️ Failed to upload GPX file: ${response['message']}');
+        }
         // Не бросаем исключение, так как это не критично для создания активности
       } else {
-        debugPrint('✅ GPX file uploaded and parsed successfully');
+        if (kDebugMode) {
+          debugPrint('✅ GPX file uploaded and parsed successfully');
+        }
       }
     } catch (e) {
       // Ошибка загрузки GPX файла не критична
-      debugPrint('⚠️ Failed to upload activity GPX file: $e');
+      if (kDebugMode) {
+        debugPrint('⚠️ Failed to upload activity GPX file: $e');
+      }
     }
   }
 
@@ -1756,13 +1763,19 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
       if (response['success'] == true) {
         // Фотографии успешно загружены
-        debugPrint('✅ Photos uploaded successfully');
+        if (kDebugMode) {
+          debugPrint('✅ Photos uploaded successfully');
+        }
       } else {
-        debugPrint('⚠️ Failed to upload photos: ${response['message']}');
+        if (kDebugMode) {
+          debugPrint('⚠️ Failed to upload photos: ${response['message']}');
+        }
       }
     } catch (e) {
       // Ошибка загрузки фотографий не критична
-      debugPrint('⚠️ Failed to upload activity photos: $e');
+      if (kDebugMode) {
+        debugPrint('⚠️ Failed to upload activity photos: $e');
+      }
     }
   }
 

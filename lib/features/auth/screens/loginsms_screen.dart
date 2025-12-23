@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_shell.dart';
@@ -49,11 +50,15 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
           '/login_user.php',
           body: {'phone': widget.phone},
         );
-        debugPrint('fetchApiData response: $data');
+        if (kDebugMode) {
+          debugPrint('fetchApiData response: $data');
+        }
       },
       // 🔹 Ошибки отправки кода только логируем, не показываем пользователю
       onError: (error) {
-        debugPrint("fetchApiData error: $error");
+        if (kDebugMode) {
+          debugPrint("fetchApiData error: $error");
+        }
         // Очищаем ошибку, чтобы не показывать пользователю
         formNotifier.clearGeneralError();
       },
@@ -74,7 +79,9 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
           '/resendlgn_code.php',
           body: {'phone': widget.phone},
         );
-        debugPrint('resendCode response: $data');
+        if (kDebugMode) {
+          debugPrint('resendCode response: $data');
+        }
       },
       onSuccess: () {
         // 🔹 После успешной отправки перезапускаем таймер
@@ -82,7 +89,9 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
       },
       // 🔹 Ошибки повторной отправки кода только логируем, не показываем пользователю
       onError: (error) {
-        debugPrint("resendCode error: $error");
+        if (kDebugMode) {
+          debugPrint("resendCode error: $error");
+        }
         formNotifier.clearGeneralError();
       },
     );
@@ -128,7 +137,9 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
         if (mounted) {
           _smsCodeInputKey.currentState?.clear();
         }
-        debugPrint("enterCode error: $error");
+        if (kDebugMode) {
+          debugPrint("enterCode error: $error");
+        }
       },
     );
   }

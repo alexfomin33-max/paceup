@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
@@ -499,7 +500,9 @@ class _ConnectedTrackersScreenState
           _checkingStrava = false;
         });
       }
-      debugPrint('Ошибка проверки подключения Strava: $e');
+      if (kDebugMode) {
+        debugPrint('Ошибка проверки подключения Strava: $e');
+      }
     }
   }
 

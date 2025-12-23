@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -43,9 +44,11 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
     super.didUpdateWidget(oldWidget);
     // Если taskId изменился, обновляем провайдеры
     if (oldWidget.taskId != widget.taskId) {
-      debugPrint(
-        '🔄 Run200kScreen: taskId изменился с ${oldWidget.taskId} на ${widget.taskId}',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          '🔄 Run200kScreen: taskId изменился с ${oldWidget.taskId} на ${widget.taskId}',
+        );
+      }
       _lastTaskId = widget.taskId;
       _refreshProviders();
     }
@@ -55,7 +58,9 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
   void _refreshProviders() {
     if (!mounted) return;
     final taskId = widget.taskId;
-    debugPrint('🔄 Run200kScreen: обновление провайдеров для taskId=$taskId');
+    if (kDebugMode) {
+      debugPrint('🔄 Run200kScreen: обновление провайдеров для taskId=$taskId');
+    }
     // Инвалидируем провайдер для получения свежих данных с сервера
     ref.invalidate(taskParticipantsProvider(taskId));
     ref.invalidate(taskDetailProvider(taskId));
@@ -76,27 +81,33 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
     if (_isLoading || _currentUserId == null) return;
 
     final taskId = widget.taskId;
-    debugPrint(
-      '🎯 Run200kScreen: обработка действия для taskId=$taskId, userId=$_currentUserId',
-    );
+    if (kDebugMode) {
+      debugPrint(
+        '🎯 Run200kScreen: обработка действия для taskId=$taskId, userId=$_currentUserId',
+      );
+    }
 
     // Получаем актуальное состояние из провайдера
     final participantsData = await ref.read(
       taskParticipantsProvider(taskId).future,
     );
     final wasParticipating = participantsData.isCurrentUserParticipating;
-    debugPrint(
-      '📊 Run200kScreen: текущее состояние участия=$wasParticipating для taskId=$taskId',
-    );
+    if (kDebugMode) {
+      debugPrint(
+        '📊 Run200kScreen: текущее состояние участия=$wasParticipating для taskId=$taskId',
+      );
+    }
 
     setState(() => _isLoading = true);
 
     try {
       final api = ApiService();
       final action = wasParticipating ? 'cancel' : 'start';
-      debugPrint(
-        '📤 Run200kScreen: отправка запроса task_action.php с taskId=$taskId, action=$action',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          '📤 Run200kScreen: отправка запроса task_action.php с taskId=$taskId, action=$action',
+        );
+      }
 
       // Выполняем действие на сервере
       final response = await api.post(
@@ -104,7 +115,9 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
         body: {'task_id': taskId, 'action': action},
       );
 
-      debugPrint('✅ Run200kScreen: ответ от task_action.php: $response');
+      if (kDebugMode) {
+        debugPrint('✅ Run200kScreen: ответ от task_action.php: $response');
+      }
 
       // Инвалидируем провайдеры для получения свежих данных из API
       ref.invalidate(taskParticipantsProvider(taskId));
@@ -119,13 +132,17 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
       final updatedData = await ref.read(
         taskParticipantsProvider(taskId).future,
       );
-      debugPrint(
-        '🔄 Run200kScreen: обновленные данные участников для taskId=$taskId: isParticipating=${updatedData.isCurrentUserParticipating}, participantsCount=${updatedData.participants.length}',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          '🔄 Run200kScreen: обновленные данные участников для taskId=$taskId: isParticipating=${updatedData.isCurrentUserParticipating}, participantsCount=${updatedData.participants.length}',
+        );
+      }
     } catch (e) {
-      debugPrint(
-        '❌ Run200kScreen: ошибка при обработке действия для taskId=$taskId: $e',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          '❌ Run200kScreen: ошибка при обработке действия для taskId=$taskId: $e',
+        );
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -144,9 +161,11 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
 
     // Логируем, если taskId изменился
     if (_lastTaskId != null && _lastTaskId != taskId) {
-      debugPrint(
-        '🔄 Run200kScreen.build: taskId изменился с $_lastTaskId на $taskId',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          '🔄 Run200kScreen.build: taskId изменился с $_lastTaskId на $taskId',
+        );
+      }
       _lastTaskId = taskId;
       // Обновляем провайдеры при изменении taskId
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -160,11 +179,13 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
     final participantsAsync = ref.watch(taskParticipantsProvider(taskId));
 
     // Логируем состояние провайдеров для отладки
-    participantsAsync.whenData((data) {
-      debugPrint(
-        '📊 Run200kScreen.build: taskId=$taskId, isParticipating=${data.isCurrentUserParticipating}, participantsCount=${data.participants.length}',
-      );
-    });
+    if (kDebugMode) {
+      participantsAsync.whenData((data) {
+        debugPrint(
+          '📊 Run200kScreen.build: taskId=$taskId, isParticipating=${data.isCurrentUserParticipating}, participantsCount=${data.participants.length}',
+        );
+      });
+    }
 
     // Получаем актуальное состояние участия из провайдера
     // Провайдер - единственный источник правды, данные загружаются из API
@@ -574,10 +595,12 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                         child: Center(child: CircularProgressIndicator()),
                       ),
                       error: (error, stackTrace) {
-                        debugPrint(
-                          '❌ Run200kScreen: ошибка загрузки участников: $error',
-                        );
-                        debugPrint('❌ Run200kScreen: stackTrace: $stackTrace');
+                        if (kDebugMode) {
+                          debugPrint(
+                            '❌ Run200kScreen: ошибка загрузки участников: $error',
+                          );
+                          debugPrint('❌ Run200kScreen: stackTrace: $stackTrace');
+                        }
 
                         // Проверяем, не является ли это ошибкой "HTML вместо JSON"
                         final errorMessage = error.toString();

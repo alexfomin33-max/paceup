@@ -11,6 +11,7 @@
 
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -196,13 +197,17 @@ class _MainTabState extends MainTabState
       // Если ошибка (нет интернета) - пробуем загрузить из кэша
       // Но только если это не принудительное обновление
       if (!forceRefresh) {
-        debugPrint('⚠️ Ошибка загрузки main tab: $e, пробуем кэш...');
+        if (kDebugMode) {
+          debugPrint('⚠️ Ошибка загрузки main tab: $e, пробуем кэш...');
+        }
 
         final prefs = await SharedPreferences.getInstance();
         final cachedJson = prefs.getString(cacheKey);
 
         if (cachedJson != null) {
-          debugPrint('✅ Загружены данные из кэша');
+          if (kDebugMode) {
+            debugPrint('✅ Загружены данные из кэша');
+          }
           final jsonMap = jsonDecode(cachedJson) as Map<String, dynamic>;
           return MainTabData.fromJson(jsonMap);
         }

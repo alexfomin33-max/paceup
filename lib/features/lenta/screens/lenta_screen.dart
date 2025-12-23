@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
@@ -223,7 +224,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       if (Platform.isAndroid) {
         final hasHC = await _health.isHealthConnectAvailable();
         if (hasHC == false) {
-          debugPrint('Health Connect недоступен');
+          if (kDebugMode) {
+            debugPrint('Health Connect недоступен');
+          }
           return false;
         }
       }
@@ -255,7 +258,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
       return granted;
     } catch (e) {
-      debugPrint('Ошибка при запросе разрешений Health: $e');
+      if (kDebugMode) {
+        debugPrint('Ошибка при запросе разрешений Health: $e');
+      }
       return false;
     }
   }
@@ -273,9 +278,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       final hasPermissions = await _requestHealthPermissions();
 
       if (!hasPermissions) {
-        debugPrint(
-          'Разрешения Health Connect не выданы, синхронизация пропущена',
-        );
+        if (kDebugMode) {
+          debugPrint(
+            'Разрешения Health Connect не выданы, синхронизация пропущена',
+          );
+        }
       } else {
         final syncService = ref.read(healthSyncServiceProvider);
 
@@ -289,7 +296,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               .syncNewWorkouts(ref)
               .then((result) {
                 _isSyncingHealthData = false;
-                if (result.importedCount > 0) {
+                if (kDebugMode && result.importedCount > 0) {
                   debugPrint(
                     'Автоматически импортировано тренировок из Health Connect: ${result.importedCount}',
                   );
@@ -297,7 +304,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               })
               .catchError((error) {
                 _isSyncingHealthData = false;
-                debugPrint('Ошибка автоматической синхронизации Health Connect: $error');
+                if (kDebugMode) {
+                  debugPrint('Ошибка автоматической синхронизации Health Connect: $error');
+                }
               });
         }
       }
@@ -306,7 +315,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       _syncStravaActivities();
     } catch (e) {
       _isSyncingHealthData = false;
-      debugPrint('Ошибка синхронизации: $e');
+      if (kDebugMode) {
+        debugPrint('Ошибка синхронизации: $e');
+      }
     }
   }
 
@@ -331,7 +342,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           .syncNewWorkouts(ref)
           .then((result) {
             _isSyncingStrava = false;
-            if (result.importedCount > 0) {
+            if (kDebugMode && result.importedCount > 0) {
               debugPrint(
                 'Автоматически импортировано тренировок из Strava: ${result.importedCount}',
               );
@@ -339,11 +350,15 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           })
           .catchError((error) {
             _isSyncingStrava = false;
-            debugPrint('Ошибка автоматической синхронизации Strava: $error');
+            if (kDebugMode) {
+              debugPrint('Ошибка автоматической синхронизации Strava: $error');
+            }
           });
     } catch (e) {
       _isSyncingStrava = false;
-      debugPrint('Ошибка синхронизации Strava: $e');
+      if (kDebugMode) {
+        debugPrint('Ошибка синхронизации Strava: $e');
+      }
     }
   }
 
@@ -731,7 +746,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
             })
             .catchError((error) {
               // Игнорируем ошибки prefetch (не критично)
-              debugPrint('⚠️ Prefetch failed for index $i: $error');
+              if (kDebugMode) {
+                debugPrint('⚠️ Prefetch failed for index $i: $error');
+              }
             });
       }
     }
