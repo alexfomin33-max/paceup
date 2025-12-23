@@ -5,7 +5,8 @@ import 'package:latlong2/latlong.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/error_handler.dart';
 import '../../providers/training/training_provider.dart';
-import '../../../../../core/widgets/route_card.dart';
+import '../../../../../core/utils/static_map_url_builder.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../lenta/screens/activity/description_screen.dart';
 import '../../../../domain/models/activity_lenta.dart' as al;
 import '../../../../../providers/services/auth_provider.dart';
@@ -795,7 +796,7 @@ class _WorkoutRow extends ConsumerWidget {
                         image: AssetImage('assets/training_map.png'),
                         fit: BoxFit.cover,
                       )
-                    : RouteCard(points: item.points, height: 80),
+                    : _buildStaticMiniMap(context, item.points),
               ),
             ),
             const SizedBox(width: 12),
@@ -876,6 +877,63 @@ class _WorkoutRow extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Строит статичную мини-карту маршрута (80x70px).
+  ///
+  /// ⚡ PERFORMANCE OPTIMIZATION для маленьких карт:
+  /// - Использует DPR 1.5 (вместо полного devicePixelRatio) для уменьшения веса файла
+  /// - Ограничивает maxWidth/maxHeight до 160x140px для еще большей экономии
+  /// - Кеширование через CachedNetworkImage с memCacheWidth/maxWidthDiskCache
+  Widget _buildStaticMiniMap(BuildContext context, List<LatLng> points) {
+    const widthDp = 80.0;
+    const heightDp = 70.0;
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ОПТИМИЗАЦИЯ РАЗМЕРА: используем ограниченный DPR для мини-карт
+    // ────────────────────────────────────────────────────────────────
+    // Для маленьких карт достаточно DPR 1.5 вместо полного devicePixelRatio
+    // Это уменьшает размер файла в 2-3 раза без заметной потери качества
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final optimizedDpr = (dpr > 1.5 ? 1.5 : dpr).clamp(1.0, 1.5);
+
+    final widthPx = (widthDp * optimizedDpr).round();
+    final heightPx = (heightDp * optimizedDpr).round();
+
+    // Генерируем URL статичной карты с дополнительными ограничениями размера
+    final mapUrl = StaticMapUrlBuilder.fromPoints(
+      points: points,
+      widthPx: widthPx.toDouble(),
+      heightPx: heightPx.toDouble(),
+      strokeWidth: 2.5,
+      padding: 8.0,
+      maxWidth: 160.0,  // Дополнительное ограничение для маленьких карт
+      maxHeight: 140.0, // Дополнительное ограничение для маленьких карт
+    );
+
+    return CachedNetworkImage(
+      imageUrl: mapUrl,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      filterQuality: FilterQuality.medium,
+      memCacheWidth: widthPx,
+      maxWidthDiskCache: widthPx,
+      placeholder: (context, url) => Container(
+        color: AppColors.getSurfaceColor(context),
+        child: const Center(
+          child: CupertinoActivityIndicator(),
+        ),
+      ),
+      errorWidget: (context, url, error) => Container(
+        color: AppColors.getSurfaceColor(context),
+        child: const Icon(
+          Icons.map_outlined,
+          color: AppColors.brandPrimary,
+          size: 24,
         ),
       ),
     );
