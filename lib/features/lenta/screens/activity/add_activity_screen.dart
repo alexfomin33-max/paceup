@@ -1862,12 +1862,22 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   Future<void> _handlePickGpxFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['gpx'],
+        type: FileType.any,
       );
 
       if (result != null && result.files.single.path != null) {
-        final file = File(result.files.single.path!);
+        final filePath = result.files.single.path!;
+        final fileName = result.files.single.name.toLowerCase();
+        
+        // Проверяем, что выбранный файл имеет расширение .gpx
+        if (!fileName.endsWith('.gpx')) {
+          if (mounted) {
+            _showError('Пожалуйста, выберите файл с расширением .gpx');
+          }
+          return;
+        }
+        
+        final file = File(filePath);
         setState(() {
           _gpxFile = file;
         });
