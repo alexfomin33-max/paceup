@@ -288,19 +288,22 @@ class _ActivityDescriptionPageState
                         onEquipmentChanged: _refreshActivityAfterEquipmentChange,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    // const SizedBox(height: 4),
 
-                    // Плашка «часы» — по ширине как «обувь»: добавили такой же внутренний отступ 10
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 6),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: _WatchPill(
-                          asset: 'assets/garmin.png',
-                          title: 'Garmin Forerunner 965',
-                        ),
-                      ),
-                    ),
+                    // ────────────────────────────────────────────────────────────────
+                    // 🔹 ПЛАШКА ЧАСОВ: временно закомментирована
+                    // ────────────────────────────────────────────────────────────────
+                    // // Плашка «часы» — по ширине как «обувь»: добавили такой же внутренний отступ 10
+                    // const Padding(
+                    //   padding: EdgeInsets.symmetric(horizontal: 6),
+                    //   child: Padding(
+                    //     padding: EdgeInsets.symmetric(horizontal: 10),
+                    //     child: _WatchPill(
+                    //       asset: 'assets/garmin.png',
+                    //       title: 'Garmin Forerunner 965',
+                    //     ),
+                    //   ),
+                    // ),
 
                     const SizedBox(height: 10),
                   ],
@@ -425,70 +428,73 @@ class _ActivityDescriptionPageState
 
 /// ───────────────────────────── ВСПОМОГАТЕЛЬНЫЕ ВИДЖЕТЫ ─────────────────────
 
-/// Плашка «часы» — визуально как плашка «обувь», НО без кнопки «…»
-class _WatchPill extends StatelessWidget {
-  final String asset;
-  final String title;
-  const _WatchPill({required this.asset, required this.title});
+/// ────────────────────────────────────────────────────────────────
+/// 🔹 ПЛАШКА ЧАСОВ: временно закомментирована
+/// ────────────────────────────────────────────────────────────────
+// /// Плашка «часы» — визуально как плашка «обувь», НО без кнопки «…»
+// class _WatchPill extends StatelessWidget {
+//   final String asset;
+//   final String title;
+//   const _WatchPill({required this.asset, required this.title});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      decoration: ShapeDecoration(
-        // ────────────────────────────────────────────────────────────────
-        // 🌓 ТЕМНАЯ ТЕМА: фон плашки часов такой же, как у плашки кроссовок
-        // ────────────────────────────────────────────────────────────────
-        // В темной теме используем darkSurfaceMuted (как у плашки кроссовок)
-        // В светлой теме оставляем getBackgroundColor (не трогаем)
-        color: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.darkSurfaceMuted
-            : AppColors.getBackgroundColor(context),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xxl),
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            left: 3,
-            top: 3,
-            bottom: 3,
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: ShapeDecoration(
-                image: DecorationImage(
-                  image: AssetImage(asset),
-                  fit: BoxFit.fill,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.xxl),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 60,
-            top: 0,
-            bottom: 0,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.h13w5.copyWith(
-                  color: AppColors.getTextPrimaryColor(context),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       height: 56,
+//       decoration: ShapeDecoration(
+//         // ────────────────────────────────────────────────────────────────
+//         // 🌓 ТЕМНАЯ ТЕМА: фон плашки часов такой же, как у плашки кроссовок
+//         // ────────────────────────────────────────────────────────────────
+//         // В темной теме используем darkSurfaceMuted (как у плашки кроссовок)
+//         // В светлой теме оставляем getBackgroundColor (не трогаем)
+//         color: Theme.of(context).brightness == Brightness.dark
+//             ? AppColors.darkSurfaceMuted
+//             : AppColors.getBackgroundColor(context),
+//         shape: RoundedRectangleBorder(
+//           borderRadius: BorderRadius.circular(AppRadius.xxl),
+//         ),
+//       ),
+//       child: Stack(
+//         children: [
+//           Positioned(
+//             left: 3,
+//             top: 3,
+//             bottom: 3,
+//             child: Container(
+//               width: 50,
+//               height: 50,
+//               decoration: ShapeDecoration(
+//                 image: DecorationImage(
+//                   image: AssetImage(asset),
+//                   fit: BoxFit.fill,
+//                 ),
+//                 shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(AppRadius.xxl),
+//                 ),
+//               ),
+//             ),
+//           ),
+//           Positioned(
+//             left: 60,
+//             top: 0,
+//             bottom: 0,
+//             child: Align(
+//               alignment: Alignment.centerLeft,
+//               child: Text(
+//                 title,
+//                 maxLines: 1,
+//                 overflow: TextOverflow.ellipsis,
+//                 style: AppTextStyles.h13w5.copyWith(
+//                   color: AppColors.getTextPrimaryColor(context),
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 /// Таблица «Отрезки» — на всю ширину, белый фон с тонкими линиями
 /// Использует реальные данные из Garmin Connect (pacePerKm и heartRatePerKm)
