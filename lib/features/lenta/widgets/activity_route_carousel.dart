@@ -2,11 +2,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../../core/widgets/route_card.dart';
+import '../../../../core/utils/static_map_url_builder.dart';
 import '../../../../core/theme/app_theme.dart';
 
 /// Карусель маршрута с фотографиями для активности.
-/// Первый слайд — карта с маршрутом, остальные — фотографии.
+/// Первый слайд — статичная карта с маршрутом (PNG), остальные — фотографии.
+///
+/// ⚡ PERFORMANCE OPTIMIZATION:
+/// - Использует статичные PNG картинки вместо Mapbox GL для устранения jank
+/// - Кеширование через CachedNetworkImage снижает повторные запросы
+/// - Упрощение полилинии уменьшает размер URL и ускоряет генерацию
 class ActivityRouteCarousel extends StatefulWidget {
   const ActivityRouteCarousel({
     super.key,
@@ -98,14 +103,11 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
       );
     }
 
-    // Если есть точки маршрута, но нет фотографий — показываем только карту
+    // Если есть точки маршрута, но нет фотографий — показываем только статичную карту
     if (widget.imageUrls.isEmpty) {
       return GestureDetector(
         onTap: widget.onMapTap,
-        child: RouteCard(
-          points: widget.points,
-          height: widget.height,
-        ),
+        child: _buildStaticMapSlide(),
       );
     }
 
@@ -119,9 +121,10 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
         fit: StackFit.expand,
         children: [
           // ────────────────────────────────────────────────────────────────
-          // 📱 КАРУСЕЛЬ: PageView с картой и фотографиями
+          // 📱 КАРУСЕЛЬ: PageView со статичной картой и фотографиями
           // ────────────────────────────────────────────────────────────────
           PageView.builder(
+            key: const PageStorageKey('activity_route_carousel'),
             controller: _pageController,
             itemCount: totalSlides,
             allowImplicitScrolling: false,
@@ -138,14 +141,11 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
               }
             },
             itemBuilder: (context, index) {
-              // Первый слайд — карта
+              // Первый слайд — статичная карта
               if (index == 0) {
                 return GestureDetector(
                   onTap: widget.onMapTap,
-                  child: RouteCard(
-                    points: widget.points,
-                    height: widget.height,
-                  ),
+                  child: _buildStaticMapSlide(),
                 );
               }
 
@@ -168,6 +168,101 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
               child: _buildDots(totalSlides),
             ),
         ],
+      ),
+    );
+  }
+
+  /// Строит слайд со статичной картой маршрута.
+  ///
+  /// ⚡ PERFORMANCE OPTIMIZATION:
+  /// - Использует StaticMapUrlBuilder для генерации URL
+  /// - Кеширование через CachedNetworkImage с memCacheWidth/maxWidthDiskCache
+  /// - Placeholder и error widgets для улучшения UX
+  Widget _buildStaticMapSlide() {
+    return SizedBox(
+      width: double.infinity,
+      height: widget.height,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final hasValidSize =
+              constraints.maxWidth > 0 && constraints.maxHeight > 0;
+
+          // Если размер невалидный, показываем placeholder
+          if (!hasValidSize) {
+            return Container(
+              color: AppColors.getSurfaceColor(context),
+              child: const Center(
+                child: CupertinoActivityIndicator(),
+              ),
+            );
+          }
+
+          final dpr = MediaQuery.of(context).devicePixelRatio;
+          final screenW = constraints.maxWidth.isFinite && constraints.maxWidth > 0
+              ? constraints.maxWidth
+              : MediaQuery.of(context).size.width;
+          final screenH = widget.height;
+
+          // Генерируем размеры с учетом device pixel ratio для четкости
+          final widthPx = (screenW * dpr).round();
+          final heightPx = (screenH * dpr).round();
+
+          // Проверяем, что размеры валидны
+          if (widthPx <= 0 || heightPx <= 0) {
+            return Container(
+              color: AppColors.getSurfaceColor(context),
+              child: const Center(
+                child: CupertinoActivityIndicator(),
+              ),
+            );
+          }
+
+          // Генерируем URL статичной карты
+          final mapUrl = StaticMapUrlBuilder.fromPoints(
+            points: widget.points,
+            widthPx: widthPx.toDouble(),
+            heightPx: heightPx.toDouble(),
+            strokeWidth: 3.0,
+            padding: 12.0,
+          );
+
+          return CachedNetworkImage(
+            imageUrl: mapUrl,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            filterQuality: FilterQuality.medium,
+            memCacheWidth: widthPx,
+            maxWidthDiskCache: widthPx,
+            placeholder: (context, url) => Container(
+              color: AppColors.getSurfaceColor(context),
+              child: const Center(
+                child: CupertinoActivityIndicator(),
+              ),
+            ),
+            errorWidget: (context, url, error) => Container(
+              color: AppColors.getSurfaceColor(context),
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.map,
+                    size: 48,
+                    color: AppColors.textTertiary,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Карта недоступна',
+                    style: TextStyle(
+                      color: AppColors.textTertiary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
