@@ -45,34 +45,8 @@ class _GearItem {
   });
 
   String get value {
-    // Для главного снаряжения всегда показываем суммарную дистанцию
-    if (isMain) {
-      return '$dist км';
-    }
-    
-    // Для кроссовок показываем темп, для велосипедов - скорость
-    if (isBoots) {
-      if (avgPace != null && avgPace! > 0) {
-        final minutes = avgPace!.floor();
-        var seconds = ((avgPace! - minutes) * 60).round();
-        // Обрабатываем случай, когда секунды >= 60
-        if (seconds >= 60) {
-          final adjustedMinutes = minutes + 1;
-          seconds = 0;
-          final formattedSeconds = seconds.toString().padLeft(2, '0');
-          return '$adjustedMinutes:$formattedSeconds /км';
-        }
-        final formattedSeconds = seconds.toString().padLeft(2, '0');
-        return '$minutes:$formattedSeconds /км';
-      }
-      return '$dist км';
-    } else {
-      if (avgSpeed != null && avgSpeed! > 0) {
-        final formattedSpeed = avgSpeed!.toStringAsFixed(1).replaceAll('.', ',');
-        return '$formattedSpeed км/ч';
-      }
-      return '$dist км';
-    }
+    // Всегда показываем только суммарную дистанцию в км
+    return '$dist км';
   }
 }
 
