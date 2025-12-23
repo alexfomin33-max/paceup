@@ -358,7 +358,7 @@ class _ActivityDescriptionPageState
                       ),
                     ),
                   ),
-                  _SplitsTableFull(stats: stats),
+                  _SplitsTableFull(stats: stats, activityType: a.type),
                 ],
               ),
             ),
@@ -507,10 +507,12 @@ class _ActivityDescriptionPageState
 /// 4. Данные приходят из API в формате Map<String, double>:
 ///    - pacePerKm: {"1": 355.0, "2": 333.0, ...} (секунды на километр)
 ///    - heartRatePerKm: {"1": 128.0, "2": 135.0, ...} (пульс в bpm)
+///    - Для типа "run": pacePerKm может быть в формате {"km_1": 5.7, ...} где 5.7 = 5:42 мин/км
 class _SplitsTableFull extends StatelessWidget {
   final al.ActivityStats? stats;
+  final String activityType;
 
-  const _SplitsTableFull({this.stats});
+  const _SplitsTableFull({this.stats, required this.activityType});
 
   @override
   Widget build(BuildContext context) {
@@ -518,9 +520,37 @@ class _SplitsTableFull extends StatelessWidget {
     // Извлекаем данные о сегментах из stats
     // pacePerKm и heartRatePerKm — это Map<String, double>
     // где ключи — номера километров ("1", "2", "3" и т.д.)
+    // Для типа "run" ключи могут быть в формате "km_1", "km_2" и т.д.
     // ────────────────────────────────────────────────────────────────
-    final pacePerKm = stats?.pacePerKm ?? <String, double>{};
-    final heartRatePerKm = stats?.heartRatePerKm ?? <String, double>{};
+    var pacePerKm = stats?.pacePerKm ?? <String, double>{};
+    var heartRatePerKm = stats?.heartRatePerKm ?? <String, double>{};
+    
+    // ────────────────────────────────────────────────────────────────
+    // Для типа "run" преобразуем ключи из "km_1" в "1"
+    // ────────────────────────────────────────────────────────────────
+    if (activityType == 'run') {
+      final normalizedPacePerKm = <String, double>{};
+      final normalizedHeartRatePerKm = <String, double>{};
+      
+      pacePerKm.forEach((key, value) {
+        // Убираем префикс "km_" если он есть
+        final normalizedKey = key.startsWith('km_') 
+            ? key.substring(3) 
+            : key;
+        normalizedPacePerKm[normalizedKey] = value;
+      });
+      
+      heartRatePerKm.forEach((key, value) {
+        // Убираем префикс "km_" если он есть
+        final normalizedKey = key.startsWith('km_') 
+            ? key.substring(3) 
+            : key;
+        normalizedHeartRatePerKm[normalizedKey] = value;
+      });
+      
+      pacePerKm = normalizedPacePerKm;
+      heartRatePerKm = normalizedHeartRatePerKm;
+    }
 
     // ────────────────────────────────────────────────────────────────
     // Если данных нет, показываем пустую таблицу с заголовками
@@ -621,14 +651,24 @@ class _SplitsTableFull extends StatelessWidget {
 
     // ────────────────────────────────────────────────────────────────
     // Собираем все ключи (номера километров) и сортируем их
+    // Для типа "run" ключи уже нормализованы (без префикса "km_")
     // ────────────────────────────────────────────────────────────────
     final allKeys = <String>{...pacePerKm.keys, ...heartRatePerKm.keys};
     final sortedKeys = allKeys.toList()
       ..sort((a, b) {
         // Сортируем по числовому значению ключа
-        final aNum = int.tryParse(a) ?? 0;
-        final bNum = int.tryParse(b) ?? 0;
-        return aNum.compareTo(bNum);
+        // Убираем суффикс "_partial" если есть для правильной сортировки
+        final aClean = a.replaceAll('_partial', '');
+        final bClean = b.replaceAll('_partial', '');
+        final aNum = int.tryParse(aClean) ?? 0;
+        final bNum = int.tryParse(bClean) ?? 0;
+        if (aNum != bNum) {
+          return aNum.compareTo(bNum);
+        }
+        // Если числа равны, то "_partial" идет после обычного
+        if (a.contains('_partial') && !b.contains('_partial')) return 1;
+        if (!a.contains('_partial') && b.contains('_partial')) return -1;
+        return a.compareTo(b);
       });
 
     if (sortedKeys.isEmpty) {
@@ -637,24 +677,42 @@ class _SplitsTableFull extends StatelessWidget {
 
     // ────────────────────────────────────────────────────────────────
     // Находим самый медленный темп для нормализации визуальных полос
+    // Для типа "run" значения в формате минут (5.7 = 5:42), для других — секунды
     // ────────────────────────────────────────────────────────────────
     final paceValues = sortedKeys
         .map((k) => pacePerKm[k] ?? 0.0)
         .where((v) => v > 0)
         .toList();
-    final slowestPace = paceValues.isEmpty
+    
+    // Для типа "run" конвертируем минуты в секунды для сравнения
+    final paceValuesForComparison = activityType == 'run'
+        ? paceValues.map((v) => (v.floor() * 60 + ((v - v.floor()) * 60).round()).toDouble()).toList()
+        : paceValues;
+    
+    final slowestPace = paceValuesForComparison.isEmpty
         ? 1.0
-        : paceValues.reduce((a, b) => a > b ? a : b);
+        : paceValuesForComparison.reduce((a, b) => a > b ? a : b);
 
     // ────────────────────────────────────────────────────────────────
-    // Форматирование темпа из секунд в ММ:СС
+    // Форматирование темпа
+    // Для типа "run": значение в формате минут (5.7 = 5:42 мин/км)
+    // Для других типов: значение в секундах, форматируем как ММ:СС
     // ────────────────────────────────────────────────────────────────
-    String fmtPaceSec(double sec) {
-      if (sec <= 0) return '-';
-      final s = sec.round();
-      final m = s ~/ 60;
-      final r = s % 60;
-      return '$m:${r.toString().padLeft(2, '0')}';
+    String fmtPace(double paceValue) {
+      if (paceValue <= 0) return '-';
+      
+      if (activityType == 'run') {
+        // Формат: 5.7 означает 5 минут и 7 десятых от минуты = 5:42 мин/км
+        final minutes = paceValue.floor();
+        final seconds = ((paceValue - minutes) * 60).round();
+        return '$minutes:${seconds.toString().padLeft(2, '0')}';
+      } else {
+        // Для других типов: значение в секундах
+        final s = paceValue.round();
+        final m = s ~/ 60;
+        final r = s % 60;
+        return '$m:${r.toString().padLeft(2, '0')}';
+      }
     }
 
     return Container(
@@ -717,17 +775,24 @@ class _SplitsTableFull extends StatelessWidget {
           // ───── Строки данных из реальных данных Garmin Connect
           ...List.generate(sortedKeys.length, (i) {
             final kmKey = sortedKeys[i];
-            final paceSec = pacePerKm[kmKey] ?? 0.0;
+            final paceValue = pacePerKm[kmKey] ?? 0.0;
             final hr = heartRatePerKm[kmKey] ?? 0.0;
 
             // ────────────────────────────────────────────────────────────────
             // Вычисляем долю для визуальной полосы темпа
             // Чем быстрее темп (меньше секунд), тем длиннее полоса
             // Используем обратную пропорцию: slowestPace / paceSec
+            // Для типа "run" конвертируем минуты в секунды для сравнения
             // ────────────────────────────────────────────────────────────────
-            final visualFrac = paceSec > 0 && slowestPace > 0
-                ? (slowestPace / paceSec).clamp(0.05, 1.0)
+            final paceSecForVisual = activityType == 'run'
+                ? (paceValue.floor() * 60 + ((paceValue - paceValue.floor()) * 60).round()).toDouble()
+                : paceValue;
+            final visualFrac = paceSecForVisual > 0 && slowestPace > 0
+                ? (slowestPace / paceSecForVisual).clamp(0.05, 1.0)
                 : 0.05;
+            
+            // Форматируем ключ для отображения (убираем "_partial" если есть)
+            final displayKey = kmKey.replaceAll('_partial', '');
 
             return Column(
               children: [
@@ -738,7 +803,7 @@ class _SplitsTableFull extends StatelessWidget {
                       SizedBox(
                         width: 28,
                         child: Text(
-                          kmKey,
+                          displayKey,
                           style: AppTextStyles.h12w4.copyWith(
                             color: AppColors.getTextPrimaryColor(context),
                           ),
@@ -747,7 +812,7 @@ class _SplitsTableFull extends StatelessWidget {
                       SizedBox(
                         width: 40,
                         child: Text(
-                          fmtPaceSec(paceSec),
+                          fmtPace(paceValue),
                           style: AppTextStyles.h12w4.copyWith(
                             color: AppColors.getTextPrimaryColor(context),
                           ),
