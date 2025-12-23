@@ -20,6 +20,7 @@ import 'fullscreen_route_map_screen.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../core/services/api_service.dart';
 
 /// Страница с подробным описанием тренировки.
 /// Верхний блок (аватар, дата, метрики) полностью повторяет ActivityBlock.
@@ -42,6 +43,58 @@ class ActivityDescriptionPage extends StatefulWidget {
 
 class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
   int _chartTab = 0; // 0=Темп, 1=Пульс, 2=Высота
+  
+  // Данные пользователя (владельца тренировки)
+  String? _userFirstName;
+  String? _userLastName;
+  String? _userAvatar;
+  bool _isLoadingUserData = true;
+  
+  final ApiService _api = ApiService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  /// Загружает данные пользователя (владельца тренировки) из базы данных
+  Future<void> _loadUserData() async {
+    final activityUserId = widget.activity.userId;
+    if (activityUserId <= 0) {
+      setState(() {
+        _isLoadingUserData = false;
+      });
+      return;
+    }
+
+    try {
+      final data = await _api.post(
+        '/get_user_info.php',
+        body: {'user_id': activityUserId.toString()},
+        timeout: const Duration(seconds: 10),
+      );
+
+      if (data['ok'] == true) {
+        setState(() {
+          _userFirstName = data['first_name']?.toString() ?? '';
+          _userLastName = data['last_name']?.toString() ?? '';
+          _userAvatar = data['avatar']?.toString() ?? '';
+          _isLoadingUserData = false;
+        });
+      } else {
+        // Если ошибка, используем данные из Activity как fallback
+        setState(() {
+          _isLoadingUserData = false;
+        });
+      }
+    } catch (e) {
+      // В случае ошибки используем данные из Activity как fallback
+      setState(() {
+        _isLoadingUserData = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,9 +161,19 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: ActivityHeader(
-                        userId: widget.currentUserId,
-                        userName: a.userName.isNotEmpty ? a.userName : 'Аноним',
-                        userAvatar: a.userAvatar,
+                        userId: widget.activity.userId, // ID владельца тренировки
+                        userName: _isLoadingUserData
+                            ? (a.userName.isNotEmpty ? a.userName : 'Аноним')
+                            : (_userFirstName != null && _userLastName != null
+                                ? '$_userFirstName $_userLastName'.trim()
+                                : (_userFirstName?.isNotEmpty == true
+                                    ? _userFirstName!
+                                    : (_userLastName?.isNotEmpty == true
+                                        ? _userLastName!
+                                        : (a.userName.isNotEmpty ? a.userName : 'Аноним')))),
+                        userAvatar: _isLoadingUserData
+                            ? a.userAvatar
+                            : (_userAvatar?.isNotEmpty == true ? _userAvatar! : a.userAvatar),
                         dateStart: a.dateStart,
                         dateTextOverride: a.postDateText,
                         bottom: StatsRow(
