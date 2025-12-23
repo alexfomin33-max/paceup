@@ -210,7 +210,7 @@ class StatsRow extends StatelessWidget {
         ? avgHeartRate!.toStringAsFixed(0)
         : '—';
     final cadenceText = avgCadence != null
-        ? avgCadence!.toStringAsFixed(0)
+        ? (avgCadence! * 2).toStringAsFixed(0)
         : '—';
     final caloriesText = calories != null ? calories!.toStringAsFixed(0) : '—';
     final stepsText = totalSteps != null ? totalSteps.toString() : '—';
