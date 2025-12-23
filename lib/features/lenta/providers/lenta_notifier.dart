@@ -152,11 +152,13 @@ class LentaNotifier extends StateNotifier<LentaState> {
 
       final newSeenIds = deduplicatedItems.map(_getId).toSet();
 
-      // ✅ hasMore должен быть true, если вернулось больше 0 элементов
-      // Останавливаемся только если вернулось 0 элементов (значит больше нет данных)
-      // Это позволяет загружать дополнительные страницы, даже если на текущей странице меньше limit элементов
+      // ✅ hasMore: стандартная логика пагинации
+      // После исправления PHP скрипта сервер теперь возвращает ровно limit записей
+      // (или меньше, если это последняя страница)
+      // Если вернулось ровно limit элементов - есть еще данные (hasMore = true)
+      // Если вернулось меньше limit - это последняя страница (hasMore = false)
       final itemsCount = deduplicatedItems.length;
-      final hasMore = itemsCount > 0;
+      final hasMore = itemsCount == limit;
       
       state = state.copyWith(
         items: deduplicatedItems,
@@ -226,13 +228,13 @@ class LentaNotifier extends StateNotifier<LentaState> {
         }
       }
 
-      // ✅ hasMore должен быть true, если свежих элементов больше 0
-      // Останавливаемся только если вернулось 0 элементов (значит больше нет данных)
-      // Но также учитываем, что если до refresh были загружены дополнительные страницы,
-      // то возможно есть еще данные на следующих страницах (которые мы еще не проверили)
+      // ✅ hasMore: стандартная логика пагинации
+      // После исправления PHP скрипта сервер теперь возвращает ровно limit записей
+      // (или меньше, если это последняя страница)
+      // Если вернулось ровно limit элементов - есть еще данные (hasMore = true)
+      // Если вернулось меньше limit - это последняя страница (hasMore = false)
       final freshItemsCount = deduplicatedFreshItems.length;
-      final hadMorePagesBeforeRefresh = state.currentPage > 1 && state.hasMore;
-      final hasMore = freshItemsCount > 0 || hadMorePagesBeforeRefresh;
+      final hasMore = freshItemsCount == limit;
 
       state = state.copyWith(
         items: updatedItems,
@@ -320,12 +322,12 @@ class LentaNotifier extends StateNotifier<LentaState> {
       final updatedItems = [...state.items, ...newItems];
       final updatedSeenIds = {...state.seenIds, ...newItems.map(_getId)};
 
-      // ✅ hasMore должен быть true, если вернулось больше 0 элементов
-      // Останавливаемся только если вернулось 0 элементов (значит больше нет данных)
-      // Это позволяет загружать дополнительные страницы, даже если на текущей странице меньше limit элементов
-      // Проверяем на основе исходного количества элементов с сервера (moreItems.length),
-      // а не после дедупликации (newItems.length), потому что сервер может вернуть дубликаты
-      final hasMore = moreItems.length > 0;
+      // ✅ hasMore: стандартная логика пагинации
+      // После исправления PHP скрипта сервер теперь запрашивает больше записей из БД
+      // и возвращает ровно limit записей после фильтрации (или меньше, если это последняя страница)
+      // Если вернулось ровно limit элементов - есть еще данные (hasMore = true)
+      // Если вернулось меньше limit - это последняя страница (hasMore = false)
+      final hasMore = moreItems.length == limit;
       
       state = state.copyWith(
         items: updatedItems,
