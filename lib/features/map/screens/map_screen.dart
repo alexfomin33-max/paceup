@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui' as ui;
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,12 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:latlong2/latlong.dart' as latlong;
 import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import '../../../core/theme/app_theme.dart';
-import '../../../core/config/app_config.dart';
+import '../constants/map_layer_ids.dart';
+import '../services/map_fit_service.dart';
+import '../services/marker_assets.dart';
+import '../views/map_view.dart';
+import '../views/map_view_mac.dart';
+import '../widgets/map_tabs_widget.dart';
 
 // контент вкладок
 import 'events/events_screen.dart' as ev;
@@ -69,23 +73,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Ключ: координаты в формате "lat_lng", значение: данные маркера
   final Map<String, Map<String, dynamic>> _markerData = {};
 
-  /// ID источника GeoJSON для кластеризации
-  static const String _geoJsonSourceId = 'markers-source';
-
-  /// ID слоя для кластеров (круги)
-  static const String _clusterLayerId = 'clusters';
-
-  /// ID слоя для текста кластеров
-  static const String _clusterTextLayerId = 'cluster-count';
-
-  /// ID слоя для отдельных точек (не кластеры) - текст
-  static const String _unclusteredLayerId = 'unclustered-point';
-
-  /// ID слоя для кругов отдельных точек (фон)
-  static const String _unclusteredCircleLayerId = 'unclustered-point-circle';
-
-  /// ID слоя для официальных маркеров (красные)
-  static const String _officialCircleLayerId = 'official-point-circle';
+  /// ID источника/слоев для кластеризации (читаем из константного файла)
+  static const String _geoJsonSourceId = MapLayerIds.geoJsonSourceId;
+  static const String _clusterLayerId = MapLayerIds.clusterLayerId;
+  static const String _clusterTextLayerId = MapLayerIds.clusterTextLayerId;
+  static const String _unclusteredLayerId = MapLayerIds.unclusteredLayerId;
+  static const String _unclusteredCircleLayerId =
+      MapLayerIds.unclusteredCircleLayerId;
+  static const String _officialCircleLayerId =
+      MapLayerIds.officialCircleLayerId;
 
   /// Цвета маркеров по вкладкам
   final markerColors = const {
@@ -128,71 +124,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
-  /// ──────────── Автоматическая подстройка zoom под маркеры ────────────
-  /// Вычисляет границы всех маркеров и подстраивает карту
-  Future<void> _fitBoundsToMarkers(List<Map<String, dynamic>> markers) async {
-    if (markers.isEmpty || _mapboxMap == null) return;
-
-    // Извлекаем точки из маркеров
-    final points = markers
-        .map((m) => m['point'] as latlong.LatLng?)
-        .whereType<latlong.LatLng>()
-        .toList();
-
-    if (points.isEmpty) return;
-
-    // Если маркер один, устанавливаем центр и разумный zoom
-    if (points.length == 1) {
-      await _mapboxMap!.flyTo(
-        CameraOptions(
-          center: Point(
-            coordinates: Position(
-              points.first.longitude,
-              points.first.latitude,
-            ),
-          ),
-          zoom: 12.0,
-        ),
-        MapAnimationOptions(duration: 500, startDelay: 0),
-      );
-      return;
-    }
-
-    // Вычисляем границы для нескольких маркеров
-    double minLat = points.first.latitude;
-    double maxLat = points.first.latitude;
-    double minLng = points.first.longitude;
-    double maxLng = points.first.longitude;
-
-    for (final point in points) {
-      minLat = minLat < point.latitude ? minLat : point.latitude;
-      maxLat = maxLat > point.latitude ? maxLat : point.latitude;
-      minLng = minLng < point.longitude ? minLng : point.longitude;
-      maxLng = maxLng > point.longitude ? maxLng : point.longitude;
-    }
-
-    // Создаём bounds и подстраиваем карту с отступами с обработкой ошибок канала
-    try {
-      final camera = await _mapboxMap!.cameraForCoordinateBounds(
-        CoordinateBounds(
-          southwest: Point(coordinates: Position(minLng, minLat)),
-          northeast: Point(coordinates: Position(maxLng, maxLat)),
-          infiniteBounds: false,
-        ),
-        MbxEdgeInsets(left: 30, right: 30, top: 160, bottom: 130),
-        null,
-        null,
-        null,
-        null,
-      );
-      await _mapboxMap!.setCamera(camera);
-    } catch (cameraError) {
-      // Если канал еще не готов, логируем и продолжаем работу
-      // Карта останется в текущей позиции
-      debugPrint('⚠️ Не удалось настроить камеру карты: $cameraError');
-    }
-  }
-
   /// ──────────── Конвертация маркеров в GeoJSON ────────────
   /// Преобразует список маркеров в формат GeoJSON для использования с кластеризацией
   String _markersToGeoJson(List<Map<String, dynamic>> markers) {
@@ -231,50 +162,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return jsonEncode({'type': 'FeatureCollection', 'features': features});
   }
 
-  /// Создание изображения маркера с текстом
-  Future<Uint8List> _createMarkerImage(Color color, String text) async {
-    const size = 64.0; // Увеличиваем размер маркера еще больше
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    final paint = Paint()..color = color;
-    final borderPaint = Paint()
-      ..color = AppColors.border
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-
-    // Рисуем круг
-    canvas.drawCircle(const Offset(size / 2, size / 2), size / 2 - 0.5, paint);
-    canvas.drawCircle(
-      const Offset(size / 2, size / 2),
-      size / 2 - 0.5,
-      borderPaint,
-    );
-
-    // Рисуем текст
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: const TextStyle(
-          color: AppColors.surface,
-          fontWeight: FontWeight.w600,
-          fontSize: 36, // Увеличиваем размер текста пропорционально
-        ),
-      ),
-      textAlign: TextAlign.center,
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      Offset((size - textPainter.width) / 2, (size - textPainter.height) / 2),
-    );
-
-    final picture = recorder.endRecording();
-    final image = await picture.toImage(size.toInt(), size.toInt());
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    return byteData!.buffer.asUint8List();
-  }
-
   /// ──────────── Настройка маркеров с кластеризацией через GeoJSON ────────────
   /// Использует GeoJSON source с кластеризацией для эффективного отображения
   /// большого количества маркеров
@@ -288,13 +175,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     // Проверяем, не отменена ли операция
     if (updateToken != null && updateToken != _currentUpdateToken) {
-      debugPrint('⚠️ Операция обновления маркеров отменена (новый токен)');
+      if (kDebugMode) {
+        debugPrint('⚠️ Операция обновления маркеров отменена (новый токен)');
+      }
       return;
     }
 
     // Предотвращаем параллельные операции
     if (_isUpdatingMarkers) {
-      debugPrint('⚠️ Обновление маркеров уже выполняется, пропускаем');
+      if (kDebugMode) {
+        debugPrint('⚠️ Обновление маркеров уже выполняется, пропускаем');
+      }
       return;
     }
 
@@ -311,7 +202,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
 
     if (updateToken != null && updateToken != _currentUpdateToken) {
-      debugPrint('⚠️ Операция отменена после задержки');
+      if (kDebugMode) {
+        debugPrint('⚠️ Операция отменена после задержки');
+      }
       _isUpdatingMarkers = false;
       return;
     }
@@ -327,11 +220,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         return;
       }
 
-      debugPrint('📍 Настройка кластеризации: ${markers.length} маркеров');
+      if (kDebugMode) {
+        debugPrint('📍 Настройка кластеризации: ${markers.length} маркеров');
+      }
 
       // Проверяем отмену операции перед началом работы
       if (updateToken != null && updateToken != _currentUpdateToken) {
-        debugPrint('⚠️ Операция отменена перед началом работы');
+        if (kDebugMode) {
+          debugPrint('⚠️ Операция отменена перед началом работы');
+        }
         _isUpdatingMarkers = false;
         return;
       }
@@ -347,7 +244,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
       // Проверяем отмену операции после удаления
       if (updateToken != null && updateToken != _currentUpdateToken) {
-        debugPrint('⚠️ Операция отменена после удаления старого источника');
+        if (kDebugMode) {
+          debugPrint('⚠️ Операция отменена после удаления старого источника');
+        }
         _isUpdatingMarkers = false;
         return;
       }
@@ -363,7 +262,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       );
 
       await style.addSource(geoJsonSource);
-      debugPrint('✅ GeoJSON source создан');
+      if (kDebugMode) {
+        debugPrint('✅ GeoJSON source создан');
+      }
 
       // ── Создаем слой для кластеров (круги)
       // Используем условное выражение для цвета: красный для официальных, синий для обычных
@@ -382,7 +283,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       clusterLayer.filter = ['has', 'point_count'];
 
       await style.addLayer(clusterLayer);
-      debugPrint('✅ Слой кластеров создан');
+      if (kDebugMode) {
+        debugPrint('✅ Слой кластеров создан');
+      }
 
       // ── Создаем слой для текста кластеров
       // ВАЖНО: textField использует простой формат строки
@@ -400,7 +303,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       clusterTextLayer.filter = ['has', 'point_count'];
 
       await style.addLayer(clusterTextLayer);
-      debugPrint('✅ Слой текста кластеров создан');
+      if (kDebugMode) {
+        debugPrint('✅ Слой текста кластеров создан');
+      }
 
       // ── Создаем слой для отдельных точек (не кластеры)
       // Используем комбинацию CircleLayer (фон) и SymbolLayer (текст)
@@ -475,14 +380,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ];
 
       await style.addLayer(unclusteredTextLayer);
-      debugPrint('✅ Слой отдельных точек создан (круг + текст)');
+      if (kDebugMode) {
+        debugPrint('✅ Слой отдельных точек создан (круг + текст)');
+      }
 
       // ── Подписываемся на клики по слоям
       await _setupLayerClickHandlers();
-      debugPrint('✅ Кластеризация настроена успешно');
+      if (kDebugMode) {
+        debugPrint('✅ Кластеризация настроена успешно');
+      }
     } catch (e) {
-      debugPrint('❌ Ошибка настройки маркеров с кластеризацией: $e');
-      debugPrint('   Stack trace: ${StackTrace.current}');
+      if (kDebugMode) {
+        debugPrint('❌ Ошибка настройки маркеров с кластеризацией: $e');
+        debugPrint('   Stack trace: ${StackTrace.current}');
+      }
       // Fallback на старый метод, если кластеризация не работает
       await _setupMarkersFallback(markers, markerColor);
     } finally {
@@ -511,23 +422,33 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       for (final layerId in layerIds) {
         try {
           await style.removeStyleLayer(layerId);
-          debugPrint('✅ Слой $layerId удален');
+          if (kDebugMode) {
+            debugPrint('✅ Слой $layerId удален');
+          }
         } catch (e) {
           // Слой может не существовать - это нормально
-          debugPrint('⚠️ Слой $layerId не найден или уже удален: $e');
+          if (kDebugMode) {
+            debugPrint('⚠️ Слой $layerId не найден или уже удален: $e');
+          }
         }
       }
 
       // Удаляем источник
       try {
         await style.removeStyleSource(_geoJsonSourceId);
-        debugPrint('✅ GeoJSON источник удален');
+        if (kDebugMode) {
+          debugPrint('✅ GeoJSON источник удален');
+        }
       } catch (e) {
         // Источник может не существовать - это нормально
-        debugPrint('⚠️ GeoJSON источник не найден или уже удален: $e');
+        if (kDebugMode) {
+          debugPrint('⚠️ GeoJSON источник не найден или уже удален: $e');
+        }
       }
     } catch (e) {
-      debugPrint('⚠️ Ошибка при удалении GeoJSON источника: $e');
+      if (kDebugMode) {
+        debugPrint('⚠️ Ошибка при удалении GeoJSON источника: $e');
+      }
       // Продолжаем работу - при следующем добавлении слои будут перезаписаны
     }
   }
@@ -539,7 +460,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     // Обработчики кликов уже настроены в MapWidget через onTapListener
     // Этот метод вызывается для логирования успешной настройки
-    debugPrint('✅ Обработчики кликов для кластеризации настроены');
+    if (kDebugMode) {
+      debugPrint('✅ Обработчики кликов для кластеризации настроены');
+    }
   }
 
   /// ──────────── Fallback: старый метод через PointAnnotationManager ────────────
@@ -549,19 +472,25 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     Color markerColor,
   ) async {
     if (_mapboxMap == null || !mounted) {
-      debugPrint('⚠️ _setupMarkersFallback: карта не готова');
+      if (kDebugMode) {
+        debugPrint('⚠️ _setupMarkersFallback: карта не готова');
+      }
       return;
     }
 
     try {
-      debugPrint('📍 Настройка маркеров: ${markers.length} маркеров');
+      if (kDebugMode) {
+        debugPrint('📍 Настройка маркеров: ${markers.length} маркеров');
+      }
 
       // ── Безопасное удаление старых маркеров
       if (_pointAnnotationManager != null) {
         try {
           await _pointAnnotationManager!.deleteAll();
         } catch (e) {
-          debugPrint('⚠️ Менеджер аннотаций был уничтожен: $e');
+          if (kDebugMode) {
+            debugPrint('⚠️ Менеджер аннотаций был уничтожен: $e');
+          }
           _pointAnnotationManager = null;
         }
       }
@@ -569,7 +498,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       // ── Создаем менеджер аннотаций, если его нет
       if (_pointAnnotationManager == null && _mapboxMap != null && mounted) {
         try {
-          debugPrint('📍 Создание менеджера аннотаций...');
+          if (kDebugMode) {
+            debugPrint('📍 Создание менеджера аннотаций...');
+          }
           _pointAnnotationManager = await _mapboxMap!.annotations
               .createPointAnnotationManager();
           if (_pointAnnotationManager != null && mounted) {
@@ -578,23 +509,31 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 _onMarkerTap(annotation);
               },
             );
-            debugPrint('✅ Менеджер аннотаций создан успешно');
+            if (kDebugMode) {
+              debugPrint('✅ Менеджер аннотаций создан успешно');
+            }
           }
         } catch (e) {
-          debugPrint('❌ Ошибка создания менеджера аннотаций: $e');
+          if (kDebugMode) {
+            debugPrint('❌ Ошибка создания менеджера аннотаций: $e');
+          }
           return;
         }
       }
 
       if (_pointAnnotationManager == null || _mapboxMap == null || !mounted) {
-        debugPrint('⚠️ Менеджер аннотаций не готов');
+        if (kDebugMode) {
+          debugPrint('⚠️ Менеджер аннотаций не готов');
+        }
         return;
       }
 
       _markerData.clear();
 
       if (markers.isEmpty) {
-        debugPrint('⚠️ Нет маркеров для отображения');
+        if (kDebugMode) {
+          debugPrint('⚠️ Нет маркеров для отображения');
+        }
         return;
       }
 
@@ -609,10 +548,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           final color = isOfficial ? AppColors.error : markerColor;
           final imageKey = 'marker_${color.toARGB32()}_$count';
           if (!imageMap.containsKey(imageKey)) {
-            imageMap[imageKey] = await _createMarkerImage(color, '$count');
+            imageMap[imageKey] = await MarkerAssets.createMarkerImage(
+              color,
+              '$count',
+            );
           }
         } catch (e) {
-          debugPrint('Ошибка создания изображения маркера: $e');
+          if (kDebugMode) {
+            debugPrint('Ошибка создания изображения маркера: $e');
+          }
         }
       }
 
@@ -642,7 +586,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           );
         } catch (e) {
-          debugPrint('Ошибка создания аннотации: $e');
+          if (kDebugMode) {
+            debugPrint('Ошибка создания аннотации: $e');
+          }
         }
       }
 
@@ -651,21 +597,31 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           _mapboxMap != null &&
           mounted) {
         try {
-          debugPrint('📍 Создание ${annotations.length} аннотаций...');
+          if (kDebugMode) {
+            debugPrint('📍 Создание ${annotations.length} аннотаций...');
+          }
           await _pointAnnotationManager!.createMulti(annotations);
-          debugPrint('✅ Аннотации созданы успешно');
+          if (kDebugMode) {
+            debugPrint('✅ Аннотации созданы успешно');
+          }
         } catch (e) {
-          debugPrint('❌ Ошибка создания аннотаций: $e');
-          debugPrint('   Stack trace: ${StackTrace.current}');
+          if (kDebugMode) {
+            debugPrint('❌ Ошибка создания аннотаций: $e');
+            debugPrint('   Stack trace: ${StackTrace.current}');
+          }
         }
       } else {
-        debugPrint(
-          '⚠️ Не удалось создать аннотации: isEmpty=${annotations.isEmpty}, manager=${_pointAnnotationManager != null}, map=${_mapboxMap != null}, mounted=$mounted',
-        );
+        if (kDebugMode) {
+          debugPrint(
+            '⚠️ Не удалось создать аннотации: isEmpty=${annotations.isEmpty}, manager=${_pointAnnotationManager != null}, map=${_mapboxMap != null}, mounted=$mounted',
+          );
+        }
       }
     } catch (e) {
-      debugPrint('❌ Ошибка настройки маркеров (fallback): $e');
-      debugPrint('   Stack trace: ${StackTrace.current}');
+      if (kDebugMode) {
+        debugPrint('❌ Ошибка настройки маркеров (fallback): $e');
+        debugPrint('   Stack trace: ${StackTrace.current}');
+      }
     }
   }
 
@@ -697,15 +653,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Запускает перерисовку маркеров, как только Mapbox и менеджер готовы.
   void _applyPendingMarkersIfReady() {
     if (!mounted || _mapboxMap == null || _pendingMarkerColor == null) {
-      debugPrint(
-        '⚠️ _applyPendingMarkersIfReady: не готово (mounted=$mounted, map=${_mapboxMap != null}, color=${_pendingMarkerColor != null})',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          '⚠️ _applyPendingMarkersIfReady: не готово (mounted=$mounted, map=${_mapboxMap != null}, color=${_pendingMarkerColor != null})',
+        );
+      }
       return;
     }
 
     // Если менеджер еще не создан, ждем немного и пробуем снова
     if (_pointAnnotationManager == null) {
-      debugPrint('⚠️ Менеджер аннотаций еще не создан, ждем...');
+      if (kDebugMode) {
+        debugPrint('⚠️ Менеджер аннотаций еще не создан, ждем...');
+      }
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted && _pendingMarkerColor != null) {
           _applyPendingMarkersIfReady();
@@ -714,7 +674,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       return;
     }
 
-    debugPrint('📍 Применение маркеров: ${_pendingMarkers.length} маркеров');
+    if (kDebugMode) {
+      debugPrint('📍 Применение маркеров: ${_pendingMarkers.length} маркеров');
+    }
     final currentToken = _currentUpdateToken;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _pendingMarkerColor == null) return;
@@ -732,7 +694,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     if (_mapboxMap == null || !mounted) return;
 
     try {
-      debugPrint('📍 Клик по карте: ${context.point.coordinates}');
+      if (kDebugMode) {
+        debugPrint('📍 Клик по карте: ${context.point.coordinates}');
+      }
 
       // Получаем координаты клика на карте (географические)
       final point = context.point;
@@ -767,10 +731,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         options,
       );
 
-      debugPrint('📍 Найдено features: ${features.length}');
+      if (kDebugMode) {
+        debugPrint('📍 Найдено features: ${features.length}');
+      }
 
       if (features.isEmpty) {
-        debugPrint('⚠️ Клик был не по маркеру');
+        if (kDebugMode) {
+          debugPrint('⚠️ Клик был не по маркеру');
+        }
         return;
       }
 
@@ -780,17 +748,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       // Проверяем, какой слой был кликнут
       final layerIds = queriedFeature?.layers;
       if (layerIds == null || layerIds.isEmpty) {
-        debugPrint('⚠️ Нет информации о слоях');
+        if (kDebugMode) {
+          debugPrint('⚠️ Нет информации о слоях');
+        }
         return;
       }
 
       final clickedLayerId = layerIds.first;
-      debugPrint('📍 Клик по слою: $clickedLayerId');
+      if (kDebugMode) {
+        debugPrint('📍 Клик по слою: $clickedLayerId');
+      }
 
       // Если клик по кластеру, получаем все точки внутри и показываем bottom sheet
       if (clickedLayerId == _clusterLayerId ||
           clickedLayerId == _clusterTextLayerId) {
-        debugPrint('📍 Клик по кластеру, координаты: $lat, $lng');
+        if (kDebugMode) {
+          debugPrint('📍 Клик по кластеру, координаты: $lat, $lng');
+        }
         try {
           // ────────────────────────────────────────────────────────────────
           // Подход как в Google Maps / Яндекс.Картах:
@@ -809,9 +783,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           // Добавляем запас для надежности (40px = примерно радиус кластера + отступ)
           const clusterRadiusPixels = 40.0;
 
-          debugPrint(
-            '📍 Поиск маркеров в кластере по экранным координатам (радиус: ${clusterRadiusPixels}px)...',
-          );
+          if (kDebugMode) {
+            debugPrint(
+              '📍 Поиск маркеров в кластере по экранным координатам (радиус: ${clusterRadiusPixels}px)...',
+            );
+          }
 
           // Собираем все события/клубы из маркеров, входящих в кластер
           final allEvents = <dynamic>[];
@@ -866,24 +842,32 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   // Используем заголовок первого маркера
                   clusterTitle ??= marker['title'] as String? ?? 'Маркеры';
 
-                  debugPrint(
-                    '📍 Маркер в кластере: $markerKey, расстояние: ${distancePixels.toStringAsFixed(1)}px',
-                  );
+                  if (kDebugMode) {
+                    debugPrint(
+                      '📍 Маркер в кластере: $markerKey, расстояние: ${distancePixels.toStringAsFixed(1)}px',
+                    );
+                  }
                 }
               }
             } catch (e) {
               // Если не удалось преобразовать координаты, пропускаем маркер
-              debugPrint('⚠️ Ошибка преобразования координат маркера: $e');
+              if (kDebugMode) {
+                debugPrint('⚠️ Ошибка преобразования координат маркера: $e');
+              }
               continue;
             }
           }
 
-          debugPrint(
-            '📍 Собрано событий: ${allEvents.length}, клубов: ${allClubs.length}, маркеров: ${foundMarkerKeys.length}',
-          );
+          if (kDebugMode) {
+            debugPrint(
+              '📍 Собрано событий: ${allEvents.length}, клубов: ${allClubs.length}, маркеров: ${foundMarkerKeys.length}',
+            );
+          }
 
           if (allEvents.isEmpty && allClubs.isEmpty) {
-            debugPrint('⚠️ Не найдено данных в кластере');
+            if (kDebugMode) {
+              debugPrint('⚠️ Не найдено данных в кластере');
+            }
             return;
           }
 
@@ -907,15 +891,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               pixelCoordinate.y.toDouble(),
             );
           } catch (e) {
-            debugPrint('⚠️ Ошибка вычисления позиции кластера: $e');
+            if (kDebugMode) {
+              debugPrint('⚠️ Ошибка вычисления позиции кластера: $e');
+            }
           }
 
           // Показываем bottom sheet с объединенными данными
           _showMarkerBottomSheet(clusterMarker, screenPosition: screenPosition);
-          debugPrint('✅ Bottom sheet для кластера показан');
+          if (kDebugMode) {
+            debugPrint('✅ Bottom sheet для кластера показан');
+          }
         } catch (e) {
-          debugPrint('❌ Ошибка обработки кластера: $e');
-          debugPrint('   Stack trace: ${StackTrace.current}');
+          if (kDebugMode) {
+            debugPrint('❌ Ошибка обработки кластера: $e');
+            debugPrint('   Stack trace: ${StackTrace.current}');
+          }
         }
         return;
       }
@@ -933,7 +923,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         if (markerPoint == null) continue;
 
         // Вычисляем расстояние до маркера
-        final distance = _calculateDistance(
+        final distance = MapFitService.calculateDistance(
           lat.toDouble(),
           lng.toDouble(),
           markerPoint.latitude.toDouble(),
@@ -949,7 +939,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
       // Если нашли маркер, показываем bottom sheet
       if (closestMarker != null) {
-        debugPrint('📍 Найден маркер, расстояние: $minDistance');
+        if (kDebugMode) {
+          debugPrint('📍 Найден маркер, расстояние: $minDistance');
+        }
         Offset? screenPosition;
         try {
           final markerPoint = closestMarker['point'] as latlong.LatLng;
@@ -964,33 +956,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             pixelCoordinate.y.toDouble(),
           );
         } catch (e) {
-          debugPrint('⚠️ Ошибка вычисления позиции маркера: $e');
+          if (kDebugMode) {
+            debugPrint('⚠️ Ошибка вычисления позиции маркера: $e');
+          }
         }
 
         _showMarkerBottomSheet(closestMarker, screenPosition: screenPosition);
         return;
       }
 
-      debugPrint('⚠️ Маркер не найден для координат: $lat, $lng');
+      if (kDebugMode) {
+        debugPrint('⚠️ Маркер не найден для координат: $lat, $lng');
+      }
     } catch (e) {
-      debugPrint('❌ Ошибка обработки клика по карте: $e');
-      debugPrint('   Stack trace: ${StackTrace.current}');
+      if (kDebugMode) {
+        debugPrint('❌ Ошибка обработки клика по карте: $e');
+        debugPrint('   Stack trace: ${StackTrace.current}');
+      }
     }
-  }
-
-  /// ──────────── Вычисление расстояния между двумя точками ────────────
-  /// Использует простую формулу для вычисления расстояния в градусах
-  double _calculateDistance(
-    double lat1,
-    double lng1,
-    double lat2,
-    double lng2,
-  ) {
-    // Простое вычисление расстояния через разницу координат
-    // Для точности можно использовать формулу гаверсинуса, но для наших целей достаточно
-    final dLat = (lat1 - lat2).abs();
-    final dLng = (lng1 - lng2).abs();
-    return dLat * dLat + dLng * dLng;
   }
 
   /// Обработка клика по маркеру (для fallback метода через PointAnnotationManager)
@@ -1010,7 +993,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final marker = _markerData[markerKey];
 
     if (marker == null) {
-      debugPrint('Маркер не найден для координат: $lat, $lng');
+      if (kDebugMode) {
+        debugPrint('Маркер не найден для координат: $lat, $lng');
+      }
       return;
     }
 
@@ -1025,7 +1010,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           screenCoordinate.y.toDouble(),
         );
       } catch (e) {
-        debugPrint('Ошибка вычисления позиции маркера: $e');
+        if (kDebugMode) {
+          debugPrint('Ошибка вычисления позиции маркера: $e');
+        }
       }
     }
 
@@ -1114,147 +1101,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     });
   }
 
-  /// Построение карты с flutter_map для macOS
-  Widget _buildFlutterMap(
-    List<Map<String, dynamic>> markers,
-    Color markerColor,
-  ) {
-    // Вычисляем центр карты
-    latlong.LatLng center = const latlong.LatLng(56.129057, 40.406635);
-    double zoom = 6.0;
-
-    if (markers.isNotEmpty) {
-      final points = markers
-          .map((m) => m['point'] as latlong.LatLng?)
-          .whereType<latlong.LatLng>()
-          .toList();
-
-      if (points.isNotEmpty) {
-        if (points.length == 1) {
-          center = points.first;
-          zoom = 12.0;
-        } else {
-          // Вычисляем центр всех точек
-          double sumLat = 0, sumLng = 0;
-          for (final point in points) {
-            sumLat += point.latitude;
-            sumLng += point.longitude;
-          }
-          center = latlong.LatLng(
-            sumLat / points.length,
-            sumLng / points.length,
-          );
-          zoom = 10.0;
-        }
-      }
-    }
-
-    // Подстраиваем камеру при первом отображении
-    if (!_mapInitialized && markers.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final points = markers
-            .map((m) => m['point'] as latlong.LatLng?)
-            .whereType<latlong.LatLng>()
-            .toList();
-        if (points.length > 1) {
-          double minLat = points.first.latitude;
-          double maxLat = points.first.latitude;
-          double minLng = points.first.longitude;
-          double maxLng = points.first.longitude;
-          for (final point in points) {
-            minLat = minLat < point.latitude ? minLat : point.latitude;
-            maxLat = maxLat > point.latitude ? maxLat : point.latitude;
-            minLng = minLng < point.longitude ? minLng : point.longitude;
-            maxLng = maxLng > point.longitude ? maxLng : point.longitude;
-          }
-          _flutterMapController.fitCamera(
-            flutter_map.CameraFit.bounds(
-              bounds: flutter_map.LatLngBounds(
-                latlong.LatLng(minLat, minLng),
-                latlong.LatLng(maxLat, maxLng),
-              ),
-              padding: const EdgeInsets.all(30),
-            ),
-          );
-        } else if (points.length == 1) {
-          _flutterMapController.move(points.first, 12.0);
-        }
-      });
-    }
-
-    // Используем стабильный ключ для предотвращения пересоздания FlutterMap
-    // Это предотвращает setState во время build при инициализации MapController
-    final mapKey = ValueKey('flutter_map_$_selectedIndex');
-
-    return SizedBox.expand(
-      child: flutter_map.FlutterMap(
-        key: mapKey,
-        mapController: _flutterMapController,
-        options: flutter_map.MapOptions(
-          initialCenter: center,
-          initialZoom: zoom,
-          minZoom: 3.0,
-          maxZoom: 18.0,
-        ),
-        children: [
-          flutter_map.TileLayer(
-            urlTemplate: AppConfig.mapTilesUrl.replaceAll(
-              '{apiKey}',
-              AppConfig.mapTilerApiKey,
-            ),
-            userAgentPackageName: 'com.example.paceup',
-          ),
-          flutter_map.MarkerLayer(
-            markers: markers.map((marker) {
-              final point = marker['point'] as latlong.LatLng?;
-              if (point == null) {
-                return const flutter_map.Marker(
-                  point: latlong.LatLng(0, 0),
-                  width: 0,
-                  height: 0,
-                  child: SizedBox.shrink(),
-                );
-              }
-
-              final count = marker['count'] as int? ?? 0;
-              final isOfficial = marker['is_official'] as bool? ?? false;
-              // Используем красный цвет для официальных, синий для обычных
-              final color = isOfficial ? AppColors.error : markerColor;
-
-              return flutter_map.Marker(
-                point: point,
-                width: 64,
-                height: 64,
-                child: GestureDetector(
-                  onTap: () => _onFlutterMapMarkerTap(marker),
-                  child: Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.border, width: 1),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '$count',
-                        style: const TextStyle(
-                          color: AppColors.surface,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   void dispose() {
     _mapboxMap = null;
@@ -1315,7 +1161,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
                 // Обрабатываем ошибки
                 if (snapshot.hasError) {
-                  debugPrint('Ошибка загрузки маркеров: ${snapshot.error}');
+                  if (kDebugMode) {
+                    debugPrint('Ошибка загрузки маркеров: ${snapshot.error}');
+                  }
                 }
 
                 // Автоматическая подстройка zoom отключена для Событий и Клубов
@@ -1324,7 +1172,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 return _buildMap(markers, markerColor);
               },
             ),
-            _buildTabs(),
+            MapTabsWidget(
+              tabs: tabs,
+              selectedIndex: _selectedIndex,
+              onSelect: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+            ),
             if (_selectedIndex == 0)
               ev.EventsFloatingButtons(
                 currentFilterParams: _eventsFilterParams,
@@ -1385,7 +1241,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final markers = _markersForTabSync(context);
     // Подстраиваем zoom при изменении вкладки
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fitBoundsToMarkers(markers);
+      MapFitService.fitBoundsToMarkers(_mapboxMap, markers);
     });
     return _buildMapWithMarkers(markers, markerColor);
   }
@@ -1398,7 +1254,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       body: Stack(
         children: [
           _buildMap(markers, markerColor),
-          _buildTabs(),
+          MapTabsWidget(
+            tabs: tabs,
+            selectedIndex: _selectedIndex,
+            onSelect: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+          ),
           if (_selectedIndex == 1)
             clb.ClubsFloatingButtons(
               currentFilterParams: _clubsFilterParams,
@@ -1435,147 +1299,76 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Widget _buildMap(List<Map<String, dynamic>> markers, Color markerColor) {
     // Проверяем поддержку платформы - используем flutter_map для macOS
     if (Platform.isMacOS) {
-      return _buildFlutterMap(markers, markerColor);
+      return MapViewMac(
+        markers: markers,
+        markerColor: markerColor,
+        mapController: _flutterMapController,
+        mapInitialized: _mapInitialized,
+        onMarkerTap: _onFlutterMapMarkerTap,
+        selectedIndex: _selectedIndex,
+      );
     }
 
     // Обновляем маркеры при изменении данных (с гарантией после инициализации)
     _queueMarkersUpdate(markers, markerColor);
 
-    return SizedBox.expand(
-      child: MapWidget(
-        key: ValueKey('map_screen_${_selectedIndex}_$_mapInitialized'),
-        onTapListener: _onMapTap,
-        onMapCreated: (MapboxMap mapboxMap) async {
-          _mapboxMap = mapboxMap;
+    return MapView(
+      mapKey: ValueKey('map_screen_${_selectedIndex}_$_mapInitialized'),
+      onTapListener: _onMapTap,
+      onMapCreated: (MapboxMap mapboxMap) async {
+        _mapboxMap = mapboxMap;
 
-          // ────────────────────────── Отключаем масштабную линейку ──────────────────────────
-          // Отключаем горизонтальную линию масштаба, которая отображается сверху слева
-          try {
-            await mapboxMap.scaleBar.updateSettings(
-              ScaleBarSettings(enabled: false),
-            );
-          } catch (e) {
-            // Если метод недоступен (для обратной совместимости), игнорируем ошибку
+        // ────────────────────────── Отключаем масштабную линейку ──────────────────────────
+        // Отключаем горизонтальную линию масштаба, которая отображается сверху слева
+        try {
+          await mapboxMap.scaleBar.updateSettings(
+            ScaleBarSettings(enabled: false),
+          );
+        } catch (e) {
+          // Если метод недоступен (для обратной совместимости), игнорируем ошибку
+          if (kDebugMode) {
             debugPrint('⚠️ Не удалось отключить масштабную линейку: $e');
           }
+        }
 
-          // ── Создаем менеджер аннотаций для маркеров
-          try {
+        // ── Создаем менеджер аннотаций для маркеров
+        try {
+          if (kDebugMode) {
             debugPrint('📍 Создание менеджера аннотаций в onMapCreated...');
-            _pointAnnotationManager = await mapboxMap.annotations
-                .createPointAnnotationManager();
-            if (_pointAnnotationManager != null && mounted) {
-              _pointAnnotationManager!.tapEvents(
-                onTap: (annotation) {
-                  _onMarkerTap(annotation);
-                },
-              );
+          }
+          _pointAnnotationManager = await mapboxMap.annotations
+              .createPointAnnotationManager();
+          if (_pointAnnotationManager != null && mounted) {
+            _pointAnnotationManager!.tapEvents(
+              onTap: (annotation) {
+                _onMarkerTap(annotation);
+              },
+            );
+            if (kDebugMode) {
               debugPrint('✅ Менеджер аннотаций создан в onMapCreated');
             }
-          } catch (e) {
+          }
+        } catch (e) {
+          if (kDebugMode) {
             debugPrint(
               '❌ Ошибка создания менеджера аннотаций в onMapCreated: $e',
             );
           }
+        }
 
-          // Сохраняем цвет/данные по умолчанию, если Future уже вернул маркеры
-          _pendingMarkerColor ??= markerColor;
-          if (_pendingMarkers.isEmpty && markers.isNotEmpty) {
-            _pendingMarkers = List<Map<String, dynamic>>.unmodifiable(markers);
-          }
+        // Сохраняем цвет/данные по умолчанию, если Future уже вернул маркеры
+        _pendingMarkerColor ??= markerColor;
+        if (_pendingMarkers.isEmpty && markers.isNotEmpty) {
+          _pendingMarkers = List<Map<String, dynamic>>.unmodifiable(markers);
+        }
 
-          // Добавляем небольшую задержку для гарантии готовности карты
-          await Future.delayed(const Duration(milliseconds: 300));
-          _applyPendingMarkersIfReady();
-        },
-        cameraOptions: CameraOptions(
-          center: Point(coordinates: Position(40.406635, 56.129057)),
-          zoom: 6.0,
-        ),
-        styleUri: MapboxStyles.MAPBOX_STREETS,
-      ),
-    );
-  }
-
-  Widget _buildTabs() {
-    // ── определяем цвета в зависимости от темы
-    final brightness = Theme.of(context).brightness;
-    final isDark = brightness == Brightness.dark;
-    // ── в темной теме убираем тень, чтобы фон был идентичен нижнему меню
-    final shadowColor = isDark ? null : AppColors.shadowMedium;
-
-    return Positioned(
-      top: MediaQuery.of(context).padding.top + 16,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 300),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppColors.getSurfaceColor(context),
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              boxShadow: shadowColor != null
-                  ? [
-                      BoxShadow(
-                        color: shadowColor,
-                        blurRadius: 1,
-                        offset: const Offset(0, 1),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              children: List.generate(tabs.length, (index) {
-                final isSelected = _selectedIndex == index;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      // Если вкладка уже активна, выходим без пересборки,
-                      // чтобы избежать повторной отрисовки маркеров и мерцаний
-                      if (_selectedIndex == index) {
-                        return;
-                      }
-
-                      // При реальном переключении вкладок обновляем маркеры
-                      // НЕ сбрасываем _mapInitialized - карта должна оставаться инициализированной
-                      // Это предотвращает пересоздание карты и зависания
-                      setState(() {
-                        _selectedIndex = index;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.getTextPrimaryColor(context)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(AppRadius.xl),
-                      ),
-                      child: Text(
-                        tabs[index],
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontWeight: isSelected
-                              ? FontWeight.w500
-                              : FontWeight.w400,
-                          color: isSelected
-                              ? AppColors.getSurfaceColor(context)
-                              : AppColors.getTextPrimaryColor(context),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ),
+        // Добавляем небольшую задержку для гарантии готовности карты
+        await Future.delayed(const Duration(milliseconds: 300));
+        _applyPendingMarkersIfReady();
+      },
+      cameraOptions: CameraOptions(
+        center: Point(coordinates: Position(40.406635, 56.129057)),
+        zoom: 6.0,
       ),
     );
   }
