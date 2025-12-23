@@ -65,7 +65,6 @@ class _ViewingSneakersContentState
     _loadSneakers();
   }
 
-
   /// Загрузка кроссовок из API
   Future<void> _loadSneakers() async {
     setState(() {
@@ -92,7 +91,7 @@ class _ViewingSneakersContentState
             final workouts = item['workouts'] as int? ?? 0;
             final hours = item['hours'] as int? ?? 0;
             final paceStr = item['pace'] as String? ?? '0:00 /км';
-            
+
             // Получаем дату из базы данных
             final inUseSinceStr = item['in_use_since'] as String?;
             final sinceText = inUseSinceStr != null && inUseSinceStr.isNotEmpty
@@ -167,7 +166,8 @@ class _ViewingSneakersContentState
           final currentUserIdAsync = ref.watch(currentUserIdProvider);
           return currentUserIdAsync.when(
             data: (currentUserId) {
-              final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
+              final isOwnProfile =
+                  currentUserId != null && currentUserId == widget.userId;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Center(
@@ -184,12 +184,16 @@ class _ViewingSneakersContentState
                         const SizedBox(height: 24),
                         PrimaryButton(
                           text: 'Добавить кроссовки',
-                          leading: const Icon(CupertinoIcons.plus_circle, size: 18),
+                          leading: const Icon(
+                            CupertinoIcons.plus_circle,
+                            size: 18,
+                          ),
                           onPressed: () async {
                             await Navigator.of(context).push(
                               CupertinoPageRoute(
-                                builder: (_) =>
-                                    const AddingEquipmentScreen(initialSegment: 0),
+                                builder: (_) => const AddingEquipmentScreen(
+                                  initialSegment: 0,
+                                ),
                               ),
                             );
                             // Обновляем список после возврата
@@ -204,7 +208,8 @@ class _ViewingSneakersContentState
                 ),
               );
             },
-            loading: () => const Center(child: CupertinoActivityIndicator(radius: 16)),
+            loading: () =>
+                const Center(child: CupertinoActivityIndicator(radius: 16)),
             error: (_, __) => const SizedBox.shrink(),
           );
         },
@@ -231,7 +236,8 @@ class _ViewingSneakersContentState
                 mainBadgeText: sneaker.isMain ? 'Основные' : null,
                 onUpdate:
                     _loadSneakers, // Callback для обновления списка после действий
-                userId: widget.userId, // ID пользователя, чье снаряжение отображается
+                userId: widget
+                    .userId, // ID пользователя, чье снаряжение отображается
               ),
             ],
           );
@@ -242,7 +248,8 @@ class _ViewingSneakersContentState
             final currentUserIdAsync = ref.watch(currentUserIdProvider);
             return currentUserIdAsync.when(
               data: (currentUserId) {
-                final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
+                final isOwnProfile =
+                    currentUserId != null && currentUserId == widget.userId;
                 if (!isOwnProfile) {
                   return const SizedBox.shrink();
                 }
@@ -254,12 +261,16 @@ class _ViewingSneakersContentState
                       child: Center(
                         child: PrimaryButton(
                           text: 'Добавить кроссовки',
-                          leading: const Icon(CupertinoIcons.plus_circle, size: 18),
+                          leading: const Icon(
+                            CupertinoIcons.plus_circle,
+                            size: 18,
+                          ),
                           onPressed: () async {
                             await Navigator.of(context).push(
                               CupertinoPageRoute(
-                                builder: (_) =>
-                                    const AddingEquipmentScreen(initialSegment: 0),
+                                builder: (_) => const AddingEquipmentScreen(
+                                  initialSegment: 0,
+                                ),
                               ),
                             );
                             // Обновляем список после возврата
@@ -357,7 +368,8 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
     // Проверяем, является ли это собственным профилем
     final authService = ref.read(authServiceProvider);
     final currentUserId = await authService.getUserId();
-    final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
+    final isOwnProfile =
+        currentUserId != null && currentUserId == widget.userId;
 
     // Если это не собственный профиль, не показываем меню
     if (!isOwnProfile) {
@@ -576,7 +588,9 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
                     final currentUserIdAsync = ref.watch(currentUserIdProvider);
                     return currentUserIdAsync.when(
                       data: (currentUserId) {
-                        final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
+                        final isOwnProfile =
+                            currentUserId != null &&
+                            currentUserId == widget.userId;
                         if (!isOwnProfile) {
                           return const SizedBox.shrink();
                         }

@@ -311,7 +311,7 @@ class ActivityStats {
       avgHeartRate: j['avgHeartRate'] == null
           ? null
           : _asDouble(j['avgHeartRate']),
-      avgCadence: j['avgCadence'] == null ? null : _asDouble(j['avgCadence']),
+      avgCadence: j['avgCad'] == null ? null : _asDouble(j['avgCad']),
       calories: j['calories'] == null ? null : _asDouble(j['calories']),
       totalSteps: j['totalSteps'] == null ? null : _asInt(j['totalSteps']),
       heartRatePerKm: _parseNumMap(j['heartRatePerKm']),

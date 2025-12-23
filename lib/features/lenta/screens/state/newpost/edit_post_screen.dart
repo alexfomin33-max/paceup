@@ -291,10 +291,12 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
               onTap: () async {
                 // По тапу можно заменить файл (станет НОВОЙ картинкой),
                 // а текущую пометим на удаление (keep=false)
-                // ── выбираем и обрезаем изображение в соотношении 1.3:1
+                // ── выбираем и обрезаем изображение для высоты 350px (динамическое соотношение)
+                final screenWidth = MediaQuery.of(context).size.width;
+                final aspectRatio = screenWidth / 350.0;
                 final processed = await ImagePickerHelper.pickAndProcessImage(
                   context: context,
-                  aspectRatio: 1.3,
+                  aspectRatio: aspectRatio,
                   maxSide: ImageCompressionPreset.post.maxSide,
                   jpegQuality: ImageCompressionPreset.post.quality,
                   cropTitle: 'Обрезка фотографии',
@@ -396,10 +398,12 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
             GestureDetector(
               onTap: () async {
                 // По тапу можно заменить картинку
-                // ── выбираем и обрезаем изображение в соотношении 1.3:1
+                // ── выбираем и обрезаем изображение для высоты 350px (динамическое соотношение)
+                final screenWidth = MediaQuery.of(context).size.width;
+                final aspectRatio = screenWidth / 350.0;
                 final processed = await ImagePickerHelper.pickAndProcessImage(
                   context: context,
-                  aspectRatio: 1.3,
+                  aspectRatio: aspectRatio,
                   maxSide: ImageCompressionPreset.post.maxSide,
                   jpegQuality: ImageCompressionPreset.post.quality,
                   cropTitle: 'Обрезка фотографии',
@@ -724,11 +728,15 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
   /// Обработчик добавления фотографий к посту
   Future<void> _handleAddPhotos() async {
     try {
-      // ── выбираем и обрезаем изображения в соотношении 1.3:1
+      // ── выбираем и обрезаем изображения для высоты 350px (динамическое соотношение)
       // Используем стандартный pickMultiImage, затем обрезаем каждое
       final picker = ImagePicker();
       final pickedFiles = await picker.pickMultiImage();
       if (pickedFiles.isEmpty || !mounted) return;
+
+      // Рассчитываем соотношение сторон на основе ширины экрана
+      final screenWidth = MediaQuery.of(context).size.width;
+      final aspectRatio = screenWidth / 350.0;
 
       // ── обрезаем и сжимаем все выбранные изображения
       final compressedFiles = <File>[];
@@ -736,11 +744,11 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
         if (!mounted) return;
         
         final picked = pickedFiles[i];
-        // Обрезаем изображение в соотношении 1.3:1
+        // Обрезаем изображение для высоты 350px (динамическое соотношение)
         final cropped = await ImagePickerHelper.cropPickedImage(
           context: context,
           source: picked,
-          aspectRatio: 1.3,
+          aspectRatio: aspectRatio,
           title: 'Обрезка фотографии ${i + 1}',
         );
         

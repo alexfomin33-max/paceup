@@ -1,4 +1,5 @@
 // lib/screens/lenta/activity/edit_activity_screen.dart
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -12,10 +13,10 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/local_image_compressor.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/utils/image_picker_helper.dart';
+import '../../../../core/utils/static_map_url_builder.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/primary_button.dart';
-import '../../../../core/widgets/route_card.dart';
 import '../../../../domain/models/activity_lenta.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../core/services/auth_service.dart';
@@ -309,6 +310,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   }
 
   /// Элемент карты маршрута (второй в карусели)
+  /// Использует статичную картинку с оптимизацией размера
   Widget _buildMapItem(List<LatLng> points) {
     return Container(
       width: 90,
@@ -330,7 +332,64 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                 ),
               ),
             )
-          : RouteCard(points: points, height: 90),
+          : _buildStaticMiniMap(points),
+    );
+  }
+
+  /// Строит статичную мини-карту маршрута (90x90px) с оптимизацией размера.
+  ///
+  /// ⚡ PERFORMANCE OPTIMIZATION для маленьких карт:
+  /// - Использует DPR 1.5 (вместо полного devicePixelRatio) для уменьшения веса файла
+  /// - Ограничивает maxWidth/maxHeight до 180x180px для еще большей экономии
+  /// - Кеширование через CachedNetworkImage с memCacheWidth/maxWidthDiskCache
+  Widget _buildStaticMiniMap(List<LatLng> points) {
+    const widthDp = 90.0;
+    const heightDp = 90.0;
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ОПТИМИЗАЦИЯ РАЗМЕРА: используем ограниченный DPR для мини-карт
+    // ────────────────────────────────────────────────────────────────
+    // Для маленьких карт достаточно DPR 1.5 вместо полного devicePixelRatio
+    // Это уменьшает размер файла в 2-3 раза без заметной потери качества
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final optimizedDpr = (dpr > 1.5 ? 1.5 : dpr).clamp(1.0, 1.5);
+
+    final widthPx = (widthDp * optimizedDpr).round();
+    final heightPx = (heightDp * optimizedDpr).round();
+
+    // Генерируем URL статичной карты с дополнительными ограничениями размера
+    final mapUrl = StaticMapUrlBuilder.fromPoints(
+      points: points,
+      widthPx: widthPx.toDouble(),
+      heightPx: heightPx.toDouble(),
+      strokeWidth: 2.5,
+      padding: 8.0,
+      maxWidth: 180.0,  // Дополнительное ограничение для маленьких карт
+      maxHeight: 180.0, // Дополнительное ограничение для маленьких карт
+    );
+
+    return CachedNetworkImage(
+      imageUrl: mapUrl,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      filterQuality: FilterQuality.medium,
+      memCacheWidth: widthPx,
+      maxWidthDiskCache: widthPx,
+      placeholder: (context, url) => Container(
+        color: AppColors.getSurfaceColor(context),
+        child: const Center(
+          child: CupertinoActivityIndicator(),
+        ),
+      ),
+      errorWidget: (context, url, error) => Container(
+        color: AppColors.getSurfaceColor(context),
+        child: Icon(
+          CupertinoIcons.map,
+          size: 24,
+          color: AppColors.getIconSecondaryColor(context),
+        ),
+      ),
     );
   }
 
@@ -531,13 +590,12 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       menuButtonColor: Theme.of(context).brightness == Brightness.light
           ? AppColors.getBackgroundColor(context)
           : null, // В темной теме используем дефолтное поведение
-      onEquipmentChanged: () async {
-        // Обновляем ленту после замены эквипа
-        await ref
-            .read(lentaProvider(widget.currentUserId).notifier)
-            .forceRefresh();
-
-        // Проверяем изменения
+      onEquipmentChanged: () {
+        // Обновляем ленту фоном без блокировки UI
+        unawaited(
+          ref.read(lentaProvider(widget.currentUserId).notifier).forceRefresh(),
+        );
+        // Проверяем изменения после обновления
         _checkForChanges();
       },
     );
@@ -737,16 +795,20 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         return;
       }
 
+      // Рассчитываем соотношение сторон на основе ширины экрана
+      final screenWidth = MediaQuery.of(context).size.width;
+      final aspectRatio = screenWidth / 350.0;
+
       final filesForUpload = <String, File>{};
       for (var i = 0; i < pickedFiles.length; i++) {
         if (!mounted) return;
 
         final picked = pickedFiles[i];
-        // Обрезаем изображение в соотношении 1.3:1
+        // Обрезаем изображение для высоты 350px (динамическое соотношение)
         final cropped = await ImagePickerHelper.cropPickedImage(
           context: context,
           source: picked,
-          aspectRatio: 1.3,
+          aspectRatio: aspectRatio,
           title: 'Обрезка фотографии ${i + 1}',
         );
 

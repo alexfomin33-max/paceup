@@ -5,11 +5,13 @@ import 'package:latlong2/latlong.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/error_handler.dart';
 import '../../providers/training/training_provider.dart';
-import '../../../../../core/widgets/route_card.dart';
+import '../../../../../core/utils/static_map_url_builder.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../lenta/screens/activity/description_screen.dart';
 import '../../../../domain/models/activity_lenta.dart' as al;
 import '../../../../../providers/services/auth_provider.dart';
 import '../../../../../core/widgets/transparent_route.dart';
+import '../../../../../core/utils/activity_format.dart';
 
 class TrainingTab extends ConsumerStatefulWidget {
   /// ID пользователя, чьи тренировки нужно отобразить
@@ -795,7 +797,7 @@ class _WorkoutRow extends ConsumerWidget {
                         image: AssetImage('assets/training_map.png'),
                         fit: BoxFit.cover,
                       )
-                    : RouteCard(points: item.points, height: 80),
+                    : _buildStaticMiniMap(context, item.points),
               ),
             ),
             const SizedBox(width: 12),
@@ -816,7 +818,7 @@ class _WorkoutRow extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Три метрики — строго таблично, с вертикальными разделителями
+                  // Три метрики — строго таблично, выровнены по левому краю
                   IntrinsicHeight(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -881,36 +883,92 @@ class _WorkoutRow extends ConsumerWidget {
     );
   }
 
+  /// Строит статичную мини-карту маршрута (80x70px).
+  ///
+  /// ⚡ PERFORMANCE OPTIMIZATION для маленьких карт:
+  /// - Использует DPR 1.5 (вместо полного devicePixelRatio) для уменьшения веса файла
+  /// - Ограничивает maxWidth/maxHeight до 160x140px для еще большей экономии
+  /// - Кеширование через CachedNetworkImage с memCacheWidth/maxWidthDiskCache
+  Widget _buildStaticMiniMap(BuildContext context, List<LatLng> points) {
+    const widthDp = 80.0;
+    const heightDp = 70.0;
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ОПТИМИЗАЦИЯ РАЗМЕРА: используем ограниченный DPR для мини-карт
+    // ────────────────────────────────────────────────────────────────
+    // Для маленьких карт достаточно DPR 1.5 вместо полного devicePixelRatio
+    // Это уменьшает размер файла в 2-3 раза без заметной потери качества
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final optimizedDpr = (dpr > 1.5 ? 1.5 : dpr).clamp(1.0, 1.5);
+
+    final widthPx = (widthDp * optimizedDpr).round();
+    final heightPx = (heightDp * optimizedDpr).round();
+
+    // Генерируем URL статичной карты с дополнительными ограничениями размера
+    final mapUrl = StaticMapUrlBuilder.fromPoints(
+      points: points,
+      widthPx: widthPx.toDouble(),
+      heightPx: heightPx.toDouble(),
+      strokeWidth: 2.5,
+      padding: 8.0,
+      maxWidth: 160.0,  // Дополнительное ограничение для маленьких карт
+      maxHeight: 140.0, // Дополнительное ограничение для маленьких карт
+    );
+
+    return CachedNetworkImage(
+      imageUrl: mapUrl,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      filterQuality: FilterQuality.medium,
+      memCacheWidth: widthPx,
+      maxWidthDiskCache: widthPx,
+      placeholder: (context, url) => Container(
+        color: AppColors.getSurfaceColor(context),
+        child: const Center(
+          child: CupertinoActivityIndicator(),
+        ),
+      ),
+      errorWidget: (context, url, error) => Container(
+        color: AppColors.getSurfaceColor(context),
+        child: const Icon(
+          Icons.map_outlined,
+          color: AppColors.brandPrimary,
+          size: 24,
+        ),
+      ),
+    );
+  }
+
+  /// Отображает метрику с выравниванием по левому краю
   Widget _metric(
     BuildContext context,
     IconData? icon,
     String text,
     MainAxisAlignment alignment,
   ) {
-    return SizedBox(
-      width: double.infinity,
-      child: Row(
-        mainAxisAlignment: alignment,
-        children: [
-          if (icon != null) ...[
-            Icon(
-              icon,
-              size: 16,
-              color: AppColors.getTextSecondaryColor(context),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Text(
-            text,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-              color: AppColors.getTextPrimaryColor(context),
-            ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (icon != null) ...[
+          Icon(
+            icon,
+            size: 16,
+            color: AppColors.getTextSecondaryColor(context),
           ),
+          const SizedBox(width: 8),
         ],
-      ),
+        Text(
+          text,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+            color: AppColors.getTextPrimaryColor(context),
+          ),
+        ),
+      ],
     );
   }
 
@@ -978,16 +1036,38 @@ class _Workout {
         .map((p) => LatLng(p.lat, p.lng))
         .toList(growable: false);
 
+    // ──────────────────────────────────────────────────────────────
+    // 🏊 ПЕРЕСЧЕТ ТЕМПА ДЛЯ ПЛАВАНИЯ: мин/100м вместо м/сек
+    // ──────────────────────────────────────────────────────────────
+    String paceText = activity.paceText;
+    double pace = activity.pace;
+
+    if (activity.sportType == 2) {
+      // Для плавания пересчитываем темп в формат "мин/100м"
+      if (activity.distance > 0 && activity.duration > 0) {
+        // Рассчитываем темп из расстояния и времени: (время в сек * 100) / (расстояние в м * 60)
+        final distanceMeters = activity.distance * 1000; // конвертируем км в метры
+        final paceMinPer100m = (activity.duration * 100) / (distanceMeters * 60);
+        paceText = formatPace(paceMinPer100m);
+        pace = paceMinPer100m;
+      } else if (activity.pace > 0) {
+        // Если есть темп в мин/км, пересчитываем в мин/100м (делим на 10)
+        final paceMinPer100m = activity.pace / 10.0;
+        paceText = formatPace(paceMinPer100m);
+        pace = paceMinPer100m;
+      }
+    }
+
     return _Workout(
       activity.id,
       activity.when,
       activity.sportType,
       activity.distanceText,
       activity.durationText,
-      activity.paceText,
+      paceText,
       activity.distance,
       activity.duration,
-      activity.pace,
+      pace,
       latLngPoints,
     );
   }

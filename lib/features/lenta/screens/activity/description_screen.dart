@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui; // для ui.Path
 import 'package:latlong2/latlong.dart' as ll;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
 // Берём готовые виджеты (чтобы совпадал верх с ActivityBlock)
@@ -20,12 +21,14 @@ import 'fullscreen_route_map_screen.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../core/services/api_service.dart';
+import '../../providers/lenta_provider.dart';
 
 /// Страница с подробным описанием тренировки.
 /// Верхний блок (аватар, дата, метрики) полностью повторяет ActivityBlock.
 /// Добавлены: плашка часов, «Отрезки» на всю ширину, сегменты «Темп/Пульс/Высота»,
 /// единый блок «График + сводка темпа».
-class ActivityDescriptionPage extends StatefulWidget {
+class ActivityDescriptionPage extends ConsumerStatefulWidget {
   final al.Activity activity;
   final int currentUserId;
 
@@ -36,16 +39,171 @@ class ActivityDescriptionPage extends StatefulWidget {
   });
 
   @override
-  State<ActivityDescriptionPage> createState() =>
+  ConsumerState<ActivityDescriptionPage> createState() =>
       _ActivityDescriptionPageState();
 }
 
-class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
+class _ActivityDescriptionPageState
+    extends ConsumerState<ActivityDescriptionPage> {
   int _chartTab = 0; // 0=Темп, 1=Пульс, 2=Высота
+
+  // Данные пользователя (владельца тренировки)
+  String? _userFirstName;
+  String? _userLastName;
+  String? _userAvatar;
+  bool _isLoadingUserData = true;
+
+  // ────────────────────────────────────────────────────────────────
+  // 📦 ЛОКАЛЬНОЕ СОСТОЯНИЕ: храним обновленную активность после замены экипировки
+  // ────────────────────────────────────────────────────────────────
+  al.Activity? _updatedActivity;
+
+  final ApiService _api = ApiService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  /// Загружает данные пользователя (владельца тренировки) из базы данных
+  Future<void> _loadUserData() async {
+    final activityUserId = widget.activity.userId;
+    if (activityUserId <= 0) {
+      setState(() {
+        _isLoadingUserData = false;
+      });
+      return;
+    }
+
+    try {
+      final data = await _api.post(
+        '/get_user_info.php',
+        body: {'user_id': activityUserId.toString()},
+        timeout: const Duration(seconds: 10),
+      );
+
+      if (data['ok'] == true) {
+        setState(() {
+          _userFirstName = data['first_name']?.toString() ?? '';
+          _userLastName = data['last_name']?.toString() ?? '';
+          _userAvatar = data['avatar']?.toString() ?? '';
+          _isLoadingUserData = false;
+        });
+      } else {
+        // Если ошибка, используем данные из Activity как fallback
+        setState(() {
+          _isLoadingUserData = false;
+        });
+      }
+    } catch (e) {
+      // В случае ошибки используем данные из Activity как fallback
+      setState(() {
+        _isLoadingUserData = false;
+      });
+    }
+  }
+
+  /// Получает актуальную активность: либо из провайдера (если обновлена),
+  /// либо из widget.activity
+  al.Activity get _currentActivity {
+    // Если есть обновленная активность в локальном состоянии — используем её
+    if (_updatedActivity != null) {
+      return _updatedActivity!;
+    }
+
+    // Пытаемся получить обновленную активность из провайдера
+    final userId = widget.currentUserId > 0
+        ? widget.currentUserId
+        : widget.activity.userId;
+    if (userId > 0) {
+      try {
+        final lentaState = ref.read(lentaProvider(userId));
+        final updated = lentaState.items.firstWhere(
+          (a) => a.lentaId == widget.activity.lentaId,
+          orElse: () => widget.activity,
+        );
+        return updated;
+      } catch (e) {
+        // Если ошибка — используем исходную активность
+        return widget.activity;
+      }
+    }
+
+    return widget.activity;
+  }
+
+  /// Обновляет активность после замены экипировки
+  Future<void> _refreshActivityAfterEquipmentChange() async {
+    final userId = widget.currentUserId > 0
+        ? widget.currentUserId
+        : widget.activity.userId;
+    if (userId <= 0) return;
+
+    try {
+      // Обновляем провайдер
+      await ref.read(lentaProvider(userId).notifier).refresh();
+
+      // Получаем обновленную активность из провайдера
+      final lentaState = ref.read(lentaProvider(userId));
+      final updated = lentaState.items.firstWhere(
+        (a) => a.lentaId == widget.activity.lentaId,
+        orElse: () => widget.activity,
+      );
+
+      // Обновляем локальное состояние
+      if (mounted) {
+        setState(() {
+          _updatedActivity = updated;
+        });
+      }
+    } catch (e) {
+      // В случае ошибки просто обновляем локальное состояние из провайдера
+      // без дополнительных действий
+    }
+  }
+
+  /// ────────────────────────────────────────────────────────────────
+  /// 🔄 ОБНОВЛЕНИЕ ЭКРАНА: при скролле сверху вниз (pull-to-refresh)
+  /// ────────────────────────────────────────────────────────────────
+  /// Обновляет данные активности из провайдера и перезагружает данные пользователя
+  Future<void> _onRefresh() async {
+    final userId = widget.currentUserId > 0
+        ? widget.currentUserId
+        : widget.activity.userId;
+    if (userId <= 0) return;
+
+    try {
+      // Обновляем провайдер ленты
+      await ref.read(lentaProvider(userId).notifier).refresh();
+
+      // Получаем обновленную активность из провайдера
+      final lentaState = ref.read(lentaProvider(userId));
+      final updated = lentaState.items.firstWhere(
+        (a) => a.lentaId == widget.activity.lentaId,
+        orElse: () => widget.activity,
+      );
+
+      // Обновляем локальное состояние активности
+      if (mounted) {
+        setState(() {
+          _updatedActivity = updated;
+        });
+      }
+
+      // Перезагружаем данные пользователя
+      await _loadUserData();
+    } catch (e) {
+      // В случае ошибки просто перезагружаем данные пользователя
+      if (mounted) {
+        await _loadUserData();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final a = widget.activity;
+    final a = _currentActivity;
     final stats = a.stats;
 
     return InteractiveBackSwipe(
@@ -81,217 +239,235 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
           ],
         ),
 
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // ───────── Верхний блок (как в ActivityBlock)
-            SliverToBoxAdapter(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.getSurfaceColor(context),
-                  border: Border(
-                    top: BorderSide(
-                      width: 0.5,
-                      color: AppColors.getBorderColor(context),
-                    ),
-                    bottom: BorderSide(
-                      width: 0.5,
-                      color: AppColors.getBorderColor(context),
-                    ),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Шапка: аватар, имя, дата, метрики (как в ActivityBlock)
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: ActivityHeader(
-                        userId: widget.currentUserId,
-                        userName: a.userName.isNotEmpty ? a.userName : 'Аноним',
-                        userAvatar: a.userAvatar,
-                        dateStart: a.dateStart,
-                        dateTextOverride: a.postDateText,
-                        bottom: StatsRow(
-                          distanceMeters: stats?.distance,
-                          durationSec: stats?.duration,
-                          elevationGainM: stats?.cumulativeElevationGain,
-                          avgPaceMinPerKm: stats?.avgPace,
-                          avgHeartRate: stats?.avgHeartRate,
-                          avgCadence: stats?.avgCadence,
-                          calories: stats?.calories,
-                          totalSteps: stats?.totalSteps,
-                          // ────────────────────────────────────────────────────────────────
-                          // Тренировка добавлена вручную только если нет GPS-трека
-                          // И нет данных о пульсе/каденсе (значит действительно вручную)
-                          // ────────────────────────────────────────────────────────────────
-                          isManuallyAdded:
-                              a.points.isEmpty &&
-                              (stats?.avgHeartRate == null &&
-                                  stats?.avgCadence == null),
-                          // ────────────────────────────────────────────────────────────────
-                          // Показываем третью строку (Калории | Шаги | Скорость) на экране описания
-                          // ────────────────────────────────────────────────────────────────
-                          showExtendedStats: true,
-                          // ────────────────────────────────────────────────────────────────
-                          // 📏 ПЕРЕДАЧА ТИПА АКТИВНОСТИ: для плавания расстояние показываем в метрах
-                          // ────────────────────────────────────────────────────────────────
-                          activityType: a.type,
-                        ),
-                        bottomGap: 12.0,
-                      ),
-                    ),
-
-                    // Плашка «обувь» (из ActivityBlock) — без кнопки меню
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: ab.EquipmentChip(
-                        items: a.equipments,
-                        userId: a.userId,
-                        activityType: a.type,
-                        activityId: a.id,
-                        activityDistance: (stats?.distance ?? 0.0) / 1000.0,
-                        showMenuButton:
-                            false, // скрываем кнопку меню на странице описания
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Плашка «часы» — по ширине как «обувь»: добавили такой же внутренний отступ 10
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 6),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: _WatchPill(
-                          asset: 'assets/garmin.png',
-                          title: 'Garmin Forerunner 965',
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-                  ],
-                ),
-              ),
+        body: RefreshIndicator(
+          onRefresh: _onRefresh,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
             ),
-
-            // ───────── Карта маршрута с фотографиями (как в ActivityBlock)
-            // Показываем только если есть точки маршрута или есть изображения
-            // Соотношение сторон 1.3:1 (как в постах и тренировках)
-            if (a.points.isNotEmpty || a.mediaImages.isNotEmpty) ...[
+            slivers: [
+              // ───────── Верхний блок (как в ActivityBlock)
               SliverToBoxAdapter(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    // Вычисляем высоту для соотношения сторон 1.3:1
-                    final width = constraints.maxWidth;
-                    final height = width / 1.3;
-                    return ActivityRouteCarousel(
-                      points: a.points
-                          .map((c) => ll.LatLng(c.lat, c.lng))
-                          .toList(),
-                      imageUrls: a.mediaImages,
-                      height: height,
-                      // ────────────────────────────────────────────────────────────────
-                      // 🔹 ОТКРЫТИЕ ПОЛНОЭКРАННОЙ КАРТЫ: при клике на слайд с картой
-                      // ────────────────────────────────────────────────────────────────
-                      onMapTap: a.points.isNotEmpty
-                          ? () {
-                              Navigator.of(context).push(
-                                TransparentPageRoute(
-                                  builder: (context) =>
-                                      FullscreenRouteMapScreen(
-                                        points: a.points
-                                            .map((c) => ll.LatLng(c.lat, c.lng))
-                                            .toList(),
-                                      ),
-                                ),
-                              );
-                            }
-                          : null,
-                    );
-                  },
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-            ],
-
-            // ───────── «Отрезки» — таблица на всю ширину экрана
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                    child: Text(
-                      'Отрезки',
-                      style: AppTextStyles.h15w5.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
-                      ),
-                    ),
-                  ),
-                  _SplitsTableFull(stats: stats),
-                ],
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-            // ───────── Сегменты — как в communication_prefs.dart (вынесены отдельно)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Center(
-                  child: _SegmentedPill(
-                    left: 'Темп',
-                    center: 'Пульс',
-                    right: 'Высота',
-                    value: _chartTab,
-                    onChanged: (v) => setState(() => _chartTab = v),
-                  ),
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-            // ───────── ЕДИНЫЙ блок: график + сводка темпа
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              sliver: SliverToBoxAdapter(
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     color: AppColors.getSurfaceColor(context),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(
-                      color: AppColors.getBorderColor(context),
-                      width: 1,
+                    border: Border(
+                      top: BorderSide(
+                        width: 0.5,
+                        color: AppColors.getBorderColor(context),
+                      ),
+                      bottom: BorderSide(
+                        width: 0.5,
+                        color: AppColors.getBorderColor(context),
+                      ),
                     ),
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(
-                        height: 210,
-                        width: double.infinity,
-                        child: _SimpleLineChart(mode: _chartTab),
+                      // Шапка: аватар, имя, дата, метрики (как в ActivityBlock)
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: ActivityHeader(
+                          userId:
+                              widget.activity.userId, // ID владельца тренировки
+                          userName: _isLoadingUserData
+                              ? (a.userName.isNotEmpty ? a.userName : 'Аноним')
+                              : (_userFirstName != null && _userLastName != null
+                                    ? '$_userFirstName $_userLastName'.trim()
+                                    : (_userFirstName?.isNotEmpty == true
+                                          ? _userFirstName!
+                                          : (_userLastName?.isNotEmpty == true
+                                                ? _userLastName!
+                                                : (a.userName.isNotEmpty
+                                                      ? a.userName
+                                                      : 'Аноним')))),
+                          userAvatar: _isLoadingUserData
+                              ? a.userAvatar
+                              : (_userAvatar?.isNotEmpty == true
+                                    ? _userAvatar!
+                                    : a.userAvatar),
+                          dateStart: a.dateStart,
+                          dateTextOverride: a.postDateText,
+                          bottom: StatsRow(
+                            distanceMeters: stats?.distance,
+                            durationSec: stats?.duration,
+                            elevationGainM: stats?.cumulativeElevationGain,
+                            avgPaceMinPerKm: stats?.avgPace,
+                            avgHeartRate: stats?.avgHeartRate,
+                            avgCadence: stats?.avgCadence,
+                            calories: stats?.calories,
+                            totalSteps: stats?.totalSteps,
+                            // ────────────────────────────────────────────────────────────────
+                            // Тренировка добавлена вручную только если нет GPS-трека
+                            // И нет данных о пульсе/каденсе (значит действительно вручную)
+                            // ────────────────────────────────────────────────────────────────
+                            isManuallyAdded:
+                                a.points.isEmpty &&
+                                (stats?.avgHeartRate == null &&
+                                    stats?.avgCadence == null),
+                            // ────────────────────────────────────────────────────────────────
+                            // Показываем третью строку (Калории | Шаги | Скорость) на экране описания
+                            // 🚴 ДЛЯ ВЕЛОСИПЕДА: не показываем третью строку метрик
+                            // 🏊 ДЛЯ ПЛАВАНИЯ: не показываем третью строку метрик
+                            // ────────────────────────────────────────────────────────────────
+                            showExtendedStats:
+                                !(a.type.toLowerCase() == 'bike' ||
+                                    a.type.toLowerCase() == 'bicycle' ||
+                                    a.type.toLowerCase() == 'cycling' ||
+                                    a.type.toLowerCase() == 'swim' ||
+                                    a.type.toLowerCase() == 'swimming'),
+                            // ────────────────────────────────────────────────────────────────
+                            // 📏 ПЕРЕДАЧА ТИПА АКТИВНОСТИ: для плавания расстояние показываем в метрах
+                            // ────────────────────────────────────────────────────────────────
+                            activityType: a.type,
+                            // ────────────────────────────────────────────────────────────────
+                            // 📏 УМЕНЬШАЕМ НИЖНИЙ PADDING: для уменьшения промежутка между метриками и картой
+                            // ────────────────────────────────────────────────────────────────
+                            bottomPadding: 0,
+                          ),
+                          bottomGap: 16.0,
+                        ),
                       ),
-                      const SizedBox(height: 6),
-                      Divider(
-                        height: 1,
-                        thickness: 0.5,
-                        color: AppColors.getBorderColor(context),
-                      ),
-                      const SizedBox(height: 4),
-                      const _PaceSummary(), // подписи «Самый быстрый/Средний/Самый медленный»
                     ],
                   ),
                 ),
               ),
-            ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ],
+              // ───────── Карта маршрута с фотографиями (как в ActivityBlock)
+              // Показываем только если есть точки маршрута или есть изображения
+              // Высота 350
+              if (a.points.isNotEmpty || a.mediaImages.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: ActivityRouteCarousel(
+                    points: a.points
+                        .map((c) => ll.LatLng(c.lat, c.lng))
+                        .toList(),
+                    imageUrls: a.mediaImages,
+                    height: 350,
+                    // ────────────────────────────────────────────────────────────────
+                    // 🔹 ОТКРЫТИЕ ПОЛНОЭКРАННОЙ КАРТЫ: при клике на слайд с картой
+                    // ────────────────────────────────────────────────────────────────
+                    onMapTap: a.points.isNotEmpty
+                        ? () {
+                            Navigator.of(context).push(
+                              TransparentPageRoute(
+                                builder: (context) => FullscreenRouteMapScreen(
+                                  points: a.points
+                                      .map((c) => ll.LatLng(c.lat, c.lng))
+                                      .toList(),
+                                ),
+                              ),
+                            );
+                          }
+                        : null,
+                  ),
+                ),
+                // ────────────────────────────────────────────────────────────────
+                // 📦 ЭКИПИРОВКА: на всю ширину экрана, вплотную под блоком с маршрутом
+                // ────────────────────────────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Container(
+                    width: double.infinity,
+                    // ────────────────────────────────────────────────────────────────
+                    // 🌓 ФОН: используем surface цвет (белый в светлой теме)
+                    // ────────────────────────────────────────────────────────────────
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurfaceColor(context),
+                    ),
+                    child: ab.EquipmentChip(
+                      items: a.equipments,
+                      userId: a.userId,
+                      activityType: a.type,
+                      activityId: a.id,
+                      activityDistance: (stats?.distance ?? 0.0) / 1000.0,
+                      showMenuButton:
+                          true, // показываем кнопку меню для замены экипировки
+                      onEquipmentChanged: _refreshActivityAfterEquipmentChange,
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 8)),
+              ],
+
+              // ───────── «Отрезки» — таблица на всю ширину экрана
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+                      child: Text(
+                        'Отрезки',
+                        style: AppTextStyles.h15w5.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+                    ),
+                    _SplitsTableFull(stats: stats, activityType: a.type),
+                  ],
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              // ───────── Сегменты — как в communication_prefs.dart (вынесены отдельно)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(
+                    child: _SegmentedPill(
+                      left: 'Темп',
+                      center: 'Пульс',
+                      right: 'Высота',
+                      value: _chartTab,
+                      onChanged: (v) => setState(() => _chartTab = v),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+              // ───────── ЕДИНЫЙ блок: график + сводка темпа
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                sliver: SliverToBoxAdapter(
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurfaceColor(context),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: AppColors.getBorderColor(context),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 210,
+                          width: double.infinity,
+                          child: _SimpleLineChart(mode: _chartTab),
+                        ),
+                        const SizedBox(height: 6),
+                        Divider(
+                          height: 1,
+                          thickness: 0.5,
+                          color: AppColors.getBorderColor(context),
+                        ),
+                        const SizedBox(height: 4),
+                        const _PaceSummary(), // подписи «Самый быстрый/Средний/Самый медленный»
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            ],
+          ),
         ),
       ),
     );
@@ -300,70 +476,73 @@ class _ActivityDescriptionPageState extends State<ActivityDescriptionPage> {
 
 /// ───────────────────────────── ВСПОМОГАТЕЛЬНЫЕ ВИДЖЕТЫ ─────────────────────
 
-/// Плашка «часы» — визуально как плашка «обувь», НО без кнопки «…»
-class _WatchPill extends StatelessWidget {
-  final String asset;
-  final String title;
-  const _WatchPill({required this.asset, required this.title});
+/// ────────────────────────────────────────────────────────────────
+/// 🔹 ПЛАШКА ЧАСОВ: временно закомментирована
+/// ────────────────────────────────────────────────────────────────
+// /// Плашка «часы» — визуально как плашка «обувь», НО без кнопки «…»
+// class _WatchPill extends StatelessWidget {
+//   final String asset;
+//   final String title;
+//   const _WatchPill({required this.asset, required this.title});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      decoration: ShapeDecoration(
-        // ────────────────────────────────────────────────────────────────
-        // 🌓 ТЕМНАЯ ТЕМА: фон плашки часов такой же, как у плашки кроссовок
-        // ────────────────────────────────────────────────────────────────
-        // В темной теме используем darkSurfaceMuted (как у плашки кроссовок)
-        // В светлой теме оставляем getBackgroundColor (не трогаем)
-        color: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.darkSurfaceMuted
-            : AppColors.getBackgroundColor(context),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xxl),
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            left: 3,
-            top: 3,
-            bottom: 3,
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: ShapeDecoration(
-                image: DecorationImage(
-                  image: AssetImage(asset),
-                  fit: BoxFit.fill,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.xxl),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 60,
-            top: 0,
-            bottom: 0,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.h13w5.copyWith(
-                  color: AppColors.getTextPrimaryColor(context),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       height: 56,
+//       decoration: ShapeDecoration(
+//         // ────────────────────────────────────────────────────────────────
+//         // 🌓 ТЕМНАЯ ТЕМА: фон плашки часов такой же, как у плашки кроссовок
+//         // ────────────────────────────────────────────────────────────────
+//         // В темной теме используем darkSurfaceMuted (как у плашки кроссовок)
+//         // В светлой теме оставляем getBackgroundColor (не трогаем)
+//         color: Theme.of(context).brightness == Brightness.dark
+//             ? AppColors.darkSurfaceMuted
+//             : AppColors.getBackgroundColor(context),
+//         shape: RoundedRectangleBorder(
+//           borderRadius: BorderRadius.circular(AppRadius.xxl),
+//         ),
+//       ),
+//       child: Stack(
+//         children: [
+//           Positioned(
+//             left: 3,
+//             top: 3,
+//             bottom: 3,
+//             child: Container(
+//               width: 50,
+//               height: 50,
+//               decoration: ShapeDecoration(
+//                 image: DecorationImage(
+//                   image: AssetImage(asset),
+//                   fit: BoxFit.fill,
+//                 ),
+//                 shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(AppRadius.xxl),
+//                 ),
+//               ),
+//             ),
+//           ),
+//           Positioned(
+//             left: 60,
+//             top: 0,
+//             bottom: 0,
+//             child: Align(
+//               alignment: Alignment.centerLeft,
+//               child: Text(
+//                 title,
+//                 maxLines: 1,
+//                 overflow: TextOverflow.ellipsis,
+//                 style: AppTextStyles.h13w5.copyWith(
+//                   color: AppColors.getTextPrimaryColor(context),
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 /// Таблица «Отрезки» — на всю ширину, белый фон с тонкими линиями
 /// Использует реальные данные из Garmin Connect (pacePerKm и heartRatePerKm)
@@ -376,10 +555,12 @@ class _WatchPill extends StatelessWidget {
 /// 4. Данные приходят из API в формате Map<String, double>:
 ///    - pacePerKm: {"1": 355.0, "2": 333.0, ...} (секунды на километр)
 ///    - heartRatePerKm: {"1": 128.0, "2": 135.0, ...} (пульс в bpm)
+///    - Для типа "run": pacePerKm может быть в формате {"km_1": 5.7, ...} где 5.7 = 5:42 мин/км
 class _SplitsTableFull extends StatelessWidget {
   final al.ActivityStats? stats;
+  final String activityType;
 
-  const _SplitsTableFull({this.stats});
+  const _SplitsTableFull({this.stats, required this.activityType});
 
   @override
   Widget build(BuildContext context) {
@@ -387,9 +568,33 @@ class _SplitsTableFull extends StatelessWidget {
     // Извлекаем данные о сегментах из stats
     // pacePerKm и heartRatePerKm — это Map<String, double>
     // где ключи — номера километров ("1", "2", "3" и т.д.)
+    // Для типа "run" ключи могут быть в формате "km_1", "km_2" и т.д.
     // ────────────────────────────────────────────────────────────────
-    final pacePerKm = stats?.pacePerKm ?? <String, double>{};
-    final heartRatePerKm = stats?.heartRatePerKm ?? <String, double>{};
+    var pacePerKm = stats?.pacePerKm ?? <String, double>{};
+    var heartRatePerKm = stats?.heartRatePerKm ?? <String, double>{};
+
+    // ────────────────────────────────────────────────────────────────
+    // Для типа "run" преобразуем ключи из "km_1" в "1"
+    // ────────────────────────────────────────────────────────────────
+    if (activityType == 'run') {
+      final normalizedPacePerKm = <String, double>{};
+      final normalizedHeartRatePerKm = <String, double>{};
+
+      pacePerKm.forEach((key, value) {
+        // Убираем префикс "km_" если он есть
+        final normalizedKey = key.startsWith('km_') ? key.substring(3) : key;
+        normalizedPacePerKm[normalizedKey] = value;
+      });
+
+      heartRatePerKm.forEach((key, value) {
+        // Убираем префикс "km_" если он есть
+        final normalizedKey = key.startsWith('km_') ? key.substring(3) : key;
+        normalizedHeartRatePerKm[normalizedKey] = value;
+      });
+
+      pacePerKm = normalizedPacePerKm;
+      heartRatePerKm = normalizedHeartRatePerKm;
+    }
 
     // ────────────────────────────────────────────────────────────────
     // Если данных нет, показываем пустую таблицу с заголовками
@@ -490,14 +695,24 @@ class _SplitsTableFull extends StatelessWidget {
 
     // ────────────────────────────────────────────────────────────────
     // Собираем все ключи (номера километров) и сортируем их
+    // Для типа "run" ключи уже нормализованы (без префикса "km_")
     // ────────────────────────────────────────────────────────────────
     final allKeys = <String>{...pacePerKm.keys, ...heartRatePerKm.keys};
     final sortedKeys = allKeys.toList()
       ..sort((a, b) {
         // Сортируем по числовому значению ключа
-        final aNum = int.tryParse(a) ?? 0;
-        final bNum = int.tryParse(b) ?? 0;
-        return aNum.compareTo(bNum);
+        // Убираем суффикс "_partial" если есть для правильной сортировки
+        final aClean = a.replaceAll('_partial', '');
+        final bClean = b.replaceAll('_partial', '');
+        final aNum = int.tryParse(aClean) ?? 0;
+        final bNum = int.tryParse(bClean) ?? 0;
+        if (aNum != bNum) {
+          return aNum.compareTo(bNum);
+        }
+        // Если числа равны, то "_partial" идет после обычного
+        if (a.contains('_partial') && !b.contains('_partial')) return 1;
+        if (!a.contains('_partial') && b.contains('_partial')) return -1;
+        return a.compareTo(b);
       });
 
     if (sortedKeys.isEmpty) {
@@ -505,25 +720,52 @@ class _SplitsTableFull extends StatelessWidget {
     }
 
     // ────────────────────────────────────────────────────────────────
-    // Находим самый медленный темп для нормализации визуальных полос
+    // Находим самый быстрый темп для нормализации визуальных полос
+    // Для типа "run" значения в формате минут (5.7 = 5:42), для других — секунды
     // ────────────────────────────────────────────────────────────────
     final paceValues = sortedKeys
         .map((k) => pacePerKm[k] ?? 0.0)
         .where((v) => v > 0)
         .toList();
-    final slowestPace = paceValues.isEmpty
-        ? 1.0
-        : paceValues.reduce((a, b) => a > b ? a : b);
+
+    // Для типа "run" конвертируем минуты в секунды для сравнения
+    final paceValuesForComparison = activityType == 'run'
+        ? paceValues
+              .map(
+                (v) => (v.floor() * 60 + ((v - v.floor()) * 60).round())
+                    .toDouble(),
+              )
+              .toList()
+        : paceValues;
 
     // ────────────────────────────────────────────────────────────────
-    // Форматирование темпа из секунд в ММ:СС
+    // Находим самый быстрый темп (минимальное значение в секундах)
+    // У самого быстрого темпа полоска будет на всю ширину (1.0)
     // ────────────────────────────────────────────────────────────────
-    String fmtPaceSec(double sec) {
-      if (sec <= 0) return '-';
-      final s = sec.round();
-      final m = s ~/ 60;
-      final r = s % 60;
-      return '$m:${r.toString().padLeft(2, '0')}';
+    final fastestPace = paceValuesForComparison.isEmpty
+        ? 1.0
+        : paceValuesForComparison.reduce((a, b) => a < b ? a : b);
+
+    // ────────────────────────────────────────────────────────────────
+    // Форматирование темпа
+    // Для типа "run": значение в формате минут (5.7 = 5:42 мин/км)
+    // Для других типов: значение в секундах, форматируем как ММ:СС
+    // ────────────────────────────────────────────────────────────────
+    String fmtPace(double paceValue) {
+      if (paceValue <= 0) return '-';
+
+      if (activityType == 'run') {
+        // Формат: 5.7 означает 5 минут и 7 десятых от минуты = 5:42 мин/км
+        final minutes = paceValue.floor();
+        final seconds = ((paceValue - minutes) * 60).round();
+        return '$minutes:${seconds.toString().padLeft(2, '0')}';
+      } else {
+        // Для других типов: значение в секундах
+        final s = paceValue.round();
+        final m = s ~/ 60;
+        final r = s % 60;
+        return '$m:${r.toString().padLeft(2, '0')}';
+      }
     }
 
     return Container(
@@ -586,17 +828,27 @@ class _SplitsTableFull extends StatelessWidget {
           // ───── Строки данных из реальных данных Garmin Connect
           ...List.generate(sortedKeys.length, (i) {
             final kmKey = sortedKeys[i];
-            final paceSec = pacePerKm[kmKey] ?? 0.0;
+            final paceValue = pacePerKm[kmKey] ?? 0.0;
             final hr = heartRatePerKm[kmKey] ?? 0.0;
 
             // ────────────────────────────────────────────────────────────────
             // Вычисляем долю для визуальной полосы темпа
             // Чем быстрее темп (меньше секунд), тем длиннее полоса
-            // Используем обратную пропорцию: slowestPace / paceSec
+            // Используем пропорцию: fastestPace / paceSecForVisual
+            // Самый быстрый темп (fastestPace) будет иметь полоску на всю ширину (1.0)
+            // Для типа "run" конвертируем минуты в секунды для сравнения
             // ────────────────────────────────────────────────────────────────
-            final visualFrac = paceSec > 0 && slowestPace > 0
-                ? (slowestPace / paceSec).clamp(0.05, 1.0)
+            final paceSecForVisual = activityType == 'run'
+                ? (paceValue.floor() * 60 +
+                          ((paceValue - paceValue.floor()) * 60).round())
+                      .toDouble()
+                : paceValue;
+            final visualFrac = paceSecForVisual > 0 && fastestPace > 0
+                ? (fastestPace / paceSecForVisual).clamp(0.05, 1.0)
                 : 0.05;
+
+            // Форматируем ключ для отображения (убираем "_partial" если есть)
+            final displayKey = kmKey.replaceAll('_partial', '');
 
             return Column(
               children: [
@@ -607,7 +859,7 @@ class _SplitsTableFull extends StatelessWidget {
                       SizedBox(
                         width: 28,
                         child: Text(
-                          kmKey,
+                          displayKey,
                           style: AppTextStyles.h12w4.copyWith(
                             color: AppColors.getTextPrimaryColor(context),
                           ),
@@ -616,7 +868,7 @@ class _SplitsTableFull extends StatelessWidget {
                       SizedBox(
                         width: 40,
                         child: Text(
-                          fmtPaceSec(paceSec),
+                          fmtPace(paceValue),
                           style: AppTextStyles.h12w4.copyWith(
                             color: AppColors.getTextPrimaryColor(context),
                           ),
