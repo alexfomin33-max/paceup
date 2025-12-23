@@ -910,8 +910,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         menuButtonColor: Theme.of(context).brightness == Brightness.light
             ? AppColors.getBackgroundColor(context)
             : null, // В темной теме используем дефолтное поведение
-        onEquipmentChanged: () {
-          // После изменения экипировки обновляем список
+        onEquipmentChanged: (al.Equipment _) {
+          // После изменения экипировки обновляем список (параметр не используем)
           _loadEquipment();
         },
         onEquipmentSelected: (al.Equipment newEquipment) {

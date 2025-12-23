@@ -1,4 +1,5 @@
 // lib/screens/lenta/activity/edit_activity_screen.dart
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -531,13 +532,12 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       menuButtonColor: Theme.of(context).brightness == Brightness.light
           ? AppColors.getBackgroundColor(context)
           : null, // В темной теме используем дефолтное поведение
-      onEquipmentChanged: () async {
-        // Обновляем ленту после замены эквипа
-        await ref
-            .read(lentaProvider(widget.currentUserId).notifier)
-            .forceRefresh();
-
-        // Проверяем изменения
+      onEquipmentChanged: (equipment) {
+        // Обновляем ленту фоном без блокировки UI
+        unawaited(
+          ref.read(lentaProvider(widget.currentUserId).notifier).forceRefresh(),
+        );
+        // Проверяем изменения после обновления
         _checkForChanges();
       },
     );

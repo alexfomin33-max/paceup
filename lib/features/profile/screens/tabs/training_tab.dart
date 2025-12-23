@@ -11,6 +11,7 @@ import '../../../lenta/screens/activity/description_screen.dart';
 import '../../../../domain/models/activity_lenta.dart' as al;
 import '../../../../../providers/services/auth_provider.dart';
 import '../../../../../core/widgets/transparent_route.dart';
+import '../../../../../core/utils/activity_format.dart';
 
 class TrainingTab extends ConsumerStatefulWidget {
   /// ID пользователя, чьи тренировки нужно отобразить
@@ -817,7 +818,7 @@ class _WorkoutRow extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Три метрики — строго таблично, с вертикальными разделителями
+                  // Три метрики — строго таблично, выровнены по левому краю
                   IntrinsicHeight(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -939,36 +940,35 @@ class _WorkoutRow extends ConsumerWidget {
     );
   }
 
+  /// Отображает метрику с выравниванием по левому краю
   Widget _metric(
     BuildContext context,
     IconData? icon,
     String text,
     MainAxisAlignment alignment,
   ) {
-    return SizedBox(
-      width: double.infinity,
-      child: Row(
-        mainAxisAlignment: alignment,
-        children: [
-          if (icon != null) ...[
-            Icon(
-              icon,
-              size: 16,
-              color: AppColors.getTextSecondaryColor(context),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Text(
-            text,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-              color: AppColors.getTextPrimaryColor(context),
-            ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (icon != null) ...[
+          Icon(
+            icon,
+            size: 16,
+            color: AppColors.getTextSecondaryColor(context),
           ),
+          const SizedBox(width: 8),
         ],
-      ),
+        Text(
+          text,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+            color: AppColors.getTextPrimaryColor(context),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1036,16 +1036,38 @@ class _Workout {
         .map((p) => LatLng(p.lat, p.lng))
         .toList(growable: false);
 
+    // ──────────────────────────────────────────────────────────────
+    // 🏊 ПЕРЕСЧЕТ ТЕМПА ДЛЯ ПЛАВАНИЯ: мин/100м вместо м/сек
+    // ──────────────────────────────────────────────────────────────
+    String paceText = activity.paceText;
+    double pace = activity.pace;
+
+    if (activity.sportType == 2) {
+      // Для плавания пересчитываем темп в формат "мин/100м"
+      if (activity.distance > 0 && activity.duration > 0) {
+        // Рассчитываем темп из расстояния и времени: (время в сек * 100) / (расстояние в м * 60)
+        final distanceMeters = activity.distance * 1000; // конвертируем км в метры
+        final paceMinPer100m = (activity.duration * 100) / (distanceMeters * 60);
+        paceText = formatPace(paceMinPer100m);
+        pace = paceMinPer100m;
+      } else if (activity.pace > 0) {
+        // Если есть темп в мин/км, пересчитываем в мин/100м (делим на 10)
+        final paceMinPer100m = activity.pace / 10.0;
+        paceText = formatPace(paceMinPer100m);
+        pace = paceMinPer100m;
+      }
+    }
+
     return _Workout(
       activity.id,
       activity.when,
       activity.sportType,
       activity.distanceText,
       activity.durationText,
-      activity.paceText,
+      paceText,
       activity.distance,
       activity.duration,
-      activity.pace,
+      pace,
       latLngPoints,
     );
   }

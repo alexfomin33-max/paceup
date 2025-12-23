@@ -11,6 +11,7 @@ import 'package:latlong2/latlong.dart';
 // Токены/модели
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../domain/models/activity_lenta.dart';
+import '../../../../../domain/models/activity_lenta.dart' as al;
 import '../../../../../core/utils/error_handler.dart';
 
 // Подвиджеты
@@ -56,14 +57,14 @@ class ActivityBlock extends ConsumerWidget {
     final stats = activity.stats;
 
     // ────────────────────────────────────────────────────────────────
-    // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: получаем актуальный Activity из провайдера
+    // 🔔 ТОЧЕЧНОЕ НАБЛЮДЕНИЕ: тянем только нужный элемент ленты через select
+    // Чтобы лайк/коммент обновляли ровно одну карточку, а не весь список
     // ────────────────────────────────────────────────────────────────
-    // Watch провайдер для получения актуального счетчика комментариев
-    final lentaState = ref.watch(lentaProvider(currentUserId));
-    final updatedActivity = lentaState.items.firstWhere(
-      (a) => a.lentaId == activity.lentaId,
-      orElse: () => activity, // fallback на переданную activity
-    );
+    final updatedActivity =
+        ref.watch(
+          lentaItemProvider((userId: currentUserId, lentaId: activity.lentaId)),
+        ) ??
+        activity;
 
     // ────────────────────────────────────────────────────────────────
     // 🔹 КЛЮЧ ДЛЯ МЕНЮ: нужен для привязки всплывающего меню
@@ -145,9 +146,19 @@ class ActivityBlock extends ConsumerWidget {
                 (stats?.distance ?? 0.0) /
                 1000.0, // конвертируем метры в километры
             showMenuButton: updatedActivity.userId == currentUserId,
-            onEquipmentChanged: () {
-              // Обновляем ленту после замены эквипа
-              ref.read(lentaProvider(currentUserId).notifier).forceRefresh();
+            onEquipmentChanged: (al.Equipment newEq) {
+              // Обновляем только эту карточку, без полной перезагрузки ленты
+              final current = updatedActivity.equipments;
+              final updatedList = [
+                newEq,
+                ...current.where((e) => e.equipUserId != newEq.equipUserId),
+              ];
+              ref
+                  .read(lentaProvider(currentUserId).notifier)
+                  .updateActivityEquipments(
+                    lentaId: updatedActivity.lentaId,
+                    equipments: updatedList,
+                  );
             },
           );
 

@@ -776,8 +776,18 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       );
     }
 
-    // Читаем состояние из Riverpod provider
-    final lentaState = ref.watch(lentaProvider(_actualUserId!));
+    // Читаем состояние из Riverpod provider (только нужные поля, без лишних rebuild)
+    final lentaSnapshot = ref.watch(
+      lentaProvider(_actualUserId!).select(
+        (s) => (
+          items: s.items,
+          isLoadingMore: s.isLoadingMore,
+          isRefreshing: s.isRefreshing,
+          hasMore: s.hasMore,
+          error: s.error,
+        ),
+      ),
+    );
     // Читаем состояние непрочитанных чатов
     final unreadChatsState = _actualUserId != null
         ? ref.watch(unreadChatsProvider(_actualUserId!))
@@ -873,9 +883,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
       body: () {
         // Показываем ошибку, если есть
-        if (lentaState.error != null && lentaState.items.isEmpty) {
+        if (lentaSnapshot.error != null && lentaSnapshot.items.isEmpty) {
           return ErrorDisplay.centered(
-            error: lentaState.error,
+            error: lentaSnapshot.error,
             onRetry: () async {
               // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
               final userId = await _auth.getUserId();
@@ -885,14 +895,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           );
         }
 
-        final items = lentaState.items;
+        final items = lentaSnapshot.items;
 
         // ────────────────────────────────────────────────────────────────
         // 📦 НАЧАЛЬНАЯ ЗАГРУЗКА: показываем skeleton loader
         // ────────────────────────────────────────────────────────────────
         // Если нет данных и идёт загрузка - показываем skeleton loader вместо индикатора
         // Это предотвращает визуальный микролаг после splash screen
-        if (items.isEmpty && lentaState.isRefreshing) {
+        if (items.isEmpty && lentaSnapshot.isRefreshing) {
           return ListView(
             padding: const EdgeInsets.only(top: 4, bottom: 12),
             physics: const NeverScrollableScrollPhysics(),
@@ -973,7 +983,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
-              itemCount: items.length + (lentaState.isLoadingMore ? 1 : 0),
+              itemCount: items.length + (lentaSnapshot.isLoadingMore ? 1 : 0),
               // ────────────────────────────────────────────────────────
               // 🎯 ОПТИМИЗАЦИЯ: RepaintBoundary добавляем вручную только
               // для сложных виджетов (посты с изображениями).
@@ -984,7 +994,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                   false, // отключаем автоматическое добавление
               addSemanticIndexes: false,
               itemBuilder: (context, i) {
-                if (lentaState.isLoadingMore && i == items.length) {
+                if (lentaSnapshot.isLoadingMore && i == items.length) {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Center(child: CupertinoActivityIndicator()),
