@@ -650,17 +650,19 @@ class _BackgroundImage extends StatelessWidget {
     final calculatedHeight =
         screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
 
-    // Если есть URL из базы данных, используем его
+    // Если есть URL из базы данных, используем его с fade-анимацией
     if (imageUrl != null && imageUrl!.isNotEmpty) {
       return CachedNetworkImage(
         imageUrl: imageUrl!,
         width: double.infinity,
         height: calculatedHeight,
         fit: BoxFit.cover,
+        fadeInDuration: const Duration(milliseconds: 300),
+        fadeOutDuration: const Duration(milliseconds: 100),
         placeholder: (context, url) => Container(
           width: double.infinity,
           height: calculatedHeight,
-          color: AppColors.getBorderColor(context),
+          color: AppColors.getSurfaceColor(context),
           child: const Center(
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
@@ -668,7 +670,7 @@ class _BackgroundImage extends StatelessWidget {
         errorWidget: (context, url, error) => Container(
           width: double.infinity,
           height: calculatedHeight,
-          color: AppColors.getBorderColor(context),
+          color: AppColors.getSurfaceColor(context),
           child: Icon(
             Icons.image,
             size: 48,
@@ -678,23 +680,13 @@ class _BackgroundImage extends StatelessWidget {
       );
     }
 
-    // Fallback на asset изображение
-    return Image.asset(
-      'assets/200k_run.png',
+    // Если URL еще не загружен, показываем placeholder без статичной картинки
+    return Container(
       width: double.infinity,
       height: calculatedHeight,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => Builder(
-        builder: (context) => Container(
-          width: double.infinity,
-          height: calculatedHeight,
-          color: AppColors.getBorderColor(context),
-          child: Icon(
-            Icons.image,
-            size: 48,
-            color: AppColors.getIconSecondaryColor(context),
-          ),
-        ),
+      color: AppColors.getSurfaceColor(context),
+      child: const Center(
+        child: CircularProgressIndicator(strokeWidth: 2),
       ),
     );
   }
@@ -708,17 +700,19 @@ class _HeaderLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Если есть URL из базы данных, используем его
+    // Если есть URL из базы данных, используем его с fade-анимацией
     if (logoUrl != null && logoUrl!.isNotEmpty) {
       return CachedNetworkImage(
         imageUrl: logoUrl!,
         width: 90,
         height: 90,
         fit: BoxFit.cover,
+        fadeInDuration: const Duration(milliseconds: 300),
+        fadeOutDuration: const Duration(milliseconds: 100),
         placeholder: (context, url) => Container(
           width: 90,
           height: 90,
-          color: AppColors.getBorderColor(context),
+          color: AppColors.getSurfaceColor(context),
           child: const Center(
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
@@ -726,7 +720,7 @@ class _HeaderLogo extends StatelessWidget {
         errorWidget: (context, url, error) => Container(
           width: 90,
           height: 90,
-          color: AppColors.getBorderColor(context),
+          color: AppColors.getSurfaceColor(context),
           child: Icon(
             Icons.image,
             size: 32,
@@ -736,23 +730,13 @@ class _HeaderLogo extends StatelessWidget {
       );
     }
 
-    // Fallback на asset изображение
-    return Image.asset(
-      'assets/card200run.jpg',
+    // Если URL еще не загружен, показываем placeholder без статичной картинки
+    return Container(
       width: 90,
       height: 90,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => Builder(
-        builder: (context) => Container(
-          width: 90,
-          height: 90,
-          color: AppColors.getBorderColor(context),
-          child: Icon(
-            Icons.image,
-            size: 32,
-            color: AppColors.getIconSecondaryColor(context),
-          ),
-        ),
+      color: AppColors.getSurfaceColor(context),
+      child: const Center(
+        child: CircularProgressIndicator(strokeWidth: 2),
       ),
     );
   }

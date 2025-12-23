@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../../core/theme/app_theme.dart';
-import '../../../../../../providers/services/api_provider.dart';
-import '../../../../../../core/utils/error_handler.dart';
-import '../../../../../../core/widgets/transparent_route.dart';
-import '../../../../../../features/profile/screens/profile_screen.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../providers/services/api_provider.dart';
+import '../../../../../core/utils/error_handler.dart';
+import '../../../../../core/widgets/transparent_route.dart';
+import '../../../../profile/screens/profile_screen.dart';
 
 class CoffeeRunVldStatsContent extends ConsumerStatefulWidget {
   final int clubId;
