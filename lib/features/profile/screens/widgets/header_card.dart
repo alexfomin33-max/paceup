@@ -2,12 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../edit_profile_screen.dart';
 import '../state/subscribe/communication_screen.dart';
 import '../../../../domain/models/user_profile_header.dart';
-import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/avatar.dart';
-import '../../../../providers/services/auth_provider.dart';
 
 class HeaderCard extends ConsumerWidget {
   final UserProfileHeader? profile;
@@ -179,43 +176,6 @@ class HeaderCard extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    // ────────────────────────────────────────────────────
-                    // 🔹 ИКОНКА РЕДАКТИРОВАНИЯ: показываем только для своего
-                    // профиля. Для чужого профиля меню теперь в AppBar.
-                    // ────────────────────────────────────────────────────
-                    Builder(
-                      builder: (context) {
-                        final currentUserIdAsync = ref.watch(
-                          currentUserIdProvider,
-                        );
-                        final currentUserId = currentUserIdAsync.value;
-                        final isOwnProfile =
-                            currentUserId != null && currentUserId == userId;
-
-                        if (isOwnProfile) {
-                          // Свой профиль - показываем иконку карандаша для редактирования
-                          return _SmallIconBtn(
-                            icon: CupertinoIcons.pencil,
-                            onPressed: () async {
-                              final changed = await Navigator.of(context)
-                                  .push<bool>(
-                                    TransparentPageRoute(
-                                      builder: (_) =>
-                                          EditProfileScreen(userId: userId),
-                                    ),
-                                  );
-                              if (changed == true) {
-                                onReload(); // ← одна строка на авто-рефреш
-                              }
-                            },
-                          );
-                        } else {
-                          // Чужой профиль — ничего не показываем, меню в AppBar
-                          return const SizedBox.shrink();
-                        }
-                      },
-                    ),
                   ],
                 ),
                 const SizedBox(height: 0),
@@ -291,36 +251,6 @@ class HeaderCard extends ConsumerWidget {
     if (p.age != null) parts.add('${p.age} ${_yearsRu(p.age)}');
     if ((p.city ?? '').isNotEmpty) parts.add(p.city!);
     return parts.isEmpty ? null : parts.join(', ');
-  }
-}
-
-class _SmallIconBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onPressed;
-
-  const _SmallIconBtn({required this.icon, this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onPressed,
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.darkSurfaceMuted
-              : AppColors.skeletonBase,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-        child: Icon(
-          icon,
-          size: 16,
-          color: AppColors.getIconPrimaryColor(context),
-        ),
-      ),
-    );
   }
 }
 

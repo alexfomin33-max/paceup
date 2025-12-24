@@ -14,9 +14,9 @@ import '../../../providers/services/auth_provider.dart';
 import '../../../providers/services/api_provider.dart';
 import '../../../core/services/api_service.dart'; // для ApiException
 import '../../lenta/providers/lenta_provider.dart';
+import '../../../core/widgets/avatar.dart';
 
 // общие виджеты
-import 'widgets/header_card.dart';
 import 'widgets/tabs_bar.dart';
 
 // вкладки
@@ -36,6 +36,9 @@ import 'state/search/search_screen.dart';
 
 // экран настроек
 import 'state/settings/settings_screen.dart';
+
+// экран редактирования профиля
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   /// Опциональный userId. Если не передан, используется текущий пользователь из AuthService
@@ -66,6 +69,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   int _tab = 0;
   bool _wasRouteActive =
       false; // Отслеживание предыдущего состояния видимости маршрута
+  bool _isScrolled =
+      false; // Состояние скролла для раннего показа имени и изменения иконки
+  double _titleOpacity =
+      0; // Плавное появление имени пользователя в AppBar от 0 до 1
+  double _headerOpacity =
+      1; // Плавное исчезновение всей шапки (cover + карточка) при скролле
 
   @override
   void dispose() {
@@ -153,6 +162,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         }
       });
     }
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Формируем отображаемое имя для заголовка AppBar при скролле
+  // ────────────────────────────────────────────────────────────────────────
+  String? _buildDisplayName(ProfileHeaderState state) {
+    final profile = state.profile;
+    if (profile == null) return null;
+
+    final fn = profile.firstName.trim();
+    final ln = profile.lastName.trim();
+    final full = [fn, ln].where((s) => s.isNotEmpty).join(' ').trim();
+    if (full.isNotEmpty) return full;
+    return 'Профиль';
   }
 
   @override
@@ -308,179 +331,474 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollUpdateNotification) {
+            final screenW = MediaQuery.of(context).size.width;
+            final coverHeight = screenW / 2.3;
+            final containerHeight = coverHeight + 68;
+            final expandedHeight =
+                containerHeight + 0; // Совмещаем с фактической высотой AppBar
+            final threshold = expandedHeight * 0.8; // Порог коллапса шапки
 
-      // ─────────── Верхняя шапка: обычный, плоский PaceAppBar ───────────
-      appBar: PaceAppBar(
-        // ────────────────────────────────────────────────────────────────
-        // 🔹 ЗАГОЛОВОК: показываем "AI тренер" только для своего профиля
-        // ────────────────────────────────────────────────────────────────
-        titleWidget: isOwnProfile
-            ? Row(
-                children: [
-                  Icon(
-                    CupertinoIcons.sparkles,
-                    size: 20,
-                    color: AppColors.getIconPrimaryColor(context),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'AI тренер',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 16,
-                      color: AppColors.getTextPrimaryColor(context),
+            // ──────────────────────────────────────────────────────────────
+            // Плавно считаем прогресс схлопывания шапки, чтобы анимировать
+            // появление имени в AppBar. Ограничиваем обновления, чтобы не
+            // триггерить лишние rebuild'ы при минимальных изменениях.
+            // ──────────────────────────────────────────────────────────────
+            final rawProgress = notification.metrics.pixels / threshold;
+            final newOpacity = rawProgress.clamp(0.0, 1.0).toDouble();
+            final newIsScrolled = newOpacity >= 1;
+            final newHeaderOpacity = (1 - newOpacity).clamp(0.0, 1.0);
+
+            if (newIsScrolled != _isScrolled ||
+                (newOpacity - _titleOpacity).abs() > 0.02 ||
+                (newHeaderOpacity - _headerOpacity).abs() > 0.02) {
+              setState(() {
+                _isScrolled = newIsScrolled;
+                _titleOpacity = newOpacity;
+                _headerOpacity = newHeaderOpacity;
+              });
+            }
+          }
+          return false;
+        },
+        child: NestedScrollView(
+          // ──────────────────────────────────────────────────────────────
+          // Скроллируем шапку как в VK: cover + данные в flexibleSpace,
+          // имя появляется в заголовке при прокрутке.
+          // ──────────────────────────────────────────────────────────────
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            final screenW = MediaQuery.of(context).size.width;
+            final coverHeight = screenW / 2.3;
+            final containerHeight = coverHeight + 28;
+            final expandedHeight = containerHeight + 0;
+            final displayName = _buildDisplayName(profileState);
+
+            // Используем прогресс скролла для плавного появления заголовка
+            final titleOpacity = _titleOpacity.clamp(0.0, 1.0);
+            final headerOpacity = _headerOpacity.clamp(0.0, 1.0);
+            final isCollapsed = _isScrolled || innerBoxIsScrolled;
+
+            return [
+              SliverAppBar(
+                pinned: true,
+                floating: false,
+                snap: false,
+                automaticallyImplyLeading: false,
+                expandedHeight: expandedHeight,
+                backgroundColor: AppColors.getSurfaceColor(context),
+                elevation: 0,
+                scrolledUnderElevation: 1,
+                forceElevated: isCollapsed || titleOpacity > 0.05,
+                leadingWidth: 56,
+                leading: isOwnProfile
+                    ? null
+                    : IconButton(
+                        splashRadius: 22,
+                        icon: Icon(
+                          CupertinoIcons.back,
+                          size: 22,
+                          color: AppColors.getIconPrimaryColor(context),
+                        ),
+                        onPressed: () => Navigator.of(context).maybePop(),
+                      ),
+                title: displayName != null
+                    ? AnimatedOpacity(
+                        opacity: titleOpacity,
+                        duration: const Duration(milliseconds: 160),
+                        curve: Curves.easeOut,
+                        child: Text(
+                          displayName,
+                          style: AppTextStyles.h18w6.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                        ),
+                      )
+                    : null,
+                centerTitle: false,
+                actions: isOwnProfile
+                    ? [
+                        _CircleAppIcon(
+                          icon: CupertinoIcons.ellipsis_vertical,
+                          key: menuKey,
+                          isScrolled: isCollapsed,
+                          fadeOpacity: headerOpacity,
+                          onPressed: () {
+                            _showOwnProfileMenu(
+                              context: context,
+                              ref: ref,
+                              userId: userId,
+                              menuKey: menuKey,
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 6),
+                      ]
+                    : [
+                        _CircleAppIcon(
+                          icon: CupertinoIcons.ellipsis_vertical,
+                          key: menuKey,
+                          isScrolled: isCollapsed,
+                          fadeOpacity: headerOpacity,
+                          onPressed: () {
+                            _showUserMenu(
+                              context: context,
+                              ref: ref,
+                              userId: userId,
+                              currentUserId: currentUserId ?? 0,
+                              menuKey: menuKey,
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                flexibleSpace: FlexibleSpaceBar(
+                  collapseMode: CollapseMode.parallax,
+                  // Плавно скрываем весь flexibleSpace (обложка + карточка)
+                  background: AnimatedOpacity(
+                    opacity: headerOpacity,
+                    duration: const Duration(milliseconds: 160),
+                    curve: Curves.easeOut,
+                    child: _ProfileFlexibleSpace(
+                      userId: userId,
+                      profileState: profileState,
+                      coverHeight: coverHeight,
+                      containerHeight: containerHeight,
+                      displayName: displayName ?? 'Профиль',
+                      onReload: () {
+                        ref
+                            .read(profileHeaderProvider(userId).notifier)
+                            .reload();
+                      },
                     ),
                   ),
-                  const SizedBox(width: 6),
-                ],
-              )
-            : null,
-        title: isOwnProfile ? null : '',
-        // ────────────────────────────────────────────────────────────────
-        // 🔹 КНОПКА НАЗАД: показываем только для чужих профилей
-        // ────────────────────────────────────────────────────────────────
-        showBack: !isOwnProfile,
-        // ────────────────────────────────────────────────────────────────
-        // 🔹 ДЕЙСТВИЯ В APP BAR: разные для своего и чужого профиля
-        // ────────────────────────────────────────────────────────────────
-        actions: isOwnProfile
-            ? [
-                // Свой профиль — показываем стандартные иконки
-                const _AppIcon(CupertinoIcons.square_arrow_up),
-                _AppIcon(
-                  CupertinoIcons.person_badge_plus,
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (_) => const SearchPrefsPage(startIndex: 0),
-                      ),
-                    );
-                  },
                 ),
-                _AppIcon(
-                  CupertinoIcons.gear,
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      TransparentPageRoute(
-                        builder: (_) => const SettingsScreen(),
-                      ),
-                    );
-                  },
+              ),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _TabsHeaderDelegate(
+                  pageController: _pageController,
+                  tab: _tab,
+                  items: _tabTitles,
+                  onTap: _onTabTap,
+                  coverHeight: coverHeight,
                 ),
-                const SizedBox(width: 6),
-              ]
-            : [
-                // Чужой профиль — показываем только иконку трех точек
-                _AppIcon(
-                  CupertinoIcons.ellipsis,
-                  key: menuKey,
-                  onPressed: () {
-                    // Вызываем асинхронную функцию без await (обработчик onPressed не возвращает Future)
-                    _showUserMenu(
-                      context: context,
-                      ref: ref,
-                      userId: userId,
-                      currentUserId: currentUserId ?? 0,
-                      menuKey: menuKey,
-                    );
-                  },
-                ),
-                const SizedBox(width: 6),
+              ),
+            ];
+          },
+          body: GearPrefsScope(
+            notifier: _gearPrefs,
+            child: PageView(
+              controller: _pageController,
+              physics: const BouncingScrollPhysics(),
+              onPageChanged: _onPageChanged,
+              children: [
+                MainTab(key: _mainTabKey, userId: userId),
+                PhotosTab(userId: userId),
+                StatsTab(userId: userId),
+                TrainingTab(userId: userId),
+                const RacesTab(),
+                GearTab(userId: userId),
+                ClubsTab(userId: userId),
+                const AwardsTab(),
+                const SkillsTab(),
               ],
-        showBottomDivider: true,
-      ),
-
-      // ─────────── Статика сверху (HeaderCard + TabsBar) + вкладки ниже ───────────
-      body: Column(
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          // Хедер профиля — статичный
-          RepaintBoundary(
-            child: HeaderCard(
-              profile: profileState.profile,
-              userId: userId,
-              onReload: () {
-                ref.read(profileHeaderProvider(userId).notifier).reload();
-              },
             ),
           ),
-
-          // TabsBar — тоже статичный
-          RepaintBoundary(
-            child: SizedBox(
-              height: 40.5,
-              child: AnimatedBuilder(
-                animation: _pageController,
-                builder: (_, _) {
-                  final page = _pageController.hasClients
-                      ? (_pageController.page ?? _tab.toDouble())
-                      : _tab.toDouble();
-                  return TabsBar(
-                    value: _tab,
-                    page: page,
-                    items: _tabTitles,
-                    onChanged: _onTabTap,
-                  );
-                },
-              ),
-            ),
-          ),
-
-          // Разделитель под табами
-          Divider(
-            height: 0.5,
-            thickness: 0.5,
-            color: AppColors.getDividerColor(context),
-          ),
-
-          // Контент вкладок — скроллится внутри, шапка/табы остаются на месте
-          Expanded(
-            child: GearPrefsScope(
-              notifier: _gearPrefs,
-              child: PageView(
-                controller: _pageController,
-                physics: const BouncingScrollPhysics(),
-                onPageChanged: _onPageChanged,
-                children: [
-                  MainTab(key: _mainTabKey, userId: userId),
-                  PhotosTab(userId: userId),
-                  StatsTab(userId: userId),
-                  TrainingTab(userId: userId),
-                  const RacesTab(),
-                  GearTab(userId: userId),
-                  ClubsTab(userId: userId),
-                  const AwardsTab(),
-                  const SkillsTab(),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _AppIcon extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onPressed;
-  const _AppIcon(this.icon, {super.key, this.onPressed});
+// ────────────────────────────────────────────────────────────────────
+//                           ЛОКАЛЬНЫЕ ВИДЖЕТЫ
+// ────────────────────────────────────────────────────────────────────
+
+/// Гибкая шапка профиля в стиле VK (cover + HeaderCard внутри flexibleSpace).
+class _ProfileFlexibleSpace extends StatelessWidget {
+  final int userId;
+  final ProfileHeaderState profileState;
+  final VoidCallback onReload;
+  final double coverHeight;
+  final double containerHeight;
+  final String displayName;
+
+  const _ProfileFlexibleSpace({
+    required this.userId,
+    required this.profileState,
+    required this.onReload,
+    required this.coverHeight,
+    required this.containerHeight,
+    required this.displayName,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 44.0, // kAppBarTapTarget
-      height: 44.0, // kAppBarTapTarget
-      child: IconButton(
-        onPressed: onPressed ?? () {},
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 44.0, minHeight: 44.0),
-        icon: Icon(
-          icon,
-          color: AppColors.getIconPrimaryColor(context),
-          size: 20.0,
+    // ──────────────────────────────────────────────────────────────
+    // Верхний фон: мягкий градиент из brand в surface, скроллится
+    // вместе с контентом.
+    // ──────────────────────────────────────────────────────────────
+    final surface = AppColors.getSurfaceColor(context);
+    final profile = profileState.profile;
+
+    final followers = profile?.followers ?? 0;
+    final following = profile?.following ?? 0;
+    final avatarUrl = profile?.avatar;
+
+    return Container(
+      color: surface,
+      height: containerHeight,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(AppRadius.xl),
+          bottomRight: Radius.circular(AppRadius.xl),
         ),
-        splashRadius: 22,
+        child: Stack(
+          children: [
+            // Фоновая картинка cover
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: coverHeight,
+              child: Image.asset(
+                'assets/fon.jpg',
+                width: double.infinity,
+                height: coverHeight,
+                fit: BoxFit.cover,
+              ),
+            ),
+
+            // Аватар с обводкой внизу обложки (как логотип в клубах)
+            Positioned(
+              left: 12,
+              bottom: 4,
+              child: Container(
+                width: 92,
+                height: 92,
+                decoration: BoxDecoration(
+                  color: surface,
+                  shape: BoxShape.circle,
+                ),
+                padding: const EdgeInsets.all(1),
+                child: ClipOval(
+                  child: Avatar(
+                    image: (avatarUrl != null && avatarUrl.isNotEmpty)
+                        ? avatarUrl
+                        : 'assets/avatar_0.png',
+                    size: 90,
+                    fadeIn: true,
+                    gapless: true,
+                  ),
+                ),
+              ),
+            ),
+
+            // Блок с именем, возрастом/городом и статистикой
+            Positioned(
+              left: 116,
+              right: 12,
+              top: coverHeight + 12,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 24,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Text(
+                        displayName,
+                        style: AppTextStyles.h17w6.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      _CountPill(label: 'Подписки', value: following),
+                      const SizedBox(width: 24),
+                      _CountPill(label: 'Подписчики', value: followers),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Делегат для закреплённой TabsBar под шапкой.
+class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final PageController pageController;
+  final int tab;
+  final List<String> items;
+  final ValueChanged<int> onTap;
+  final double coverHeight;
+
+  _TabsHeaderDelegate({
+    required this.pageController,
+    required this.tab,
+    required this.items,
+    required this.onTap,
+    required this.coverHeight,
+  });
+
+  @override
+  double get minExtent => 41 + _overlap();
+
+  @override
+  double get maxExtent => 41 + _overlap();
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(
+      color: AppColors.getSurfaceColor(context),
+      padding: EdgeInsets.only(top: _overlap()),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 40.5,
+            child: AnimatedBuilder(
+              animation: pageController,
+              builder: (_, __) {
+                final page = pageController.hasClients
+                    ? (pageController.page ?? tab.toDouble())
+                    : tab.toDouble();
+                return TabsBar(
+                  value: tab,
+                  page: page,
+                  items: items,
+                  onChanged: onTap,
+                );
+              },
+            ),
+          ),
+          Divider(
+            height: 0.5,
+            thickness: 0.5,
+            color: AppColors.getDividerColor(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _TabsHeaderDelegate oldDelegate) {
+    return oldDelegate.tab != tab ||
+        oldDelegate.items != items ||
+        oldDelegate.pageController != pageController ||
+        oldDelegate.coverHeight != coverHeight;
+  }
+
+  double _overlap() {
+    // Небольшое перекрытие, чтобы Tabs визуально "поджимались" к шапке
+    // (как в club_detail_screen) — слегка уменьшаем до 4px, чтобы поднять Tabs
+    return 2;
+  }
+}
+
+/// Небольшая «пилюля» со счётчиком (подписки/подписчики).
+class _CountPill extends StatelessWidget {
+  final String label;
+  final int value;
+
+  const _CountPill({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+          children: [
+            TextSpan(
+              text: '$label: ',
+              style: TextStyle(color: AppColors.getTextSecondaryColor(context)),
+            ),
+            TextSpan(
+              text: '$value',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Полупрозрачная круглая кнопка-иконка для AppBar (как в клубах)
+/// Плавно меняет стиль при скролле: кружок исчезает, иконка становится темной
+class _CircleAppIcon extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final bool isScrolled;
+  final double fadeOpacity; // Плавное исчезновение фона при начале скролла
+  const _CircleAppIcon({
+    required this.icon,
+    required this.isScrolled,
+    required this.fadeOpacity,
+    super.key,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Цвет иконки: плавно переходим от светлого (на обложке) к темному
+    // (в AppBar) с самого начала скролла
+    final lightIcon = AppColors.getSurfaceColor(context);
+    final darkIcon = AppColors.getIconPrimaryColor(context);
+    final iconColor = Color.lerp(
+      lightIcon,
+      darkIcon,
+      (1 - fadeOpacity.clamp(0.0, 1.0)),
+    );
+
+    // Цвет фона: темный с прозрачностью когда не скроллено, прозрачный когда скроллено
+    final backgroundColor = isScrolled
+        ? Colors.transparent
+        : AppColors.getTextPrimaryColor(
+            context,
+          ).withValues(alpha: 0.5 * fadeOpacity.clamp(0.0, 1.0));
+
+    return SizedBox(
+      width: 38.0, // kAppBarTapTarget
+      height: 38.0, // kAppBarTapTarget
+      child: GestureDetector(
+        onTap: onPressed ?? () {},
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 20, color: iconColor),
+        ),
       ),
     );
   }
@@ -489,6 +807,69 @@ class _AppIcon extends StatelessWidget {
 // ────────────────────────────────────────────────────────────────────
 //                           ЛОКАЛЬНЫЕ ХЕЛПЕРЫ
 // ────────────────────────────────────────────────────────────────────
+
+/// Показывает всплывающее меню для действий со своим профилем
+/// (редактирование профиля, поиск людей, настройки).
+Future<void> _showOwnProfileMenu({
+  required BuildContext context,
+  required WidgetRef ref,
+  required int userId,
+  required GlobalKey menuKey,
+}) async {
+  // ──────────────────────────────────────────────
+  // Формируем список пунктов меню для своего профиля
+  // ──────────────────────────────────────────────
+  final items = <MoreMenuItem>[
+    // 1) Редактировать
+    MoreMenuItem(
+      text: 'Редактировать',
+      icon: CupertinoIcons.pencil,
+      onTap: () async {
+        MoreMenuHub.hide();
+        if (!context.mounted) return;
+        final changed = await Navigator.of(context).push<bool>(
+          TransparentPageRoute(
+            builder: (_) => EditProfileScreen(userId: userId),
+          ),
+        );
+        if (changed == true && context.mounted) {
+          // Обновляем профиль после редактирования
+          ref.read(profileHeaderProvider(userId).notifier).reload();
+        }
+      },
+    ),
+
+    // 2) Поиск людей
+    MoreMenuItem(
+      text: 'Поиск людей',
+      icon: CupertinoIcons.person_badge_plus,
+      onTap: () {
+        MoreMenuHub.hide();
+        if (!context.mounted) return;
+        Navigator.of(context).push(
+          CupertinoPageRoute(
+            builder: (_) => const SearchPrefsPage(startIndex: 0),
+          ),
+        );
+      },
+    ),
+
+    // 3) Настройки
+    MoreMenuItem(
+      text: 'Настройки',
+      icon: CupertinoIcons.gear,
+      onTap: () {
+        MoreMenuHub.hide();
+        if (!context.mounted) return;
+        Navigator.of(
+          context,
+        ).push(TransparentPageRoute(builder: (_) => const SettingsScreen()));
+      },
+    ),
+  ];
+
+  MoreMenuOverlay(anchorKey: menuKey, items: items).show(context);
+}
 
 /// Показывает всплывающее меню для действий с чужим профилем
 /// (подписка, скрытие постов/тренировок, блокировка).
@@ -515,9 +896,7 @@ Future<void> _showUserMenu({
   try {
     final statusData = await api.post(
       '/get_user_status.php',
-      body: {
-        'target_user_id': userId.toString(),
-      },
+      body: {'target_user_id': userId.toString()},
       timeout: const Duration(seconds: 10),
     );
 
@@ -547,11 +926,7 @@ Future<void> _showUserMenu({
       icon: isSubscribed
           ? CupertinoIcons.person_badge_minus
           : CupertinoIcons.person_badge_plus,
-      textStyle: isSubscribed
-          ? const TextStyle(
-              color: AppColors.error,
-            )
-          : null,
+      textStyle: isSubscribed ? const TextStyle(color: AppColors.error) : null,
       iconColor: isSubscribed ? AppColors.error : null,
       onTap: () async {
         MoreMenuHub.hide();
@@ -572,9 +947,7 @@ Future<void> _showUserMenu({
       iconColor: arePostsHidden ? iconPrimaryColor : AppColors.error,
       textStyle: arePostsHidden
           ? null
-          : const TextStyle(
-              color: AppColors.error,
-            ),
+          : const TextStyle(color: AppColors.error),
       onTap: () async {
         MoreMenuHub.hide();
         await _handleHidePosts(
@@ -589,16 +962,12 @@ Future<void> _showUserMenu({
 
     // 3) Скрыть тренировки / Показать тренировки
     MoreMenuItem(
-      text: areActivitiesHidden
-          ? 'Показать тренировки'
-          : 'Скрыть тренировки',
+      text: areActivitiesHidden ? 'Показать тренировки' : 'Скрыть тренировки',
       icon: CupertinoIcons.flame,
       iconColor: areActivitiesHidden ? iconPrimaryColor : AppColors.error,
       textStyle: areActivitiesHidden
           ? null
-          : const TextStyle(
-              color: AppColors.error,
-            ),
+          : const TextStyle(color: AppColors.error),
       onTap: () async {
         MoreMenuHub.hide();
         await _handleHideActivities(
@@ -616,9 +985,7 @@ Future<void> _showUserMenu({
       text: isBlocked ? 'Разблокировать' : 'Заблокировать',
       icon: CupertinoIcons.exclamationmark_octagon,
       iconColor: AppColors.error,
-      textStyle: const TextStyle(
-        color: AppColors.error,
-      ),
+      textStyle: const TextStyle(color: AppColors.error),
       onTap: () async {
         MoreMenuHub.hide();
         await _handleBlock(
@@ -632,10 +999,7 @@ Future<void> _showUserMenu({
     ),
   ];
 
-  MoreMenuOverlay(
-    anchorKey: menuKey,
-    items: items,
-  ).show(context);
+  MoreMenuOverlay(anchorKey: menuKey, items: items).show(context);
 }
 
 /// Обработчик подписки/отписки
@@ -709,10 +1073,9 @@ Future<void> _handleHidePosts({
         await ref.read(lentaProvider(currentUserId).notifier).refresh();
       } else {
         // Скрываем посты - удаляем их из ленты
-        ref.read(lentaProvider(currentUserId).notifier).removeUserContent(
-          hiddenUserId: userId,
-          contentType: 'post',
-        );
+        ref
+            .read(lentaProvider(currentUserId).notifier)
+            .removeUserContent(hiddenUserId: userId, contentType: 'post');
       }
     } else if (context.mounted) {
       await _showErrorDialog(
@@ -760,10 +1123,9 @@ Future<void> _handleHideActivities({
         await ref.read(lentaProvider(currentUserId).notifier).refresh();
       } else {
         // Скрываем тренировки - удаляем их из ленты
-        ref.read(lentaProvider(currentUserId).notifier).removeUserContent(
-          hiddenUserId: userId,
-          contentType: 'activity',
-        );
+        ref
+            .read(lentaProvider(currentUserId).notifier)
+            .removeUserContent(hiddenUserId: userId, contentType: 'activity');
       }
     } else if (context.mounted) {
       await _showErrorDialog(
@@ -825,10 +1187,7 @@ Future<void> _handleBlock({
 }
 
 /// Показ диалога с ошибкой
-Future<void> _showErrorDialog(
-  BuildContext context,
-  String message,
-) async {
+Future<void> _showErrorDialog(BuildContext context, String message) async {
   if (!context.mounted) return;
 
   await showCupertinoDialog<void>(
