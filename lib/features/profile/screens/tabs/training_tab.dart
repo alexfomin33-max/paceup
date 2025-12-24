@@ -792,7 +792,7 @@ class _WorkoutRow extends ConsumerWidget {
               child: SizedBox(
                 width: 80,
                 height: 70,
-                child: item.points.isEmpty
+                child: item.points.isEmpty || !_arePointsValidForMap(item.points)
                     ? Image(
                         image: AssetImage(
                           // Выбираем картинку в зависимости от типа спорта
@@ -890,15 +890,115 @@ class _WorkoutRow extends ConsumerWidget {
     );
   }
 
+  /// Прореживает точки маршрута для оптимизации построения карты.
+  /// 
+  /// Берет каждую N-ю точку (где N = step), обязательно сохраняя
+  /// первую и последнюю точки маршрута.
+  /// 
+  /// Это необходимо для треков с большим количеством точек, чтобы
+  /// уменьшить размер URL и ускорить генерацию карты Mapbox.
+  /// 
+  /// Прореживание применяется только если точек больше threshold.
+  List<LatLng> _thinPoints(
+    List<LatLng> points, {
+    int step = 30,
+    int threshold = 100,
+  }) {
+    // Если точек мало или step <= 1, возвращаем как есть
+    if (points.length <= 2 || step <= 1) {
+      return points;
+    }
+
+    // Если точек меньше порога, не прореживаем
+    if (points.length < threshold) {
+      return points;
+    }
+
+    final thinnedPoints = <LatLng>[];
+    
+    // Всегда добавляем первую точку
+    thinnedPoints.add(points.first);
+    
+    // Добавляем каждую step-ю точку, начиная с индекса step
+    for (int i = step; i < points.length - 1; i += step) {
+      thinnedPoints.add(points[i]);
+    }
+    
+    // Всегда добавляем последнюю точку (если она еще не добавлена)
+    final lastPoint = points.last;
+    if (thinnedPoints.last != lastPoint) {
+      thinnedPoints.add(lastPoint);
+    }
+    
+    return thinnedPoints;
+  }
+
+  /// Проверяет, что точки маршрута валидны для построения карты.
+  /// 
+  /// Проверяет, что маршрут имеет достаточный разброс координат
+  /// (минимум 0.001 градуса разницы между самой северной и южной точками,
+  /// или между самой западной и восточной точками).
+  /// 
+  /// Это необходимо, потому что Mapbox Static Images API не может построить
+  /// карту, если все точки находятся практически в одной точке.
+  bool _arePointsValidForMap(List<LatLng> points) {
+    if (points.isEmpty || points.length < 2) {
+      return false;
+    }
+
+    // Находим минимальные и максимальные координаты
+    double minLat = points.first.latitude;
+    double maxLat = points.first.latitude;
+    double minLng = points.first.longitude;
+    double maxLng = points.first.longitude;
+
+    for (final point in points) {
+      if (point.latitude < minLat) minLat = point.latitude;
+      if (point.latitude > maxLat) maxLat = point.latitude;
+      if (point.longitude < minLng) minLng = point.longitude;
+      if (point.longitude > maxLng) maxLng = point.longitude;
+    }
+
+    // Проверяем, что есть достаточный разброс координат
+    // Минимум 0.001 градуса (~100 метров) для валидной карты
+    const minDifference = 0.001;
+    final latDifference = maxLat - minLat;
+    final lngDifference = maxLng - minLng;
+
+    return latDifference >= minDifference || lngDifference >= minDifference;
+  }
+
   /// Строит статичную мини-карту маршрута (80x70px).
   ///
   /// ⚡ PERFORMANCE OPTIMIZATION для маленьких карт:
   /// - Использует DPR 1.5 (вместо полного devicePixelRatio) для уменьшения веса файла
   /// - Ограничивает maxWidth/maxHeight до 160x140px для еще большей экономии
+  /// - Прореживает точки (каждую 30-ю) для треков с большим количеством точек
   /// - Кеширование через CachedNetworkImage с memCacheWidth/maxWidthDiskCache
   Widget _buildStaticMiniMap(BuildContext context, List<LatLng> points) {
     const widthDp = 80.0;
     const heightDp = 70.0;
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ПРОРЕЖИВАНИЕ ТОЧЕК: для треков с большим количеством точек
+    // ────────────────────────────────────────────────────────────────
+    // Берем каждую 30-ю точку, чтобы уменьшить размер URL и ускорить генерацию
+    final thinnedPoints = _thinPoints(points, step: 30);
+
+    // Проверяем валидность прореженных точек
+    if (!_arePointsValidForMap(thinnedPoints)) {
+      // Если после прореживания точки все еще невалидны, возвращаем дефолтное изображение
+      return Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: AppColors.getSurfaceColor(context),
+        child: const Icon(
+          Icons.map_outlined,
+          color: AppColors.brandPrimary,
+          size: 24,
+        ),
+      );
+    }
 
     // ────────────────────────────────────────────────────────────────
     // 🔹 ОПТИМИЗАЦИЯ РАЗМЕРА: используем ограниченный DPR для мини-карт
@@ -912,15 +1012,32 @@ class _WorkoutRow extends ConsumerWidget {
     final heightPx = (heightDp * optimizedDpr).round();
 
     // Генерируем URL статичной карты с дополнительными ограничениями размера
-    final mapUrl = StaticMapUrlBuilder.fromPoints(
-      points: points,
-      widthPx: widthPx.toDouble(),
-      heightPx: heightPx.toDouble(),
-      strokeWidth: 2.5,
-      padding: 8.0,
-      maxWidth: 160.0,  // Дополнительное ограничение для маленьких карт
-      maxHeight: 140.0, // Дополнительное ограничение для маленьких карт
-    );
+    // Обрабатываем возможные ошибки при генерации URL
+    String? mapUrl;
+    try {
+      mapUrl = StaticMapUrlBuilder.fromPoints(
+        points: thinnedPoints,
+        widthPx: widthPx.toDouble(),
+        heightPx: heightPx.toDouble(),
+        strokeWidth: 2.5,
+        padding: 8.0,
+        maxWidth: 160.0,  // Дополнительное ограничение для маленьких карт
+        maxHeight: 140.0, // Дополнительное ограничение для маленьких карт
+      );
+    } catch (e) {
+      // Если не удалось сгенерировать URL (например, некорректные точки),
+      // возвращаем дефолтное изображение
+      return Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: AppColors.getSurfaceColor(context),
+        child: const Icon(
+          Icons.map_outlined,
+          color: AppColors.brandPrimary,
+          size: 24,
+        ),
+      );
+    }
 
     return CachedNetworkImage(
       imageUrl: mapUrl,
