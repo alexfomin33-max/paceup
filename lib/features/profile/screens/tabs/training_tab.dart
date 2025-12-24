@@ -10,6 +10,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../lenta/screens/activity/description_screen.dart';
 import '../../../../domain/models/activity_lenta.dart' as al;
 import '../../../../../providers/services/auth_provider.dart';
+import '../../../../../providers/services/api_provider.dart';
+import '../../../lenta/providers/lenta_provider.dart';
 import '../../../../../core/widgets/transparent_route.dart';
 import '../../../../../core/utils/activity_format.dart';
 
@@ -755,6 +757,114 @@ class _WorkoutRow extends ConsumerWidget {
   final int profileUserId;
   const _WorkoutRow({required this.item, required this.profileUserId});
 
+  /// Загружает полную активность из API по ID тренировки
+  /// Сначала пытается найти в провайдере ленты, затем загружает через API
+  Future<al.Activity?> _loadActivityById(
+    int activityId,
+    int currentUserId,
+    WidgetRef ref,
+  ) async {
+    // Сначала пытаемся найти в ленте текущего пользователя
+    try {
+      final lentaState = ref.read(lentaProvider(currentUserId));
+      final activity = lentaState.items.firstWhere(
+        (a) => a.id == activityId && a.type != 'post',
+      );
+      return activity;
+    } catch (e) {
+      // Активность не найдена в ленте
+    }
+
+    // Также проверяем ленту владельца тренировки (если это другой пользователь)
+    if (profileUserId != currentUserId) {
+      try {
+        final lentaState = ref.read(lentaProvider(profileUserId));
+        final activity = lentaState.items.firstWhere(
+          (a) => a.id == activityId && a.type != 'post',
+        );
+        return activity;
+      } catch (e) {
+        // Активность не найдена в ленте владельца
+      }
+    }
+
+    // Загружаем через API, проверяя несколько страниц
+    try {
+      final api = ref.read(apiServiceProvider);
+
+      // Проверяем первые 3 страницы (до 300 активностей)
+      for (int page = 1; page <= 3; page++) {
+        try {
+          // Сначала пробуем загрузить из ленты текущего пользователя
+          final data = await api.post(
+            '/activities_lenta.php',
+            body: {
+              'userId': currentUserId.toString(),
+              'limit': '100',
+              'page': page.toString(),
+            },
+            timeout: const Duration(seconds: 10),
+          );
+
+          final List rawList = data['data'] as List? ?? const [];
+          final activities = rawList
+              .whereType<Map<String, dynamic>>()
+              .map((json) => al.Activity.fromApi(json))
+              .toList();
+
+          try {
+            return activities.firstWhere(
+              (a) => a.id == activityId && a.type != 'post',
+            );
+          } catch (e2) {
+            // Активность не найдена на этой странице, продолжаем поиск
+          }
+        } catch (e) {
+          // Ошибка загрузки страницы, продолжаем
+          break;
+        }
+      }
+
+      // Если не найдено в ленте текущего пользователя, пробуем ленту владельца
+      if (profileUserId != currentUserId) {
+        for (int page = 1; page <= 3; page++) {
+          try {
+            final data = await api.post(
+              '/activities_lenta.php',
+              body: {
+                'userId': profileUserId.toString(),
+                'limit': '100',
+                'page': page.toString(),
+              },
+              timeout: const Duration(seconds: 10),
+            );
+
+            final List rawList = data['data'] as List? ?? const [];
+            final activities = rawList
+                .whereType<Map<String, dynamic>>()
+                .map((json) => al.Activity.fromApi(json))
+                .toList();
+
+            try {
+              return activities.firstWhere(
+                (a) => a.id == activityId && a.type != 'post',
+              );
+            } catch (e2) {
+              // Активность не найдена на этой странице, продолжаем поиск
+            }
+          } catch (e) {
+            // Ошибка загрузки страницы, продолжаем
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      // Ошибка загрузки через API
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return InkWell(
@@ -763,19 +873,26 @@ class _WorkoutRow extends ConsumerWidget {
         final currentUserId = await auth.getUserId();
         if (currentUserId == null) return;
 
-        // Получаем данные пользователя (пока используем дефолтные значения)
-        final userName = 'Пользователь';
-        final userAvatar = 'assets/avatar_2.png';
+        // Показываем индикатор загрузки
+        if (!context.mounted) return;
 
-        // Используем userId профиля (владельца активности), а не текущего пользователя
-        final activity = item.toActivity(profileUserId, userName, userAvatar);
+        // Загружаем полную активность из API
+        final activity = await _loadActivityById(item.id, currentUserId, ref);
 
         if (!context.mounted) return;
+
+        // Если не удалось загрузить из API, используем локальную версию как fallback
+        final finalActivity = activity ??
+            item.toActivity(
+              profileUserId,
+              'Пользователь',
+              'assets/avatar_2.png',
+            );
 
         Navigator.of(context).push(
           TransparentPageRoute(
             builder: (_) => ActivityDescriptionPage(
-              activity: activity,
+              activity: finalActivity,
               currentUserId: currentUserId,
             ),
           ),
