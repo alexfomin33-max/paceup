@@ -1584,7 +1584,7 @@ class _SegmentedPill extends StatelessWidget {
 /// - Ось X — километры 0..N (где N — количество точек);
 /// - Для «Пульс»/«Высота» — обычные числа.
 /// - Единицы измерения на оси Y НЕ отображаем.
-class _SimpleLineChart extends StatelessWidget {
+class _SimpleLineChart extends StatefulWidget {
   final int mode; // 0 pace, 1 hr, 2 elev
   final List<double> paceData;
   final List<double> heartRateData;
@@ -1598,21 +1598,28 @@ class _SimpleLineChart extends StatelessWidget {
   });
 
   @override
+  State<_SimpleLineChart> createState() => _SimpleLineChartState();
+}
+
+class _SimpleLineChartState extends State<_SimpleLineChart> {
+  int? _selectedIndex;
+
+  @override
   Widget build(BuildContext context) {
     List<double> y;
     bool isPace;
 
-    if (mode == 0) {
+    if (widget.mode == 0) {
       // Темп: секунд/км -> будем форматировать как мин/км
-      y = paceData.isNotEmpty ? paceData : [];
+      y = widget.paceData.isNotEmpty ? widget.paceData : [];
       isPace = true;
-    } else if (mode == 1) {
+    } else if (widget.mode == 1) {
       // Пульс
-      y = heartRateData.isNotEmpty ? heartRateData : [];
+      y = widget.heartRateData.isNotEmpty ? widget.heartRateData : [];
       isPace = false;
     } else {
       // Высота
-      y = elevationData.isNotEmpty ? elevationData : [];
+      y = widget.elevationData.isNotEmpty ? widget.elevationData : [];
       isPace = false;
     }
 
@@ -1631,14 +1638,35 @@ class _SimpleLineChart extends StatelessWidget {
     // xMax = число километров (точек). Подписываем 0..xMax (включительно).
     final xMax = y.length;
 
-    return CustomPaint(
-      painter: _LinePainter(
-        yValues: y,
-        paceMode: isPace,
-        xMax: xMax,
-        textSecondaryColor: AppColors.getTextSecondaryColor(context),
+    return GestureDetector(
+      onTapDown: (details) {
+        final RenderBox box = context.findRenderObject() as RenderBox;
+        final localPosition = box.globalToLocal(details.globalPosition);
+        final painter = _LinePainter(
+          yValues: y,
+          paceMode: isPace,
+          xMax: xMax,
+          textSecondaryColor: AppColors.getTextSecondaryColor(context),
+          borderColor: AppColors.getBorderColor(context),
+          selectedIndex: _selectedIndex,
+        );
+        final tappedIndex = painter.getTappedIndex(localPosition, box.size);
+        setState(() {
+          // Если кликнули по той же точке, снимаем выделение
+          _selectedIndex = tappedIndex == _selectedIndex ? null : tappedIndex;
+        });
+      },
+      child: CustomPaint(
+        painter: _LinePainter(
+          yValues: y,
+          paceMode: isPace,
+          xMax: xMax,
+          textSecondaryColor: AppColors.getTextSecondaryColor(context),
+          borderColor: AppColors.getBorderColor(context),
+          selectedIndex: _selectedIndex,
+        ),
+        willChange: false,
       ),
-      willChange: false,
     );
   }
 }
@@ -1648,12 +1676,16 @@ class _LinePainter extends CustomPainter {
   final bool paceMode; // true -> формат ММ:СС
   final int xMax; // количество км (точек), рисуем подписи 0..xMax
   final Color textSecondaryColor; // цвет текста для подписей осей
+  final Color borderColor; // цвет границы для сетки
+  final int? selectedIndex; // индекс выбранной точки
 
   _LinePainter({
     required this.yValues,
     required this.paceMode,
     required this.xMax,
     required this.textSecondaryColor,
+    required this.borderColor,
+    this.selectedIndex,
   });
 
   String _fmtSecToMinSec(double sec) {
@@ -1663,20 +1695,73 @@ class _LinePainter extends CustomPainter {
     return '$m:${r.toString().padLeft(2, '0')}';
   }
 
+  /// Определяет, какая точка была нажата по координатам
+  int? getTappedIndex(Offset localPosition, Size size) {
+    if (yValues.isEmpty) return null;
+
+    const left = 36.0;
+    const right = 8.0;
+    const top = 8.0;
+    const bottom = 38.0;
+    final chartW = size.width - left - right;
+    final chartH = size.height - top - bottom;
+
+    final minY = yValues.reduce((a, b) => a < b ? a : b);
+    final maxY = yValues.reduce((a, b) => a > b ? a : b);
+    final range = (maxY - minY).abs() < 1e-6 ? 1 : (maxY - minY);
+
+    final n = yValues.length;
+    final dx = n > 1 ? chartW / (n - 1) : 0;
+
+    for (int i = 0; i < n; i++) {
+      final cx = n > 1 ? left + dx * i : left + chartW / 2;
+      final frac = (yValues[i] - minY) / range;
+      final cy = size.height - bottom - frac * chartH;
+
+      final pointRadius = selectedIndex == i ? 8.0 : 5.0;
+      final distanceToPoint = (localPosition - Offset(cx, cy)).distance;
+
+      // Увеличиваем область клика для удобства
+      if (distanceToPoint <= pointRadius + 10) {
+        return i;
+      }
+    }
+
+    return null;
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
-    // Используем статические цвета для графика (brandPrimary и skeletonBase не зависят от темы)
+    // Цвета как в профиле: оранжевая линия и заливка
+    const lineColor = Color(0xFFFF9500); // Оранжевый цвет как в профиле
+    
+    // Используем borderColor для сетки (как в профиле)
     final paintGrid = Paint()
-      ..color = AppColors.skeletonBase
-      ..strokeWidth = 1;
+      ..color = borderColor
+      ..strokeWidth = 0.5;
 
     final paintLine = Paint()
-      ..color = AppColors.brandPrimary
-      ..strokeWidth = 2
+      ..color = lineColor
+      ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
 
-    // Паддинги для осей и подписей — уменьшили left, чтобы график стал шире
-    const left = 36.0; // было 48.0
+    // Заливка под линией (как в профиле)
+    final fillPaint = Paint()
+      ..color = lineColor.withValues(alpha: 0.1)
+      ..style = PaintingStyle.fill;
+
+    // Точки на линии
+    final pointPaint = Paint()
+      ..color = lineColor
+      ..style = PaintingStyle.fill;
+
+    // Точка выбранная (больше размером)
+    final selectedPointPaint = Paint()
+      ..color = lineColor
+      ..style = PaintingStyle.fill;
+
+    // Паддинги для осей и подписей
+    const left = 36.0;
     const bottom = 38.0; // место под подписи км
     const top = 8.0;
     const right = 8.0;
@@ -1686,47 +1771,18 @@ class _LinePainter extends CustomPainter {
 
     if (yValues.isEmpty || w <= 0 || h <= 0) return;
 
-    // Горизонтальные линии (Y)
-    const gridY = 5;
-    for (int i = 0; i <= gridY; i++) {
-      final y = top + h * (i / gridY);
-      canvas.drawLine(Offset(left, y), Offset(left + w, y), paintGrid);
-    }
-
-    // Вертикальные линии + подписи X (0..xMax)
-    final tpXStyle = TextStyle(
-      fontFamily: 'Inter',
-      fontSize: 10,
-      color: textSecondaryColor,
-    );
-    for (int k = 0; k <= xMax; k++) {
-      final x = left + w * (k / xMax);
-      canvas.drawLine(Offset(x, top), Offset(x, top + h), paintGrid);
-
-      final span = TextSpan(text: '$k', style: tpXStyle);
-      final tp = TextPainter(text: span, textDirection: TextDirection.ltr)
-        ..layout();
-      tp.paint(canvas, Offset(x - tp.width / 2, top + h + 6));
-    }
-
     // Нормализация Y
     final minY = yValues.reduce((a, b) => a < b ? a : b);
     final maxY = yValues.reduce((a, b) => a > b ? a : b);
     final range = (maxY - minY).abs() < 1e-6 ? 1 : (maxY - minY);
 
-    // Линия графика
-    final dx = w / (yValues.length - 1);
-    final path = ui.Path();
-    for (int i = 0; i < yValues.length; i++) {
-      final nx = left + dx * i;
-      final ny = top + h * (1 - (yValues[i] - minY) / range);
-      if (i == 0) {
-        path.moveTo(nx, ny);
-      } else {
-        path.lineTo(nx, ny);
-      }
+    // Горизонтальные линии сетки (как в профиле)
+    const gridY = 5;
+    final tp = TextPainter(textDirection: TextDirection.ltr);
+    for (int i = 0; i <= gridY; i++) {
+      final y = top + h * (i / gridY);
+      canvas.drawLine(Offset(left, y), Offset(left + w, y), paintGrid);
     }
-    canvas.drawPath(path, paintLine);
 
     // Подписи оси Y (max, mid, min) — единицу измерения НЕ рисуем
     final tpYStyle = TextStyle(
@@ -1739,13 +1795,99 @@ class _LinePainter extends CustomPainter {
       final val = labels[i];
       final ly = i == 0 ? top : (i == 1 ? top + h / 2 : top + h);
       final txt = paceMode ? _fmtSecToMinSec(val) : val.toStringAsFixed(0);
-      final span = TextSpan(text: txt, style: tpYStyle);
-      final tp = TextPainter(text: span, textDirection: TextDirection.ltr)
-        ..layout();
+      tp.text = TextSpan(text: txt, style: tpYStyle);
+      tp.layout();
       tp.paint(canvas, Offset(left - tp.width - 6, ly - tp.height / 2));
     }
 
-    // (удалено) Единицы измерения у оси Y — не рисуем по задаче
+    // Линия графика и заливка
+    final dx = yValues.length > 1 ? w / (yValues.length - 1) : 0;
+    final path = ui.Path();
+    final fillPath = ui.Path();
+    
+    for (int i = 0; i < yValues.length; i++) {
+      final nx = yValues.length > 1 ? left + dx * i : left + w / 2;
+      final ny = top + h * (1 - (yValues[i] - minY) / range);
+      
+      if (i == 0) {
+        path.moveTo(nx, ny);
+        fillPath.moveTo(nx, size.height - bottom);
+        fillPath.lineTo(nx, ny);
+      } else {
+        path.lineTo(nx, ny);
+        fillPath.lineTo(nx, ny);
+      }
+    }
+
+    // Замыкаем путь заливки
+    if (yValues.isNotEmpty) {
+      final lastNx = yValues.length > 1 
+          ? left + dx * (yValues.length - 1) 
+          : left + w / 2;
+      fillPath.lineTo(lastNx, size.height - bottom);
+      fillPath.close();
+    }
+
+    // Рисуем заливку под линией (как в профиле)
+    canvas.drawPath(fillPath, fillPaint);
+
+    // Рисуем линию графика
+    canvas.drawPath(path, paintLine);
+
+    // Рисуем точки на линии (как в профиле)
+    for (int i = 0; i < yValues.length; i++) {
+      final nx = yValues.length > 1 ? left + dx * i : left + w / 2;
+      final ny = top + h * (1 - (yValues[i] - minY) / range);
+
+      final isSelected = selectedIndex == i;
+      final pointRadius = isSelected ? 8.0 : 5.0;
+      final paint = isSelected ? selectedPointPaint : pointPaint;
+
+      // Рисуем точку
+      canvas.drawCircle(Offset(nx, ny), pointRadius, paint);
+
+      // Если точка выбрана, рисуем вертикальную линию и метку
+      if (isSelected) {
+        // Вертикальная линия до оси X
+        final verticalLinePaint = Paint()
+          ..color = lineColor
+          ..strokeWidth = 1.0;
+        canvas.drawLine(
+          Offset(nx, ny),
+          Offset(nx, size.height - bottom),
+          verticalLinePaint,
+        );
+
+        // Метка над точкой с значением
+        final value = yValues[i];
+        final valueText = paceMode ? _fmtSecToMinSec(value) : value.toStringAsFixed(0);
+        tp.text = TextSpan(
+          text: valueText,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: lineColor,
+          ),
+        );
+        tp.layout();
+        tp.paint(canvas, Offset(nx - tp.width / 2, ny - tp.height - 6));
+      }
+    }
+
+    // Подписи X (0..xMax) — без вертикальных линий
+    final tpXStyle = TextStyle(
+      fontFamily: 'Inter',
+      fontSize: 10,
+      color: textSecondaryColor,
+    );
+    for (int k = 0; k <= xMax; k++) {
+      final x = left + w * (k / xMax);
+      final span = TextSpan(text: '$k', style: tpXStyle);
+      tp.text = span;
+      tp.layout();
+      tp.paint(canvas, Offset(x - tp.width / 2, top + h + 6));
+    }
   }
 
   @override
@@ -1753,7 +1895,9 @@ class _LinePainter extends CustomPainter {
       old.yValues != yValues ||
       old.paceMode != paceMode ||
       old.xMax != xMax ||
-      old.textSecondaryColor != textSecondaryColor;
+      old.textSecondaryColor != textSecondaryColor ||
+      old.borderColor != borderColor ||
+      old.selectedIndex != selectedIndex;
 }
 
 /// Подписи к графику — в одном блоке с графиком
