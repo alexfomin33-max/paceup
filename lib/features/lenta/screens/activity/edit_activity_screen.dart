@@ -65,6 +65,12 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   // Индекс перетаскиваемой фотографии
   int? _draggedIndex;
 
+  // Экипировка (для добавления, если не выбрана)
+  bool _showEquipment = false;
+  List<Equipment> _availableEquipment = [];
+  Equipment? _selectedEquipment;
+  bool _isLoadingEquipment = false;
+
   @override
   void initState() {
     super.initState();
@@ -80,6 +86,12 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     // Инициализируем видимость из userGroup
     // Предполагаем: 0 = публичная, 1 = подписчики, 2 = только я
     _selectedVisibility = widget.activity.userGroup.clamp(0, 2);
+
+    // Инициализируем состояние экипировки
+    // Если экипировка не выбрана и тип активности позволяет выбрать экипировку
+    if (widget.activity.equipments.isEmpty && _shouldShowEquipment()) {
+      _showEquipment = false; // По умолчанию чекбокс выключен
+    }
 
     // Слушаем изменения для определения, есть ли изменения
     _descriptionController.addListener(_checkForChanges);
@@ -162,7 +174,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                   _buildDescriptionInput(),
 
                   // ────────────────────────────────────────────────────────────────
-                  // 👟 3. СМЕНА ЭКИПИРОВКИ (показываем только если есть экипировка)
+                  // 👟 3. ЭКИПИРОВКА
                   // ────────────────────────────────────────────────────────────────
                   Builder(
                     builder: (context) {
@@ -175,26 +187,85 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                         orElse: () => widget.activity,
                       );
 
-                      // Показываем блок только если есть экипировка
-                      if (updatedActivity.equipments.isEmpty) {
-                        return const SizedBox.shrink();
+                      // Если экипировка уже выбрана, показываем EquipmentChip
+                      if (updatedActivity.equipments.isNotEmpty) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 24),
+                            const Text(
+                              'Экипировка',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildEquipmentSection(),
+                          ],
+                        );
                       }
 
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 24),
-                          const Text(
-                            'Экипировка',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
+                      // Если экипировка не выбрана и тип активности позволяет выбрать экипировку
+                      if (_shouldShowEquipment()) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Transform.scale(
+                                    scale: 0.85,
+                                    alignment: Alignment.centerLeft,
+                                    child: Checkbox(
+                                      value: _showEquipment,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      visualDensity: VisualDensity.compact,
+                                      activeColor: AppColors.brandPrimary,
+                                      checkColor: AppColors.getSurfaceColor(
+                                        context,
+                                      ),
+                                      side: BorderSide(
+                                        color: AppColors.getIconSecondaryColor(
+                                          context,
+                                        ),
+                                        width: 1.5,
+                                      ),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _showEquipment = value ?? false;
+                                          if (_showEquipment &&
+                                              _availableEquipment.isEmpty) {
+                                            _loadEquipment();
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Добавить экипировку',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildEquipmentSection(),
-                        ],
-                      );
+                            if (_showEquipment) ...[
+                              const SizedBox(height: 8),
+                              _buildEquipmentSelectionSection(),
+                            ],
+                          ],
+                        );
+                      }
+
+                      return const SizedBox.shrink();
                     },
                   ),
 
@@ -601,6 +672,200 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     );
   }
 
+  /// Секция выбора экипировки (если экипировка не выбрана)
+  Widget _buildEquipmentSelectionSection() {
+    if (_isLoadingEquipment) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: CupertinoActivityIndicator(),
+        ),
+      );
+    }
+
+    if (_availableEquipment.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          'Нет доступной экипировки для выбранного типа тренировки',
+          style: AppTextStyles.h14w4.copyWith(
+            color: AppColors.getTextSecondaryColor(context),
+          ),
+        ),
+      );
+    }
+
+    // Если экипировка выбрана, показываем EquipmentChip
+    if (_selectedEquipment != null) {
+      return EquipmentChip(
+        items: [_selectedEquipment!],
+        userId: widget.currentUserId,
+        activityType: widget.activity.type,
+        activityId: widget.activity.id,
+        activityDistance: (widget.activity.stats?.distance ?? 0.0) / 1000.0,
+        showMenuButton: true,
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.getSurfaceColor(context)
+            : null,
+        menuButtonColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.getBackgroundColor(context)
+            : null,
+        onEquipmentChanged: () {
+          _loadEquipment();
+        },
+        onEquipmentSelected: (Equipment newEquipment) {
+          setState(() {
+            _selectedEquipment = newEquipment;
+          });
+        },
+      );
+    }
+
+    // Если экипировка не выбрана, показываем выпадающий список для выбора
+    return InputDecorator(
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: AppColors.getSurfaceColor(context),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<Equipment>(
+          value: _selectedEquipment,
+          isExpanded: true,
+          hint: const Text('Выберите экипировку', style: AppTextStyles.h14w4),
+          onChanged: (Equipment? newValue) {
+            setState(() {
+              _selectedEquipment = newValue;
+            });
+          },
+          dropdownColor: AppColors.getSurfaceColor(context),
+          menuMaxHeight: 300,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          icon: Icon(
+            Icons.arrow_drop_down,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+          items: _availableEquipment.map((equipment) {
+            final displayName = equipment.brand.isNotEmpty
+                ? '${equipment.brand} ${equipment.name}'
+                : equipment.name;
+            return DropdownMenuItem<Equipment>(
+              value: equipment,
+              child: Text(displayName, style: AppTextStyles.h14w4),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  /// Проверяет, нужно ли показывать чекбокс экипировки
+  /// Показываем только для "Бег" и "Велосипед"
+  bool _shouldShowEquipment() {
+    final activityType = widget.activity.type.toLowerCase();
+    return activityType == 'run' || activityType == 'bike';
+  }
+
+  /// Загружает список экипировки для типа тренировки
+  Future<void> _loadEquipment() async {
+    if (!_shouldShowEquipment()) return;
+
+    setState(() {
+      _isLoadingEquipment = true;
+    });
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/get_equipment.php',
+        body: {'user_id': widget.currentUserId.toString()},
+      );
+
+      if (data['success'] == true) {
+        // Преобразуем тип активности в тип эквипа
+        final String equipmentType = _activityTypeToEquipmentType(
+          widget.activity.type,
+        );
+
+        if (equipmentType.isEmpty) {
+          setState(() {
+            _availableEquipment = [];
+            _isLoadingEquipment = false;
+          });
+          return;
+        }
+
+        // Получаем эквип нужного типа (boots или bikes)
+        final List<dynamic> equipmentList = equipmentType == 'boots'
+            ? data['boots'] ?? []
+            : data['bikes'] ?? [];
+
+        // Преобразуем в модель Equipment
+        final List<Equipment> allEquipment = equipmentList
+            .map(
+              (item) => Equipment.fromJson({
+                'name': item['name'] ?? '',
+                'brand': item['brand'] ?? '',
+                'mileage': item['dist'] ?? 0,
+                'img': item['image'] ?? '',
+                'main': item['main'] ?? false,
+                'myraiting': 0.0,
+                'type': equipmentType,
+                'equip_user_id': item['equip_user_id'],
+              }),
+            )
+            .toList();
+
+        setState(() {
+          _availableEquipment = allEquipment;
+          _isLoadingEquipment = false;
+        });
+      } else {
+        setState(() {
+          _availableEquipment = [];
+          _isLoadingEquipment = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _availableEquipment = [];
+        _isLoadingEquipment = false;
+      });
+    }
+  }
+
+  /// Преобразует тип активности в тип эквипа
+  String _activityTypeToEquipmentType(String activityType) {
+    final String type = activityType.toLowerCase();
+    if (type == 'run' || type == 'running') {
+      return 'boots';
+    } else if (type == 'bike' || type == 'cycling' || type == 'bicycle') {
+      return 'bike';
+    }
+    return '';
+  }
+
   /// Выпадающий список для выбора видимости
   Widget _buildVisibilitySelector() {
     const List<String> options = [
@@ -705,15 +970,27 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           throw Exception('Не удалось определить пользователя');
         }
 
+        // Формируем тело запроса
+        final body = <String, dynamic>{
+          'user_id': userId.toString(),
+          'activity_id': widget.activity.id.toString(),
+          'content': _descriptionController.text.trim(),
+          'user_group': _selectedVisibility.toString(),
+          'media_images': _imageUrls, // Отправляем новый порядок фотографий
+        };
+
+        // Получаем equip_user_id из выбранной экипировки
+        // Отправляем только если чекбокс включен и экипировка выбрана
+        if (_showEquipment && _selectedEquipment != null) {
+          final equipUserId = _selectedEquipment!.equipUserId ?? 0;
+          if (equipUserId > 0) {
+            body['equip_user_id'] = equipUserId.toString();
+          }
+        }
+
         final response = await api.post(
           '/update_activity.php',
-          body: {
-            'user_id': userId.toString(),
-            'activity_id': widget.activity.id.toString(),
-            'content': _descriptionController.text.trim(),
-            'user_group': _selectedVisibility.toString(),
-            'media_images': _imageUrls, // Отправляем новый порядок фотографий
-          },
+          body: body,
         );
 
         if (response['success'] != true) {
