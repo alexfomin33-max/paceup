@@ -1,9 +1,13 @@
 // lib/screens/lenta/widgets/activity_description_block.dart
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui; // для ui.Path
 import 'package:latlong2/latlong.dart' as ll;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_theme.dart';
 // Берём готовые виджеты (чтобы совпадал верх с ActivityBlock)
@@ -18,10 +22,19 @@ import '../../widgets/activity_route_carousel.dart';
 import '../../../../domain/models/activity_lenta.dart' as al;
 import 'combining_screen.dart';
 import 'fullscreen_route_map_screen.dart';
+import 'edit_activity_screen.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
-import '../../../../core/services/api_service.dart';
+import '../../../../core/widgets/more_menu_overlay.dart';
+import '../../../../core/widgets/more_menu_hub.dart';
+import '../../../../core/services/api_service.dart' show ApiService, ApiException;
+import '../../../../core/utils/error_handler.dart';
+import '../../../../core/utils/local_image_compressor.dart'
+    show compressLocalImage, ImageCompressionPreset;
+import '../../../../core/utils/image_picker_helper.dart';
+import '../../../../providers/services/api_provider.dart';
+import '../../../../providers/services/auth_provider.dart';
 import '../../providers/lenta_provider.dart';
 
 /// Страница с подробным описанием тренировки.
@@ -52,6 +65,11 @@ class _ActivityDescriptionPageState
   String? _userLastName;
   String? _userAvatar;
   bool _isLoadingUserData = true;
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 КЛЮЧ ДЛЯ МЕНЮ: нужен для привязки всплывающего меню
+  // ────────────────────────────────────────────────────────────────
+  final GlobalKey _menuKey = GlobalKey();
 
   // ────────────────────────────────────────────────────────────────
   // 📦 ЛОКАЛЬНОЕ СОСТОЯНИЕ: храним обновленную активность после замены экипировки
@@ -225,6 +243,91 @@ class _ActivityDescriptionPageState
   }
 
   /// ────────────────────────────────────────────────────────────────
+  /// 🔹 ПОКАЗ МЕНЮ: показывает меню с действиями для тренировки
+  /// ────────────────────────────────────────────────────────────────
+  void _showMenu(BuildContext context) {
+    final a = _currentActivity;
+    final items = <MoreMenuItem>[];
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 МЕНЮ ДЛЯ АВТОРА: редактирование, добавление фото, удаление
+    // ────────────────────────────────────────────────────────────────
+    if (a.userId == widget.currentUserId) {
+      items.addAll([
+        MoreMenuItem(
+          text: 'Редактировать',
+          icon: CupertinoIcons.pencil,
+          onTap: () {
+            MoreMenuHub.hide();
+            Navigator.of(context)
+                .push(
+                  TransparentPageRoute(
+                    builder: (_) => EditActivityScreen(
+                      activity: a,
+                      currentUserId: widget.currentUserId,
+                    ),
+                  ),
+                )
+                .then((updated) {
+                  // Если изменения были сохранены, обновляем данные
+                  if (updated == true && mounted) {
+                    _refreshActivityAfterEquipmentChange();
+                  }
+                });
+          },
+        ),
+        MoreMenuItem(
+          text: 'Добавить фотографии',
+          icon: CupertinoIcons.photo_on_rectangle,
+          onTap: () {
+            MoreMenuHub.hide();
+            _handleAddPhotos(
+              context: context,
+              activityId: a.id,
+              lentaId: a.lentaId,
+            );
+          },
+        ),
+        MoreMenuItem(
+          text: 'Удалить тренировку',
+          icon: CupertinoIcons.minus_circle,
+          iconColor: AppColors.error,
+          textStyle: const TextStyle(
+            color: AppColors.error,
+          ),
+          onTap: () {
+            MoreMenuHub.hide();
+            _handleDeleteActivity(context: context, activity: a);
+          },
+        ),
+      ]);
+    } else {
+      // ────────────────────────────────────────────────────────────────
+      // 🔹 МЕНЮ ДЛЯ ДРУГИХ ПОЛЬЗОВАТЕЛЕЙ: только "Скрыть тренировки"
+      // ────────────────────────────────────────────────────────────────
+      items.add(
+        MoreMenuItem(
+          text: 'Скрыть тренировки',
+          icon: CupertinoIcons.eye_slash,
+          iconColor: AppColors.error,
+          textStyle: const TextStyle(
+            color: AppColors.error,
+          ),
+          onTap: () {
+            MoreMenuHub.hide();
+            _handleHideActivities(context: context, activity: a);
+          },
+        ),
+      );
+    }
+
+    MoreMenuOverlay(
+      anchorKey: _menuKey,
+      items: items,
+    ).show(context);
+  }
+
+  /// ────────────────────────────────────────────────────────────────
   /// 🔄 ОБНОВЛЕНИЕ ЭКРАНА: при скролле сверху вниз (pull-to-refresh)
   /// ────────────────────────────────────────────────────────────────
   /// Обновляет данные активности из провайдера и перезагружает данные пользователя
@@ -289,24 +392,36 @@ class _ActivityDescriptionPageState
               },
             ),
             IconButton(
+              key: _menuKey,
               splashRadius: 22,
               icon: Icon(
                 CupertinoIcons.ellipsis,
                 size: 20,
                 color: AppColors.getIconPrimaryColor(context),
               ),
-              onPressed: () {},
+              onPressed: () => _showMenu(context),
             ),
           ],
         ),
 
         body: RefreshIndicator(
           onRefresh: _onRefresh,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            slivers: [
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (n) {
+              // ────────── Скрываем меню при скролле ──────────
+              if (n is ScrollStartNotification ||
+                  n is ScrollUpdateNotification ||
+                  n is OverscrollNotification ||
+                  n is UserScrollNotification) {
+                MoreMenuHub.hide();
+              }
+              return false;
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              slivers: [
               // ───────── Верхний блок (как в ActivityBlock)
               SliverToBoxAdapter(
                 child: Container(
@@ -537,11 +652,401 @@ class _ActivityDescriptionPageState
               ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              ],
+            ), // CustomScrollView
+          ), // NotificationListener
+        ), // RefreshIndicator
+      ), // Scaffold
+    ); // InteractiveBackSwipe
+  }
+
+  /// ────────────────────────────────────────────────────────────────
+  /// 📸 ОБРАБОТЧИК ДОБАВЛЕНИЯ ФОТОГРАФИЙ
+  /// ────────────────────────────────────────────────────────────────
+  Future<void> _handleAddPhotos({
+    required BuildContext context,
+    required int activityId,
+    required int lentaId,
+  }) async {
+    final picker = ImagePicker();
+    final container = ProviderScope.containerOf(context);
+    final auth = container.read(authServiceProvider);
+    final navigator = Navigator.of(context, rootNavigator: true);
+    var loaderShown = false;
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final aspectRatio = screenWidth / 350.0;
+
+    void hideLoader() {
+      if (loaderShown && navigator.mounted) {
+        navigator.pop();
+        loaderShown = false;
+      }
+    }
+
+    try {
+      final pickedFiles = await picker.pickMultiImage();
+      if (pickedFiles.isEmpty) return;
+
+      final userId = await auth.getUserId();
+      if (userId == null) {
+        if (context.mounted) {
+          await _showErrorDialog(
+            context: context,
+            error: 'Не удалось определить пользователя. Пожалуйста, авторизуйтесь.',
+          );
+        }
+        return;
+      }
+
+      final filesForUpload = <String, File>{};
+      for (var i = 0; i < pickedFiles.length; i++) {
+        if (!context.mounted) return;
+
+        final picked = pickedFiles[i];
+        final cropped = await ImagePickerHelper.cropPickedImage(
+          context: context,
+          source: picked,
+          aspectRatio: aspectRatio,
+          title: 'Обрезка фотографии ${i + 1}',
+        );
+
+        if (cropped == null) {
+          continue;
+        }
+
+        final compressed = await compressLocalImage(
+          sourceFile: cropped,
+          maxSide: ImageCompressionPreset.activity.maxSide,
+          jpegQuality: ImageCompressionPreset.activity.quality,
+        );
+
+        if (cropped.path != compressed.path) {
+          try {
+            await cropped.delete();
+          } catch (_) {
+            // Игнорируем ошибки удаления
+          }
+        }
+
+        filesForUpload['file$i'] = compressed;
+      }
+
+      if (filesForUpload.isEmpty) {
+        if (context.mounted) {
+          await _showErrorDialog(
+            context: context,
+            error: 'Не удалось подготовить файлы для загрузки.',
+          );
+        }
+        return;
+      }
+
+      if (!context.mounted) return;
+      _showBlockingLoader(context, message: 'Загружаем фотографии…');
+      loaderShown = true;
+
+      final api = ref.read(apiServiceProvider);
+      final response = await api.postMultipart(
+        '/upload_activity_photos.php',
+        files: filesForUpload,
+        fields: {'user_id': '$userId', 'activity_id': '$activityId'},
+        timeout: const Duration(minutes: 2),
+      );
+
+      hideLoader();
+
+      if (response['success'] != true) {
+        final message = response['message']?.toString() ??
+            'Не удалось загрузить фотографии. Попробуйте ещё раз.';
+        if (context.mounted) {
+          await _showErrorDialog(context: context, error: message);
+        }
+        return;
+      }
+
+      final images = (response['images'] as List?)
+              ?.whereType<String>()
+              .toList(growable: false) ??
+          const [];
+
+      if (images.isNotEmpty) {
+        await ref
+            .read(lentaProvider(widget.currentUserId).notifier)
+            .updateActivityMedia(lentaId: lentaId, mediaImages: images);
+      } else {
+        await ref.read(lentaProvider(widget.currentUserId).notifier).refresh();
+      }
+
+      if (context.mounted) {
+        await showCupertinoDialog<void>(
+          context: context,
+          builder: (ctx) => CupertinoAlertDialog(
+            title: const Text('Готово'),
+            content: const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text('Фотографии добавлены к тренировке.'),
+            ),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Ок'),
+              ),
+            ],
+          ),
+        );
+      }
+
+      // Обновляем локальное состояние активности
+      await _refreshActivityAfterEquipmentChange();
+    } catch (e) {
+      hideLoader();
+      if (context.mounted) {
+        await _showErrorDialog(context: context, error: e);
+      }
+    }
+  }
+
+  /// ────────────────────────────────────────────────────────────────
+  /// 🗑️ ОБРАБОТЧИК УДАЛЕНИЯ ТРЕНИРОВКИ
+  /// ────────────────────────────────────────────────────────────────
+  Future<void> _handleDeleteActivity({
+    required BuildContext context,
+    required al.Activity activity,
+  }) async {
+    final confirmed = await _confirmDeletion(context);
+    if (!confirmed || !context.mounted) return;
+
+    final navigator = Navigator.of(context, rootNavigator: true);
+    _showBlockingLoader(context);
+
+    final success = await _sendDeleteActivityRequest(
+      context: context,
+      userId: widget.currentUserId,
+      activityId: activity.id,
+    );
+
+    if (navigator.mounted) {
+      navigator.pop();
+    }
+
+    if (!context.mounted) return;
+
+    if (success) {
+      // Удаляем элемент из провайдера
+      await ref
+          .read(lentaProvider(widget.currentUserId).notifier)
+          .removeItem(activity.lentaId);
+      // Закрываем экран описания
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+    } else {
+      await _showErrorDialog(
+        context: context,
+        error: 'Не удалось удалить тренировку. Попробуйте ещё раз.',
+      );
+    }
+  }
+
+  /// ────────────────────────────────────────────────────────────────
+  /// 👁️ ОБРАБОТЧИК СКРЫТИЯ ТРЕНИРОВОК ПОЛЬЗОВАТЕЛЯ
+  /// ────────────────────────────────────────────────────────────────
+  Future<void> _handleHideActivities({
+    required BuildContext context,
+    required al.Activity activity,
+  }) async {
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Скрыть тренировки?'),
+        content: Text(
+          'Тренировки ${activity.userName} будут скрыты из вашей ленты.',
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Да, скрыть'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/hide_user_content.php',
+        body: {
+          'userId': '${widget.currentUserId}',
+          'hidden_user_id': '${activity.userId}',
+          'action': 'hide',
+          'content_type': 'activity',
+        },
+        timeout: const Duration(seconds: 10),
+      );
+
+      final success = data['success'] == true;
+
+      if (success && context.mounted) {
+        // Удаляем тренировки пользователя из ленты локально
+        ref
+            .read(lentaProvider(widget.currentUserId).notifier)
+            .removeUserContent(
+              hiddenUserId: activity.userId,
+              contentType: 'activity',
+            );
+        // Закрываем экран описания
+        if (context.mounted) {
+          Navigator.of(context).pop();
+        }
+      } else if (context.mounted) {
+        await showCupertinoDialog<void>(
+          context: context,
+          builder: (ctx) => CupertinoAlertDialog(
+            title: const Text('Ошибка'),
+            content: Text(
+              data['message']?.toString() ??
+                  'Не удалось скрыть тренировки пользователя',
+            ),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Ок'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        await _showErrorDialog(context: context, error: e);
+      }
+    }
+  }
+
+  /// ────────────────────────────────────────────────────────────────
+  /// 🔹 ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
+  /// ────────────────────────────────────────────────────────────────
+
+  /// Показывает модальный диалог подтверждения удаления
+  Future<bool> _confirmDeletion(BuildContext context) async {
+    final result = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Удалить тренировку?'),
+        content: const Text('Действие нельзя отменить.'),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+
+    return result ?? false;
+  }
+
+  /// Показывает блокирующий лоадер
+  void _showBlockingLoader(
+    BuildContext context, {
+    String message = 'Удаляем тренировку…',
+  }) {
+    showCupertinoDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => CupertinoAlertDialog(
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CupertinoActivityIndicator(),
+              const SizedBox(height: 12),
+              Text(message),
             ],
           ),
         ),
       ),
     );
+  }
+
+  /// Универсальный показ ошибки
+  Future<void> _showErrorDialog({
+    required BuildContext context,
+    required dynamic error,
+  }) {
+    final message = ErrorHandler.format(error);
+    return showCupertinoDialog<void>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Ошибка'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: SelectableText.rich(
+            TextSpan(
+              text: message,
+              style: const TextStyle(color: AppColors.error, fontSize: 15),
+            ),
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Понятно'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Вызывает API удаления активности и возвращает bool-успех
+  Future<bool> _sendDeleteActivityRequest({
+    required BuildContext context,
+    required int userId,
+    required int activityId,
+  }) async {
+    try {
+      final container = ProviderScope.containerOf(context);
+      final api = container.read(apiServiceProvider);
+      final response = await api.post(
+        '/delete_activity.php',
+        body: {'userId': '$userId', 'activityId': '$activityId'},
+        timeout: const Duration(seconds: 12),
+      );
+
+      final success = response['success'] == true;
+      final message = response['message']?.toString() ?? '';
+
+      return success || message == 'Тренировка удалена';
+    } on ApiException catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️ Ошибка удаления активности: ${e.message}');
+      }
+      return false;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️ Неожиданная ошибка при удалении активности: $e');
+      }
+      return false;
+    }
   }
 }
 
