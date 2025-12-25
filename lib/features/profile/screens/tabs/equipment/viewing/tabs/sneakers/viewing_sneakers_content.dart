@@ -555,110 +555,308 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Заголовок (иконка в одной строке с названием)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: RichText(
-                    text: TextSpan(
+          Consumer(
+            builder: (context, ref, child) {
+              final currentUserIdAsync = ref.watch(currentUserIdProvider);
+              return currentUserIdAsync.when(
+                data: (currentUserId) {
+                  final isOwnProfile =
+                      currentUserId != null && currentUserId == widget.userId;
+                  // Для своего профиля - padding top: 0, для чужого - padding top: 12
+                  return Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      12,
+                      isOwnProfile ? 0 : 12,
+                      12,
+                      0,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        TextSpan(
-                          text: '${widget.brand} ',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.getTextPrimaryColor(context),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: '${widget.brand} ',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: widget.model,
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        TextSpan(
-                          text: widget.model,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.getTextPrimaryColor(context),
+                        // Показываем кнопку меню только для собственного профиля
+                        if (!isOwnProfile)
+                          const SizedBox.shrink()
+                        else
+                          IconButton(
+                            key: _menuKey,
+                            onPressed: () => _showMenu(context),
+                            tooltip: 'Меню',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
+                            icon: Icon(
+                              CupertinoIcons.ellipsis, // горизонтальная иконка
+                              size: 18,
+                              color: AppColors.getIconPrimaryColor(context),
+                            ),
                           ),
-                        ),
                       ],
                     ),
+                  );
+                },
+                loading: () => Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '${widget.brand} ',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
+                              ),
+                              TextSpan(
+                                text: widget.model,
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                // Показываем кнопку меню только для собственного профиля
-                Consumer(
-                  builder: (context, ref, child) {
-                    final currentUserIdAsync = ref.watch(currentUserIdProvider);
-                    return currentUserIdAsync.when(
-                      data: (currentUserId) {
-                        final isOwnProfile =
-                            currentUserId != null &&
-                            currentUserId == widget.userId;
-                        if (!isOwnProfile) {
-                          return const SizedBox.shrink();
-                        }
-                        return IconButton(
-                          key: _menuKey,
-                          onPressed: () => _showMenu(context),
-                          tooltip: 'Меню',
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 32,
+                error: (_, _) => Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '${widget.brand} ',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
+                              ),
+                              TextSpan(
+                                text: widget.model,
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
+                              ),
+                            ],
                           ),
-                          icon: Icon(
-                            CupertinoIcons.ellipsis, // горизонтальная иконка
-                            size: 18,
-                            color: AppColors.getIconPrimaryColor(context),
-                          ),
-                        );
-                      },
-                      loading: () => const SizedBox.shrink(),
-                      error: (_, _) => const SizedBox.shrink(),
-                    );
-                  },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              );
+            },
           ),
 
           // ── Чип «Основные/Основной» сразу под названием
           if (widget.mainBadgeText != null)
-            Transform.translate(
-              offset: const Offset(0, -6),
-              child: Padding(
-                padding: const EdgeInsets.only(left: 12, bottom: 6),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    // ────────────────────────────────────────────────────────────────
-                    // 🌓 ТЕМНАЯ ТЕМА: темно-серый фон для плашки "Основные"
-                    // ────────────────────────────────────────────────────────────────
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.darkDivider
-                        : AppColors.getTextPrimaryColor(context),
-                    borderRadius: BorderRadius.circular(AppRadius.xl), // пилюля
-                  ),
-                  child: Text(
-                    widget.mainBadgeText!,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 11,
-                      // ────────────────────────────────────────────────────────────────
-                      // 🌓 ТЕМНАЯ ТЕМА: светлый текст на сером фоне
-                      // ────────────────────────────────────────────────────────────────
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.getSurfaceColor(context),
-                      fontWeight: FontWeight.w600,
+            Consumer(
+              builder: (context, ref, child) {
+                final currentUserIdAsync = ref.watch(currentUserIdProvider);
+                return currentUserIdAsync.when(
+                  data: (currentUserId) {
+                    final isOwnProfile =
+                        currentUserId != null && currentUserId == widget.userId;
+                    // Для своего профиля используем Transform.translate (как было),
+                    // для чужого - обычный Padding
+                    if (isOwnProfile) {
+                      return Transform.translate(
+                        offset: const Offset(0, -6),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 12, bottom: 6),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              // ────────────────────────────────────────────────────────────────
+                              // 🌓 ТЕМНАЯ ТЕМА: темно-серый фон для плашки "Основные"
+                              // ────────────────────────────────────────────────────────────────
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? AppColors.darkDivider
+                                  : AppColors.getTextPrimaryColor(context),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.xl,
+                              ), // пилюля
+                            ),
+                            child: Text(
+                              widget.mainBadgeText!,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 11,
+                                // ────────────────────────────────────────────────────────────────
+                                // 🌓 ТЕМНАЯ ТЕМА: светлый текст на сером фоне
+                                // ────────────────────────────────────────────────────────────────
+                                color:
+                                    Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.getSurfaceColor(context),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    } else {
+                      return Padding(
+                        padding: const EdgeInsets.only(
+                          left: 12,
+                          top: 8,
+                          bottom: 6,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            // ────────────────────────────────────────────────────────────────
+                            // 🌓 ТЕМНАЯ ТЕМА: темно-серый фон для плашки "Основные"
+                            // ────────────────────────────────────────────────────────────────
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.darkDivider
+                                : AppColors.getTextPrimaryColor(context),
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.xl,
+                            ), // пилюля
+                          ),
+                          child: Text(
+                            widget.mainBadgeText!,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 11,
+                              // ────────────────────────────────────────────────────────────────
+                              // 🌓 ТЕМНАЯ ТЕМА: светлый текст на сером фоне
+                              // ────────────────────────────────────────────────────────────────
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? AppColors.darkTextPrimary
+                                  : AppColors.getSurfaceColor(context),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  loading: () => Transform.translate(
+                    offset: const Offset(0, -6),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 12, bottom: 6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkDivider
+                              : AppColors.getTextPrimaryColor(context),
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                        ),
+                        child: Text(
+                          widget.mainBadgeText!,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 11,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.getSurfaceColor(context),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
+                  error: (_, _) => Transform.translate(
+                    offset: const Offset(0, -6),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 12, bottom: 6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkDivider
+                              : AppColors.getTextPrimaryColor(context),
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                        ),
+                        child: Text(
+                          widget.mainBadgeText!,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 11,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.getSurfaceColor(context),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
 
           // ── Изображение (из базы данных или дефолтное)

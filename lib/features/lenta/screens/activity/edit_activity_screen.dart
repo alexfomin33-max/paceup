@@ -148,6 +148,12 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     return true;
   }
 
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ ПЕРЕТАСКИВАНИЯ КАРТЫ И ФОТО
+  // ────────────────────────────────────────────────────────────────
+
+  bool get _hasRoute => widget.activity.points.isNotEmpty;
+
   @override
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
@@ -327,8 +333,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   /// Горизонтальная карусель фотографий и карты
   /// Порядок: кнопка добавления фото → изображения и карта (в порядке сортировки)
   Widget _buildPhotoCarousel() {
-    // Проверяем, есть ли у тренировки маршрут
-    final hasRoute = widget.activity.points.isNotEmpty;
+    final hasRoute = _hasRoute;
 
     // Преобразуем точки маршрута в LatLng для карты (если есть)
     final routePoints = hasRoute
@@ -337,12 +342,12 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
     // Создаем объединенный список элементов для отображения
     final List<_MediaItem> items = [];
-    
+
     // Добавляем изображения
     for (int i = 0; i < _imageUrls.length; i++) {
       items.add(_MediaItem.image(_imageUrls[i], i));
     }
-    
+
     // Добавляем карту, если есть маршрут
     if (hasRoute && _mapPosition != null) {
       // Вставляем карту в нужную позицию
@@ -373,7 +378,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           // itemIndex в отображаемом списке (без кнопки добавления)
           final itemIndex = index - 1;
           final item = items[itemIndex];
-          
+
           if (item.isMap) {
             return _buildDraggableMapItem(routePoints, itemIndex);
           } else {
@@ -516,7 +521,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       heightPx: heightPx.toDouble(),
       strokeWidth: 2.5,
       padding: 8.0,
-      maxWidth: 180.0,  // Дополнительное ограничение для маленьких карт
+      maxWidth: 180.0, // Дополнительное ограничение для маленьких карт
       maxHeight: 180.0, // Дополнительное ограничение для маленьких карт
     );
 
@@ -530,9 +535,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       maxWidthDiskCache: widthPx,
       placeholder: (context, url) => Container(
         color: AppColors.getSurfaceColor(context),
-        child: const Center(
-          child: CupertinoActivityIndicator(),
-        ),
+        child: const Center(child: CupertinoActivityIndicator()),
       ),
       errorWidget: (context, url, error) => Container(
         color: AppColors.getSurfaceColor(context),
@@ -591,7 +594,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
               }
               
               final draggedItem = items[oldIndex];
-              
+
               if (draggedItem.isMap) {
                 // Перетаскивается карта - просто обновляем позицию
                 _mapPosition = newIndex;
@@ -690,19 +693,19 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   /// Создает список элементов медиа (изображения + карта)
   List<_MediaItem> _buildMediaItemsList() {
     final List<_MediaItem> items = [];
-    
+
     // Добавляем изображения
     for (int i = 0; i < _imageUrls.length; i++) {
       items.add(_MediaItem.image(_imageUrls[i], i));
     }
-    
+
     // Добавляем карту, если есть маршрут
     final hasRoute = widget.activity.points.isNotEmpty;
     if (hasRoute && _mapPosition != null) {
       final insertIndex = _mapPosition!.clamp(0, items.length);
       items.insert(insertIndex, _MediaItem.map());
     }
-    
+
     return items;
   }
 
@@ -841,6 +844,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       activityId: updatedActivity.id,
       activityDistance: (updatedActivity.stats?.distance ?? 0.0) / 1000.0,
       showMenuButton: true,
+      // Убираем нижний разделитель на экране редактирования
+      showDivider: false,
       // ────────────────────────────────────────────────────────────────
       // 🔹 ФОН ПЛАШКИ: в светлой теме используем surface вместо background
       // ────────────────────────────────────────────────────────────────
@@ -898,6 +903,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         activityId: widget.activity.id,
         activityDistance: (widget.activity.stats?.distance ?? 0.0) / 1000.0,
         showMenuButton: true,
+        // Убираем нижний разделитель на экране редактирования
+        showDivider: false,
         backgroundColor: Theme.of(context).brightness == Brightness.light
             ? AppColors.getSurfaceColor(context)
             : null,
@@ -1173,12 +1180,6 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           'media_images': _imageUrls, // Отправляем новый порядок фотографий
         };
 
-        // Отправляем позицию карты, если есть маршрут
-        final hasRoute = widget.activity.points.isNotEmpty;
-        if (hasRoute && _mapPosition != null) {
-          body['map_sort_order'] = _mapPosition.toString();
-        }
-
         // Получаем equip_user_id из выбранной экипировки
         // Отправляем только если чекбокс включен и экипировка выбрана
         if (_showEquipment && _selectedEquipment != null) {
@@ -1188,10 +1189,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           }
         }
 
-        final response = await api.post(
-          '/update_activity.php',
-          body: body,
-        );
+        final response = await api.post('/update_activity.php', body: body);
 
         if (response['success'] != true) {
           final message =
@@ -1371,26 +1369,6 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
               lentaId: widget.activity.lentaId,
               mediaImages: _imageUrls,
             );
-
-        if (mounted) {
-          await showCupertinoDialog<void>(
-            context: context,
-            builder: (ctx) => CupertinoAlertDialog(
-              title: const Text('Готово'),
-              content: const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text('Фотографии добавлены к тренировке.'),
-              ),
-              actions: [
-                CupertinoDialogAction(
-                  isDefaultAction: true,
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Ок'),
-                ),
-              ],
-            ),
-          );
-        }
       } else {
         // Если сервер не вернул список, обновляем через refresh
         if (!mounted) return;
