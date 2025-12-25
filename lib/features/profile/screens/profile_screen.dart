@@ -40,6 +40,9 @@ import 'state/settings/settings_screen.dart';
 // экран редактирования профиля
 import 'edit_profile_screen.dart';
 
+// экран подписок и подписчиков
+import 'state/subscribe/communication_screen.dart';
+
 class ProfileScreen extends ConsumerStatefulWidget {
   /// Опциональный userId. Если не передан, используется текущий пользователь из AuthService
   final int? userId;
@@ -273,25 +276,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           return Scaffold(
             backgroundColor: AppColors.getBackgroundColor(context),
             appBar: PaceAppBar(
-              titleWidget: Row(
-                children: [
-                  Icon(
-                    CupertinoIcons.sparkles,
-                    size: 20,
-                    color: AppColors.getIconPrimaryColor(context),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'AI тренер',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 16,
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-              ),
+              title: 'Профиль',
               showBack: false,
               showBottomDivider: true,
             ),
@@ -315,22 +300,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       },
       loading: () => Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(
-          titleWidget: Row(
-            children: [
-              Icon(
-                CupertinoIcons.sparkles,
-                size: 20,
-                color: AppColors.iconPrimary,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'AI тренер',
-                style: TextStyle(fontFamily: 'Inter', fontSize: 16),
-              ),
-              SizedBox(width: 6),
-            ],
-          ),
+        appBar: PaceAppBar(
+          title: 'Профиль',
           showBack: false,
           showBottomDivider: true,
         ),
@@ -338,22 +309,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       error: (err, stack) => Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(
-          titleWidget: Row(
-            children: [
-              Icon(
-                CupertinoIcons.sparkles,
-                size: 20,
-                color: AppColors.iconPrimary,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'AI тренер',
-                style: TextStyle(fontFamily: 'Inter', fontSize: 16),
-              ),
-              SizedBox(width: 6),
-            ],
-          ),
+        appBar: PaceAppBar(
+          title: 'Профиль',
           showBack: false,
           showBottomDivider: true,
         ),
@@ -751,12 +708,38 @@ class _ProfileFlexibleSpace extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 3),
                   Row(
                     children: [
-                      _CountPill(label: 'Подписки', value: following),
+                      _CountPill(
+                        label: 'Подписки',
+                        value: following,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (_) => CommunicationPrefsPage(
+                                startIndex: 0,
+                                userId: userId,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                       const SizedBox(width: 24),
-                      _CountPill(label: 'Подписчики', value: followers),
+                      _CountPill(
+                        label: 'Подписчики',
+                        value: followers,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (_) => CommunicationPrefsPage(
+                                startIndex: 1,
+                                userId: userId,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ],
@@ -848,32 +831,39 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
 class _CountPill extends StatelessWidget {
   final String label;
   final int value;
+  final VoidCallback? onTap;
 
-  const _CountPill({required this.label, required this.value});
+  const _CountPill({required this.label, required this.value, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: RichText(
-        text: TextSpan(
-          style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
-          children: [
-            TextSpan(
-              text: '$label: ',
-              style: TextStyle(color: AppColors.getTextSecondaryColor(context)),
-            ),
-            TextSpan(
-              text: '$value',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppColors.getTextPrimaryColor(context),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        padding: const EdgeInsets.only(left: 0, right: 8, top: 4, bottom: 4),
+        child: RichText(
+          text: TextSpan(
+            style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+            children: [
+              TextSpan(
+                text: '$label: ',
+                style: TextStyle(
+                  color: AppColors.getTextSecondaryColor(context),
+                ),
               ),
-            ),
-          ],
+              TextSpan(
+                text: '$value',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/segmented_pill.dart'; // ← глобальная пилюля
 import '../../../../../core/widgets/app_bar.dart'; // ← глобальный AppBar
+import '../../../../../core/widgets/transparent_route.dart';
+import '../search/search_screen.dart'; // ← страница поиска друзей
 import 'tabs/subscriptions/subscriptions_content.dart';
 import 'tabs/subscribers/subscribers_content.dart';
 
@@ -58,15 +60,38 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
     _page.animateToPage(i, duration: _kTabAnim, curve: _kTabCurve);
   }
 
+  /// Навигация на страницу поиска друзей
+  ///
+  /// ⚡ UX: открывает страницу поиска друзей/клубов при нажатии на иконку
+  void _navigateToSearch() {
+    Navigator.of(context).push(
+      TransparentPageRoute(
+        builder: (_) => const SearchPrefsPage(startIndex: 0),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final query = _controller.text.trim();
 
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
-      appBar: const PaceAppBar(
+      appBar: PaceAppBar(
         title: 'Связи',
         // дефолтная «назад», центрированный титул, нижний разделитель — уже настроены
+        actions: [
+          IconButton(
+            splashRadius: 22,
+            icon: Icon(
+              CupertinoIcons.person_add,
+              size: 22,
+              color: AppColors.getIconPrimaryColor(context),
+            ),
+            onPressed: _navigateToSearch,
+          ),
+          const SizedBox(width: 6),
+        ],
       ),
       body: Column(
         children: [
