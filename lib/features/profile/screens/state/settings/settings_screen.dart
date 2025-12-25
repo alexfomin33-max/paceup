@@ -15,6 +15,7 @@ import 'health_data_access_screen.dart';
 import 'contacts_access_screen.dart';
 import 'help_info_screen.dart';
 import 'feedback_screen.dart';
+import 'hidden_content_screen.dart';
 // import 'biometric_screen.dart'; // Закомментировано для macOS/web
 import 'user_settings_provider.dart';
 
@@ -300,6 +301,26 @@ class SettingsScreen extends ConsumerWidget {
                     Navigator.of(context).push(
                       TransparentPageRoute(
                         builder: (_) => const FeedbackScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Скрытые тренировки и посты
+            _SettingsGroup(
+              children: [
+                _SettingsTile(
+                  icon: CupertinoIcons.eye_slash,
+                  iconColor: AppColors.brandPrimary,
+                  title: 'Скрытые тренировки и посты',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      TransparentPageRoute(
+                        builder: (_) => const HiddenContentScreen(),
                       ),
                     );
                   },

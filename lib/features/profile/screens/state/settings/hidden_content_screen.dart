@@ -1,0 +1,443 @@
+// lib/features/profile/screens/state/settings/hidden_content_screen.dart
+// ─────────────────────────────────────────────────────────────────────────────
+//                          Экран «Скрытые тренировки и посты»
+//  Отображает список пользователей с переключателями для скрытия/показа
+//  тренировок и постов
+// ─────────────────────────────────────────────────────────────────────────────
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/widgets/app_bar.dart';
+import '../../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../../core/utils/error_handler.dart';
+import '../../../../../core/widgets/avatar.dart';
+import '../../../../../providers/services/api_provider.dart';
+
+/// Модель пользователя со статусами скрытия
+class _HiddenUser {
+  final int id;
+  final String name;
+  final String? avatar;
+  final bool isActivitiesHidden; // Тренировки скрыты
+  final bool isPostsHidden; // Посты скрыты
+
+  const _HiddenUser({
+    required this.id,
+    required this.name,
+    this.avatar,
+    required this.isActivitiesHidden,
+    required this.isPostsHidden,
+  });
+
+  _HiddenUser copyWith({
+    int? id,
+    String? name,
+    String? avatar,
+    bool? isActivitiesHidden,
+    bool? isPostsHidden,
+  }) {
+    return _HiddenUser(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      avatar: avatar ?? this.avatar,
+      isActivitiesHidden: isActivitiesHidden ?? this.isActivitiesHidden,
+      isPostsHidden: isPostsHidden ?? this.isPostsHidden,
+    );
+  }
+}
+
+class HiddenContentScreen extends ConsumerStatefulWidget {
+  const HiddenContentScreen({super.key});
+
+  @override
+  ConsumerState<HiddenContentScreen> createState() =>
+      _HiddenContentScreenState();
+}
+
+class _HiddenContentScreenState extends ConsumerState<HiddenContentScreen> {
+  List<_HiddenUser> _users = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHiddenUsers();
+  }
+
+  /// Загрузка списка пользователей со скрытым контентом
+  Future<void> _loadHiddenUsers() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      // Предполагаем, что endpoint называется /get_hidden_users.php
+      // Если endpoint другой, его можно будет изменить
+      final data = await api.get('/get_hidden_users.php');
+
+      if (data['success'] == true) {
+        final usersList = data['users'] as List<dynamic>? ?? [];
+        setState(() {
+          _users = usersList.map((item) {
+            return _HiddenUser(
+              id: item['id'] as int,
+              name: item['name'] as String? ?? 'Пользователь',
+              avatar: item['avatar'] as String?,
+              // Если переключатель выключен - контент скрыт
+              isActivitiesHidden: (item['activities_hidden'] as int? ?? 0) == 1,
+              isPostsHidden: (item['posts_hidden'] as int? ?? 0) == 1,
+            );
+          }).toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = data['message'] ?? 'Ошибка при загрузке списка';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = ErrorHandler.format(e);
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Обновление статуса скрытия тренировок
+  Future<void> _updateActivitiesHidden(int userId, bool isHidden) async {
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/hide_user_content.php',
+        body: {
+          'hidden_user_id': userId.toString(),
+          'action': isHidden ? 'hide' : 'show',
+          'content_type': 'activity',
+        },
+        timeout: const Duration(seconds: 10),
+      );
+
+      if (data['success'] == true) {
+        setState(() {
+          _users = _users.map((user) {
+            if (user.id == userId) {
+              return user.copyWith(isActivitiesHidden: isHidden);
+            }
+            return user;
+          }).toList();
+        });
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              data['message']?.toString() ?? 'Не удалось обновить настройки',
+            ),
+          ),
+        );
+        // Откатываем изменение
+        _loadHiddenUsers();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            ErrorHandler.formatWithContext(
+              e,
+              context: 'обновлении настроек тренировок',
+            ),
+          ),
+        ),
+      );
+      // Откатываем изменение
+      _loadHiddenUsers();
+    }
+  }
+
+  /// Обновление статуса скрытия постов
+  Future<void> _updatePostsHidden(int userId, bool isHidden) async {
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/hide_user_content.php',
+        body: {
+          'hidden_user_id': userId.toString(),
+          'action': isHidden ? 'hide' : 'show',
+          'content_type': 'post',
+        },
+        timeout: const Duration(seconds: 10),
+      );
+
+      if (data['success'] == true) {
+        setState(() {
+          _users = _users.map((user) {
+            if (user.id == userId) {
+              return user.copyWith(isPostsHidden: isHidden);
+            }
+            return user;
+          }).toList();
+        });
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              data['message']?.toString() ?? 'Не удалось обновить настройки',
+            ),
+          ),
+        );
+        // Откатываем изменение
+        _loadHiddenUsers();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            ErrorHandler.formatWithContext(
+              e,
+              context: 'обновлении настроек постов',
+            ),
+          ),
+        ),
+      );
+      // Откатываем изменение
+      _loadHiddenUsers();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InteractiveBackSwipe(
+      child: Scaffold(
+        backgroundColor: AppColors.getBackgroundColor(context),
+        appBar: const PaceAppBar(title: 'Скрытые тренировки и посты'),
+        body: SafeArea(
+          child: _isLoading
+              ? const Center(child: CupertinoActivityIndicator(radius: 16))
+              : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _error!,
+                        style: TextStyle(
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      CupertinoButton(
+                        onPressed: _loadHiddenUsers,
+                        child: const Text('Повторить'),
+                      ),
+                    ],
+                  ),
+                )
+              : _users.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons.eye_slash,
+                        size: 48,
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Нет скрытых пользователей',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 15,
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    // ─── Заголовок таблицы ───
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                'Пользователь',
+                                style: AppTextStyles.h13w5.copyWith(
+                                  color: AppColors.getTextSecondaryColor(
+                                    context,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Center(
+                                child: Text(
+                                  'Тренировки',
+                                  style: AppTextStyles.h13w5.copyWith(
+                                    color: AppColors.getTextSecondaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Center(
+                                child: Text(
+                                  'Посты',
+                                  style: AppTextStyles.h13w5.copyWith(
+                                    color: AppColors.getTextSecondaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // ─── Список пользователей ───
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final user = _users[index];
+                        return _HiddenUserRow(
+                          user: user,
+                          onActivitiesChanged: (value) {
+                            _updateActivitiesHidden(
+                              user.id,
+                              !value, // Инвертируем: если переключатель выключен - скрыто
+                            );
+                          },
+                          onPostsChanged: (value) {
+                            _updatePostsHidden(
+                              user.id,
+                              !value, // Инвертируем: если переключатель выключен - скрыто
+                            );
+                          },
+                        );
+                      }, childCount: _users.length),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Строка таблицы с пользователем и переключателями
+class _HiddenUserRow extends StatelessWidget {
+  final _HiddenUser user;
+  final ValueChanged<bool> onActivitiesChanged;
+  final ValueChanged<bool> onPostsChanged;
+
+  const _HiddenUserRow({
+    required this.user,
+    required this.onActivitiesChanged,
+    required this.onPostsChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowSoft,
+            offset: const Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Row(
+          children: [
+            // ─── Первая колонка: аватар и имя ───
+            Expanded(
+              flex: 3,
+              child: Row(
+                children: [
+                  Avatar(
+                    image: user.avatar != null && user.avatar!.isNotEmpty
+                        ? user.avatar!
+                        : 'assets/avatar_0.png',
+                    size: 40,
+                    fadeIn: true,
+                    gapless: true,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      user.name,
+                      style: AppTextStyles.h14w4.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ─── Вторая колонка: переключатель "Тренировки" ───
+            Expanded(
+              flex: 2,
+              child: Center(
+                child: CupertinoSwitch(
+                  value: !user
+                      .isActivitiesHidden, // Инвертируем: если скрыто - переключатель выключен
+                  onChanged: onActivitiesChanged,
+                  activeTrackColor: AppColors.brandPrimary,
+                ),
+              ),
+            ),
+
+            // ─── Третья колонка: переключатель "Посты" ───
+            Expanded(
+              flex: 2,
+              child: Center(
+                child: CupertinoSwitch(
+                  value: !user
+                      .isPostsHidden, // Инвертируем: если скрыто - переключатель выключен
+                  onChanged: onPostsChanged,
+                  activeTrackColor: AppColors.brandPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
