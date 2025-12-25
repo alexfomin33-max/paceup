@@ -65,6 +65,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final PageController _pageController = PageController();
   final GearPrefs _gearPrefs = GearPrefs();
   final GlobalKey<MainTabState> _mainTabKey = GlobalKey<MainTabState>();
+  late List<Widget?> _tabCache = List<Widget?>.filled(
+    _tabTitles.length,
+    null,
+    growable: false,
+  );
+  int? _cachedUserId;
+  DateTime? _lastProfileRefresh;
+  static const _profileRefreshDebounce = Duration(seconds: 4);
 
   int _tab = 0;
   bool _wasRouteActive =
@@ -75,6 +83,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       0; // Плавное появление имени пользователя в AppBar от 0 до 1
   double _headerOpacity =
       1; // Плавное исчезновение всей шапки (cover + карточка) при скролле
+
+  @override
+  void initState() {
+    super.initState();
+    // ────────────────────────────────────────────────────────────────
+    // Предкэшируем обложку, чтобы убрать декодирование в первый кадр
+    // и снизить лаг при открытии профиля.
+    // ────────────────────────────────────────────────────────────────
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await precacheImage(const AssetImage('assets/fon.jpg'), context);
+    });
+  }
 
   @override
   void dispose() {
@@ -90,9 +111,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   // и избежать визуального "мигания" изображения
   // ────────────────────────────────────────────────────────────────────────
   void _updateProfileHeader(int userId) {
-    // Используем refresh() для обновления данных без очистки кэша аватарки
-    // Это обновит количество подписок и подписчиков без визуального эффекта
-    ref.read(profileHeaderProvider(userId).notifier).refresh();
+    // Используем refresh() с антидребезгом, чтобы не спамить сетью
+    // при быстром перелистывании вкладок.
+    _refreshProfileDebounced(userId);
   }
 
   // ────────────────────────────────────────────────────────────────────────
@@ -139,6 +160,53 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  // ────────────────────────────────────────────────────────────────────
+  //                           КЭШИРОВАНИЕ ВКЛАДОК
+  // ────────────────────────────────────────────────────────────────────
+
+  /// Следим, что кэш соответствует текущему userId, иначе пересобираем его.
+  void _ensureTabCacheForUser(int userId) {
+    if (_cachedUserId == userId) return;
+    _cachedUserId = userId;
+    _tabCache = List<Widget?>.filled(_tabTitles.length, null, growable: false);
+    _tabCache[0] = MainTab(key: _mainTabKey, userId: userId);
+  }
+
+  /// Возвращает вкладку из кэша или создаёт новую с сохранением.
+  Widget _getTab(int index, int userId) {
+    final cached = _tabCache[index];
+    if (cached != null) return cached;
+    final created = _createTab(index, userId);
+    _tabCache[index] = created;
+    return created;
+  }
+
+  /// Создаёт конкретную вкладку по индексу.
+  Widget _createTab(int index, int userId) {
+    switch (index) {
+      case 0:
+        return MainTab(key: _mainTabKey, userId: userId);
+      case 1:
+        return PhotosTab(userId: userId);
+      case 2:
+        return StatsTab(userId: userId);
+      case 3:
+        return TrainingTab(userId: userId);
+      case 4:
+        return const RacesTab();
+      case 5:
+        return GearTab(userId: userId);
+      case 6:
+        return ClubsTab(userId: userId);
+      case 7:
+        return const AwardsTab();
+      case 8:
+        return const SkillsTab();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
   void _onPageChanged(int i) {
     setState(() => _tab = i);
     // При переключении на вкладку "Основное" (индекс 0) проверяем кэш
@@ -152,13 +220,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     // ────────────────────────────────────────────────────────────────────────
     final userId = widget.userId;
     if (userId != null) {
-      _updateProfileHeader(userId);
+      _refreshProfileDebounced(userId);
     } else {
       // Если userId не передан, получаем текущего пользователя
       final currentUserIdAsync = ref.read(currentUserIdProvider);
       currentUserIdAsync.whenData((currentUserId) {
         if (currentUserId != null) {
-          _updateProfileHeader(currentUserId);
+          _refreshProfileDebounced(currentUserId);
         }
       });
     }
@@ -325,6 +393,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final isOwnProfile = currentUserId != null && currentUserId == userId;
 
     // ────────────────────────────────────────────────────────────────
+    // Высоты шапки, рассчитанные один раз за build (без повторных MediaQuery).
+    // ────────────────────────────────────────────────────────────────
+    final headerMetrics = _headerMetrics(context);
+
+    // ────────────────────────────────────────────────────────────────
+    // Ленивая инициализация табов под конкретного пользователя, чтобы
+    // не держать в кэше чужие вкладки и не пересоздавать MainTab.
+    // ────────────────────────────────────────────────────────────────
+    _ensureTabCacheForUser(userId);
+
+    // ────────────────────────────────────────────────────────────────
     // 🔹 КЛЮЧ ДЛЯ МЕНЮ: нужен для привязки всплывающего меню в AppBar
     // ────────────────────────────────────────────────────────────────
     final menuKey = GlobalKey();
@@ -333,13 +412,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       backgroundColor: AppColors.getBackgroundColor(context),
       body: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
-          if (notification is ScrollUpdateNotification) {
-            final screenW = MediaQuery.of(context).size.width;
-            final coverHeight = screenW / 2.3;
-            final containerHeight = coverHeight + 68;
-            final expandedHeight =
-                containerHeight + 0; // Совмещаем с фактической высотой AppBar
-            final threshold = expandedHeight * 0.8; // Порог коллапса шапки
+          // Обрабатываем только вертикальные уведомления верхнего уровня,
+          // чтобы свайпы PageView (горизонтальные) не трогали анимацию шапки.
+          if (notification is ScrollUpdateNotification &&
+              notification.depth == 0 &&
+              notification.metrics.axis == Axis.vertical) {
+            final threshold =
+                headerMetrics.threshold; // Порог коллапса шапки (кэш)
 
             // ──────────────────────────────────────────────────────────────
             // Плавно считаем прогресс схлопывания шапки, чтобы анимировать
@@ -352,8 +431,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             final newHeaderOpacity = (1 - newOpacity).clamp(0.0, 1.0);
 
             if (newIsScrolled != _isScrolled ||
-                (newOpacity - _titleOpacity).abs() > 0.02 ||
-                (newHeaderOpacity - _headerOpacity).abs() > 0.02) {
+                (newOpacity - _titleOpacity).abs() > 0.04 ||
+                (newHeaderOpacity - _headerOpacity).abs() > 0.04) {
               setState(() {
                 _isScrolled = newIsScrolled;
                 _titleOpacity = newOpacity;
@@ -369,9 +448,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           // имя появляется в заголовке при прокрутке.
           // ──────────────────────────────────────────────────────────────
           headerSliverBuilder: (context, innerBoxIsScrolled) {
-            final screenW = MediaQuery.of(context).size.width;
-            final coverHeight = screenW / 2.3;
-            final containerHeight = coverHeight + 28;
+            final coverHeight = headerMetrics.coverHeight;
+            final containerHeight = headerMetrics.containerHeightTabs;
             final expandedHeight = containerHeight + 0;
             final displayName = _buildDisplayName(profileState);
 
@@ -454,7 +532,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         const SizedBox(width: 6),
                       ],
                 flexibleSpace: FlexibleSpaceBar(
-                  collapseMode: CollapseMode.parallax,
+                  collapseMode: CollapseMode.none,
                   // Плавно скрываем весь flexibleSpace (обложка + карточка)
                   background: AnimatedOpacity(
                     opacity: headerOpacity,
@@ -464,7 +542,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       userId: userId,
                       profileState: profileState,
                       coverHeight: coverHeight,
-                      containerHeight: containerHeight,
+                      containerHeight: headerMetrics.containerHeightHeader,
                       displayName: displayName ?? 'Профиль',
                       onReload: () {
                         ref
@@ -489,32 +567,79 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           },
           body: GearPrefsScope(
             notifier: _gearPrefs,
-            child: PageView(
+            child: PageView.builder(
               controller: _pageController,
               physics: const BouncingScrollPhysics(),
               onPageChanged: _onPageChanged,
-              children: [
-                MainTab(key: _mainTabKey, userId: userId),
-                PhotosTab(userId: userId),
-                StatsTab(userId: userId),
-                TrainingTab(userId: userId),
-                const RacesTab(),
-                GearTab(userId: userId),
-                ClubsTab(userId: userId),
-                const AwardsTab(),
-                const SkillsTab(),
-              ],
+              itemCount: _tabTitles.length,
+              // Ленивая сборка вкладок: создаём по требованию и кэшируем,
+              // чтобы не тратить кадры и память на невидимые экраны.
+              itemBuilder: (context, index) => _getTab(index, userId),
             ),
           ),
         ),
       ),
     );
   }
+
+  // ────────────────────────────────────────────────────────────────────
+  // МЕТРИКИ ШАПКИ (кэшируем расчёты размеров) + антидребезг refresh
+  // ────────────────────────────────────────────────────────────────────
+
+  _HeaderMetrics _headerMetrics(BuildContext context) =>
+      _HeaderMetrics.fromContext(context);
+
+  void _refreshProfileDebounced(int userId) {
+    final now = DateTime.now();
+    if (_lastProfileRefresh != null &&
+        now.difference(_lastProfileRefresh!) < _profileRefreshDebounce) {
+      return;
+    }
+    _lastProfileRefresh = now;
+    ref.read(profileHeaderProvider(userId).notifier).refresh();
+  }
 }
 
 // ────────────────────────────────────────────────────────────────────
 //                           ЛОКАЛЬНЫЕ ВИДЖЕТЫ
 // ────────────────────────────────────────────────────────────────────
+
+// ────────────────────────────────────────────────────────────────────
+//                           МОДЕЛЬ МЕТРИК ШАПКИ
+// ────────────────────────────────────────────────────────────────────
+
+class _HeaderMetrics {
+  final double screenWidth;
+  final double coverHeight;
+  final double containerHeightHeader;
+  final double containerHeightTabs;
+  final double threshold;
+
+  const _HeaderMetrics({
+    required this.screenWidth,
+    required this.coverHeight,
+    required this.containerHeightHeader,
+    required this.containerHeightTabs,
+    required this.threshold,
+  });
+
+  factory _HeaderMetrics.fromContext(BuildContext context) {
+    final screenW = MediaQuery.of(context).size.width;
+    final coverHeight = screenW / 2.3;
+    // Высота блока обложки + карточки (используется для исчезновения).
+    final containerHeightHeader = coverHeight + 68;
+    // Высота для расширенной шапки с Tabs (слегка меньше для визуальной связки).
+    final containerHeightTabs = coverHeight + 28;
+    final threshold = containerHeightHeader * 0.8;
+    return _HeaderMetrics(
+      screenWidth: screenW,
+      coverHeight: coverHeight,
+      containerHeightHeader: containerHeightHeader,
+      containerHeightTabs: containerHeightTabs,
+      threshold: threshold,
+    );
+  }
+}
 
 /// Гибкая шапка профиля в стиле VK (cover + HeaderCard внутри flexibleSpace).
 class _ProfileFlexibleSpace extends StatelessWidget {
@@ -600,26 +725,24 @@ class _ProfileFlexibleSpace extends StatelessWidget {
             Positioned(
               left: 116,
               right: 12,
-              top: coverHeight + 12,
+              top: coverHeight + 11,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   SizedBox(
                     height: 24,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      child: Text(
-                        displayName,
-                        style: AppTextStyles.h17w6.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.getTextPrimaryColor(context),
-                        ),
+                    child: Text(
+                      displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.h17w6.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 7),
                   Row(
                     children: [
                       _CountPill(label: 'Подписки', value: following),
@@ -803,10 +926,6 @@ class _CircleAppIcon extends StatelessWidget {
     );
   }
 }
-
-// ────────────────────────────────────────────────────────────────────
-//                           ЛОКАЛЬНЫЕ ХЕЛПЕРЫ
-// ────────────────────────────────────────────────────────────────────
 
 /// Показывает всплывающее меню для действий со своим профилем
 /// (редактирование профиля, поиск людей, настройки).

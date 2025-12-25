@@ -194,7 +194,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     _scrollController.dispose();
     _prefetchDebounceTimer?.cancel(); // ✅ Очищаем таймер prefetch
     _unreadChatsPollingTimer?.cancel(); // ✅ Очищаем таймер polling чатов
-    _unreadNotificationsPollingTimer?.cancel(); // ✅ Очищаем таймер polling уведомлений
+    _unreadNotificationsPollingTimer
+        ?.cancel(); // ✅ Очищаем таймер polling уведомлений
     super.dispose();
   }
 
@@ -305,7 +306,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               .catchError((error) {
                 _isSyncingHealthData = false;
                 if (kDebugMode) {
-                  debugPrint('Ошибка автоматической синхронизации Health Connect: $error');
+                  debugPrint(
+                    'Ошибка автоматической синхронизации Health Connect: $error',
+                  );
                 }
               });
         }
@@ -418,7 +421,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   /// Обновляет счетчик каждые 5 секунд, чтобы пользователь видел
   /// новые непрочитанные уведомления в реальном времени.
   void _startUnreadNotificationsPolling(int userId) {
-    _unreadNotificationsPollingTimer?.cancel(); // Отменяем предыдущий таймер, если есть
+    _unreadNotificationsPollingTimer
+        ?.cancel(); // Отменяем предыдущий таймер, если есть
 
     _unreadNotificationsPollingTimer = Timer.periodic(_pollingInterval, (_) {
       if (!mounted || _actualUserId == null) {
@@ -805,16 +809,16 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         ),
       ),
     );
-    // Читаем состояние непрочитанных чатов
-    final unreadChatsState = _actualUserId != null
-        ? ref.watch(unreadChatsProvider(_actualUserId!))
-        : null;
-    // Читаем состояние уведомлений для счетчика
-    // ✅ Используем селектор для отслеживания только unreadCount
-    // Это гарантирует, что виджет перестроится при изменении счетчика
-    // ✅ Исправлено: используем полное состояние для гарантии обновления
-    final notificationsState = ref.watch(notificationsProvider);
-    final unreadNotificationsCount = notificationsState.unreadCount;
+    // Читаем состояние непрочитанных чатов только по числу, чтобы не триггерить rebuild AppBar
+    final unreadChatsCount = _actualUserId != null
+        ? ref.watch(
+            unreadChatsProvider(_actualUserId!).select((s) => s.unreadCount),
+          )
+        : 0;
+    // Читаем состояние уведомлений для счетчика — тоже селектор по числу
+    final unreadNotificationsCount = ref.watch(
+      notificationsProvider.select((s) => s.unreadCount),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
@@ -870,11 +874,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                 icon: CupertinoIcons.bubble_left_bubble_right,
                 onPressed: _openChat,
               ),
-              if (unreadChatsState != null && unreadChatsState.unreadCount > 0)
+              if (unreadChatsCount > 0)
                 Positioned(
                   right: 4,
                   top: 4,
-                  child: _Badge(count: unreadChatsState.unreadCount),
+                  child: _Badge(count: unreadChatsCount),
                 ),
             ],
           ),
@@ -963,11 +967,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
         return NotificationListener<ScrollNotification>(
           onNotification: (n) {
-            // ────────── Скрываем меню при скролле ──────────
-            if (n is ScrollStartNotification ||
-                n is ScrollUpdateNotification ||
-                n is OverscrollNotification ||
-                n is UserScrollNotification) {
+            // ────────── Скрываем меню только при явном жесте пользователя ──────────
+            // ✅ Снижаем количество вызовов hide(), чтобы не занимать главный поток
+            if (n is UserScrollNotification) {
               MoreMenuHub.hide();
             }
 
@@ -1000,6 +1002,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
+              // ────────── cacheExtent ──────────
+              // ✅ Подгружаем чуть дальше экрана (~1.5x высоты) для плавности
+              cacheExtent: MediaQuery.of(context).size.height * 1.5,
               itemCount: items.length + (lentaSnapshot.isLoadingMore ? 1 : 0),
               // ────────────────────────────────────────────────────────
               // 🎯 ОПТИМИЗАЦИЯ: RepaintBoundary добавляем вручную только
@@ -1032,6 +1037,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                 if (shouldShowRecommended) {
                   final card = _buildFeedItem(activity);
                   return RepaintBoundary(
+                    key: ValueKey(activity.lentaId),
                     child: Column(
                       children: [
                         card,
@@ -1058,12 +1064,16 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
                 if (shouldWrapInRepaintBoundary) {
                   return RepaintBoundary(
+                    key: ValueKey(activity.lentaId),
                     child: Column(children: [card, const SizedBox(height: 16)]),
                   );
                 }
 
                 // Простые виджеты без изображений — без RepaintBoundary
-                return Column(children: [card, const SizedBox(height: 16)]);
+                return Column(
+                  key: ValueKey(activity.lentaId),
+                  children: [card, const SizedBox(height: 16)],
+                );
               },
             ),
           ),
