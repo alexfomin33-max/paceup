@@ -356,6 +356,7 @@ class ActivityBlock extends ConsumerWidget {
                             .toList(),
                         imageUrls: updatedActivity.mediaImages,
                         height: 350,
+                        mapSortOrder: updatedActivity.mapSortOrder,
                       );
                     }
 

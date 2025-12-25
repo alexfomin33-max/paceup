@@ -6,7 +6,7 @@ import '../../../../core/utils/static_map_url_builder.dart';
 import '../../../../core/theme/app_theme.dart';
 
 /// Карусель маршрута с фотографиями для активности.
-/// Первый слайд — статичная карта с маршрутом (PNG), остальные — фотографии.
+/// Карта и фотографии отображаются в порядке, указанном в mapSortOrder.
 ///
 /// ⚡ PERFORMANCE OPTIMIZATION:
 /// - Использует статичные PNG картинки вместо Mapbox GL для устранения jank
@@ -19,6 +19,7 @@ class ActivityRouteCarousel extends StatefulWidget {
     required this.imageUrls,
     this.height = 240,
     this.onMapTap,
+    this.mapSortOrder,
   });
 
   /// Точки трека в порядке следования.
@@ -32,6 +33,10 @@ class ActivityRouteCarousel extends StatefulWidget {
 
   /// Callback для клика на карту (вызывается только при клике на слайд с картой).
   final VoidCallback? onMapTap;
+
+  /// Позиция карты в общем списке (изображения + карта).
+  /// Если null, карта идет первой (для обратной совместимости).
+  final int? mapSortOrder;
 
   @override
   State<ActivityRouteCarousel> createState() => _ActivityRouteCarouselState();
@@ -112,8 +117,18 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
     }
 
     // Если есть и точки, и фотографии — показываем карусель с картой и фотографиями
-    // Общее количество слайдов: карта (1) + фотографии
+    // Определяем позицию карты в общем списке
+    final mapPosition = widget.mapSortOrder ?? 0; // По умолчанию карта идет первой
     final totalSlides = 1 + widget.imageUrls.length;
+
+    // Создаем список элементов для отображения
+    final List<_CarouselItem> items = [];
+    for (int i = 0; i < widget.imageUrls.length; i++) {
+      items.add(_CarouselItem.image(widget.imageUrls[i], i));
+    }
+    // Вставляем карту в нужную позицию
+    final insertIndex = mapPosition.clamp(0, items.length);
+    items.insert(insertIndex, _CarouselItem.map());
 
     return SizedBox(
       height: widget.height,
@@ -133,27 +148,24 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
               setState(() => _currentIndex = index);
               // Очищаем кэш изображений, которые далеко от текущего
               final evictIndex = index - 2;
-              if (evictIndex >= 1 && evictIndex < totalSlides) {
-                final photoIndex = evictIndex - 1;
-                if (photoIndex >= 0 && photoIndex < widget.imageUrls.length) {
-                  _evictNetworkImage(widget.imageUrls[photoIndex]);
+              if (evictIndex >= 0 && evictIndex < items.length) {
+                final item = items[evictIndex];
+                if (item.isImage) {
+                  _evictNetworkImage(item.imageUrl!);
                 }
               }
             },
             itemBuilder: (context, index) {
-              // Первый слайд — статичная карта
-              if (index == 0) {
+              final item = items[index];
+              
+              if (item.isMap) {
                 return GestureDetector(
                   onTap: widget.onMapTap,
                   child: _buildStaticMapSlide(),
                 );
+              } else {
+                return _buildPhotoSlide(item.imageUrl!);
               }
-
-              // Остальные слайды — фотографии
-              final photoIndex = index - 1;
-              final imageUrl = widget.imageUrls[photoIndex];
-
-              return _buildPhotoSlide(imageUrl);
             },
           ),
 
@@ -354,4 +366,16 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
       // Игнорируем ошибки очистки кэша
     }
   }
+}
+
+/// Вспомогательный класс для представления элемента карусели (изображение или карта)
+class _CarouselItem {
+  final String? imageUrl;
+  final int? photoIndex;
+  final bool isMap;
+
+  _CarouselItem.image(this.imageUrl, this.photoIndex) : isMap = false;
+  _CarouselItem.map() : imageUrl = null, photoIndex = null, isMap = true;
+  
+  bool get isImage => !isMap;
 }
