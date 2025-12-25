@@ -19,6 +19,8 @@ class TrainingActivity {
   final double pace; // средний темп
   final String paceText; // "4:15 /км"
   final List<RoutePoint> points; // Точки маршрута для карты
+  final bool hasValidTrack; // Есть ли валидный трек маршрута
+  final String? firstImageUrl; // URL первого изображения (если есть)
 
   TrainingActivity({
     required this.id,
@@ -31,6 +33,8 @@ class TrainingActivity {
     required this.pace,
     required this.paceText,
     required this.points,
+    required this.hasValidTrack,
+    this.firstImageUrl,
   });
 
   factory TrainingActivity.fromJson(Map<String, dynamic> json) {
@@ -67,6 +71,8 @@ class TrainingActivity {
       pace: (json['pace'] as num?)?.toDouble() ?? 0.0,
       paceText: json['paceText'] as String? ?? '',
       points: pointsList,
+      hasValidTrack: (json['hasValidTrack'] as bool?) ?? false,
+      firstImageUrl: json['firstImageUrl'] as String?,
     );
   }
 }

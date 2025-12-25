@@ -903,25 +903,17 @@ class _WorkoutRow extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(10, 8, 20, 8),
         child: Row(
           children: [
-            // Мини-карта 80x80 (статичная карта маршрута)
+            // Мини-карта/изображение 80x70
+            // Логика приоритетов:
+            // 1. Если есть трек И изображения → показываем трек
+            // 2. Если нет трека, но есть изображения → показываем первое изображение
+            // 3. Если нет трека И нет изображений → показываем заглушку
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.sm),
               child: SizedBox(
                 width: 80,
                 height: 70,
-                child: item.points.isEmpty || !_arePointsValidForMap(item.points)
-                    ? Image(
-                        image: AssetImage(
-                          // Выбираем картинку в зависимости от типа спорта
-                          item.kind == 2
-                              ? 'assets/nogps_swim.jpg' // Плавание
-                              : (item.kind == 0
-                                  ? 'assets/nogps.jpg' // Бег
-                                  : 'assets/training_map.png'), // Велосипед
-                        ),
-                        fit: BoxFit.cover,
-                      )
-                    : _buildStaticMiniMap(context, item.points),
+                child: _buildActivityImage(context, item),
               ),
             ),
             const SizedBox(width: 12),
@@ -1181,6 +1173,53 @@ class _WorkoutRow extends ConsumerWidget {
     );
   }
 
+  /// Строит изображение для активности согласно логике приоритетов:
+  /// 1. Если есть валидный трек И есть изображения → показываем трек
+  /// 2. Если нет трека, но есть изображения → показываем первое изображение
+  /// 3. Если нет трека И нет изображений → показываем заглушку
+  Widget _buildActivityImage(BuildContext context, _Workout item) {
+    // 1. Если есть валидный трек И есть изображения → показываем трек
+    if (item.hasValidTrack && item.firstImageUrl != null) {
+      return _buildStaticMiniMap(context, item.points);
+    }
+    
+    // 2. Если нет трека, но есть изображения → показываем первое изображение
+    if (!item.hasValidTrack && item.firstImageUrl != null) {
+      return CachedNetworkImage(
+        imageUrl: item.firstImageUrl!,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        placeholder: (context, url) => Container(
+          color: AppColors.getSurfaceColor(context),
+          child: const Center(
+            child: CupertinoActivityIndicator(),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildPlaceholderImage(item.kind),
+      );
+    }
+    
+    // 3. Если нет трека И нет изображений → показываем заглушку
+    // Также показываем заглушку, если есть трек, но нет изображений
+    return _buildPlaceholderImage(item.kind);
+  }
+
+  /// Строит изображение-заглушку в зависимости от типа спорта
+  Widget _buildPlaceholderImage(int kind) {
+    return Image(
+      image: AssetImage(
+        // Выбираем картинку в зависимости от типа спорта
+        kind == 2
+            ? 'assets/nogps_swim.jpg' // Плавание
+            : (kind == 0
+                ? 'assets/nogps.jpg' // Бег
+                : 'assets/training_map.png'), // Велосипед
+      ),
+      fit: BoxFit.cover,
+    );
+  }
+
   /// Отображает метрику с выравниванием по левому краю
   Widget _metric(
     BuildContext context,
@@ -1256,6 +1295,8 @@ class _Workout {
   final double distance; // км для конвертации
   final int duration; // секунды для конвертации
   final double pace; // темп для конвертации
+  final bool hasValidTrack; // Есть ли валидный трек маршрута
+  final String? firstImageUrl; // URL первого изображения (если есть)
 
   _Workout(
     this.id,
@@ -1268,6 +1309,8 @@ class _Workout {
     this.duration,
     this.pace, [
     this.points = const [],
+    this.hasValidTrack = false,
+    this.firstImageUrl,
   ]);
 
   /// Создаёт из TrainingActivity
@@ -1310,6 +1353,8 @@ class _Workout {
       activity.duration,
       pace,
       latLngPoints,
+      activity.hasValidTrack,
+      activity.firstImageUrl,
     );
   }
 
