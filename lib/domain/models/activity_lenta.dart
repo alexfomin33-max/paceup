@@ -31,6 +31,7 @@ class Activity {
   final bool islike;
   final List<String> mediaImages; // полные URL картинок
   final List<String> mediaVideos; // полные URL видео
+  final int? mapSortOrder; // позиция карты в общем списке (изображения + карта)
 
   Activity({
     required this.id,
@@ -54,6 +55,7 @@ class Activity {
     this.islike = false,
     this.mediaImages = const [],
     this.mediaVideos = const [],
+    this.mapSortOrder,
   });
 
   factory Activity.fromApi(Map<String, dynamic> j) {
@@ -103,6 +105,7 @@ class Activity {
       ),
       mediaImages: mediaImages,
       mediaVideos: mediaVideos,
+      mapSortOrder: j['map_sort_order'] != null ? _asInt(j['map_sort_order']) : null,
     );
   }
 
@@ -132,6 +135,7 @@ class Activity {
       islike: islike,
       mediaImages: mediaImages,
       mediaVideos: mediaVideos,
+      mapSortOrder: mapSortOrder,
     );
   }
 
@@ -159,6 +163,7 @@ class Activity {
       islike: islike,
       mediaImages: mediaImages,
       mediaVideos: mediaVideos,
+      mapSortOrder: mapSortOrder,
     );
   }
 
@@ -186,6 +191,7 @@ class Activity {
       islike: islike,
       mediaImages: images ?? mediaImages,
       mediaVideos: videos ?? mediaVideos,
+      mapSortOrder: mapSortOrder,
     );
   }
 }
