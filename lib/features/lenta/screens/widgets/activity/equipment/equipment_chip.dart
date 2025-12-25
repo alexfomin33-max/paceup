@@ -28,6 +28,8 @@ class EquipmentChip extends StatefulWidget {
   backgroundColor; // опциональный цвет фона плашки (для переопределения на конкретных экранах)
   final Color?
   menuButtonColor; // опциональный цвет фона кнопки меню (для переопределения на конкретных экранах)
+  final bool
+  showDivider; // показывать ли нижний разделитель (для тонкой настройки экранов)
 
   const EquipmentChip({
     super.key,
@@ -42,6 +44,7 @@ class EquipmentChip extends StatefulWidget {
     this.onEquipmentSelected,
     this.backgroundColor,
     this.menuButtonColor,
+    this.showDivider = true,
   });
 
   @override
@@ -93,8 +96,17 @@ class _EquipmentChipState extends State<EquipmentChip> {
 
     return Column(
       children: [
-        SizedBox(
+        Container(
           height: 64, // 56 + 4 (верх) + 4 (низ) = 64
+          decoration: BoxDecoration(
+            color: widget.backgroundColor ??
+                AppColors.getSurfaceColor(context),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
           child: Padding(
             padding: const EdgeInsets.only(
               left: 16,
@@ -286,7 +298,11 @@ class _EquipmentChipState extends State<EquipmentChip> {
         // ────────────────────────────────────────────────────────────────
         // РАЗДЕЛИТЕЛЬ: горизонтальная линия снизу блока экипировки
         // ────────────────────────────────────────────────────────────────
-        Container(height: 0.5, color: AppColors.getDividerColor(context)),
+        if (widget.showDivider)
+          Container(
+            height: 0.5,
+            color: AppColors.getDividerColor(context),
+          ),
       ],
     );
   }

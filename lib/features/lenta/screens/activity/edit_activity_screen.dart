@@ -26,6 +26,22 @@ import '../../../../core/widgets/form_error_display.dart';
 
 import '../widgets/activity/equipment/equipment_chip.dart';
 
+// ────────────────────────────────────────────────────────────────
+// 🔹 ВСПОМОГАТЕЛЬНЫЕ ТИПЫ ДЛЯ КАРУСЕЛИ (фото / мини-карта)
+// ────────────────────────────────────────────────────────────────
+enum _CarouselItemType { map, photo }
+
+class _CarouselItem {
+  final _CarouselItemType type;
+  final String? url;
+
+  const _CarouselItem.map()
+      : type = _CarouselItemType.map,
+        url = null;
+
+  const _CarouselItem.photo(this.url) : type = _CarouselItemType.photo;
+}
+
 /// ────────────────────────────────────────────────────────────────
 /// 🔹 ЭКРАН РЕДАКТИРОВАНИЯ АКТИВНОСТИ
 /// ────────────────────────────────────────────────────────────────
@@ -65,6 +81,9 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   // Индекс перетаскиваемой фотографии
   int? _draggedIndex;
 
+  // Позиция мини-карты в карусели (0 = первой после кнопки добавления)
+  int? _mapPosition;
+
   // Экипировка (для добавления, если не выбрана)
   bool _showEquipment = false;
   List<Equipment> _availableEquipment = [];
@@ -82,6 +101,11 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
     // Инициализируем фотографии
     _imageUrls.addAll(widget.activity.mediaImages);
+
+    // Фиксируем начальную позицию карты, если маршрут есть
+    if (widget.activity.points.isNotEmpty) {
+      _mapPosition = 0;
+    }
 
     // Инициализируем видимость из userGroup
     // Предполагаем: 0 = публичная, 1 = подписчики, 2 = только я
@@ -132,6 +156,79 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       if (list1[i] != list2[i]) return false;
     }
     return true;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ ПЕРЕТАСКИВАНИЯ КАРТЫ И ФОТО
+  // ────────────────────────────────────────────────────────────────
+
+  bool get _hasRoute => widget.activity.points.isNotEmpty;
+
+  /// Формирует список элементов карусели (карта + фото) в актуальном порядке
+  List<_CarouselItem> _buildCarouselItems(bool hasRoute) {
+    final items = _imageUrls.map(_CarouselItem.photo).toList();
+
+    if (hasRoute) {
+      final int safeMapIndex = (_mapPosition ?? 0)
+          .clamp(0, items.length)
+          .toInt(); // защита от выхода за границы
+      items.insert(safeMapIndex, const _CarouselItem.map());
+    }
+
+    return items;
+  }
+
+  /// Проверяет, один и тот же ли элемент (карта или конкретное фото)
+  bool _isSameItem(_CarouselItem a, _CarouselItem b) {
+    if (a.type != b.type) return false;
+    if (a.type == _CarouselItemType.map) return true;
+    return a.url == b.url;
+  }
+
+  /// Находит индекс элемента в текущем списке
+  int _findItemIndex(List<_CarouselItem> items, _CarouselItem target) {
+    return items.indexWhere((element) => _isSameItem(element, target));
+  }
+
+  /// Обрабатывает перестановку элементов (карта ↔ фото, фото ↔ фото)
+  void _handleReorder(
+    _CarouselItem dragged,
+    int targetIndex,
+    bool hasRoute,
+  ) {
+    final items = _buildCarouselItems(hasRoute);
+    final oldIndex = _findItemIndex(items, dragged);
+
+    if (oldIndex == -1 || oldIndex == targetIndex) return;
+
+    final updated = List<_CarouselItem>.from(items);
+    final item = updated.removeAt(oldIndex);
+    updated.insert(targetIndex, item);
+
+    _applyNewOrder(updated);
+  }
+
+  /// Применяет новый порядок: обновляет список фото и позицию карты
+  void _applyNewOrder(List<_CarouselItem> items) {
+    final newImages = <String>[];
+    int? newMapPosition;
+
+    for (var i = 0; i < items.length; i++) {
+      final item = items[i];
+      if (item.type == _CarouselItemType.map) {
+        newMapPosition = i;
+      } else if (item.url != null) {
+        newImages.add(item.url!);
+      }
+    }
+
+    setState(() {
+      _imageUrls
+        ..clear()
+        ..addAll(newImages);
+      _mapPosition = newMapPosition;
+      _checkForChanges();
+    });
   }
 
   @override
@@ -313,17 +410,19 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   /// Горизонтальная карусель фотографий
   /// Порядок: кнопка добавления фото → карта (если есть маршрут) → фотографии
   Widget _buildPhotoCarousel() {
-    // Проверяем, есть ли у тренировки маршрут
-    final hasRoute = widget.activity.points.isNotEmpty;
+    final hasRoute = _hasRoute;
 
     // Преобразуем точки маршрута в LatLng для карты (если есть)
     final routePoints = hasRoute
         ? widget.activity.points.map((c) => LatLng(c.lat, c.lng)).toList()
         : <LatLng>[];
 
+    // Формируем текущий порядок элементов (карта + фото)
+    final items = _buildCarouselItems(hasRoute);
+
     // Общее количество элементов:
-    // кнопка добавления (1) + карта (1, если есть маршрут) + фотографии
-    final totalItems = 1 + (hasRoute ? 1 : 0) + _imageUrls.length;
+    // кнопка добавления (1) + карта/фото (динамический список)
+    final totalItems = 1 + items.length;
 
     return SizedBox(
       height: 96, // 90 + 6 (padding сверху для кнопок удаления)
@@ -341,17 +440,16 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
             return _buildAddPhotoButton();
           }
 
-          // Если есть маршрут, второй элемент — карта
-          if (hasRoute && index == 1) {
-            return _buildMapItem(routePoints);
-          }
+          // Динамические элементы: карта или фото
+          final itemIndex = index - 1; // смещение из-за кнопки добавления
+          final item = items[itemIndex];
 
-          // Остальные элементы — фотографии
-          // Если есть маршрут, фотографии начинаются с index 2
-          // Если нет маршрута, фотографии начинаются с index 1
-          final photoIndex = hasRoute ? index - 2 : index - 1;
-          final imageUrl = _imageUrls[photoIndex];
-          return _buildDraggablePhotoItem(imageUrl, photoIndex);
+          return _buildDraggableCarouselItem(
+            item: item,
+            itemIndex: itemIndex,
+            routePoints: routePoints,
+            hasRoute: hasRoute,
+          );
         },
       ),
     );
@@ -380,16 +478,23 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     );
   }
 
-  /// Элемент карты маршрута (второй в карусели)
+  /// Элемент карты маршрута (позиция может меняться при dnd)
   /// Использует статичную картинку с оптимизацией размера
-  Widget _buildMapItem(List<LatLng> points) {
+  Widget _buildMapItem(
+    List<LatLng> points, {
+    bool isDragging = false,
+  }) {
     return Container(
       width: 90,
       height: 90,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.sm),
         color: AppColors.getBackgroundColor(context),
-        border: Border.all(color: AppColors.getBorderColor(context)),
+        border: Border.all(
+          color: isDragging
+              ? AppColors.brandPrimary
+              : AppColors.getBorderColor(context),
+        ),
       ),
       clipBehavior: Clip.antiAlias,
       child: points.isEmpty
@@ -464,22 +569,31 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     );
   }
 
-  /// Перетаскиваемый элемент фотографии
-  Widget _buildDraggablePhotoItem(String imageUrl, int photoIndex) {
-    final isDragging = _draggedIndex == photoIndex;
+  /// Перетаскиваемый элемент (фото или мини-карта)
+  Widget _buildDraggableCarouselItem({
+    required _CarouselItem item,
+    required int itemIndex,
+    required List<LatLng> routePoints,
+    required bool hasRoute,
+  }) {
+    final isDragging = _draggedIndex == itemIndex;
 
-    return LongPressDraggable<String>(
-      data: imageUrl,
+    return LongPressDraggable<_CarouselItem>(
+      data: item,
       feedback: Material(
         color: Colors.transparent,
         child: Opacity(
           opacity: 0.8,
-          child: _buildPhotoItemContent(imageUrl, isDragging: true),
+          child: _buildCarouselItemContent(
+            item,
+            isDragging: true,
+            routePoints: routePoints,
+          ),
         ),
       ),
       onDragStarted: () {
         setState(() {
-          _draggedIndex = photoIndex;
+          _draggedIndex = itemIndex;
         });
       },
       onDragEnd: (details) {
@@ -487,29 +601,36 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           _draggedIndex = null;
         });
       },
-      child: DragTarget<String>(
-        onWillAcceptWithDetails: (data) => data.data != imageUrl,
-        onAcceptWithDetails: (data) {
-          final oldIndex = _imageUrls.indexOf(data.data);
-          final newIndex = photoIndex;
-
-          if (oldIndex != -1 && oldIndex != newIndex) {
-            setState(() {
-              _imageUrls.removeAt(oldIndex);
-              _imageUrls.insert(newIndex, data.data);
-              _checkForChanges();
-            });
-          }
-        },
+      child: DragTarget<_CarouselItem>(
+        onWillAccept: (data) => data != null && !_isSameItem(data, item),
+        onAccept: (data) => _handleReorder(data, itemIndex, hasRoute),
         builder: (context, candidateData, rejectedData) {
           final isTargeted = candidateData.isNotEmpty;
           return Opacity(
             opacity: isDragging ? 0.5 : (isTargeted ? 0.7 : 1.0),
-            child: _buildPhotoItemContent(imageUrl, isDragging: isDragging),
+            child: _buildCarouselItemContent(
+              item,
+              isDragging: isDragging,
+              routePoints: routePoints,
+            ),
           );
         },
       ),
     );
+  }
+
+  /// Содержимое элемента карусели с учётом типа (карта/фото)
+  Widget _buildCarouselItemContent(
+    _CarouselItem item, {
+    required bool isDragging,
+    required List<LatLng> routePoints,
+  }) {
+    if (item.type == _CarouselItemType.map) {
+      return _buildMapItem(routePoints, isDragging: isDragging);
+    }
+
+    final imageUrl = item.url ?? '';
+    return _buildPhotoItemContent(imageUrl, isDragging: isDragging);
   }
 
   /// Содержимое элемента фотографии (без обертки drag and drop)
@@ -647,6 +768,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       activityId: updatedActivity.id,
       activityDistance: (updatedActivity.stats?.distance ?? 0.0) / 1000.0,
       showMenuButton: true,
+      // Убираем нижний разделитель на экране редактирования
+      showDivider: false,
       // ────────────────────────────────────────────────────────────────
       // 🔹 ФОН ПЛАШКИ: в светлой теме используем surface вместо background
       // ────────────────────────────────────────────────────────────────
@@ -704,6 +827,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         activityId: widget.activity.id,
         activityDistance: (widget.activity.stats?.distance ?? 0.0) / 1000.0,
         showMenuButton: true,
+        // Убираем нижний разделитель на экране редактирования
+        showDivider: false,
         backgroundColor: Theme.of(context).brightness == Brightness.light
             ? AppColors.getSurfaceColor(context)
             : null,
@@ -979,6 +1104,12 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           'media_images': _imageUrls, // Отправляем новый порядок фотографий
         };
 
+        // Передаём позицию мини-карты, чтобы бек мог воспроизвести порядок
+        // визуальной карусели (если есть маршрут и позиция определена)
+        if (_hasRoute && _mapPosition != null) {
+          body['map_position'] = _mapPosition.toString();
+        }
+
         // Получаем equip_user_id из выбранной экипировки
         // Отправляем только если чекбокс включен и экипировка выбрана
         if (_showEquipment && _selectedEquipment != null) {
@@ -1171,26 +1302,6 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
               lentaId: widget.activity.lentaId,
               mediaImages: _imageUrls,
             );
-
-        if (mounted) {
-          await showCupertinoDialog<void>(
-            context: context,
-            builder: (ctx) => CupertinoAlertDialog(
-              title: const Text('Готово'),
-              content: const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text('Фотографии добавлены к тренировке.'),
-              ),
-              actions: [
-                CupertinoDialogAction(
-                  isDefaultAction: true,
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Ок'),
-                ),
-              ],
-            ),
-          );
-        }
       } else {
         // Если сервер не вернул список, обновляем через refresh
         await ref.read(lentaProvider(widget.currentUserId).notifier).refresh();

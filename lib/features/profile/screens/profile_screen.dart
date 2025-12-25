@@ -412,6 +412,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       backgroundColor: AppColors.getBackgroundColor(context),
       body: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
+          // ──────────────────────────────────────────────────────────────
+          // При любом вертикальном скролле прячем всплывающее меню
+          // с тремя точками, чтобы оно не перекрывало контент.
+          // ──────────────────────────────────────────────────────────────
+          if (notification.depth == 0 &&
+              notification.metrics.axis == Axis.vertical) {
+            MoreMenuHub.hide();
+          }
+
           // Обрабатываем только вертикальные уведомления верхнего уровня,
           // чтобы свайпы PageView (горизонтальные) не трогали анимацию шапки.
           if (notification is ScrollUpdateNotification &&
