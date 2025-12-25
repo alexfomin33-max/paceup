@@ -102,10 +102,6 @@ class _EquipmentChipState extends State<EquipmentChip> {
             color: widget.backgroundColor ??
                 AppColors.getSurfaceColor(context),
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
           ),
           child: Padding(
             padding: const EdgeInsets.only(
