@@ -118,7 +118,8 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
 
     // Если есть и точки, и фотографии — показываем карусель с картой и фотографиями
     // Определяем позицию карты в общем списке
-    final mapPosition = widget.mapSortOrder ?? 0; // По умолчанию карта идет первой
+    // Если mapSortOrder == null, карта идет после всех изображений (для обратной совместимости)
+    final mapPosition = widget.mapSortOrder ?? widget.imageUrls.length;
     final totalSlides = 1 + widget.imageUrls.length;
 
     // Создаем список элементов для отображения
