@@ -77,11 +77,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       r'закончил забег\s+(\d+(?:\.\d+)?)\s*км\.?',
       caseSensitive: false,
     );
-    
+
     text = text.replaceAllMapped(runPattern, (match) {
       final distanceStr = match.group(1) ?? '0';
       final distance = double.tryParse(distanceStr) ?? 0.0;
-      final formattedDistance = distance.toStringAsFixed(2).replaceAll('.', ',');
+      final formattedDistance = distance
+          .toStringAsFixed(2)
+          .replaceAll('.', ',');
       return 'закончил забег $formattedDistance км';
     });
 
@@ -91,11 +93,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       r'закончил заезд\s+(\d+(?:\.\d+)?)\s*км\.?',
       caseSensitive: false,
     );
-    
+
     text = text.replaceAllMapped(ridePattern, (match) {
       final distanceStr = match.group(1) ?? '0';
       final distance = double.tryParse(distanceStr) ?? 0.0;
-      final formattedDistance = distance.toStringAsFixed(2).replaceAll('.', ',');
+      final formattedDistance = distance
+          .toStringAsFixed(2)
+          .replaceAll('.', ',');
       return 'закончил заезд $formattedDistance км';
     });
 
@@ -105,7 +109,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       r'закончил заплыв\s+(\d+(?:\.\d+)?)\s*км\.?',
       caseSensitive: false,
     );
-    
+
     text = text.replaceAllMapped(swimPattern, (match) {
       final distanceStr = match.group(1) ?? '0';
       final distanceKm = double.tryParse(distanceStr) ?? 0.0;
@@ -150,6 +154,28 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       default:
         return CupertinoIcons.bell;
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Получение иконки для уведомления на основе текста
+  // Для тренировок определяет иконку по тексту ("закончил заплыв" → иконка плавания и т.д.)
+  // ─────────────────────────────────────────────────────────────────────────────
+  IconData _getIconDataForNotification(NotificationItem notification) {
+    final text = notification.text.toLowerCase();
+
+    // Проверяем текст на наличие упоминаний о тренировках
+    if (text.contains('закончил заплыв') || text.contains('заплыв')) {
+      return Icons.pool;
+    }
+    if (text.contains('закончил заезд') || text.contains('заезд')) {
+      return Icons.pedal_bike;
+    }
+    if (text.contains('закончил забег') || text.contains('забег')) {
+      return Icons.directions_run;
+    }
+
+    // Если это не тренировка, используем стандартную логику по icon коду
+    return _getIconData(notification.icon);
   }
 
   // Получение цвета из строки
@@ -525,7 +551,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 color: Theme.of(context).brightness == Brightness.dark
                     ? AppColors.getBorderColor(context)
                     : AppColors.border,
-                indent: 57,
+                indent: 70,
                 endIndent: 8,
               ),
               itemBuilder: (context, i) {
@@ -551,65 +577,100 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       horizontal: 8,
                       vertical: 10,
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Stack(
                       children: [
-                        // Аватарка отправителя (с обработчиком клика)
-                        GestureDetector(
-                          onTap: () => _handleAvatarTap(notification.senderId),
-                          child: ClipOval(
-                            child: CachedNetworkImage(
-                              imageUrl: notification.senderAvatar,
-                              width: 40,
-                              height: 40,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                width: 40,
-                                height: 40,
-                                color: AppColors.skeletonBase,
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                width: 40,
-                                height: 40,
-                                color: AppColors.skeletonBase,
-                                child: const Icon(CupertinoIcons.person),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Аватарка отправителя (с обработчиком клика)
+                            GestureDetector(
+                              onTap: () =>
+                                  _handleAvatarTap(notification.senderId),
+                              child: SizedBox(
+                                width: 52,
+                                height: 52,
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    ClipOval(
+                                      child: CachedNetworkImage(
+                                        imageUrl: notification.senderAvatar,
+                                        width: 52,
+                                        height: 52,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) =>
+                                            Container(
+                                              width: 52,
+                                              height: 52,
+                                              color: AppColors.skeletonBase,
+                                            ),
+                                        errorWidget: (context, url, error) =>
+                                            Container(
+                                              width: 52,
+                                              height: 52,
+                                              color: AppColors.skeletonBase,
+                                              child: const Icon(
+                                                CupertinoIcons.person,
+                                              ),
+                                            ),
+                                      ),
+                                    ),
+                                    // ─── Иконка уведомления в правом верхнем углу ───
+                                    Positioned(
+                                      right: -3,
+                                      top: -3,
+                                      child: Container(
+                                        width: 20,
+                                        height: 20,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: _resolveIconColor(
+                                            notification,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.getSurfaceColor(
+                                              context,
+                                            ),
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          _getIconDataForNotification(
+                                            notification,
+                                          ),
+                                          size: 12,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
+                            const SizedBox(width: 10),
 
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    _getIconData(notification.icon),
-                                    size: 16,
-                                    color: _resolveIconColor(notification),
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    _formatWhen(notification.createdAt),
-                                    style: AppTextStyles.h11w4Ter,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
+                            Expanded(
+                              child: Text(
                                 _formatNotificationText(notification.text),
                                 style: TextStyle(
                                   fontSize: 13,
-                                  height: 1.25,
+                                  height: 1.5,
                                   fontWeight: isRead
                                       ? FontWeight.normal
                                       : FontWeight.w600,
                                   color: AppColors.getTextPrimaryColor(context),
                                 ),
                               ),
-                            ],
+                            ),
+                          ],
+                        ),
+                        // ─── Дата в правом нижнем углу карточки ───
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: Text(
+                            _formatWhen(notification.createdAt),
+                            style: AppTextStyles.h11w4Ter,
                           ),
                         ),
                       ],

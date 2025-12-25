@@ -21,22 +21,22 @@ import '../../../../../market/screens/tabs/things/tradechat_things_screen.dart';
 class ChatItem {
   final int id;
   final String chatType; // 'regular', 'slot' или 'thing'
-  
+
   // Для обычных чатов
   final int? userId;
   final String? userName;
   final String? userAvatar;
-  
+
   // Для чатов по продаже слотов
   final int? slotId;
   final String? slotTitle;
   final String? eventLogoUrl;
-  
+
   // Для чатов по продаже вещей
   final int? thingId;
   final String? thingTitle;
   final String? thingImageUrl;
-  
+
   final String lastMessage;
   final bool
   lastMessageHasImage; // ─── Флаг наличия изображения в последнем сообщении ───
@@ -65,12 +65,14 @@ class ChatItem {
 
   factory ChatItem.fromJson(Map<String, dynamic> json) {
     final chatType = json['chat_type'] as String? ?? 'regular';
-    
+
     if (chatType == 'slot') {
       return ChatItem(
         id: (json['id'] as num).toInt(),
         chatType: chatType,
-        slotId: json['slot_id'] != null ? (json['slot_id'] as num).toInt() : null,
+        slotId: json['slot_id'] != null
+            ? (json['slot_id'] as num).toInt()
+            : null,
         slotTitle: json['slot_title'] as String?,
         eventLogoUrl: json['event_logo_url'] as String?,
         lastMessage: json['last_message'] as String? ?? '',
@@ -83,7 +85,9 @@ class ChatItem {
       return ChatItem(
         id: (json['id'] as num).toInt(),
         chatType: chatType,
-        thingId: json['thing_id'] != null ? (json['thing_id'] as num).toInt() : null,
+        thingId: json['thing_id'] != null
+            ? (json['thing_id'] as num).toInt()
+            : null,
         thingTitle: json['thing_title'] as String?,
         thingImageUrl: json['thing_image_url'] as String?,
         lastMessage: json['last_message'] as String? ?? '',
@@ -96,7 +100,9 @@ class ChatItem {
       return ChatItem(
         id: (json['id'] as num).toInt(),
         chatType: chatType,
-        userId: json['user_id'] != null ? (json['user_id'] as num).toInt() : null,
+        userId: json['user_id'] != null
+            ? (json['user_id'] as num).toInt()
+            : null,
         userName: json['user_name'] as String?,
         userAvatar: json['user_avatar'] as String?,
         lastMessage: json['last_message'] as String? ?? '',
@@ -107,7 +113,7 @@ class ChatItem {
       );
     }
   }
-  
+
   bool get isSlotChat => chatType == 'slot';
   bool get isThingChat => chatType == 'thing';
   bool get isRegularChat => chatType == 'regular';
@@ -118,17 +124,11 @@ class _SlotChatScreenWrapper extends StatelessWidget {
   final int slotId;
   final int? chatId; // ─── chatId для открытия конкретного чата ───
 
-  const _SlotChatScreenWrapper({
-    required this.slotId,
-    this.chatId,
-  });
+  const _SlotChatScreenWrapper({required this.slotId, this.chatId});
 
   @override
   Widget build(BuildContext context) {
-    return TradeChatSlotsScreen(
-      slotId: slotId,
-      chatId: chatId,
-    );
+    return TradeChatSlotsScreen(slotId: slotId, chatId: chatId);
   }
 }
 
@@ -137,17 +137,11 @@ class _ThingChatScreenWrapper extends StatelessWidget {
   final int thingId;
   final int? chatId; // ─── chatId для открытия конкретного чата ───
 
-  const _ThingChatScreenWrapper({
-    required this.thingId,
-    this.chatId,
-  });
+  const _ThingChatScreenWrapper({required this.thingId, this.chatId});
 
   @override
   Widget build(BuildContext context) {
-    return TradeChatThingsScreen(
-      thingId: thingId,
-      chatId: chatId,
-    );
+    return TradeChatThingsScreen(thingId: thingId, chatId: chatId);
   }
 }
 
@@ -414,7 +408,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       return 'http://uploads.paceup.ru/images/users/avatars/${chat.userId}/${chat.userAvatar}';
     }
   }
-  
+
   /// ─── Получение названия для отображения ───
   String _getDisplayName(ChatItem chat) {
     if (chat.isSlotChat) {
@@ -515,21 +509,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             }
 
             // ─── Список чатов ───
-            return ListView.separated(
+            return ListView.builder(
               controller: _scrollController,
               physics: const BouncingScrollPhysics(
                 parent: AlwaysScrollableScrollPhysics(),
               ),
               itemCount: _chats.length + (_isLoadingMore ? 1 : 0),
-              separatorBuilder: (_, _) => Divider(
-                height: 1,
-                thickness: 0.5,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.getBorderColor(context)
-                    : AppColors.border,
-                indent: 62,
-                endIndent: 8,
-              ),
               itemBuilder: (context, i) {
                 // Индикатор загрузки в конце списка
                 if (i == _chats.length) {
@@ -554,15 +539,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       // Аватар или logo события/вещи
                       (chat.isSlotChat || chat.isThingChat)
                           ? ClipRRect(
-                              borderRadius: BorderRadius.circular(22),
+                              borderRadius: BorderRadius.circular(26),
                               child: Builder(
                                 builder: (context) {
-                                  final dpr = MediaQuery.of(context).devicePixelRatio;
-                                  final w = (44 * dpr).round();
+                                  final dpr = MediaQuery.of(
+                                    context,
+                                  ).devicePixelRatio;
+                                  final w = (52 * dpr).round();
                                   if (imageUrl == null || imageUrl.isEmpty) {
                                     return Container(
-                                      width: 44,
-                                      height: 44,
+                                      width: 52,
+                                      height: 52,
                                       color: AppColors.surfaceMuted,
                                       child: Icon(
                                         chat.isSlotChat
@@ -577,16 +564,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                       '${chat.isSlotChat ? 'slot' : 'thing'}_logo_${chat.id}_$imageUrl',
                                     ),
                                     imageUrl: imageUrl,
-                                    width: 44,
-                                    height: 44,
+                                    width: 52,
+                                    height: 52,
                                     fit: BoxFit.cover,
-                                    fadeInDuration: const Duration(milliseconds: 120),
+                                    fadeInDuration: const Duration(
+                                      milliseconds: 120,
+                                    ),
                                     memCacheWidth: w,
                                     maxWidthDiskCache: w,
                                     errorWidget: (context, url, error) {
                                       return Container(
-                                        width: 44,
-                                        height: 44,
+                                        width: 52,
+                                        height: 52,
                                         color: AppColors.surfaceMuted,
                                         child: Icon(
                                           chat.isSlotChat
@@ -603,24 +592,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                           : ClipOval(
                               child: Builder(
                                 builder: (context) {
-                                  final dpr = MediaQuery.of(context).devicePixelRatio;
-                                  final w = (44 * dpr).round();
-                                  final url = imageUrl ?? 'http://uploads.paceup.ru/images/users/avatars/def.png';
+                                  final dpr = MediaQuery.of(
+                                    context,
+                                  ).devicePixelRatio;
+                                  final w = (52 * dpr).round();
+                                  final url =
+                                      imageUrl ??
+                                      'http://uploads.paceup.ru/images/users/avatars/def.png';
                                   return CachedNetworkImage(
                                     key: ValueKey(
                                       'avatar_${chat.id}_${chat.userId}_$url',
                                     ),
                                     imageUrl: url,
-                                    width: 44,
-                                    height: 44,
+                                    width: 52,
+                                    height: 52,
                                     fit: BoxFit.cover,
-                                    fadeInDuration: const Duration(milliseconds: 120),
+                                    fadeInDuration: const Duration(
+                                      milliseconds: 120,
+                                    ),
                                     memCacheWidth: w,
                                     maxWidthDiskCache: w,
                                     errorWidget: (context, url, error) {
                                       return Container(
-                                        width: 44,
-                                        height: 44,
+                                        width: 52,
+                                        height: 52,
                                         color: AppColors.surfaceMuted,
                                         child: const Icon(
                                           CupertinoIcons.person,
@@ -639,6 +634,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const SizedBox(height: 3),
                             // Первая строка: имя + время
                             Row(
                               children: [
@@ -720,43 +716,54 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   behavior: HitTestBehavior.opaque,
                   onTap: () async {
                     dynamic result;
-                    
+
                     if (chat.isSlotChat) {
                       // Для slot чатов открываем TradeChatSlotsScreen
                       if (chat.slotId != null) {
-                        result = await Navigator.of(context, rootNavigator: true).push(
-                          TransparentPageRoute(
-                            builder: (_) => _SlotChatScreenWrapper(
-                              slotId: chat.slotId!,
-                              chatId: chat.id, // ─── Передаем chatId для открытия конкретного чата ───
-                            ),
-                          ),
-                        );
+                        result =
+                            await Navigator.of(
+                              context,
+                              rootNavigator: true,
+                            ).push(
+                              TransparentPageRoute(
+                                builder: (_) => _SlotChatScreenWrapper(
+                                  slotId: chat.slotId!,
+                                  chatId: chat
+                                      .id, // ─── Передаем chatId для открытия конкретного чата ───
+                                ),
+                              ),
+                            );
                       }
                     } else if (chat.isThingChat) {
                       // Для thing чатов открываем TradeChatThingsScreen
                       if (chat.thingId != null) {
-                        result = await Navigator.of(context, rootNavigator: true).push(
-                          TransparentPageRoute(
-                            builder: (_) => _ThingChatScreenWrapper(
-                              thingId: chat.thingId!,
-                              chatId: chat.id, // ─── Передаем chatId для открытия конкретного чата ───
-                            ),
-                          ),
-                        );
+                        result =
+                            await Navigator.of(
+                              context,
+                              rootNavigator: true,
+                            ).push(
+                              TransparentPageRoute(
+                                builder: (_) => _ThingChatScreenWrapper(
+                                  thingId: chat.thingId!,
+                                  chatId: chat
+                                      .id, // ─── Передаем chatId для открытия конкретного чата ───
+                                ),
+                              ),
+                            );
                       }
                     } else {
                       // Для обычных чатов открываем PersonalChatScreen
-                      result = await Navigator.of(context, rootNavigator: true).push(
-                        TransparentPageRoute(
-                          builder: (_) => PersonalChatScreen(
-                            chatId: chat.id,
-                            userId: chat.userId ?? 0,
-                            userName: chat.userName ?? 'Пользователь',
-                            userAvatar: chat.userAvatar ?? '',
-                          ),
-                        ),
-                      );
+                      result = await Navigator.of(context, rootNavigator: true)
+                          .push(
+                            TransparentPageRoute(
+                              builder: (_) => PersonalChatScreen(
+                                chatId: chat.id,
+                                userId: chat.userId ?? 0,
+                                userName: chat.userName ?? 'Пользователь',
+                                userAvatar: chat.userAvatar ?? '',
+                              ),
+                            ),
+                          );
                     }
 
                     // Обновляем список чатов после возврата из чата
@@ -766,24 +773,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   },
                   child: chatRow,
                 );
-
-                // Нижняя граница под самой последней карточкой
-                final isLastVisible = i == _chats.length - 1 && !_isLoadingMore;
-                if (isLastVisible) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      item,
-                      Divider(
-                        height: 1,
-                        thickness: 0.5,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.getBorderColor(context)
-                            : AppColors.border,
-                      ),
-                    ],
-                  );
-                }
 
                 return item;
               },

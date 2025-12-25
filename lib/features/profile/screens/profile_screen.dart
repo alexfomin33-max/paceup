@@ -478,17 +478,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 elevation: 0,
                 scrolledUnderElevation: 1,
                 forceElevated: isCollapsed || titleOpacity > 0.05,
-                leadingWidth: 56,
+                leadingWidth: 46,
                 leading: isOwnProfile
                     ? null
-                    : IconButton(
-                        splashRadius: 22,
-                        icon: Icon(
-                          CupertinoIcons.back,
-                          size: 22,
-                          color: AppColors.getIconPrimaryColor(context),
+                    : Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: _CircleAppIcon(
+                          icon: CupertinoIcons.back,
+                          isScrolled: isCollapsed,
+                          fadeOpacity: headerOpacity,
+                          onPressed: () => Navigator.of(context).maybePop(),
                         ),
-                        onPressed: () => Navigator.of(context).maybePop(),
                       ),
                 title: displayName != null
                     ? AnimatedOpacity(
