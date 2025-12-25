@@ -446,11 +446,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           final newIndex = itemIndex;
 
           if (oldIndex != newIndex) {
-            setState(() {
-              // Обновляем позицию карты
-              _mapPosition = newIndex;
-              _checkForChanges();
-            });
+            _reorderMediaItems(oldIndex, newIndex);
           }
         },
         builder: (context, candidateData, rejectedData) {
@@ -583,100 +579,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           final newIndex = itemIndex;
 
           if (oldIndex != newIndex) {
-            setState(() {
-              // Создаем временный список для определения типа элементов
-              final items = _buildMediaItemsList();
-              
-              // Проверяем, что индексы валидны
-              if (oldIndex < 0 || oldIndex >= items.length || 
-                  newIndex < 0 || newIndex >= items.length) {
-                return;
-              }
-              
-              final draggedItem = items[oldIndex];
-
-              if (draggedItem.isMap) {
-                // Перетаскивается карта - просто обновляем позицию
-                _mapPosition = newIndex;
-              } else {
-                // Перетаскивается изображение
-                // oldIndex и newIndex - это индексы в объединенном списке (изображения + карта)
-                // photoIndex - это индекс изображения в списке _imageUrls (без карты)
-                
-                // Получаем текущий индекс изображения в списке _imageUrls
-                final oldPhotoIndex = draggedItem.photoIndex!;
-                
-                // Конвертируем newIndex (в объединенном списке) в insertIndex (в списке изображений)
-                // newIndex - это позиция в объединенном списке [изображения + карта]
-                // insertIndex - это позиция в списке только изображений [изображения]
-                int insertIndex = newIndex;
-                if (_mapPosition != null) {
-                  if (newIndex > _mapPosition!) {
-                    // Если вставляем после карты, уменьшаем индекс на 1 (вычитаем карту)
-                    insertIndex = newIndex - 1;
-                  } else {
-                    // Если newIndex <= _mapPosition, вставляем перед картой или на место карты
-                    // В этом случае newIndex уже указывает на правильную позицию в списке изображений
-                    // (так как карта еще не учтена в списке изображений)
-                    insertIndex = newIndex;
-                  }
-                }
-                
-                // Перемещаем изображение в списке _imageUrls
-                final imageUrlToMove = _imageUrls[oldPhotoIndex];
-                
-                // Проверяем, что перемещение действительно нужно
-                // Сравниваем старую позицию с новой позицией (до корректировки)
-                // Если позиции совпадают, ничего не делаем
-                if (oldPhotoIndex == insertIndex) {
-                  return;
-                }
-                
-                // Удаляем элемент
-                _imageUrls.removeAt(oldPhotoIndex);
-                
-                // Вычисляем финальный индекс для вставки с учетом удаления элемента
-                // После удаления все элементы с позиции oldPhotoIndex+1 сдвигаются влево на 1
-                // Поэтому если insertIndex > oldPhotoIndex, нужно уменьшить его на 1
-                int finalInsertIndex = insertIndex;
-                if (oldPhotoIndex < insertIndex) {
-                  finalInsertIndex = insertIndex - 1;
-                }
-                // Если oldPhotoIndex >= insertIndex, то finalInsertIndex = insertIndex
-                // (элемент удаляется после или на целевой позиции, поэтому сдвига не происходит)
-                
-                // Вставляем на правильную позицию
-                // Используем finalInsertIndex, который уже скорректирован с учетом удаления
-                _imageUrls.insert(finalInsertIndex.clamp(0, _imageUrls.length), imageUrlToMove);
-                
-                // Обновляем позицию карты, если она была затронута перемещением изображения
-                // Позиция карты в объединенном списке может измениться только если:
-                // 1. Изображение переместилось с позиции ПЕРЕД картой на позицию ПОСЛЕ карты
-                // 2. Изображение переместилось с позиции ПОСЛЕ карты на позицию ПЕРЕД картой
-                if (_mapPosition != null) {
-                  // oldPhotoIndex - это индекс в списке _imageUrls (без карты) ДО перемещения
-                  // finalInsertIndex - это индекс в списке _imageUrls (без карты) ПОСЛЕ перемещения
-                  // _mapPosition - это позиция карты в объединенном списке (изображения + карта)
-                  
-                  // Определяем, было ли изображение перед картой в объединенном списке
-                  final wasBeforeMap = oldPhotoIndex < _mapPosition!;
-                  // Определяем, будет ли изображение после карты в объединенном списке
-                  final willBeAfterMap = finalInsertIndex >= _mapPosition!;
-                  
-                  if (wasBeforeMap && willBeAfterMap) {
-                    // Изображение переместилось с позиции перед картой на позицию после карты
-                    // Карта сдвигается влево на 1 позицию
-                    _mapPosition = _mapPosition! - 1;
-                  } else if (!wasBeforeMap && !willBeAfterMap) {
-                    // Изображение переместилось с позиции после карты на позицию перед картой
-                    // Карта сдвигается вправо на 1 позицию
-                    _mapPosition = _mapPosition! + 1;
-                  }
-                  // В остальных случаях позиция карты не меняется
-                }
-              }
-              _checkForChanges();
-            });
+            _reorderMediaItems(oldIndex, newIndex);
           }
         },
         builder: (context, candidateData, rejectedData) {
@@ -707,6 +610,45 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     }
 
     return items;
+  }
+
+  /// Перестраивает единый список медиа после любого dnd
+  /// Позволяет менять местами карту и фото без потери порядка
+  void _reorderMediaItems(int oldIndex, int newIndex) {
+    final items = _buildMediaItemsList();
+
+    if (oldIndex < 0 ||
+        oldIndex >= items.length ||
+        newIndex < 0 ||
+        newIndex >= items.length) {
+      return;
+    }
+
+    // Перемещаем элемент: при переносе вправо вставляем после цели,
+    // чтобы фото могло занять место карты и наоборот
+    final dragged = items.removeAt(oldIndex);
+    final targetIndex = oldIndex < newIndex ? newIndex : newIndex;
+    items.insert(targetIndex.clamp(0, items.length), dragged);
+
+    final List<String> reorderedImages = [];
+    int? mapPos;
+
+    for (int i = 0; i < items.length; i++) {
+      final item = items[i];
+      if (item.isMap) {
+        mapPos = i;
+      } else if (item.imageUrl != null) {
+        reorderedImages.add(item.imageUrl!);
+      }
+    }
+
+    setState(() {
+      _imageUrls
+        ..clear()
+        ..addAll(reorderedImages);
+      _mapPosition = mapPos;
+      _checkForChanges();
+    });
   }
 
   /// Содержимое элемента фотографии (без обертки drag and drop)
@@ -1179,6 +1121,12 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           'user_group': _selectedVisibility.toString(),
           'media_images': _imageUrls, // Отправляем новый порядок фотографий
         };
+
+        // Сохраняем порядок карты в общем списке (фото + карта)
+        // Отправляем только если маршрут существует и позиция определена
+        if (_hasRoute && _mapPosition != null) {
+          body['map_sort_order'] = _mapPosition.toString();
+        }
 
         // Получаем equip_user_id из выбранной экипировки
         // Отправляем только если чекбокс включен и экипировка выбрана
