@@ -93,6 +93,9 @@ dev_dependencies:
   build_runner: ^2.4.13
   riverpod_generator: ^2.6.2
   drift_dev: ^2.20.3
+  # ────────────────────────── Investor PDF generation ──────────────────────────
+  pdf: ^3.11.3
+  docs_gee: ^1.0.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

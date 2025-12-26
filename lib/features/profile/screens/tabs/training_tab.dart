@@ -882,7 +882,8 @@ class _WorkoutRow extends ConsumerWidget {
         if (!context.mounted) return;
 
         // Если не удалось загрузить из API, используем локальную версию как fallback
-        final finalActivity = activity ??
+        final finalActivity =
+            activity ??
             item.toActivity(
               profileUserId,
               'Пользователь',
@@ -979,7 +980,8 @@ class _WorkoutRow extends ConsumerWidget {
                             MainAxisAlignment.start,
                           ),
                         ),
-                        IntrinsicWidth(
+                        SizedBox(
+                          width: 60,
                           child: _metric(
                             context,
                             Icons.speed,
@@ -1000,13 +1002,13 @@ class _WorkoutRow extends ConsumerWidget {
   }
 
   /// Прореживает точки маршрута для оптимизации построения карты.
-  /// 
+  ///
   /// Берет каждую N-ю точку (где N = step), обязательно сохраняя
   /// первую и последнюю точки маршрута.
-  /// 
+  ///
   /// Это необходимо для треков с большим количеством точек, чтобы
   /// уменьшить размер URL и ускорить генерацию карты Mapbox.
-  /// 
+  ///
   /// Прореживание применяется только если точек больше threshold.
   List<LatLng> _thinPoints(
     List<LatLng> points, {
@@ -1024,30 +1026,30 @@ class _WorkoutRow extends ConsumerWidget {
     }
 
     final thinnedPoints = <LatLng>[];
-    
+
     // Всегда добавляем первую точку
     thinnedPoints.add(points.first);
-    
+
     // Добавляем каждую step-ю точку, начиная с индекса step
     for (int i = step; i < points.length - 1; i += step) {
       thinnedPoints.add(points[i]);
     }
-    
+
     // Всегда добавляем последнюю точку (если она еще не добавлена)
     final lastPoint = points.last;
     if (thinnedPoints.last != lastPoint) {
       thinnedPoints.add(lastPoint);
     }
-    
+
     return thinnedPoints;
   }
 
   /// Проверяет, что точки маршрута валидны для построения карты.
-  /// 
+  ///
   /// Проверяет, что маршрут имеет достаточный разброс координат
   /// (минимум 0.001 градуса разницы между самой северной и южной точками,
   /// или между самой западной и восточной точками).
-  /// 
+  ///
   /// Это необходимо, потому что Mapbox Static Images API не может построить
   /// карту, если все точки находятся практически в одной точке.
   bool _arePointsValidForMap(List<LatLng> points) {
@@ -1130,7 +1132,7 @@ class _WorkoutRow extends ConsumerWidget {
         heightPx: heightPx.toDouble(),
         strokeWidth: 2.5,
         padding: 8.0,
-        maxWidth: 160.0,  // Дополнительное ограничение для маленьких карт
+        maxWidth: 160.0, // Дополнительное ограничение для маленьких карт
         maxHeight: 140.0, // Дополнительное ограничение для маленьких карт
       );
     } catch (e) {
@@ -1158,9 +1160,7 @@ class _WorkoutRow extends ConsumerWidget {
       maxWidthDiskCache: widthPx,
       placeholder: (context, url) => Container(
         color: AppColors.getSurfaceColor(context),
-        child: const Center(
-          child: CupertinoActivityIndicator(),
-        ),
+        child: const Center(child: CupertinoActivityIndicator()),
       ),
       errorWidget: (context, url, error) => Container(
         color: AppColors.getSurfaceColor(context),
@@ -1182,7 +1182,7 @@ class _WorkoutRow extends ConsumerWidget {
     if (item.hasValidTrack && item.firstImageUrl != null) {
       return _buildStaticMiniMap(context, item.points);
     }
-    
+
     // 2. Если нет трека, но есть изображения → показываем первое изображение
     if (!item.hasValidTrack && item.firstImageUrl != null) {
       return CachedNetworkImage(
@@ -1192,14 +1192,12 @@ class _WorkoutRow extends ConsumerWidget {
         height: double.infinity,
         placeholder: (context, url) => Container(
           color: AppColors.getSurfaceColor(context),
-          child: const Center(
-            child: CupertinoActivityIndicator(),
-          ),
+          child: const Center(child: CupertinoActivityIndicator()),
         ),
         errorWidget: (context, url, error) => _buildPlaceholderImage(item.kind),
       );
     }
-    
+
     // 3. Если нет трека И нет изображений → показываем заглушку
     // Также показываем заглушку, если есть трек, но нет изображений
     return _buildPlaceholderImage(item.kind);
@@ -1213,8 +1211,8 @@ class _WorkoutRow extends ConsumerWidget {
         kind == 2
             ? 'assets/nogps_swim.jpg' // Плавание
             : (kind == 0
-                ? 'assets/nogps.jpg' // Бег
-                : 'assets/training_map.png'), // Велосипед
+                  ? 'assets/nogps.jpg' // Бег
+                  : 'assets/training_map.png'), // Велосипед
       ),
       fit: BoxFit.cover,
     );
@@ -1232,11 +1230,7 @@ class _WorkoutRow extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (icon != null) ...[
-          Icon(
-            icon,
-            size: 16,
-            color: AppColors.getTextSecondaryColor(context),
-          ),
+          Icon(icon, size: 16, color: AppColors.getTextSecondaryColor(context)),
           const SizedBox(width: 8),
         ],
         Text(
@@ -1330,8 +1324,10 @@ class _Workout {
       // Для плавания пересчитываем темп в формат "мин/100м"
       if (activity.distance > 0 && activity.duration > 0) {
         // Рассчитываем темп из расстояния и времени: (время в сек * 100) / (расстояние в м * 60)
-        final distanceMeters = activity.distance * 1000; // конвертируем км в метры
-        final paceMinPer100m = (activity.duration * 100) / (distanceMeters * 60);
+        final distanceMeters =
+            activity.distance * 1000; // конвертируем км в метры
+        final paceMinPer100m =
+            (activity.duration * 100) / (distanceMeters * 60);
         paceText = formatPace(paceMinPer100m);
         pace = paceMinPer100m;
       } else if (activity.pace > 0) {
