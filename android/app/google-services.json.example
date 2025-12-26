@@ -1,0 +1,30 @@
+{
+  "_comment": "Это пример файла. Замените на реальный google-services.json из Firebase Console",
+  "project_info": {
+    "project_number": "551207679750",
+    "project_id": "paceup-83652",
+    "storage_bucket": "paceup-83652.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:551207679750:android:xxxxx",
+        "android_client_info": {
+          "package_name": "com.example.paceup"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "YOUR_API_KEY_HERE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
