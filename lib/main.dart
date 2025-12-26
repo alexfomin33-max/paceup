@@ -26,17 +26,20 @@ void main() async {
   // ВАЖНО: Перед запуском выполните: flutter pub get
   // Ошибки компиляции исчезнут после установки пакетов firebase_core и firebase_messaging
   // На macOS Firebase не инициализируем (FCM не поддерживается)
+  bool firebaseInitialized = false;
   if (!Platform.isMacOS) {
     try {
       await Firebase.initializeApp();
+      firebaseInitialized = true;
       if (kDebugMode) {
         debugPrint('✅ Firebase инициализирован');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Игнорируем ошибки инициализации Firebase
       // Это нормально, если пакеты еще не установлены (flutter pub get)
       if (kDebugMode) {
         debugPrint('⚠️ Firebase не инициализирован: $e');
+        debugPrint('⚠️ Stack trace: $stackTrace');
         debugPrint('   Выполните: flutter pub get');
       }
     }
@@ -84,9 +87,9 @@ void main() async {
   // ────────────────────────── Автоматическая регистрация FCM токена (для тестирования) ──────────────────────────
   // Регистрируем FCM токен при запуске (dev/test), даже если check_token не проходит.
   // Это удобно для тестирования, когда авторизация жестко задана в auth_service.dart
-  if (!Platform.isMacOS) {
+  if (!Platform.isMacOS && firebaseInitialized) {
     // Ждем небольшую задержку, чтобы Firebase точно инициализировался
-    Future.delayed(const Duration(milliseconds: 500), () async {
+    Future.delayed(const Duration(milliseconds: 1000), () async {
       try {
         if (kDebugMode) {
           debugPrint('🔔 [FCM] Начинаем регистрацию токена при запуске...');
@@ -128,6 +131,10 @@ void main() async {
         }
       }
     });
+  } else if (!Platform.isMacOS && !firebaseInitialized) {
+    if (kDebugMode) {
+      debugPrint('⚠️ [FCM] Firebase не инициализирован, пропускаем регистрацию FCM токена');
+    }
   }
 
   // Инициализируем базу данных через провайдер

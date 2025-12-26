@@ -25,7 +25,15 @@ class FCMService {
   factory FCMService() => _instance;
   FCMService._internal();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  // Ленивая инициализация FirebaseMessaging (создается только при первом использовании)
+  FirebaseMessaging? _messaging;
+  FirebaseMessaging get messaging {
+    if (_messaging == null) {
+      _messaging = FirebaseMessaging.instance;
+    }
+    return _messaging!;
+  }
+  
   final AuthService _auth = AuthService();
   final ApiService _api = ApiService();
   
@@ -55,7 +63,7 @@ class FCMService {
       }
       
       // Запрос разрешений на уведомления
-      NotificationSettings settings = await _messaging.requestPermission(
+      NotificationSettings settings = await messaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
@@ -105,7 +113,7 @@ class FCMService {
         debugPrint('🔔 [FCM] Запрашиваем токен у Firebase...');
       }
       
-      String? token = await _messaging.getToken();
+      String? token = await messaging.getToken();
       _fcmToken = token;
       
       if (kDebugMode) {
@@ -124,7 +132,7 @@ class FCMService {
       }
       
       // Слушаем обновления токена
-      _messaging.onTokenRefresh.listen((newToken) {
+      messaging.onTokenRefresh.listen((newToken) {
         if (kDebugMode) {
           debugPrint('🔔 [FCM] Токен обновлен, регистрируем новый токен...');
         }
@@ -231,7 +239,7 @@ class FCMService {
     });
 
     // Обработка уведомления, открывшего приложение из закрытого состояния
-    _messaging.getInitialMessage().then((RemoteMessage? message) {
+    messaging.getInitialMessage().then((RemoteMessage? message) {
       if (message != null) {
         if (kDebugMode) {
           debugPrint('📨 Приложение открыто из уведомления: ${message.data}');
