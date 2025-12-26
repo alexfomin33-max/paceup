@@ -8,11 +8,16 @@ import '../../../profile/providers/search/friends_search_provider.dart';
 import '../../../profile/screens/profile_screen.dart';
 
 /// Блок «Рекомендации для вас» с реальными данными из API
-class RecommendedBlock extends ConsumerWidget {
+class RecommendedBlock extends ConsumerStatefulWidget {
   const RecommendedBlock({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RecommendedBlock> createState() => _RecommendedBlockState();
+}
+
+class _RecommendedBlockState extends ConsumerState<RecommendedBlock> {
+  @override
+  Widget build(BuildContext context) {
     final recommendedFriendsAsync = ref.watch(recommendedFriendsProvider);
 
     // ────────────────────────────────────────────────────────────────
@@ -26,6 +31,9 @@ class RecommendedBlock extends ConsumerWidget {
       next.whenData((friends) {
         // Откладываем обновление кэша до завершения build
         Future.microtask(() {
+          // ✅ Проверяем, что виджет еще не удален перед использованием ref
+          if (!mounted) return;
+          
           final subscriptionNotifier = ref.read(
             subscriptionStateProvider.notifier,
           );
