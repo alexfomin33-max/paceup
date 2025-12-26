@@ -116,7 +116,7 @@ class _HiddenContentScreenState extends ConsumerState<HiddenContentScreen> {
       final data = await api.post(
         '/hide_user_content.php',
         body: {
-          'hidden_user_id': userId.toString(),
+          'hidden_user_id': userId,
           'action': isHidden ? 'hide' : 'show',
           'content_type': 'activity',
         },
@@ -168,7 +168,7 @@ class _HiddenContentScreenState extends ConsumerState<HiddenContentScreen> {
       final data = await api.post(
         '/hide_user_content.php',
         body: {
-          'hidden_user_id': userId.toString(),
+          'hidden_user_id': userId,
           'action': isHidden ? 'hide' : 'show',
           'content_type': 'post',
         },
