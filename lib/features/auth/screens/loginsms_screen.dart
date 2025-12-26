@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_shell.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../providers/services/api_provider.dart';
+import '../../../providers/services/fcm_provider.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../widgets/sms_code_input.dart';
 import '../widgets/resend_code_button.dart';
@@ -117,6 +119,18 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
 
         // 🔹 Если код валиден и виджет всё ещё в дереве
         if (codeValue > 0 && mounted) {
+          // Регистрируем FCM токен после успешного входа (только на мобильных устройствах)
+          if (!Platform.isMacOS) {
+            try {
+              final fcmService = ref.read(fcmServiceProvider);
+              await fcmService.initialize();
+            } catch (e) {
+              if (kDebugMode) {
+                debugPrint('Ошибка инициализации FCM: $e');
+              }
+            }
+          }
+          
           Navigator.pushReplacementNamed(
             context,
             '/lenta',

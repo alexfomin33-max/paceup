@@ -1,7 +1,10 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/services/auth_provider.dart';
+import '../../../providers/services/fcm_provider.dart';
 
 /// 🔹 SplashScreen — стартовый экран приложения, отображается при запуске
 /// Используется для проверки авторизации пользователя и перенаправления
@@ -92,6 +95,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       // 🔹 Пользователь авторизован
       final int? userId = await auth.getUserId();
       if (!mounted) return;
+
+      // Инициализируем FCM для авторизованного пользователя (только на мобильных устройствах)
+      if (!Platform.isMacOS) {
+        try {
+          final fcmService = ref.read(fcmServiceProvider);
+          await fcmService.initialize();
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('Ошибка инициализации FCM: $e');
+          }
+        }
+      }
 
       // Синхронизация будет запущена в LentaScreen после загрузки экрана
       // (там пользователь уже точно авторизован и данные готовы)

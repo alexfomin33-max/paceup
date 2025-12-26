@@ -45,6 +45,9 @@ dependencies:
   flutter_chat_ui: ^2.9.0
   flutter_chat_types: ^3.6.2
   flutter_local_notifications: ^19.5.0
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.9
+  device_info_plus: ^12.2.0
   
   # ────────────────────────── State Management ──────────────────────────
   flutter_riverpod: ^2.6.1
