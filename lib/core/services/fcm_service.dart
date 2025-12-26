@@ -2,7 +2,7 @@
 // Этот файл требует установки пакетов:
 //   - firebase_core: ^2.24.2
 //   - firebase_messaging: ^14.7.9
-//   - device_info_plus: ^9.1.1
+//   - device_info_plus: ^12.2.0
 //
 // Ошибки компиляции исчезнут после установки пакетов
 
@@ -66,27 +66,29 @@ class FCMService {
         debugPrint('🔔 [FCM] Статус разрешения: ${settings.authorizationStatus}');
       }
 
-      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional) {
+      // ВАЖНО: для регистрации токена разрешение на уведомления НЕ обязательно.
+      // Даже если пользователь запретил пуши, мы всё равно пытаемся получить FCM token
+      // и зарегистрировать его на сервере (пуши могут быть включены позже).
+      if (settings.authorizationStatus != AuthorizationStatus.authorized &&
+          settings.authorizationStatus != AuthorizationStatus.provisional) {
         if (kDebugMode) {
-          debugPrint('🔔 [FCM] Разрешение получено, получаем токен...');
+          debugPrint(
+            '⚠️ [FCM] Разрешение на уведомления не предоставлено (статус: ${settings.authorizationStatus}), '
+            'но токен всё равно попробуем зарегистрировать',
+          );
         }
-        
-        // Получаем FCM токен
-        await _getAndRegisterToken();
-        
-        // Настраиваем обработчики уведомлений
-        _setupMessageHandlers();
-        
-        _isInitialized = true;
-        
-        if (kDebugMode) {
-          debugPrint('✅ [FCM] Инициализирован успешно');
-        }
-      } else {
-        if (kDebugMode) {
-          debugPrint('⚠️ [FCM] Разрешение на уведомления не предоставлено (статус: ${settings.authorizationStatus})');
-        }
+      }
+
+      // Получаем FCM токен (вне зависимости от разрешений) и регистрируем на сервере
+      await _getAndRegisterToken();
+
+      // Настраиваем обработчики уведомлений (data-сообщения могут приходить даже без permission)
+      _setupMessageHandlers();
+
+      _isInitialized = true;
+
+      if (kDebugMode) {
+        debugPrint('✅ [FCM] Инициализация завершена');
       }
     } catch (e, stackTrace) {
       if (kDebugMode) {

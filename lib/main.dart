@@ -82,7 +82,7 @@ void main() async {
   final container = ProviderContainer();
 
   // ────────────────────────── Автоматическая регистрация FCM токена (для тестирования) ──────────────────────────
-  // Регистрируем FCM токен при запуске, если пользователь авторизован
+  // Регистрируем FCM токен при запуске (dev/test), даже если check_token не проходит.
   // Это удобно для тестирования, когда авторизация жестко задана в auth_service.dart
   if (!Platform.isMacOS) {
     // Ждем небольшую задержку, чтобы Firebase точно инициализировался
@@ -93,20 +93,17 @@ void main() async {
         }
         
         final auth = container.read(authServiceProvider);
-        final isAuthorized = await auth.isAuthorized();
-        
+        final userId = await auth.getUserId();
         if (kDebugMode) {
-          debugPrint('🔔 [FCM] Авторизация проверена: $isAuthorized');
+          debugPrint('🔔 [FCM] userId (из AuthService): $userId');
         }
-        
-        if (isAuthorized) {
-          final userId = await auth.getUserId();
-          if (kDebugMode) {
-            debugPrint('🔔 [FCM] userId: $userId');
-          }
-          
+
+        // Если userId есть — пытаемся инициализировать FCM и зарегистрировать токен.
+        // Не завязываемся на auth.isAuthorized(), т.к. он дергает сеть (check_token)
+        // и может возвращать false в dev среде.
+        if (userId != null) {
           final fcmService = container.read(fcmServiceProvider);
-          
+
           // Инициализируем FCM с подробным логированием
           try {
             await fcmService.initialize();
@@ -121,7 +118,7 @@ void main() async {
           }
         } else {
           if (kDebugMode) {
-            debugPrint('⚠️ [FCM] Пользователь не авторизован, пропускаем регистрацию');
+            debugPrint('⚠️ [FCM] userId == null, пропускаем регистрацию');
           }
         }
       } catch (e, stackTrace) {
