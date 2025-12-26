@@ -34,17 +34,26 @@ class FCMService {
 
   /// Инициализация FCM и запрос разрешений
   Future<void> initialize() async {
-    if (_isInitialized) return;
+    if (_isInitialized) {
+      if (kDebugMode) {
+        debugPrint('🔔 [FCM] Уже инициализирован, пропускаем');
+      }
+      return;
+    }
     
     // На macOS FCM не поддерживается, пропускаем инициализацию
     if (Platform.isMacOS) {
       if (kDebugMode) {
-        debugPrint('⚠️ FCM: Не поддерживается на macOS, пропускаем инициализацию');
+        debugPrint('⚠️ [FCM] Не поддерживается на macOS, пропускаем инициализацию');
       }
       return;
     }
     
     try {
+      if (kDebugMode) {
+        debugPrint('🔔 [FCM] Запрашиваем разрешения на уведомления...');
+      }
+      
       // Запрос разрешений на уведомления
       NotificationSettings settings = await _messaging.requestPermission(
         alert: true,
@@ -53,8 +62,16 @@ class FCMService {
         provisional: false,
       );
 
+      if (kDebugMode) {
+        debugPrint('🔔 [FCM] Статус разрешения: ${settings.authorizationStatus}');
+      }
+
       if (settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional) {
+        if (kDebugMode) {
+          debugPrint('🔔 [FCM] Разрешение получено, получаем токен...');
+        }
+        
         // Получаем FCM токен
         await _getAndRegisterToken();
         
@@ -64,16 +81,17 @@ class FCMService {
         _isInitialized = true;
         
         if (kDebugMode) {
-          debugPrint('✅ FCM инициализирован успешно');
+          debugPrint('✅ [FCM] Инициализирован успешно');
         }
       } else {
         if (kDebugMode) {
-          debugPrint('⚠️ FCM: Разрешение на уведомления не предоставлено');
+          debugPrint('⚠️ [FCM] Разрешение на уведомления не предоставлено (статус: ${settings.authorizationStatus})');
         }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (kDebugMode) {
-        debugPrint('❌ Ошибка инициализации FCM: $e');
+        debugPrint('❌ [FCM] Ошибка инициализации FCM: $e');
+        debugPrint('❌ [FCM] Stack trace: $stackTrace');
       }
     }
   }
@@ -81,20 +99,40 @@ class FCMService {
   /// Получение и регистрация FCM токена
   Future<void> _getAndRegisterToken() async {
     try {
+      if (kDebugMode) {
+        debugPrint('🔔 [FCM] Запрашиваем токен у Firebase...');
+      }
+      
       String? token = await _messaging.getToken();
       _fcmToken = token;
+      
+      if (kDebugMode) {
+        debugPrint('🔔 [FCM] Токен получен: ${token != null ? "${token.substring(0, 20)}..." : "null"}');
+      }
+      
       if (_fcmToken != null) {
+        if (kDebugMode) {
+          debugPrint('🔔 [FCM] Регистрируем токен на сервере...');
+        }
         await _registerTokenOnServer(_fcmToken!);
+      } else {
+        if (kDebugMode) {
+          debugPrint('⚠️ [FCM] Токен не получен от Firebase');
+        }
       }
       
       // Слушаем обновления токена
       _messaging.onTokenRefresh.listen((newToken) {
+        if (kDebugMode) {
+          debugPrint('🔔 [FCM] Токен обновлен, регистрируем новый токен...');
+        }
         _fcmToken = newToken;
         _registerTokenOnServer(newToken);
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (kDebugMode) {
-        debugPrint('❌ Ошибка получения FCM токена: $e');
+        debugPrint('❌ [FCM] Ошибка получения FCM токена: $e');
+        debugPrint('❌ [FCM] Stack trace: $stackTrace');
       }
     }
   }
@@ -105,9 +143,13 @@ class FCMService {
       final userId = await _auth.getUserId();
       if (userId == null) {
         if (kDebugMode) {
-          debugPrint('⚠️ FCM: userId не найден, пропускаем регистрацию токена');
+          debugPrint('⚠️ [FCM] userId не найден, пропускаем регистрацию токена');
         }
         return;
+      }
+
+      if (kDebugMode) {
+        debugPrint('🔔 [FCM] Регистрируем токен для userId: $userId');
       }
 
       // Получаем тип устройства
@@ -120,20 +162,31 @@ class FCMService {
           deviceType = 'android';
           final androidInfo = await deviceInfo.androidInfo;
           deviceId = androidInfo.id; // Android ID
+          if (kDebugMode) {
+            debugPrint('🔔 [FCM] Android device ID: $deviceId');
+          }
         } else if (Platform.isIOS) {
           deviceType = 'ios';
           final iosInfo = await deviceInfo.iosInfo;
           deviceId = iosInfo.identifierForVendor; // IDFV
+          if (kDebugMode) {
+            debugPrint('🔔 [FCM] iOS device ID: $deviceId');
+          }
         }
         // macOS пропускаем - FCM не поддерживается
       } catch (e) {
         if (kDebugMode) {
-          debugPrint('⚠️ FCM: Ошибка получения device info: $e');
+          debugPrint('⚠️ [FCM] Ошибка получения device info: $e');
         }
       }
 
       // Отправляем токен на сервер
-      await _api.post(
+      if (kDebugMode) {
+        debugPrint('🔔 [FCM] Отправляем запрос на сервер: /register_fcm_token.php');
+        debugPrint('🔔 [FCM] Данные: user_id=$userId, device_type=$deviceType, device_id=$deviceId');
+      }
+      
+      final response = await _api.post(
         '/register_fcm_token.php',
         body: {
           'user_id': userId,
@@ -144,11 +197,13 @@ class FCMService {
       );
 
       if (kDebugMode) {
-        debugPrint('✅ FCM токен зарегистрирован на сервере');
+        debugPrint('✅ [FCM] Ответ сервера: $response');
+        debugPrint('✅ [FCM] Токен успешно зарегистрирован на сервере');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (kDebugMode) {
-        debugPrint('❌ Ошибка регистрации FCM токена на сервере: $e');
+        debugPrint('❌ [FCM] Ошибка регистрации FCM токена на сервере: $e');
+        debugPrint('❌ [FCM] Stack trace: $stackTrace');
       }
     }
   }
