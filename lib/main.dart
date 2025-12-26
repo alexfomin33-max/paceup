@@ -85,29 +85,52 @@ void main() async {
   // Регистрируем FCM токен при запуске, если пользователь авторизован
   // Это удобно для тестирования, когда авторизация жестко задана в auth_service.dart
   if (!Platform.isMacOS) {
-    try {
-      final auth = container.read(authServiceProvider);
-      final isAuthorized = await auth.isAuthorized();
-      
-      if (isAuthorized) {
-        final fcmService = container.read(fcmServiceProvider);
-        // Инициализируем FCM в фоне, не блокируем запуск приложения
-        fcmService.initialize().then((_) {
+    // Ждем небольшую задержку, чтобы Firebase точно инициализировался
+    Future.delayed(const Duration(milliseconds: 500), () async {
+      try {
+        if (kDebugMode) {
+          debugPrint('🔔 [FCM] Начинаем регистрацию токена при запуске...');
+        }
+        
+        final auth = container.read(authServiceProvider);
+        final isAuthorized = await auth.isAuthorized();
+        
+        if (kDebugMode) {
+          debugPrint('🔔 [FCM] Авторизация проверена: $isAuthorized');
+        }
+        
+        if (isAuthorized) {
+          final userId = await auth.getUserId();
           if (kDebugMode) {
-            debugPrint('✅ FCM токен зарегистрирован при запуске (тестовый режим)');
+            debugPrint('🔔 [FCM] userId: $userId');
           }
-        }).catchError((e) {
+          
+          final fcmService = container.read(fcmServiceProvider);
+          
+          // Инициализируем FCM с подробным логированием
+          try {
+            await fcmService.initialize();
+            if (kDebugMode) {
+              debugPrint('✅ [FCM] Инициализация завершена');
+            }
+          } catch (e, stackTrace) {
+            if (kDebugMode) {
+              debugPrint('❌ [FCM] Ошибка инициализации FCM: $e');
+              debugPrint('❌ [FCM] Stack trace: $stackTrace');
+            }
+          }
+        } else {
           if (kDebugMode) {
-            debugPrint('⚠️ Ошибка регистрации FCM токена при запуске: $e');
+            debugPrint('⚠️ [FCM] Пользователь не авторизован, пропускаем регистрацию');
           }
-        });
+        }
+      } catch (e, stackTrace) {
+        if (kDebugMode) {
+          debugPrint('❌ [FCM] Критическая ошибка регистрации FCM токена: $e');
+          debugPrint('❌ [FCM] Stack trace: $stackTrace');
+        }
       }
-    } catch (e) {
-      // Игнорируем ошибки регистрации FCM (не критично для запуска приложения)
-      if (kDebugMode) {
-        debugPrint('⚠️ Не удалось зарегистрировать FCM токен при запуске: $e');
-      }
-    }
+    });
   }
 
   // Инициализируем базу данных через провайдер
