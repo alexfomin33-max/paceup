@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import '../../core/theme/app_theme.dart';
 import 'routes.dart';
@@ -18,6 +19,30 @@ import '../../core/utils/image_cache_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ────────────────────────── Firebase инициализация ──────────────────────────
+  // ВАЖНО: Перед запуском выполните: flutter pub get
+  // Ошибки компиляции исчезнут после установки пакетов firebase_core и firebase_messaging
+  // На macOS Firebase не инициализируем (FCM не поддерживается)
+  if (!Platform.isMacOS) {
+    try {
+      await Firebase.initializeApp();
+      if (kDebugMode) {
+        debugPrint('✅ Firebase инициализирован');
+      }
+    } catch (e) {
+      // Игнорируем ошибки инициализации Firebase
+      // Это нормально, если пакеты еще не установлены (flutter pub get)
+      if (kDebugMode) {
+        debugPrint('⚠️ Firebase не инициализирован: $e');
+        debugPrint('   Выполните: flutter pub get');
+      }
+    }
+  } else {
+    if (kDebugMode) {
+      debugPrint('⚠️ Firebase пропущен на macOS (FCM не поддерживается)');
+    }
+  }
 
   // ────────────────────────── MapBox инициализация ──────────────────────────
   // Mapbox не поддерживает macOS, поэтому инициализируем только для поддерживаемых платформ
