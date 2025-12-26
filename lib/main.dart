@@ -15,7 +15,7 @@ import 'core/config/app_config.dart';
 import 'providers/services/cache_provider.dart';
 import 'providers/services/auth_provider.dart';
 import 'providers/services/fcm_provider.dart';
-import 'theme_provider.dart';
+import 'providers/theme_provider.dart';
 import '../../core/utils/db_optimizer.dart';
 import '../../core/utils/image_cache_manager.dart';
 
@@ -88,19 +88,24 @@ void main() async {
     try {
       final auth = container.read(authServiceProvider);
       final isAuthorized = await auth.isAuthorized();
-      
+
       if (isAuthorized) {
         final fcmService = container.read(fcmServiceProvider);
         // Инициализируем FCM в фоне, не блокируем запуск приложения
-        fcmService.initialize().then((_) {
-          if (kDebugMode) {
-            debugPrint('✅ FCM токен зарегистрирован при запуске (тестовый режим)');
-          }
-        }).catchError((e) {
-          if (kDebugMode) {
-            debugPrint('⚠️ Ошибка регистрации FCM токена при запуске: $e');
-          }
-        });
+        fcmService
+            .initialize()
+            .then((_) {
+              if (kDebugMode) {
+                debugPrint(
+                  '✅ FCM токен зарегистрирован при запуске (тестовый режим)',
+                );
+              }
+            })
+            .catchError((e) {
+              if (kDebugMode) {
+                debugPrint('⚠️ Ошибка регистрации FCM токена при запуске: $e');
+              }
+            });
       }
     } catch (e) {
       // Игнорируем ошибки регистрации FCM (не критично для запуска приложения)
