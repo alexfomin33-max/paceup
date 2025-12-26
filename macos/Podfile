@@ -44,4 +44,27 @@ post_install do |installer|
       config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
     end
   end
+  
+  # Исправление синтаксиса Swift для совместимости с Swift 5.0
+  # FirebaseCoreInternal использует новый синтаксис Swift 5.7+, который не поддерживается в Swift 5.0
+  storage_file = File.join(installer.sandbox.root, 'FirebaseCoreInternal', 'FirebaseCore', 'Internal', 'Sources', 'HeartbeatLogging', 'Storage.swift')
+  if File.exist?(storage_file)
+    # Изменяем права доступа для записи
+    File.chmod(0644, storage_file)
+    content = File.read(storage_file)
+    # Заменяем новый синтаксис if let data { на старый if let data = data {
+    content.gsub!(/if let data \{/, 'if let data = data {')
+    content.gsub!(/options: \.atomic/, 'options: Data.WritingOptions.atomic')
+    File.write(storage_file, content)
+  end
+  
+  heartbeat_storage_file = File.join(installer.sandbox.root, 'FirebaseCoreInternal', 'FirebaseCore', 'Internal', 'Sources', 'HeartbeatLogging', 'HeartbeatStorage.swift')
+  if File.exist?(heartbeat_storage_file)
+    # Изменяем права доступа для записи
+    File.chmod(0644, heartbeat_storage_file)
+    content = File.read(heartbeat_storage_file)
+    # Заменяем новый синтаксис if let heartbeatsBundle { на старый if let heartbeatsBundle = heartbeatsBundle {
+    content.gsub!(/if let heartbeatsBundle \{/, 'if let heartbeatsBundle = heartbeatsBundle {')
+    File.write(heartbeat_storage_file, content)
+  end
 end
