@@ -111,7 +111,7 @@ class _InterFonts {
 //                                Styling
 // ─────────────────────────────────────────────────────────────────────────────
 
-PdfColor _brandPrimary() => PdfColor.fromInt(_kBrandPrimaryArgb);
+PdfColor _brandPrimary() => const PdfColor.fromInt(_kBrandPrimaryArgb);
 
 PdfColor _textPrimary() => const PdfColor(0.11, 0.11, 0.12);
 
@@ -132,10 +132,7 @@ pw.Document _buildDeckPdf({
   required _InterFonts fonts,
 }) {
   final doc = pw.Document();
-  final theme = pw.ThemeData.withFont(
-    base: fonts.regular,
-    bold: fonts.bold,
-  );
+  final theme = pw.ThemeData.withFont(base: fonts.regular, bold: fonts.bold);
 
   // ──────────────────────────────────────────────────────────────
   // Важно: цифры и допущения тут сознательно “плейсхолдерные”,
@@ -143,114 +140,114 @@ pw.Document _buildDeckPdf({
   // ──────────────────────────────────────────────────────────────
 
   final pages = <_DeckSlide>[
-    _DeckSlide(
+    const _DeckSlide(
       title: 'PaceUp',
       subtitle: 'Спортивная платформа: тренировки → люди → события → сделки',
-      bullets: const [
+      bullets: [
         'Россия: запуск по всей стране, рост через 10–20 якорных городов',
         'Стадия: MVP готов, pre‑launch',
         'Монетизация: маркет/комиссия → PacePro → реклама/партнёрки',
       ],
     ),
-    _DeckSlide(
+    const _DeckSlide(
       title: 'Проблема',
       subtitle: 'Спорт‑путь пользователя разорван на инструменты',
-      bullets: const [
+      bullets: [
         'Тренировки в трекерах — отдельно',
         'Сообщество и мотивация — отдельно',
         'Локальные старты/клубы — фрагментированы',
         'Вторичный рынок слотов/экипировки — без специализированной воронки',
       ],
     ),
-    _DeckSlide(
+    const _DeckSlide(
       title: 'Решение',
       subtitle: '“Всё спортивное” в одном приложении',
-      bullets: const [
+      bullets: [
         'Авто‑импорт тренировок (Health/Strava) → контент появляется сам',
         'Лента + подписки + челленджи → удержание',
         'Карта событий/клубов → локальный рост',
         'Маркет слотов/вещей + чаты → транзакции',
       ],
     ),
-    _DeckSlide(
+    const _DeckSlide(
       title: 'Продукт (MVP)',
       subtitle: 'Что уже реализовано в приложении',
-      bullets: const [
+      bullets: [
         'Лента активностей/постов, пагинация, оффлайн‑кэш',
         'Карта: события и клубы, кластеризация маркеров',
         'Маркет: слоты и вещи + чаты сделок + алерты',
         'Уведомления и бейджи, задачи и лидерборды',
       ],
     ),
-    _DeckSlide(
+    const _DeckSlide(
       title: 'Почему мы сможем',
       subtitle: 'Техническая база под “быстрый UX” и рост плотности контента',
-      bullets: const [
+      bullets: [
         'Offline‑first (Drift) + единый image cache',
         'Импорт тренировок снижает cost of content',
         'Кластеризация карты под рост событий/клубов',
       ],
     ),
-    _DeckSlide(
+    const _DeckSlide(
       title: 'Рынок (placeholder)',
       subtitle: 'TAM / SAM / SOM — будут уточнены по источникам',
-      bullets: const [
+      bullets: [
         'TAM: цифровой фитнес + любительские старты + экипировка (РФ)',
         'SAM: мультиспорт‑аудитория крупных городов + участники стартов',
         'SOM (12 мес): достижимая аудитория якорных городов',
       ],
     ),
-    _DeckSlide(
+    const _DeckSlide(
       title: 'Конкуренты',
       subtitle: 'Мы объединяем то, что сейчас разрознено',
-      bullets: const [
+      bullets: [
         'Strava‑класс (соцсеть тренировок)',
         'Трекеры (Apple/Google/прочие)',
         'Каталоги стартов/клубов (локальные)',
         'Маркетплейсы общего назначения',
       ],
     ),
-    _DeckSlide(
+    const _DeckSlide(
       title: 'Монетизация (этапы)',
       subtitle: 'Сначала транзакции, потом подписка',
-      bullets: const [
+      bullets: [
         '0–6 мес: комиссия/платное продвижение в маркете + affiliate',
         '6–12 мес: PacePro подписка (аналитика/планы/приоритет)',
         '12+ мес: реклама/спонсоры (после масштаба)',
       ],
     ),
-    _DeckSlide(
+    const _DeckSlide(
       title: 'Go‑To‑Market',
       subtitle: 'Доступно по всей РФ, рост — в городских кластерах',
-      bullets: const [
+      bullets: [
         '10–20 якорных городов: партнёры, клубы, организаторы стартов',
         'Paid acquisition 300k–1 млн ₽/мес: тесты, оптимизация по KPI',
         'Механики: импорт → лента → челленджи → события/маркет',
       ],
     ),
-    _DeckSlide(
+    const _DeckSlide(
       title: 'Метрики (north star)',
       subtitle: 'Что докажет PMF и монетизацию',
-      bullets: const [
+      bullets: [
         'Activation: % подключивших трекеры + импорт 1 тренировки',
         'Engagement: D7/D30, sessions/week',
         'Marketplace: chat→reserve→deal, GMV, take rate',
         'Revenue: conversion to Pro, ARPU',
       ],
     ),
-    _DeckSlide(
+    const _DeckSlide(
       title: 'План 12 месяцев',
       subtitle: 'Переход от MVP к монетизации',
-      bullets: const [
+      bullets: [
         '0–8 недель: безопасность/авторизация, аналитика, on‑boarding',
         '2–6 мес: рост якорных городов, усиление маркета',
         '6–12 мес: PacePro + масштабирование партнёрств',
       ],
     ),
-    _DeckSlide(
+    const _DeckSlide(
       title: 'Раунд',
       subtitle: 'Pre‑seed 5–20 млн ₽',
-      bullets: const [
+      bullets: [
         'Цель: публичный запуск по РФ, рост в якорных городах, первые доходы',
         'Use of funds: продукт+безопасность+аналитика+рост+модерация',
         'Runway: 9–15 месяцев (placeholder)',
@@ -333,20 +330,13 @@ class _DeckSlideView extends pw.StatelessWidget {
                 ),
                 child: pw.Text(
                   'Investor deck',
-                  style: pw.TextStyle(
-                    fontSize: 12,
-                    color: _textSecondary(),
-                  ),
+                  style: pw.TextStyle(fontSize: 12, color: _textSecondary()),
                 ),
               ),
             ],
           ),
           pw.SizedBox(height: 22),
-          pw.Container(
-            height: 2,
-            width: 84,
-            color: _brandPrimary(),
-          ),
+          pw.Container(height: 2, width: 84, color: _brandPrimary()),
           pw.SizedBox(height: 18),
           pw.Text(
             slide.subtitle,
@@ -404,18 +394,12 @@ class _DeckSlideView extends pw.StatelessWidget {
             children: [
               pw.Text(
                 'PaceUp • РФ • ${DateTime.now().year}',
-                style: pw.TextStyle(
-                  fontSize: 11,
-                  color: _textSecondary(),
-                ),
+                style: pw.TextStyle(fontSize: 11, color: _textSecondary()),
               ),
               pw.Spacer(),
               pw.Text(
                 'Данные: placeholder / assumptions',
-                style: pw.TextStyle(
-                  fontSize: 11,
-                  color: _textSecondary(),
-                ),
+                style: pw.TextStyle(fontSize: 11, color: _textSecondary()),
               ),
             ],
           ),
@@ -435,10 +419,7 @@ pw.Document _buildBusinessPlanPdf({
 }) {
   final doc = pw.Document();
 
-  final theme = pw.ThemeData.withFont(
-    base: fonts.regular,
-    bold: fonts.bold,
-  );
+  final theme = pw.ThemeData.withFont(base: fonts.regular, bold: fonts.bold);
 
   doc.addPage(
     pw.MultiPage(
@@ -463,52 +444,44 @@ pw.Document _buildBusinessPlanPdf({
               'слотов и экипировки, чаты и уведомления. '
               'Старт — nationwide (вся РФ), рост — через 10–20 якорных городов.',
             ),
-            _PlanBlock.bullets(
-              const [
-                'Стадия: MVP готов, запуск готовится.',
-                'Монетизация: транзакции/комиссия → подписка PacePro → реклама.',
-                'Запрос: Pre‑seed 5–20 млн ₽ на 9–15 месяцев runway (placeholder).',
-              ],
-            ),
+            _PlanBlock.bullets(const [
+              'Стадия: MVP готов, запуск готовится.',
+              'Монетизация: транзакции/комиссия → подписка PacePro → реклама.',
+              'Запрос: Pre‑seed 5–20 млн ₽ на 9–15 месяцев runway (placeholder).',
+            ]),
           ],
         ),
         _PlanSection(
           title: '2. Проблема',
           blocks: [
-            _PlanBlock.bullets(
-              const [
-                'Тренировки живут в трекерах, а социальная мотивация — отдельно.',
-                'События и клубы — фрагментированы по сайтам/чатам.',
-                'Слоты на старты и вторичка экипировки — без удобной воронки.',
-              ],
-            ),
+            _PlanBlock.bullets(const [
+              'Тренировки живут в трекерах, а социальная мотивация — отдельно.',
+              'События и клубы — фрагментированы по сайтам/чатам.',
+              'Слоты на старты и вторичка экипировки — без удобной воронки.',
+            ]),
           ],
         ),
         _PlanSection(
           title: '3. Решение и ценностное предложение',
           blocks: [
-            _PlanBlock.bullets(
-              const [
-                'Импорт тренировок (Health/Strava) создаёт контент автоматически.',
-                'Соцграф, задачи, лидерборды повышают вовлечённость.',
-                'Карта событий/клубов даёт локальную “точку сборки”.',
-                'Маркет + чаты сделок создают транзакционный слой.',
-              ],
-            ),
+            _PlanBlock.bullets(const [
+              'Импорт тренировок (Health/Strava) создаёт контент автоматически.',
+              'Соцграф, задачи, лидерборды повышают вовлечённость.',
+              'Карта событий/клубов даёт локальную “точку сборки”.',
+              'Маркет + чаты сделок создают транзакционный слой.',
+            ]),
           ],
         ),
         _PlanSection(
           title: '4. Продукт (MVP) — подтверждено репозиторием',
           blocks: [
-            _PlanBlock.bullets(
-              const [
-                'Лента: пагинация, обновления, оффлайн‑кэш.',
-                'Импорт: Health Connect/HealthKit, Strava sync, маршруты Android.',
-                'Карта: события/клубы, кластеризация.',
-                'Маркет: слоты/вещи, алерты, чаты сделок.',
-                'Уведомления и бейджи, задачи и лидерборды.',
-              ],
-            ),
+            _PlanBlock.bullets(const [
+              'Лента: пагинация, обновления, оффлайн‑кэш.',
+              'Импорт: Health Connect/HealthKit, Strava sync, маршруты Android.',
+              'Карта: события/клубы, кластеризация.',
+              'Маркет: слоты/вещи, алерты, чаты сделок.',
+              'Уведомления и бейджи, задачи и лидерборды.',
+            ]),
           ],
         ),
         _PlanSection(
@@ -532,13 +505,11 @@ pw.Document _buildBusinessPlanPdf({
         _PlanSection(
           title: '6. Бизнес‑модель и монетизация',
           blocks: [
-            _PlanBlock.bullets(
-              const [
-                '0–6 мес: комиссия с маркета + платное продвижение + affiliate.',
-                '6–12 мес: PacePro подписка (аналитика/планы/приоритетные алерты).',
-                '12+ мес: реклама/спонсоры (после масштаба и сегментации).',
-              ],
-            ),
+            _PlanBlock.bullets(const [
+              '0–6 мес: комиссия с маркета + платное продвижение + affiliate.',
+              '6–12 мес: PacePro подписка (аналитика/планы/приоритетные алерты).',
+              '12+ мес: реклама/спонсоры (после масштаба и сегментации).',
+            ]),
             _PlanBlock.table(
               headers: ['Поток', 'Механика', 'Плейсхолдер'],
               rows: [
@@ -557,13 +528,11 @@ pw.Document _buildBusinessPlanPdf({
               'Рост и партнёрства концентрируются в 10–20 городах, '
               'чтобы ускорить цикл обучения и снизить CAC.',
             ),
-            _PlanBlock.bullets(
-              const [
-                'Маркетинг 300k–1 млн ₽/мес (первые 3 месяца).',
-                'Партнёры: организаторы стартов, клубы, амбассадоры.',
-                'Ключевой onboarding: трекер → импорт тренировки → подписка → чат.',
-              ],
-            ),
+            _PlanBlock.bullets(const [
+              'Маркетинг 300k–1 млн ₽/мес (первые 3 месяца).',
+              'Партнёры: организаторы стартов, клубы, амбассадоры.',
+              'Ключевой onboarding: трекер → импорт тренировки → подписка → чат.',
+            ]),
           ],
         ),
         _PlanSection(
@@ -572,7 +541,11 @@ pw.Document _buildBusinessPlanPdf({
             _PlanBlock.table(
               headers: ['Метрика', 'Цель (3 мес)', 'Почему важно'],
               rows: [
-                ['Activation', '35% подключили трекер', 'контент появляется сам'],
+                [
+                  'Activation',
+                  '35% подключили трекер',
+                  'контент появляется сам',
+                ],
                 ['D7', '18%', 'проверка вовлечённости'],
                 ['GMV', '10 млн ₽', 'монетизация маркета'],
                 ['Paid Pro', '1.5% MAU', 'путь к подписке'],
@@ -583,14 +556,12 @@ pw.Document _buildBusinessPlanPdf({
         _PlanSection(
           title: '9. Риски и блокеры к публичному запуску',
           blocks: [
-            _PlanBlock.bullets(
-              const [
-                'Авторизация/токены: убрать временные “костыли”.',
-                'Секреты/ключи: процесс хранения и ротации.',
-                'Модерация маркета: анти‑фрод и правила сделок.',
-                'Push‑инфраструктура и аналитика воронок.',
-              ],
-            ),
+            _PlanBlock.bullets(const [
+              'Авторизация/токены: убрать временные “костыли”.',
+              'Секреты/ключи: процесс хранения и ротации.',
+              'Модерация маркета: анти‑фрод и правила сделок.',
+              'Push‑инфраструктура и аналитика воронок.',
+            ]),
           ],
         ),
         _PlanSection(
@@ -627,18 +598,16 @@ pw.Document _buildBusinessPlanPdf({
         _PlanSection(
           title: '12. Приложение: доказательства по репозиторию',
           blocks: [
-            _PlanBlock.bullets(
-              const [
-                'API клиент: lib/core/services/api_service.dart',
-                'Лента: lib/features/lenta/…',
-                'Импорт: lib/core/services/health_sync_service.dart и '
-                    'lib/core/services/strava_sync_service.dart',
-                'Карта: lib/features/map/screens/map_screen.dart',
-                'Маркет: lib/features/market/…',
-                'Offline/perf docs: docs/offline-first-implementation.md, '
-                    'docs/unified-image-cache.md',
-              ],
-            ),
+            _PlanBlock.bullets(const [
+              'API клиент: lib/core/services/api_service.dart',
+              'Лента: lib/features/lenta/…',
+              'Импорт: lib/core/services/health_sync_service.dart и '
+                  'lib/core/services/strava_sync_service.dart',
+              'Карта: lib/features/map/screens/map_screen.dart',
+              'Маркет: lib/features/market/…',
+              'Offline/perf docs: docs/offline-first-implementation.md, '
+                  'docs/unified-image-cache.md',
+            ]),
           ],
         ),
       ],
@@ -779,7 +748,11 @@ class _PlanDisclaimer extends pw.StatelessWidget {
         'Дисклеймер: все цифры, бюджеты и прогнозы в этом документе — '
         'плейсхолдеры (assumptions) по вашему запросу и требуют валидации '
         'на реальных данных, источниках и результатах экспериментов.',
-        style: pw.TextStyle(fontSize: 10, color: _textSecondary(), height: 1.25),
+        style: pw.TextStyle(
+          fontSize: 10,
+          color: _textSecondary(),
+          height: 1.25,
+        ),
       ),
     );
   }
@@ -807,10 +780,7 @@ class _PlanSection extends pw.StatelessWidget {
             ),
           ),
           pw.SizedBox(height: 8),
-          for (final b in blocks) ...[
-            b,
-            pw.SizedBox(height: 10),
-          ],
+          for (final b in blocks) ...[b, pw.SizedBox(height: 10)],
         ],
       ),
     );
@@ -932,5 +902,3 @@ class _PlanBlock extends pw.StatelessWidget {
   @override
   pw.Widget build(pw.Context context) => _builder();
 }
-
-

@@ -267,73 +267,111 @@ class _HiddenContentScreenState extends ConsumerState<HiddenContentScreen> {
               : CustomScrollView(
                   physics: const BouncingScrollPhysics(),
                   slivers: [
-                    // ─── Заголовок таблицы ───
+                    // ─── Единая таблица ───
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child: Text(
-                                'Пользователь',
-                                style: AppTextStyles.h13w5.copyWith(
-                                  color: AppColors.getTextSecondaryColor(
-                                    context,
-                                  ),
-                                ),
-                              ),
+                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.getSurfaceColor(context),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            border: Border.all(
+                              color: AppColors.getBorderColor(context),
+                              width: 0.5,
                             ),
-                            Expanded(
-                              flex: 2,
-                              child: Center(
-                                child: Text(
-                                  'Тренировки',
-                                  style: AppTextStyles.h13w5.copyWith(
-                                    color: AppColors.getTextSecondaryColor(
-                                      context,
+                          ),
+                          child: Column(
+                            children: [
+                              // ─── Заголовок таблицы ───
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 16,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Пользователь',
+                                        style: AppTextStyles.h13w5.copyWith(
+                                          color:
+                                              AppColors.getTextSecondaryColor(
+                                                context,
+                                              ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: Center(
-                                child: Text(
-                                  'Посты',
-                                  style: AppTextStyles.h13w5.copyWith(
-                                    color: AppColors.getTextSecondaryColor(
-                                      context,
+                                    const SizedBox(width: 16),
+                                    Center(
+                                      child: Text(
+                                        'Тренировки',
+                                        style: AppTextStyles.h13w5.copyWith(
+                                          color:
+                                              AppColors.getTextSecondaryColor(
+                                                context,
+                                              ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 16),
+                                    Center(
+                                      child: Text(
+                                        'Посты',
+                                        style: AppTextStyles.h13w5.copyWith(
+                                          color:
+                                              AppColors.getTextSecondaryColor(
+                                                context,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                          ],
+                              // ─── Разделитель после заголовка ───
+                              Divider(
+                                height: 1,
+                                thickness: 0.5,
+                                color: AppColors.getBorderColor(context),
+                              ),
+                              // ─── Список пользователей ───
+                              ...List.generate(_users.length, (index) {
+                                final user = _users[index];
+                                return Column(
+                                  children: [
+                                    _HiddenUserRow(
+                                      user: user,
+                                      onActivitiesChanged: (value) {
+                                        _updateActivitiesHidden(
+                                          user.id,
+                                          !value, // Инвертируем: если переключатель выключен - скрыто
+                                        );
+                                      },
+                                      onPostsChanged: (value) {
+                                        _updatePostsHidden(
+                                          user.id,
+                                          !value, // Инвертируем: если переключатель выключен - скрыто
+                                        );
+                                      },
+                                    ),
+                                    // ─── Разделитель между строками (кроме последней) ───
+                                    if (index < _users.length - 1)
+                                      Divider(
+                                        height: 1,
+                                        thickness: 0.5,
+                                        color: AppColors.getBorderColor(
+                                          context,
+                                        ),
+                                        indent:
+                                            64, // Отступ для выравнивания с аватаром
+                                      ),
+                                  ],
+                                );
+                              }),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    // ─── Список пользователей ───
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final user = _users[index];
-                        return _HiddenUserRow(
-                          user: user,
-                          onActivitiesChanged: (value) {
-                            _updateActivitiesHidden(
-                              user.id,
-                              !value, // Инвертируем: если переключатель выключен - скрыто
-                            );
-                          },
-                          onPostsChanged: (value) {
-                            _updatePostsHidden(
-                              user.id,
-                              !value, // Инвертируем: если переключатель выключен - скрыто
-                            );
-                          },
-                        );
-                      }, childCount: _users.length),
                     ),
                     const SliverToBoxAdapter(child: SizedBox(height: 24)),
                   ],
@@ -358,85 +396,65 @@ class _HiddenUserRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: AppColors.getBorderColor(context),
-          width: 0.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-            spreadRadius: 0,
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, top: 10, bottom: 10),
+      child: Row(
+        children: [
+          // ─── Первая колонка: аватар и имя ───
+          Expanded(
+            child: Row(
+              children: [
+                Avatar(
+                  image: user.avatar != null && user.avatar!.isNotEmpty
+                      ? user.avatar!
+                      : 'assets/avatar_0.png',
+                  size: 40,
+                  fadeIn: true,
+                  gapless: true,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    user.name,
+                    style: AppTextStyles.h14w4.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ─── Вторая колонка: переключатель "Тренировки" ───
+          const SizedBox(width: 16),
+          Center(
+            child: Transform.scale(
+              scale: 0.75,
+              child: CupertinoSwitch(
+                value: !user
+                    .isActivitiesHidden, // Инвертируем: если скрыто - переключатель выключен
+                onChanged: onActivitiesChanged,
+                activeTrackColor: AppColors.brandPrimary,
+              ),
+            ),
+          ),
+
+          // ─── Третья колонка: переключатель "Посты" ───
+          const SizedBox(width: 16),
+          Center(
+            child: Transform.scale(
+              scale: 0.75,
+              child: CupertinoSwitch(
+                value: !user
+                    .isPostsHidden, // Инвертируем: если скрыто - переключатель выключен
+                onChanged: onPostsChanged,
+                activeTrackColor: AppColors.brandPrimary,
+              ),
+            ),
           ),
         ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: Row(
-          children: [
-            // ─── Первая колонка: аватар и имя ───
-            Expanded(
-              flex: 3,
-              child: Row(
-                children: [
-                  Avatar(
-                    image: user.avatar != null && user.avatar!.isNotEmpty
-                        ? user.avatar!
-                        : 'assets/avatar_0.png',
-                    size: 40,
-                    fadeIn: true,
-                    gapless: true,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      user.name,
-                      style: AppTextStyles.h14w4.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // ─── Вторая колонка: переключатель "Тренировки" ───
-            Expanded(
-              flex: 2,
-              child: Center(
-                child: CupertinoSwitch(
-                  value: !user
-                      .isActivitiesHidden, // Инвертируем: если скрыто - переключатель выключен
-                  onChanged: onActivitiesChanged,
-                  activeTrackColor: AppColors.brandPrimary,
-                ),
-              ),
-            ),
-
-            // ─── Третья колонка: переключатель "Посты" ───
-            Expanded(
-              flex: 2,
-              child: Center(
-                child: CupertinoSwitch(
-                  value: !user
-                      .isPostsHidden, // Инвертируем: если скрыто - переключатель выключен
-                  onChanged: onPostsChanged,
-                  activeTrackColor: AppColors.brandPrimary,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

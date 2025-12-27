@@ -275,7 +275,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           // Пользователь не авторизован
           return Scaffold(
             backgroundColor: AppColors.getBackgroundColor(context),
-            appBar: PaceAppBar(
+            appBar: const PaceAppBar(
               title: 'Профиль',
               showBack: false,
               showBottomDivider: true,
@@ -300,7 +300,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       },
       loading: () => Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: PaceAppBar(
+        appBar: const PaceAppBar(
           title: 'Профиль',
           showBack: false,
           showBottomDivider: true,
@@ -309,7 +309,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       error: (err, stack) => Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: PaceAppBar(
+        appBar: const PaceAppBar(
           title: 'Профиль',
           showBack: false,
           showBottomDivider: true,

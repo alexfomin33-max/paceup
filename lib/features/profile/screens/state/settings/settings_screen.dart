@@ -115,7 +115,7 @@ class SettingsScreen extends ConsumerWidget {
             _SettingsGroup(
               children: [
                 settingsAsync.when(
-                  data: (settings) => _SettingsTile(
+                  data: (settings) => _SettingsTileWithFade(
                     icon: CupertinoIcons.phone,
                     iconColor: AppColors.brandPrimary,
                     title: 'Телефон',
@@ -136,7 +136,7 @@ class SettingsScreen extends ConsumerWidget {
                     icon: CupertinoIcons.phone,
                     iconColor: AppColors.brandPrimary,
                     title: 'Телефон',
-                    trailingText: 'Загрузка...',
+                    trailingText: null,
                     onTap: () {},
                   ),
                   error: (error, stackTrace) => _SettingsTile(
@@ -149,7 +149,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const _Divider(),
                 settingsAsync.when(
-                  data: (settings) => _SettingsTile(
+                  data: (settings) => _SettingsTileWithFade(
                     icon: CupertinoIcons.envelope,
                     iconColor: AppColors.brandPrimary,
                     title: 'E-mail',
@@ -170,7 +170,7 @@ class SettingsScreen extends ConsumerWidget {
                     icon: CupertinoIcons.envelope,
                     iconColor: AppColors.brandPrimary,
                     title: 'E-mail',
-                    trailingText: 'Загрузка...',
+                    trailingText: null,
                     onTap: () {},
                   ),
                   error: (error, stackTrace) => _SettingsTile(
@@ -183,7 +183,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const _Divider(),
                 settingsAsync.when(
-                  data: (settings) => _SettingsTile(
+                  data: (settings) => _SettingsTileWithFade(
                     icon: CupertinoIcons.lock,
                     iconColor: AppColors.brandPrimary,
                     title: 'Пароль',
@@ -207,7 +207,7 @@ class SettingsScreen extends ConsumerWidget {
                     icon: CupertinoIcons.lock,
                     iconColor: AppColors.brandPrimary,
                     title: 'Пароль',
-                    trailingText: 'Загрузка...',
+                    trailingText: null,
                     onTap: () {},
                   ),
                   error: (error, stackTrace) => _SettingsTile(
@@ -490,6 +490,96 @@ class _SettingsTile extends StatelessWidget {
               CupertinoIcons.chevron_forward,
               size: 18,
               color: trailingIconColor, // 🔹 теперь может быть цветной
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Пункт настроек с fade-in анимацией для trailingText
+class _SettingsTileWithFade extends StatefulWidget {
+  final IconData icon;
+  final Color? iconColor;
+  final String title;
+  final String? trailingText;
+  final VoidCallback? onTap;
+
+  const _SettingsTileWithFade({
+    required this.icon,
+    required this.title,
+    this.iconColor,
+    this.trailingText,
+    this.onTap,
+  });
+
+  @override
+  State<_SettingsTileWithFade> createState() => _SettingsTileWithFadeState();
+}
+
+class _SettingsTileWithFadeState extends State<_SettingsTileWithFade> {
+  double _opacity = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Запускаем fade-in анимацию после первого кадра
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _opacity = 1.0;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Используем цвета из темы
+    final defaultIconColor =
+        widget.iconColor ?? AppColors.getIconPrimaryColor(context);
+    final defaultTextColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.darkTextTertiary
+        : AppColors.textTertiary;
+
+    return InkWell(
+      onTap: widget.onTap ?? () {},
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        child: Row(
+          children: [
+            Container(
+              width: 28,
+              alignment: Alignment.centerLeft,
+              child: Icon(widget.icon, size: 20, color: defaultIconColor),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                widget.title,
+                style: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ),
+            if (widget.trailingText != null) ...[
+              AnimatedOpacity(
+                opacity: _opacity,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeIn,
+                child: Text(
+                  widget.trailingText!,
+                  style: TextStyle(color: defaultTextColor),
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+            const Icon(
+              CupertinoIcons.chevron_forward,
+              size: 18,
+              color: AppColors.brandPrimary,
             ),
           ],
         ),
