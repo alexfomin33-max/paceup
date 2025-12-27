@@ -981,7 +981,7 @@ class _WorkoutRow extends ConsumerWidget {
                           ),
                         ),
                         SizedBox(
-                          width: 60,
+                          width: 65,
                           child: _metric(
                             context,
                             Icons.speed,

@@ -6,6 +6,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -72,6 +73,7 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
         final gender = _mapGender(j['gender']) ?? '';
         final mainSport = _mapSport(j['sport']) ?? '';
         final avatar = _s(j['avatar']);
+        final background = _s(j['background_url'] ?? j['background']);
 
         // Обновляем состояние
         state = state.copyWith(
@@ -86,6 +88,7 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
           gender: gender,
           mainSport: mainSport,
           avatarUrl: avatar,
+          backgroundUrl: background,
         );
       },
       onError: (error) {
@@ -110,6 +113,22 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
 
     final bytes = await processed.readAsBytes();
     state = state.copyWith(avatarBytes: bytes);
+  }
+
+  /// Выбор фоновой картинки из галереи с обрезкой в пропорции 2.1:1
+  Future<void> pickBackground(BuildContext context) async {
+    // ── выбираем фоновую картинку с обрезкой в пропорцию 2.1:1
+    final processed = await ImagePickerHelper.pickAndProcessImage(
+      context: context,
+      aspectRatio: 2.1,
+      maxSide: ImageCompressionPreset.background.maxSide,
+      jpegQuality: ImageCompressionPreset.background.quality,
+      cropTitle: 'Обрезка фонового фото',
+    );
+    if (processed == null) return;
+
+    final bytes = await processed.readAsBytes();
+    state = state.copyWith(backgroundBytes: bytes);
   }
 
   /// Обновление даты рождения (вызывается из UI при выборе даты)
@@ -197,6 +216,32 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
   /// Обновление основного вида спорта
   void updateMainSport(String value) {
     state = state.copyWith(mainSport: value);
+  }
+
+  /// Обновление фоновой картинки (байты)
+  void updateBackgroundBytes(Uint8List? value) {
+    // ── Для явной установки null используем прямой вызов конструктора
+    if (value == null) {
+      state = EditProfileState(
+        firstName: state.firstName,
+        lastName: state.lastName,
+        nickname: state.nickname,
+        city: state.city,
+        height: state.height,
+        weight: state.weight,
+        hrMax: state.hrMax,
+        birthDate: state.birthDate,
+        gender: state.gender,
+        mainSport: state.mainSport,
+        avatarUrl: state.avatarUrl,
+        avatarBytes: state.avatarBytes,
+        backgroundUrl: state.backgroundUrl,
+        backgroundBytes: null, // ── явно устанавливаем null
+        loadError: state.loadError,
+      );
+    } else {
+      state = state.copyWith(backgroundBytes: value);
+    }
   }
 
   // ── Утилиты для парсинга JSON ──
@@ -328,6 +373,11 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
     if (state.avatarBytes != null && state.avatarBytes!.isNotEmpty) {
       map['avatar_base64'] = base64Encode(state.avatarBytes!);
       map['avatar_mime'] = 'image/jpeg';
+    }
+
+    if (state.backgroundBytes != null && state.backgroundBytes!.isNotEmpty) {
+      map['background_base64'] = base64Encode(state.backgroundBytes!);
+      map['background_mime'] = 'image/jpeg';
     }
 
     return map;

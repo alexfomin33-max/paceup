@@ -260,6 +260,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       setGender: (g) => notifier.updateGender(g),
       setSport: (s) => notifier.updateMainSport(s),
       pickBirthDate: _pickBirthDate,
+      backgroundUrl: profileState.backgroundUrl,
+      backgroundBytes: profileState.backgroundBytes,
+      onPickBackground: () => notifier.pickBackground(context),
+      onRemoveBackground: () => notifier.updateBackgroundBytes(null),
     );
   }
 }

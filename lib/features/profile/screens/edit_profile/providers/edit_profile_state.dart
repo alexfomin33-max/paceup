@@ -4,6 +4,8 @@
 //  Модель состояния для экрана редактирования профиля
 // ────────────────────────────────────────────────────────────────────────────
 
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 
 /// Состояние экрана редактирования профиля
@@ -29,6 +31,10 @@ class EditProfileState {
   final String? avatarUrl;
   final Uint8List? avatarBytes;
 
+  /// Фоновая картинка
+  final String? backgroundUrl;
+  final Uint8List? backgroundBytes;
+
   /// Ошибка загрузки
   final String? loadError;
 
@@ -45,6 +51,8 @@ class EditProfileState {
     this.mainSport = '',
     this.avatarUrl,
     this.avatarBytes,
+    this.backgroundUrl,
+    this.backgroundBytes,
     this.loadError,
   });
 
@@ -67,6 +75,8 @@ class EditProfileState {
     String? mainSport,
     String? avatarUrl,
     Uint8List? avatarBytes,
+    String? backgroundUrl,
+    Uint8List? backgroundBytes,
     String? loadError,
   }) {
     return EditProfileState(
@@ -82,6 +92,8 @@ class EditProfileState {
       mainSport: mainSport ?? this.mainSport,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       avatarBytes: avatarBytes ?? this.avatarBytes,
+      backgroundUrl: backgroundUrl ?? this.backgroundUrl,
+      backgroundBytes: backgroundBytes ?? this.backgroundBytes,
       loadError: loadError ?? this.loadError,
     );
   }
