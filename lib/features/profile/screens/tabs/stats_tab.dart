@@ -1156,7 +1156,7 @@ class _BarsPainter extends CustomPainter {
       final frac = rangeY > 0 ? ((v - minY) / rangeY).clamp(0.0, 1.0) : 0.0;
       final cy = size.height - bottomPad - frac * chartH;
 
-      final pointRadius = selectedIndex == i ? 8.0 : 5.0;
+      final pointRadius = selectedIndex == i ? 6.0 : 4.0;
       final distanceToPoint = (localPosition - Offset(cx, cy)).distance;
 
       // Увеличиваем область клика для удобства
@@ -1262,7 +1262,7 @@ class _BarsPainter extends CustomPainter {
     for (int i = 0; i < points.length; i++) {
       final point = points[i];
       final isSelected = selectedIndex == i;
-      final pointRadius = isSelected ? 8.0 : 5.0;
+      final pointRadius = isSelected ? 6.0 : 4.0;
 
       // Если точка выбрана, рисуем вертикальную линию до оси X
       if (isSelected) {

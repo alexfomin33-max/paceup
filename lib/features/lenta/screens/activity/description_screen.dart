@@ -1957,7 +1957,7 @@ class _LinePainter extends CustomPainter {
           ? top + frac * chartH
           : size.height - bottom - frac * chartH;
 
-      final pointRadius = selectedIndex == i ? 8.0 : 5.0;
+      final pointRadius = selectedIndex == i ? 6.0 : 4.0;
       final distanceToPoint = (localPosition - Offset(cx, cy)).distance;
 
       // Увеличиваем область клика для удобства
@@ -2033,10 +2033,18 @@ class _LinePainter extends CustomPainter {
     // Генерируем 5 значений для подписей (соответствуют линиям сетки)
     for (int i = 0; i <= gridY; i++) {
       final frac = i / gridY;
-      // Для темпа переворачиваем: minY сверху, maxY снизу
+      // ────────────────────────────────────────────────────────────────
+      // Для темпа переворачиваем: minY (быстрый темп) сверху, maxY (медленный) снизу
+      // Для обычных графиков: maxY сверху, minY снизу
+      // ────────────────────────────────────────────────────────────────
       final val = paceMode
-          ? minY + (maxY - minY) * (1 - frac)
-          : minY + (maxY - minY) * frac;
+          ? minY +
+                (maxY - minY) *
+                    frac // Для темпа: frac=0 → minY (верх), frac=1 → maxY (низ)
+          : minY +
+                (maxY - minY) *
+                    (1 -
+                        frac); // Для обычных: frac=0 → maxY (верх), frac=1 → minY (низ)
       final ly = top + h * frac;
       final txt = paceMode ? _fmtSecToMinSec(val) : val.toStringAsFixed(0);
       tp.text = TextSpan(text: txt, style: tpYStyle);
@@ -2092,7 +2100,7 @@ class _LinePainter extends CustomPainter {
       final ny = paceMode ? top + h * frac : top + h * (1 - frac);
 
       final isSelected = selectedIndex == i;
-      final pointRadius = isSelected ? 8.0 : 5.0;
+      final pointRadius = isSelected ? 6.0 : 4.0;
       final paint = isSelected ? selectedPointPaint : pointPaint;
 
       // Рисуем точку
@@ -2125,7 +2133,7 @@ class _LinePainter extends CustomPainter {
           ),
         );
         tp.layout();
-        tp.paint(canvas, Offset(nx - tp.width / 2, ny - tp.height - 6));
+        tp.paint(canvas, Offset(nx - tp.width / 2, ny - tp.height - 8));
       }
     }
 

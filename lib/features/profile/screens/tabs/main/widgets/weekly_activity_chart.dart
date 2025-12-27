@@ -428,7 +428,7 @@ class _LineChartPainter extends CustomPainter {
       final frac = (distance / maxY).clamp(0.0, 1.0);
       final cy = size.height - bottomPad - frac * chartH;
 
-      final pointRadius = selectedWeekIndex == i ? 8.0 : 5.0;
+      final pointRadius = selectedWeekIndex == i ? 6.0 : 4.0;
       final distanceToPoint = (localPosition - Offset(cx, cy)).distance;
 
       if (distanceToPoint <= pointRadius + 10) {
@@ -551,7 +551,7 @@ class _LineChartPainter extends CustomPainter {
       final cy = size.height - bottomPad - frac * chartH;
 
       final isSelected = selectedWeekIndex == i;
-      final pointRadius = isSelected ? 8.0 : 5.0;
+      final pointRadius = isSelected ? 6.0 : 4.0;
       final paint = isSelected ? selectedPointPaint : pointPaint;
 
       // Рисуем точку
