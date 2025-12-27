@@ -23,8 +23,13 @@ import '../widgets/activity/stats/stats_row.dart';
 import '../widgets/activity/equipment/equipment_chip.dart'
     as ab
     show EquipmentChip;
+// Блок действий (лайк, комментарии, совместно)
+import '../widgets/activity/actions/activity_actions_row.dart';
 // Карусель маршрута с фотографиями
 import '../../widgets/activity_route_carousel.dart';
+// Комментарии и совместные активности
+import '../widgets/comments_bottom_sheet.dart';
+import 'together/together_screen.dart';
 // Модель — через алиас, чтобы не конфликтовало имя Equipment
 import '../../../../domain/models/activity_lenta.dart' as al;
 import 'combining_screen.dart';
@@ -706,11 +711,98 @@ class _ActivityDescriptionPageState
                     ),
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                // ────────────────────────────────────────────────────────────────
+                // 🎯 ДЕЙСТВИЯ: лайк, комментарии, совместно
+                // ────────────────────────────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurfaceColor(context),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(AppRadius.xl),
+                        bottomRight: Radius.circular(AppRadius.xl),
+                      ),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: ActivityActionsRow(
+                      activityId: a.id,
+                      currentUserId: widget.currentUserId,
+                      initialLikes: a.likes,
+                      initiallyLiked: a.islike,
+                      commentsCount: a.comments,
+                      hideRightActions: a.points.isEmpty,
+                      onOpenComments: () {
+                        // ────────────────────────────────────────────────────────────────
+                        // 🔹 Открываем комментарии в bottom sheet
+                        // ────────────────────────────────────────────────────────────────
+                        showModalBottomSheet(
+                          context: context,
+                          useRootNavigator: true,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) {
+                            final lentaState = ref.read(
+                              lentaProvider(widget.currentUserId),
+                            );
+                            final activityItem = lentaState.items.firstWhere(
+                              (item) => item.lentaId == a.lentaId,
+                              orElse: () => a,
+                            );
+
+                            return CommentsBottomSheet(
+                              itemType: 'activity',
+                              itemId: activityItem.id,
+                              currentUserId: widget.currentUserId,
+                              lentaId: activityItem.lentaId,
+                              onCommentAdded: () {
+                                final currentState = ref.read(
+                                  lentaProvider(widget.currentUserId),
+                                );
+                                final latestActivity = currentState.items
+                                    .firstWhere(
+                                      (a) => a.lentaId == activityItem.lentaId,
+                                      orElse: () => activityItem,
+                                    );
+
+                                ref
+                                    .read(
+                                      lentaProvider(
+                                        widget.currentUserId,
+                                      ).notifier,
+                                    )
+                                    .updateComments(
+                                      activityItem.lentaId,
+                                      latestActivity.comments + 1,
+                                    );
+                              },
+                            );
+                          },
+                        );
+                      },
+                      onOpenTogether: () {
+                        // ────────────────────────────────────────────────────────────────
+                        // 🔹 Открываем экран совместных активностей
+                        // ────────────────────────────────────────────────────────────────
+                        Navigator.of(context).push(
+                          TransparentPageRoute(
+                            builder: (_) => const TogetherScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
                 // ───────── «Отрезки» — таблица на всю ширину экрана
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   sliver: SliverToBoxAdapter(
                     child: Container(
                       padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
@@ -730,7 +822,7 @@ class _ActivityDescriptionPageState
                   ),
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
                 // ───────── Сегменты — как в communication_prefs.dart (вынесены отдельно)
                 SliverToBoxAdapter(
@@ -752,7 +844,7 @@ class _ActivityDescriptionPageState
 
                 // ───────── ЕДИНЫЙ блок: график + сводка темпа
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   sliver: SliverToBoxAdapter(
                     child: Container(
                       padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
@@ -797,7 +889,7 @@ class _ActivityDescriptionPageState
                   ),
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
               ],
             ),
           ),
@@ -1769,6 +1861,7 @@ class _SimpleLineChartState extends State<_SimpleLineChart> {
           yValues: y,
           paceMode: isPace,
           xMax: xMax,
+          chartMode: widget.mode,
           textSecondaryColor: AppColors.getTextSecondaryColor(context),
           borderColor: AppColors.getBorderColor(context),
           selectedIndex: _selectedIndex,
@@ -1784,6 +1877,7 @@ class _SimpleLineChartState extends State<_SimpleLineChart> {
           yValues: y,
           paceMode: isPace,
           xMax: xMax,
+          chartMode: widget.mode,
           textSecondaryColor: AppColors.getTextSecondaryColor(context),
           borderColor: AppColors.getBorderColor(context),
           selectedIndex: _selectedIndex,
@@ -1798,6 +1892,7 @@ class _LinePainter extends CustomPainter {
   final List<double> yValues; // для Темпа — секунды/км
   final bool paceMode; // true -> формат ММ:СС
   final int xMax; // количество км (точек), рисуем подписи 0..xMax
+  final int chartMode; // 0 = Темп, 1 = Пульс, 2 = Высота
   final Color textSecondaryColor; // цвет текста для подписей осей
   final Color borderColor; // цвет границы для сетки
   final int? selectedIndex; // индекс выбранной точки
@@ -1806,10 +1901,26 @@ class _LinePainter extends CustomPainter {
     required this.yValues,
     required this.paceMode,
     required this.xMax,
+    required this.chartMode,
     required this.textSecondaryColor,
     required this.borderColor,
     this.selectedIndex,
   });
+
+  /// Получает цвет линии графика в зависимости от режима
+  /// 0 = Темп (brandPrimary), 1 = Пульс (female), 2 = Высота (accentMint)
+  Color get lineColor {
+    switch (chartMode) {
+      case 0:
+        return AppColors.brandPrimary;
+      case 1:
+        return AppColors.female;
+      case 2:
+        return AppColors.accentMint;
+      default:
+        return AppColors.brandPrimary;
+    }
+  }
 
   String _fmtSecToMinSec(double sec) {
     final s = sec.round();
@@ -1860,9 +1971,6 @@ class _LinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Цвета как в профиле: оранжевая линия и заливка
-    const lineColor = Color(0xFFFF9500); // Оранжевый цвет как в профиле
-
     // Используем borderColor для сетки (как в профиле)
     final paintGrid = Paint()
       ..color = borderColor
@@ -1912,21 +2020,24 @@ class _LinePainter extends CustomPainter {
       canvas.drawLine(Offset(left, y), Offset(left + w, y), paintGrid);
     }
 
-    // Подписи оси Y (max, mid, min) — единицу измерения НЕ рисуем
+    // Подписи оси Y — единицу измерения НЕ рисуем
     // ────────────────────────────────────────────────────────────────
     // Для темпа переворачиваем: minY (быстрый темп) сверху, maxY (медленный) снизу
+    // Рисуем подписи для всех линий сетки (5 подписей)
     // ────────────────────────────────────────────────────────────────
     final tpYStyle = TextStyle(
       fontFamily: 'Inter',
       fontSize: 10,
       color: textSecondaryColor,
     );
-    final labels = paceMode
-        ? <double>[minY, minY + (maxY - minY) * 0.5, maxY]
-        : <double>[maxY, minY + (maxY - minY) * 0.5, minY];
-    for (int i = 0; i < labels.length; i++) {
-      final val = labels[i];
-      final ly = i == 0 ? top : (i == 1 ? top + h / 2 : top + h);
+    // Генерируем 5 значений для подписей (соответствуют линиям сетки)
+    for (int i = 0; i <= gridY; i++) {
+      final frac = i / gridY;
+      // Для темпа переворачиваем: minY сверху, maxY снизу
+      final val = paceMode
+          ? minY + (maxY - minY) * (1 - frac)
+          : minY + (maxY - minY) * frac;
+      final ly = top + h * frac;
       final txt = paceMode ? _fmtSecToMinSec(val) : val.toStringAsFixed(0);
       tp.text = TextSpan(text: txt, style: tpYStyle);
       tp.layout();
@@ -2006,7 +2117,7 @@ class _LinePainter extends CustomPainter {
             : value.toStringAsFixed(0);
         tp.text = TextSpan(
           text: valueText,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 11,
             fontWeight: FontWeight.w600,
@@ -2019,12 +2130,38 @@ class _LinePainter extends CustomPainter {
     }
 
     // Подписи X (0..xMax) — без вертикальных линий
+    // Если точек больше 20, пропускаем подписи для лучшей читаемости
     final tpXStyle = TextStyle(
       fontFamily: 'Inter',
       fontSize: 10,
       color: textSecondaryColor,
     );
-    for (int k = 0; k <= xMax; k++) {
+
+    // Определяем шаг для подписей в зависимости от количества точек
+    // Цель: показать примерно 10-15 подписей максимум
+    final step = xMax <= 20
+        ? 1
+        : xMax <= 40
+        ? 2
+        : xMax <= 60
+        ? 3
+        : xMax <= 80
+        ? 4
+        : xMax <= 100
+        ? 5
+        : (xMax / 10).ceil();
+
+    // Всегда показываем первую (0) и последнюю (xMax) подпись
+    final labelsToShow = <int>{0, xMax};
+
+    // Добавляем промежуточные подписи с учетом шага
+    for (int k = step; k < xMax; k += step) {
+      labelsToShow.add(k);
+    }
+
+    // Сортируем и рисуем подписи
+    final sortedLabels = labelsToShow.toList()..sort();
+    for (final k in sortedLabels) {
       final x = left + w * (k / xMax);
       final span = TextSpan(text: '$k', style: tpXStyle);
       tp.text = span;
@@ -2038,6 +2175,7 @@ class _LinePainter extends CustomPainter {
       old.yValues != yValues ||
       old.paceMode != paceMode ||
       old.xMax != xMax ||
+      old.chartMode != chartMode ||
       old.textSecondaryColor != textSecondaryColor ||
       old.borderColor != borderColor ||
       old.selectedIndex != selectedIndex;

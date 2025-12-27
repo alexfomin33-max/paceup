@@ -436,8 +436,6 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     return (minY, maxY, tick);
   }
 
-  Color _barColor() => AppColors.accentMint;
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading && _statsData == null) {
@@ -592,7 +590,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: _YearChartCard(
             initialYear: _currentYear,
-            color: _barColor(),
+            color: AppColors.brandPrimary,
             minY: distanceMinY,
             maxY: distanceMaxY,
             tick: distanceTick,
@@ -616,7 +614,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
           child: _YearChartCard(
             initialYear: _currentYear,
-            color: AppColors.male,
+            color: AppColors.female,
             minY: activeDaysMinY,
             maxY: activeDaysMaxY,
             tick: activeDaysTick,
@@ -640,7 +638,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
           child: _YearChartCard(
             initialYear: _currentYear,
-            color: AppColors.female,
+            color: AppColors.accentMint,
             minY: activeTimeMinY,
             maxY: activeTimeMaxY,
             tick: activeTimeTick,
