@@ -567,12 +567,6 @@ Future<void> _handleAddPhotos({
     }
 
     if (filesForUpload.isEmpty) {
-      if (context.mounted) {
-        await _showErrorDialog(
-          context: context,
-          error: 'Не удалось подготовить файлы для загрузки.',
-        );
-      }
       return;
     }
 

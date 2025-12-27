@@ -75,6 +75,28 @@ class MoreMenuOverlay {
     final overlay = Overlay.of(context, rootOverlay: true);
     if (anchorCtx == null) return;
 
+    // ────────────────────────────────────────────────────────────────
+    // 📏 ВЫЧИСЛЕНИЕ ШИРИНЫ ПО СОДЕРЖИМОМУ: находим самый длинный текст
+    // ────────────────────────────────────────────────────────────────
+    final textStyle = AppTextStyles.h14w4;
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+    double maxTextWidth = 0.0;
+    for (final item in items) {
+      textPainter.text = TextSpan(
+        text: item.text,
+        style: item.textStyle ?? textStyle,
+      );
+      textPainter.layout();
+      if (textPainter.width > maxTextWidth) {
+        maxTextWidth = textPainter.width;
+      }
+    }
+    // Ширина = текст + padding horizontal (14*2) + иконка (18) + отступ (12)
+    // + минимальные отступы для комфорта
+    final computedWidth = maxTextWidth + 14 * 2 + 18 + 12 + 8;
+    // Используем вычисленную ширину, но не меньше минимальной
+    final menuWidth = computedWidth > width ? computedWidth : width;
+
     // Прямоугольник кнопки "…" в системе координат overlay.
     final anchorBox = anchorCtx.findRenderObject() as RenderBox;
     final overlayBox = overlay.context.findRenderObject() as RenderBox;
@@ -96,13 +118,13 @@ class MoreMenuOverlay {
         2;
 
     // Базовая позиция: под кнопкой, выравниваем по правому краю.
-    double left = anchorRect.right - width;
+    double left = anchorRect.right - menuWidth;
     double top = anchorRect.bottom + margin;
 
     // Не вылезаем за края.
     if (left < horizontalInset) left = horizontalInset;
-    if (left + width > screenSize.width - horizontalInset) {
-      left = screenSize.width - horizontalInset - width;
+    if (left + menuWidth > screenSize.width - horizontalInset) {
+      left = screenSize.width - horizontalInset - menuWidth;
     }
 
     // Если снизу не помещается — показываем над якорем.
@@ -140,7 +162,7 @@ class MoreMenuOverlay {
           Positioned(
             left: left,
             top: top,
-            width: width,
+            width: menuWidth,
             child: Material(
               color: Colors.transparent,
               child: Container(
@@ -186,17 +208,16 @@ class MoreMenuOverlay {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    it.text,
-                    style:
-                        it.textStyle ??
-                        AppTextStyles.h14w4.copyWith(color: textColor),
-                  ),
-                ),
-                const SizedBox(width: 12),
                 Icon(it.icon, size: 18, color: it.iconColor ?? iconColor),
+                const SizedBox(width: 12),
+                Text(
+                  it.text,
+                  style:
+                      it.textStyle ??
+                      AppTextStyles.h14w4.copyWith(color: textColor),
+                ),
               ],
             ),
           ),

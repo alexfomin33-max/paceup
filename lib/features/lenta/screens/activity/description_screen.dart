@@ -1,7 +1,14 @@
 // lib/screens/lenta/widgets/activity_description_block.dart
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart'
+    show
+        CupertinoIcons,
+        CupertinoAlertDialog,
+        CupertinoDialogAction,
+        CupertinoActivityIndicator,
+        CupertinoSliverRefreshControl,
+        showCupertinoDialog;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui; // для ui.Path
@@ -23,7 +30,6 @@ import '../../../../domain/models/activity_lenta.dart' as al;
 import 'combining_screen.dart';
 import 'fullscreen_route_map_screen.dart';
 import 'edit_activity_screen.dart';
-import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/more_menu_overlay.dart';
@@ -89,6 +95,13 @@ class _ActivityDescriptionPageState
   Map<String, dynamic>? _chartsSummary;
 
   final ApiService _api = ApiService();
+
+  // ────────────────────────────────────────────────────────────────
+  // 🎬 АНИМАЦИЯ ПРИ СКРОЛЛЕ: состояние для плавного появления заголовка
+  // ────────────────────────────────────────────────────────────────
+  bool _isScrolled = false;
+  double _titleOpacity = 0;
+  double _headerOpacity = 1;
 
   @override
   void initState() {
@@ -293,6 +306,16 @@ class _ActivityDescriptionPageState
           },
         ),
         MoreMenuItem(
+          text: 'Объединить тренировку',
+          icon: CupertinoIcons.personalhotspot,
+          onTap: () {
+            MoreMenuHub.hide();
+            Navigator.of(context).push(
+              TransparentPageRoute(builder: (_) => const CombiningScreen()),
+            );
+          },
+        ),
+        MoreMenuItem(
           text: 'Удалить тренировку',
           icon: CupertinoIcons.minus_circle,
           iconColor: AppColors.error,
@@ -362,63 +385,210 @@ class _ActivityDescriptionPageState
     }
   }
 
+  // ────────────────────────────────────────────────────────────────
+  // 📏 МЕТРИКИ ШАПКИ: вычисляем высоту карты для анимации
+  // ────────────────────────────────────────────────────────────────
+  double _getMapHeight(BuildContext context) {
+    final a = _currentActivity;
+    if (a.points.isEmpty && a.mediaImages.isEmpty) return 0;
+    // Высота карты (350) + небольшой отступ для визуальной связки
+    return 350.0;
+  }
+
+  double _getHeaderThreshold(BuildContext context) {
+    final mapHeight = _getMapHeight(context);
+    // Порог коллапса шапки (80% от высоты карты)
+    return mapHeight * 0.8;
+  }
+
+  /// ────────────────────────────────────────────────────────────────
+  /// 📏 ФОРМАТИРОВАНИЕ РАССТОЯНИЯ: для плавания показываем в метрах,
+  /// для остальных типов — в километрах
+  /// ────────────────────────────────────────────────────────────────
+  String _formatDistance(double? distanceMeters, String activityType) {
+    if (distanceMeters == null) return '—';
+
+    final isSwim =
+        activityType.toLowerCase() == 'swim' ||
+        activityType.toLowerCase() == 'swimming';
+
+    if (isSwim) {
+      // Для плавания: форматируем в метрах с пробелами после каждых 3 цифр
+      final value = distanceMeters.toStringAsFixed(0);
+      final buffer = StringBuffer();
+      for (int i = 0; i < value.length; i++) {
+        if (i > 0 && (value.length - i) % 3 == 0) {
+          buffer.write(' ');
+        }
+        buffer.write(value[i]);
+      }
+      return '${buffer.toString()} м';
+    } else {
+      // Для остальных типов: форматируем в километрах с 2 знаками после запятой
+      return '${(distanceMeters / 1000.0).toStringAsFixed(2)} км';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final a = _currentActivity;
     final stats = a.stats;
+    final mapHeight = _getMapHeight(context);
+    final threshold = _getHeaderThreshold(context);
+    final distanceText = _formatDistance(stats?.distance, a.type);
 
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: PaceAppBar(
-          title: 'Тренировка',
-          showBottomDivider:
-              false, // чтобы не было двойной линии со следующим блоком
-          actions: [
-            IconButton(
-              splashRadius: 22,
-              icon: Icon(
-                CupertinoIcons.personalhotspot,
-                size: 20,
-                color: AppColors.getIconPrimaryColor(context),
-              ),
-              onPressed: () {
-                Navigator.of(context).push(
-                  TransparentPageRoute(builder: (_) => const CombiningScreen()),
-                );
-              },
-            ),
-            IconButton(
-              key: _menuKey,
-              splashRadius: 22,
-              icon: Icon(
-                CupertinoIcons.ellipsis,
-                size: 20,
-                color: AppColors.getIconPrimaryColor(context),
-              ),
-              onPressed: () => _showMenu(context),
-            ),
-          ],
-        ),
+        body: NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            // ──────────────────────────────────────────────────────────────
+            // При любом вертикальном скролле прячем всплывающее меню
+            // ──────────────────────────────────────────────────────────────
+            if (notification.depth == 0 &&
+                notification.metrics.axis == Axis.vertical) {
+              MoreMenuHub.hide();
+            }
 
-        body: RefreshIndicator(
-          onRefresh: _onRefresh,
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (n) {
-              // ────────── Скрываем меню при скролле ──────────
-              if (n is ScrollStartNotification ||
-                  n is ScrollUpdateNotification ||
-                  n is OverscrollNotification ||
-                  n is UserScrollNotification) {
-                MoreMenuHub.hide();
+            // Обрабатываем только вертикальные уведомления верхнего уровня
+            if (notification is ScrollUpdateNotification &&
+                notification.depth == 0 &&
+                notification.metrics.axis == Axis.vertical) {
+              // ──────────────────────────────────────────────────────────────
+              // Плавно считаем прогресс схлопывания шапки
+              // Заголовок появляется только в конце скролла (после 70% прогресса)
+              // ──────────────────────────────────────────────────────────────
+              final thresholdValue = threshold > 0 ? threshold : 1.0;
+              final rawProgress = notification.metrics.pixels / thresholdValue;
+              final clampedProgress = rawProgress.clamp(0.0, 1.0).toDouble();
+
+              // Заголовок начинает появляться только после 70% скролла
+              const titleStartProgress = 0.7;
+              final titleProgress = clampedProgress < titleStartProgress
+                  ? 0.0
+                  : ((clampedProgress - titleStartProgress) /
+                            (1.0 - titleStartProgress))
+                        .clamp(0.0, 1.0);
+
+              final newOpacity = titleProgress;
+              final newIsScrolled = clampedProgress >= 1;
+              final newHeaderOpacity = (1 - clampedProgress).clamp(0.0, 1.0);
+
+              if (newIsScrolled != _isScrolled ||
+                  (newOpacity - _titleOpacity).abs() > 0.04 ||
+                  (newHeaderOpacity - _headerOpacity).abs() > 0.04) {
+                setState(() {
+                  _isScrolled = newIsScrolled;
+                  _titleOpacity = newOpacity;
+                  _headerOpacity = newHeaderOpacity;
+                });
               }
-              return false;
+            }
+            return false;
+          },
+          child: NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              final expandedHeight = mapHeight;
+              final titleOpacity = _titleOpacity.clamp(0.0, 1.0);
+              final headerOpacity = _headerOpacity.clamp(0.0, 1.0);
+              final isCollapsed = _isScrolled || innerBoxIsScrolled;
+
+              return [
+                SliverAppBar(
+                  pinned: true,
+                  floating: false,
+                  snap: false,
+                  automaticallyImplyLeading: false,
+                  expandedHeight: expandedHeight,
+                  backgroundColor: AppColors.getSurfaceColor(context),
+                  elevation: 0,
+                  scrolledUnderElevation: 1,
+                  forceElevated: isCollapsed || titleOpacity > 0.05,
+                  leadingWidth: 46,
+                  leading: Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: _CircleAppIcon(
+                      icon: CupertinoIcons.back,
+                      isScrolled: isCollapsed,
+                      fadeOpacity: headerOpacity,
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
+                  ),
+                  title: titleOpacity > 0.01
+                      ? AnimatedOpacity(
+                          opacity: titleOpacity,
+                          duration: const Duration(milliseconds: 160),
+                          curve: Curves.easeOut,
+                          child: Text(
+                            distanceText,
+                            style: AppTextStyles.h18w6.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                        )
+                      : null,
+                  centerTitle: true,
+                  actions: [
+                    _CircleAppIcon(
+                      icon: CupertinoIcons.ellipsis_vertical,
+                      key: _menuKey,
+                      isScrolled: isCollapsed,
+                      fadeOpacity: headerOpacity,
+                      onPressed: () => _showMenu(context),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  flexibleSpace: FlexibleSpaceBar(
+                    collapseMode: CollapseMode.none,
+                    // Плавно скрываем карту при скролле
+                    background: AnimatedOpacity(
+                      opacity: headerOpacity,
+                      duration: const Duration(milliseconds: 160),
+                      curve: Curves.easeOut,
+                      child: (a.points.isNotEmpty || a.mediaImages.isNotEmpty)
+                          ? ActivityRouteCarousel(
+                              points: a.points
+                                  .map((c) => ll.LatLng(c.lat, c.lng))
+                                  .toList(),
+                              imageUrls: a.mediaImages,
+                              height: mapHeight,
+                              mapSortOrder: a.mapSortOrder,
+                              // ────────────────────────────────────────────────────────────────
+                              // 🔹 ОТКРЫТИЕ ПОЛНОЭКРАННОЙ КАРТЫ: при клике на слайд с картой
+                              // ────────────────────────────────────────────────────────────────
+                              onMapTap: a.points.isNotEmpty
+                                  ? () {
+                                      Navigator.of(context).push(
+                                        TransparentPageRoute(
+                                          builder: (context) =>
+                                              FullscreenRouteMapScreen(
+                                                points: a.points
+                                                    .map(
+                                                      (c) => ll.LatLng(
+                                                        c.lat,
+                                                        c.lng,
+                                                      ),
+                                                    )
+                                                    .toList(),
+                                              ),
+                                        ),
+                                      );
+                                    }
+                                  : null,
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+              ];
             },
-            child: CustomScrollView(
+            body: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
               slivers: [
+                // ───────────────── Pull-to-refresh ─────────────────
+                CupertinoSliverRefreshControl(onRefresh: _onRefresh),
                 // ───────── Верхний блок (как в ActivityBlock)
                 SliverToBoxAdapter(
                   child: Container(
@@ -512,81 +682,51 @@ class _ActivityDescriptionPageState
                   ),
                 ),
 
-                // ───────── Карта маршрута с фотографиями (как в ActivityBlock)
-                // Показываем только если есть точки маршрута или есть изображения
-                // Высота 350
-                if (a.points.isNotEmpty || a.mediaImages.isNotEmpty) ...[
-                  SliverToBoxAdapter(
-                    child: ActivityRouteCarousel(
-                      points: a.points
-                          .map((c) => ll.LatLng(c.lat, c.lng))
-                          .toList(),
-                      imageUrls: a.mediaImages,
-                      height: 350,
-                      mapSortOrder: a.mapSortOrder,
-                      // ────────────────────────────────────────────────────────────────
-                      // 🔹 ОТКРЫТИЕ ПОЛНОЭКРАННОЙ КАРТЫ: при клике на слайд с картой
-                      // ────────────────────────────────────────────────────────────────
-                      onMapTap: a.points.isNotEmpty
-                          ? () {
-                              Navigator.of(context).push(
-                                TransparentPageRoute(
-                                  builder: (context) =>
-                                      FullscreenRouteMapScreen(
-                                        points: a.points
-                                            .map((c) => ll.LatLng(c.lat, c.lng))
-                                            .toList(),
-                                      ),
-                                ),
-                              );
-                            }
-                          : null,
+                // ────────────────────────────────────────────────────────────────
+                // 📦 ЭКИПИРОВКА: на всю ширину экрана, под блоком с хэдером
+                // ────────────────────────────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Container(
+                    width: double.infinity,
+                    // ────────────────────────────────────────────────────────────────
+                    // 🌓 ФОН: используем surface цвет (белый в светлой теме)
+                    // ────────────────────────────────────────────────────────────────
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurfaceColor(context),
+                    ),
+                    child: ab.EquipmentChip(
+                      items: a.equipments,
+                      userId: a.userId,
+                      activityType: a.type,
+                      activityId: a.id,
+                      activityDistance: (stats?.distance ?? 0.0) / 1000.0,
+                      showMenuButton:
+                          true, // показываем кнопку меню для замены экипировки
+                      onEquipmentChanged: _refreshActivityAfterEquipmentChange,
                     ),
                   ),
-                  // ────────────────────────────────────────────────────────────────
-                  // 📦 ЭКИПИРОВКА: на всю ширину экрана, вплотную под блоком с маршрутом
-                  // ────────────────────────────────────────────────────────────────
-                  SliverToBoxAdapter(
-                    child: Container(
-                      width: double.infinity,
-                      // ────────────────────────────────────────────────────────────────
-                      // 🌓 ФОН: используем surface цвет (белый в светлой теме)
-                      // ────────────────────────────────────────────────────────────────
-                      decoration: BoxDecoration(
-                        color: AppColors.getSurfaceColor(context),
-                      ),
-                      child: ab.EquipmentChip(
-                        items: a.equipments,
-                        userId: a.userId,
-                        activityType: a.type,
-                        activityId: a.id,
-                        activityDistance: (stats?.distance ?? 0.0) / 1000.0,
-                        showMenuButton:
-                            true, // показываем кнопку меню для замены экипировки
-                        onEquipmentChanged:
-                            _refreshActivityAfterEquipmentChange,
-                      ),
-                    ),
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                ],
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
                 // ───────── «Отрезки» — таблица на всю ширину экрана
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
-                        child: Text(
-                          'Отрезки',
-                          style: AppTextStyles.h15w5.copyWith(
-                            color: AppColors.getTextPrimaryColor(context),
-                          ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  sliver: SliverToBoxAdapter(
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.getSurfaceColor(context),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: AppColors.getBorderColor(context),
+                          width: 1,
                         ),
                       ),
-                      _SplitsTableFull(stats: stats, activityType: a.type),
-                    ],
+                      child: _SplitsTableFull(
+                        stats: stats,
+                        activityType: a.type,
+                      ),
+                    ),
                   ),
                 ),
 
@@ -659,11 +799,11 @@ class _ActivityDescriptionPageState
 
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
               ],
-            ), // CustomScrollView
-          ), // NotificationListener
-        ), // RefreshIndicator
-      ), // Scaffold
-    ); // InteractiveBackSwipe
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// ────────────────────────────────────────────────────────────────
@@ -1185,96 +1325,83 @@ class _SplitsTableFull extends StatelessWidget {
     // Если данных нет, показываем пустую таблицу с заголовками
     // ────────────────────────────────────────────────────────────────
     if (pacePerKm.isEmpty && heartRatePerKm.isEmpty) {
-      return Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: AppColors.getSurfaceColor(context),
-          border: Border(
-            top: BorderSide(color: AppColors.getBorderColor(context), width: 1),
-            bottom: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 28,
+                  child: Text(
+                    'Км',
+                    style: AppTextStyles.h12w4.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 52,
+                  child: Text(
+                    'Темп',
+                    style: AppTextStyles.h12w4.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                ),
+                const Expanded(child: SizedBox()),
+                SizedBox(
+                  width: 40,
+                  child: Text(
+                    'Пульс',
+                    textAlign: TextAlign.right,
+                    style: AppTextStyles.h12w4.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 28,
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: AppColors.getBorderColor(context),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Text(
+                  'Нет данных о сегментах',
+                  style: AppTextStyles.h13w4.copyWith(
+                    color: AppColors.getTextSecondaryColor(context),
+                  ),
+                ),
+                if (stats == null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      'Км',
+                      'Статистика тренировки недоступна',
                       style: AppTextStyles.h12w4.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                     ),
-                  ),
-                  SizedBox(
-                    width: 52,
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      'Темп',
+                      'Garmin Connect не передал данные о сегментах',
                       style: AppTextStyles.h12w4.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                     ),
                   ),
-                  const Expanded(child: SizedBox()),
-                  SizedBox(
-                    width: 40,
-                    child: Text(
-                      'Пульс',
-                      textAlign: TextAlign.right,
-                      style: AppTextStyles.h12w4.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ),
-            Divider(
-              height: 1,
-              thickness: 0.5,
-              color: AppColors.getBorderColor(context),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Text(
-                    'Нет данных о сегментах',
-                    style: AppTextStyles.h13w4.copyWith(
-                      color: AppColors.getTextSecondaryColor(context),
-                    ),
-                  ),
-                  if (stats == null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        'Статистика тренировки недоступна',
-                        style: AppTextStyles.h12w4.copyWith(
-                          color: AppColors.getTextSecondaryColor(context),
-                        ),
-                      ),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        'Garmin Connect не передал данные о сегментах',
-                        style: AppTextStyles.h12w4.copyWith(
-                          color: AppColors.getTextSecondaryColor(context),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       );
     }
 
@@ -1353,165 +1480,152 @@ class _SplitsTableFull extends StatelessWidget {
       }
     }
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.getSurfaceColor(context),
-        border: Border(
-          top: BorderSide(color: AppColors.getBorderColor(context), width: 1),
-          bottom: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+    return Column(
+      children: [
+        // ───── Заголовок столбцов
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 28,
+                child: Text(
+                  'Км',
+                  style: AppTextStyles.h12w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 52,
+                child: Text(
+                  'Темп',
+                  style: AppTextStyles.h12w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                ),
+              ),
+              const Expanded(child: SizedBox()),
+              SizedBox(
+                width: 40,
+                child: Text(
+                  'Пульс',
+                  textAlign: TextAlign.right,
+                  style: AppTextStyles.h12w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ),
-      child: Column(
-        children: [
-          // ───── Заголовок столбцов
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 28,
-                  child: Text(
-                    'Км',
-                    style: AppTextStyles.h12w4.copyWith(
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 52,
-                  child: Text(
-                    'Темп',
-                    style: AppTextStyles.h12w4.copyWith(
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                ),
-                const Expanded(child: SizedBox()),
-                SizedBox(
-                  width: 40,
-                  child: Text(
-                    'Пульс',
-                    textAlign: TextAlign.right,
-                    style: AppTextStyles.h12w4.copyWith(
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Divider(
-            height: 1,
-            thickness: 0.5,
-            color: AppColors.getBorderColor(context),
-          ),
+        Divider(
+          height: 1,
+          thickness: 0.5,
+          color: AppColors.getBorderColor(context),
+        ),
 
-          // ───── Строки данных из реальных данных Garmin Connect
-          ...List.generate(sortedKeys.length, (i) {
-            final kmKey = sortedKeys[i];
-            final paceValue = pacePerKm[kmKey] ?? 0.0;
-            final hr = heartRatePerKm[kmKey] ?? 0.0;
+        // ───── Строки данных из реальных данных Garmin Connect
+        ...List.generate(sortedKeys.length, (i) {
+          final kmKey = sortedKeys[i];
+          final paceValue = pacePerKm[kmKey] ?? 0.0;
+          final hr = heartRatePerKm[kmKey] ?? 0.0;
 
-            // ────────────────────────────────────────────────────────────────
-            // Вычисляем долю для визуальной полосы темпа
-            // Чем быстрее темп (меньше секунд), тем длиннее полоса
-            // Используем пропорцию: fastestPace / paceSecForVisual
-            // Самый быстрый темп (fastestPace) будет иметь полоску на всю ширину (1.0)
-            // Для типа "run" конвертируем минуты в секунды для сравнения
-            // ────────────────────────────────────────────────────────────────
-            final paceSecForVisual = activityType == 'run'
-                ? (paceValue.floor() * 60 +
-                          ((paceValue - paceValue.floor()) * 60).round())
-                      .toDouble()
-                : paceValue;
-            final visualFrac = paceSecForVisual > 0 && fastestPace > 0
-                ? (fastestPace / paceSecForVisual).clamp(0.05, 1.0)
-                : 0.05;
+          // ────────────────────────────────────────────────────────────────
+          // Вычисляем долю для визуальной полосы темпа
+          // Чем быстрее темп (меньше секунд), тем длиннее полоса
+          // Используем пропорцию: fastestPace / paceSecForVisual
+          // Самый быстрый темп (fastestPace) будет иметь полоску на всю ширину (1.0)
+          // Для типа "run" конвертируем минуты в секунды для сравнения
+          // ────────────────────────────────────────────────────────────────
+          final paceSecForVisual = activityType == 'run'
+              ? (paceValue.floor() * 60 +
+                        ((paceValue - paceValue.floor()) * 60).round())
+                    .toDouble()
+              : paceValue;
+          final visualFrac = paceSecForVisual > 0 && fastestPace > 0
+              ? (fastestPace / paceSecForVisual).clamp(0.05, 1.0)
+              : 0.05;
 
-            // Форматируем ключ для отображения (убираем "_partial" если есть)
-            final displayKey = kmKey.replaceAll('_partial', '');
+          // Форматируем ключ для отображения (убираем "_partial" если есть)
+          final displayKey = kmKey.replaceAll('_partial', '');
 
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 28,
-                        child: Text(
-                          displayKey,
-                          style: AppTextStyles.h12w4.copyWith(
-                            color: AppColors.getTextPrimaryColor(context),
-                          ),
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 28,
+                      child: Text(
+                        displayKey,
+                        style: AppTextStyles.h12w4.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
-                      SizedBox(
-                        width: 40,
-                        child: Text(
-                          fmtPace(paceValue),
-                          style: AppTextStyles.h12w4.copyWith(
-                            color: AppColors.getTextPrimaryColor(context),
-                          ),
+                    ),
+                    SizedBox(
+                      width: 40,
+                      child: Text(
+                        fmtPace(paceValue),
+                        style: AppTextStyles.h12w4.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: LayoutBuilder(
-                          builder: (_, c) => Stack(
-                            children: [
-                              Container(
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: AppColors.skeletonBase,
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.sm,
-                                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (_, c) => Stack(
+                          children: [
+                            Container(
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: AppColors.skeletonBase,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
                                 ),
                               ),
-                              Container(
-                                width: c.maxWidth * visualFrac,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: AppColors.brandPrimary,
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.sm,
-                                  ),
+                            ),
+                            Container(
+                              width: c.maxWidth * visualFrac,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: AppColors.brandPrimary,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 40,
-                        child: Text(
-                          hr > 0 ? hr.round().toString() : '-',
-                          textAlign: TextAlign.right,
-                          style: AppTextStyles.h12w4.copyWith(
-                            color: AppColors.getTextPrimaryColor(context),
-                          ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 40,
+                      child: Text(
+                        hr > 0 ? hr.round().toString() : '-',
+                        textAlign: TextAlign.right,
+                        style: AppTextStyles.h12w4.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                if (i != sortedKeys.length - 1)
-                  Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    color: AppColors.getBorderColor(context),
-                  ),
-              ],
-            );
-          }),
-        ],
-      ),
+              ),
+              if (i != sortedKeys.length - 1)
+                Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  color: AppColors.getBorderColor(context),
+                ),
+            ],
+          );
+        }),
+      ],
     );
   }
 }
@@ -1725,7 +1839,12 @@ class _LinePainter extends CustomPainter {
     for (int i = 0; i < n; i++) {
       final cx = n > 1 ? left + dx * i : left + chartW / 2;
       final frac = (yValues[i] - minY) / range;
-      final cy = size.height - bottom - frac * chartH;
+      // ────────────────────────────────────────────────────────────────
+      // Для темпа переворачиваем ось Y: меньшие значения (быстрый темп) сверху
+      // ────────────────────────────────────────────────────────────────
+      final cy = paceMode
+          ? top + frac * chartH
+          : size.height - bottom - frac * chartH;
 
       final pointRadius = selectedIndex == i ? 8.0 : 5.0;
       final distanceToPoint = (localPosition - Offset(cx, cy)).distance;
@@ -1794,12 +1913,17 @@ class _LinePainter extends CustomPainter {
     }
 
     // Подписи оси Y (max, mid, min) — единицу измерения НЕ рисуем
+    // ────────────────────────────────────────────────────────────────
+    // Для темпа переворачиваем: minY (быстрый темп) сверху, maxY (медленный) снизу
+    // ────────────────────────────────────────────────────────────────
     final tpYStyle = TextStyle(
       fontFamily: 'Inter',
       fontSize: 10,
       color: textSecondaryColor,
     );
-    final labels = <double>[maxY, minY + (maxY - minY) * 0.5, minY];
+    final labels = paceMode
+        ? <double>[minY, minY + (maxY - minY) * 0.5, maxY]
+        : <double>[maxY, minY + (maxY - minY) * 0.5, minY];
     for (int i = 0; i < labels.length; i++) {
       final val = labels[i];
       final ly = i == 0 ? top : (i == 1 ? top + h / 2 : top + h);
@@ -1816,7 +1940,11 @@ class _LinePainter extends CustomPainter {
 
     for (int i = 0; i < yValues.length; i++) {
       final nx = yValues.length > 1 ? left + dx * i : left + w / 2;
-      final ny = top + h * (1 - (yValues[i] - minY) / range);
+      // ────────────────────────────────────────────────────────────────
+      // Для темпа переворачиваем ось Y: меньшие значения (быстрый темп) сверху
+      // ────────────────────────────────────────────────────────────────
+      final frac = (yValues[i] - minY) / range;
+      final ny = paceMode ? top + h * frac : top + h * (1 - frac);
 
       if (i == 0) {
         path.moveTo(nx, ny);
@@ -1846,7 +1974,11 @@ class _LinePainter extends CustomPainter {
     // Рисуем точки на линии (как в профиле)
     for (int i = 0; i < yValues.length; i++) {
       final nx = yValues.length > 1 ? left + dx * i : left + w / 2;
-      final ny = top + h * (1 - (yValues[i] - minY) / range);
+      // ────────────────────────────────────────────────────────────────
+      // Для темпа переворачиваем ось Y: меньшие значения (быстрый темп) сверху
+      // ────────────────────────────────────────────────────────────────
+      final frac = (yValues[i] - minY) / range;
+      final ny = paceMode ? top + h * frac : top + h * (1 - frac);
 
       final isSelected = selectedIndex == i;
       final pointRadius = isSelected ? 8.0 : 5.0;
@@ -2070,5 +2202,63 @@ class _ChartSummary extends StatelessWidget {
         ),
       );
     }
+  }
+}
+
+/// ────────────────────────────────────────────────────────────────────
+/// 🎨 КРУГЛАЯ КНОПКА-ИКОНКА: полупрозрачная кнопка для AppBar
+/// Плавно меняет стиль при скролле: кружок исчезает, иконка становится темной
+/// ────────────────────────────────────────────────────────────────────
+class _CircleAppIcon extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final bool isScrolled;
+  final double fadeOpacity; // Плавное исчезновение фона при начале скролла
+  const _CircleAppIcon({
+    required this.icon,
+    required this.isScrolled,
+    required this.fadeOpacity,
+    super.key,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Цвет иконки: плавно переходим от светлого (на карте) к темному
+    // (в AppBar) с самого начала скролла
+    final lightIcon = AppColors.getSurfaceColor(context);
+    final darkIcon = AppColors.getIconPrimaryColor(context);
+    final iconColor = Color.lerp(
+      lightIcon,
+      darkIcon,
+      (1 - fadeOpacity.clamp(0.0, 1.0)),
+    );
+
+    // Цвет фона: темный с прозрачностью когда не скроллено, прозрачный когда скроллено
+    final backgroundColor = isScrolled
+        ? Colors.transparent
+        : AppColors.getTextPrimaryColor(
+            context,
+          ).withValues(alpha: 0.5 * fadeOpacity.clamp(0.0, 1.0));
+
+    return SizedBox(
+      width: 38.0,
+      height: 38.0,
+      child: GestureDetector(
+        onTap: onPressed ?? () {},
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 20, color: iconColor),
+        ),
+      ),
+    );
   }
 }
