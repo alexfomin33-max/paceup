@@ -12,7 +12,7 @@ class Task {
   /// Название задачи
   final String name;
 
-  /// Тип задачи ('run', 'bike', 'swim', 'walk', 'general')
+  /// Тип задачи ('run', 'bike', 'swim', 'walk', 'general', 'ski')
   final String type;
 
   /// Название типа задачи для отображения
