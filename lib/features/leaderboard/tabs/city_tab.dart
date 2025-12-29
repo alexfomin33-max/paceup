@@ -127,6 +127,15 @@ class _CityTabState extends ConsumerState<CityTab>
   void _applyCity() {
     final city = _cityController.text.trim();
     if (city.isNotEmpty) {
+      // Проверяем, что город выбран из списка
+      if (!_cities.contains(city)) {
+        // Город не найден в списке - очищаем поле
+        _cityController.clear();
+        setState(() {
+          _selectedCity = null;
+        });
+        return;
+      }
       setState(() {
         _selectedCity = city;
       });
@@ -253,6 +262,10 @@ class _CityTabState extends ConsumerState<CityTab>
                     });
                   },
                   onSubmitted: _applyCity, // Применяем город при нажатии Enter
+                  hasError: _selectedCity == null && _cityController.text.isNotEmpty,
+                  errorText: _selectedCity == null && _cityController.text.isNotEmpty
+                      ? 'Выберите город из списка'
+                      : null,
                 ),
                 const SizedBox(height: 8),
                 // ── Панель фильтров

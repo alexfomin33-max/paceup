@@ -1,6 +1,6 @@
 // lib/features/leaderboard/widgets/city_autocomplete_field.dart
 // ─────────────────────────────────────────────────────────────────────────────
-// Виджет автокомплита для поиска города
+// Виджет автокомплита для поиска города с валидацией
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/material.dart';
@@ -10,12 +10,15 @@ import '../../../core/theme/app_theme.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 //                     ПОЛЕ АВТОКОМПЛИТА ДЛЯ ГОРОДА
 // ─────────────────────────────────────────────────────────────────────────────
-/// Виджет автокомплита для поиска города (аналогичен create_club_screen.dart)
-class CityAutocompleteField extends StatelessWidget {
+/// Виджет автокомплита для поиска города с обязательным выбором из списка
+class CityAutocompleteField extends StatefulWidget {
   final TextEditingController controller;
   final List<String> suggestions;
   final Function(String) onSelected;
   final VoidCallback? onSubmitted; // Callback для нажатия Enter
+  final bool hasError; // Показывать ли ошибку
+  final String? errorText; // Текст ошибки
+  final String? hintText; // Подсказка
 
   const CityAutocompleteField({
     super.key,
@@ -23,11 +26,73 @@ class CityAutocompleteField extends StatelessWidget {
     required this.suggestions,
     required this.onSelected,
     this.onSubmitted,
+    this.hasError = false,
+    this.errorText,
+    this.hintText,
   });
 
   @override
+  State<CityAutocompleteField> createState() => _CityAutocompleteFieldState();
+}
+
+class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
+  final FocusNode _focusNode = FocusNode();
+  String? _selectedCity; // Храним выбранный город из списка
+
+  @override
+  void initState() {
+    super.initState();
+    // Инициализируем выбранный город, если он уже есть в контроллере
+    if (widget.controller.text.isNotEmpty) {
+      final city = widget.controller.text.trim();
+      if (widget.suggestions.contains(city)) {
+        _selectedCity = city;
+      }
+    }
+    
+    // Слушаем изменения в контроллере
+    widget.controller.addListener(_onControllerChanged);
+    
+    // Слушаем потерю фокуса для валидации
+    _focusNode.addListener(_onFocusChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    _focusNode.removeListener(_onFocusChanged);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    // Если текст изменился не через выбор из списка, сбрасываем выбранный город
+    if (widget.controller.text.trim() != _selectedCity) {
+      _selectedCity = null;
+    }
+  }
+
+  void _onFocusChanged() {
+    if (!_focusNode.hasFocus) {
+      // При потере фокуса проверяем, что город выбран из списка
+      final city = widget.controller.text.trim();
+      if (city.isNotEmpty && !widget.suggestions.contains(city)) {
+        // Город не найден в списке - очищаем поле
+        widget.controller.clear();
+        _selectedCity = null;
+        setState(() {});
+      }
+    }
+  }
+
+  /// Проверяет, что город выбран из списка
+  bool get isValid => _selectedCity != null && _selectedCity!.isNotEmpty;
+
+  @override
   Widget build(BuildContext context) {
-    final borderColor = AppColors.getBorderColor(context);
+    final borderColor = widget.hasError
+        ? AppColors.error
+        : AppColors.getBorderColor(context);
 
     return Autocomplete<String>(
       optionsBuilder: (TextEditingValue textEditingValue) {
@@ -35,11 +100,17 @@ class CityAutocompleteField extends StatelessWidget {
           return const Iterable<String>.empty();
         }
         final query = textEditingValue.text.toLowerCase();
-        return suggestions.where((city) {
+        return widget.suggestions.where((city) {
           return city.toLowerCase().startsWith(query);
         });
       },
-      onSelected: onSelected,
+      onSelected: (String city) {
+        // Город выбран из списка
+        _selectedCity = city;
+        widget.controller.text = city;
+        widget.onSelected(city);
+        setState(() {});
+      },
       fieldViewBuilder:
           (
             BuildContext context,
@@ -49,50 +120,62 @@ class CityAutocompleteField extends StatelessWidget {
           ) {
             // Инициализируем текст из внешнего контроллера
             if (textEditingController.text.isEmpty &&
-                controller.text.isNotEmpty) {
-              textEditingController.text = controller.text;
+                widget.controller.text.isNotEmpty) {
+              textEditingController.text = widget.controller.text;
             }
 
             // Синхронизируем изменения в Autocomplete контроллере с внешним
             textEditingController.addListener(() {
-              if (textEditingController.text != controller.text) {
-                controller.text = textEditingController.text;
+              if (textEditingController.text != widget.controller.text) {
+                widget.controller.text = textEditingController.text;
+                // Если текст не совпадает с выбранным городом, сбрасываем выбор
+                if (textEditingController.text.trim() != _selectedCity) {
+                  _selectedCity = null;
+                }
               }
             });
 
-            return TextField(
-              controller: textEditingController,
-              focusNode: focusNode,
-              onSubmitted: (String value) {
-                onFieldSubmitted();
-                // Вызываем дополнительный callback, если он предоставлен
-                if (onSubmitted != null) {
-                  onSubmitted!();
-                }
-              },
-              style: AppTextStyles.h14w4.copyWith(
-                color: AppColors.getTextPrimaryColor(context),
-              ),
-              decoration: InputDecoration(
-                hintText: 'Введите город',
-                hintStyle: AppTextStyles.h14w4Place,
-                filled: true,
-                fillColor: AppColors.getSurfaceColor(context),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 17,
+            // Используем наш FocusNode для отслеживания потери фокуса
+            return Focus(
+              focusNode: _focusNode,
+              child: TextField(
+                controller: textEditingController,
+                focusNode: focusNode,
+                onSubmitted: (String value) {
+                  onFieldSubmitted();
+                  // Вызываем дополнительный callback, если он предоставлен
+                  if (widget.onSubmitted != null) {
+                    widget.onSubmitted!();
+                  }
+                },
+                style: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: borderColor, width: 1),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: borderColor, width: 1),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: borderColor, width: 1),
+                decoration: InputDecoration(
+                  hintText: widget.hintText ?? 'Введите город',
+                  hintStyle: AppTextStyles.h14w4Place,
+                  filled: true,
+                  fillColor: AppColors.getSurfaceColor(context),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 17,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderSide: BorderSide(color: borderColor, width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderSide: BorderSide(color: borderColor, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderSide: BorderSide(color: borderColor, width: 1),
+                  ),
+                  errorText: widget.hasError
+                      ? (widget.errorText ?? 'Выберите город из списка')
+                      : null,
+                  errorMaxLines: 2,
                 ),
               ),
             );

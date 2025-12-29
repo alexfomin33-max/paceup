@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -19,6 +20,7 @@ import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../providers/services/api_provider.dart';
 import '../../../../../core/providers/form_state_provider.dart';
 import '../../../../../core/widgets/form_error_display.dart';
+import '../../../../leaderboard/widgets/city_autocomplete_field.dart';
 import '../../../models/market_models.dart' show Gender;
 
 /// Экран редактирования объявления о продаже вещи
@@ -36,7 +38,12 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
   final priceCtrl = TextEditingController();
   // ── контроллеры для полей ввода городов передачи
   final List<TextEditingController> _cityControllers = [];
+  // ── список выбранных городов из списка (для валидации)
+  final List<String?> _selectedCities = [];
   final descCtrl = TextEditingController();
+  
+  // ── Список городов для автокомплита (загружается из БД)
+  List<String> _cities = [];
 
   final List<String> _categories = const [
     'Кроссовки',
@@ -65,8 +72,46 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
     super.initState();
     // ── создаём первое поле для ввода города передачи
     _cityControllers.add(TextEditingController());
-    _cityControllers.last.addListener(() => setState(() {}));
+    _selectedCities.add(null);
+    _cityControllers.last.addListener(() {
+      setState(() {});
+      // Если текст изменился не через выбор из списка, сбрасываем выбранный город
+      final index = _cityControllers.length - 1;
+      if (_cityControllers[index].text.trim() != _selectedCities[index]) {
+        _selectedCities[index] = null;
+      }
+    });
+    // Загружаем список городов из БД
+    _loadCities();
     _loadThingData();
+  }
+  
+  /// Загрузка списка городов из БД через API
+  Future<void> _loadCities() async {
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api
+          .get('/get_cities.php')
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              throw TimeoutException(
+                'Превышено время ожидания загрузки городов',
+              );
+            },
+          );
+
+      if (data['success'] == true && data['cities'] != null) {
+        final cities = data['cities'] as List<dynamic>? ?? [];
+        if (mounted) {
+          setState(() {
+            _cities = cities.map((city) => city.toString()).toList();
+          });
+        }
+      }
+    } catch (e) {
+      // В случае ошибки оставляем пустой список
+    }
   }
 
   @override
@@ -131,12 +176,31 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
       // ── заполняем города
       final cities = (thing['cities'] as List<dynamic>?) ?? [];
       _cityControllers.clear();
+      _selectedCities.clear();
       if (cities.isEmpty) {
         _cityControllers.add(TextEditingController());
+        _selectedCities.add(null);
+        _cityControllers.last.addListener(() {
+          setState(() {});
+          final index = _cityControllers.length - 1;
+          if (_cityControllers[index].text.trim() != _selectedCities[index]) {
+            _selectedCities[index] = null;
+          }
+        });
       } else {
         for (final city in cities) {
-          final controller = TextEditingController(text: city.toString());
-          controller.addListener(() => setState(() {}));
+          final cityName = city.toString();
+          final controller = TextEditingController(text: cityName);
+          // Проверяем, есть ли город в списке
+          final selectedCity = _cities.contains(cityName) ? cityName : null;
+          _selectedCities.add(selectedCity);
+          controller.addListener(() {
+            setState(() {});
+            final index = _cityControllers.length - 1;
+            if (controller.text.trim() != _selectedCities[index]) {
+              _selectedCities[index] = null;
+            }
+          });
           _cityControllers.add(controller);
         }
       }
@@ -161,7 +225,14 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
   void _addCityField() {
     setState(() {
       final newController = TextEditingController();
-      newController.addListener(() => setState(() {}));
+      _selectedCities.add(null);
+      newController.addListener(() {
+        setState(() {});
+        final index = _cityControllers.length;
+        if (newController.text.trim() != _selectedCities[index]) {
+          _selectedCities[index] = null;
+        }
+      });
       _cityControllers.add(newController);
     });
   }
@@ -253,10 +324,27 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
 
     await formNotifier.submit(
       () async {
-        // ── собираем города передачи из контроллеров
+        // ── проверяем, что все города выбраны из списка
+        for (int i = 0; i < _cityControllers.length; i++) {
+          final cityText = _cityControllers[i].text.trim();
+          if (cityText.isNotEmpty && !_cities.contains(cityText)) {
+            // Город не найден в списке - очищаем поле
+            _cityControllers[i].clear();
+            _selectedCities[i] = null;
+            throw Exception('Выберите все города из списка');
+          }
+        }
+        
+        // ── собираем города передачи из контроллеров (только выбранные из списка)
         final cities = _cityControllers
-            .map((ctrl) => ctrl.text.trim())
-            .where((city) => city.isNotEmpty)
+            .asMap()
+            .entries
+            .where((entry) {
+              final index = entry.key;
+              final cityText = entry.value.text.trim();
+              return cityText.isNotEmpty && _selectedCities[index] != null;
+            })
+            .map((entry) => entry.value.text.trim())
             .toList();
 
         // ── формируем данные для отправки
@@ -625,45 +713,16 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
                   children: List.generate(_cityControllers.length, (index) {
                     return SizedBox(
                       width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
-                      child: TextFormField(
+                      child: CityAutocompleteField(
                         controller: _cityControllers[index],
-                        onChanged: (_) => setState(() {}),
-                        style: AppTextStyles.h14w4.copyWith(
-                          color: AppColors.getTextPrimaryColor(context),
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Населенный пункт',
-                          hintStyle: AppTextStyles.h14w4Place.copyWith(
-                            color: AppColors.getTextPlaceholderColor(context),
-                          ),
-                          filled: true,
-                          fillColor: AppColors.getSurfaceColor(context),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 17,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            borderSide: BorderSide(
-                              color: AppColors.getBorderColor(context),
-                              width: 1,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            borderSide: BorderSide(
-                              color: AppColors.getBorderColor(context),
-                              width: 1,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            borderSide: BorderSide(
-                              color: AppColors.getBorderColor(context),
-                              width: 1,
-                            ),
-                          ),
-                        ),
+                        suggestions: _cities,
+                        hintText: 'Населенный пункт',
+                        onSelected: (city) {
+                          setState(() {
+                            _selectedCities[index] = city;
+                            _cityControllers[index].text = city;
+                          });
+                        },
                       ),
                     );
                   }),

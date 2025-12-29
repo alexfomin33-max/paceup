@@ -6,6 +6,7 @@
 //  Декомпозирован на отдельные виджеты и провайдеры для улучшения читаемости
 // ────────────────────────────────────────────────────────────────────────────
 
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +15,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/providers/form_state_provider.dart';
+import '../../../providers/services/api_provider.dart';
 import 'edit_profile/providers/edit_profile_provider.dart';
 import 'edit_profile/widgets/edit_profile_states.dart';
 import 'edit_profile/widgets/edit_profile_form_pane.dart';
@@ -38,6 +40,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _hrMax;
   // ── отдельный фокус для пикера даты рождения, чтобы не возвращалась клавиатура
   final _pickerFocusNode = FocusNode(debugLabel: 'editProfilePickerFocus');
+  
+  // ── Список городов для автокомплита (загружается из БД)
+  List<String> _cities = [];
+  
+  // ── Выбранный город из списка (для валидации)
+  String? _selectedCity;
 
   @override
   void initState() {
@@ -53,7 +61,40 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     // Синхронизируем контроллеры с состоянием после первого билда
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncControllersWithState();
+      _loadCities();
     });
+  }
+  
+  /// Загрузка списка городов из БД через API
+  Future<void> _loadCities() async {
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api
+          .get('/get_cities.php')
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              throw TimeoutException(
+                'Превышено время ожидания загрузки городов',
+              );
+            },
+          );
+
+      if (data['success'] == true && data['cities'] != null) {
+        final cities = data['cities'] as List<dynamic>? ?? [];
+        if (mounted) {
+          setState(() {
+            _cities = cities.map((city) => city.toString()).toList();
+            // Проверяем, есть ли текущий город в списке
+            if (_city.text.isNotEmpty && _cities.contains(_city.text.trim())) {
+              _selectedCity = _city.text.trim();
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // В случае ошибки оставляем пустой список
+    }
   }
 
   @override
@@ -86,6 +127,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final formState = ref.read(formStateProvider);
     if (formState.isSubmitting) return;
     FocusScope.of(context).unfocus();
+
+    // Проверяем, что город выбран из списка
+    final cityText = _city.text.trim();
+    if (cityText.isNotEmpty && !_cities.contains(cityText)) {
+      // Город не найден в списке - очищаем поле
+      _city.clear();
+      _selectedCity = null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Выберите город из списка'),
+        ),
+      );
+      return;
+    }
 
     final notifier = ref.read(editProfileProvider(widget.userId).notifier);
 
@@ -260,6 +315,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       setGender: (g) => notifier.updateGender(g),
       setSport: (s) => notifier.updateMainSport(s),
       pickBirthDate: _pickBirthDate,
+      cities: _cities,
+      onCitySelected: (city) {
+        setState(() {
+          _selectedCity = city;
+        });
+      },
       backgroundUrl: profileState.backgroundUrl,
       backgroundBytes: profileState.backgroundBytes,
       onPickBackground: () => notifier.pickBackground(context),

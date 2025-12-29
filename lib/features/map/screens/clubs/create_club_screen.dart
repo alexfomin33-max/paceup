@@ -37,6 +37,9 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
 
   // ── список городов для автокомплита (загружается из БД)
   List<String> _cities = [];
+  
+  // ── Выбранный город из списка (для валидации)
+  String? _selectedCity;
 
   // ── медиа
   File? logoFile;
@@ -51,7 +54,7 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
 
   bool get isFormValid =>
       nameCtrl.text.trim().isNotEmpty &&
-      cityCtrl.text.trim().isNotEmpty &&
+      _selectedCity != null && _selectedCity!.isNotEmpty &&
       activity != null &&
       foundationDate != null;
 
@@ -65,6 +68,10 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
     cityCtrl.addListener(() {
       _refresh();
       _clearFieldError('city');
+      // Если текст изменился не через выбор из списка, сбрасываем выбранный город
+      if (cityCtrl.text.trim() != _selectedCity) {
+        _selectedCity = null;
+      }
     });
     // Загружаем список городов из БД
     _loadCities();
@@ -270,8 +277,14 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
     if (nameCtrl.text.trim().isEmpty) {
       newErrors['name'] = 'Введите название клуба';
     }
-    if (cityCtrl.text.trim().isEmpty) {
-      newErrors['city'] = 'Введите город';
+    if (_selectedCity == null || _selectedCity!.isEmpty) {
+      newErrors['city'] = 'Выберите город из списка';
+      // Очищаем поле, если город не выбран из списка
+      cityCtrl.clear();
+    } else if (!_cities.contains(_selectedCity)) {
+      newErrors['city'] = 'Выберите город из списка';
+      cityCtrl.clear();
+      _selectedCity = null;
     }
     if (activity == null) {
       newErrors['activity'] = 'Выберите вид активности';
@@ -694,8 +707,12 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
                     controller: cityCtrl,
                     suggestions: _cities,
                     hasError: formState.fieldErrors.containsKey('city'),
+                    errorText: formState.fieldErrors['city'],
                     onSelected: (city) {
-                      cityCtrl.text = city;
+                      setState(() {
+                        _selectedCity = city;
+                        cityCtrl.text = city;
+                      });
                       _clearFieldError('city');
                     },
                   ),
@@ -873,12 +890,14 @@ class _CityAutocompleteField extends StatelessWidget {
   final List<String> suggestions;
   final Function(String) onSelected;
   final bool hasError;
+  final String? errorText;
 
   const _CityAutocompleteField({
     required this.controller,
     required this.suggestions,
     required this.onSelected,
     this.hasError = false,
+    this.errorText,
   });
 
   @override
@@ -948,6 +967,10 @@ class _CityAutocompleteField extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   borderSide: BorderSide(color: borderColor, width: 1),
                 ),
+                errorText: hasError
+                    ? (errorText ?? 'Выберите город из списка')
+                    : null,
+                errorMaxLines: 2,
               ),
             );
           },

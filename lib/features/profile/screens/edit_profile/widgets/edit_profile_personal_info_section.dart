@@ -4,13 +4,17 @@
 //  Секция личной информации (имя, фамилия, никнейм, дата рождения, пол, город, спорт)
 // ────────────────────────────────────────────────────────────────────────────
 
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 import 'edit_profile_form_fields.dart';
 import 'edit_profile_avatar_section.dart';
 import 'edit_profile_avatar_section.dart' as avatar;
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../leaderboard/widgets/city_autocomplete_field.dart';
 
 /// ───────────────────────────── Секция личной информации ─────────────────────────────
 
@@ -33,6 +37,8 @@ class EditProfilePersonalInfoSection extends StatelessWidget {
     required this.setGender,
     required this.setSport,
     required this.pickBirthDate,
+    required this.cities,
+    this.onCitySelected,
   });
 
   final String? avatarUrl;
@@ -54,6 +60,9 @@ class EditProfilePersonalInfoSection extends StatelessWidget {
   final void Function(String) setSport;
 
   final Future<void> Function() pickBirthDate;
+  
+  final List<String> cities;
+  final void Function(String)? onCitySelected;
 
   String _formatDate(DateTime? d) {
     if (d == null) return '';
@@ -117,10 +126,38 @@ class EditProfilePersonalInfoSection extends StatelessWidget {
               items: const ['Мужской', 'Женский'],
               onChanged: setGender,
             ),
-            EditProfileFieldRow.input(
-              label: 'Город',
-              controller: city,
-              hint: 'Город',
+            // ── Поле города с автокомплитом
+            SizedBox(
+              height: 50,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: kEditProfileLabelWidth,
+                    child: Text(
+                      'Город',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.getTextSecondaryColor(context),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: CityAutocompleteField(
+                      controller: city,
+                      suggestions: cities,
+                      hintText: 'Город',
+                      onSelected: (selectedCity) {
+                        city.text = selectedCity;
+                        if (onCitySelected != null) {
+                          onCitySelected!(selectedCity);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
             EditProfileFieldRow.dropdown(
               label: 'Основной вид спорта',

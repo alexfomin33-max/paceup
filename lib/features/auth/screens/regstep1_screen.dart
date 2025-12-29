@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import '../../../core/providers/form_state_provider.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../widgets/custom_text_field.dart';
 import '../../../core/widgets/form_error_display.dart';
+import '../../leaderboard/widgets/city_autocomplete_field.dart';
 
 /// 🔹 Первый экран регистрации — ввод базовых данных спортсмена
 class Regstep1Screen extends ConsumerStatefulWidget {
@@ -36,6 +38,12 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
   // 🔹 Списки возможных значений
   final List<String> genders = ['Муж', 'Жен'];
   final List<String> sports = ['Бег', 'Велосипед', 'Плавание'];
+  
+  // 🔹 Список городов для автокомплита (загружается из БД)
+  List<String> _cities = [];
+  
+  // 🔹 Выбранный город из списка (для валидации)
+  String? _selectedCity;
 
   /// 🔹 Проверка корректности заполнения формы
   bool get isFormValid {
@@ -43,7 +51,7 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
         surnameController.text.trim().isNotEmpty &&
         dobController.text.isNotEmpty &&
         selectedGender != null &&
-        cityController.text.trim().isNotEmpty &&
+        _selectedCity != null && _selectedCity!.isNotEmpty &&
         selectedSport != null;
   }
 
@@ -70,9 +78,46 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
     );
   }
 
+  /// 🔹 Загрузка списка городов из БД через API
+  Future<void> _loadCities() async {
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api
+          .get('/get_cities.php')
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              throw TimeoutException(
+                'Превышено время ожидания загрузки городов',
+              );
+            },
+          );
+
+      if (data['success'] == true && data['cities'] != null) {
+        final cities = data['cities'] as List<dynamic>? ?? [];
+        if (mounted) {
+          setState(() {
+            _cities = cities.map((city) => city.toString()).toList();
+          });
+        }
+      }
+    } catch (e) {
+      // В случае ошибки оставляем пустой список
+      // Ошибка не критична, так как автокомплит работает и без списка
+    }
+  }
+
   /// 🔹 Метод проверки валидности формы и перехода на следующий экран
   Future<void> _checkAndContinue() async {
     final formState = ref.read(formStateProvider);
+    
+    // Проверяем, что город выбран из списка
+    final formNotifier = ref.read(formStateProvider.notifier);
+    if (_selectedCity == null || _selectedCity!.isEmpty) {
+      formNotifier.setFieldErrors({'city': 'Выберите город из списка'});
+      return;
+    }
+    
     if (!isFormValid || formState.isSubmitting) return;
 
     await saveForm();
@@ -101,16 +146,23 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
       final formNotifier = ref.read(formStateProvider.notifier);
       nameController.addListener(() {
         formNotifier.clearGeneralError();
+        formNotifier.clearFieldError('name');
       });
       surnameController.addListener(() {
         formNotifier.clearGeneralError();
+        formNotifier.clearFieldError('surname');
       });
       dobController.addListener(() {
         formNotifier.clearGeneralError();
+        formNotifier.clearFieldError('dob');
       });
       cityController.addListener(() {
         formNotifier.clearGeneralError();
+        formNotifier.clearFieldError('city');
       });
+      
+      // Загружаем список городов из БД
+      _loadCities();
     });
   }
 
@@ -194,10 +246,40 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
                     },
                   ),
                   const SizedBox(height: 22),
-                  CustomTextField(
-                    controller: cityController,
-                    label: 'Город*',
-                    showRequiredStar: true,
+                  // 🔹 Поле города с автокомплитом
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RichText(
+                        text: TextSpan(
+                          text: 'Город',
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          children: const [
+                            TextSpan(
+                              text: '*',
+                              style: TextStyle(color: AppColors.error, fontSize: 16),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      CityAutocompleteField(
+                        controller: cityController,
+                        suggestions: _cities,
+                        hasError: formState.fieldErrors.containsKey('city'),
+                        errorText: formState.fieldErrors['city'],
+                        onSelected: (city) {
+                          setState(() {
+                            _selectedCity = city;
+                          });
+                          ref.read(formStateProvider.notifier).clearFieldError('city');
+                        },
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 22),
                   CustomDropdownField(
