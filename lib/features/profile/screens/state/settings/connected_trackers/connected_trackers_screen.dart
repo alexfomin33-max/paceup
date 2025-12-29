@@ -342,6 +342,8 @@ class _ConnectedTrackersScreenState
             kind = 'Велосипед';
           } else if (raw.contains('swimming')) {
             kind = 'Плавание';
+          } else if (raw.contains('skiing') || raw.contains('ski')) {
+            kind = 'Лыжи';
           }
         }
 

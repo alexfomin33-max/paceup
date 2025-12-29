@@ -609,7 +609,7 @@ class _TrainingTabContentState extends ConsumerState<_TrainingTabContent>
   /// МАППИНГ ТИПА ТРЕНИРОВКИ ИЗ HEALTH CONNECT/HEALTHKIT
   ///
   /// Преобразует тип workout из Health Connect/HealthKit в формат БД:
-  /// 'run', 'bike', 'swim'
+  /// 'run', 'bike', 'swim', 'ski'
   /// ─────────────────────────────────────────────────────────────────────────
   String _mapWorkoutTypeToActivityType(HealthDataPoint workout) {
     // Пытаемся получить тип из workout value
@@ -619,6 +619,17 @@ class _TrainingTabContentState extends ConsumerState<_TrainingTabContent>
       final activityTypeName = value.workoutActivityType.name.toLowerCase();
 
       // Маппинг типов активности на типы в БД
+      // Лыжи (проверяем первыми, чтобы не попасть в другие категории)
+      if (activityTypeName.contains('skiing') ||
+          activityTypeName.contains('ski') ||
+          activityTypeName.contains('downhill') ||
+          activityTypeName.contains('alpine') ||
+          activityTypeName.contains('cross_country') ||
+          activityTypeName.contains('nordic')) {
+        return 'ski';
+      }
+      
+      // Бег и ходьба
       if (activityTypeName.contains('running') ||
           activityTypeName.contains('walking') ||
           activityTypeName.contains('hiking') ||

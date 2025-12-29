@@ -310,6 +310,18 @@ String _mapWorkoutTypeToActivityType(HealthDataPoint workout) {
   final value = workout.value;
   if (value is WorkoutHealthValue) {
     final activityTypeName = value.workoutActivityType.name.toLowerCase();
+    
+    // Лыжи (проверяем первыми, чтобы не попасть в другие категории)
+    if (activityTypeName.contains('skiing') ||
+        activityTypeName.contains('ski') ||
+        activityTypeName.contains('downhill') ||
+        activityTypeName.contains('alpine') ||
+        activityTypeName.contains('cross_country') ||
+        activityTypeName.contains('nordic')) {
+      return 'ski';
+    }
+    
+    // Бег и ходьба
     if (activityTypeName.contains('running') ||
         activityTypeName.contains('walking') ||
         activityTypeName.contains('hiking') ||
