@@ -478,9 +478,18 @@ class _OfficialEventDetailScreenState
           child: Stack(
             children: [
               // ───────── Скроллируемый контент
-              CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
+              NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  // Закрываем попап меню при любом скролле или свайпе
+                  if (notification is ScrollUpdateNotification ||
+                      notification is ScrollStartNotification) {
+                    MoreMenuHub.hide();
+                  }
+                  return false;
+                },
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
                   // ───────── Верхний блок с метриками (на всю ширину)
                   SliverToBoxAdapter(
                     child: Builder(
@@ -836,6 +845,7 @@ class _OfficialEventDetailScreenState
                   if (registrationLink.isNotEmpty)
                     const SliverToBoxAdapter(child: SizedBox(height: 16)),
                 ],
+                ),
               ),
 
               // ───────── Плавающие круглые иконки (назад + действие)

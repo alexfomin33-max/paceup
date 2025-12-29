@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'more_menu_hub.dart';
 
 /// Интерактивный full-screen свайп-назад:
 /// тянем child вправо; на отпускании либо докатываем и pop(), либо возвращаем.
@@ -100,7 +101,11 @@ class _InteractiveBackSwipeState extends State<InteractiveBackSwipe>
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onHorizontalDragStart: (_) => _settle.stop(),
+      onHorizontalDragStart: (_) {
+        _settle.stop();
+        // Закрываем попап меню при начале свайпа назад
+        MoreMenuHub.hide();
+      },
       onHorizontalDragUpdate: (details) {
         final next = (_drag + details.delta.dx).clamp(0.0, width);
         if (next != _drag) setState(() => _drag = next);
