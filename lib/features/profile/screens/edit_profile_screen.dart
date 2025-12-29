@@ -43,9 +43,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   
   // ── Список городов для автокомплита (загружается из БД)
   List<String> _cities = [];
-  
-  // ── Выбранный город из списка (для валидации)
-  String? _selectedCity;
+
+  // Флаги для отслеживания, редактирует ли пользователь поля
+  bool _isUserEditingFirstName = false;
+  bool _isUserEditingLastName = false;
+  bool _isUserEditingCity = false;
 
   @override
   void initState() {
@@ -62,6 +64,30 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncControllersWithState();
       _loadCities();
+      
+      // Добавляем слушатели для обновления состояния провайдера при изменении
+      // Делаем это после синхронизации, чтобы не вызывать обновления при инициализации
+      final notifier = ref.read(editProfileProvider(widget.userId).notifier);
+      
+      _firstName.addListener(() {
+        if (!_isUserEditingFirstName) return;
+        notifier.updateFirstName(_firstName.text);
+      });
+
+      _lastName.addListener(() {
+        if (!_isUserEditingLastName) return;
+        notifier.updateLastName(_lastName.text);
+      });
+
+      _city.addListener(() {
+        if (!_isUserEditingCity) return;
+        notifier.updateCity(_city.text);
+      });
+      
+      // После синхронизации включаем отслеживание изменений
+      _isUserEditingFirstName = true;
+      _isUserEditingLastName = true;
+      _isUserEditingCity = true;
     });
   }
   
@@ -85,10 +111,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         if (mounted) {
           setState(() {
             _cities = cities.map((city) => city.toString()).toList();
-            // Проверяем, есть ли текущий город в списке
-            if (_city.text.isNotEmpty && _cities.contains(_city.text.trim())) {
-              _selectedCity = _city.text.trim();
-            }
           });
         }
       }
@@ -113,6 +135,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   /// Синхронизация контроллеров с состоянием из провайдера
   void _syncControllersWithState() {
     final state = ref.read(editProfileProvider(widget.userId));
+    // Временно отключаем отслеживание изменений при синхронизации
+    _isUserEditingFirstName = false;
+    _isUserEditingLastName = false;
+    _isUserEditingCity = false;
+    
     _firstName.text = state.firstName;
     _lastName.text = state.lastName;
     _nickname.text = state.nickname;
@@ -120,6 +147,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _height.text = state.height;
     _weight.text = state.weight;
     _hrMax.text = state.hrMax;
+    
+    // Включаем отслеживание обратно
+    _isUserEditingFirstName = true;
+    _isUserEditingLastName = true;
+    _isUserEditingCity = true;
   }
 
   /// Сохранение профиля
@@ -133,7 +165,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (cityText.isNotEmpty && !_cities.contains(cityText)) {
       // Город не найден в списке - очищаем поле
       _city.clear();
-      _selectedCity = null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Выберите город из списка'),
@@ -213,17 +244,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final formState = ref.watch(formStateProvider);
     final notifier = ref.read(editProfileProvider(widget.userId).notifier);
 
-    // Синхронизируем контроллеры при изменении состояния
-    if (profileState.firstName != _firstName.text) {
+    // Синхронизируем контроллеры при изменении состояния только если пользователь не редактирует
+    // Это предотвращает перезапись пользовательского ввода
+    if (!_isUserEditingFirstName && profileState.firstName != _firstName.text) {
       _firstName.text = profileState.firstName;
     }
-    if (profileState.lastName != _lastName.text) {
+    if (!_isUserEditingLastName && profileState.lastName != _lastName.text) {
       _lastName.text = profileState.lastName;
     }
     if (profileState.nickname != _nickname.text) {
       _nickname.text = profileState.nickname;
     }
-    if (profileState.city != _city.text) {
+    if (!_isUserEditingCity && profileState.city != _city.text) {
       _city.text = profileState.city;
     }
     if (profileState.height != _height.text) {
@@ -317,9 +349,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       pickBirthDate: _pickBirthDate,
       cities: _cities,
       onCitySelected: (city) {
-        setState(() {
-          _selectedCity = city;
-        });
+        // Обновляем состояние провайдера при выборе города
+        notifier.updateCity(city);
       },
       backgroundUrl: profileState.backgroundUrl,
       backgroundBytes: profileState.backgroundBytes,
