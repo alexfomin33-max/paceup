@@ -281,7 +281,10 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
         );
       }
     } catch (e) {
-      // Игнорируем ошибки при отметке как прочитанных
+      // Логируем ошибки для отладки
+      debugPrint('⚠️ Ошибка при отметке уведомлений как прочитанных: $e');
+      // Пробрасываем ошибку наверх для обработки в UI
+      rethrow;
     }
   }
 

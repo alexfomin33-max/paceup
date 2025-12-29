@@ -28,6 +28,7 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   final ScrollController _scrollController = ScrollController();
+  bool _isMarkingAllAsRead = false;
 
   @override
   void initState() {
@@ -226,6 +227,47 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => const SettingsSheet(),
     );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // ОБРАБОТКА КЛИКА: массовая пометка всех уведомлений как прочитанных
+  // ─────────────────────────────────────────────────────────────────────────────
+  Future<void> _markAllAsRead() async {
+    if (_isMarkingAllAsRead) return; // Предотвращаем множественные вызовы
+    
+    final state = ref.read(notificationsProvider);
+    
+    // Проверяем, есть ли непрочитанные уведомления
+    final hasUnread = state.items.any((n) => !n.isRead);
+    if (!hasUnread && state.unreadCount == 0) {
+      // Все уже прочитаны, ничего не делаем
+      return;
+    }
+
+    setState(() {
+      _isMarkingAllAsRead = true;
+    });
+
+    try {
+      // Вызываем метод провайдера для массовой пометки (передаем null для всех уведомлений)
+      await ref.read(notificationsProvider.notifier).markAsRead(null);
+    } catch (e) {
+      // Показываем ошибку пользователю, если что-то пошло не так
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка при отметке уведомлений: ${e.toString()}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isMarkingAllAsRead = false;
+        });
+      }
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -459,20 +501,26 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         appBar: PaceAppBar(
           title: 'Уведомления',
           actions: [
-            // Кнопка «отметить» (функционал добавим позже)
+            // Кнопка «отметить все как прочитанные»
             SizedBox(
               width: 44,
               height: 44,
               child: IconButton(
-                onPressed: () {},
+                onPressed: _isMarkingAllAsRead ? null : _markAllAsRead,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 splashRadius: 22,
-                icon: Icon(
-                  CupertinoIcons.check_mark_circled,
-                  size: 20,
-                  color: AppColors.getIconPrimaryColor(context),
-                ),
+                icon: _isMarkingAllAsRead
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CupertinoActivityIndicator(radius: 8),
+                      )
+                    : Icon(
+                        CupertinoIcons.check_mark_circled,
+                        size: 20,
+                        color: AppColors.getIconPrimaryColor(context),
+                      ),
               ),
             ),
             SizedBox(
