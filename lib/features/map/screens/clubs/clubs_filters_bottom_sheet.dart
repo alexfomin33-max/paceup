@@ -347,7 +347,7 @@ class ClubsFilterParams {
 }
 
 /// Виды спорта для фильтра
-enum SportType { run, bike, swim }
+enum SportType { run, bike, swim, ski }
 
 extension SportTypeExtension on SportType {
   String get label {
@@ -358,6 +358,8 @@ extension SportTypeExtension on SportType {
         return 'Велосипед';
       case SportType.swim:
         return 'Плавание';
+      case SportType.ski:
+        return 'Лыжи';
     }
   }
 
@@ -370,6 +372,8 @@ extension SportTypeExtension on SportType {
         return 'Велосипед';
       case SportType.swim:
         return 'Плавание';
+      case SportType.ski:
+        return 'Лыжи';
     }
   }
 
@@ -381,6 +385,8 @@ extension SportTypeExtension on SportType {
         return Icons.directions_bike;
       case SportType.swim:
         return Icons.pool;
+      case SportType.ski:
+        return Icons.downhill_skiing;
     }
   }
 }

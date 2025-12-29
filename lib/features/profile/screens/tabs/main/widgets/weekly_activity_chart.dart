@@ -46,6 +46,8 @@ IconData _getSportIcon(String sportType) {
     return Icons.directions_bike;
   } else if (type == 'swim' || type == 'swimming') {
     return Icons.pool;
+  } else if (type == 'ski' || type == 'skiing') {
+    return Icons.downhill_skiing;
   }
   // Дефолтная иконка
   return Icons.directions_run;
@@ -60,6 +62,9 @@ Color _getSportIconColor(String sportType) {
   } else if (type == 'swim' || type == 'swimming') {
     // Бирюзовый для плавания
     return AppColors.accentMint;
+  } else if (type == 'ski' || type == 'skiing') {
+    // Зеленый для лыж
+    return AppColors.success;
   }
   // Дефолтный цвет для бега и других видов спорта
   return AppColors.brandPrimary;

@@ -1261,9 +1261,11 @@ class _WorkoutRow extends ConsumerWidget {
         // Выбираем картинку в зависимости от типа спорта
         kind == 2
             ? 'assets/nogps_swim.jpg' // Плавание
-            : (kind == 0
-                  ? 'assets/nogps.jpg' // Бег
-                  : 'assets/training_map.png'), // Велосипед
+            : (kind == 3
+                  ? 'assets/nogps.jpg' // Лыжи (используем ту же картинку что и для бега)
+                  : (kind == 0
+                        ? 'assets/nogps.jpg' // Бег
+                        : 'assets/training_map.png')), // Велосипед
       ),
       fit: BoxFit.cover,
     );
