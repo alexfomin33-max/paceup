@@ -282,11 +282,21 @@ class _CachedBackgroundImage extends StatelessWidget {
       width: double.infinity,
       height: height,
       fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: targetW,
       memCacheHeight: targetH,
       maxWidthDiskCache: targetW,
       maxHeightDiskCache: targetH,
+      placeholder: (context, imageUrl) => Container(
+        width: double.infinity,
+        height: height,
+        color: AppColors.getBackgroundColor(context),
+        child: Center(
+          child: CupertinoActivityIndicator(
+            radius: 10,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
+      ),
       errorWidget: (context, imageUrl, error) => _Placeholder(height: height),
     );
   }

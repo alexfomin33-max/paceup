@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../models/main_tab_data.dart';
 
@@ -152,7 +153,7 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
       return;
     }
 
-    final imageProvider = NetworkImage(widget.imageUrl!);
+    final imageProvider = CachedNetworkImageProvider(widget.imageUrl!);
     _imageStream = imageProvider.resolve(const ImageConfiguration());
 
     _listener = ImageStreamListener(
@@ -216,10 +217,21 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
       final imageWidget = SizedBox(
         width: 66,
         height: 44,
-        child: Image.network(
-          widget.imageUrl!,
+        child: CachedNetworkImage(
+          imageUrl: widget.imageUrl!,
           fit: _fit,
-          errorBuilder: (context, error, stackTrace) {
+          placeholder: (context, url) => Container(
+            width: 66,
+            height: 44,
+            color: AppColors.getBackgroundColor(context),
+            child: Center(
+              child: CupertinoActivityIndicator(
+                radius: 8,
+                color: AppColors.getIconSecondaryColor(context),
+              ),
+            ),
+          ),
+          errorWidget: (context, url, error) {
             final image = Image.asset(
               defaultImage,
               width: 66,

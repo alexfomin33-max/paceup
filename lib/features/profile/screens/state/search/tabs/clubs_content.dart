@@ -357,22 +357,24 @@ class _ClubLogoImage extends StatelessWidget {
       width: 100,
       height: 100,
       fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: targetW,
       maxWidthDiskCache: targetW,
-      errorWidget: (context, imageUrl, error) => Container(
-        color: AppColors.skeletonBase,
+      placeholder: (context, imageUrl) => Container(
+        color: AppColors.getBackgroundColor(context),
         alignment: Alignment.center,
-        child: const Icon(
-          CupertinoIcons.photo,
-          size: 24,
-          color: AppColors.textSecondary,
+        child: CupertinoActivityIndicator(
+          radius: 10,
+          color: AppColors.getIconSecondaryColor(context),
         ),
       ),
-      placeholder: (context, imageUrl) => Container(
-        color: AppColors.skeletonBase,
+      errorWidget: (context, imageUrl, error) => Container(
+        color: AppColors.getBackgroundColor(context),
         alignment: Alignment.center,
-        child: const CupertinoActivityIndicator(radius: 10),
+        child: Icon(
+          CupertinoIcons.photo,
+          size: 24,
+          color: AppColors.getIconSecondaryColor(context),
+        ),
       ),
     );
   }

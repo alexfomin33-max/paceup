@@ -332,19 +332,22 @@ class _Avatar extends StatelessWidget {
         placeholder: (context, _) => Container(
           width: 44,
           height: 44,
-          color: AppColors.getSkeletonBaseColor(context),
+          color: AppColors.getBackgroundColor(context),
           alignment: Alignment.center,
-          child: const CupertinoActivityIndicator(),
+          child: CupertinoActivityIndicator(
+            radius: 8,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
         ),
         errorWidget: (context, url, error) => Container(
           width: 44,
           height: 44,
-          color: AppColors.getSkeletonBaseColor(context),
+          color: AppColors.getBackgroundColor(context),
           alignment: Alignment.center,
           child: Icon(
-            CupertinoIcons.person,
+            CupertinoIcons.person_fill,
             size: 20,
-            color: AppColors.getTextSecondaryColor(context),
+            color: AppColors.getIconSecondaryColor(context),
           ),
         ),
       ),

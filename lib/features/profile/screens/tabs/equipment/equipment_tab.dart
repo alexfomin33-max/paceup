@@ -7,6 +7,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/error_handler.dart';
 import '../../../../../providers/services/api_provider.dart';
@@ -552,7 +553,7 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
   void _determineFit() {
     if (widget.imageUrl == null || widget.imageUrl!.isEmpty) return;
 
-    final imageProvider = NetworkImage(widget.imageUrl!);
+    final imageProvider = CachedNetworkImageProvider(widget.imageUrl!);
     _imageStream = imageProvider.resolve(const ImageConfiguration());
 
     _listener = ImageStreamListener(
@@ -598,10 +599,21 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
       return SizedBox(
         width: 63,
         height: 42,
-        child: Image.network(
-          widget.imageUrl!,
+        child: CachedNetworkImage(
+          imageUrl: widget.imageUrl!,
           fit: _fit,
-          errorBuilder: (context, error, stackTrace) {
+          placeholder: (context, url) => Container(
+            width: 63,
+            height: 42,
+            color: AppColors.getBackgroundColor(context),
+            child: Center(
+              child: CupertinoActivityIndicator(
+                radius: 8,
+                color: AppColors.getIconSecondaryColor(context),
+              ),
+            ),
+          ),
+          errorWidget: (context, url, error) {
             final image = Image.asset(
               widget.isBoots ? 'assets/add_boots.png' : 'assets/add_bike.png',
               width: 63,
