@@ -163,7 +163,14 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     return buffer.toString();
   }
 
-  /// Форматирует набор высоты в метрах
+  /// Форматирует число (double) с пробелами в качестве разделителя тысяч, без округления
+  /// Показывает целую часть числа. Например: 17000.5 → "17 000", 12345.789 → "12 345"
+  String _formatNumberWithSpacesFromDouble(double number) {
+    final intValue = number.truncate();
+    return _formatNumberWithSpaces(intValue);
+  }
+
+  /// Форматирует набор высоты в метрах без округления
   /// Принимает строку из API (может быть "1.5 км", "1500 м" или число)
   /// Возвращает отформатированную строку в метрах с пробелами после трех знаков
   String _formatElevationGain(String? elevationGain) {
@@ -175,29 +182,29 @@ class _ByTypeContentState extends State<_ByTypeContent> {
       // Убираем пробелы и приводим к нижнему регистру
       final cleaned = elevationGain.trim().toLowerCase();
 
-      // Если содержит "км", парсим и конвертируем в метры
+      // Если содержит "км", парсим и конвертируем в метры без округления
       if (cleaned.contains('км')) {
         final numberStr = cleaned.replaceAll('км', '').trim();
         final number = double.tryParse(numberStr);
         if (number != null) {
-          final meters = (number * 1000).round();
-          return '${_formatNumberWithSpaces(meters)} м';
+          final meters = number * 1000;
+          return '${_formatNumberWithSpacesFromDouble(meters)} м';
         }
       }
 
-      // Если содержит "м", парсим число и оставляем в метрах
+      // Если содержит "м", парсим число и оставляем в метрах без округления
       if (cleaned.contains('м')) {
         final numberStr = cleaned.replaceAll('м', '').trim();
         final number = double.tryParse(numberStr);
         if (number != null) {
-          return '${_formatNumberWithSpaces(number.round())} м';
+          return '${_formatNumberWithSpacesFromDouble(number)} м';
         }
       }
 
-      // Если просто число, считаем что это метры
+      // Если просто число, считаем что это метры, показываем без округления
       final number = double.tryParse(cleaned);
       if (number != null) {
-        return '${_formatNumberWithSpaces(number.round())} м';
+        return '${_formatNumberWithSpacesFromDouble(number)} м';
       }
 
       // Если не удалось распарсить, возвращаем как есть
