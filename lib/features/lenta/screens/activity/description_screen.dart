@@ -1610,8 +1610,8 @@ class _SplitsTableFull extends StatelessWidget {
         .where((v) => v > 0)
         .toList();
 
-    // Для типа "run" конвертируем минуты в секунды для сравнения
-    final paceValuesForComparison = activityType == 'run'
+    // Для типов "run" и "ski" конвертируем минуты в секунды для сравнения
+    final paceValuesForComparison = (activityType == 'run' || activityType == 'ski')
         ? paceValues
               .map(
                 (v) => (v.floor() * 60 + ((v - v.floor()) * 60).round())
