@@ -2030,9 +2030,11 @@ class _LinePainter extends CustomPainter {
       final frac = (yValues[i] - minY) / range;
       // ────────────────────────────────────────────────────────────────
       // Для темпа переворачиваем ось Y: меньшие значения (быстрый темп) сверху
+      // Инверсия: быстрый темп (minY) → сверху, медленный темп (maxY) → снизу
+      // Для темпа: frac=0 (minY) → cy=top (сверху), frac=1 (maxY) → cy=top+chartH (снизу)
       // ────────────────────────────────────────────────────────────────
       final cy = paceMode
-          ? top + frac * chartH
+          ? top + frac * chartH  // Инверсия: frac=0 (minY) → top, frac=1 (maxY) → top+chartH
           : size.height - bottom - frac * chartH;
 
       final pointRadius = selectedIndex == i ? 6.0 : 4.0;
@@ -2118,7 +2120,7 @@ class _LinePainter extends CustomPainter {
       final val = paceMode
           ? minY +
                 (maxY - minY) *
-                    frac // Для темпа: frac=0 → minY (верх), frac=1 → maxY (низ)
+                    frac // Для темпа: frac=0 → minY (быстрый, верх), frac=1 → maxY (медленный, низ)
           : minY +
                 (maxY - minY) *
                     (1 -
@@ -2139,6 +2141,8 @@ class _LinePainter extends CustomPainter {
       final nx = yValues.length > 1 ? left + dx * i : left + w / 2;
       // ────────────────────────────────────────────────────────────────
       // Для темпа переворачиваем ось Y: меньшие значения (быстрый темп) сверху
+      // Инверсия: быстрый темп (minY) → сверху, медленный темп (maxY) → снизу
+      // Для темпа: frac=0 (minY) → ny=top (сверху), frac=1 (maxY) → ny=top+h (снизу)
       // ────────────────────────────────────────────────────────────────
       final frac = (yValues[i] - minY) / range;
       final ny = paceMode ? top + h * frac : top + h * (1 - frac);
@@ -2173,6 +2177,8 @@ class _LinePainter extends CustomPainter {
       final nx = yValues.length > 1 ? left + dx * i : left + w / 2;
       // ────────────────────────────────────────────────────────────────
       // Для темпа переворачиваем ось Y: меньшие значения (быстрый темп) сверху
+      // Инверсия: быстрый темп (minY) → сверху, медленный темп (maxY) → снизу
+      // Для темпа: frac=0 (minY) → ny=top (сверху), frac=1 (maxY) → ny=top+h (снизу)
       // ────────────────────────────────────────────────────────────────
       final frac = (yValues[i] - minY) / range;
       final ny = paceMode ? top + h * frac : top + h * (1 - frac);
