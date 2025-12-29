@@ -70,8 +70,6 @@ class ActivityDescriptionPage extends ConsumerStatefulWidget {
 
 class _ActivityDescriptionPageState
     extends ConsumerState<ActivityDescriptionPage> {
-  int _chartTab = 0; // 0=Темп, 1=Пульс, 2=Высота
-
   // Данные пользователя (владельца тренировки)
   String? _userFirstName;
   String? _userLastName;
@@ -396,7 +394,7 @@ class _ActivityDescriptionPageState
   double _getMapHeight(BuildContext context) {
     final a = _currentActivity;
     final stats = a.stats;
-    
+
     // ────────────────────────────────────────────────────────────────
     // 🔍 ПРОВЕРКА НА ИМПОРТИРОВАННУЮ ТРЕНИРОВКУ БЕЗ МАРШРУТА:
     // Если есть пульс/каденс, но нет маршрута и изображений —
@@ -405,17 +403,15 @@ class _ActivityDescriptionPageState
     final hasHeartRateOrCadence =
         stats?.avgHeartRate != null || stats?.avgCadence != null;
     final isImportedWithoutRoute =
-        hasHeartRateOrCadence &&
-        a.points.isEmpty &&
-        a.mediaImages.isEmpty;
-    
+        hasHeartRateOrCadence && a.points.isEmpty && a.mediaImages.isEmpty;
+
     // Если есть маршрут, изображения или импортированная тренировка без маршрута — высота 350
     if (a.points.isNotEmpty ||
         a.mediaImages.isNotEmpty ||
         isImportedWithoutRoute) {
       return 350.0;
     }
-    
+
     // Иначе — высота 0 (ничего не показываем)
     return 0;
   }
@@ -629,9 +625,9 @@ class _ActivityDescriptionPageState
                             final activityType = a.type.toLowerCase();
                             final defaultImagePath =
                                 (activityType == 'swim' ||
-                                        activityType == 'swimming')
-                                    ? 'assets/nogps_swim.jpg'
-                                    : 'assets/nogps.jpg';
+                                    activityType == 'swimming')
+                                ? 'assets/nogps_swim.jpg'
+                                : 'assets/nogps.jpg';
 
                             return SizedBox(
                               height: mapHeight,
@@ -641,15 +637,15 @@ class _ActivityDescriptionPageState
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
                                     Container(
-                                  color: AppColors.disabled,
-                                  child: const Center(
-                                    child: Icon(
-                                      CupertinoIcons.photo,
-                                      size: 48,
-                                      color: AppColors.textTertiary,
+                                      color: AppColors.disabled,
+                                      child: const Center(
+                                        child: Icon(
+                                          CupertinoIcons.photo,
+                                          size: 48,
+                                          color: AppColors.textTertiary,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
                               ),
                             );
                           }
@@ -902,25 +898,7 @@ class _ActivityDescriptionPageState
 
                 const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-                // ───────── Сегменты — как в communication_prefs.dart (вынесены отдельно)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Center(
-                      child: _SegmentedPill(
-                        left: 'Темп',
-                        center: 'Пульс',
-                        right: 'Высота',
-                        value: _chartTab,
-                        onChanged: (v) => setState(() => _chartTab = v),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                // ───────── ЕДИНЫЙ блок: график + сводка темпа
+                // ───────── БЛОК ГРАФИКА ТЕМПА
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   sliver: SliverToBoxAdapter(
@@ -935,32 +913,112 @@ class _ActivityDescriptionPageState
                         ),
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          _ChartMetricsHeader(mode: 0, summary: _chartsSummary),
+                          const SizedBox(height: 20),
                           SizedBox(
                             height: 210,
                             width: double.infinity,
                             child: _isLoadingCharts
                                 ? const Center(
-                                    child: CupertinoActivityIndicator(radius: 10),
+                                    child: CupertinoActivityIndicator(
+                                      radius: 10,
+                                    ),
                                   )
                                 : _SimpleLineChart(
-                                    mode: _chartTab,
+                                    mode: 0,
                                     paceData: _paceData,
                                     heartRateData: _heartRateData,
                                     elevationData: _elevationData,
                                   ),
                           ),
-                          const SizedBox(height: 6),
-                          Divider(
-                            height: 1,
-                            thickness: 0.5,
-                            color: AppColors.getBorderColor(context),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                // ───────── БЛОК ГРАФИКА ПУЛЬСА
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  sliver: SliverToBoxAdapter(
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.getSurfaceColor(context),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: AppColors.getBorderColor(context),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _ChartMetricsHeader(mode: 1, summary: _chartsSummary),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            height: 210,
+                            width: double.infinity,
+                            child: _isLoadingCharts
+                                ? const Center(
+                                    child: CupertinoActivityIndicator(
+                                      radius: 10,
+                                    ),
+                                  )
+                                : _SimpleLineChart(
+                                    mode: 1,
+                                    paceData: _paceData,
+                                    heartRateData: _heartRateData,
+                                    elevationData: _elevationData,
+                                  ),
                           ),
-                          const SizedBox(height: 4),
-                          _ChartSummary(
-                            mode: _chartTab,
-                            summary: _chartsSummary,
-                          ), // подписи с данными в зависимости от вкладки
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                // ───────── БЛОК ГРАФИКА ВЫСОТЫ
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  sliver: SliverToBoxAdapter(
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.getSurfaceColor(context),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: AppColors.getBorderColor(context),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _ChartMetricsHeader(mode: 2, summary: _chartsSummary),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            height: 210,
+                            width: double.infinity,
+                            child: _isLoadingCharts
+                                ? const Center(
+                                    child: CupertinoActivityIndicator(
+                                      radius: 10,
+                                    ),
+                                  )
+                                : _SimpleLineChart(
+                                    mode: 2,
+                                    paceData: _paceData,
+                                    heartRateData: _heartRateData,
+                                    elevationData: _elevationData,
+                                  ),
+                          ),
                         ],
                       ),
                     ),
@@ -1800,78 +1858,6 @@ class _SplitsTableFull extends StatelessWidget {
   }
 }
 
-/// Переключатель-пилюля (3 сегмента) — стиль как в communication_prefs.dart
-class _SegmentedPill extends StatelessWidget {
-  final String left;
-  final String center;
-  final String right;
-  final int value;
-  final ValueChanged<int> onChanged;
-
-  const _SegmentedPill({
-    required this.left,
-    required this.center,
-    required this.right,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 320,
-      child: Container(
-        padding: const EdgeInsets.all(2),
-        decoration: BoxDecoration(
-          color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(child: _seg(0, left)),
-            Expanded(child: _seg(1, center)),
-            Expanded(child: _seg(2, right)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _seg(int idx, String text) {
-    final selected = value == idx;
-    return Builder(
-      builder: (context) => GestureDetector(
-        onTap: () => onChanged(idx),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.getTextPrimaryColor(context)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-          ),
-          child: Center(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-                color: selected
-                    ? AppColors.getSurfaceColor(context)
-                    : AppColors.getTextPrimaryColor(context),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Простой линейный график:
 /// - Для «Темп» ось Y — ММ:СС (мин/км), данные храним в сек/км;
 /// - Ось X — километры 0..N (где N — количество точек);
@@ -2034,7 +2020,9 @@ class _LinePainter extends CustomPainter {
       // Для темпа: frac=0 (minY) → cy=top (сверху), frac=1 (maxY) → cy=top+chartH (снизу)
       // ────────────────────────────────────────────────────────────────
       final cy = paceMode
-          ? top + frac * chartH  // Инверсия: frac=0 (minY) → top, frac=1 (maxY) → top+chartH
+          ? top +
+                frac *
+                    chartH // Инверсия: frac=0 (minY) → top, frac=1 (maxY) → top+chartH
           : size.height - bottom - frac * chartH;
 
       final pointRadius = selectedIndex == i ? 6.0 : 4.0;
@@ -2273,13 +2261,15 @@ class _LinePainter extends CustomPainter {
       old.selectedIndex != selectedIndex;
 }
 
-/// Подписи к графику — в одном блоке с графиком
-/// Отображает данные в зависимости от выбранной вкладки (темп, пульс, высота)
-class _ChartSummary extends StatelessWidget {
+/// ────────────────────────────────────────────────────────────────
+/// 📊 ЗАГОЛОВОК С МЕТРИКАМИ: отображает ключевые метрики над графиком
+/// В стиле скриншотов: два значения по центру с подписями
+/// ────────────────────────────────────────────────────────────────
+class _ChartMetricsHeader extends StatelessWidget {
   final int mode; // 0 pace, 1 hr, 2 elev
   final Map<String, dynamic>? summary;
 
-  const _ChartSummary({required this.mode, this.summary});
+  const _ChartMetricsHeader({required this.mode, this.summary});
 
   String _fmtSecToMinSec(double sec) {
     final s = sec.round();
@@ -2290,148 +2280,238 @@ class _ChartSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget row(String name, String val) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              name,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: AppColors.getTextPrimaryColor(context),
-              ),
-            ),
-            Text(
-              val,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                color: AppColors.getTextPrimaryColor(context),
-              ),
-            ),
-          ],
-        ),
-      );
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ЗАГОЛОВОК ГРАФИКА: слева вверху
+    // ────────────────────────────────────────────────────────────────
+    String getTitle() {
+      switch (mode) {
+        case 0:
+          return 'Темп';
+        case 1:
+          return 'Пульс';
+        case 2:
+          return 'Высота';
+        default:
+          return '';
+      }
     }
 
-    if (summary == null) {
-      // Если данных нет, показываем пустые значения
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Column(
-          children: [
-            row('—', '—'),
-            row('—', '—'),
-            if (mode == 0) row('—', '—'),
-          ],
-        ),
-      );
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ИКОНКА ГРАФИКА: слева от заголовка
+    // ────────────────────────────────────────────────────────────────
+    IconData getIcon() {
+      switch (mode) {
+        case 0:
+          return Icons.speed;
+        case 1:
+          return CupertinoIcons.heart;
+        case 2:
+          return Icons.landscape;
+        default:
+          return CupertinoIcons.chart_bar;
+      }
     }
 
-    if (mode == 0) {
-      // Темп
-      final paceSummary = summary!['pace'] as Map<String, dynamic>?;
-      if (paceSummary == null) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Column(
-            children: [
-              row('Самый быстрый', '—'),
-              row('Средний темп', '—'),
-              row('Самый медленный', '—'),
-            ],
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ЦВЕТ ИКОНКИ: в зависимости от типа графика
+    // ────────────────────────────────────────────────────────────────
+    Color getIconColor() {
+      switch (mode) {
+        case 0:
+          return AppColors.brandPrimary;
+        case 1:
+          return AppColors.female;
+        case 2:
+          return AppColors.accentMint;
+        default:
+          return AppColors.getTextPrimaryColor(context);
+      }
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ВИДЖЕТ ДЛЯ ОТОБРАЖЕНИЯ МЕТРИКИ: большое значение и подпись
+    // ────────────────────────────────────────────────────────────────
+    Widget metricItem(String value, String label) {
+      return Column(
+        children: [
+          Text(
+            value,
+            style: AppTextStyles.h18w6.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
           ),
-        );
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: AppTextStyles.h12w4.copyWith(
+              color: AppColors.getTextSecondaryColor(context),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ВИДЖЕТ С МЕТРИКАМИ: по центру справа
+    // ────────────────────────────────────────────────────────────────
+    Widget buildMetrics() {
+      if (summary == null) {
+        // Если данных нет, показываем пустые значения
+        if (mode == 0) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              metricItem('—', 'Ср. темп'),
+              const SizedBox(width: 64),
+              metricItem('—', 'Макс. темп'),
+            ],
+          );
+        } else if (mode == 1) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              metricItem('—', 'Ср. пульс'),
+              const SizedBox(width: 64),
+              metricItem('—', 'Макс. пульс'),
+            ],
+          );
+        } else {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              metricItem('—', 'Мин. высота'),
+              const SizedBox(width: 64),
+              metricItem('—', 'Макс. высота'),
+            ],
+          );
+        }
       }
 
-      final fastest = paceSummary['fastest'] as num?;
-      final average = paceSummary['average'] as num?;
-      final slowest = paceSummary['slowest'] as num?;
+      if (mode == 0) {
+        // Темп: Ср. темп и Макс. темп (самый быстрый = минимальное время)
+        final paceSummary = summary!['pace'] as Map<String, dynamic>?;
+        if (paceSummary == null) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              metricItem('—', 'Ср. темп'),
+              const SizedBox(width: 64),
+              metricItem('—', 'Макс. темп'),
+            ],
+          );
+        }
 
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Column(
+        final average = paceSummary['average'] as num?;
+        final fastest = paceSummary['fastest'] as num?;
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            row(
-              'Самый быстрый',
-              fastest != null
-                  ? '${_fmtSecToMinSec(fastest.toDouble())} /км'
-                  : '—',
-            ),
-            row(
-              'Средний темп',
+            metricItem(
               average != null
                   ? '${_fmtSecToMinSec(average.toDouble())} /км'
                   : '—',
+              'Ср. темп',
             ),
-            row(
-              'Самый медленный',
-              slowest != null
-                  ? '${_fmtSecToMinSec(slowest.toDouble())} /км'
+            const SizedBox(width: 64),
+            metricItem(
+              fastest != null
+                  ? '${_fmtSecToMinSec(fastest.toDouble())} /км'
                   : '—',
+              'Макс. темп',
             ),
           ],
-        ),
-      );
-    } else if (mode == 1) {
-      // Пульс
-      final hrSummary = summary!['heartRate'] as Map<String, dynamic>?;
-      if (hrSummary == null) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Column(
+        );
+      } else if (mode == 1) {
+        // Пульс: Ср. пульс и Макс. пульс
+        final hrSummary = summary!['heartRate'] as Map<String, dynamic>?;
+        if (hrSummary == null) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              row('Минимальный', '—'),
-              row('Средний', '—'),
-              row('Максимальный', '—'),
+              metricItem('—', 'Ср. пульс'),
+              const SizedBox(width: 64),
+              metricItem('—', 'Макс. пульс'),
+            ],
+          );
+        }
+
+        final average = hrSummary['average'] as num?;
+        final max = hrSummary['max'] as num?;
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            metricItem(
+              average != null ? '${average.round()}' : '—',
+              'Ср. пульс',
+            ),
+            const SizedBox(width: 64),
+            metricItem(max != null ? '${max.round()}' : '—', 'Макс. пульс'),
+          ],
+        );
+      } else {
+        // Высота: Мин. высота и Макс. высота
+        final elevSummary = summary!['elevation'] as Map<String, dynamic>?;
+        if (elevSummary == null) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              metricItem('—', 'Мин. высота'),
+              const SizedBox(width: 64),
+              metricItem('—', 'Макс. высота'),
+            ],
+          );
+        }
+
+        final min = elevSummary['min'] as num?;
+        final max = elevSummary['max'] as num?;
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            metricItem(
+              min != null ? '${min.toStringAsFixed(1)}' : '—',
+              'Мин. высота',
+            ),
+            const SizedBox(width: 64),
+            metricItem(
+              max != null ? '${max.toStringAsFixed(1)}' : '—',
+              'Макс. высота',
+            ),
+          ],
+        );
+      }
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 СТРУКТУРА: заголовок на отдельной строке, метрики ниже по центру
+    // ────────────────────────────────────────────────────────────────
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 0, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Заголовок с иконкой на первой строке
+          Row(
+            children: [
+              // Иконка без кружка для всех типов графиков
+              Icon(getIcon(), size: 22, color: getIconColor()),
+              const SizedBox(width: 8),
+              Text(
+                getTitle(),
+                style: AppTextStyles.h17w6.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
             ],
           ),
-        );
-      }
-
-      final min = hrSummary['min'] as num?;
-      final average = hrSummary['average'] as num?;
-      final max = hrSummary['max'] as num?;
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Column(
-          children: [
-            row('Минимальный', min != null ? '${min.round()} уд/мин' : '—'),
-            row('Средний', average != null ? '${average.round()} уд/мин' : '—'),
-            row('Максимальный', max != null ? '${max.round()} уд/мин' : '—'),
-          ],
-        ),
-      );
-    } else {
-      // Высота
-      final elevSummary = summary!['elevation'] as Map<String, dynamic>?;
-      if (elevSummary == null) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Column(
-            children: [row('Минимальная', '—'), row('Максимальная', '—')],
-          ),
-        );
-      }
-
-      final min = elevSummary['min'] as num?;
-      final max = elevSummary['max'] as num?;
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Column(
-          children: [
-            row('Минимальная', min != null ? '${min.round()} м' : '—'),
-            row('Максимальная', max != null ? '${max.round()} м' : '—'),
-          ],
-        ),
-      );
-    }
+          const SizedBox(height: 20),
+          // Метрики по центру на второй строке
+          Center(child: buildMetrics()),
+        ],
+      ),
+    );
   }
 }
 
