@@ -57,7 +57,6 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
         physics: const BouncingScrollPhysics(
           parent: AlwaysScrollableScrollPhysics(),
         ),
-        primary: false, // Отключаем автоматическое использование PrimaryScrollController
         slivers: [
           const SliverToBoxAdapter(child: SizedBox(height: 32)),
           SliverFillRemaining(
@@ -107,7 +106,6 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
         physics: const BouncingScrollPhysics(
           parent: AlwaysScrollableScrollPhysics(),
         ),
-        primary: false, // Отключаем автоматическое использование PrimaryScrollController
         slivers: [
           const SliverToBoxAdapter(child: SizedBox(height: 32)),
           SliverFillRemaining(
@@ -132,7 +130,6 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
       physics: const BouncingScrollPhysics(
         parent: AlwaysScrollableScrollPhysics(),
       ),
-      primary: false, // Отключаем автоматическое использование PrimaryScrollController
       cacheExtent: 600, // подгружаем сетку чуть раньше
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 3)),

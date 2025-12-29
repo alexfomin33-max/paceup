@@ -71,7 +71,6 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
   }) {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
-      primary: false, // Отключаем автоматическое использование PrimaryScrollController
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
 

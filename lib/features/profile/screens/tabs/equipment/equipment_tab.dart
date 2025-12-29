@@ -283,7 +283,6 @@ class _GearTabState extends ConsumerState<GearTab>
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
-      primary: false, // Отключаем автоматическое использование PrimaryScrollController
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
