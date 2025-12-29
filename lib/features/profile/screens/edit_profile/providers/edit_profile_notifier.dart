@@ -235,7 +235,7 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
         mainSport: state.mainSport,
         avatarUrl: state.avatarUrl,
         avatarBytes: state.avatarBytes,
-        backgroundUrl: state.backgroundUrl,
+        backgroundUrl: null, // ── при удалении также очищаем URL
         backgroundBytes: null, // ── явно устанавливаем null
         loadError: state.loadError,
       );
@@ -375,9 +375,14 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
       map['avatar_mime'] = 'image/jpeg';
     }
 
+    // Фоновая картинка: либо новая картинка, либо удаление
     if (state.backgroundBytes != null && state.backgroundBytes!.isNotEmpty) {
       map['background_base64'] = base64Encode(state.backgroundBytes!);
       map['background_mime'] = 'image/jpeg';
+    } else if (state.backgroundUrl == null && state.backgroundBytes == null) {
+      // Если backgroundUrl стал null (был удален), отправляем пустую строку для удаления
+      // Это происходит только если пользователь явно удалил картинку
+      map['background_base64'] = '';
     }
 
     return map;

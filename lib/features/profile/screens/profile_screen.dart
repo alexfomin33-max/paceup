@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bar.dart'; // ← наш глобальный AppBar
@@ -638,6 +639,7 @@ class _ProfileFlexibleSpace extends StatelessWidget {
     final followers = profile?.followers ?? 0;
     final following = profile?.following ?? 0;
     final avatarUrl = profile?.avatar;
+    final backgroundUrl = profile?.background;
 
     return Container(
       color: surface,
@@ -655,12 +657,32 @@ class _ProfileFlexibleSpace extends StatelessWidget {
               left: 0,
               right: 0,
               height: coverHeight,
-              child: Image.asset(
-                'assets/fon.jpg',
-                width: double.infinity,
-                height: coverHeight,
-                fit: BoxFit.cover,
-              ),
+              child: backgroundUrl != null && backgroundUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: backgroundUrl,
+                      width: double.infinity,
+                      height: coverHeight,
+                      fit: BoxFit.cover,
+                      fadeInDuration: const Duration(milliseconds: 200),
+                      errorWidget: (context, url, error) => Image.asset(
+                        'assets/fon.jpg',
+                        width: double.infinity,
+                        height: coverHeight,
+                        fit: BoxFit.cover,
+                      ),
+                      placeholder: (context, url) => Image.asset(
+                        'assets/fon.jpg',
+                        width: double.infinity,
+                        height: coverHeight,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Image.asset(
+                      'assets/fon.jpg',
+                      width: double.infinity,
+                      height: coverHeight,
+                      fit: BoxFit.cover,
+                    ),
             ),
 
             // Аватар с обводкой внизу обложки (как логотип в клубах)

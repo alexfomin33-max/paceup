@@ -3,6 +3,7 @@ class UserProfileHeader {
   final String firstName;
   final String lastName;
   final String? avatar;   // полный URL
+  final String? background;   // полный URL фоновой картинки
   final String? city;
   final int? age;
   final int? followers;
@@ -14,6 +15,7 @@ class UserProfileHeader {
     required this.firstName,
     required this.lastName,
     this.avatar,
+    this.background,
     this.city,
     this.age,
     this.followers,
@@ -45,6 +47,7 @@ class UserProfileHeader {
       firstName: (j['first_name'] ?? '').toString(),
       lastName: (j['last_name'] ?? '').toString(),
       avatar: toStr(j['avatar']),
+      background: toStr(j['background']),
       city: toStr(j['city']),
       age: toInt(j['age']),
       followers: toInt(stats['followers']),
