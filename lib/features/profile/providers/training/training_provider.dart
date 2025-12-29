@@ -11,7 +11,7 @@ import '../../../../providers/services/api_provider.dart';
 class TrainingActivity {
   final int id;
   final DateTime when; // Дата и время тренировки
-  final int sportType; // 0=бег, 1=вело, 2=плавание
+  final int sportType; // 0=бег, 1=вело, 2=плавание, 3=лыжи
   final double distance; // км
   final String distanceText; // "21,24 км"
   final int duration; // секунды

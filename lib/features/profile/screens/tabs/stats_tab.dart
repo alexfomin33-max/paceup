@@ -59,7 +59,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
   static const _periods = ['За неделю', 'За месяц', 'За год'];
   String _period = 'За год';
 
-  // Вид спорта: 0 бег, 1 вело, 2 плавание (single-select)
+  // Вид спорта: 0 бег, 1 вело, 2 плавание, 3 лыжи (single-select)
   int _sport = 0;
 
   // Состояние загрузки
@@ -90,7 +90,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         'За год': 'year',
       };
 
-      final sportTypeMap = {0: 'run', 1: 'bike', 2: 'swim'};
+      final sportTypeMap = {0: 'run', 1: 'bike', 2: 'swim', 3: 'ski'};
 
       final period = periodMap[_period] ?? 'year';
       final sportType = sportTypeMap[_sport];
@@ -144,6 +144,8 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         return 'bike';
       case 2:
         return 'swim';
+      case 3:
+        return 'ski';
       default:
         return null;
     }
@@ -287,6 +289,26 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           Icons.speed_outlined,
           'Средний темп',
           metrics.avgPace ?? '—',
+        ),
+      ];
+    } else if (sportType == 'ski') {
+      return [
+        _MetricRowData(
+          Icons.downhill_skiing,
+          'Заездов на лыжах',
+          metrics.activitiesCount,
+        ),
+        _MetricRowData(Icons.timer_outlined, 'Общее время', metrics.totalTime),
+        _MetricRowData(Icons.place_outlined, 'Расстояние', metrics.distance),
+        _MetricRowData(
+          Icons.speed_outlined,
+          'Средняя скорость',
+          metrics.avgSpeed ?? '—',
+        ),
+        _MetricRowData(
+          Icons.terrain_outlined,
+          'Набор высоты',
+          _formatElevationGain(metrics.elevationGain),
         ),
       ];
     }
@@ -547,6 +569,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
               _SportIcon(
                 selected: _sport == 0,
                 icon: Icons.directions_run_outlined,
+                sportType: 0,
                 onTap: () {
                   setState(() => _sport = 0);
                   _loadStats();
@@ -556,6 +579,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
               _SportIcon(
                 selected: _sport == 1,
                 icon: Icons.directions_bike_outlined,
+                sportType: 1,
                 onTap: () {
                   setState(() => _sport = 1);
                   _loadStats();
@@ -565,8 +589,19 @@ class _ByTypeContentState extends State<_ByTypeContent> {
               _SportIcon(
                 selected: _sport == 2,
                 icon: Icons.pool_outlined,
+                sportType: 2,
                 onTap: () {
                   setState(() => _sport = 2);
+                  _loadStats();
+                },
+              ),
+              const SizedBox(width: 8),
+              _SportIcon(
+                selected: _sport == 3,
+                icon: Icons.downhill_skiing,
+                sportType: 3,
+                onTap: () {
+                  setState(() => _sport = 3);
                   _loadStats();
                 },
               ),
@@ -693,11 +728,28 @@ class _SportIcon extends StatelessWidget {
   final bool selected;
   final IconData icon;
   final VoidCallback onTap;
+  final int? sportType; // 0 бег, 1 вело, 2 плавание, 3 лыжи
   const _SportIcon({
     required this.selected,
     required this.icon,
     required this.onTap,
+    this.sportType,
   });
+
+  /// Получить цвет активной иконки в зависимости от типа спорта
+  Color _getActiveColor() {
+    if (sportType == null) return AppColors.brandPrimary;
+    switch (sportType!) {
+      case 1: // велосипед
+        return AppColors.female;
+      case 2: // плавание
+        return AppColors.accentTeal;
+      case 3: // лыжи
+        return AppColors.success;
+      default: // бег (0)
+        return AppColors.brandPrimary;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -709,7 +761,7 @@ class _SportIcon extends StatelessWidget {
         height: 28,
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.brandPrimary
+              ? _getActiveColor()
               : AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(

@@ -800,6 +800,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                               value: 'walk',
                               child: Text('Ходьба'),
                             ),
+                            DropdownMenuItem<String>(
+                              value: 'ski',
+                              child: Text('Лыжи'),
+                            ),
                           ],
                         ),
                       ),

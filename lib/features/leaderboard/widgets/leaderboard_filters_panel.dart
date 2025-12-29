@@ -132,6 +132,12 @@ class _LeaderboardFiltersPanelState extends State<LeaderboardFiltersPanel> {
               icon: Icons.pool,
               onTap: () => widget.onSportChanged(2),
             ),
+            const SizedBox(width: 8),
+            SportIcon(
+              selected: widget.sport == 3,
+              icon: Icons.downhill_skiing,
+              onTap: () => widget.onSportChanged(3),
+            ),
           ],
         ),
         const SizedBox(height: 8),

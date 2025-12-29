@@ -162,7 +162,7 @@ class EditProfilePersonalInfoSection extends StatelessWidget {
             EditProfileFieldRow.dropdown(
               label: 'Основной вид спорта',
               value: mainSport.isEmpty ? null : mainSport,
-              items: const ['Бег', 'Велоспорт', 'Плавание'],
+              items: const ['Бег', 'Велоспорт', 'Плавание', 'Лыжи'],
               onChanged: setSport,
             ),
           ],

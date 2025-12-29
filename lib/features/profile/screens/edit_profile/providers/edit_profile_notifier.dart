@@ -315,6 +315,11 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
       case 'плавание':
       case 'Плавание':
         return 'Плавание';
+      case 'ski':
+      case 'skiing':
+      case 'лыжи':
+      case 'Лыжи':
+        return 'Лыжи';
       default:
         return s;
     }
@@ -351,6 +356,7 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
       final v = s.trim().toLowerCase();
       if (v.contains('вел')) return 'Велоспорт';
       if (v.contains('плав') || v.contains('swim')) return 'Плавание';
+      if (v.contains('лыж') || v.contains('ski')) return 'Лыжи';
       return 'Бег';
     }
 

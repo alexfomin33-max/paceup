@@ -29,8 +29,8 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
   // Текущий месяц
   late DateTime _month;
 
-  // Мультиселект видов спорта: 0 бег, 1 вело, 2 плавание
-  Set<int> _sports = {0, 1, 2};
+  // Мультиселект видов спорта: 0 бег, 1 вело, 2 плавание, 3 лыжи
+  Set<int> _sports = {0, 1, 2, 3};
 
   // Флаг для инициализации месяца только один раз при первой загрузке
   bool _monthInitialized = false;
@@ -301,6 +301,13 @@ class _MonthToolbar extends StatelessWidget {
           sportType: 2,
           onTap: () => onToggleSport(2),
         ),
+        const SizedBox(width: 8),
+        _SportIcon(
+          selected: sports.contains(3),
+          icon: Icons.downhill_skiing,
+          sportType: 3,
+          onTap: () => onToggleSport(3),
+        ),
       ],
     );
   }
@@ -349,7 +356,7 @@ class _NavIcon extends StatelessWidget {
 class _SportIcon extends StatelessWidget {
   final bool selected;
   final IconData icon;
-  final int sportType; // 0 бег, 1 вело, 2 плавание
+  final int sportType; // 0 бег, 1 вело, 2 плавание, 3 лыжи
   final VoidCallback onTap;
   const _SportIcon({
     required this.selected,
@@ -365,6 +372,8 @@ class _SportIcon extends StatelessWidget {
         return AppColors.female; // Розовый цвет, как в main_tab.dart
       case 2: // плавание
         return AppColors.accentTeal;
+      case 3: // лыжи
+        return AppColors.success; // Зеленый цвет для лыж
       default: // бег (0)
         return AppColors.brandPrimary;
     }
@@ -534,6 +543,9 @@ class _MonthGrid extends StatelessWidget {
       } else if (sportTypes.contains(2)) {
         // Только плавание
         color = AppColors.accentTeal;
+      } else if (sportTypes.contains(3)) {
+        // Только лыжи
+        color = AppColors.success;
       } else {
         // Только бег
         color = AppColors.brandPrimary;
@@ -581,17 +593,42 @@ class _MonthGrid extends StatelessWidget {
       }
     }
 
-    // Если все три типа тренировок (Бег + Велосипед + Плавание)
-    if (sportTypes.length == 3 &&
+    // Если три типа тренировок
+    if (sportTypes.length == 3) {
+      // Бег + Велосипед + Плавание
+      if (sportTypes.contains(0) &&
+          sportTypes.contains(1) &&
+          sportTypes.contains(2)) {
+        return BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              AppColors.brandPrimary,
+              AppColors.female,
+              AppColors.accentTeal,
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        );
+      }
+      // Другие комбинации из трех типов - используем градиент с лыжами
+      // Можно добавить специфичные комбинации при необходимости
+    }
+
+    // Если четыре типа тренировок (Бег + Велосипед + Плавание + Лыжи)
+    if (sportTypes.length == 4 &&
         sportTypes.contains(0) &&
         sportTypes.contains(1) &&
-        sportTypes.contains(2)) {
+        sportTypes.contains(2) &&
+        sportTypes.contains(3)) {
       return BoxDecoration(
         gradient: const LinearGradient(
           colors: [
             AppColors.brandPrimary,
             AppColors.female,
             AppColors.accentTeal,
+            AppColors.success,
           ],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
@@ -951,7 +988,9 @@ class _WorkoutRow extends ConsumerWidget {
                                   ? Icons.directions_run
                                   : (item.kind == 1
                                         ? Icons.directions_bike
-                                        : Icons.pool),
+                                        : (item.kind == 2
+                                              ? Icons.pool
+                                              : Icons.downhill_skiing)),
                               size: 15,
                               color: item.kind == 1
                                   ? AppColors
@@ -959,8 +998,10 @@ class _WorkoutRow extends ConsumerWidget {
                                   : (item.kind == 2
                                         ? AppColors
                                               .accentTeal // Бирюзовый для плавания
-                                        : AppColors
-                                              .brandPrimary), // Синий для бега
+                                        : (item.kind == 3
+                                              ? AppColors.success // Зеленый для лыж
+                                              : AppColors
+                                                    .brandPrimary)), // Синий для бега
                             ),
                           ),
                         ),
@@ -1291,7 +1332,7 @@ class _WorkoutRow extends ConsumerWidget {
 class _Workout {
   final int id;
   final DateTime when;
-  final int kind; // 0 бег, 1 вело, 2 плавание
+  final int kind; // 0 бег, 1 вело, 2 плавание, 3 лыжи
   final String distText;
   final String durText;
   final String paceText;
@@ -1367,7 +1408,11 @@ class _Workout {
   /// Конвертирует в Activity для description_screen
   al.Activity toActivity(int userId, String userName, String userAvatar) {
     // Определяем тип спорта как строку
-    final sportTypeStr = kind == 0 ? 'run' : (kind == 1 ? 'bike' : 'swim');
+    final sportTypeStr = kind == 0
+        ? 'run'
+        : (kind == 1
+            ? 'bike'
+            : (kind == 2 ? 'swim' : (kind == 3 ? 'ski' : 'run')));
 
     // Создаём ActivityStats из доступных данных
     final stats = al.ActivityStats(

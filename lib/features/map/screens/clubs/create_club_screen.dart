@@ -618,7 +618,7 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
                           style: AppTextStyles.h14w4.copyWith(
                             color: AppColors.getTextPrimaryColor(context),
                           ),
-                          items: const ['Бег', 'Велосипед', 'Плавание'].map((
+                          items: const ['Бег', 'Велосипед', 'Плавание', 'Лыжи'].map((
                             option,
                           ) {
                             return DropdownMenuItem<String>(

@@ -22,7 +22,7 @@ class AllUsersLeaderboardResult {
 /// Провайдер для загрузки лидерборда всех пользователей
 /// 
 /// Параметры:
-/// - sport: 0=бег, 1=вело, 2=плавание (по умолчанию 0)
+/// - sport: 0=бег, 1=вело, 2=плавание, 3=лыжи (по умолчанию 0)
 /// - period: 'current_week', 'current_month', 'current_year', 'custom'
 final allUsersLeaderboardProvider = FutureProvider.autoDispose
     .family<AllUsersLeaderboardResult, AllUsersLeaderboardParams>(
@@ -74,7 +74,7 @@ final allUsersLeaderboardProvider = FutureProvider.autoDispose
 
 /// Параметры для загрузки лидерборда всех пользователей
 class AllUsersLeaderboardParams {
-  final int sport; // 0=бег, 1=вело, 2=плавание
+  final int sport; // 0=бег, 1=вело, 2=плавание, 3=лыжи
   final String period; // 'current_week', 'current_month', 'current_year', 'custom'
   final String? dateStart; // Для custom периода
   final String? dateEnd; // Для custom периода

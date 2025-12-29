@@ -28,7 +28,7 @@ class _AllUsersTabState extends ConsumerState<AllUsersTab>
   // ── выбранный параметр лидерборда (по умолчанию "Расстояние")
   String? _selectedParameter = 'Расстояние';
 
-  // ── вид спорта: 0 бег, 1 вело, 2 плавание (single-select)
+  // ── вид спорта: 0 бег, 1 вело, 2 плавание, 3 лыжи (single-select)
   int _sport = 0;
 
   // ── выбранный период (по умолчанию "Текущий месяц")

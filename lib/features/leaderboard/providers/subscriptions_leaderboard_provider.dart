@@ -22,7 +22,7 @@ class SubscriptionsLeaderboardResult {
 /// Провайдер для загрузки лидерборда подписок
 /// 
 /// Параметры:
-/// - sport: 0=бег, 1=вело, 2=плавание (по умолчанию 0)
+/// - sport: 0=бег, 1=вело, 2=плавание, 3=лыжи (по умолчанию 0)
 /// - period: 'current_week', 'current_month', 'current_year', 'custom'
 final subscriptionsLeaderboardProvider = FutureProvider.autoDispose
     .family<SubscriptionsLeaderboardResult, SubscriptionsLeaderboardParams>(
@@ -74,7 +74,7 @@ final subscriptionsLeaderboardProvider = FutureProvider.autoDispose
 
 /// Параметры для загрузки лидерборда подписок
 class SubscriptionsLeaderboardParams {
-  final int sport; // 0=бег, 1=вело, 2=плавание
+  final int sport; // 0=бег, 1=вело, 2=плавание, 3=лыжи
   final String period; // 'current_week', 'current_month', 'current_year', 'custom'
   final String? dateStart; // Для custom периода
   final String? dateEnd; // Для custom периода

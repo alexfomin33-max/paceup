@@ -54,13 +54,14 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   late final TextEditingController _descriptionController;
   late final FocusNode _descriptionFocusNode;
 
-  // Вид тренировки: "Бег", "Велосипед", "Плавание"
+  // Вид тренировки: "Бег", "Велосипед", "Плавание", "Лыжи"
   String? _selectedActivityType;
-  static const List<String> _activityTypes = ['Бег', 'Велосипед', 'Плавание'];
+  static const List<String> _activityTypes = ['Бег', 'Велосипед', 'Плавание', 'Лыжи'];
   static const Map<String, String> _activityTypeMap = {
     'Бег': 'run',
     'Велосипед': 'bike',
     'Плавание': 'swim',
+    'Лыжи': 'ski',
   };
 
   // Дата и время тренировки

@@ -163,7 +163,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
         // Заполняем выборы
         final activityStr = club['activity'] as String?;
         // Проверяем, что значение активности входит в список допустимых
-        const allowedActivities = ['Бег', 'Велосипед', 'Плавание'];
+        const allowedActivities = ['Бег', 'Велосипед', 'Плавание', 'Лыжи'];
         if (activityStr != null && allowedActivities.contains(activityStr)) {
           activity = activityStr;
         } else {
@@ -933,7 +933,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                           style: AppTextStyles.h14w4.copyWith(
                             color: AppColors.getTextPrimaryColor(context),
                           ),
-                          items: const ['Бег', 'Велосипед', 'Плавание'].map((
+                          items: const ['Бег', 'Велосипед', 'Плавание', 'Лыжи'].map((
                             option,
                           ) {
                             return DropdownMenuItem<String>(

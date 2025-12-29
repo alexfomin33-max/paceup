@@ -543,6 +543,10 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                               value: 'walk',
                               child: Text('Ходьба'),
                             ),
+                            DropdownMenuItem<String>(
+                              value: 'ski',
+                              child: Text('Лыжи'),
+                            ),
                           ],
                         ),
                       ),

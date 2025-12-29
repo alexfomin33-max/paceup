@@ -37,7 +37,7 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
 
   // 🔹 Списки возможных значений
   final List<String> genders = ['Муж', 'Жен'];
-  final List<String> sports = ['Бег', 'Велосипед', 'Плавание'];
+  final List<String> sports = ['Бег', 'Велосипед', 'Плавание', 'Лыжи'];
   
   // 🔹 Список городов для автокомплита (загружается из БД)
   List<String> _cities = [];
