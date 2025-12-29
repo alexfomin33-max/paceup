@@ -1469,9 +1469,9 @@ class _SplitsTableFull extends StatelessWidget {
     var heartRatePerKm = stats?.heartRatePerKm ?? <String, double>{};
 
     // ────────────────────────────────────────────────────────────────
-    // Для типа "run" преобразуем ключи из "km_1" в "1"
+    // Для типов "run" и "ski" преобразуем ключи из "km_1" в "1"
     // ────────────────────────────────────────────────────────────────
-    if (activityType == 'run') {
+    if (activityType == 'run' || activityType == 'ski') {
       final normalizedPacePerKm = <String, double>{};
       final normalizedHeartRatePerKm = <String, double>{};
 
@@ -1630,13 +1630,13 @@ class _SplitsTableFull extends StatelessWidget {
 
     // ────────────────────────────────────────────────────────────────
     // Форматирование темпа
-    // Для типа "run": значение в формате минут (5.7 = 5:42 мин/км)
+    // Для типов "run" и "ski": значение в формате минут (5.7 = 5:42 мин/км)
     // Для других типов: значение в секундах, форматируем как ММ:СС
     // ────────────────────────────────────────────────────────────────
     String fmtPace(double paceValue) {
       if (paceValue <= 0) return '-';
 
-      if (activityType == 'run') {
+      if (activityType == 'run' || activityType == 'ski') {
         // Формат: 5.7 означает 5 минут и 7 десятых от минуты = 5:42 мин/км
         final minutes = paceValue.floor();
         final seconds = ((paceValue - minutes) * 60).round();
@@ -1706,9 +1706,9 @@ class _SplitsTableFull extends StatelessWidget {
           // Чем быстрее темп (меньше секунд), тем длиннее полоса
           // Используем пропорцию: fastestPace / paceSecForVisual
           // Самый быстрый темп (fastestPace) будет иметь полоску на всю ширину (1.0)
-          // Для типа "run" конвертируем минуты в секунды для сравнения
+          // Для типов "run" и "ski" конвертируем минуты в секунды для сравнения
           // ────────────────────────────────────────────────────────────────
-          final paceSecForVisual = activityType == 'run'
+          final paceSecForVisual = (activityType == 'run' || activityType == 'ski')
               ? (paceValue.floor() * 60 +
                         ((paceValue - paceValue.floor()) * 60).round())
                     .toDouble()
