@@ -273,20 +273,19 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
             ),
             const SizedBox(height: 8),
 
-            // Название клуба с горизонтальным скроллингом
+            // Название клуба с обрезанием текста
             Center(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                    color: AppColors.getTextPrimaryColor(context),
-                  ),
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                  color: AppColors.getTextPrimaryColor(context),
                 ),
               ),
             ),

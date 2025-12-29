@@ -465,9 +465,18 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
             bottom: true,
             child: Stack(
               children: [
-                CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
+                NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    // Закрываем попап меню при любом скролле или свайпе
+                    if (notification is ScrollUpdateNotification ||
+                        notification is ScrollStartNotification) {
+                      MoreMenuHub.hide();
+                    }
+                    return false;
+                  },
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
                     // ───────── Cover + overlay-кнопки + логотип
                     SliverToBoxAdapter(
                       child: Builder(
@@ -913,6 +922,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
                     const SliverToBoxAdapter(child: SizedBox(height: 16)),
                   ],
+                  ),
                 ),
 
                 // ───────── Плавающие круглые иконки (назад + редактирование)
