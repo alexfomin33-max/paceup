@@ -567,11 +567,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                     width: 52,
                                     height: 52,
                                     fit: BoxFit.cover,
-                                    fadeInDuration: const Duration(
-                                      milliseconds: 120,
-                                    ),
+                                    // ── Встроенная анимация fade-in работает по умолчанию
                                     memCacheWidth: w,
                                     maxWidthDiskCache: w,
+                                    placeholder: (context, url) => Container(
+                                      width: 52,
+                                      height: 52,
+                                      color: AppColors.surfaceMuted,
+                                      child: Center(
+                                        child: CupertinoActivityIndicator(
+                                          radius: 10,
+                                        ),
+                                      ),
+                                    ),
                                     errorWidget: (context, url, error) {
                                       return Container(
                                         width: 52,
@@ -607,11 +615,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                     width: 52,
                                     height: 52,
                                     fit: BoxFit.cover,
-                                    fadeInDuration: const Duration(
-                                      milliseconds: 120,
-                                    ),
+                                    // ── Встроенная анимация fade-in работает по умолчанию
                                     memCacheWidth: w,
                                     maxWidthDiskCache: w,
+                                    placeholder: (context, url) => Container(
+                                      width: 52,
+                                      height: 52,
+                                      color: AppColors.surfaceMuted,
+                                      child: Center(
+                                        child: CupertinoActivityIndicator(
+                                          radius: 10,
+                                        ),
+                                      ),
+                                    ),
                                     errorWidget: (context, url, error) {
                                       return Container(
                                         width: 52,

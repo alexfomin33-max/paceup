@@ -39,9 +39,7 @@ class LeaderboardAvatar extends StatelessWidget {
   void _navigateToProfile(BuildContext context) {
     if (userId != null) {
       Navigator.of(context).push(
-        TransparentPageRoute(
-          builder: (_) => ProfileScreen(userId: userId!),
-        ),
+        TransparentPageRoute(builder: (_) => ProfileScreen(userId: userId!)),
       );
     }
   }
@@ -93,6 +91,7 @@ class LeaderboardAvatar extends StatelessWidget {
                             4, // учитываем промежуточную обводку (2px с каждой стороны)
                         height: avatarSize - 4,
                         fit: BoxFit.cover,
+                        // ── Встроенная анимация fade-in работает по умолчанию
                         placeholder: (context, url) => Container(
                           width: avatarSize - 4,
                           height: avatarSize - 4,
@@ -118,38 +117,38 @@ class LeaderboardAvatar extends StatelessWidget {
                     ),
                   ),
                 ),
-              // ── Значок с номером места в правом нижнем углу
-              // ── Позиционирование пропорционально размеру контейнера для визуального выравнивания
-              Positioned(
-                right: badgeOffset,
-                bottom: badgeOffset,
-                child: Container(
-                  width: badgeSize,
-                  height: badgeSize,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: borderColor,
-                    border: Border.all(
-                      color: AppColors.getSurfaceColor(context),
-                      width: 1.5,
+                // ── Значок с номером места в правом нижнем углу
+                // ── Позиционирование пропорционально размеру контейнера для визуального выравнивания
+                Positioned(
+                  right: badgeOffset,
+                  bottom: badgeOffset,
+                  child: Container(
+                    width: badgeSize,
+                    height: badgeSize,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: borderColor,
+                      border: Border.all(
+                        color: AppColors.getSurfaceColor(context),
+                        width: 1.5,
+                      ),
                     ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$rank',
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                    child: Center(
+                      child: Text(
+                        '$rank',
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
         ),
         const SizedBox(height: 8),
         // ── Имя пользователя (стиль как в таблице, одна строка, чуть толще) - кликабельное

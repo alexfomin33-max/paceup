@@ -682,11 +682,23 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                       return CachedNetworkImage(
                                         imageUrl: backgroundUrl,
                                         fit: BoxFit.cover,
-                                        fadeInDuration: const Duration(
-                                          milliseconds: 200,
-                                        ),
                                         memCacheWidth: targetW,
                                         memCacheHeight: targetH,
+                                        placeholder: (context, url) => Container(
+                                          width: double.infinity,
+                                          height: calculatedHeight,
+                                          color: AppColors.getSurfaceColor(
+                                            context,
+                                          ),
+                                          child: Center(
+                                            child: CupertinoActivityIndicator(
+                                              radius: 12,
+                                              color: AppColors.getIconPrimaryColor(
+                                                context,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
                                         errorWidget: (context, url, error) =>
                                             Container(
                                               color: AppColors.getSurfaceColor(
@@ -800,10 +812,22 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                           width: 40,
                                           height: 40,
                                           fit: BoxFit.cover,
-                                          fadeInDuration: const Duration(
-                                            milliseconds: 120,
-                                          ),
                                           memCacheWidth: cacheWidth,
+                                          placeholder: (context, url) => Container(
+                                            width: 40,
+                                            height: 40,
+                                            color: AppColors.getBorderColor(
+                                              context,
+                                            ),
+                                            child: Center(
+                                              child: CupertinoActivityIndicator(
+                                                radius: 8,
+                                                color: AppColors.getIconPrimaryColor(
+                                                  context,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                           errorWidget:
                                               (
                                                 context,
@@ -1139,12 +1163,26 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                                   width: 48,
                                                   height: 48,
                                                   fit: BoxFit.cover,
-                                                  fadeInDuration:
-                                                      const Duration(
-                                                        milliseconds: 120,
-                                                      ),
                                                   memCacheWidth: w,
                                                   maxWidthDiskCache: w,
+                                                  placeholder: (context, url) =>
+                                                      Container(
+                                                    width: 48,
+                                                    height: 48,
+                                                    color: AppColors.getBorderColor(
+                                                      context,
+                                                    ),
+                                                    child: Center(
+                                                      child:
+                                                          CupertinoActivityIndicator(
+                                                        radius: 8,
+                                                        color: AppColors
+                                                            .getIconPrimaryColor(
+                                                          context,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
                                                   errorWidget:
                                                       (
                                                         context,
@@ -1398,9 +1436,19 @@ class _Avatar40 extends StatelessWidget {
       width: 40,
       height: 40,
       fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
+      placeholder: (context, url) => Container(
+        width: 40,
+        height: 40,
+        color: AppColors.getBorderColor(context),
+        child: Center(
+          child: CupertinoActivityIndicator(
+            radius: 8,
+            color: AppColors.getIconPrimaryColor(context),
+          ),
+        ),
+      ),
       errorWidget: (context, imageUrl, error) => Container(
         width: 40,
         height: 40,
@@ -1436,9 +1484,17 @@ class _SquarePhoto extends StatelessWidget {
               return CachedNetworkImage(
                 imageUrl: url,
                 fit: BoxFit.cover,
-                fadeInDuration: const Duration(milliseconds: 120),
                 memCacheWidth: target,
                 maxWidthDiskCache: target,
+                placeholder: (context, url) => Container(
+                  color: AppColors.getBorderColor(context),
+                  child: Center(
+                    child: CupertinoActivityIndicator(
+                      radius: 12,
+                      color: AppColors.getIconPrimaryColor(context),
+                    ),
+                  ),
+                ),
                 errorWidget: (context, imageUrl, error) => Container(
                   color: AppColors.getBorderColor(context),
                   child: Icon(
@@ -1493,7 +1549,15 @@ class _GalleryViewerState extends State<_GalleryViewer> {
                     child: CachedNetworkImage(
                       imageUrl: widget.images[i],
                       fit: BoxFit.contain,
-                      fadeInDuration: const Duration(milliseconds: 120),
+                      placeholder: (context, url) => Container(
+                        color: AppColors.getBorderColor(context),
+                        child: Center(
+                          child: CupertinoActivityIndicator(
+                            radius: 16,
+                            color: AppColors.getIconPrimaryColor(context),
+                          ),
+                        ),
+                      ),
                       errorWidget: (context, imageUrl, error) => Container(
                         color: AppColors.getBorderColor(context),
                         child: Icon(

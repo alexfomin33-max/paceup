@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/image_picker_helper.dart';
 import '../../../core/utils/local_image_compressor.dart'
@@ -1465,12 +1466,23 @@ class _MediaTile extends StatelessWidget {
                     ),
                   )
                 : existingUrl != null
-                ? Image.network(
-                    existingUrl!,
+                ? CachedNetworkImage(
+                    imageUrl: existingUrl!,
                     fit: BoxFit.cover,
                     width: width,
                     height: height,
-                    errorBuilder: (context, error, stackTrace) => Container(
+                    placeholder: (context, url) => Container(
+                      width: width,
+                      height: height,
+                      color: AppColors.getBackgroundColor(context),
+                      child: Center(
+                        child: CupertinoActivityIndicator(
+                          radius: 10,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
                       width: width,
                       height: height,
                       color: AppColors.getBackgroundColor(context),

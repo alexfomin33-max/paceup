@@ -367,9 +367,22 @@ class _RowTileState extends State<_RowTile> {
                       width: 44,
                       height: 44,
                       fit: BoxFit.cover,
-                      fadeInDuration: const Duration(milliseconds: 120),
+                      // ── Встроенная анимация fade-in работает по умолчанию
                       memCacheWidth: w,
                       maxWidthDiskCache: w,
+                      placeholder: (context, url) => Container(
+                        width: 44,
+                        height: 44,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkSurfaceMuted
+                            : AppColors.skeletonBase,
+                        child: Center(
+                          child: CupertinoActivityIndicator(
+                            radius: 9,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
+                        ),
+                      ),
                       errorWidget: (context, imageUrl, error) {
                         return Container(
                           width: 44,

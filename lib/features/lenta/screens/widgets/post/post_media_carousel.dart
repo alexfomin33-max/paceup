@@ -145,6 +145,11 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
               fit: BoxFit.cover,
               memCacheWidth: targetW,
               maxWidthDiskCache: targetW,
+              // ── Встроенная анимация fade-in работает по умолчанию
+              placeholder: (context, url) => Container(
+                color: AppColors.disabled,
+                child: const Center(child: CupertinoActivityIndicator()),
+              ),
               errorWidget: (context, url, error) => Container(
                 color: AppColors.disabled,
                 child: const Icon(

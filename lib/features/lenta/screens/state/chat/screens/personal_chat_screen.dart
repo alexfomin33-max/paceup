@@ -996,9 +996,20 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                             width: 36,
                             height: 36,
                             fit: BoxFit.cover,
-                            fadeInDuration: const Duration(milliseconds: 120),
+                            // ── Встроенная анимация fade-in работает по умолчанию
                             memCacheWidth: w,
                             maxWidthDiskCache: w,
+                            placeholder: (context, url) => Container(
+                              width: 36,
+                              height: 36,
+                              color: AppColors.getSurfaceMutedColor(context),
+                              child: Center(
+                                child: CupertinoActivityIndicator(
+                                  radius: 8,
+                                  color: AppColors.getIconSecondaryColor(context),
+                                ),
+                              ),
+                            ),
                             errorWidget: (context, imageUrl, error) {
                               return Image.asset(
                                 'assets/${widget.userAvatar}',
@@ -1341,9 +1352,20 @@ class _BubbleLeft extends StatelessWidget {
                   width: 28,
                   height: 28,
                   fit: BoxFit.cover,
-                  fadeInDuration: const Duration(milliseconds: 120),
+                  // ── Встроенная анимация fade-in работает по умолчанию
                   memCacheWidth: w,
                   maxWidthDiskCache: w,
+                  placeholder: (context, url) => Container(
+                    width: 28,
+                    height: 28,
+                    color: AppColors.getSurfaceMutedColor(context),
+                    child: Center(
+                      child: CupertinoActivityIndicator(
+                        radius: 6,
+                        color: AppColors.getIconSecondaryColor(context),
+                      ),
+                    ),
+                  ),
                   errorWidget: (context, url, error) => Container(
                     width: 28,
                     height: 28,
@@ -1387,9 +1409,20 @@ class _BubbleLeft extends StatelessWidget {
                               imageUrl: image!,
                               width: maxW,
                               fit: BoxFit.cover,
-                              fadeInDuration: const Duration(milliseconds: 200),
+                              // ── Встроенная анимация fade-in работает по умолчанию
                               memCacheWidth: w,
                               maxWidthDiskCache: w,
+                              placeholder: (context, url) => Container(
+                                width: maxW,
+                                height: 200,
+                                color: AppColors.getSurfaceMutedColor(context),
+                                child: Center(
+                                  child: CupertinoActivityIndicator(
+                                    radius: 12,
+                                    color: AppColors.getIconSecondaryColor(context),
+                                  ),
+                                ),
+                              ),
                               errorWidget: (context, url, error) {
                                 return Container(
                                   width: maxW,
@@ -1511,9 +1544,20 @@ class _BubbleRight extends StatelessWidget {
                               imageUrl: image!,
                               width: maxW,
                               fit: BoxFit.cover,
-                              fadeInDuration: const Duration(milliseconds: 200),
+                              // ── Встроенная анимация fade-in работает по умолчанию
                               memCacheWidth: w,
                               maxWidthDiskCache: w,
+                              placeholder: (context, url) => Container(
+                                width: maxW,
+                                height: 200,
+                                color: AppColors.getSurfaceMutedColor(context),
+                                child: Center(
+                                  child: CupertinoActivityIndicator(
+                                    radius: 12,
+                                    color: AppColors.getIconSecondaryColor(context),
+                                  ),
+                                ),
+                              ),
                               errorWidget: (context, url, error) {
                                 return Container(
                                   width: maxW,
@@ -1733,7 +1777,16 @@ class _FullscreenImageOverlay extends StatelessWidget {
                   child: CachedNetworkImage(
                     imageUrl: imageUrl,
                     fit: BoxFit.contain,
-                    fadeInDuration: const Duration(milliseconds: 200),
+                    // ── Встроенная анимация fade-in работает по умолчанию
+                    placeholder: (context, url) => Container(
+                      color: AppColors.getSurfaceMutedColor(context),
+                      child: Center(
+                        child: CupertinoActivityIndicator(
+                          radius: 16,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      ),
+                    ),
                     errorWidget: (context, url, error) {
                       return Container(
                         color: AppColors.getSurfaceMutedColor(context),
