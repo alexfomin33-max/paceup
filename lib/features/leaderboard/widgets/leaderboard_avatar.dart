@@ -3,7 +3,9 @@
 // Виджет аватара лидера с рамкой и значком места
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/transparent_route.dart';
@@ -84,39 +86,34 @@ class LeaderboardAvatar extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.all(2),
                     child: ClipOval(
-                      child: Image.network(
-                        avatarUrl,
+                      child: CachedNetworkImage(
+                        imageUrl: avatarUrl,
                         width:
                             avatarSize -
                             4, // учитываем промежуточную обводку (2px с каждой стороны)
                         height: avatarSize - 4,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: avatarSize - 4,
-                            height: avatarSize - 4,
-                            color: AppColors.getBorderColor(context),
-                            child: Icon(
-                              Icons.person,
-                              size: (avatarSize - 4) * 0.6,
+                        placeholder: (context, url) => Container(
+                          width: avatarSize - 4,
+                          height: avatarSize - 4,
+                          color: AppColors.getBackgroundColor(context),
+                          child: Center(
+                            child: CupertinoActivityIndicator(
+                              radius: (avatarSize - 4) * 0.15,
+                              color: AppColors.getIconSecondaryColor(context),
                             ),
-                          );
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            width: avatarSize - 4,
-                            height: avatarSize - 4,
-                            color: AppColors.getBorderColor(context),
-                            child: Center(
-                              child: SizedBox(
-                                width: (avatarSize - 4) * 0.4,
-                                height: (avatarSize - 4) * 0.4,
-                                child: const CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ),
-                          );
-                        },
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          width: avatarSize - 4,
+                          height: avatarSize - 4,
+                          color: AppColors.getBackgroundColor(context),
+                          child: Icon(
+                            CupertinoIcons.person_fill,
+                            size: (avatarSize - 4) * 0.6,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
+                        ),
                       ),
                     ),
                   ),

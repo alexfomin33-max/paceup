@@ -476,7 +476,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
       return InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.getBackgroundColor(context),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(child: CupertinoActivityIndicator(radius: 10)),
         ),
       );
     }
@@ -1273,12 +1273,9 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                     child: SizedBox(
                                       width: 20,
                                       height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              AppColors.surface,
-                                            ),
+                                      child: CupertinoActivityIndicator(
+                                        radius: 10,
+                                        color: AppColors.surface,
                                       ),
                                     ),
                                   )

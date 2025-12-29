@@ -556,7 +556,7 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
               ),
             ],
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(child: CupertinoActivityIndicator(radius: 10)),
         ),
       );
     }

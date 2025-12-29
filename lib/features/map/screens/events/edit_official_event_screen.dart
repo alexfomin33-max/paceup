@@ -692,7 +692,7 @@ class _EditOfficialEventScreenState
             ),
           ],
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const Center(child: CupertinoActivityIndicator(radius: 10)),
       );
     }
 

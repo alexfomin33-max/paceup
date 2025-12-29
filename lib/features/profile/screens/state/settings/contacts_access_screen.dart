@@ -141,7 +141,8 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
         body: SafeArea(
           child: _isLoading
               ? const Center(
-                  child: CircularProgressIndicator(
+                  child: CupertinoActivityIndicator(
+                    radius: 10,
                     color: AppColors.brandPrimary,
                   ),
                 )

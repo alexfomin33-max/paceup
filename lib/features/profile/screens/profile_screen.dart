@@ -306,7 +306,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           showBack: false,
           showBottomDivider: true,
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const Center(child: CupertinoActivityIndicator(radius: 10)),
       ),
       error: (err, stack) => Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
@@ -663,14 +663,18 @@ class _ProfileFlexibleSpace extends StatelessWidget {
                       width: double.infinity,
                       height: coverHeight,
                       fit: BoxFit.cover,
-                      fadeInDuration: const Duration(milliseconds: 200),
-                      errorWidget: (context, url, error) => Image.asset(
-                        'assets/fon.jpg',
+                      placeholder: (context, url) => Container(
                         width: double.infinity,
                         height: coverHeight,
-                        fit: BoxFit.cover,
+                        color: AppColors.getBackgroundColor(context),
+                        child: Center(
+                          child: CupertinoActivityIndicator(
+                            radius: 10,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
+                        ),
                       ),
-                      placeholder: (context, url) => Image.asset(
+                      errorWidget: (context, url, error) => Image.asset(
                         'assets/fon.jpg',
                         width: double.infinity,
                         height: coverHeight,

@@ -78,7 +78,7 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(20),
-          child: CircularProgressIndicator(),
+          child: CupertinoActivityIndicator(radius: 10),
         ),
       );
     }
@@ -140,7 +140,7 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(16),
-                  child: CircularProgressIndicator(),
+                  child: CupertinoActivityIndicator(radius: 10),
                 ),
               );
             }

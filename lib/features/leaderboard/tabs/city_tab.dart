@@ -6,6 +6,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/api_service.dart';
@@ -398,7 +399,7 @@ class _CityTabState extends ConsumerState<CityTab>
             },
             loading: () => const Padding(
               padding: EdgeInsets.all(32.0),
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(child: CupertinoActivityIndicator(radius: 10)),
             ),
             error: (error, stack) => Padding(
               padding: const EdgeInsets.all(32.0),

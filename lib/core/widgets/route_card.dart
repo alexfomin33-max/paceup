@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart' as flutter_map;
@@ -59,7 +60,7 @@ class _RouteCardState extends State<RouteCard> {
             width: double.infinity,
             height: widget.height,
             child: const Center(
-              child: CircularProgressIndicator(color: AppColors.brandPrimary),
+              child: CupertinoActivityIndicator(radius: 10, color: AppColors.brandPrimary),
             ),
           );
         }

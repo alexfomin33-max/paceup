@@ -1,8 +1,10 @@
 // lib/widgets/optimized_avatar.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../providers/avatar_version_provider.dart';
+import '../../core/theme/app_theme.dart';
 
 /// Универсальный аватар с fallback, gaplessPlayback и опциональным fade-in.
 /// Поддерживает сеть (url) и ассет (asset).
@@ -134,8 +136,18 @@ class OptimizedAvatar extends ConsumerWidget {
         fit: fit,
         memCacheWidth: w,
         maxWidthDiskCache: w,
-        // Плавный placeholder (прозрачный для gaplessPlayback эффекта)
-        placeholder: (context, url) => const SizedBox.shrink(),
+        // Плавный placeholder с индикатором загрузки
+        placeholder: (context, url) => Container(
+          width: size,
+          height: size,
+          color: AppColors.getBackgroundColor(context),
+          child: Center(
+            child: CupertinoActivityIndicator(
+              radius: size * 0.15,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+          ),
+        ),
         // Fallback на дефолтную аватарку при ошибке
         errorWidget: (context, url, error) =>
             Image.asset(fallbackAsset, width: size, height: size, fit: fit),

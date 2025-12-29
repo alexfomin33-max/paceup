@@ -334,9 +334,9 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      child: CupertinoActivityIndicator(
+                        radius: 10,
+                        color: Colors.white,
                       ),
                     )
                   : Text(

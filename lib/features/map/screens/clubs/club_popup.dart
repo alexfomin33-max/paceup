@@ -1,5 +1,6 @@
 // lib/screens/map/clubs/club_popup.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/transparent_route.dart';
@@ -285,8 +286,8 @@ class _ClubRow extends StatelessWidget {
                           // ────────────────────────────────────────────────────────────────
                           color: AppColors.getBackgroundColor(context),
                           child: Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                            child: CupertinoActivityIndicator(
+                              radius: 10,
                               // ────────────────────────────────────────────────────────────────
                               // 🌓 ТЕМНАЯ ТЕМА: адаптивный цвет индикатора загрузки
                               // ────────────────────────────────────────────────────────────────

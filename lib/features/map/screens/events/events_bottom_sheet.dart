@@ -525,7 +525,7 @@ class _EventLogoImage extends StatelessWidget {
       placeholder: (context, imageUrl) => Container(
         color: AppColors.skeletonBase,
         alignment: Alignment.center,
-        child: const CircularProgressIndicator(strokeWidth: 2),
+        child: const CupertinoActivityIndicator(radius: 10),
       ),
     );
   }

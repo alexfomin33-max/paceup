@@ -445,7 +445,7 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
               loading: () => const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(child: CupertinoActivityIndicator(radius: 10)),
                 ),
               ),
               error: (error, stack) => SliverToBoxAdapter(
@@ -503,11 +503,9 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                           ? const SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.surface,
-                                ),
+                              child: CupertinoActivityIndicator(
+                                radius: 10,
+                                color: AppColors.surface,
                               ),
                             )
                           : Text(
@@ -592,7 +590,7 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                       },
                       loading: () => const Padding(
                         padding: EdgeInsets.all(16),
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(child: CupertinoActivityIndicator(radius: 10)),
                       ),
                       error: (error, stackTrace) {
                         if (kDebugMode) {
@@ -680,22 +678,23 @@ class _BackgroundImage extends StatelessWidget {
         width: double.infinity,
         height: calculatedHeight,
         fit: BoxFit.cover,
-        fadeInDuration: const Duration(milliseconds: 300),
-        fadeOutDuration: const Duration(milliseconds: 100),
         placeholder: (context, url) => Container(
           width: double.infinity,
           height: calculatedHeight,
-          color: AppColors.getSurfaceColor(context),
-          child: const Center(
-            child: CircularProgressIndicator(strokeWidth: 2),
+          color: AppColors.getBackgroundColor(context),
+          child: Center(
+            child: CupertinoActivityIndicator(
+              radius: 10,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
           ),
         ),
         errorWidget: (context, url, error) => Container(
           width: double.infinity,
           height: calculatedHeight,
-          color: AppColors.getSurfaceColor(context),
+          color: AppColors.getBackgroundColor(context),
           child: Icon(
-            Icons.image,
+            CupertinoIcons.photo,
             size: 48,
             color: AppColors.getIconSecondaryColor(context),
           ),
@@ -707,9 +706,12 @@ class _BackgroundImage extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: calculatedHeight,
-      color: AppColors.getSurfaceColor(context),
-      child: const Center(
-        child: CircularProgressIndicator(strokeWidth: 2),
+      color: AppColors.getBackgroundColor(context),
+      child: Center(
+        child: CupertinoActivityIndicator(
+          radius: 10,
+          color: AppColors.getIconSecondaryColor(context),
+        ),
       ),
     );
   }
@@ -730,22 +732,23 @@ class _HeaderLogo extends StatelessWidget {
         width: 90,
         height: 90,
         fit: BoxFit.cover,
-        fadeInDuration: const Duration(milliseconds: 300),
-        fadeOutDuration: const Duration(milliseconds: 100),
         placeholder: (context, url) => Container(
           width: 90,
           height: 90,
-          color: AppColors.getSurfaceColor(context),
-          child: const Center(
-            child: CircularProgressIndicator(strokeWidth: 2),
+          color: AppColors.getBackgroundColor(context),
+          child: Center(
+            child: CupertinoActivityIndicator(
+              radius: 10,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
           ),
         ),
         errorWidget: (context, url, error) => Container(
           width: 90,
           height: 90,
-          color: AppColors.getSurfaceColor(context),
+          color: AppColors.getBackgroundColor(context),
           child: Icon(
-            Icons.image,
+            CupertinoIcons.photo,
             size: 32,
             color: AppColors.getIconSecondaryColor(context),
           ),
@@ -757,9 +760,12 @@ class _HeaderLogo extends StatelessWidget {
     return Container(
       width: 90,
       height: 90,
-      color: AppColors.getSurfaceColor(context),
-      child: const Center(
-        child: CircularProgressIndicator(strokeWidth: 2),
+      color: AppColors.getBackgroundColor(context),
+      child: Center(
+        child: CupertinoActivityIndicator(
+          radius: 10,
+          color: AppColors.getIconSecondaryColor(context),
+        ),
       ),
     );
   }
@@ -941,16 +947,22 @@ class _FriendRow extends StatelessWidget {
               placeholder: (context, url) => Container(
                 width: 32,
                 height: 32,
-                color: AppColors.skeletonBase,
+                color: AppColors.getBackgroundColor(context),
+                child: Center(
+                  child: CupertinoActivityIndicator(
+                    radius: 8,
+                    color: AppColors.getIconSecondaryColor(context),
+                  ),
+                ),
               ),
               errorWidget: (context, url, error) => Container(
                 width: 32,
                 height: 32,
-                color: AppColors.skeletonBase,
-                child: const Icon(
+                color: AppColors.getBackgroundColor(context),
+                child: Icon(
                   CupertinoIcons.person_fill,
                   size: 20,
-                  color: AppColors.textSecondary,
+                  color: AppColors.getIconSecondaryColor(context),
                 ),
               ),
             ),

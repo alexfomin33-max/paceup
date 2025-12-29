@@ -207,7 +207,7 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
       loading: () => const Center(
         child: Padding(
           padding: EdgeInsets.all(20),
-          child: CircularProgressIndicator(color: AppColors.brandPrimary),
+          child: CupertinoActivityIndicator(radius: 10, color: AppColors.brandPrimary),
         ),
       ),
       error: (error, stack) => Center(
@@ -1160,15 +1160,20 @@ class _WorkoutRow extends ConsumerWidget {
       memCacheWidth: widthPx,
       maxWidthDiskCache: widthPx,
       placeholder: (context, url) => Container(
-        color: AppColors.getSurfaceColor(context),
-        child: const Center(child: CupertinoActivityIndicator()),
+        color: AppColors.getBackgroundColor(context),
+        child: Center(
+          child: CupertinoActivityIndicator(
+            radius: 10,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
       ),
       errorWidget: (context, url, error) => Container(
-        color: AppColors.getSurfaceColor(context),
-        child: const Icon(
-          Icons.map_outlined,
-          color: AppColors.brandPrimary,
-          size: 24,
+        color: AppColors.getBackgroundColor(context),
+        child: Icon(
+          CupertinoIcons.map,
+          color: AppColors.getIconSecondaryColor(context),
+          size: 32,
         ),
       ),
     );
@@ -1192,8 +1197,13 @@ class _WorkoutRow extends ConsumerWidget {
         width: double.infinity,
         height: double.infinity,
         placeholder: (context, url) => Container(
-          color: AppColors.getSurfaceColor(context),
-          child: const Center(child: CupertinoActivityIndicator()),
+          color: AppColors.getBackgroundColor(context),
+          child: Center(
+            child: CupertinoActivityIndicator(
+              radius: 10,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+          ),
         ),
         errorWidget: (context, url, error) => _buildPlaceholderImage(item.kind),
       );

@@ -400,7 +400,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
       return InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.getBackgroundColor(context),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(child: CupertinoActivityIndicator(radius: 10)),
         ),
       );
     }

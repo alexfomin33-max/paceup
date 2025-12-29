@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -48,7 +49,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
 
     // ──────────────── Состояние загрузки ────────────────
     if (photosState.isLoading && photosState.photos.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CupertinoActivityIndicator(radius: 10));
     }
 
     // ──────────────── Состояние ошибки ────────────────
@@ -186,16 +187,19 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                           memCacheWidth: cacheWidth,
                           filterQuality: FilterQuality.low,
                           placeholder: (context, url) => Container(
-                            color: AppColors.getDividerColor(context),
-                            child: const Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                            color: AppColors.getBackgroundColor(context),
+                            child: Center(
+                              child: CupertinoActivityIndicator(
+                                radius: 10,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
                             ),
                           ),
                           errorWidget: (context, url, error) => Container(
-                            color: AppColors.getDividerColor(context),
+                            color: AppColors.getBackgroundColor(context),
                             child: Icon(
-                              Icons.broken_image,
-                              color: AppColors.getTextSecondaryColor(context),
+                              CupertinoIcons.photo,
+                              color: AppColors.getIconSecondaryColor(context),
                               size: 32,
                             ),
                           ),
@@ -379,15 +383,22 @@ class _ZoomableImageState extends State<_ZoomableImage> {
         imageUrl: widget.photoUrl,
         fit: BoxFit.contain,
         placeholder: (context, url) => Container(
-          color: AppColors.textPrimary,
-          child: const Center(
-            child: CircularProgressIndicator(color: AppColors.surface),
+          color: AppColors.getBackgroundColor(context),
+          child: Center(
+            child: CupertinoActivityIndicator(
+              radius: 10,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
           ),
         ),
         errorWidget: (context, url, error) => Container(
-          color: AppColors.textPrimary,
-          child: const Center(
-            child: Icon(Icons.broken_image, color: AppColors.surface, size: 48),
+          color: AppColors.getBackgroundColor(context),
+          child: Center(
+            child: Icon(
+              CupertinoIcons.photo,
+              color: AppColors.getIconSecondaryColor(context),
+              size: 48,
+            ),
           ),
         ),
       ),

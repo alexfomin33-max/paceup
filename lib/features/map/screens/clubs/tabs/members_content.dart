@@ -207,7 +207,7 @@ class CoffeeRunVldMembersContentState
             builder: (context) => Container(
               color: AppColors.getSurfaceColor(context),
               padding: const EdgeInsets.all(16),
-              child: const Center(child: CircularProgressIndicator()),
+              child: const Center(child: CupertinoActivityIndicator(radius: 10)),
             ),
           );
         }
@@ -347,7 +347,7 @@ class _MemberRow extends StatelessWidget {
                     ? const SizedBox(
                         width: 24,
                         height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CupertinoActivityIndicator(radius: 10),
                       )
                     : Icon(
                         isSubscribed

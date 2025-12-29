@@ -158,7 +158,7 @@ class ActiveContent extends ConsumerWidget {
             loading: () => const Center(
               child: Padding(
                 padding: EdgeInsets.all(32),
-                child: CircularProgressIndicator(),
+                child: CupertinoActivityIndicator(radius: 10),
               ),
             ),
             error: (error, stack) => Column(
@@ -633,18 +633,21 @@ class _RectImage extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.skeletonBase,
+                color: AppColors.getBackgroundColor(context),
                 borderRadius: BorderRadius.circular(AppRadius.xxl),
               ),
-              child: const Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
+              child: Center(
+                child: CupertinoActivityIndicator(
+                  radius: 10,
+                  color: AppColors.getIconSecondaryColor(context),
+                ),
               ),
             ),
             errorWidget: (context, url, error) => Container(
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.skeletonBase,
+                color: AppColors.getBackgroundColor(context),
                 borderRadius: BorderRadius.circular(AppRadius.xxl),
               ),
               child: Icon(

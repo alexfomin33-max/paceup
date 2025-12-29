@@ -941,7 +941,7 @@ class _ActivityDescriptionPageState
                             width: double.infinity,
                             child: _isLoadingCharts
                                 ? const Center(
-                                    child: CircularProgressIndicator(),
+                                    child: CupertinoActivityIndicator(radius: 10),
                                   )
                                 : _SimpleLineChart(
                                     mode: _chartTab,

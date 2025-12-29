@@ -1,4 +1,5 @@
 // lib/screens/tabs/available_content.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -109,7 +110,7 @@ class AvailableContent extends ConsumerWidget {
             loading: () => const Center(
               child: Padding(
                 padding: EdgeInsets.all(32),
-                child: CircularProgressIndicator(),
+                child: CupertinoActivityIndicator(radius: 10),
               ),
             ),
             error: (error, stack) {
@@ -282,14 +283,21 @@ class AvailableTaskCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       width: double.infinity,
                       placeholder: (context, url) => Container(
-                        color: AppColors.getBorderColor(context),
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                        color: AppColors.getBackgroundColor(context),
+                        child: Center(
+                          child: CupertinoActivityIndicator(
+                            radius: 10,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
                         ),
                       ),
                       errorWidget: (context, url, error) => Container(
-                        color: AppColors.getBorderColor(context),
-                        child: const Icon(Icons.image_not_supported),
+                        color: AppColors.getBackgroundColor(context),
+                        child: Icon(
+                          CupertinoIcons.photo,
+                          size: 28,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
                       ),
                     )
                   : Container(

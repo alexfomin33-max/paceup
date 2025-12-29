@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import 'auth_shell.dart';
@@ -132,11 +133,9 @@ class _AddAccScreenState extends ConsumerState<AddAccScreen> {
                           ? const SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.textPrimary,
-                                ),
+                              child: CupertinoActivityIndicator(
+                                radius: 10,
+                                color: AppColors.textPrimary,
                               ),
                             )
                           : const Text(

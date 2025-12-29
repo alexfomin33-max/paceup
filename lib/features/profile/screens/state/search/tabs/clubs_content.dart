@@ -116,7 +116,7 @@ class _SearchClubsContentState extends ConsumerState<SearchClubsContent> {
             loading: () => const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(child: CupertinoActivityIndicator(radius: 10)),
               ),
             ),
             error: (error, stack) {
@@ -372,7 +372,7 @@ class _ClubLogoImage extends StatelessWidget {
       placeholder: (context, imageUrl) => Container(
         color: AppColors.skeletonBase,
         alignment: Alignment.center,
-        child: const CircularProgressIndicator(strokeWidth: 2),
+        child: const CupertinoActivityIndicator(radius: 10),
       ),
     );
   }

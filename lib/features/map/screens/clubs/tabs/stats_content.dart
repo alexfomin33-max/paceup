@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_theme.dart';
@@ -273,7 +274,7 @@ class _CoffeeRunVldStatsContentState
                     // Индикатор загрузки в конце списка
                     return const Padding(
                       padding: EdgeInsets.all(20.0),
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(child: CupertinoActivityIndicator(radius: 10)),
                     );
                   }
 
@@ -400,7 +401,7 @@ class _CoffeeRunVldStatsContentState
                   child: const Center(
                     child: Padding(
                       padding: EdgeInsets.all(20.0),
-                      child: CircularProgressIndicator(),
+                      child: CupertinoActivityIndicator(radius: 10),
                     ),
                   ),
                 ),

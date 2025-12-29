@@ -495,6 +495,15 @@ class _EditingBikeContentState extends ConsumerState<EditingBikeContent>
                                       maxWidthDiskCache: cacheWidth,
                                       filterQuality: FilterQuality.high,
                                       // НЕ передаем cacheManager - используется DefaultCacheManager
+                                      placeholder: (context, url) => Container(
+                                        color: AppColors.getBackgroundColor(context),
+                                        child: Center(
+                                          child: CupertinoActivityIndicator(
+                                            radius: 10,
+                                            color: AppColors.getIconSecondaryColor(context),
+                                          ),
+                                        ),
+                                      ),
                                       errorWidget: (context, url, error) {
                                         // При ошибке загрузки показываем пустое место,
                                         // чтобы оставалось только фоновое изображение

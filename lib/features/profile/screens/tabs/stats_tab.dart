@@ -449,7 +449,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(32.0),
-          child: CircularProgressIndicator(),
+          child: CupertinoActivityIndicator(radius: 10),
         ),
       );
     }
@@ -579,7 +579,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         if (_isLoading)
           const Padding(
             padding: EdgeInsets.all(32.0),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CupertinoActivityIndicator(radius: 10)),
           )
         else
           Padding(
@@ -834,7 +834,7 @@ class _YearChartCardState extends State<_YearChartCard> {
                           child: SizedBox(
                             width: 14,
                             height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CupertinoActivityIndicator(radius: 10),
                           ),
                         ),
                       )

@@ -415,7 +415,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       return InteractiveBackSwipe(
         child: Scaffold(
           backgroundColor: AppColors.getBackgroundColor(context),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(child: CupertinoActivityIndicator(radius: 10)),
         ),
       );
     }
@@ -894,11 +894,9 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        AppColors.surface,
-                                      ),
+                                    child: CupertinoActivityIndicator(
+                                      radius: 10,
+                                      color: AppColors.surface,
                                     ),
                                   )
                                 : Text(
@@ -1524,7 +1522,7 @@ class _EventMembersSliverState extends ConsumerState<_EventMembersSliver> {
                 ),
               ),
             ),
-            child: const Center(child: CircularProgressIndicator()),
+            child: const Center(child: CupertinoActivityIndicator(radius: 10)),
           ),
         ),
       );
@@ -1579,7 +1577,7 @@ class _EventMembersSliverState extends ConsumerState<_EventMembersSliver> {
             builder: (context) => Container(
               color: AppColors.getSurfaceColor(context),
               padding: const EdgeInsets.all(16),
-              child: const Center(child: CircularProgressIndicator()),
+              child: const Center(child: CupertinoActivityIndicator(radius: 10)),
             ),
           );
         }
@@ -1829,7 +1827,7 @@ class _EventMembersContentState extends ConsumerState<EventMembersContent> {
           // Индикатор загрузки в конце списка
           return const Padding(
             padding: EdgeInsets.all(16),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CupertinoActivityIndicator(radius: 10)),
           );
         }
 
@@ -1957,7 +1955,7 @@ class _MemberRow extends StatelessWidget {
                   ? const SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CupertinoActivityIndicator(radius: 10),
                     )
                   : Icon(
                       isSubscribed

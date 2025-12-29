@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import 'notification_settings_provider.dart';
@@ -232,7 +233,7 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
                           ),
                           loading: () => const Padding(
                             padding: EdgeInsets.all(20),
-                            child: CircularProgressIndicator(),
+                            child: CupertinoActivityIndicator(radius: 10),
                           ),
                           error: (error, stack) => const Padding(
                             padding: EdgeInsets.all(20),

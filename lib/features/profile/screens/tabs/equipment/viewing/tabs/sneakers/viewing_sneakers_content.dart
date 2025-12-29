@@ -909,6 +909,17 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
                                     maxWidthDiskCache: cacheWidth,
                                     filterQuality: FilterQuality.high,
                                     // НЕ передаем cacheManager - используется DefaultCacheManager
+                                    placeholder: (context, url) => Container(
+                                      width: 220,
+                                      height: 150,
+                                      color: AppColors.getBackgroundColor(context),
+                                      child: Center(
+                                        child: CupertinoActivityIndicator(
+                                          radius: 10,
+                                          color: AppColors.getIconSecondaryColor(context),
+                                        ),
+                                      ),
+                                    ),
                                     errorWidget: (context, url, error) {
                                       // ────────────────────────────────────────────────────────────────
                                       // 🖼️ ДЕФОЛТНОЕ ИЗОБРАЖЕНИЕ: при ошибке загрузки показываем asset

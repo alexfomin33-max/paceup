@@ -2,6 +2,7 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../models/market_models.dart';
 import '../tradechat_slots_screen.dart';
@@ -280,22 +281,19 @@ class _Thumb extends StatelessWidget {
                 },
               )
             : _isValidNetworkUrl
-            ? Image.network(
-                imageUrl,
+            ? CachedNetworkImage(
+                imageUrl: imageUrl,
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: AppColors.getBackgroundColor(context),
-                    child: Center(
-                      child: CupertinoActivityIndicator(
-                        radius: 10,
-                        color: AppColors.getIconSecondaryColor(context),
-                      ),
+                placeholder: (context, url) => Container(
+                  color: AppColors.getBackgroundColor(context),
+                  child: Center(
+                    child: CupertinoActivityIndicator(
+                      radius: 10,
+                      color: AppColors.getIconSecondaryColor(context),
                     ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) {
+                  ),
+                ),
+                errorWidget: (context, url, error) {
                   debugPrint(
                     '❌ Ошибка загрузки изображения: $imageUrl - $error',
                   );

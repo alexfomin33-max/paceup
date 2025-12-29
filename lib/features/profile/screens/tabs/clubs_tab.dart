@@ -133,7 +133,7 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
           loading: () => const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(24),
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(child: CupertinoActivityIndicator(radius: 10)),
             ),
           ),
           error: (err, stack) => SliverToBoxAdapter(
@@ -363,22 +363,25 @@ class _ClubLogoImage extends StatelessWidget {
       width: 100,
       height: 100,
       fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: targetW,
       maxWidthDiskCache: targetW,
-      errorWidget: (context, imageUrl, error) => Container(
-        color: AppColors.skeletonBase,
-        alignment: Alignment.center,
-        child: const Icon(
-          CupertinoIcons.photo,
-          size: 24,
-          color: AppColors.textSecondary,
+      placeholder: (context, imageUrl) => Container(
+        color: AppColors.getBackgroundColor(context),
+        child: Center(
+          child: CupertinoActivityIndicator(
+            radius: 10,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
         ),
       ),
-      placeholder: (context, imageUrl) => Container(
-        color: AppColors.skeletonBase,
+      errorWidget: (context, imageUrl, error) => Container(
+        color: AppColors.getBackgroundColor(context),
         alignment: Alignment.center,
-        child: const CircularProgressIndicator(strokeWidth: 2),
+        child: Icon(
+          CupertinoIcons.photo,
+          size: 24,
+          color: AppColors.getIconSecondaryColor(context),
+        ),
       ),
     );
   }

@@ -834,7 +834,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
             ),
           ],
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const Center(child: CupertinoActivityIndicator(radius: 10)),
       );
     }
 
@@ -1623,12 +1623,9 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                                     child: SizedBox(
                                       width: 20,
                                       height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              AppColors.surface,
-                                            ),
+                                      child: CupertinoActivityIndicator(
+                                        radius: 10,
+                                        color: AppColors.surface,
                                       ),
                                     ),
                                   )

@@ -134,7 +134,8 @@ class _PushNotificationsScreenState
         body: SafeArea(
           child: _isLoading
               ? const Center(
-                  child: CircularProgressIndicator(
+                  child: CupertinoActivityIndicator(
+                    radius: 10,
                     color: AppColors.brandPrimary,
                   ),
                 )

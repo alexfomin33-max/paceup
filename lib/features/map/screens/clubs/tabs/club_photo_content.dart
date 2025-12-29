@@ -491,11 +491,9 @@ class _AddPhotoPlaceholder extends StatelessWidget {
                 ? SizedBox(
                     width: 24,
                     height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.getIconSecondaryColor(context),
-                      ),
+                    child: CupertinoActivityIndicator(
+                      radius: 10,
+                      color: AppColors.getIconSecondaryColor(context),
                     ),
                   )
                 : Icon(
@@ -580,11 +578,9 @@ class _PhotoItem extends StatelessWidget {
                     height: cellSize,
                     color: AppColors.getBorderColor(context),
                     child: Center(
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.getIconSecondaryColor(context),
-                        ),
+                      child: CupertinoActivityIndicator(
+                        radius: 10,
+                        color: AppColors.getIconSecondaryColor(context),
                       ),
                     ),
                   ),
@@ -799,11 +795,9 @@ class _ZoomableImageState extends State<_ZoomableImage> {
           builder: (context) => Container(
             color: AppColors.getBorderColor(context),
             child: Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  AppColors.getIconSecondaryColor(context),
-                ),
+              child: CupertinoActivityIndicator(
+                radius: 10,
+                color: AppColors.getIconSecondaryColor(context),
               ),
             ),
           ),

@@ -3,7 +3,9 @@
 // Виджет строки таблицы лидерборда
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/transparent_route.dart';
@@ -66,34 +68,32 @@ class LeaderboardRow extends StatelessWidget {
           GestureDetector(
             onTap: userId != null ? () => _navigateToProfile(context) : null,
             child: ClipOval(
-              child: Image.network(
-                avatarUrl,
+              child: CachedNetworkImage(
+                imageUrl: avatarUrl,
                 width: 32,
                 height: 32,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 32,
-                    height: 32,
-                    color: AppColors.getBorderColor(context),
-                    child: const Icon(Icons.person, size: 20),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    width: 32,
-                    height: 32,
-                    color: AppColors.getBorderColor(context),
-                    child: const Center(
-                      child: SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
+                placeholder: (context, url) => Container(
+                  width: 32,
+                  height: 32,
+                  color: AppColors.getBackgroundColor(context),
+                  child: Center(
+                    child: CupertinoActivityIndicator(
+                      radius: 8,
+                      color: AppColors.getIconSecondaryColor(context),
                     ),
-                  );
-                },
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  width: 32,
+                  height: 32,
+                  color: AppColors.getBackgroundColor(context),
+                  child: Icon(
+                    CupertinoIcons.person_fill,
+                    size: 20,
+                    color: AppColors.getIconSecondaryColor(context),
+                  ),
+                ),
               ),
             ),
           ),

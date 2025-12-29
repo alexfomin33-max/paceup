@@ -652,7 +652,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
             ),
           ],
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const Center(child: CupertinoActivityIndicator(radius: 10)),
       );
     }
 
