@@ -126,6 +126,7 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
 
         return CustomScrollView(
           physics: const BouncingScrollPhysics(),
+          primary: false, // Отключаем автоматическое использование PrimaryScrollController
           slivers: [
             const SliverToBoxAdapter(child: SizedBox(height: 14)),
 
@@ -1174,17 +1175,17 @@ class _WorkoutRow extends ConsumerWidget {
   }
 
   /// Строит изображение для активности согласно логике приоритетов:
-  /// 1. Если есть валидный трек И есть изображения → показываем трек
+  /// 1. Если есть валидный трек → показываем карту MapBox (независимо от наличия изображений)
   /// 2. Если нет трека, но есть изображения → показываем первое изображение
   /// 3. Если нет трека И нет изображений → показываем заглушку
   Widget _buildActivityImage(BuildContext context, _Workout item) {
-    // 1. Если есть валидный трек И есть изображения → показываем трек
-    if (item.hasValidTrack && item.firstImageUrl != null) {
+    // 1. Если есть валидный трек → показываем карту MapBox
+    if (item.hasValidTrack) {
       return _buildStaticMiniMap(context, item.points);
     }
 
     // 2. Если нет трека, но есть изображения → показываем первое изображение
-    if (!item.hasValidTrack && item.firstImageUrl != null) {
+    if (item.firstImageUrl != null) {
       return CachedNetworkImage(
         imageUrl: item.firstImageUrl!,
         fit: BoxFit.cover,
@@ -1199,7 +1200,6 @@ class _WorkoutRow extends ConsumerWidget {
     }
 
     // 3. Если нет трека И нет изображений → показываем заглушку
-    // Также показываем заглушку, если есть трек, но нет изображений
     return _buildPlaceholderImage(item.kind);
   }
 
