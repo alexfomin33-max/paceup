@@ -301,6 +301,11 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         _MetricRowData(Icons.timer_outlined, 'Общее время', metrics.totalTime),
         _MetricRowData(Icons.place_outlined, 'Расстояние', metrics.distance),
         _MetricRowData(
+          Icons.favorite_border,
+          'Средний пульс',
+          metrics.avgHeartRate ?? '—',
+        ),
+        _MetricRowData(
           Icons.speed_outlined,
           'Средняя скорость',
           metrics.avgSpeed ?? '—',
