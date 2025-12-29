@@ -1114,9 +1114,19 @@ class _HeaderLogo extends StatelessWidget {
       width: 90,
       height: 90,
       fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
+      placeholder: (context, url) => Container(
+        width: 90,
+        height: 90,
+        color: AppColors.getBorderColor(context),
+        child: Center(
+          child: CupertinoActivityIndicator(
+            radius: 10,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
+      ),
       errorWidget: (context, imageUrl, error) => Builder(
         builder: (context) => Container(
           width: 90,
@@ -1151,11 +1161,21 @@ class _BackgroundImage extends StatelessWidget {
       width: double.infinity,
       height: calculatedHeight,
       fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: targetW,
       memCacheHeight: targetH,
       maxWidthDiskCache: targetW,
       maxHeightDiskCache: targetH,
+      placeholder: (context, url) => Container(
+        width: double.infinity,
+        height: calculatedHeight,
+        color: AppColors.getBorderColor(context),
+        child: Center(
+          child: CupertinoActivityIndicator(
+            radius: 12,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
+      ),
       errorWidget: (context, imageUrl, error) => Builder(
         builder: (context) => Container(
           width: double.infinity,
@@ -1258,6 +1278,17 @@ class _MemberAvatars extends StatelessWidget {
                         width: avatarSize,
                         height: avatarSize,
                         fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          width: avatarSize,
+                          height: avatarSize,
+                          color: AppColors.getBorderColor(context),
+                          child: Center(
+                            child: CupertinoActivityIndicator(
+                              radius: avatarSize * 0.2,
+                              color: AppColors.getIconSecondaryColor(context),
+                            ),
+                          ),
+                        ),
                         errorWidget: (context, url, error) => Container(
                           width: avatarSize,
                           height: avatarSize,

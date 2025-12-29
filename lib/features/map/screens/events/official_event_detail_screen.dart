@@ -511,8 +511,18 @@ class _OfficialEventDetailScreenState
                                     ? CachedNetworkImage(
                                         imageUrl: backgroundUrl,
                                         fit: BoxFit.cover,
-                                        fadeInDuration: const Duration(
-                                          milliseconds: 120,
+                                        placeholder: (context, url) => Container(
+                                          color: AppColors.getBorderColor(
+                                            context,
+                                          ),
+                                          child: Center(
+                                            child: CupertinoActivityIndicator(
+                                              radius: 12,
+                                              color: AppColors.getIconSecondaryColor(
+                                                context,
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                         errorWidget: (context, url, error) =>
                                             Builder(

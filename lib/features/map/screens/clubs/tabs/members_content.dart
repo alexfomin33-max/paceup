@@ -383,9 +383,19 @@ class _Avatar40 extends StatelessWidget {
       width: 40,
       height: 40,
       fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
+      placeholder: (context, url) => Container(
+        width: 40,
+        height: 40,
+        color: AppColors.getBorderColor(context),
+        child: Center(
+          child: CupertinoActivityIndicator(
+            radius: 8,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
+      ),
       errorWidget: (context, imageUrl, error) => Builder(
         builder: (context) => Container(
           width: 40,

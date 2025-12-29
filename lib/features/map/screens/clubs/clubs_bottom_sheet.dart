@@ -430,7 +430,6 @@ class _ClubLogoImage extends StatelessWidget {
       width: 100,
       height: 100,
       fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: targetW,
       maxWidthDiskCache: targetW,
       errorWidget: (context, imageUrl, error) => Container(

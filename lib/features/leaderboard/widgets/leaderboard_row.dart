@@ -73,6 +73,7 @@ class LeaderboardRow extends StatelessWidget {
                 width: 32,
                 height: 32,
                 fit: BoxFit.cover,
+                // ── Встроенная анимация fade-in работает по умолчанию
                 placeholder: (context, url) => Container(
                   width: 32,
                   height: 32,

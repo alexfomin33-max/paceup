@@ -430,19 +430,22 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
                   placeholder: (context, url) => Container(
                     width: 80,
                     height: 80,
-                    color: AppColors.getSkeletonBaseColor(context),
+                    color: AppColors.getBackgroundColor(context),
                     alignment: Alignment.center,
-                    child: const CupertinoActivityIndicator(),
+                    child: CupertinoActivityIndicator(
+                      radius: 10,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
                   ),
                   errorWidget: (context, url, error) => Container(
                     width: 80,
                     height: 80,
-                    color: AppColors.getSkeletonBaseColor(context),
+                    color: AppColors.getBackgroundColor(context),
                     alignment: Alignment.center,
                     child: Icon(
-                      CupertinoIcons.person,
+                      CupertinoIcons.person_fill,
                       size: 32,
-                      color: AppColors.getTextSecondaryColor(context),
+                      color: AppColors.getIconSecondaryColor(context),
                     ),
                   ),
                 ),

@@ -1463,9 +1463,19 @@ class _MediaTile extends StatelessWidget {
                           width: width,
                           height: height,
                           fit: BoxFit.cover,
-                          fadeInDuration: const Duration(milliseconds: 120),
                           memCacheWidth: side,
                           maxWidthDiskCache: side,
+                          placeholder: (context, url) => Container(
+                            width: width,
+                            height: height,
+                            color: AppColors.getBackgroundColor(context),
+                            child: Center(
+                              child: CupertinoActivityIndicator(
+                                radius: 10,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
+                            ),
+                          ),
                           errorWidget: (context, imageUrl, error) => Container(
                             width: width,
                             height: height,
@@ -1491,9 +1501,19 @@ class _MediaTile extends StatelessWidget {
                           width: width,
                           height: height,
                           fit: BoxFit.cover,
-                          fadeInDuration: const Duration(milliseconds: 120),
                           memCacheWidth: side,
                           maxWidthDiskCache: side,
+                          placeholder: (context, url) => Container(
+                            width: width,
+                            height: height,
+                            color: AppColors.getBackgroundColor(context),
+                            child: Center(
+                              child: CupertinoActivityIndicator(
+                                radius: 10,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
+                            ),
+                          ),
                           errorWidget: (context, imageUrl, error) => Container(
                             width: width,
                             height: height,

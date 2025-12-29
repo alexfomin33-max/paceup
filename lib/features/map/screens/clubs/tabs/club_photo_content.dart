@@ -559,7 +559,6 @@ class _PhotoItem extends StatelessWidget {
                 height: cellSize,
                 fit: BoxFit.cover,
                 memCacheWidth: cacheWidth,
-                fadeInDuration: const Duration(milliseconds: 120),
                 errorWidget: (context, url, error) => Builder(
                   builder: (context) => Container(
                     width: cellSize,

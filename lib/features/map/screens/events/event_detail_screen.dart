@@ -560,6 +560,19 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                     child: CachedNetworkImage(
                                       imageUrl: backgroundUrl,
                                       fit: BoxFit.cover,
+                                      placeholder: (context, url) => Container(
+                                        width: double.infinity,
+                                        height: 200,
+                                        color: AppColors.getBorderColor(context),
+                                        child: Center(
+                                          child: CupertinoActivityIndicator(
+                                            radius: 12,
+                                            color: AppColors.getIconSecondaryColor(
+                                              context,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                       errorWidget: (context, url, error) =>
                                           Container(
                                         color: AppColors.getBorderColor(context),
@@ -1061,9 +1074,19 @@ class _HeaderLogo extends StatelessWidget {
       width: 100,
       height: 100,
       fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
+      placeholder: (context, url) => Container(
+        width: 100,
+        height: 100,
+        color: AppColors.getBorderColor(context),
+        child: Center(
+          child: CupertinoActivityIndicator(
+            radius: 10,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
+      ),
       errorWidget: (context, imageUrl, error) => Builder(
         builder: (context) => Container(
           width: 100,
@@ -1094,9 +1117,19 @@ class _Avatar40 extends StatelessWidget {
       width: 40,
       height: 40,
       fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 120),
       memCacheWidth: w,
       maxWidthDiskCache: w,
+      placeholder: (context, url) => Container(
+        width: 40,
+        height: 40,
+        color: AppColors.getBorderColor(context),
+        child: Center(
+          child: CupertinoActivityIndicator(
+            radius: 8,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        ),
+      ),
       errorWidget: (context, imageUrl, error) => Builder(
         builder: (context) => Container(
           width: 40,
@@ -1134,9 +1167,17 @@ class _SquarePhoto extends StatelessWidget {
               return CachedNetworkImage(
                 imageUrl: url,
                 fit: BoxFit.cover,
-                fadeInDuration: const Duration(milliseconds: 120),
                 memCacheWidth: target,
                 maxWidthDiskCache: target,
+                placeholder: (context, url) => Container(
+                  color: AppColors.getBorderColor(context),
+                  child: Center(
+                    child: CupertinoActivityIndicator(
+                      radius: 12,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
+                  ),
+                ),
                 errorWidget: (context, imageUrl, error) => Builder(
                   builder: (context) => Container(
                     color: AppColors.getBorderColor(context),
@@ -1227,7 +1268,15 @@ class _GalleryViewerState extends State<_GalleryViewer> {
                     child: CachedNetworkImage(
                       imageUrl: widget.images[i],
                       fit: BoxFit.contain,
-                      fadeInDuration: const Duration(milliseconds: 120),
+                      placeholder: (context, url) => Container(
+                        color: AppColors.getBorderColor(context),
+                        child: Center(
+                          child: CupertinoActivityIndicator(
+                            radius: 16,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
+                        ),
+                      ),
                       errorWidget: (context, imageUrl, error) => Builder(
                         builder: (context) => Container(
                           color: AppColors.getBorderColor(context),

@@ -133,10 +133,17 @@ class EditProfileAvatarEditable extends ConsumerWidget {
         fit: BoxFit.cover,
         memCacheWidth: w,
         maxWidthDiskCache: w,
-        // Добавляем fade-in эффект при загрузке
-        fadeInDuration: const Duration(milliseconds: 300),
-        fadeOutDuration: const Duration(milliseconds: 100),
-        placeholder: (context, url) => buildEmpty(),
+        placeholder: (context, url) => Container(
+          width: size,
+          height: size,
+          color: AppColors.getBackgroundColor(context),
+          child: Center(
+            child: CupertinoActivityIndicator(
+              radius: size * 0.15,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+          ),
+        ),
         errorWidget: (context, url, error) => buildEmpty(),
       );
     }

@@ -807,9 +807,23 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                               width: 36,
                               height: 36,
                               fit: BoxFit.cover,
-                              fadeInDuration: const Duration(milliseconds: 120),
                               memCacheWidth: w,
                               maxWidthDiskCache: w,
+                              placeholder: (context, url) => Container(
+                                width: 36,
+                                height: 36,
+                                color: AppColors.getSurfaceMutedColor(
+                                  context,
+                                ),
+                                child: Center(
+                                  child: CupertinoActivityIndicator(
+                                    radius: 8,
+                                    color: AppColors.getIconSecondaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                ),
+                              ),
                               errorWidget: (context, imageUrl, error) {
                                 return Container(
                                   width: 36,
@@ -1367,17 +1381,37 @@ class _ParticipantRow extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 14,
-                backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
-                    ? NetworkImage(avatarUrl!)
-                    : null,
-                child: avatarUrl == null || avatarUrl!.isEmpty
-                    ? Icon(
+                backgroundColor: AppColors.getBackgroundColor(context),
+                child: avatarUrl != null && avatarUrl!.isNotEmpty
+                    ? ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl: avatarUrl!,
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            width: 28,
+                            height: 28,
+                            color: AppColors.getBackgroundColor(context),
+                            child: Center(
+                              child: CupertinoActivityIndicator(
+                                radius: 8,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Icon(
+                            CupertinoIcons.person_fill,
+                            size: 14,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
+                        ),
+                      )
+                    : Icon(
                         CupertinoIcons.person_fill,
                         size: 14,
                         color: AppColors.getIconSecondaryColor(context),
-                      )
-                    : null,
-                onBackgroundImageError: (error, stackTrace) {},
+                      ),
               ),
               const SizedBox(width: 8),
               Text.rich(
@@ -1483,9 +1517,23 @@ class _BubbleLeft extends StatelessWidget {
                               imageUrl: image!,
                               width: maxW,
                               fit: BoxFit.cover,
-                              fadeInDuration: const Duration(milliseconds: 200),
                               memCacheWidth: w,
                               maxWidthDiskCache: w,
+                              placeholder: (context, url) => Container(
+                                width: maxW,
+                                height: 200,
+                                color: AppColors.getSurfaceMutedColor(
+                                  context,
+                                ),
+                                child: Center(
+                                  child: CupertinoActivityIndicator(
+                                    radius: 12,
+                                    color: AppColors.getIconSecondaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                ),
+                              ),
                               errorWidget: (context, url, error) {
                                 return Container(
                                   width: maxW,
@@ -1600,9 +1648,23 @@ class _BubbleRight extends StatelessWidget {
                               imageUrl: image!,
                               width: maxW,
                               fit: BoxFit.cover,
-                              fadeInDuration: const Duration(milliseconds: 200),
                               memCacheWidth: w,
                               maxWidthDiskCache: w,
+                              placeholder: (context, url) => Container(
+                                width: maxW,
+                                height: 200,
+                                color: AppColors.getSurfaceMutedColor(
+                                  context,
+                                ),
+                                child: Center(
+                                  child: CupertinoActivityIndicator(
+                                    radius: 12,
+                                    color: AppColors.getIconSecondaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                ),
+                              ),
                               errorWidget: (context, url, error) {
                                 return Container(
                                   width: maxW,
@@ -1786,7 +1848,15 @@ class _FullscreenImageOverlay extends StatelessWidget {
                   child: CachedNetworkImage(
                     imageUrl: imageUrl,
                     fit: BoxFit.contain,
-                    fadeInDuration: const Duration(milliseconds: 200),
+                    placeholder: (context, url) => Container(
+                      color: AppColors.getSurfaceMutedColor(context),
+                      child: Center(
+                        child: CupertinoActivityIndicator(
+                          radius: 16,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      ),
+                    ),
                     errorWidget: (context, url, error) {
                       return Container(
                         color: AppColors.getSurfaceMutedColor(context),
