@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../models/market_models.dart' show Gender;
 import '../../../../../core/widgets/primary_button.dart';
@@ -518,20 +519,33 @@ class _EventAutocompleteField extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.xs,
                                   ),
-                                  child: Image.network(
-                                    selectedLogoUrl!,
+                                  child: CachedNetworkImage(
+                                    imageUrl: selectedLogoUrl!,
                                     width: 30,
                                     height: 30,
                                     fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) => Icon(
-                                          CupertinoIcons.calendar,
-                                          size: 18,
-                                          color:
-                                              AppColors.getIconSecondaryColor(
-                                                context,
-                                              ),
+                                    placeholder: (context, url) => Container(
+                                      width: 30,
+                                      height: 30,
+                                      color: AppColors.getBackgroundColor(
+                                        context,
+                                      ),
+                                      child: Center(
+                                        child: CupertinoActivityIndicator(
+                                          radius: 8,
+                                          color: AppColors.getIconSecondaryColor(
+                                            context,
+                                          ),
                                         ),
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) => Icon(
+                                      CupertinoIcons.calendar,
+                                      size: 18,
+                                      color: AppColors.getIconSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               )
@@ -639,20 +653,36 @@ class _EventAutocompleteField extends StatelessWidget {
                                     ),
                                     clipBehavior: Clip.antiAlias,
                                     child: hasLogo
-                                        ? Image.network(
-                                            option.logoUrl!,
+                                        ? CachedNetworkImage(
+                                            imageUrl: option.logoUrl!,
                                             fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                                  return Icon(
-                                                    CupertinoIcons.calendar,
-                                                    size: 18,
-                                                    color:
-                                                        AppColors.getIconSecondaryColor(
-                                                          context,
-                                                        ),
-                                                  );
-                                                },
+                                            placeholder: (context, url) =>
+                                                Container(
+                                              width: 40,
+                                              height: 40,
+                                              color: AppColors.getBackgroundColor(
+                                                context,
+                                              ),
+                                              child: Center(
+                                                child:
+                                                    CupertinoActivityIndicator(
+                                                  radius: 8,
+                                                  color: AppColors
+                                                      .getIconSecondaryColor(
+                                                    context,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            errorWidget:
+                                                (context, url, error) => Icon(
+                                              CupertinoIcons.calendar,
+                                              size: 18,
+                                              color: AppColors
+                                                  .getIconSecondaryColor(
+                                                context,
+                                              ),
+                                            ),
                                           )
                                         : Icon(
                                             CupertinoIcons.calendar,

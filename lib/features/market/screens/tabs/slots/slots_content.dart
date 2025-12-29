@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/services/auth_service.dart';
@@ -596,19 +597,33 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
                                         ),
                                       ),
                                       clipBehavior: Clip.antiAlias,
-                                      child: Image.network(
-                                        option.logoUrl!,
+                                      child: CachedNetworkImage(
+                                        imageUrl: option.logoUrl!,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Icon(
-                                            CupertinoIcons.calendar,
-                                            size: 18,
-                                            color:
-                                                AppColors.getIconSecondaryColor(
-                                                  context,
-                                                ),
-                                          );
-                                        },
+                                        placeholder: (context, url) => Container(
+                                          width: 40,
+                                          height: 40,
+                                          color: AppColors.getBackgroundColor(
+                                            context,
+                                          ),
+                                          child: Center(
+                                            child: CupertinoActivityIndicator(
+                                              radius: 8,
+                                              color: AppColors
+                                                  .getIconSecondaryColor(
+                                                context,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        errorWidget: (context, url, error) =>
+                                            Icon(
+                                          CupertinoIcons.calendar,
+                                          size: 18,
+                                          color: AppColors.getIconSecondaryColor(
+                                            context,
+                                          ),
+                                        ),
                                       ),
                                     )
                                   else
