@@ -42,6 +42,9 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
 
   // ── список городов для автокомплита (загружается из БД)
   List<String> _cities = [];
+  
+  // ── Выбранный город из списка (для валидации)
+  String? _selectedCity;
 
   // ── медиа
   final picker = ImagePicker();
@@ -64,7 +67,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
 
   bool get isFormValid =>
       nameCtrl.text.trim().isNotEmpty &&
-      cityCtrl.text.trim().isNotEmpty &&
+      _selectedCity != null && _selectedCity!.isNotEmpty &&
       activity != null &&
       foundationDate != null;
 
@@ -78,11 +81,13 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
     cityCtrl.addListener(() {
       _refresh();
       _clearFieldError('city');
+      // Если текст изменился не через выбор из списка, сбрасываем выбранный город
+      if (cityCtrl.text.trim() != _selectedCity) {
+        _selectedCity = null;
+      }
     });
-    // Загружаем список городов из БД
-    _loadCities();
-    // Загружаем данные клуба для редактирования
-    _loadClubData();
+    // Загружаем список городов из БД, затем данные клуба
+    _loadCities().then((_) => _loadClubData());
   }
 
   /// Загрузка списка городов из БД через API
@@ -102,9 +107,15 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
 
       if (data['success'] == true && data['cities'] != null) {
         final cities = data['cities'] as List<dynamic>? ?? [];
-        setState(() {
-          _cities = cities.map((city) => city.toString()).toList();
-        });
+        if (mounted) {
+          setState(() {
+            _cities = cities.map((city) => city.toString()).toList();
+            // Проверяем, есть ли текущий город в списке
+            if (cityCtrl.text.isNotEmpty && _cities.contains(cityCtrl.text.trim())) {
+              _selectedCity = cityCtrl.text.trim();
+            }
+          });
+        }
       }
     } catch (e) {
       // В случае ошибки оставляем пустой список
@@ -141,7 +152,12 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
         // Заполняем текстовые поля
         nameCtrl.text = club['name'] as String? ?? '';
         linkCtrl.text = club['link'] as String? ?? '';
-        cityCtrl.text = club['city'] as String? ?? '';
+        final cityName = club['city'] as String? ?? '';
+        cityCtrl.text = cityName;
+        // Проверяем, есть ли город в списке
+        if (cityName.isNotEmpty && _cities.contains(cityName)) {
+          _selectedCity = cityName;
+        }
         descCtrl.text = club['description'] as String? ?? '';
 
         // Заполняем выборы
@@ -516,8 +532,14 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
     if (nameCtrl.text.trim().isEmpty) {
       newErrors['name'] = 'Введите название клуба';
     }
-    if (cityCtrl.text.trim().isEmpty) {
-      newErrors['city'] = 'Введите город';
+    if (_selectedCity == null || _selectedCity!.isEmpty) {
+      newErrors['city'] = 'Выберите город из списка';
+      // Очищаем поле, если город не выбран из списка
+      cityCtrl.clear();
+    } else if (!_cities.contains(_selectedCity)) {
+      newErrors['city'] = 'Выберите город из списка';
+      cityCtrl.clear();
+      _selectedCity = null;
     }
     if (activity == null) {
       newErrors['activity'] = 'Выберите вид активности';
@@ -1000,8 +1022,12 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                     controller: cityCtrl,
                     suggestions: _cities,
                     hasError: formState.fieldErrors.containsKey('city'),
+                    errorText: formState.fieldErrors['city'],
                     onSelected: (city) {
-                      cityCtrl.text = city;
+                      setState(() {
+                        _selectedCity = city;
+                        cityCtrl.text = city;
+                      });
                       _clearFieldError('city');
                     },
                   ),
@@ -1188,12 +1214,14 @@ class _CityAutocompleteField extends StatelessWidget {
   final List<String> suggestions;
   final Function(String) onSelected;
   final bool hasError;
+  final String? errorText;
 
   const _CityAutocompleteField({
     required this.controller,
     required this.suggestions,
     required this.onSelected,
     this.hasError = false,
+    this.errorText,
   });
 
   @override
@@ -1263,6 +1291,10 @@ class _CityAutocompleteField extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   borderSide: BorderSide(color: borderColor, width: 1),
                 ),
+                errorText: hasError
+                    ? (errorText ?? 'Выберите город из списка')
+                    : null,
+                errorMaxLines: 2,
               ),
             );
           },

@@ -38,10 +38,12 @@ class EditProfileFormPane extends StatelessWidget {
     required this.setGender,
     required this.setSport,
     required this.pickBirthDate,
+    required this.cities,
     this.backgroundUrl,
     this.backgroundBytes,
     this.onPickBackground,
     this.onRemoveBackground,
+    this.onCitySelected,
   });
 
   final String? avatarUrl;
@@ -66,6 +68,9 @@ class EditProfileFormPane extends StatelessWidget {
   final void Function(String) setSport;
 
   final Future<void> Function() pickBirthDate;
+  
+  final List<String> cities;
+  final void Function(String)? onCitySelected;
 
   final String? backgroundUrl;
   final Uint8List? backgroundBytes;
@@ -108,6 +113,8 @@ class EditProfileFormPane extends StatelessWidget {
             setGender: setGender,
             setSport: setSport,
             pickBirthDate: pickBirthDate,
+            cities: cities,
+            onCitySelected: onCitySelected,
           ),
 
           const SizedBox(height: 20),
