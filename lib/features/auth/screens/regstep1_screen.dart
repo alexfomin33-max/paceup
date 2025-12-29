@@ -38,10 +38,10 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
   // 🔹 Списки возможных значений
   final List<String> genders = ['Муж', 'Жен'];
   final List<String> sports = ['Бег', 'Велосипед', 'Плавание', 'Лыжи'];
-  
+
   // 🔹 Список городов для автокомплита (загружается из БД)
   List<String> _cities = [];
-  
+
   // 🔹 Выбранный город из списка (для валидации)
   String? _selectedCity;
 
@@ -51,7 +51,8 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
         surnameController.text.trim().isNotEmpty &&
         dobController.text.isNotEmpty &&
         selectedGender != null &&
-        _selectedCity != null && _selectedCity!.isNotEmpty &&
+        _selectedCity != null &&
+        _selectedCity!.isNotEmpty &&
         selectedSport != null;
   }
 
@@ -60,22 +61,20 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
     final formNotifier = ref.read(formStateProvider.notifier);
     final api = ref.read(apiServiceProvider);
 
-    await formNotifier.submit(
-      () async {
-        await api.post(
-          '/save_reg_form1.php',
-          body: {
-            'user_id': '${widget.userId}', // 🔹 PHP ожидает строки
-            'name': nameController.text.trim(),
-            'surname': surnameController.text.trim(),
-            'dateage': dobController.text,
-            'city': cityController.text.trim(),
-            'gender': selectedGender!,
-            'sport': selectedSport!,
-          },
-        );
-      },
-    );
+    await formNotifier.submit(() async {
+      await api.post(
+        '/save_reg_form1.php',
+        body: {
+          'user_id': '${widget.userId}', // 🔹 PHP ожидает строки
+          'name': nameController.text.trim(),
+          'surname': surnameController.text.trim(),
+          'dateage': dobController.text,
+          'city': cityController.text.trim(),
+          'gender': selectedGender!,
+          'sport': selectedSport!,
+        },
+      );
+    });
   }
 
   /// 🔹 Загрузка списка городов из БД через API
@@ -110,14 +109,14 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
   /// 🔹 Метод проверки валидности формы и перехода на следующий экран
   Future<void> _checkAndContinue() async {
     final formState = ref.read(formStateProvider);
-    
+
     // Проверяем, что город выбран из списка
     final formNotifier = ref.read(formStateProvider.notifier);
     if (_selectedCity == null || _selectedCity!.isEmpty) {
       formNotifier.setFieldErrors({'city': 'Выберите город из списка'});
       return;
     }
-    
+
     if (!isFormValid || formState.isSubmitting) return;
 
     await saveForm();
@@ -160,7 +159,7 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
         formNotifier.clearGeneralError();
         formNotifier.clearFieldError('city');
       });
-      
+
       // Загружаем список городов из БД
       _loadCities();
     });
@@ -251,17 +250,20 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       RichText(
-                        text: TextSpan(
+                        text: const TextSpan(
                           text: 'Город',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
-                          children: const [
+                          children: [
                             TextSpan(
                               text: '*',
-                              style: TextStyle(color: AppColors.error, fontSize: 16),
+                              style: TextStyle(
+                                color: AppColors.error,
+                                fontSize: 16,
+                              ),
                             ),
                           ],
                         ),
@@ -276,7 +278,9 @@ class Regstep1ScreenState extends ConsumerState<Regstep1Screen> {
                           setState(() {
                             _selectedCity = city;
                           });
-                          ref.read(formStateProvider.notifier).clearFieldError('city');
+                          ref
+                              .read(formStateProvider.notifier)
+                              .clearFieldError('city');
                         },
                       ),
                     ],

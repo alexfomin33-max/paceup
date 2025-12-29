@@ -8,7 +8,6 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 
 import 'edit_profile_form_fields.dart';
 import 'edit_profile_avatar_section.dart';
@@ -60,7 +59,7 @@ class EditProfilePersonalInfoSection extends StatelessWidget {
   final void Function(String) setSport;
 
   final Future<void> Function() pickBirthDate;
-  
+
   final List<String> cities;
   final void Function(String)? onCitySelected;
 

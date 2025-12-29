@@ -1,7 +1,6 @@
 // lib/widgets/route_card.dart
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:latlong2/latlong.dart';
@@ -60,7 +59,10 @@ class _RouteCardState extends State<RouteCard> {
             width: double.infinity,
             height: widget.height,
             child: const Center(
-              child: CupertinoActivityIndicator(radius: 10, color: AppColors.brandPrimary),
+              child: CupertinoActivityIndicator(
+                radius: 10,
+                color: AppColors.brandPrimary,
+              ),
             ),
           );
         }
@@ -167,28 +169,34 @@ class _RouteCardState extends State<RouteCard> {
 
                       // Подстраиваем камеру под границы с обработкой ошибок канала
                       try {
-                        final camera = await mapboxMap.cameraForCoordinateBounds(
-                          CoordinateBounds(
-                            southwest: Point(
-                              coordinates: Position(
-                                bounds.southwest.longitude,
-                                bounds.southwest.latitude,
+                        final camera = await mapboxMap
+                            .cameraForCoordinateBounds(
+                              CoordinateBounds(
+                                southwest: Point(
+                                  coordinates: Position(
+                                    bounds.southwest.longitude,
+                                    bounds.southwest.latitude,
+                                  ),
+                                ),
+                                northeast: Point(
+                                  coordinates: Position(
+                                    bounds.northeast.longitude,
+                                    bounds.northeast.latitude,
+                                  ),
+                                ),
+                                infiniteBounds: false,
                               ),
-                            ),
-                            northeast: Point(
-                              coordinates: Position(
-                                bounds.northeast.longitude,
-                                bounds.northeast.latitude,
+                              MbxEdgeInsets(
+                                top: 12,
+                                left: 12,
+                                bottom: 12,
+                                right: 12,
                               ),
-                            ),
-                            infiniteBounds: false,
-                          ),
-                          MbxEdgeInsets(top: 12, left: 12, bottom: 12, right: 12),
-                          null,
-                          null,
-                          null,
-                          null,
-                        );
+                              null,
+                              null,
+                              null,
+                              null,
+                            );
                         await mapboxMap.setCamera(camera);
                       } catch (cameraError) {
                         // Если канал еще не готов, логируем и продолжаем работу
@@ -212,7 +220,10 @@ class _RouteCardState extends State<RouteCard> {
                     },
                     cameraOptions: CameraOptions(
                       center: Point(
-                        coordinates: Position(center.longitude, center.latitude),
+                        coordinates: Position(
+                          center.longitude,
+                          center.latitude,
+                        ),
                       ),
                       zoom: 12,
                     ),

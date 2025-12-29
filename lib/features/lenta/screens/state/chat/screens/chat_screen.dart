@@ -574,7 +574,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                       width: 52,
                                       height: 52,
                                       color: AppColors.surfaceMuted,
-                                      child: Center(
+                                      child: const Center(
                                         child: CupertinoActivityIndicator(
                                           radius: 10,
                                         ),
@@ -622,7 +622,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                       width: 52,
                                       height: 52,
                                       color: AppColors.surfaceMuted,
-                                      child: Center(
+                                      child: const Center(
                                         child: CupertinoActivityIndicator(
                                           radius: 10,
                                         ),
