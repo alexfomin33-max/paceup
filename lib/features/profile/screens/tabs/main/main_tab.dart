@@ -250,6 +250,7 @@ class _MainTabState extends MainTabState
         // Всегда показываем CustomScrollView с pull-to-refresh
         return CustomScrollView(
           physics: const BouncingScrollPhysics(),
+          primary: false, // Отключаем автоматическое использование PrimaryScrollController
           slivers: [
             // ───────────────── Pull-to-refresh ─────────────────
             CupertinoSliverRefreshControl(onRefresh: _refresh),

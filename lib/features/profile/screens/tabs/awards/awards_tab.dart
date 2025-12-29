@@ -21,6 +21,7 @@ class _AwardsTabState extends State<AwardsTab>
     super.build(context);
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
+      primary: false, // Отключаем автоматическое использование PrimaryScrollController
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
         SliverToBoxAdapter(
