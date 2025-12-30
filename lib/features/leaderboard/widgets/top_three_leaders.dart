@@ -29,10 +29,7 @@ class TopThreeLeaders extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return Padding(
-      // ── Отступы слева и справа как у элементов выше (16px)
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
+    return Container(
         // ── Светлый фон для светлой темы с закруглением углов и тонкой рамкой
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
@@ -76,8 +73,7 @@ class TopThreeLeaders extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 

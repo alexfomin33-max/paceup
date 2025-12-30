@@ -476,52 +476,52 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
               ),
             ),
 
-            // ─────────── Кнопка "Начать" / "Отменить"
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-                child: Center(
-                  child: SizedBox(
-                    width: 200,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleTaskAction,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: currentIsParticipating
-                            ? AppColors.error
-                            : AppColors.brandPrimary,
-                        foregroundColor: AppColors.surface,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 0,
-                          vertical: 8,
+            // ─────────── Кнопка "Начать"
+            // Показываем кнопку только если пользователь еще не участвует
+            if (!currentIsParticipating)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                  child: Center(
+                    child: SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _handleTaskAction,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.brandPrimary,
+                          foregroundColor: AppColors.surface,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 0,
+                            vertical: 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.xl),
+                          ),
+                          elevation: 0,
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.xl),
-                        ),
-                        elevation: 0,
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CupertinoActivityIndicator(
+                                  radius: 10,
+                                  color: AppColors.surface,
+                                ),
+                              )
+                            : const Text(
+                                'Начать',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.surface,
+                                ),
+                              ),
                       ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CupertinoActivityIndicator(
-                                radius: 10,
-                                color: AppColors.surface,
-                              ),
-                            )
-                          : Text(
-                              currentIsParticipating ? 'Отменить' : 'Начать',
-                              style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.surface,
-                              ),
-                            ),
                     ),
                   ),
                 ),
               ),
-            ),
 
             // ─────────── Контент
             SliverToBoxAdapter(
@@ -529,7 +529,7 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 10, 16, 10),
+                    padding: EdgeInsets.fromLTRB(16, 24, 16, 10),
                     child: _SectionTitle('Прогресс друзей'),
                   ),
                   Container(

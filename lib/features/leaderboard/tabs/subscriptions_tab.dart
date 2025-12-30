@@ -90,8 +90,8 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
             padding: const EdgeInsets.only(
               top: 16,
               bottom: 8,
-              left: 16,
-              right: 16,
+              left: 12,
+              right: 12,
             ),
             child: LeaderboardFiltersPanel(
               selectedParameter: _selectedParameter,
@@ -233,7 +233,7 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
 
               if (rows.isEmpty) {
                 return const Padding(
-                  padding: EdgeInsets.all(32.0),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 32),
                   child: Center(
                     child: Text(
                       'Нет данных для отображения',
@@ -246,28 +246,31 @@ class _SubscriptionsTabState extends ConsumerState<SubscriptionsTab>
                 );
               }
 
-              return Column(
-                children: [
-                  // ── Топ-3 лидера перед таблицей (только если есть 3+ пользователя)
-                  if (rows.length >= 3) TopThreeLeaders(rows: rows),
-                  if (rows.length >= 3) const SizedBox(height: 16),
-                  // ── Таблица лидерборда на всю ширину с отступами по 4px
-                  // Если пользователей меньше 3, показываем всех в таблице
-                  // Если 3 или больше, показываем только с 4-го места
-                  LeaderboardTable(
-                    rows: rows,
-                    currentUserRank: currentUserRank,
-                    showAllIfLessThanThree: true,
-                  ),
-                ],
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Column(
+                  children: [
+                    // ── Топ-3 лидера перед таблицей (только если есть 3+ пользователя)
+                    if (rows.length >= 3) TopThreeLeaders(rows: rows),
+                    if (rows.length >= 3) const SizedBox(height: 16),
+                    // ── Таблица лидерборда на всю ширину с отступами по 4px
+                    // Если пользователей меньше 3, показываем всех в таблице
+                    // Если 3 или больше, показываем только с 4-го места
+                    LeaderboardTable(
+                      rows: rows,
+                      currentUserRank: currentUserRank,
+                      showAllIfLessThanThree: true,
+                    ),
+                  ],
+                ),
               );
             },
             loading: () => const Padding(
-              padding: EdgeInsets.all(32.0),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 32),
               child: Center(child: CupertinoActivityIndicator(radius: 10)),
             ),
             error: (error, stack) => Padding(
-              padding: const EdgeInsets.all(32.0),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 32),
               child: Center(
                 child: Column(
                   children: [

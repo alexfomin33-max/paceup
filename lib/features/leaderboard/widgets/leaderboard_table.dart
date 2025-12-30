@@ -12,7 +12,8 @@ import 'leaderboard_row.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 //                     ТАБЛИЦА ЛИДЕРБОРДА
 // ─────────────────────────────────────────────────────────────────────────────
-/// Таблица лидерборда на всю ширину экрана с отступами по 4px
+/// Таблица лидерборда на всю ширину экрана
+/// Горизонтальные отступы задаются в родительских вкладках (12px)
 class LeaderboardTable extends StatelessWidget {
   final List<LeaderboardRowData> rows;
   final int? currentUserRank;
@@ -27,29 +28,21 @@ class LeaderboardTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: AppColors.getSurfaceColor(context),
-          border: Border(
-            top: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 0.5,
-            ),
-            bottom: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 0.5,
-            ),
-          ),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(
+          color: AppColors.getBorderColor(context),
+          width: 1,
         ),
-        child: Column(
-          // ── Если пользователей меньше 3 и showAllIfLessThanThree = true, показываем всех
-          // ── Иначе пропускаем первые 3 места (они показываются в топ-3 лидерах)
-          // ── Таблица начинается с 4-го места
-          children: _buildTableRows(),
-        ),
+      ),
+      child: Column(
+        // ── Если пользователей меньше 3 и showAllIfLessThanThree = true, показываем всех
+        // ── Иначе пропускаем первые 3 места (они показываются в топ-3 лидерах)
+        // ── Таблица начинается с 4-го места
+        children: _buildTableRows(),
       ),
     );
   }
