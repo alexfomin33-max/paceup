@@ -400,56 +400,76 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
         final c = _comments[index];
         final humanDate = _formatHumanDate(c.createdAt);
 
-        return ListTile(
-          leading: CircleAvatar(
-            radius: 20,
-            backgroundColor: AppColors.getSurfaceMutedColor(context),
-            backgroundImage: (c.userAvatar != null && c.userAvatar!.isNotEmpty)
-                ? NetworkImage(c.userAvatar!)
-                : null,
-            child: (c.userAvatar == null || c.userAvatar!.isEmpty)
-                ? Text(
-                    c.userName.isNotEmpty ? c.userName.characters.first : '?',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  )
-                : null,
-          ),
-          title: Transform.translate(
-            offset: const Offset(0, -4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: Text(
-                    c.userName,
-                    style: AppTextStyles.h14w6.copyWith(
-                      letterSpacing: 0,
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '· $humanDate',
-                  style: AppTextStyles.h12w4Ter.copyWith(
-                    color: AppColors.getTextTertiaryColor(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 0),
-            child: Text(
-              c.text,
-              style: AppTextStyles.h13w4.copyWith(
-                color: AppColors.getTextPrimaryColor(context),
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 Кастомная верстка вместо ListTile: аватарка выровнена сверху
+        // ────────────────────────────────────────────────────────────────
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ──── Аватарка (сверху) ────
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: AppColors.getSurfaceMutedColor(context),
+                backgroundImage:
+                    (c.userAvatar != null && c.userAvatar!.isNotEmpty)
+                    ? NetworkImage(c.userAvatar!)
+                    : null,
+                child: (c.userAvatar == null || c.userAvatar!.isEmpty)
+                    ? Text(
+                        c.userName.isNotEmpty
+                            ? c.userName.characters.first
+                            : '?',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      )
+                    : null,
               ),
-            ),
+              const SizedBox(width: 12),
+              // ──── Имя, дата и текст ────
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Имя пользователя и дата
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            c.userName,
+                            style: AppTextStyles.h14w6.copyWith(
+                              letterSpacing: 0,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '· $humanDate',
+                          style: AppTextStyles.h12w4Ter.copyWith(
+                            color: AppColors.getTextTertiaryColor(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    // Текст комментария
+                    Text(
+                      c.text,
+                      style: AppTextStyles.h13w4.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       },
