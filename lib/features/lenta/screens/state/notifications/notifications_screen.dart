@@ -15,6 +15,7 @@ import '../../../../map/screens/events/event_detail_screen2.dart';
 import '../../activity/description_screen.dart';
 import '../../../../../domain/models/activity_lenta.dart' as al;
 import '../../../providers/lenta_provider.dart';
+import '../../widgets/post/description_post_card.dart';
 import 'settings_bottom_sheet.dart';
 import 'notifications_provider.dart';
 
@@ -330,6 +331,65 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
+  // ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ: загрузка поста по ID
+  // ─────────────────────────────────────────────────────────────────────────────
+  Future<al.Activity?> _loadPostById(
+    int postId,
+    int currentUserId,
+  ) async {
+    // Сначала пытаемся найти в ленте
+    final lentaState = ref.read(lentaProvider(currentUserId));
+    try {
+      return lentaState.items.firstWhere(
+        (a) => a.id == postId && a.type == 'post',
+      );
+    } catch (e) {
+      // Пост не найден в ленте
+    }
+
+    // Загружаем через API, проверяя несколько страниц
+    try {
+      final api = ref.read(apiServiceProvider);
+
+      // Проверяем первые 3 страницы (до 300 элементов)
+      for (int page = 1; page <= 3; page++) {
+        try {
+          final data = await api.post(
+            '/activities_lenta.php',
+            body: {
+              'userId': currentUserId.toString(),
+              'limit': '100',
+              'page': page.toString(),
+            },
+            timeout: const Duration(seconds: 10),
+          );
+
+          final List rawList = data['data'] as List? ?? const [];
+          final activities = rawList
+              .whereType<Map<String, dynamic>>()
+              .map((json) => al.Activity.fromApi(json))
+              .toList();
+
+          try {
+            return activities.firstWhere(
+              (a) => a.id == postId && a.type == 'post',
+            );
+          } catch (e2) {
+            // Пост не найден на этой странице, продолжаем поиск
+          }
+        } catch (e) {
+          // Ошибка загрузки страницы, продолжаем
+          break;
+        }
+      }
+    } catch (e) {
+      // Ошибка загрузки через API
+    }
+
+    return null;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
   // НАВИГАЦИЯ: обработка клика на уведомление
   // ─────────────────────────────────────────────────────────────────────────────
   Future<void> _handleNotificationTap(NotificationItem notification) async {
@@ -407,12 +467,23 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     }
 
     // ─── Переход на пост
-    // Для поста открываем экран поста (комментарии открываются внутри)
-    // Но так как отдельного экрана поста нет, открываем комментарии
-    // В будущем можно добавить отдельный экран поста
+    // Для поста открываем экран поста
     if (objectType == 'post' || notificationType.contains('пост')) {
-      // Пока просто ничего не делаем, так как нет отдельного экрана поста
-      // Можно открыть ленту и прокрутить к посту, но это сложно
+      final foundPost = await _loadPostById(objectId, currentUserId);
+
+      // Проверяем, что виджет все еще смонтирован после async операции
+      if (!mounted) return;
+
+      if (foundPost != null) {
+        Navigator.of(context).push(
+          TransparentPageRoute(
+            builder: (_) => PostDescriptionScreen(
+              post: foundPost,
+              currentUserId: currentUserId,
+            ),
+          ),
+        );
+      }
       return;
     }
 
@@ -443,7 +514,21 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           );
         }
       } else if (objectType == 'post') {
-        // Для поста пока ничего не делаем (нет отдельного экрана поста)
+        final foundPost = await _loadPostById(objectId, currentUserId);
+
+        // Проверяем, что виджет все еще смонтирован после async операции
+        if (!mounted) return;
+
+        if (foundPost != null) {
+          Navigator.of(context).push(
+            TransparentPageRoute(
+              builder: (_) => PostDescriptionScreen(
+                post: foundPost,
+                currentUserId: currentUserId,
+              ),
+            ),
+          );
+        }
       }
       return;
     }
@@ -473,7 +558,21 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           );
         }
       } else if (objectType == 'post') {
-        // Для поста пока ничего не делаем
+        final foundPost = await _loadPostById(objectId, currentUserId);
+
+        // Проверяем, что виджет все еще смонтирован после async операции
+        if (!mounted) return;
+
+        if (foundPost != null) {
+          Navigator.of(context).push(
+            TransparentPageRoute(
+              builder: (_) => PostDescriptionScreen(
+                post: foundPost,
+                currentUserId: currentUserId,
+              ),
+            ),
+          );
+        }
       }
       return;
     }

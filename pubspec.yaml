@@ -137,6 +137,7 @@ flutter:
      - assets/walking.png
      - assets/running.jpg
      - assets/cycling.jpg
+     - assets/skiing.jpg
      - assets/swimming.webp
      - assets/5k.png
      - assets/10k.png
@@ -194,6 +195,8 @@ flutter:
      - assets/add_boots.png
      - assets/nogps.jpg
      - assets/nogps_swim.jpg
+     - assets/nogsp_bike.jpg
+     - assets/nogps_ski.jpg
      - assets/fon.jpg
 
 

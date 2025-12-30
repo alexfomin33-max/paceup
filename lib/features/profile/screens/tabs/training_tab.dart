@@ -373,7 +373,7 @@ class _SportIcon extends StatelessWidget {
       case 2: // плавание
         return AppColors.accentTeal;
       case 3: // лыжи
-        return AppColors.success; // Зеленый цвет для лыж
+        return AppColors.warning; // Оранжевый цвет для лыж
       default: // бег (0)
         return AppColors.brandPrimary;
     }
@@ -545,7 +545,7 @@ class _MonthGrid extends StatelessWidget {
         color = AppColors.accentTeal;
       } else if (sportTypes.contains(3)) {
         // Только лыжи
-        color = AppColors.success;
+        color = AppColors.warning;
       } else {
         // Только бег
         color = AppColors.brandPrimary;
@@ -628,7 +628,7 @@ class _MonthGrid extends StatelessWidget {
             AppColors.brandPrimary,
             AppColors.female,
             AppColors.accentTeal,
-            AppColors.success,
+            AppColors.warning,
           ],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
@@ -999,7 +999,7 @@ class _WorkoutRow extends ConsumerWidget {
                                         ? AppColors
                                               .accentTeal // Бирюзовый для плавания
                                         : (item.kind == 3
-                                              ? AppColors.success // Зеленый для лыж
+                                              ? AppColors.warning // Оранжевый для лыж
                                               : AppColors
                                                     .brandPrimary)), // Синий для бега
                             ),

@@ -4,7 +4,7 @@ const Map<String, String> kActivityAssetByType = {
   'running': 'assets/running.jpg',
   'cycling': 'assets/cycling.jpg',
   'swimming': 'assets/swimming.webp',
-  'skiing': 'assets/walking.png', // Используем walking.png как временное изображение для лыж
+  'skiing': 'assets/skiing.jpg',
 };
 
 /// Фиксированные ассеты для PR (код дистанции → локальный asset)
