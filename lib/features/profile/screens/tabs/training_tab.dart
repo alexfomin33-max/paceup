@@ -928,7 +928,7 @@ class _WorkoutRow extends ConsumerWidget {
               'assets/avatar_2.png',
             );
 
-        Navigator.of(context).push(
+        Navigator.of(context, rootNavigator: true).push(
           TransparentPageRoute(
             builder: (_) => ActivityDescriptionPage(
               activity: finalActivity,

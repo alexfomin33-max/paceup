@@ -1,7 +1,7 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -42,15 +42,23 @@ class PostDescriptionScreen extends ConsumerStatefulWidget {
       _PostDescriptionScreenState();
 }
 
-class _PostDescriptionScreenState
-    extends ConsumerState<PostDescriptionScreen> {
+class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
   /// Текущее состояние поста (для синхронизации лайков и комментариев)
   late Activity _currentPost;
+
+  /// Список пользователей, которые поставили лайк
+  List<_LikeUser> _likedUsers = [];
+  bool _isLoadingLikes = false;
+  String? _likesError;
 
   @override
   void initState() {
     super.initState();
     _currentPost = widget.post;
+    // Загружаем список лайков только если есть лайки
+    if (_currentPost.likes > 0) {
+      _loadLikedUsers();
+    }
   }
 
   /// ─────────────────────────────────────────────────────────────────────────────
@@ -83,6 +91,52 @@ class _PostDescriptionScreenState
     );
   }
 
+  /// ─────────────────────────────────────────────────────────────────────────────
+  /// ЗАГРУЗКА СПИСКА ПОЛЬЗОВАТЕЛЕЙ, КОТОРЫЕ ПОСТАВИЛИ ЛАЙК
+  /// ─────────────────────────────────────────────────────────────────────────────
+  Future<void> _loadLikedUsers() async {
+    if (_isLoadingLikes) return;
+
+    setState(() {
+      _isLoadingLikes = true;
+      _likesError = null;
+    });
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/get_activity_likes.php',
+        body: {'activityId': '${_currentPost.id}', 'type': 'post'},
+        timeout: const Duration(seconds: 10),
+      );
+
+      if (data['ok'] == true || data['success'] == true) {
+        final usersList = data['users'] as List<dynamic>? ?? [];
+        setState(() {
+          _likedUsers = usersList.map((item) {
+            return _LikeUser(
+              id: int.tryParse('${item['user_id']}') ?? 0,
+              name: item['name']?.toString() ?? 'Пользователь',
+              avatar: item['avatar']?.toString() ?? '',
+            );
+          }).toList();
+          _isLoadingLikes = false;
+        });
+      } else {
+        setState(() {
+          _likesError =
+              data['message']?.toString() ??
+              'Не удалось загрузить список лайков';
+          _isLoadingLikes = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _likesError = 'Ошибка загрузки: ${e.toString()}';
+        _isLoadingLikes = false;
+      });
+    }
+  }
 
   /// ─────────────────────────────────────────────────────────────────────────────
   /// ОТКРЫТИЕ КОММЕНТАРИЕВ: показываем bottom sheet с комментариями
@@ -114,16 +168,16 @@ class _PostDescriptionScreenState
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: Theme.of(context).brightness == Brightness.light
-            ? AppColors.surface
-            : AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.getBackgroundColor(context),
 
-        appBar: PaceAppBar(
+        appBar: const PaceAppBar(
           title: 'Пост',
-          actions: const [], // Без кнопок справа
+          actions: [], // Без кнопок справа
         ),
 
         body: SafeArea(
+          top: false,
+          bottom: false,
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics(),
@@ -134,47 +188,67 @@ class _PostDescriptionScreenState
                 // ──────────────────────────────────────────────────────────────
                 // ШАПКА: единый UserHeader (аватар, имя, дата)
                 // ──────────────────────────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: UserHeader(
-                    userName: _currentPost.userName,
-                    userAvatar: _currentPost.userAvatar,
-                    dateText: formatFeedDateText(
-                      serverText: _currentPost.postDateText,
-                      date: _currentPost.dateStart,
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.getSurfaceColor(context),
+                    border: Border(
+                      top: BorderSide(
+                        width: 0.5,
+                        color: AppColors.getBorderColor(context),
+                      ),
+                      bottom: BorderSide(
+                        width: 0.5,
+                        color: AppColors.getBorderColor(context),
+                      ),
                     ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: UserHeader(
+                      userName: _currentPost.userName,
+                      userAvatar: _currentPost.userAvatar,
+                      dateText: formatFeedDateText(
+                        serverText: _currentPost.postDateText,
+                        date: _currentPost.dateStart,
+                      ),
 
-                    // ──────────────────────────────────────────────────────────────
-                    // ПЕРЕХОД В ПРОФИЛЬ: клик на аватар или имя открывает профиль автора
-                    // ──────────────────────────────────────────────────────────────
-                    onAvatarTap: () {
-                      Navigator.of(context).push(
-                        TransparentPageRoute(
-                          builder: (_) =>
-                              ProfileScreen(userId: _currentPost.userId),
-                        ),
-                      );
-                    },
-                    onNameTap: () {
-                      Navigator.of(context).push(
-                        TransparentPageRoute(
-                          builder: (_) =>
-                              ProfileScreen(userId: _currentPost.userId),
-                        ),
-                      );
-                    },
+                      // ──────────────────────────────────────────────────────────────
+                      // ПЕРЕХОД В ПРОФИЛЬ: клик на аватар или имя открывает профиль автора
+                      // ──────────────────────────────────────────────────────────────
+                      onAvatarTap: () {
+                        Navigator.of(context).push(
+                          TransparentPageRoute(
+                            builder: (_) =>
+                                ProfileScreen(userId: _currentPost.userId),
+                          ),
+                        );
+                      },
+                      onNameTap: () {
+                        Navigator.of(context).push(
+                          TransparentPageRoute(
+                            builder: (_) =>
+                                ProfileScreen(userId: _currentPost.userId),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
 
                 // ──────────────────────────────────────────────────────────────
                 // МЕДИА-КАРУСЕЛЬ: картинки/видео, высота 350
                 // ──────────────────────────────────────────────────────────────
-                SizedBox(
-                  height: 350,
+                Container(
                   width: double.infinity,
-                  child: PostMediaCarousel(
-                    imageUrls: _currentPost.mediaImages,
-                    videoUrls: _currentPost.mediaVideos,
+                  color: AppColors.getSurfaceColor(context),
+                  child: SizedBox(
+                    height: 350,
+                    width: double.infinity,
+                    child: PostMediaCarousel(
+                      imageUrls: _currentPost.mediaImages,
+                      videoUrls: _currentPost.mediaVideos,
+                    ),
                   ),
                 ),
 
@@ -182,60 +256,313 @@ class _PostDescriptionScreenState
                 // ТЕКСТ ПОСТА: после медиа, до лайков/комментариев (с раскрытием)
                 // ──────────────────────────────────────────────────────────────
                 if (_currentPost.postContent.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                    child: ExpandableText(text: _currentPost.postContent),
+                  Container(
+                    width: double.infinity,
+                    color: AppColors.getSurfaceColor(context),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                      child: ExpandableText(text: _currentPost.postContent),
+                    ),
                   ),
 
                 // ──────────────────────────────────────────────────────────────
                 // НИЖНЯЯ ПАНЕЛЬ: лайк и комментарии
                 // ──────────────────────────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      // Лайк-бар: локальная анимация + API
-                      _PostLikeBar(
-                        post: _currentPost,
-                        currentUserId: widget.currentUserId,
-                        onLikeChanged: (likes, isLiked) {
-                          // Обновляем состояние поста при изменении лайка
-                          setState(() {
-                            _currentPost = _updatePostLikes(likes, isLiked);
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 16),
-
-                      // Кнопка «комментарии» — открывает bottom sheet
-                      GestureDetector(
-                        onTap: _openComments,
-                        behavior: HitTestBehavior.opaque,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              CupertinoIcons.chat_bubble,
-                              size: 20,
-                              color: AppColors.warning,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _currentPost.comments.toString(),
-                              style: AppTextStyles.h14w4.copyWith(
-                                color: AppColors.getTextPrimaryColor(context),
-                              ),
-                            ),
-                          ],
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.getSurfaceColor(context),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(AppRadius.xl),
+                      bottomRight: Radius.circular(AppRadius.xl),
+                    ),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        // Лайк-бар: локальная анимация + API
+                        _PostLikeBar(
+                          post: _currentPost,
+                          currentUserId: widget.currentUserId,
+                          onLikeChanged: (likes, isLiked) {
+                            // Обновляем состояние поста при изменении лайка
+                            setState(() {
+                              _currentPost = _updatePostLikes(likes, isLiked);
+                            });
+                            // Обновляем список пользователей, которые поставили лайк
+                            if (_currentPost.likes > 0) {
+                              _loadLikedUsers();
+                            } else {
+                              setState(() {
+                                _likedUsers = [];
+                              });
+                            }
+                          },
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 16),
+
+                        // Кнопка «комментарии» — открывает bottom sheet
+                        GestureDetector(
+                          onTap: _openComments,
+                          behavior: HitTestBehavior.opaque,
+                          child: Row(
+                            children: [
+                              const Icon(
+                                CupertinoIcons.chat_bubble,
+                                size: 20,
+                                color: AppColors.warning,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _currentPost.comments.toString(),
+                                style: AppTextStyles.h14w4.copyWith(
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+
+                // ──────────────────────────────────────────────────────────────
+                // СПИСОК ПОЛЬЗОВАТЕЛЕЙ, КОТОРЫЕ ПОСТАВИЛИ ЛАЙК
+                // ──────────────────────────────────────────────────────────────
+                if (_currentPost.likes > 0) ...[
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.getSurfaceColor(context),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: AppColors.getBorderColor(context),
+                          width: 1,
+                        ),
+                      ),
+                      child: _LikedUsersList(
+                        users: _likedUsers,
+                        isLoading: _isLoadingLikes,
+                        error: _likesError,
+                        onRetry: _loadLikedUsers,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// ─────────────────────────────────────────────────────────────────────────────
+/// МОДЕЛЬ ПОЛЬЗОВАТЕЛЯ, КОТОРЫЙ ПОСТАВИЛ ЛАЙК
+/// ─────────────────────────────────────────────────────────────────────────────
+class _LikeUser {
+  final int id;
+  final String name;
+  final String avatar;
+
+  const _LikeUser({required this.id, required this.name, required this.avatar});
+}
+
+/// ─────────────────────────────────────────────────────────────────────────────
+/// СПИСОК ПОЛЬЗОВАТЕЛЕЙ, КОТОРЫЕ ПОСТАВИЛИ ЛАЙК
+/// ─────────────────────────────────────────────────────────────────────────────
+class _LikedUsersList extends StatelessWidget {
+  final List<_LikeUser> users;
+  final bool isLoading;
+  final String? error;
+  final VoidCallback? onRetry;
+
+  const _LikedUsersList({
+    required this.users,
+    required this.isLoading,
+    this.error,
+    this.onRetry,
+  });
+
+  /// Формирование URL для аватара
+  String _getAvatarUrl(String avatar, int userId) {
+    if (avatar.isEmpty) {
+      return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+    }
+    if (avatar.startsWith('http')) return avatar;
+    return 'http://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // ────────────────────────────────────────────────────────────────
+    // СОСТОЯНИЕ ЗАГРУЗКИ: показываем индикатор
+    // ────────────────────────────────────────────────────────────────
+    if (isLoading) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: CupertinoActivityIndicator(radius: 10)),
+      );
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // СОСТОЯНИЕ ОШИБКИ: показываем ошибку с кнопкой повтора
+    // ────────────────────────────────────────────────────────────────
+    if (error != null) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            SelectableText.rich(
+              TextSpan(
+                text: error!,
+                style: TextStyle(color: AppColors.error, fontSize: 13),
+              ),
+            ),
+            if (onRetry != null) ...[
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: onRetry,
+                child: Text(
+                  'Повторить',
+                  style: AppTextStyles.h14w5.copyWith(
+                    color: AppColors.brandPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // ПУСТОЕ СОСТОЯНИЕ: если список пуст
+    // ────────────────────────────────────────────────────────────────
+    if (users.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          'Нет данных о пользователях',
+          style: AppTextStyles.h13w4.copyWith(
+            color: AppColors.getTextSecondaryColor(context),
+          ),
+        ),
+      );
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // СПИСОК ПОЛЬЗОВАТЕЛЕЙ: отображаем всех пользователей
+    // ────────────────────────────────────────────────────────────────
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Заголовок
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+          child: Text(
+            'Лайки',
+            style: AppTextStyles.h15w6.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ),
+        ),
+        Divider(
+          height: 1,
+          thickness: 0.5,
+          color: AppColors.getBorderColor(context),
+        ),
+        // Список пользователей
+        ...List.generate(users.length, (index) {
+          final user = users[index];
+          final avatarUrl = _getAvatarUrl(user.avatar, user.id);
+          final isLast = index == users.length - 1;
+
+          return Column(
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  Navigator.of(context).push(
+                    TransparentPageRoute(
+                      builder: (_) => ProfileScreen(userId: user.id),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      // Аватар
+                      ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl: avatarUrl,
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            width: 44,
+                            height: 44,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.darkSurfaceMuted
+                                : AppColors.skeletonBase,
+                            child: Center(
+                              child: CupertinoActivityIndicator(
+                                radius: 9,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            width: 44,
+                            height: 44,
+                            color: AppColors.skeletonBase,
+                            child: const Icon(
+                              CupertinoIcons.person_fill,
+                              size: 24,
+                              color: AppColors.textTertiary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Имя пользователя
+                      Expanded(
+                        child: Text(
+                          user.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.h15w5.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (!isLast)
+                Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  color: AppColors.getBorderColor(context),
+                ),
+            ],
+          );
+        }),
+        const SizedBox(height: 8),
+      ],
     );
   }
 }
@@ -341,8 +668,8 @@ class _PostLikeBarState extends ConsumerState<_PostLikeBar>
         timeout: const Duration(seconds: 10),
       );
 
-      final actualData = data['data'] is List &&
-              (data['data'] as List).isNotEmpty
+      final actualData =
+          data['data'] is List && (data['data'] as List).isNotEmpty
           ? (data['data'] as List)[0] as Map<String, dynamic>
           : data;
 

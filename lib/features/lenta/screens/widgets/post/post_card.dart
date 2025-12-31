@@ -19,6 +19,7 @@ import '../../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../../core/widgets/transparent_route.dart';
 import '../../../../profile/screens/profile_screen.dart';
 import '../../../../../features/lenta/providers/lenta_provider.dart';
+import 'description_post_card.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 ///   КАРТОЧКА ПОСТА
@@ -151,6 +152,20 @@ class _PostCardState extends ConsumerState<PostCard> {
     if (mounted) setState(() => _deleting = false);
   }
 
+  /// ─────────────────────────────────────────────────────────────────────────────
+  /// НАВИГАЦИЯ В ЭКРАН ОПИСАНИЯ ПОСТА: открываем PostDescriptionScreen
+  /// ─────────────────────────────────────────────────────────────────────────────
+  void _openPostDescription() {
+    Navigator.of(context, rootNavigator: true).push(
+      TransparentPageRoute(
+        builder: (_) => PostDescriptionScreen(
+          post: widget.post,
+          currentUserId: widget.currentUserId,
+        ),
+      ),
+    );
+  }
+
   /// Обработчик скрытия постов пользователя.
   ///
   /// Показывает диалог подтверждения, после чего скрывает посты через API.
@@ -281,6 +296,10 @@ class _PostCardState extends ConsumerState<PostCard> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+          bottom: Radius.circular(AppRadius.xl),
+        ),
         border: Border(
           top: BorderSide(width: 0.5, color: AppColors.getBorderColor(context)),
           bottom: BorderSide(
@@ -401,7 +420,7 @@ class _PostCardState extends ConsumerState<PostCard> {
           ),
 
           // ──────────────────────────────────────────────────────────────
-          // МЕДИА-КАРУСЕЛЬ: картинки/видео, высота 400
+          // МЕДИА-КАРУСЕЛЬ: картинки/видео, высота 350
           // ──────────────────────────────────────────────────────────────
           SizedBox(
             height: 350,
@@ -409,6 +428,7 @@ class _PostCardState extends ConsumerState<PostCard> {
             child: PostMediaCarousel(
               imageUrls: post.mediaImages,
               videoUrls: post.mediaVideos,
+              onMediaTap: _openPostDescription,
             ),
           ),
 
@@ -416,9 +436,13 @@ class _PostCardState extends ConsumerState<PostCard> {
           // ТЕКСТ ПОСТА: после медиа, до лайков/комментариев (с раскрытием)
           // ──────────────────────────────────────────────────────────────
           if (post.postContent.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-              child: ExpandableText(text: post.postContent),
+            GestureDetector(
+              onTap: _openPostDescription,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                child: ExpandableText(text: post.postContent),
+              ),
             ),
 
           // ──────────────────────────────────────────────────────────────

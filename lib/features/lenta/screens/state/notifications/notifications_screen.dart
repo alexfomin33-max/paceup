@@ -454,7 +454,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       if (!mounted) return;
 
       if (foundActivity != null) {
-        Navigator.of(context).push(
+        Navigator.of(context, rootNavigator: true).push(
           TransparentPageRoute(
             builder: (_) => ActivityDescriptionPage(
               activity: foundActivity,
@@ -475,7 +475,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       if (!mounted) return;
 
       if (foundPost != null) {
-        Navigator.of(context).push(
+        Navigator.of(context, rootNavigator: true).push(
           TransparentPageRoute(
             builder: (_) => PostDescriptionScreen(
               post: foundPost,
@@ -504,7 +504,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         if (!mounted) return;
 
         if (foundActivity != null) {
-          Navigator.of(context).push(
+          Navigator.of(context, rootNavigator: true).push(
             TransparentPageRoute(
               builder: (_) => ActivityDescriptionPage(
                 activity: foundActivity,
@@ -520,7 +520,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         if (!mounted) return;
 
         if (foundPost != null) {
-          Navigator.of(context).push(
+          Navigator.of(context, rootNavigator: true).push(
             TransparentPageRoute(
               builder: (_) => PostDescriptionScreen(
                 post: foundPost,
@@ -548,7 +548,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         if (!mounted) return;
 
         if (foundActivity != null) {
-          Navigator.of(context).push(
+          Navigator.of(context, rootNavigator: true).push(
             TransparentPageRoute(
               builder: (_) => ActivityDescriptionPage(
                 activity: foundActivity,
@@ -564,7 +564,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         if (!mounted) return;
 
         if (foundPost != null) {
-          Navigator.of(context).push(
+          Navigator.of(context, rootNavigator: true).push(
             TransparentPageRoute(
               builder: (_) => PostDescriptionScreen(
                 post: foundPost,

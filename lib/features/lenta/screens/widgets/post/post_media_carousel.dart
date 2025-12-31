@@ -6,11 +6,13 @@ import '../../../../../core/theme/app_theme.dart';
 class PostMediaCarousel extends StatefulWidget {
   final List<String> imageUrls;
   final List<String> videoUrls;
+  final VoidCallback? onMediaTap;
 
   const PostMediaCarousel({
     super.key,
     required this.imageUrls,
     required this.videoUrls,
+    this.onMediaTap,
   });
 
   @override
@@ -71,38 +73,42 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
                   final dpr = MediaQuery.of(context).devicePixelRatio;
                   final screenW = constraints.maxWidth;
                   final targetW = (screenW * dpr).round();
-                  return CachedNetworkImage(
-                    imageUrl: url,
-                    // НЕ передаем cacheManager - используется DefaultCacheManager с offline support
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    filterQuality: FilterQuality.low,
-                    memCacheWidth: targetW,
-                    maxWidthDiskCache: targetW,
-                    placeholder: (context, url) => Container(
-                      color: AppColors.disabled,
-                      child: const Center(child: CupertinoActivityIndicator()),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: AppColors.disabled,
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.image_outlined,
-                            size: 48,
-                            color: AppColors.textTertiary,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Изображение недоступно',
-                            style: TextStyle(
+                  return GestureDetector(
+                    onTap: widget.onMediaTap,
+                    behavior: HitTestBehavior.opaque,
+                    child: CachedNetworkImage(
+                      imageUrl: url,
+                      // НЕ передаем cacheManager - используется DefaultCacheManager с offline support
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      filterQuality: FilterQuality.low,
+                      memCacheWidth: targetW,
+                      maxWidthDiskCache: targetW,
+                      placeholder: (context, url) => Container(
+                        color: AppColors.disabled,
+                        child: const Center(child: CupertinoActivityIndicator()),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: AppColors.disabled,
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.image_outlined,
+                              size: 48,
                               color: AppColors.textTertiary,
-                              fontSize: 12,
                             ),
-                          ),
-                        ],
+                            SizedBox(height: 8),
+                            Text(
+                              'Изображение недоступно',
+                              style: TextStyle(
+                                color: AppColors.textTertiary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -131,51 +137,49 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
   }
 
   Widget _buildVideoPreview(String url) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // ✅ Дефолтный cache для video placeholder
-        Builder(
-          builder: (context) {
-            final dpr = MediaQuery.of(context).devicePixelRatio;
-            final screenW = MediaQuery.of(context).size.width;
-            final targetW = (screenW * dpr).round();
-            return CachedNetworkImage(
-              imageUrl: _videoPlaceholder,
-              fit: BoxFit.cover,
-              memCacheWidth: targetW,
-              maxWidthDiskCache: targetW,
-              // ── Встроенная анимация fade-in работает по умолчанию
-              placeholder: (context, url) => Container(
-                color: AppColors.disabled,
-                child: const Center(child: CupertinoActivityIndicator()),
-              ),
-              errorWidget: (context, url, error) => Container(
-                color: AppColors.disabled,
-                child: const Icon(
-                  CupertinoIcons.video_camera,
-                  size: 48,
-                  color: AppColors.textTertiary,
+    return GestureDetector(
+      onTap: widget.onMediaTap,
+      behavior: HitTestBehavior.opaque,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // ✅ Дефолтный cache для video placeholder
+          Builder(
+            builder: (context) {
+              final dpr = MediaQuery.of(context).devicePixelRatio;
+              final screenW = MediaQuery.of(context).size.width;
+              final targetW = (screenW * dpr).round();
+              return CachedNetworkImage(
+                imageUrl: _videoPlaceholder,
+                fit: BoxFit.cover,
+                memCacheWidth: targetW,
+                maxWidthDiskCache: targetW,
+                // ── Встроенная анимация fade-in работает по умолчанию
+                placeholder: (context, url) => Container(
+                  color: AppColors.disabled,
+                  child: const Center(child: CupertinoActivityIndicator()),
                 ),
-              ),
-            );
-          },
-        ),
-        Container(color: AppColors.scrim20),
-        const Center(
-          child: Icon(
-            CupertinoIcons.play_circle_fill,
-            size: 64,
-            color: AppColors.surface,
+                errorWidget: (context, url, error) => Container(
+                  color: AppColors.disabled,
+                  child: const Icon(
+                    CupertinoIcons.video_camera,
+                    size: 48,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              );
+            },
           ),
-        ),
-        Positioned.fill(
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(onTap: () {}),
+          Container(color: AppColors.scrim20),
+          const Center(
+            child: Icon(
+              CupertinoIcons.play_circle_fill,
+              size: 64,
+              color: AppColors.surface,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

@@ -1681,7 +1681,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         Navigator.of(context).pop();
 
         // Открываем экран описания тренировки
-        Navigator.of(context).push(
+        Navigator.of(context, rootNavigator: true).push(
           TransparentPageRoute(
             builder: (_) => ActivityDescriptionPage(
               activity: createdActivity!,
