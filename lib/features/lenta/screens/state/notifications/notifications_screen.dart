@@ -532,7 +532,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     // ─── Переход на пост
     // Для поста открываем экран поста
-    if (objectType == 'post' || notificationType.contains('пост')) {
+    // ВАЖНО: проверяем как objectType, так и notificationType ('posts' для новых постов)
+    final isPostNotification =
+        objectType == 'post' ||
+        notificationType == 'posts' ||
+        notificationType.contains('post') ||
+        notificationType.contains('пост');
+
+    if (isPostNotification) {
       final foundPost = await _loadPostById(objectId, currentUserId);
 
       // Проверяем, что виджет все еще смонтирован после async операции
